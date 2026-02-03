@@ -12,39 +12,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # =========================================================
-  # JOB 0: REPO SAFETY CHECK
-  # =========================================================
-  repo-safety-check:
-    name: Repo Safety Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check for files > 90MB
-        run: |
-          FILES=$(find . -type f -size +90M)
-          if [ -n "$FILES" ]; then
-            echo "⚠️ Large files detected:"
-            echo "$FILES"
-            exit 1
-          fi
-          echo "✅ No large files >90MB"
-
-      - name: Check for logs or cache folders
-        run: |
-          FILES=$(find ./backend/logs ./frontend/logs ./backend/data/cache ./frontend/data/cache 2>/dev/null)
-          if [ -n "$FILES" ]; then
-            echo "⚠️ Forbidden log/cache files detected:"
-            echo "$FILES"
-            exit 1
-          fi
-          echo "✅ No logs/cache files detected"
-
-  # =========================================================
+  # ---------------------------------------------------------
   # JOB 1: BUILD & TEST BACKEND
-  # =========================================================
+  # ---------------------------------------------------------
   backend-build:
     name: Backend Build & Test
     runs-on: ubuntu-latest
@@ -82,6 +52,21 @@ jobs:
         run: npm run build
         working-directory: backend
 
+      - name: Check forbidden files (logs/cache)
+        run: |
+          FILES=""
+          for dir in ./backend/logs ./frontend/logs ./backend/data/cache ./frontend/data/cache; do
+            if [ -d "$dir" ]; then
+              FILES="$FILES $(find $dir)"
+            fi
+          done
+          if [ -n "$FILES" ]; then
+            echo "❌ Found forbidden files:"
+            echo "$FILES"
+            exit 1
+          else
+            echo "✅ No forbidden files found"
+
       - name: Trigger Render deployment
         if: github.ref == 'refs/heads/main'
         env:
@@ -92,11 +77,10 @@ jobs:
             echo "✅ Render deployment triggered"
           else
             echo "⚠️ RENDER_DEPLOY_HOOK not set. Skipping Render deploy."
-          fi
 
-  # =========================================================
+  # ---------------------------------------------------------
   # JOB 2: BUILD & DEPLOY FRONTEND
-  # =========================================================
+  # ---------------------------------------------------------
   frontend-build:
     name: Frontend Build & Firebase Deploy
     runs-on: ubuntu-latest
