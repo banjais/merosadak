@@ -39,6 +39,16 @@ jobs:
           cache: "npm"
           cache-dependency-path: backend/package-lock.json
 
+      # ------------------- Inject .env.production -------------------
+      - name: Create backend/.env.production from secret
+        run: |
+          if [ -n "${{ secrets.ENV_PRODUCTION }}" ]; then
+            echo "${{ secrets.ENV_PRODUCTION }}" > backend/.env.production
+            echo "✅ backend/.env.production created"
+          else
+            echo "⚠️ ENV_PRODUCTION secret not set!"
+          fi
+
       - name: Install backend dependencies
         run: npm ci
         working-directory: backend
@@ -52,12 +62,13 @@ jobs:
         run: npm run build
         working-directory: backend
 
+      # ------------------- Check forbidden files -------------------
       - name: Check forbidden files (logs/cache)
         run: |
           FILES=""
           for dir in ./backend/logs ./frontend/logs ./backend/data/cache ./frontend/data/cache; do
             if [ -d "$dir" ]; then
-              FILES="$FILES $(find $dir)"
+              FILES="$FILES $(find $dir -type f ! -name 'logs.ts')"
             fi
           done
           if [ -n "$FILES" ]; then
