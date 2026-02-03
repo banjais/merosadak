@@ -34,6 +34,9 @@ backend/logs/
 frontend/logs/
 *.log
 
+# Allow main logging source file
+!backend/src/logs/logs.ts
+
 # ======================================================
 # Runtime-generated Data (Keeps your repo clean)
 # ======================================================
