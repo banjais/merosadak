@@ -1,0 +1,90 @@
+Sadak-Sathi Architecture Diagram
+              ┌─────────────────────────┐
+              │       Frontend          │
+              │ (Web / PWA / Mobile)   │
+              │----------------------- │
+              │ - Map (Leaflet / 3D)  │
+              │ - Road search          │
+              │ - Local POIs           │
+              │ - Weather & Traffic    │
+              │ - AI assistant         │
+              │ - Driver/Vehicle input │
+              └─────────┬─────────────┘
+                        │
+                        │ All requests routed to
+                        ▼
+              ┌─────────────────────────┐
+              │   Cloudflare Worker     │
+              │------------------------│
+              │ - Receives POST/GET     │
+              │ - Forwards to services  │
+              │ - Retry fallback        │
+              │ - Hides API keys        │
+              │------------------------│
+              │ Services (fallback order):
+              │ 1️⃣ Cloudflare backend
+              │ 2️⃣ Render backend
+              └─────────┬─────────────┘
+                        │
+          ┌─────────────┴────────────────┐
+          │                              │
+ ┌─────────────────┐           ┌──────────────────┐
+ │ Cloudflare      │           │ Render Backend    │
+ │ Service         │           │ Express + Node    │
+ │---------------- │           │----------------- │
+ │ /api/search      │           │ /api/search       │
+ │ /api/gemini      │           │ /api/gemini       │
+ │ /api/driver-health│          │ /api/driver-health│
+ │ /api/vehicle-health│         │ /api/vehicle-health│
+ │ /api/nepal-boundary│         │ /api/nepal-boundary│
+ │---------------- │           │----------------- │
+ │ Env secrets:     │           │ Env secrets:      │
+ │ FIRST_SERVICE_TOKEN│         │ SECOND_SERVICE_TOKEN│
+ │ GAS_URL           │         │ SHEET_ID / TAB    │
+ │ FIREBASE_KEYS     │         │ GEMINI_API_KEY    │
+ └─────────────────┘           └──────────────────┘
+          │                              │
+          └───────────────┬──────────────┘
+                          │
+        ┌─────────────────┴─────────────────┐
+        │          External APIs            │
+        │----------------------------------│
+        │ - Google Sheets (via GAS URL)     │
+        │ - Waze / TomTom / Overpass / OWM │
+        │ - Gemini API (AI responses)      │
+        │ - Firebase (DB, Auth, Storage)  │
+        └─────────────────────────────────┘
+
+How it works
+
+Frontend calls /api/* endpoints.
+
+Cloudflare Worker intercepts requests:
+
+Adds authorization headers (secrets hidden).
+
+Forwards request to primary service (Cloudflare backend).
+
+If fails, retries with secondary service (Render backend).
+
+Backend services:
+
+Handle search, AI, driver/vehicle health, Nepal boundary.
+
+Can fetch Google Sheet, traffic, weather, POIs using secrets.
+
+Secrets (API keys, tokens, Firebase keys) never exposed to users.
+
+Frontend receives processed data:
+
+Map overlays, traffic, POIs, AI suggestions, road status, driver/vehicle logs.
+
+✅ Notes
+
+POIs, weather, and traffic are optionally proxied through Worker to hide keys.
+
+Fallback ensures service continuity if one backend is down.
+
+Environment variables and secrets are set in Cloudflare, Render, and GitHub.
+
+Frontend only sees the final endpoint (https://sadaksathi.web.app) — users don’t know if Cloudflare or Render is used.

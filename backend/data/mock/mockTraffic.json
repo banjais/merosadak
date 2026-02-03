@@ -1,0 +1,57 @@
+[
+  {
+    "highway": "H001",
+    "section": "Kathmandu to Dhulikhel",
+    "status": "Blocked",
+    "coordinates": [
+      [27.7172, 85.3240],
+      [27.7150, 85.3340]
+    ],
+    "remarks": "Landslide near Banepa",
+    "lastUpdated": "2025-12-23T10:00:00Z"
+  },
+  {
+    "highway": "H002",
+    "section": "Pokhara to Baglung",
+    "status": "One-Lane",
+    "coordinates": [
+      [28.2096, 83.9856],
+      [28.2380, 83.9970]
+    ],
+    "remarks": "Road repair ongoing",
+    "lastUpdated": "2025-12-23T09:30:00Z"
+  },
+  {
+    "highway": "H003",
+    "section": "Biratnagar to Dharan",
+    "status": "Resumed",
+    "coordinates": [
+      [26.4525, 87.2718],
+      [26.4660, 87.2830]
+    ],
+    "remarks": "",
+    "lastUpdated": "2025-12-23T08:45:00Z"
+  },
+  {
+    "highway": "Local01",
+    "section": "Singhadurbar area",
+    "status": "One-Lane",
+    "coordinates": [
+      [27.7000, 85.3170],
+      [27.7010, 85.3185]
+    ],
+    "remarks": "Traffic jam due to VIP movement",
+    "lastUpdated": "2025-12-23T11:15:00Z"
+  },
+  {
+    "highway": "Local02",
+    "section": "New Baneshwor to Maitighar",
+    "status": "Blocked",
+    "coordinates": [
+      [27.7120, 85.3245],
+      [27.7155, 85.3270]
+    ],
+    "remarks": "Protest on road",
+    "lastUpdated": "2025-12-23T11:00:00Z"
+  }
+]

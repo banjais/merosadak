@@ -1,0 +1,28 @@
+﻿// backend/src/services/poisService.ts
+import fs from "fs";
+import { POI_DATA } from "../utils/paths.js";
+import { logInfo, logError } from "../logs.js";
+import type { POI } from "../types.js";
+
+// Read POIs from JSON file
+export function getPOIs(): POI[] {
+  try {
+    const raw = fs.readFileSync(POI_DATA, "utf-8");
+    const data: POI[] = JSON.parse(raw);
+    logInfo("[poisService] POI data read successfully", { count: data.length });
+    return data;
+  } catch (err: any) {
+    logError("[poisService] Failed to read POI data", { error: err.message });
+    return [];
+  }
+}
+
+// Optional: if you want to update POIs
+export function writePOIs(data: POI[]): void {
+  try {
+    fs.writeFileSync(POI_DATA, JSON.stringify(data, null, 2));
+    logInfo("[poisService] POI data written successfully", { count: data.length });
+  } catch (err: any) {
+    logError("[poisService] Failed to write POI data", { error: err.message });
+  }
+}

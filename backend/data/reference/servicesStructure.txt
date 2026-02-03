@@ -1,0 +1,69 @@
+data.service.ts at the center:
+
+                         ┌───────────────────┐
+                         │   External APIs   │
+                         │------------------│
+                         │ OpenWeather       │
+                         │ TomTom / Waze     │
+                         │ Overpass / POI    │
+                         │ DHM / Hydrology   │
+                         └─────────┬─────────┘
+                                   │
+                                   │ fetch / get
+                                   ▼
+                        ┌─────────────────────┐
+                        │   data.service.ts   │
+                        │--------------------│
+                        │ fetchPOIData        │─────┐
+                        │ fetchTrafficData    │─────┐
+                        │ fetchWeatherData    │─────┐
+                        │ fetchDhm            │─────┐
+                        │ loadMock<T>         │<─── fallback
+                        └─────────┬───────────┘
+                                  │
+         ┌────────────────────────┼─────────────────────────┐
+         ▼                        ▼                         ▼
+ ┌───────────────┐        ┌────────────────┐        ┌─────────────────┐
+ │  poi.service  │        │ traffic.service│        │ weather.service │
+ │ getPOIs()     │        │ getTrafficIncidents()│  │ getWeather()    │
+ └───────────────┘        └────────────────┘        └─────────────────┘
+         │                        │                         │
+         ▼                        ▼                         ▼
+  frontend fetches            frontend fetches           frontend fetches
+  POIs for map / list         traffic incidents          weather info
+
+         ┌─────────────────────────────────────────────────────────┐
+         │                   route.service.ts                     │
+         │--------------------------------------------------------│
+         │ Calls data.service for traffic, weather, POIs, DHM     │
+         │ Combines with routing API to return:                   │
+         │ - main route & alternatives                             │
+         │ - traffic / weather / POIs / DHM                        │
+         └─────────────────────────────────────────────────────────┘
+
+ ┌───────────────────────────┐
+ │ road.service.ts            │
+ │ Uses DATA_PATH → master.geojson │
+ │ Provides RoadInfo[]        │
+ └───────────────────────────┘
+         │
+         ▼
+  frontend fetches roads + highway info
+
+Other services using data.service.ts:
+- dhm.service.ts → fetchDhm
+- search.service.ts → fetchRoads + fetchPOIData
+- voice.service.ts → TTS queue (optional travel summaries)
+- radio.service.ts → static / mock radio stations
+
+✅ Notes:
+
+data.service.ts is the core: All live/mocked data flows through it.
+
+Mocks are fallback only if API fails or USE_MOCK = true.
+
+Road / master.geojson is your authoritative source for roads/highways.
+
+Frontend calls backend services (poi.service.ts, traffic.service.ts, road.service.ts, etc.) – never directly to data.service.ts.
+
+.env.local variables like DATA_PATH, API keys, and endpoints are read inside services.

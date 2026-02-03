@@ -1,0 +1,13 @@
+USER
+ │
+ │  https://sadaksathi.web.app
+ ▼
+Firebase Hosting (Frontend)
+ │
+ │  fetch("/api/...")
+ ▼
+Cloudflare Worker
+ │
+ ├─► Firebase backend (fast)
+ │
+ └─► Render backend (fallback, sleep-safe)

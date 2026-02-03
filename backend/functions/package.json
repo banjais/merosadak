@@ -1,0 +1,30 @@
+{
+  "name": "sadaksathi-functions",
+  "version": "1.0.0",
+  "description": "Sadak-Sathi API Proxy for Firebase",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.3.0",
+    "firebase-admin": "^13.1.0",
+    "express": "^5.0.0",
+    "cors": "^2.8.5",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "firebase-functions-test": "^3.4.0"
+  },
+  "private": true
+}

@@ -1,0 +1,47 @@
+[Source: DOR Sheet / Mock / External API]
+           │
+           ▼
+   ┌─────────────────────┐
+   │ trafficService.ts   │
+   │ getTraffic()        │
+   │--------------------│
+   │ fetches traffic     │
+   │ status for each     │
+   │ highway segment     │
+   └─────────────────────┘
+           │
+           ▼
+   ┌─────────────────────┐
+   │ useService.ts       │
+   │ (Caching & Mocking) │
+   │--------------------│
+   │ - Checks cache      │
+   │ - Updates cache     │
+   │ - Uses mock if dev  │
+   └─────────────────────┘
+           │
+           ▼
+   ┌─────────────────────┐
+   │ websocketService.ts │
+   │--------------------│
+   │ - Optional real-time│
+   │   broadcast of      │
+   │   traffic updates   │
+   └─────────────────────┘
+           │
+           ▼
+   ┌─────────────────────┐
+   │ Frontend (MapView)  │
+   │--------------------│
+   │ - Leaflet/Map Layer │
+   │ - Draws congestion  │
+   │   lines / markers   │
+   │ - Popups show       │
+   │   status & remarks  │
+   └─────────────────────┘
+           │
+           ▼
+[User: Anywhere in Nepal]
+- Sees traffic congestion on map
+- Can search road/highway
+- Receives real-time updates via WebSocket

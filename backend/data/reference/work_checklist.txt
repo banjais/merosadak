@@ -1,0 +1,86 @@
+1️⃣ Frontend Verification
+Feature	How to Test	Expected Result	Notes
+Home Page / Map	Open / in browser	Map loads, markers visible, UI responsive	Check map tiles and Nepal boundary overlay
+Road Status Dashboard	Navigate /dashboard	All roads with statuses shown, filters work	Test “Blocked / One-Lane / Resumed”
+Search (Text/Voice)	Search highway or location	Correct road/POI shows, voice input works	Test Nepali and English
+AI Assistant	Open AI modal	Generates suggestions, TTS/STT works	Check travel advice, bilingual output
+Print / Export	Click print/export button	Printable report shows all visible data	Include map snapshot if possible
+Dark / Light Mode	Toggle UI mode	Colors switch correctly	Check map overlay contrast
+Driver Panel	Enable driver mode	Semi-transparent panel appears	Shows compass, speedometer, location
+Nearby POIs	Click fuel/hotel/hospital markers	Correct info panel pops	Check coordinates & labels
+Offline Mode	Disconnect network	Cached pages work	Only PWA features cached
+2️⃣ Backend API Verification
+API Endpoint	Method	Test Steps	Expected Response	Notes
+/road-status	GET	Fetch all roads	JSON array with current statuses	Include blocked/one-lane/resumed
+/road-status/:id	GET	Fetch a specific road	JSON object with status, contacts	Test multiple road IDs
+/highways	GET	Fetch highway info	JSON array of all highways	Include codes and sections
+/traffic	GET	Fetch all traffic incidents	JSON array of incidents	Include Waze/TomTom/DHM data
+/traffic?district=Kathmandu	GET	Fetch district-specific traffic	JSON array	Check incidents in Kathmandu
+/pois?lat=27.7&lng=85.3	GET	Fetch nearby POIs	JSON array of fuel, hotels, restaurants, hospitals	Test multiple coordinates
+/weather?lat=27.7&lng=85.3	GET	Fetch weather info	JSON object with temperature, condition	Test multiple coordinates
+/nepalBoundary	GET	Fetch boundary data	GeoJSON of Nepal boundary	Verify on map
+/google-sheet	GET	Fetch live road closure sheet	JSON array of current closures	Compare with Google Sheet
+/ai/suggest	POST	Send query {query: "Kathmandu to Pokhara"}	JSON suggestions	Check Gemini API response
+/admin/settings	GET	Fetch admin settings	JSON object	Test with admin token
+/alerts/email	POST	Send test alert email	200 OK	Check SMTP config
+3️⃣ Real-Time Data Verification
+
+Traffic Data
+
+Check map markers for blocked/one-lane roads.
+
+Confirm updates from Waze/TomTom/DHM match live conditions.
+
+POIs
+
+Click on markers for hotels, fuel, hospitals.
+
+Confirm correct name, address, and coordinates.
+
+Weather
+
+Confirm map tooltip and dashboard show correct temperature & condition.
+
+Compare with OpenWeatherMap data for same coordinates.
+
+Nepal Boundary
+
+Confirm GeoJSON loads correctly on map.
+
+Overlay boundary with road layers.
+
+Real-Time Google Sheet
+
+Compare /google-sheet API response with live Google Sheet.
+
+Confirm blocked, one-lane, resumed road statuses match.
+
+4️⃣ Automated Post-Deploy Verification
+
+Run GitHub Actions workflow (already configured) to:
+
+Test all APIs including traffic, highways, POIs, weather, nepalBoundary, Google Sheet.
+
+Fail deployment if any critical API fails.
+
+5️⃣ Optional Manual Checks
+
+Open site on mobile and desktop.
+
+Check map layers, toggles, driver panel.
+
+Test AI assistant responses in both languages.
+
+Print/export reports.
+
+Test offline PWA caching.
+
+✅ Outcome: After following this plan, you will have verified:
+
+Frontend UI, map, overlays
+
+All backend APIs
+
+Real-time data from traffic, POIs, weather, Google Sheet
+
+Nepal boundary and highways

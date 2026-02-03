@@ -1,0 +1,79 @@
+1️⃣ Core Data (Official / Priority)
+Data	Source	Notes / Importance
+Road closures / status	Google Sheet via GAS	Official, government-verified, must be first info users see. This is the “critical” data for travelers.
+Highway GeoJSON	/backend/data/highway/index.json	All 79 highways; official Department of Roads geometry.
+District / Local boundaries	/backend/data/local/index_district.json	Official geo boundaries. Useful for mapping and filtering highways by district.
+
+Logic:
+
+Always fetch GAS road closure data first.
+
+Merge with official highways & districts.
+
+Display immediately to the user in the UI.
+
+2️⃣ Secondary / Optional Data (Unofficial / Enhancements)
+Data	Source	Notes / Fallback Logic
+Traffic flow / congestion	Waze JSON / TomTom	Real-time, unofficial. Useful for predicting delays. Fallback: TomTom if Waze unavailable.
+Weather	OpenWeatherMap (or DHM if available later)	Optional, but good for planning. Always fallback to OpenWeatherMap.
+POIs	TomTom / Overpass	Optional: fuel stations, hotels, restaurants. Only for user convenience.
+AI Suggestions	Gemini API	Optional; can provide travel advice based on road + weather + traffic.
+
+Logic:
+
+Secondary data is only for enhancement.
+
+Users should never wait for these to see road closure status.
+
+Fetch asynchronously in the background or in parallel after the official data is returned.
+
+3️⃣ Worker vs Backend Roles
+Task	Location
+Merge GAS road closure + official highways/districts	Worker
+Fallback logic for unofficial data (traffic, weather, POIs)	Worker
+API aggregation & unified response for frontend	Worker
+Backend tasks (Express routes)	Backend
+/api/driver-health, /api/vehicle-health, /api/gemini	Backend
+
+Reason:
+
+Worker can aggregate multiple sources and handle fallback logic, keeping the frontend simple.
+
+Backend handles other administrative endpoints or AI calls, not core road data aggregation.
+
+4️⃣ Fallback / Optional Data Logic
+
+Pseudocode for the Worker’s priority logic:
+
+// Step 1: Road closure data (official, critical)
+const roadStatus = await fetchGAS();
+
+// Step 2: Map closures to official highways & districts
+const highwayStatus = mapRoadStatusToHighways(roadStatus);
+const districtStatus = mapRoadStatusToDistricts(roadStatus);
+
+// Step 3: Optional secondary info (non-blocking)
+const [traffic, weather, pois] = await Promise.all([
+  fetchWazeTrafficOrTomTom(highwayCoords),
+  fetchWeather(OpenWeatherMap),
+  fetchPOIs(TomTomOrOverpass)
+]);
+
+return {
+  highways: highwayStatus,
+  districts: districtStatus,
+  optional: { traffic, weather, pois }
+};
+
+
+UI / frontend: show highway blockages first, then enhance with weather, traffic, POIs.
+
+✅ Summary / Priorities for Users
+
+Road blockages / closures → official GAS sheet data (most important).
+
+Highway & district info → official geojson (used for mapping).
+
+Optional data → weather, traffic, POIs, AI suggestions.
+
+User experience: users can see road closure instantly, optional data loads asynchronously.

@@ -1,0 +1,7 @@
+frontend can just call:
+
+GET /api/search?q=NH01
+GET /api/gemini {userId, query}
+GET /api/nepal-boundary
+GET /api/weather?lat=27.7&lon=85.3
+GET /api/traffic?lat=27.7&lon=85.3

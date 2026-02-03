@@ -1,0 +1,132 @@
+Sadak-Sathi Backend Architecture Diagram
+          ┌───────────────────────────────┐
+          │           Frontend            │
+          │  React / Leaflet App / PWA   │
+          └─────────────┬────────────────┘
+                        │
+                        │ HTTP / WebSocket / Fetch
+                        ▼
+          ┌───────────────────────────────┐
+          │         Cloudflare Worker      │
+          │  (cf-worker.js: routing & cache) │
+          ├─────────────┬────────────────┤
+          │ GET /api    │ Other /api    │
+          ▼             ▼
+  ┌───────────────┐ ┌───────────────┐
+  │ Firebase BE   │ │ Render BE     │
+  │ (primary)     │ │ (fallback)    │
+  └───────────────┘ └───────────────┘
+          │
+          ▼
+      Express App (app.ts / index.ts)
+          │
+ ┌────────┼────────┐
+ │ API Routes     │ WebSocket
+ │ /api/roads     │ initializeWebSocket
+ │ /api/traffic   │
+ │ /api/weather   │
+ │ /api/pois      │
+ └────────┼────────┘
+          │
+          ▼
+  ┌───────────────────────────────┐
+  │        Controllers            │
+  │ ----------------------------- │
+  │ roadController.ts             │
+  │ sheetAdminController.ts       │
+  │ superadminLogs.ts             │
+  └─────────────┬─────────────────┘
+                │
+                ▼
+        ┌─────────────────────────┐
+        │         Services        │
+        │ -----------------------│
+        │ roadService.js          │
+        │ trafficService.js       │
+        │ weatherService.js       │
+        │ poisService.js          │
+        │ boundaryService.js      │
+        │ otpService.js           │
+        │ authService.js          │
+        │ cacheService.js         │
+        └─────────────┬───────────┘
+                      │
+    ┌─────────────────┼─────────────────────┐
+    │                 │                     │
+    ▼                 ▼                     ▼
+Master GeoJSON     POI GeoJSON           Boundary GeoJSON
+(master.geojson)  (poi.geojson)         (boundary.geojson)
+   │                 │                     │
+   ▼                 ▼                     ▼
+    ───────────── Worker (worker.ts) ──────────────
+    │  - Fetch roads, traffic, POIs, weather, boundary
+    │  - Generate searchCache
+    │  - Generate OTPs & JWT
+    │  - Save to /cache
+    │
+    ▼
+  /cache folder:
+  ├─ master_data
+  ├─ traffic_data
+  ├─ poi_data__
+  ├─ weather_data___default
+  └─ searchCache
+
+    ▼
+Logging & Alerts
+ ┌─────────────────────────────┐
+ │ logs.ts                     │
+ │ - app.log                   │
+ │ - error.log                 │
+ │ - traffic.log               │
+ │ - weather.log               │
+ │ - sheet.log                 │
+ │ - auth.log                  │
+ │ - geojson.log               │
+ └─────────────────────────────┘
+ ┌─────────────────────────────┐
+ │ emailAlerts.ts              │
+ │ - Sends critical error email│
+ └─────────────────────────────┘
+
+Legend / Notes
+
+Frontend → CF Worker → Backend
+
+CF Worker handles caching GET requests and routing to Firebase (primary) or Render (fallback).
+
+Controllers
+
+Handle HTTP requests.
+
+Call services for data fetch, filter, and processing.
+
+Worker
+
+Periodically fetches data (traffic, roads, weather, POIs, boundaries).
+
+Precomputes search cache (searchCache).
+
+Generates OTPs and JWT tokens for users.
+
+Saves everything to /cache.
+
+Services
+
+Interface with external APIs, Google Sheets, and local GeoJSON files.
+
+Provide standardized data objects to controllers and worker.
+
+Data Folder (/backend/data)
+
+Master GeoJSON, POIs, and boundary files.
+
+/cache folder auto-updated by worker.
+
+/logs auto-updated by logs.ts.
+
+Logging & Alerts
+
+All events/errors logged via logs.ts.
+
+Critical failures can trigger email alerts via emailAlerts.ts.

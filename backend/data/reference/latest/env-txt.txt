@@ -1,0 +1,45 @@
+                 ┌───────────────────────┐
+                 │   .env.development     │
+                 │   .env.production      │
+                 └─────────┬─────────────┘
+                           │
+                           │ loadEnv() reads correct file based on NODE_ENV
+                           ▼
+                 ┌───────────────────────┐
+                 │      loadEnv.ts       │
+                 │ - Reads .env file     │
+                 │ - Populates process.env
+                 └─────────┬─────────────┘
+                           │
+                           │ Exports environment config
+                           ▼
+                 ┌───────────────────────┐
+                 │      config.ts        │
+                 │ - Centralizes paths, │
+                 │   cache files, keys  │
+                 │ - Exposes ENV object │
+                 └─────────┬─────────────┘
+                           │
+                           │ Used by services & APIs
+                           ▼
+                 ┌───────────────────────┐
+                 │   serviceApis.ts      │
+                 │ - Maps each service: │
+                 │   primary API         │
+                 │   fallback API        │
+                 │ - Uses config.ts keys │
+                 └─────────┬─────────────┘
+                           │
+                           │ Called by backend services
+                           ▼
+        ┌─────────────────────────────┐
+        │  Backend Services           │
+        │ - RoadService               │
+        │ - WeatherService            │
+        │ - TrafficService            │
+        │ - POIService                │
+        │ ...                         │
+        │                             │
+        │ Fetch from: primary API → fallback API (if fails) │
+        │ Use ENV paths for cache / data / logs             │
+        └─────────────────────────────┘

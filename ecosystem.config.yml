@@ -1,0 +1,9 @@
+apps:
+  - name: "sadaksathi-all-in-one"
+    cwd: "./backend"
+    script: "dist/index.js"
+    env:
+      NODE_ENV: "production" # 👈 This forces bootstrapEnv.ts to pick .env.production
+      PORT: 4000
+    env_development:
+      NODE_ENV: "development"

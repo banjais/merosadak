@@ -1,0 +1,57 @@
+1️⃣ Frontend (Firebase Hosting)
+
+Public files in main/ (or frontend/dist if you build there).
+
+Users only see https://sadaksathi.web.app.
+
+All API calls are proxied, so no Render/Cloudflare URLs are exposed.
+
+Multilingual support: Nepali + English.
+
+2️⃣ Backend (Firebase + optional Cloudflare Worker fallback)
+
+/backend/src/index.ts serves all API endpoints:
+
+/api/search → highways/districts/road status (official + unofficial)
+
+/api/driver-health & /api/vehicle-health → telemetry/logging
+
+/api/gemini → AI suggestions
+
+/api/nepal-boundary → official district boundaries
+
+Uses .env.local to store all secrets (GAS URL, Gemini key, Waze, TomTom, OpenWeatherMap, etc.).
+
+Official data (road closures, highways, districts) prioritized; other data (traffic, POIs, weather) merged for user experience.
+
+Firebase Functions are not deployed if Blaze (pay) plan not available; Cloudflare Worker can optionally handle API processing if needed.
+
+3️⃣ Cloudflare Worker
+
+Optional proxy / fallback / URL masking.
+
+Does not replace processing server; just forwards requests if Render sleeps.
+
+Can hide Render URLs from users.
+
+You can still use Firebase URL as canonical endpoint for all calls.
+
+4️⃣ Data & GeoJSON
+
+/backend/data/highway/index.json → 79 official highways.
+
+/backend/data/local/index_district.json → 77 districts, official boundaries.
+
+GAS sheet → authoritative road closures.
+
+Only Nepal boundaries visible; all searches limited to Nepal.
+
+Official vs unofficial data stored and merged in backend logic.
+
+5️⃣ Secrets & Safety
+
+.env.local for local dev.
+
+Cloudflare/Render/GitHub secrets hidden.
+
+Firebase URL is the only exposed endpoint.

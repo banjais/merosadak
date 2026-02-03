@@ -1,0 +1,131 @@
+visualize the Sadak-Sathi backend structure and how all the pieces connect. I’ll break it down layer by layer for clarity:
+
+1. Entry Point
+
+index.ts or server.ts (not shared but implied)
+
+Loads environment (loadEnv.ts)
+
+Initializes Sentry (sentry.ts)
+
+Mounts apiRouter at /api
+
+2. API Routing Layer (routes/)
+
+routerIndex.ts – central router
+
+Core API
+
+trafficRouter → trafficService
+
+roadRouter → roadService + roadController + roadIndex.ts
+
+poiRouter → poiService
+
+boundaryRouter → loads boundary GeoJSON
+
+weatherRouter → weatherService
+
+Auth
+
+authRouter → authService
+
+otpRouter → otpService + telegram service
+
+Search
+
+searchRouter → searchService → searchUtils.ts
+
+Admin / Gemini
+
+adminRouter → admin combined
+
+adminAnalyticsRouter
+
+adminLogsRouter
+
+adminDataRouter
+
+geminiRouter → geminiService
+
+geminiLogsRouter
+
+superadminRouter → sheetAdminController + superadminLogs
+
+Cache
+
+cacheRouter
+
+All routes pass through middleware (JWT, rate limiter, role check) when needed.
+
+3. Controllers (controllers/)
+
+roadController.ts → handles /roads
+
+sheetAdminController.ts → /superadmin account management
+
+superadminLogs.ts → read superadmin logs
+
+4. Services (services/)
+
+(all routes call these for actual logic)
+
+roadService.ts → reads master.geojson, builds status, updates from Google Sheets
+
+trafficService.ts → fetch Waze or internal traffic cache
+
+poiService.ts → load POIs (from GeoJSON/cache)
+
+weatherService.ts → fetch weather
+
+otpService.ts → generate/verify OTP
+
+telegramOtpService.ts → sends OTP via Telegram
+
+authService.ts → user auth, roles
+
+geminiService.ts → query Gemini AI, track usage
+
+sheetAdmin.js → Google Sheet admin CRUD
+
+5. Utils (utils/)
+Utility	Purpose
+email.ts	Send OTP emails
+jwt.ts	Sign & verify JWT
+loadEnv.ts	Load .env files
+loadGeoJSON.ts	Read GeoJSON files
+paths.ts	Define folders & cache paths
+rateLimit.ts	Rate limiting logic
+roadIndex.ts	Build searchable road index
+searchUtils.ts	Fuzzy search across roads, POI, traffic, weather
+sentry.ts	Sentry init & capture
+statusMapper.ts	Map Nepali/English status labels
+stringUtils.ts	String/label helpers
+telegram.ts	Send Telegram OTP
+6. Middleware (middleware/)
+
+auth.ts → JWT auth, superadmin check, role-based authorization
+
+rateLimit.ts → Express rate limiting wrapper
+
+7. Scripts (scripts/)
+
+setupDataDirs.ts → ensures data/, logs/, cache/ exist
+
+mergeMasterGeojson.ts → merge master.geojson from Google Sheet
+
+generateSearchCache.ts → pre-build cache for search
+
+8. Alerts
+
+alerts/emailAlerts.ts → send critical error alerts via email
+
+9. Types (types/)
+
+custom.d.ts → 3rd party modules
+
+express.d.ts → extend Request with user
+
+xml2js.d.ts → module typing
+
+Other shared types → User, RoadStatus, POI, TrafficInfo, WeatherData, FeatureCollection, Label

@@ -1,0 +1,38 @@
+
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 50 modules transformed.
+Γ£ù Build failed in 1.06s
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+D:/LNB/sadaksathi/frontend/src/components/DriverDashboard.tsx:161:6: ERROR: Expected ")" but found "{"
+file: D:/LNB/sadaksathi/frontend/src/components/DriverDashboard.tsx:161:6
+
+Expected ")" but found "{"
+159 |        </div>
+160 |  
+161 |        {/* ≡ƒº¡ Dynamic Bottom Strip */}
+    |        ^
+162 |        <div className="flex flex-col sm:flex-row px-6 sm:px-12 py-6 sm:py-8 bg-indigo-600 justify-between items-center...
+163 |              <div className="text-lg sm:text-2xl font-black tracking-wide flex flex-col sm:flex-row items-center gap-1...
+
+    at failureErrorWithLog (D:\LNB\sadaksathi\node_modules\esbuild\lib\main.js:1467:15)
+    at D:\LNB\sadaksathi\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (D:\LNB\sadaksathi\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (D:\LNB\sadaksathi\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (D:\LNB\sadaksathi\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path D:\LNB\sadaksathi\frontend
+npm error workspace frontend@0.0.0
+npm error location D:\LNB\sadaksathi\frontend
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vite build

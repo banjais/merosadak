@@ -1,0 +1,40 @@
+User or App
+   │
+   ▼
+[geminiService.queryGemini(prompt, userEmail)]
+   │
+   │ 1️⃣ Check Daily Limit
+   │    └─ limitService.canQuery(email)
+   │        └─ If exceeded → return "Daily limit exceeded" + logAnalytics
+   │
+   ▼
+   │ 2️⃣ Generate Cache Key
+   │    └─ cacheKey = first 32 chars of Base64(prompt)
+   │
+   ▼
+[withCache(cacheKey, fetchFn)]
+   │
+   │ 3️⃣ Check Cache
+   │    └─ If cached → return cached text (skip API call)
+   │
+   ▼
+   │ 4️⃣ Call serviceApis.GEMINI(prompt)
+   │    └─ fetchWithFallback:
+   │         • Primary: POST to GEMINI.API_URL
+   │         • Fallback: (if network/API fails) → return MOCK.GEMINI
+   │         • Cache JSON locally (optional, generic caching)
+   │
+   ▼
+   │ 5️⃣ Response Handling in geminiService
+   │    ├─ If valid response:
+   │    │     • limitService.recordQuery(email)
+   │    │     • logAnalytics(email, "gemini_query")
+   │    │     • logGeminiQuery(email, prompt, response)
+   │    │     └─ return response
+   │    └─ If error:
+   │          • logError("[geminiService] ...")
+   │          • logAnalytics(email, "gemini_query", {error})
+   │          └─ return "Gemini AI unavailable"
+   │
+   ▼
+  User receives text output

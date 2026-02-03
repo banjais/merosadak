@@ -1,0 +1,9 @@
+User Browser
+   |
+   +--> https://sadaksathi.web.app        (Frontend - Firebase FREE)
+   |
+   +--> https://sadaksathi.banjays.workers.dev/api/*
+            |
+            +--> Cloudflare logic
+            |
+            +--> Render backend (fallback)

@@ -1,0 +1,10 @@
+{
+  "flowSegmentData": [
+    {
+      "road": "H01",
+      "currentSpeed": 0,
+      "freeFlowSpeed": 60,
+      "confidence": 0.9
+    }
+  ]
+}

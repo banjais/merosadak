@@ -1,0 +1,135 @@
+eware
+ │   │   ├─ auth.ts             # JWT & role-based access
+ │   │   └─ rateLimit.ts        # API rate limiter
+ │   ├─ scripts
+ │   │   ├─ setupDataDirs.ts    # Ensure /data, /cache, /logs exist
+ │   │   ├─ mergeMasterGeojson.ts # Merge sheet → master.geojson
+ │   │   └─ generateSearchCache.ts # Precompute search cache
+ │   ├─ services
+ │   │   ├─ roadService.js
+ │   │   ├─ trafficService.js
+ │   │   ├─ poisService.js
+ │   │   ├─ weatherService.js
+ │   │   ├─ boundaryService.js
+ │   │   ├─ otpService.js
+ │   │   ├─ authService.js
+ │   │   └─ cacheService.js
+ │   └─ utils
+ │       ├─ roadIndex.ts       # Build road status index
+ │       ├─ searchUtils.ts     # Unified Fuse.js search
+ │       ├─ statusMapper.ts    # Map Nepali → English road statuses
+ │       ├─ stringUtils.ts     # Safe string/Label utils
+ │       ├─ paths.ts           # File paths: /data, /cache, /logs
+ │       ├─ sentry.ts          # Error tracking via Sentry
+ │       └─ telegram.ts        # Telegram OTP sending
+ │
+ └─ data
+     ├─ master.geojson          # Road & highway master data
+     ├─ poi.geojson             # Points of interest
+     ├─ boundary.geojson        # Nepal boundary
+     ├─ cache/                  # Auto-created: searchCache, traffic_data, master_data, poi_data__, weather_data___default
+     └─ logs/                   # Auto-created: app.log, error.log, traffic.log, weather.log, sheet.log, auth.log, geojson.log
+2️⃣ Data Flow Overview
+a. Master Data
+/data/master.geojson → contains all highways & their road statuses
+
+Accessed by:
+
+roadController.ts → returns filtered road statuses
+
+worker.ts → caches master_data and precomputes search
+
+searchUtils.ts → used in search cache
+
+b. POIs
+/data/poi.geojson → Points of Interest
+
+Accessed by:
+
+worker.ts → caches poi_data__
+
+searchUtils.ts → Fuse.js search
+
+c. Boundary
+/data/boundary.geojson → Nepal boundary
+
+Accessed by:
+
+worker.ts → included in search cache
+
+Map rendering (frontend)
+
+d. Cache
+Created/managed by worker.ts & cacheService.js
+
+Stores precomputed data for fast API responses
+
+traffic_data → latest traffic
+
+master_data → latest master.geojson
+
+poi_data__ → POIs
+
+weather_data___default → weather data
+
+searchCache → combined search results (roads + POIs + traffic + weather + boundaries)
+
+e. Logs
+Created by logs.ts:
+
+app.log → general app events
+
+error.log → errors
+
+traffic.log → traffic fetches
+
+weather.log → weather fetches
+
+sheet.log → sheet admin actions
+
+auth.log → auth actions
+
+geojson.log → GeoJSON file reads/updates
+
+Accessed by superadminLogs.ts → filtered & paginated in superadmin dashboard
+
+3️⃣ Worker Precompute Flow
+Fetch & cache traffic: getTrafficForRoadSegment() → traffic_data
+
+Fetch & cache roads: getRoadStatus() → master_data
+
+Fetch POIs & weather: getPOI(), getWeather() → poi_data__, weather_data___default
+
+Fetch boundary: getNepalBoundary()
+
+Generate search cache:
+
+Combine roads, traffic, POIs, weather, boundaries
+
+Save as searchCache
+
+Generate OTPs + JWT tokens for all users (logging purposes)
+
+4️⃣ Request Routing / Access
+API Requests: /api/road, /api/traffic, /api/weather, /api/pois
+
+Primary: Firebase backend
+
+Fallback: Render backend
+
+Cached GET responses via cf-worker.js
+
+Frontend Assets: / → served from https://sadaksathi.web.app
+
+Middleware:
+
+JWT auth (auth.ts)
+
+Role-based access (superadmin/admin/user)
+
+Rate limiting (rateLimit.ts)
+
+Search: Fuse.js over all cached data, precomputed by worker
+
+5️⃣ Alerts
+emailAlerts.ts → SMTP alert emails when critical errors occur

@@ -1,0 +1,18 @@
+##check changes
+git health
+
+
+git pull
+# work...
+git commit -m "Clear message"
+git push
+
+
+
+git pull
+git commit
+git push
+
+
+git clone https://github.com/banjais/sadaksathi.git
+git pull --rebase

@@ -1,0 +1,25 @@
+/backend/src/services/
+│
+├─ aiService.ts
+├─ analyticsService.ts
+├─authService.ts
+├─distanceCalculatorService.ts
+├─districtService.ts
+├─liveRoadStatusService.ts
+├─highwaysService.ts
+├─nepalBoundaryService.ts
+├─notificationService.ts
+├─offlineService.ts
+├─poiService.ts
+├─reportService.ts
+├─roadService.ts
+├─searchService.ts
+├─settingsService.ts
+├─trafficService.ts
+├─travelGroupService.ts
+├─userPointsService.ts
+├─userService.ts
+├─voiceService.ts
+│
+├─index.ts
+└─singletons.ts

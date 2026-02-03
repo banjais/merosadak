@@ -1,0 +1,8 @@
+name = "sadaksathi"
+main = "backend/src/cf-worker.js"
+compatibility_date = "2025-12-29"
+account_id = "052a34d4627b5c02d0bff84ff1c0f906"
+workers_dev = true
+
+[triggers]
+crons = ["*/5 * * * *"]

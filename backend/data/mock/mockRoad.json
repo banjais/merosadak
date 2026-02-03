@@ -1,0 +1,57 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "road_refno": "H01",
+        "road_name": "Prithvi Highway",
+        "roadStatus": [
+          {
+            "status": "Blocked",
+            "incidentDistrict": { "en": "Dhading" },
+            "incidentPlace": { "en": "Benighat" },
+            "incidentStarted": "2026-01-05T08:00:00+05:45",
+            "estimatedRestoration": "2026-01-06T18:00:00+05:45",
+            "restorationEfforts": "Clearing landslide debris",
+            "remarks": "Heavy vehicles not allowed",
+            "dataPulledDate": "2026-01-05T09:00:00+05:45"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [84.854, 27.950],
+          [84.860, 27.960]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_refno": "H02",
+        "road_name": "Tribhuvan Highway",
+        "roadStatus": [
+          {
+            "status": "One-Lane",
+            "incidentDistrict": { "en": "Bhaktapur" },
+            "incidentPlace": { "en": "Madhyapur" },
+            "incidentStarted": "2026-01-05T07:30:00+05:45",
+            "estimatedRestoration": "2026-01-05T20:00:00+05:45",
+            "restorationEfforts": "Repairing damaged road",
+            "remarks": "One lane open for vehicles",
+            "dataPulledDate": "2026-01-05T08:00:00+05:45"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [85.330, 27.680],
+          [85.340, 27.690]
+        ]
+      }
+    }
+  ]
+}

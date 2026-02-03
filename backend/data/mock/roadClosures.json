@@ -1,0 +1,25 @@
+[
+  {
+    "road_name": "Highway 2",
+    "road_nameLabel": { "en": "Highway 2", "ne": "सडक २" },
+    "road_refno": "H02",
+    "dist_name": "Lalitpur",
+    "dist_nameLabel": { "en": "Lalitpur", "ne": "ललितपुर" },
+    "roadStatus": [
+      {
+        "status": { "en": "One-Lane", "ne": "एक लेन" },
+        "concernedOffice": { "en": "District Roads Office", "ne": "जिल्ला सडक कार्यालय" },
+        "blockageStarted": "2025-12-18T08:00:00Z",
+        "reopenDate": null,
+        "place": { "en": "Lalitpur Ring Road", "ne": "ललितपुर रिङ रोड" },
+        "chainage": { "en": "KM 10-12", "ne": "किमी १०-१२" },
+        "remarks": { "en": "Road maintenance", "ne": "सडक मर्मत" }
+      }
+    ],
+    "tolls": [],
+    "userReports": [],
+    "pavement": "Gravel",
+    "contact": "District Roads Office: 01-654321",
+    "extra": {}
+  }
+]

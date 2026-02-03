@@ -1,0 +1,49 @@
+Commands:
+
+from root//
+wrangler deploy
+wrangler secret list
+wrangler tail
+wrangler tail sadaksathi --status ok
+wrangler tail sadaksathi --status error
+
+
+
+
+from frontend//
+vite build
+node scripts/obfuscate.js
+npm install
+npm run build
+npm run dev
+
+
+from backend//
+npm install
+npm run build
+npm start
+npm run worker
+
+
+
+Merge File:/backend//
+tsc --watch >> backend/data/logs/build.log 2>&1
+
+npm run build
+node dist/scripts/refineMasterGeojson.js
+node dist/worker.js
+
+
+Refine/ backend/src/scripts/
+
+node dist/scripts/refineMasterGeojson.js
+node dist/index.js
+
+
+
+check
+npm run lint
+npm run lint -- --fix
+
+
+

@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Nepal" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.058, 30.422],
+            [88.201, 30.422],
+            [88.201, 26.347],
+            [80.058, 26.347],
+            [80.058, 30.422]
+          ]
+        ]
+      }
+    }
+  ]
+}

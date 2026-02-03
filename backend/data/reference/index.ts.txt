@@ -1,0 +1,16 @@
+index.ts
+
+Exposes all backend routes:
+
+app.get("/api/nepal-boundary", ...);
+app.get("/api/search", ...);
+app.post("/api/gemini", ...);
+app.get("/api/pois", ...);
+app.get("/api/weather", ...);
+app.get("/api/roads", ...);
+app.get("/api/traffic", ...);
+app.get("/api/dhm", ...);
+app.get("/api/vehicle-status", ...);
+app.get("/api/route", ...);
+app.get("/api/route/alternative", ...);
+app.get("/api/route/instructions", ...);

@@ -1,0 +1,105 @@
+visual diagram of the Sadak-Sathi backend structure and data flow. I’ve structured it so you can see routes → controllers → services → utils → data/cache → external sources clearly.
+
+                          ┌───────────────┐
+                          │  .env / Env   │
+                          └──────┬────────┘
+                                 │
+                      ┌──────────▼─────────┐
+                      │   index.ts / App   │
+                      │ - loadEnv.ts       │
+                      │ - sentry.ts        │
+                      │ - mount apiRouter  │
+                      └──────────┬─────────┘
+                                 │
+                    ┌────────────▼─────────────┐
+                    │        apiRouter         │
+                    │-------------------------│
+                    │ /roads    → roadRouter   │
+                    │ /traffic  → trafficRouter│
+                    │ /pois     → poiRouter    │
+                    │ /weather  → weatherRouter│
+                    │ /auth     → authRouter   │
+                    │ /otp      → otpRouter    │
+                    │ /search   → searchRouter │
+                    │ /admin/*  → adminRouter  │
+                    │ /gemini   → geminiRouter │
+                    │ /superadmin → superadmin │
+                    └────────────┬─────────────┘
+                                 │
+         ┌───────────────────────┴───────────────────────┐
+         │                                               │
+┌────────▼─────────┐                           ┌─────────▼─────────┐
+│   Controllers    │                           │     Middleware    │
+│------------------│                           │------------------│
+│ roadController   │                           │ auth.ts (JWT,    │
+│ sheetAdminCtrl   │                           │ superadmin check)│
+│ superadminLogs   │                           │ rateLimit.ts     │
+└────────┬─────────┘                           └─────────┬────────┘
+         │                                              │
+         │                                              │
+┌────────▼─────────┐                           ┌────────▼─────────┐
+│    Services      │                           │      Alerts      │
+│------------------│                           │-----------------│
+│ roadService      │◀───── master.geojson ────▶│ emailAlerts.ts  │
+│ trafficService   │◀───── traffic cache ─────▶│                 │
+│ poiService       │◀───── pois cache ─────────│                 │
+│ weatherService   │◀───── weather cache ─────▶│                 │
+│ otpService       │                           │                 │
+│ telegramService  │                           │                 │
+│ geminiService    │                           │                 │
+│ sheetAdmin       │                           │                 │
+└────────┬─────────┘                           └─────────────────┘
+         │
+┌────────▼─────────┐
+│      Utils       │
+│------------------│
+│ jwt.ts           │
+│ roadIndex.ts     │
+│ searchUtils.ts   │
+│ statusMapper.ts  │
+│ stringUtils.ts   │
+│ paths.ts         │
+│ loadGeoJSON.ts   │
+│ loadEnv.ts       │
+│ rateLimit.ts     │
+│ sentry.ts        │
+│ telegram.ts      │
+│ email.ts         │
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│ Data & Cache     │
+│------------------│
+│ master.geojson   │
+│ pois.geojson     │
+│ traffic_data.json│
+│ weather_data.json│
+│ searchCache.json │
+│ logs / superadmin│
+└────────┘
+
+Flow Explanation
+
+Client → API Router
+
+All requests hit apiRouter with optional JWT & rate-limit middleware.
+
+Controller Layer
+
+Handles requests, filters parameters, calls services.
+
+Service Layer
+
+Core logic, fetches from cache, master.geojson, Google Sheets, or external APIs (Waze, Gemini, Weather).
+
+Utils Layer
+
+Shared helpers (JWT, search, road index, string/label conversions, status mapping, email/Telegram).
+
+Data & Cache
+
+All GeoJSON, search cache, logs, and temporary caches are here.
+
+Alerts
+
+Sends email notifications for critical failures via emailAlerts.ts.

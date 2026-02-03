@@ -1,0 +1,38 @@
+backend/
+├── .env.development       ← dev environment variables
+├── .env.production        ← prod environment variables
+├── package.json
+├── tsconfig.json
+├── tsup.config.ts
+├── src/                   ← source TypeScript files
+│   ├── index.ts           ← main server entry
+│   ├── config/            ← configuration files
+│   │   ├── config.ts
+│   │   ├── paths.ts
+│   │   ├── serviceApis.ts
+│   │   └── mock.ts
+│   ├── routes/            ← Express routers
+│   │   ├── routerIndex.ts
+│   │   └── superadminLiveLogs.ts
+│   ├── services/          ← backend services
+│   │   ├── websocketService.ts
+│   │   └── schedulerService.ts
+│   └── scripts/           ← optional scripts (e.g., Merge.ts)
+├── dist/                  ← compiled production files (ESM)
+│   ├── index.js           ← compiled main entry
+│   ├── index.js.map       ← source map
+│   ├── config/
+│   │   ├── config.js
+│   │   ├── config.js.map
+│   │   ├── paths.js
+│   │   ├── paths.js.map
+│   │   ├── serviceApis.js
+│   │   ├── serviceApis.js.map
+│   │   ├── mock.js
+│   │   └── mock.js.map
+│   ├── routes/            ← compiled routes
+│   │   ├── routerIndex.js
+│   │   └── superadminLiveLogs.js
+│   └── services/          ← compiled services
+│       ├── websocketService.js
+│       └── schedulerService.js

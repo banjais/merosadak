@@ -1,0 +1,1 @@
+NAVIGATE_URL=https://navigate-dor-api.rimes.int/Road_closure_history_api/getMarqueeData

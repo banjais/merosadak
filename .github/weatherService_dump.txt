@@ -1,0 +1,54 @@
+﻿// backend/src/services/weatherService.ts
+import axios from "axios";
+import fs from "fs";
+import path from "path";
+import type { WeatherData } from "../types.js";
+import { logInfo, logError } from "../logs.js";
+
+const MOCK_FILE = path.join(process.cwd(), "backend/data/weather.mock.json");
+
+/**
+ * Core function that fetches weather (from OpenWeatherMap or mock)
+ */
+export async function fetchWeather(lat?: number, lon?: number, city?: string): Promise<WeatherData[]> {
+  try {
+    let data: WeatherData[] = [];
+
+    if (process.env.OPENWEATHERMAP_API_KEY) {
+      let url = "";
+      if (lat !== undefined && lon !== undefined) {
+        url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHERMAP_API_KEY}&units=metric`;
+      } else if (city) {
+        url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPENWEATHERMAP_API_KEY}&units=metric`;
+      }
+
+      if (url) {
+        const resp = await axios.get(url, { timeout: 10000 });
+        data = [resp.data].map(d => ({ ...d, locationLabel: { en: d.name } }));
+        logInfo("[weatherService] Weather fetched from OpenWeatherMap", { count: data.length });
+        return data;
+      }
+    }
+
+    // fallback to mock
+    const mockData = JSON.parse(fs.readFileSync(MOCK_FILE, "utf-8"));
+    data = mockData.map((d: any) => ({ ...d, locationLabel: { en: d.location } }));
+    logInfo("[weatherService] Weather loaded from mock", { count: data.length });
+    return data;
+  } catch (err: any) {
+    logError("[weatherService] Failed to fetch weather, using mock", { error: err.message });
+    const mockData = JSON.parse(fs.readFileSync(MOCK_FILE, "utf-8"));
+    return mockData.map((d: any) => ({ ...d, locationLabel: { en: d.location } }));
+  }
+}
+
+/**
+ * Export aliases so router can use them
+ */
+export const getWeather = fetchWeather;
+
+// Dummy refresh function (just calls fetchWeather for now)
+export async function refreshWeatherCache(lat?: number, lon?: number, city?: string): Promise<WeatherData[]> {
+  // You could implement cache invalidation here if you have caching
+  return fetchWeather(lat, lon, city);
+}

@@ -1,0 +1,37 @@
+complete integration table for Sadak-Sathi, covering all features, backend endpoints, frontend components, and developer notes:
+
+Feature	Backend Service / API	Frontend Component	Notes / Developer Guidance
+Route calculation	/api/route	MapView, RoutePanel	Calculate optimal route using Leaflet routing or Mapbox. Return polyline, distance, ETA, elevation optionally.
+Alternative routes	/api/route/alternative	MapView	Provide 2–3 route options with distance/time. Highlight shortest and fastest routes.
+Distance & ETA	/api/route	MapView / Info Panel	Include vehicle speed, traffic delays, road closures in ETA calculations.
+Turn-by-turn navigation	/api/route/instructions	MapView / Sidebar	Include text and optional voice cues. Integrate voice.ts for TTS alerts.
+Vehicle / driver status	/api/vehicle-status	DriverPanel	Metrics: fuel/battery, speed, odometer, tire pressure, engine health. Include alert system for low fuel/maintenance.
+AI travel advice	/api/gemini	TravelPanelWithAI	Summary, suggestions, reminders. Supports Nepali/English. Use GeminiService for backend requests.
+AI emotions / avatar	/api/gemini	AIAvatar / GeminiDemo	Emotional expressions in avatar based on AI response. Connect with voice.ts for speech tone.
+Weather data	/api/weather	MapView / Dashboard Panel	Real-time weather: temperature, humidity, wind, description. Use OpenWeather API or mock if unavailable.
+Traffic data	/api/roads + Waze/TomTom	MapView / Dashboard Panel	Traffic incidents, congestion levels, flow speed. Combine multiple sources and fallback to mock if APIs fail.
+Nearby POIs	/api/pois	MapView / Info Panel	Fuel, hotels, restaurants, hospitals, banks, bus stations, ATMs. Fetch via Overpass API or mock data.
+Road closure / status	/api/roads	MapView / Dashboard Panel	Show Blocked, One-Lane, Resumed roads. Use DOR .geojson and Google Sheet data via Apps Script.
+DHM / hydrology alerts	/api/dhm	Dashboard Panel / DriverPanel	River levels, rainfall forecast, flood warnings. Optional integration for alert popups.
+Scheduled TTS reminders	/api/voice	DriverPanel / TravelPanelWithAI	Read AI suggestions, travel reminders, or traffic alerts. Queue and schedule using voice.ts.
+Admin controls	/api/admin	SettingsPanel	Modify keys, update thresholds, manage mock/live data. Requires authentication.
+Offline / low-bandwidth mode	Local cache + IndexedDB	MapView, panels	Cache map tiles, POIs, and weather/traffic data. Fallback to offline mock if API fails.
+Multi-language support	/api/gemini + frontend i18n	All UI panels	Nepali / English toggle. Backend sends prompt with language context.
+Map layers / 3D option	Leaflet / Mapbox / Cesium	MapView	Light, dark, terrain layers. Optional 3D view.
+✅ Developer Notes
+
+All backend APIs should support fallback to mock data if real APIs fail.
+
+All frontend panels must handle real-time updates (POIs, traffic, weather, road status).
+
+TTS integration should support voice types and personalities.
+
+AI responses should include timestamp and action type for frontend display and TTS.
+
+Map must always be visible; panels are semi-transparent, resizable, auto-hidable for driver mode.
+
+Security: sensitive keys (API keys, Gemini keys) should be stored in .env and never in frontend.
+
+Offline support should allow basic navigation, POIs, and travel summary even if APIs are unreachable.
+
+Every integration point must be tested in local dev, staging, and production environments.

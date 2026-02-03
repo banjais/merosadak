@@ -1,0 +1,35 @@
+🔁 Cache lifecycle (simple)
+API request
+   ↓
+Check cache file
+   ↓
+Valid? ── YES → return cache
+   │
+   NO
+   ↓
+Fetch live data
+   ↓
+Save cache file
+   ↓
+Return response
+
+
+
+
+
+
+
+
+
+
+
+
+Layers: Two
+
+User
+ ↓
+Cloudflare edge cache (seconds/minutes)
+ ↓
+Backend file cache (minutes/hours)
+ ↓
+External API

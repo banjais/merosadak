@@ -1,0 +1,56 @@
++--------------------------+
+|        Frontend (React)  |
+|--------------------------|
+| - App.tsx / DriverMap    |
+| - MapView                |
+| - API Wrapper (api.ts)   |
+|   - fetchSearch()        |
+|   - fetchGemini()        |
+|   - fetchNepalBoundary() |
+|   - sendDriverHealth()   |
+|   - sendVehicleHealth()   |
++-----------+--------------+
+            |
+            | HTTP / HTTPS
+            v
++--------------------------+
+|    Firebase Hosting      |
+| (BASE_URL: sadaksathi.web.app)
+|--------------------------|
+| - Serves API endpoints   |
+|   (e.g., /api/search,    |
+|    /api/gemini,           |
+|    /api/nepal-boundary)   |
++-----------+--------------+
+            |
+            | Internal routing
+            v
++--------------------------+
+|   First Service (Cloudflare Worker)
+|   SECOND_SERVICE_URL: e.g.,
+|   sadaksathi.banjays.workers.dev
+|--------------------------|
+| - worker.ts               |
+| - Fuzzy search with Fuse  |
+|   - highway index JSON    |
+|     ../data/highway/index.json
+|   - district index JSON   |
+|     ../data/local/index_district.json
+| - Fetches:
+|   - Road Status (Google Apps Script)
+|   - Weather (OpenWeatherMap / Open-Meteo)
+|   - Traffic / POIs (TomTom API)
+|   - AI / Gemini API        |
++-----------+--------------+
+            |
+            | Fallback if Cloudflare fails
+            v
++--------------------------+
+| Second Service (Render)  |
+| SECOND_SERVICE_URL:      |
+| https://sadaksathi.onrender.com
+|--------------------------|
+| - Same worker.ts logic   |
+| - Serves all API endpoints
++--------------------------+
+

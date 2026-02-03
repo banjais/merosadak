@@ -1,0 +1,77 @@
+1️⃣ Frontend
+
+Hosted on Firebase Hosting → URL: https://sadaksathi.web.app
+
+Serves your HTML/CSS/JS frontend only.
+
+Users never see the backend URLs (Worker or Render).
+
+Frontend calls APIs only via relative paths, e.g., /api/search, /api/gemini.
+
+2️⃣ Cloudflare Worker (Main API Processor)
+
+Handles all backend logic:
+
+Fetch Google Sheet data (road status) via Apps Script.
+
+Load highway & district JSON files.
+
+Call external APIs: weather, traffic, POIs.
+
+AI/Gemini queries.
+
+Users call /api/... → hits Worker.
+
+Worker processes data and returns JSON.
+
+Hides all downstream service URLs:
+
+Render URL never exposed.
+
+Google Sheet / TomTom / OpenWeatherMap / Gemini keys are hidden.
+
+3️⃣ Render (Optional Fallback API)
+
+Only used if Cloudflare Worker fails (e.g., outage or rate-limit).
+
+Worker can proxy requests to Render as a fallback.
+
+Users still don’t see Render URL.
+
+4️⃣ Firebase Hosting + Worker Integration
+
+Firebase hosts frontend.
+
+Cloudflare Worker serves as backend for frontend.
+
+All API calls from frontend go through Worker, not Render.
+
+User Browser
+    |
+    |  (https://sadaksathi.web.app)
+    v
+Firebase Hosting (frontend)
+    |
+    |  /api/search, /api/gemini, /api/roads
+    v
+Cloudflare Worker (processing server)
+    |  -> Google Sheets
+    |  -> Local JSON (highway, geojson)
+    |  -> Weather / Traffic / POIs APIs
+    |  -> Gemini AI
+    |  -> Optional: Render fallback
+    v
+JSON response back to frontend
+
+
+✅ Advantages
+
+Users only see sadaksathi.web.app.
+
+All API keys are hidden in Worker environment variables.
+
+Cloudflare Worker now acts as your main server (no paid Firebase Functions required).
+
+Optional Render fallback for reliability.
+
+Frontend remains fast and static, backend logic fully under your control.

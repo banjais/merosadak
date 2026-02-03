@@ -1,0 +1,47 @@
+/sadaksathi/backend:
+
+npm install
+npm run build
+npm run worker
+
+
+curl -UseBasicParsing http://localhost:4000/api/traffic
+curl -UseBasicParsing http://localhost:4000/api/roads
+curl -UseBasicParsing http://localhost:4000/api/traffic
+curl -UseBasicParsing "http://localhost:4000/api/weather?lat=27.7&lng=85.3"
+curl -UseBasicParsing http://localhost:4000/api/health
+curl -UseBasicParsing "http://localhost:4000/api/pois?lat=27.7&lng=85.3"
+curl -UseBasicParsing http://localhost:4000/api/boundary
+
+
+Auth API (JWT)
+Signup:
+
+$body = @{
+    email = "admin@test.com"
+    password = "test123"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:4000/api/auth/login" `
+  -Method POST `
+  -Body $body `
+  -ContentType "application/json"
+
+test superadmin:
+
+$body = @{ email = "banjays@gmail.com" } | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:4000/api/auth/request-otp" `
+  -Method POST `
+  -Body $body `
+  -ContentType "application/json"
+
+--------------
+
+
+$body = @{ email = "banjays@gmail.com"; otp = "725952" } | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:4003/api/auth/verify-otp" `
+  -Method POST `
+  -Body $body `
+  -ContentType "application/json"

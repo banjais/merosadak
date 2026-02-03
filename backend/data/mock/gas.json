@@ -1,0 +1,15 @@
+[
+  {
+    "road_refno": "H01",
+    "roadStatus": "Blocked",
+    "chainage": "0+500",
+    "incidentDistrict": "Kathmandu",
+    "incidentCoordinate": "[27.7172,85.3240]",
+    "incidentPlace": "Boudhanath",
+    "incidentStarted": "2026-01-05T09:00:00Z",
+    "estimatedRestoration": "2026-01-05T15:00:00Z",
+    "restorationEfforts": "Manual clearance",
+    "remarks": "Fallen tree",
+    "dataPulledDate": "2026-01-05T09:05:00Z"
+  }
+]

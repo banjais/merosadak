@@ -1,0 +1,24 @@
+Cloudflare Worker Reverse Proxy we implemented, the frontend can access everything through a single domain.
+
+Assuming your base URL is https://sadaksathi.web.app/, here is the complete API map for your frontend:
+
+Core Data Services
+Service	Frontend Request URL	Purpose
+Traffic	https://sadaksathi.web.app/api/traffic	Real-time traffic flow (TomTom/Waze)
+Roads	https://sadaksathi.web.app/api/roads	Road blocks & status (from Google Sheet)
+Weather	https://sadaksathi.web.app/api/weather	Local weather (DHM Nepal/OpenWeather)
+POIs	https://sadaksathi.web.app/api/pois	Hospitals, Hotels, & Petrol Pumps
+Boundary	https://sadaksathi.web.app/api/boundary	Nepal national boundary GeoJSON
+Search	https://sadaksathi.web.app/api/search	Unified search across all types
+AI & Auth Services
+Service	Frontend Request URL	Purpose
+Gemini AI	https://sadaksathi.web.app/api/gemini/query	Send prompts to the Travel Assistant
+AI Usage	https://sadaksathi.web.app/api/gemini/usage	Check remaining daily AI queries
+Auth	https://sadaksathi.web.app/api/auth/login	Begin login/OTP process
+Verify OTP	https://sadaksathi.web.app/api/auth/verify	Submit OTP and get JWT token
+Admin & System
+Service	Frontend Request URL	Purpose
+Analytics	https://sadaksathi.web.app/api/admin/analytics	View app usage logs (Superadmin only)
+System Logs	https://sadaksathi.web.app/api/admin/logs	View technical backend logs
+Cache Mgmt	https://sadaksathi.web.app/api/cache/clear	Manually clear server-side cache
+[!NOTE] Why this works: All requests starting with /api are automatically captured by the Cloudflare Worker and forwarded to your Render backend. Everything else is served as static HTML/JS/CSS from Firebase. This prevents all CORS (Cross-Origin) issues!

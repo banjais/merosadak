@@ -1,0 +1,76 @@
+Flow Diagram: Last-Used Cache Strategy
+User Request → Service Hook
+                  |
+                  v
+          ┌──────────────────┐
+          │ Attempt Primary  │
+          │ External API(s)  │
+          └──────────────────┘
+                  |
+        ┌─────────┴─────────┐
+        │                   │
+   Success?               Fail
+        │                   │
+        v                   v
+ ┌───────────────┐    ┌───────────────────┐
+ │ Save Response │    │ Check Cache File  │
+ │ to Cache      │    └───────────────────┘
+ │ (overwrite)   │            |
+ │ from API only │     Cache Exists? ──┐
+ └───────────────┘            |        │
+        │                      │        │
+ Return Data                 Yes       No
+ (from API)                  │        │
+        │                     v        v
+        └────────────────> Return Cache  Return Mock (Dev)
+                           (fromCache=true) 
+
+
+
+diagram of the cache & fallback flow for your services:
+
+        ┌─────────────────────┐
+        │   User requests     │
+        │   traffic/weather/  │
+        │   POI data          │
+        └─────────┬──────────┘
+                  │
+                  ▼
+        ┌─────────────────────┐
+        │  Check cache (TTL)  │
+        └─────┬───────────────┘
+   Yes       │        No
+(Cache valid)│   (Cache missing / expired)
+   ▼        ▼
+┌────────┐  ┌─────────────────────┐
+│Return  │  │  Fetch from APIs     │
+│cached  │  │  (Primary → Secondary) │
+│data    │  └─────────┬───────────┘
+└────────┘            │
+                      ▼
+             ┌─────────────────────┐
+             │ Was API fetch OK?   │
+             └─────┬───────────────┘
+          Yes │             │ No
+              ▼             ▼
+      ┌────────────┐   ┌────────────────────┐
+      │ Update     │   │ Use last cache if  │
+      │ cache with │   │ exists             │
+      │ API data   │   │ (fallback)         │
+      └─────┬──────┘   └─────────┬──────────┘
+            │                        │
+            ▼                        ▼
+      ┌────────────┐           ┌────────────┐
+      │ Return     │           │ Return     │
+      │ fresh API  │           │ last cache │
+      │ data       │           │ data       │
+      └────────────┘           └────────────┘
+
+
+Notes about mock & dev mode:
+
+Mock data is used only if no API and NODE_ENV=development.
+
+In production, cache always stores last successfully fetched API data.
+
+This guarantees: every user gets last known data, even if external APIs fail.

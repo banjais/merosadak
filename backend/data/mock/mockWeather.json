@@ -1,0 +1,14 @@
+[
+  {
+    "city": "Kathmandu",
+    "temperature": 25,
+    "weather_code": 1,
+    "wind_speed": 5
+  },
+  {
+    "city": "Pokhara",
+    "temperature": 22,
+    "weather_code": 2,
+    "wind_speed": 3
+  }
+]

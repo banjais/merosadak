@@ -1,0 +1,26 @@
+Frontend → Backend Data Flow Map
+Frontend Component / Module	Backend Service Called	Data Returned	Notes / Usage
+Map Display / Dashboard	road.service.ts	RoadInfo[]	Fetch roads/highways from master.geojson via DATA_PATH. Display on map.
+	highway.service.ts	JSON / GeoJSON	For full highway details / GeoJSON overlay.
+	district.service.ts	JSON / GeoJSON	For district boundaries overlay.
+	nepalBoundaryService.ts	GeoJSON	Nepal country boundary (normal / light).
+POI Panel / Search	poi.service.ts → data.service.ts → Overpass API or mock	POI[]	Fuel, restaurants, hospitals, hotels, banks, ATMs.
+Traffic Panel / Alerts	traffic.service.ts → data.service.ts → Waze / TomTom or mock	Traffic incidents & congestion	Shows real-time congestion on map & alerts panel.
+Weather Panel / Info	weather.service.ts → data.service.ts → OpenWeather or mock	WeatherData	Current temperature, wind, humidity, description.
+Route Finder / Directions	route.service.ts → data.service.ts + routing API	RouteResult & Traffic/Weather/POIs/DHM	Main route, alternative routes, travel info for map & dashboard.
+Search / Filter Roads & POIs	search.service.ts → road.service.ts + data.service.ts	Filtered RoadInfo[] + POI[]	Search bar on map/dashboard.
+DHM / Hydrology Panel	dhm.service.ts → data.service.ts → DHM API or mock	River levels, rainfall forecast, warnings	Optional alerts on dashboard.
+TTS / Travel Summaries	voice.service.ts → data.service.ts	Synthesize text	Optional travel plan announcements (male/female/neutral voices).
+Radio / Entertainment	radio.service.ts	Static radio station list	Can be enhanced with live streaming APIs later.
+Leaderboard / Gamification	userPoints.ts	User points & badges	Optional, purely internal logic.
+Key Principles
+
+All real-time or live data flows through data.service.ts.
+
+Mock fallback happens only if API fails or USE_MOCK=true.
+
+Roads / master.geojson is the authoritative source for all highway/road info.
+
+Frontend never calls external APIs directly—it always talks to backend services.
+
+.env.local variables (API keys, DATA_PATH, endpoints) are loaded at backend start, used in respective services.

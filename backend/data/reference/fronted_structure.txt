@@ -1,0 +1,30 @@
+frontend/
+├─ public/
+│  ├─ icons/
+│  │  ├─ favicon.svg
+│  │  ├─ apple-touch-icon.png
+│  │  ├─ pwa-192x192.png
+│  │  └─ pwa-512x512.png
+│  ├─ sw.js              <-- Service worker (static copy, auto managed by Vite PWA)
+│  ├─ app.config.json    <-- App config (version, theme, name, etc.)
+│  └─ robots.txt
+├─ src/
+│  ├─ components/
+│  │  ├─ Preloader.tsx
+│  │  └─ Preloader.css
+│  ├─ contexts/
+│  │  └─ AuthContext.tsx
+│  ├─ services/
+│  │  └─ ... (API wrappers, singleton clients)
+│  ├─ mocks/
+│  │  └─ ... (JSON mock data)
+│  ├─ config/
+│  │  └─ config.ts      <-- BASE_URL, API endpoints, map defaults
+│  ├─ registerSW.ts      <-- Registers the service worker
+│  ├─ App.tsx
+│  ├─ main.tsx
+│  └─ index.css
+├─ index.html
+├─ vite.config.ts
+├─ tsconfig.json
+└─ package.json

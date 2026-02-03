@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents unwanted bounce/scroll on mobile */
+}
+
+/* Default Dark background for the root if JS hasn't loaded theme yet */
+body {
+  background-color: #0f172a;
+}
+
+/* Ensure Leaflet takes full space and matches theme */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  background-color: #1e293b !important; /* Slightly lighter slate for map loading area */
+  outline: none;
+}
+
+/* 🟢 Smooth transitions for theme switching */
+.transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Fix for Leaflet controls (Zoom in/out buttons) to stay on top of the UI */
+.leaflet-control-container {
+  z-index: 1000 !important;
+}
+
+/* 🎞️ Cinematic Transitions & HUD Effects */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.scanline-effect {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(99, 102, 241, 0.05) 50%,
+    transparent
+  );
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: scanline 10s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.glass-pilot {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.neon-border-indigo {
+  box-shadow:
+    0 0 20px rgba(99, 102, 241, 0.2),
+    inset 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+/* 💠 Premium Marker Clustering Styles */
+.custom-marker-cluster {
+  background: rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 12px;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-marker-cluster:hover {
+  transform: scale(1.1);
+  background: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.5);
+}
+
+.custom-marker-cluster div {
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Base Cluster Icons need explicit positioning fix for Leaflet */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-in;
+}

@@ -1,0 +1,7 @@
+App.tsx
+   └── NepalMap.tsx           ← main map page
+         ├── fetches /api/boundary
+         ├── shows loading/error
+         └── passes nepalBoundary to MapViewWrapper
+               ├── renders MapContainer
+               └── adds BoundaryLayer + other layers

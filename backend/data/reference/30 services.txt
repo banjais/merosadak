@@ -1,0 +1,35 @@
+eton	Calculates route distances and durations	Logic / Geo
+7	districtService	Singleton	Provides district-level geo/data	File-system JSON/GEOJSON
+8	geminiService	Singleton	AI text responses (Gemini API)	AI / Google API
+9	highwayService	Singleton	Provides highway metadata	File-system JSON/GEOJSON
+10	languageService	Singleton	Multilingual labels, translations	Internal / Config
+11	liveRoadStatusService	Singleton	Fetches live road status from geojson	File-system / API
+12	mapService	Singleton	Map-related utilities, overlays	Internal / Config
+13	nepalBoundaryService	Singleton	Returns Nepal boundary geojson	File-system GEOJSON
+14	notificationService	Singleton	Sends notifications (email, in-app)	Logic / External API
+15	offlineService	Singleton	Provides offline cached data	File-system / Cache
+16	poiService	Singleton	Fetch POIs (fuel, restaurants, hotels, etc.)	API / Google Sheets
+17	radioService	Singleton	Fetch radio stations / streams	API / Mock
+18	reportService	Singleton	Generate reports (road, travel, traffic)	Logic / File / PDF
+19	roadService	Singleton	Load road network, master.geojson, road info	File-system GEOJSON
+20	routingService	Singleton	Route calculation (distance, duration, geometry)	Logic / API / Geo
+21	searchService	Singleton	Search across roads and POIs	Combined service
+22	settingsService	Singleton	App settings management	Internal / Config
+23	trafficService	Singleton	Fetch Waze/TomTom traffic data	API
+24	travelGroupService	Singleton	Manage trips, members, travel plans	Internal / Memory
+25	userPointsService	Singleton	Points, badges, leaderboard	Internal / Memory
+26	userService	Singleton	User account management, profile info	Internal / DB
+27	voiceService	Singleton	TTS / Voice playback, schedule, queue	Logic / Node TTS
+28	weatherService	Singleton	Fetch weather data	API
+29	aiService	Singleton	AI travel plan generation, suggestions	Logic / Gemini API
+30	geminiService	Singleton	(Duplicate, already listed as #8) Gemini AI service	AI / Google API
+
+Legend / Notes:
+
+Singleton: Pre-instantiated; import from singletons.ts.
+
+API: Calls external services (DHM, weather, Gemini, traffic, POI).
+
+File-system: Reads local JSON / GEOJSON (roads, districts, highways, boundaries).
+
+Logic: Internal computation (distance, TTS, routing, search, travel plan).

@@ -1,0 +1,43 @@
+1️⃣ Strategy
+
+Use a language code (en, ne, hi, zh, etc.) in requests and responses.
+
+Keep translation files for static content and labels (frontend) in frontend/src/locales/{lang}.json.
+
+Backend returns data labels in requested language where possible, or defaults to English/Nepali.
+
+For dynamic content (AI responses, Gemini, traffic, POIs, weather):
+
+Gemini: request responses in the selected language.
+
+Traffic/POIs/weather: usually in English, optionally translated via a translation API if needed.
+
+2️⃣ Example Folder Structure
+frontend/
+└── src/
+    └── locales/
+        ├── en.json       # English labels
+        ├── ne.json       # Nepali labels
+        └── hi.json       # Hindi (future)
+
+
+en.json
+
+{
+  "road_closed": "Road Closed",
+  "one_way": "One-way Open",
+  "open": "Fully Open",
+  "weather": "Weather",
+  "traffic": "Traffic"
+}
+
+
+ne.json
+
+{
+  "road_closed": "अवरुद्व",
+  "one_way": "एकतर्फी चालु रहेको",
+  "open": "दुवैतर्फ सुचारु भएको",
+  "weather": "मौसम",
+  "traffic": "यातायात"
+}

@@ -1,0 +1,15 @@
+full Cloudflare-compatible worker that mirrors your worker.ts logic:
+
+Calls Render backend first.
+
+Falls back to mock/cache if Render is unavailable.
+
+Handles all your services: Roads, Traffic, POIs, Weather, Nepal Boundary.
+
+Simulates OTP & token generation (superadmin/admin/user).
+
+Logs everything like your Node backend.
+
+Provides a warmup endpoint for Render.
+
+Fully ESM, no Node built-ins (fs, path, crypto, etc.).

@@ -1,0 +1,103 @@
+name: Sadak-Sathi CI/CD pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/build-deploy-host.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------
+  # JOB 1: BUILD & TEST BACKEND
+  # ---------------------------------------------------------
+  backend-build:
+    name: Backend Build & Test
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      API_PREFIX: /api
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-at-least-32-chars-long' }}
+      UPSTASH_REDIS_REST_URL: https://dummy.upstash.io
+      UPSTASH_REDIS_REST_TOKEN: dummy-token
+      GAS_URL: https://script.google.com/macros/s/dummy/exec
+      TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY || 'dummy-key' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Lint backend
+        run: npm run lint
+        working-directory: backend
+        continue-on-error: true
+
+      - name: Build backend
+        run: npm run build
+        working-directory: backend
+
+      - name: Trigger Render deployment
+        if: github.ref == 'refs/heads/main'
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl -X POST "$RENDER_DEPLOY_HOOK"
+            echo "✅ Render deployment triggered"
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK not set. Skipping Render deploy."
+          fi
+
+  # ---------------------------------------------------------
+  # JOB 2: BUILD & DEPLOY FRONTEND
+  # ---------------------------------------------------------
+  frontend-build:
+    name: Frontend Build & Firebase Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_APP_NAME: SadakSathi
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+
+      - name: Deploy to Firebase Hosting
+        if: github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_SADAKSATHI }}"
+          projectId: sadaksathi
+          channelId: live

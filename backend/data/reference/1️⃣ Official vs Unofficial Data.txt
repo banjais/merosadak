@@ -1,0 +1,97 @@
+1️⃣ Official vs Unofficial Data
+
+Official:
+
+Road closure info → GAS Sheet
+
+Highway geometries → index.json (79 highways)
+
+District boundaries → index_district.json (77 districts)
+
+Unofficial / optional (parallel):
+
+Traffic → Waze / TomTom
+
+Weather → OpenWeatherMap / DHM (if available later)
+
+POIs → TomTom / Overpass
+
+Behavior:
+
+Official data always loads first.
+
+Optional data loads in parallel, merged into response for the frontend.
+
+Frontend sees combined JSON, but backend can still distinguish official/unofficial internally.
+
+2️⃣ API Exposure
+
+Only Firebase URL is exposed to users.
+
+All external service keys (TomTom, OpenWeatherMap, DHM, Gemini, etc.) are hidden in .env.local or Cloudflare Worker secrets.
+
+Endpoints:
+
+/api/search?q= → returns combined JSON for highways & districts, with optional services merged.
+
+/api/gemini → AI suggestions (hidden keys).
+
+/api/driver-health & /api/vehicle-health → logging.
+
+/api/nepal-boundary → returns 77 districts only; map restricted to Nepal.
+
+3️⃣ Geographic Scope & Map Behavior
+
+Only 77 official districts → show exact Nepal borders.
+
+All services (weather, traffic, POIs) restricted to Nepal.
+
+Highway search or district search only considers Nepalese data.
+
+4️⃣ Translation
+
+All road status in Nepali from GAS Sheet.
+
+Optionally provide English translation for travelers (can be part of merged JSON).
+
+Frontend can display bilingual labels.
+
+5️⃣ Optional Services / Fallback Logic
+
+Traffic: Waze → TomTom → empty
+
+Weather: OpenWeatherMap → DHM → empty
+
+POIs: TomTom → Overpass → empty
+
+If optional service fails or key is missing → backend logs, frontend still gets official info immediately.
+
+6️⃣ Performance
+
+Worker fetches optional services in parallel, official data first.
+
+Frontend receives single JSON without waiting for all optional APIs to respond.
+
+Optional data can be updated asynchronously if needed later.
+
+✅ Plan for Worker / Backend
+
+Worker / backend loads highway & district indices at startup.
+
+On /api/search?q=:
+
+Search highways / districts → Fuse.js
+
+Fetch official road status from GAS → always included
+
+Fetch optional services in parallel → merged for frontend
+
+Restrict all optional service results within Nepal boundaries
+
+Return official + optional in single JSON, optionally marked as official/unofficial
+
+Include bilingual translation for status
+
+Secrets never exposed. Frontend uses Firebase URL only.
+
+Map shows only Nepal boundaries, no extra countries.

@@ -1,0 +1,71 @@
+# ======================================================
+# Node.js / npm
+# ======================================================
+node_modules/
+npm-debug.log*
+# package-lock.json SHOULD be committed (keep it!)
+
+# ======================================================
+# Build outputs
+# ======================================================
+dist/
+build/
+.cache/
+backend/dist/
+frontend/dist/
+
+# ======================================================
+# Environment & Secrets (CRITICAL: NEVER COMMIT)
+# ======================================================
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+*.json.secret
+serviceAccountKey.json
+
+# ======================================================
+# Logs
+# ======================================================
+logs/
+backend/logs/
+frontend/logs/
+*.log
+
+# ======================================================
+# Runtime-generated Data (Keeps your repo clean)
+# ======================================================
+# Ignore JSON data files but KEEP the folder structure
+data/*.json
+backend/data/*.json
+backend/data/cache/
+backend/data/tmp/
+frontend/data/*.json
+frontend/data/cache/
+frontend/data/tmp/
+
+# ======================================================
+# OS / Editor files
+# ======================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-project
+
+# ======================================================
+# TypeScript artifacts
+# ======================================================
+*.tsbuildinfo
+
+# ======================================================
+# Large / temporary assets (optional future-proofing)
+# ======================================================
+*.mbtiles
+*.gpkg
+*.geojson
+*.pdf
+*.zip
+*.mp4

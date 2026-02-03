@@ -1,0 +1,47 @@
+service files we need:
+
+Backend (backend/src/services/)
+
+data.service.ts – fetch POIs, weather, traffic, DHM, fallback to mock data.
+
+dhm.service.ts – hydrology / rainfall alerts (optional detailed logic separate from data.service.ts).
+
+gemini.service.ts – AI prompts, travel advice, emotional TTS payloads.
+
+poi.service.ts – abstraction for POI fetching and filtering (calls data.service.ts internally).
+
+road.service.ts – road geometries, closures, statuses, distance & ETA.
+
+search.service.ts – search roads or POIs, safe geoJSON → RoadInfo conversion.
+
+traffic.service.ts – traffic data aggregation (Waze + TomTom), congestion levels.
+
+voice.ts – TTS engine: speak, schedule, queue, voice type, personality, rate, pitch.
+
+weather.service.ts – weather fetch and mock fallback, could be inside data.service.ts too.
+
+vehicle.service.ts – vehicle / driver health (speed, fuel, battery, engine alerts).
+
+route.service.ts – routing, alternative routes, turn-by-turn, distance & ETA calculations.
+
+admin.service.ts – manage keys, settings, mock/live toggle.
+
+Frontend (frontend/src/services/)
+
+data.service.ts – mirrors backend fetches (POIs, weather, traffic, DHM) with caching.
+
+gemini.ts – sends AI requests to backend /api/gemini, receives response for panels.
+
+poi.service.ts – processes POI data for map rendering and info panels.
+
+road.service.ts – processes roads for map rendering, closures, one-lane, resumed.
+
+search.service.ts – calls backend search API or combines POIs + roads.
+
+traffic.service.ts – optional frontend helper for live traffic markers.
+
+voice.ts – TTS for AI outputs, reminders, travel summaries.
+
+weather.service.ts – fetch & format weather for dashboard or map popups.
+
+route.service.ts – frontend routing helper (optional if Leaflet routing used).

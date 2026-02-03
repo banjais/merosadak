@@ -1,0 +1,16 @@
+[
+  {
+    "location": "Bagmati River",
+    "warning": "Moderate flood risk",
+    "riverLevel": 3.5,
+    "rainfallForecast": "Heavy rain expected next 24h",
+    "lastUpdated": "2025-12-19T10:00:00Z"
+  },
+  {
+    "location": "Koshi River",
+    "warning": "Normal",
+    "riverLevel": 2.1,
+    "rainfallForecast": "Light rain expected",
+    "lastUpdated": "2025-12-19T10:00:00Z"
+  }
+]

@@ -1,0 +1,9 @@
+7. Duration
+
+The total duration of the assignment shall be twelve (12) months from the date of contract signing. System development and initial deployment shall be completed within four (4) months, followed by operation, maintenance, and technical support for the remaining contract period.
+
+The system shall be developed on behalf of the Road Safety and Traffic Unit (RSTU) and shall be compatible with traffic light hardware systems installed or upgraded under separate RSTU contracts. System integration, testing, and deployment at each intersection shall be completed within one (1) month from the date the respective hardware system is formally handed over as operational, and the finalized system shall be hosted on the Department of Roads (DoR) server.
+
+8. Dependency and Risk Allocation
+
+This contract is executed by the HMIS-ICT Unit on behalf of RSTU. Any delays arising from the installation, upgrade, readiness, or handover of traffic light hardware systems by contractors engaged by RSTU shall be treated as external dependencies and shall not be attributable to the consultant under this contract. Such delays shall not be considered a breach of contract, nor shall they affect the consultant’s contractual obligations, timelines, or payment provisions.

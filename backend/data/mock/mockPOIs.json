@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Gas Station Kathmandu",
+    "type": "fuel",
+    "coordinate": { "lat": 27.7172, "lng": 85.3240 }
+  },
+  {
+    "id": 2,
+    "name": "Hotel Pokhara",
+    "type": "hotel",
+    "coordinate": { "lat": 28.2096, "lng": 83.9856 }
+  }
+]
