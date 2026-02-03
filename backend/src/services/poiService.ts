@@ -5,7 +5,7 @@ import axios from "axios";
 
 import { CACHE_DIR, CACHE_POI } from "../config/paths.js";
 import { config } from "../config/index.js";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 import { getMarkerIcon } from "../utils/iconMap.js";
 import { withCache } from "./cacheService.js";
 

@@ -2,7 +2,7 @@ import axios from "axios";
 import fs from "fs/promises";
 import { config } from "../config/index.js";
 import { CACHE_WAZE, CACHE_DIR } from "../config/paths.js";
-import { logError, logInfo } from "../logs/logs.js";
+import { logError, logInfo } from "@logs/logs";
 
 export interface WazeIncident {
   id: string;

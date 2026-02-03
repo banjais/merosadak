@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getHistoricalLogs, generateMasterReport } from "../services/superadminService.js";
 import { forceRefresh } from "../services/schedulerService.js";
 import { getUpstashUsage, getCacheStats } from "../services/cacheService.js";
-import { logError, logInfo } from "../logs/logs.js";
+import { logError, logInfo } from "@logs/logs";
 
 /**
  * GET /api/superadmin/stats

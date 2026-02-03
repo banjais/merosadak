@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import PDFDocument from "pdfkit";
 import { LOG_DIR, CACHE_DIR, CACHE_ROAD, CACHE_TRAFFIC, CACHE_POI, CACHE_WEATHER, CACHE_MONSOON } from "../config/paths.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 import { getUpstashUsage, getCacheHealth } from "./cacheService.js";
 import { getCachedMonsoonRisk } from "./monsoonService.js";
 import { getCachedRoads } from "./roadService.js";

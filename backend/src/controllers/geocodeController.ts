@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { searchLocation } from "../services/searchService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 export const handleSearch = async (req: Request, res: Response) => {
   const { q } = req.query;

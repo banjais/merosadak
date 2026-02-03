@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getBoundaryData } from "../services/boundaryService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 export const getBoundary = async (req: Request, res: Response) => {
   try {

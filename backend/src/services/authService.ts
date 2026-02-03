@@ -1,5 +1,5 @@
 // backend/src/services/authService.ts
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 import * as OtpService from "./otpService.js";
 
 export interface AuthResponse {

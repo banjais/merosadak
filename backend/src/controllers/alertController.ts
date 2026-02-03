@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { updateAlerts, getCachedAlerts } from "../services/alertService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 export const getAlerts = async (_req: Request, res: Response) => {
   try {

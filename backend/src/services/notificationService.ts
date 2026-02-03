@@ -1,7 +1,7 @@
 // backend/src/services/notificationService.ts
 import nodemailer from "nodemailer";
 import { config } from "../config/index.js";
-import { logError, logInfo } from "../logs/logs.js";
+import { logError, logInfo } from "@logs/logs";
 
 let transporter: nodemailer.Transporter | null = null;
 

@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { logError, logInfo } from "../logs/logs.js";
+import { logError, logInfo } from "@logs/logs";
 import type { FeatureCollection } from "../types.js";
 import { DATA_DIR, CACHE_DIR, CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
 import { withCache } from "./cacheService.js"; // Hybrid cache wrapper

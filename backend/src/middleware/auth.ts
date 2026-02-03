@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/index.js"; // Direct import
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 // Extend Express Request type to include the user object
 export interface AuthRequest extends Request {

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import * as WeatherService from '../services/weatherService.js';
 import { withCache } from '../services/cacheService.js';
 import { config } from '../config/index.js';
-import { logError, logInfo } from '../logs/logs.js';
+import { logError, logInfo } from '@logs/logs';
 
 /**
  * GET /api/weather/current?lat=27.7&lng=85.3

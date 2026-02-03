@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as OtpService from "../services/otpService.js";
-import { logAuth, logError } from "../logs/logs.js";
+import { logAuth, logError } from "@logs/logs";
 import type { UserRole } from "../types.js";
 
 /**

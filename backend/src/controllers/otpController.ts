@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as OTPService from "../services/otpService.js";
-import { logAuth, logError } from "../logs/logs.js";
+import { logAuth, logError } from "@logs/logs";
 
 export const requestOTP = async (req: Request, res: Response) => {
   const { email, telegramId } = req.body;

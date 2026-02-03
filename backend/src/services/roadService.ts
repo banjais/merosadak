@@ -5,7 +5,7 @@ import path from "path";
 import { config } from "../config/index.js";
 import { DATA_DIR, BASE_DATA, CACHE_ROAD } from "../config/paths.js";
 import { SHEET_HEADERS, ROAD_STATUS } from "../constants/sheets.js";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 
 /**
  * 📍 Canonical Paths

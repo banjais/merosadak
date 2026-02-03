@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as monsoonService from "../services/monsoonService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 /**
  * GET /api/monsoon/risk

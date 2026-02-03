@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { withCache } from '../services/cacheService.js';
 import * as TrafficService from '../services/trafficService.js';
-import { logError } from '../logs/logs.js';
+import { logError } from '@logs/logs';
 
 /**
  * 🚦 Get traffic status

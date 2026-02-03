@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 import { CACHE_DIR, CACHE_ROAD, CACHE_TRAFFIC, CACHE_ALERTS, CACHE_MONSOON } from "../config/paths.js";
 import { ROAD_STATUS } from "../constants/sheets.js";
 import { getCachedWaze } from "./wazeService.js";

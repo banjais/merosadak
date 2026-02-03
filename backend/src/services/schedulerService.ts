@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 import { updateMasterFromSheet } from "./roadService.js";
 import { getCachedTraffic } from "./trafficService.js";
 import { calculateCurrentRisk } from "./monsoonService.js";

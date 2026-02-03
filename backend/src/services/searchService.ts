@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import { logInfo, logError } from '../logs/logs.js';
+import { logInfo, logError } from '@logs/logs';
 import { redisClient } from './cacheService.js'; // Upstash Redis
 import * as weatherService from './weatherService.js';
 import { getCachedRoads, calculateHaversine } from './roadService.js';

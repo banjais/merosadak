@@ -1,7 +1,7 @@
 import axios from "axios";
 import fs from "fs/promises";
 import path from "path";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 import { CACHE_TRAFFIC, CACHE_DIR } from "../config/paths.js";
 import { config } from "../config/index.js";
 

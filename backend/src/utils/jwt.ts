@@ -1,6 +1,6 @@
 // src/utils/jwt.ts
 import jwt, { type SignOptions } from "jsonwebtoken";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 import type { JWTPayload, UserRole } from "../types.js";
 
 // ----------------------

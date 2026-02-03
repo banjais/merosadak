@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as GeminiService from "../services/geminiService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 export const handleQuery = async (req: Request, res: Response) => {
   const { prompt } = req.body;

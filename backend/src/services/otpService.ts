@@ -1,5 +1,5 @@
 import { config } from "../config/index.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 import { signToken } from "../utils/jwt.js";
 import { sendTelegramMessage, sendEmail } from "./notificationService.js";
 import type { UserRole } from "../types.js";

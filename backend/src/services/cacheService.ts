@@ -6,7 +6,7 @@ import {
   logCacheHit,
   logCacheMiss,
   logCacheUpdate
-} from "../logs/logs.js";
+} from "@logs/logs";
 
 // ────────────────────────────────
 // LEVEL 1: In-Process Local RAM Cache

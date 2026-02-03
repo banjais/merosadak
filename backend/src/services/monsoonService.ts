@@ -3,7 +3,7 @@ import path from "path";
 import * as roadService from "./roadService.js";
 import * as weatherService from "./weatherService.js";
 import { CACHE_DIR, CACHE_MONSOON } from "../config/paths.js";
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs";
 
 export interface RiskAssessment {
   roadId: string;

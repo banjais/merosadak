@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as CacheService from "../services/cacheService.js";
-import { logError } from "../logs/logs.js";
+import { logError } from "@logs/logs";
 
 export const listCache = async (_req: Request, res: Response) => {
   try {

@@ -2,7 +2,7 @@
 import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import type { Request, Response, NextFunction } from "express";
-import { logInfo, logError } from "../logs/logs";
+import { logInfo, logError } from "@logs/logs";
 
 // Define severity manually to satisfy TypeScript
 type SeverityLevel = "fatal" | "error" | "warning" | "log" | "info" | "debug" | "critical";
