@@ -15,16 +15,19 @@ backend/dist/
 frontend/dist/
 
 # ======================================================
-# Environment & Secrets (CRITICAL: NEVER COMMIT)
+# Environment & Secrets
 # ======================================================
 .env
-.env.*
-backend/.env
-backend/.env.*
+.env.*           # ignore local envs
+backend/.env     # ignore local envs
+backend/.env.*   # ignore all local env except production
 frontend/.env
-frontend/.env.*
+frontend/.env.* 
 *.json.secret
 serviceAccountKey.json
+
+# Allow production env in backend for CI/CD
+!backend/.env.production
 
 # ======================================================
 # Logs
@@ -38,9 +41,8 @@ frontend/logs/
 !backend/src/logs/logs.ts
 
 # ======================================================
-# Runtime-generated Data (Keeps your repo clean)
+# Runtime-generated Data
 # ======================================================
-# Ignore JSON data files but KEEP the folder structure
 data/*.json
 backend/data/*.json
 backend/data/cache/

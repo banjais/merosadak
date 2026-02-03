@@ -19,14 +19,18 @@ jobs:
     name: Backend Build & Test
     runs-on: ubuntu-latest
     env:
-      NODE_ENV: test
-      PORT: 4000
-      API_PREFIX: /api
-      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-at-least-32-chars-long' }}
-      UPSTASH_REDIS_REST_URL: https://dummy.upstash.io
-      UPSTASH_REDIS_REST_TOKEN: dummy-token
-      GAS_URL: https://script.google.com/macros/s/dummy/exec
-      TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY || 'dummy-key' }}
+      NODE_ENV: production
+      PORT: ${{ secrets.PORT }}
+      API_PREFIX: ${{ secrets.API_PREFIX }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      GAS_URL: ${{ secrets.GAS_URL }}
+      TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      DATA_DIR: ${{ secrets.DATA_DIR }}
+      CACHE_DIR: ${{ secrets.CACHE_DIR }}
+      LOG_DIR: ${{ secrets.LOG_DIR }}
 
     steps:
       - name: Checkout repository
@@ -38,16 +42,6 @@ jobs:
           node-version: 22
           cache: "npm"
           cache-dependency-path: backend/package-lock.json
-
-      # ------------------- Inject .env.production -------------------
-      - name: Create backend/.env.production from secret
-        run: |
-          if [ -n "${{ secrets.ENV_PRODUCTION }}" ]; then
-            echo "${{ secrets.ENV_PRODUCTION }}" > backend/.env.production
-            echo "✅ backend/.env.production created"
-          else
-            echo "⚠️ ENV_PRODUCTION secret not set!"
-          fi
 
       - name: Install backend dependencies
         run: npm ci
@@ -61,14 +55,27 @@ jobs:
       - name: Build backend
         run: npm run build
         working-directory: backend
+        env:
+          # Expose all secret-based env variables to build
+          NODE_ENV: production
+          PORT: ${{ secrets.PORT }}
+          API_PREFIX: ${{ secrets.API_PREFIX }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          GAS_URL: ${{ secrets.GAS_URL }}
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DATA_DIR: ${{ secrets.DATA_DIR }}
+          CACHE_DIR: ${{ secrets.CACHE_DIR }}
+          LOG_DIR: ${{ secrets.LOG_DIR }}
 
-      # ------------------- Check forbidden files -------------------
       - name: Check forbidden files (logs/cache)
         run: |
           FILES=""
           for dir in ./backend/logs ./frontend/logs ./backend/data/cache ./frontend/data/cache; do
             if [ -d "$dir" ]; then
-              FILES="$FILES $(find $dir -type f ! -name 'logs.ts')"
+              FILES="$FILES $(find $dir)"
             fi
           done
           if [ -n "$FILES" ]; then
@@ -95,6 +102,21 @@ jobs:
   frontend-build:
     name: Frontend Build & Firebase Deploy
     runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: ${{ secrets.API_PREFIX }}
+      VITE_APP_NAME: SadakSathi
+      VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_APP_KEY: ${{ secrets.FIREBASE_APP_KEY }}
+      FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+      FIREBASE_BACKEND: ${{ secrets.FIREBASE_BACKEND }}
+      FIREBASE_BASE_URL: ${{ secrets.FIREBASE_BASE_URL }}
+      FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+      FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+      FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,10 +135,6 @@ jobs:
       - name: Build frontend
         run: npm run build
         working-directory: frontend
-        env:
-          VITE_API_BASE_URL: /api
-          VITE_APP_NAME: SadakSathi
-          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       - name: Deploy to Firebase Hosting
         if: github.ref == 'refs/heads/main'
