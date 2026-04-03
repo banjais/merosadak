@@ -54,9 +54,8 @@ jobs:
       - name: Build backend
         run: |
           cd backend
-          npm run clean
+          rm -rf dist
           npx tsup
-          npx tsx src/scripts/diagnostics.ts || true
 
       - name: Audit backend dependencies
         run: npm audit --audit-level=moderate -w merosadak-backend || true
