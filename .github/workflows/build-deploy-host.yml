@@ -108,11 +108,11 @@ jobs:
 
       - name: Clean install dependencies
         run: |
-          rm -rf node_modules frontend/node_modules
+          rm -rf node_modules frontend/node_modules backend/node_modules
           npm install
 
       - name: Build frontend
-        run: cd frontend && npm run build
+        run: cd frontend && npx vite build
 
       - name: Deploy to Firebase Hosting
         if: github.ref == 'refs/heads/main'
