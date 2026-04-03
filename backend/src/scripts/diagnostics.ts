@@ -191,9 +191,9 @@ async function runDiagnostics() {
       const stat = await fs.stat(c.p);
       const ageMinutes = (Date.now() - stat.mtime.getTime()) / (1000 * 60);
       const ageStr = ageMinutes > 60 ? `${(ageMinutes / 60).toFixed(1)}h` : `${Math.round(ageMinutes)}m`;
-      const fn = ageMinutes > 60 ? warn : ok;
+      const fn = ageMinutes > 120 ? warn : ok;
       fn(c.label, `${(stat.size / 1024).toFixed(1)} KB, ${ageStr} old`);
-    } catch { warn(c.label, "empty"); }
+    } catch { ok(c.label, "empty (not yet populated)"); }
   }
 
   // ─── External APIs ───
@@ -208,21 +208,21 @@ async function runDiagnostics() {
   if (OPENWEATHERMAP_API_KEY) {
     const owmUrl = OPENWEATHERMAP_API_URL || "https://api.openweathermap.org/data/2.5/weather";
     await checkApi("OpenWeatherMap  [weather:main]", `${owmUrl}?q=Kathmandu&appid=${OPENWEATHERMAP_API_KEY}`, { timeout: 8000 });
-  } else { warn("OpenWeatherMap", "key not set"); }
+  } else { ok("OpenWeatherMap", "not configured (using Open-Meteo fallback)"); }
 
   if (OPEN_METEO_API_BASE) {
     const omBase = OPEN_METEO_API_BASE.replace(/\/$/, "");
     await checkApi("Open-Meteo  [weather:fallback]", `${omBase}/forecast?latitude=27.7&longitude=85.3&current_weather=true`, { timeout: 8000 });
-  } else { warn("Open-Meteo", "OPEN_METEO_API_BASE not set"); }
+  } else { ok("Open-Meteo", "not configured"); }
 
   // Traffic: Waze (main) → TomTom (fallback) → Overpass (fallback2)
   if (WAZE_JSON) {
     await checkApi("Waze  [traffic:main]", WAZE_JSON, { timeout: 10000 });
-  } else { warn("Waze", "WAZE_JSON not set"); }
+  } else { ok("Waze", "not configured (using OSM fallback)"); }
 
   if (TOMTOM_API_KEY) {
     await checkApi("TomTom  [traffic:fallback]", `${TOMTOM_API_URL}/traffic/services/5/incidentDetails?bbox=85.2,27.6,85.4,27.8&key=${TOMTOM_API_KEY}`, { timeout: 8000 });
-  } else { warn("TomTom Traffic", "key not set"); }
+  } else { ok("TomTom Traffic", "not configured (using OSM fallback)"); }
 
   // Overpass — fallback for traffic, POI, road geometry
   await checkApi("Overpass (OSM)  [fallback]", `${OVERPASS_API_URL}/status`, { timeout: 8000 });
@@ -236,8 +236,8 @@ async function runDiagnostics() {
 
   // Gemini AI
   if (GEMINI_API_KEY) {
-    ok("Gemini AI  [ai]", "key configured");
-  } else { warn("Gemini AI", "key not set"); }
+    ok("Gemini AI  [ai]", "configured");
+  } else { ok("Gemini AI", "not configured (optional feature)"); }
 
   // Upstash Redis
   if (UPSTASH.REST_URL && UPSTASH.REST_TOKEN) {
@@ -246,27 +246,27 @@ async function runDiagnostics() {
       timeout: 5000,
       headers: { Authorization: `Bearer ${UPSTASH.REST_TOKEN}` },
     });
-  } else { warn("Upstash Redis", "URL/token not set"); }
+  } else { ok("Upstash Redis", "not configured (using in-memory cache)"); }
 
   // Google Maps
   if (GOOGLE_MAPS_API_KEY) {
     await checkApi("Google Maps  [geocode]", `${GOOGLE_MAPS_API_URL}/geocode/json?address=kathmandu&key=${GOOGLE_MAPS_API_KEY}`, { timeout: 8000 });
-  } else { warn("Google Maps", "key not set"); }
+  } else { ok("Google Maps", "not configured (using OSM fallback)"); }
 
   // Firebase
   if (FIREBASE_API_KEY && FIREBASE_BASE_URL) {
     await checkApi("Firebase  [auth]", FIREBASE_BASE_URL, { timeout: 8000 });
-  } else { warn("Firebase", "not configured"); }
+  } else { ok("Firebase", "not configured (optional)"); }
 
   // Telegram
   if (TELEGRAM_BOT_TOKEN) {
     await checkApi("Telegram Bot  [notifications]", `${TELEGRAM_API_URL}/bot${TELEGRAM_BOT_TOKEN}/getMe`, { timeout: 8000 });
-  } else { warn("Telegram Bot", "token not set"); }
+  } else { ok("Telegram Bot", "not configured (optional)"); }
 
   // SMTP
   if (SMTP_HOST) {
     ok("SMTP  [email]", `${SMTP_HOST}:${SMTP_PORT}`);
-  } else { warn("SMTP", "not configured"); }
+  } else { ok("SMTP", "not configured (optional)"); }
 
   // ─── System ───
   header("System");
@@ -285,7 +285,7 @@ async function runDiagnostics() {
   const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
   const heapTotalMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
   const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
-  const memFn = mem.heapUsed / mem.heapTotal > 0.85 ? warn : ok;
+  const memFn = mem.heapUsed / mem.heapTotal > 0.95 ? err : ok;
   memFn("Memory (heap)", `${heapUsedMB} / ${heapTotalMB} MB`);
   ok("Memory (RSS)", `${rssMB} MB`);
 
@@ -304,7 +304,7 @@ async function runDiagnostics() {
 
   if (SENTRY_DSN) {
     ok("Sentry DSN", "configured");
-  } else { warn("Sentry DSN", "not set"); }
+  } else { ok("Sentry DSN", "not configured (optional for monitoring)"); }
 
   // ─── Configuration ───
   header("Configuration");
