@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "merge": "tsx src/scripts/mergeData.ts",
     "diag": "tsx src/scripts/diagnostics.ts",
     "validate-sheet": "tsx src/scripts/validateSheet.ts",
