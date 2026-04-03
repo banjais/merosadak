@@ -54,15 +54,16 @@ jobs:
       - name: Build backend
         run: |
           cd backend
+          export NODE_ENV=production
           rm -rf dist
           npx tsup
 
       - name: Audit backend dependencies
-        run: npm audit --audit-level=moderate -w merosadak-backend || true
+        run: npm audit --audit-level=moderate -w backend || true
 
       - name: Check forbidden runtime files
         run: |
-          for dir in merosadak-backend/logs merosadak-backend/data/cache; do
+          for dir in backend/logs backend/data/cache; do
             if [ -d "$dir" ] && [ "$(ls -A $dir)" ]; then
               echo "❌ Forbidden files found in $dir"
               exit 1
@@ -111,7 +112,7 @@ jobs:
           npm install
 
       - name: Build frontend
-        run: npm run build -w frontend
+        run: cd frontend && npm run build
 
       - name: Deploy to Firebase Hosting
         if: github.ref == 'refs/heads/main'
