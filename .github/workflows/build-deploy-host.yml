@@ -49,10 +49,14 @@ jobs:
         run: npm install
 
       - name: Lint backend
-        run: npm run lint -w merosadak-backend || true
+        run: cd backend && npm run lint || true
 
-      - name: Build backend (includes data merge)
-        run: npm run build:skip-merge -w merosadak-backend
+      - name: Build backend
+        run: |
+          cd backend
+          npm run clean
+          npx tsup
+          npx tsx src/scripts/diagnostics.ts || true
 
       - name: Audit backend dependencies
         run: npm audit --audit-level=moderate -w merosadak-backend || true
