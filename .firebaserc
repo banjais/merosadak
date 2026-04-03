@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "sadak-sathi-3ab73"
+  },
+  "targets": {
+    "sadak-sathi-3ab73": {
+      "hosting": {
+        "sadaksathi-site": [
+          "sadaksathi"
+        ],
+        "default": [
+          "sadak-sathi-3ab73"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
