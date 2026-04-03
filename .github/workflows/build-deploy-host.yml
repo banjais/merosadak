@@ -4,8 +4,9 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "merosadak-backend/**"
+      - "backend/**"
       - "frontend/**"
+      - "package.json"
       - ".github/workflows/build-deploy-host.yml"
   pull_request:
     branches: [main]
