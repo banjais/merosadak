@@ -1,22 +1,7 @@
 {
   "hosting": [
     {
-      "target": "merosadak-site",
-      "public": "frontend/dist",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
-      "rewrites": [
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ]
-    },
-    {
-      "target": "default",
+      "target": "merosadak",
       "public": "frontend/dist",
       "ignore": [
         "firebase.json",
