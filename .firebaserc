@@ -1,15 +1,15 @@
 {
   "projects": {
-    "default": "sadak-sathi-3ab73"
+    "default": "merosadak"
   },
   "targets": {
-    "sadak-sathi-3ab73": {
+    "merosadak": {
       "hosting": {
-        "sadaksathi-site": [
-          "sadaksathi"
+        "merosadak-site": [
+          "merosadak"
         ],
         "default": [
-          "sadak-sathi-3ab73"
+          "merosadak"
         ]
       }
     }
