@@ -7,7 +7,7 @@ export const SHEET_HEADERS = {
   DIVISION: "div_name",
   ROAD_CODE: "road_refno",          
   ROAD_NAME: "road_name",
-  DISTRICT: "incidentDistrict",     
+  DISTRICT: "dist_name",      // Fixed: was "incidentDistrict"     
   PLACE: "incidentPlace",           
   CHAINAGE: "chainage",
   COORDINATES: "incidentCoordinate", 

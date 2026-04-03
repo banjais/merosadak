@@ -2,7 +2,7 @@
 // Centralized API client — no dependency on backend/functions or Firebase proxy.
 // Points directly to the backend server (Render / local).
 
-const DEFAULT_BASE = "https://sadaksathi-all-in-one.onrender.com/api";
+const DEFAULT_BASE = "https://sadaksathi.web.app/api";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE;
 
 // Build full URL:  BASE_URL + "/v1" + endpoint
