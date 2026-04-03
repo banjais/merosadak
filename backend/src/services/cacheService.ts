@@ -28,20 +28,26 @@ const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 // ────────────────────────────────
 let _redisClient: Redis | null = null;
 
-export function getRedisClient(): Redis {
+export function getRedisClient(): Redis | null {
   if (!_redisClient) {
     // Use the exported config values which are already loaded
     const url = UPSTASH.REST_URL;
     const token = UPSTASH.REST_TOKEN;
 
     if (!url || !token) {
-      throw new Error(`Redis configuration missing: ${UPSTASH.REST_URL ? 'token' : 'URL and token'} must be set`);
+      logInfo(`[Cache] Redis not configured - using L1 (RAM) + Disk cache only`);
+      return null;
     }
 
-    _redisClient = new Redis({
-      url,
-      token,
-    });
+    try {
+      _redisClient = new Redis({
+        url,
+        token,
+      });
+    } catch (err: any) {
+      logError(`[Cache] Failed to initialize Redis client: ${err.message}`);
+      return null;
+    }
   }
   return _redisClient;
 }
@@ -49,6 +55,9 @@ export function getRedisClient(): Redis {
 export const redisClient = new Proxy({} as Redis, {
   get(_target, prop) {
     const client = getRedisClient();
+    if (!client) {
+      return async () => null;
+    }
     return (client as any)[prop];
   }
 });
