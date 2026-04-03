@@ -182,6 +182,7 @@ const TileLayerSwitcher = ({ layer, isDarkMode, mapEngine }: { layer: MapLayerTy
         minZoom: 6,
         maxBounds: mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined,
         bounds: mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
     } else {
       tileLayerRef.current.setUrl(url);
