@@ -36,7 +36,7 @@ if (isProd) {
 }
 
 app.use(cors({
-  origin: ['https://sadaksathi.web.app', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: ['https://merosadak.web.app', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }));
 
