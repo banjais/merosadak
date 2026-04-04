@@ -1,4 +1,4 @@
-name: Sadak-Sathi CI/CD Pipeline
+name: MeroSadak CI/CD Pipeline
 
 on:
   push:
@@ -92,7 +92,7 @@ jobs:
 
     env:
       VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-      VITE_APP_NAME: SadakSathi
+      VITE_APP_NAME: MeroSadak
       VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:

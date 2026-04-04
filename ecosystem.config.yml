@@ -2,7 +2,7 @@ apps:
   # -------------------------
   # Backend
   # -------------------------
-  - name: sadaksathi-backend
+  - name: merosadak-backend
     cwd: ./backend
     script: dist/index.js
     watch: false
@@ -20,7 +20,7 @@ apps:
   # -------------------------
   # Frontend (Optional: serve built frontend)
   # -------------------------
-  - name: sadaksathi-frontend
+  - name: merosadak-frontend
     cwd: ./frontend
     script: serve
     args: -s dist -l 5000

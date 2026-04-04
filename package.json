@@ -6,13 +6,13 @@
     "backend"
   ],
   "scripts": {
-    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run dev -w merosadak-backend\" \"npm run dev -w frontend\"",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run dev -w merosadak-backend\" \"npm run dev -w merosadak-frontend\"",
     "install-all": "npm install",
     "clean": "rimraf node_modules frontend/node_modules merosadak-backend/node_modules",
     "merge": "npm run merge -w merosadak-backend",
-    "build": "cross-env NODE_ENV=production npm run merge -w merosadak-backend && npm run build -w merosadak-backend && npm run build -w frontend",
-    "build:skip-merge": "npm run build -w merosadak-backend && npm run build -w frontend",
-    "start": "npm run start -w merosadak-backend & npm run start -w frontend",
+    "build": "cross-env NODE_ENV=production npm run merge -w merosadak-backend && npm run build -w merosadak-backend && npm run build -w merosadak-frontend",
+    "build:skip-merge": "npm run build -w merosadak-backend && npm run build -w merosadak-frontend",
+    "start": "npm run start -w merosadak-backend & npm run start -w merosadak-frontend",
     "stop": "npx kill-port 4000 5000 || true"
   },
   "devDependencies": {
