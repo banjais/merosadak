@@ -115,8 +115,12 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend && npx vite build
-          mkdir -p dist/boundary
-          cp ../backend/data/boundary.geojson dist/boundary/
+
+      - name: Copy boundary file
+        run: |
+          ls -la backend/data/
+          mkdir -p frontend/dist/boundary
+          cp backend/data/boundary.geojson frontend/dist/boundary/
 
       - name: Deploy to Firebase Hosting
         if: github.ref == 'refs/heads/main'
