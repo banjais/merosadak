@@ -32,7 +32,7 @@ export const APP_CONFIG = {
     streetTile: "https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
     satelliteTile: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     terrainTile: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-    nepalTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    nepalTile: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     offline: {
       enabled: true,
       cacheMaxAge: 30 * 24 * 60 * 60 * 1000,

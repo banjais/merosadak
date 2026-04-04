@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "merosadak",
     "public": "frontend/dist",
     "ignore": [
       "firebase.json",

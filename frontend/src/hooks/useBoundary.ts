@@ -4,7 +4,7 @@ import { api } from "../services/apiService";
 import { GeoData } from "../services/apiService";
 
 /**
- * Custom Hook to fetch Nepal boundary from backend.
+ * Custom Hook to fetch Nepal boundary from backend or static file.
  * boundary can be null if the API call fails — NepalBounds component
  * has a hardcoded fallback so the mask always renders regardless.
  */
@@ -26,8 +26,19 @@ export function useBoundary() {
         }
       } catch (err: any) {
         if (!cancelled) {
-          setError(err.message || "Failed to fetch boundary");
-          console.error("[useBoundary] API error:", err.message);
+          console.warn("[useBoundary] API fetch failed, trying static file:", err.message);
+          try {
+            const response = await fetch('/boundary/boundary.geojson');
+            if (response.ok) {
+              const staticData = await response.json();
+              if (!cancelled && staticData) {
+                setBoundary(staticData as GeoData);
+              }
+            }
+          } catch (staticErr) {
+            console.error("[useBoundary] Static file also failed:", staticErr);
+            setError(err.message || "Failed to fetch boundary");
+          }
         }
       } finally {
         if (!cancelled) {
