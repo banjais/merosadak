@@ -106,19 +106,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Clean install dependencies
+      - name: Install and Build frontend
         run: |
-          rm -rf node_modules frontend/node_modules backend/node_modules
           npm install
-          cd frontend && npm install
-
-      - name: Build frontend
-        run: |
-          cd frontend && npx vite build
+          cd frontend && npm install && npx vite build
 
       - name: Copy boundary file
         run: |
-          ls -la backend/data/
           mkdir -p frontend/dist/boundary
           cp backend/data/boundary.geojson frontend/dist/boundary/
 
