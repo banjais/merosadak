@@ -46,7 +46,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.3",
-    "@types/nodemailer": "^8.0.0",
+    "@types/nodemailer": "^6.4.17",
     "@types/ws": "^8.5.14",
     "eslint": "^9.39.2",
     "globals": "^14.0.0",
