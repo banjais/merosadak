@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_ENV: production
       PORT: ${{ secrets.PORT }}
       API_PREFIX: ${{ secrets.API_PREFIX }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -49,27 +48,27 @@ jobs:
         run: npm install
 
       - name: Lint backend
-        run: cd backend && npm run lint || true
+        run: cd backend && npm run lint
 
       - name: Build backend
         run: |
           cd backend
           export NODE_ENV=production
           rm -rf dist
-          npx tsup
+          npm run build
 
       - name: Audit backend dependencies
-        run: npm audit --audit-level=moderate -w backend || true
+        run: npm audit --audit-level=moderate -w backend
 
       - name: Check forbidden runtime files
         run: |
           for dir in backend/logs backend/data/cache; do
             if [ -d "$dir" ] && [ "$(ls -A $dir)" ]; then
-              echo "❌ Forbidden files found in $dir"
+              echo "Forbidden files found in $dir"
               exit 1
             fi
           done
-          echo "✅ No forbidden files"
+          echo "No forbidden files"
 
       - name: Trigger Render deployment (backend)
         if: github.ref == 'refs/heads/main'
@@ -78,9 +77,9 @@ jobs:
         run: |
           if [ -n "$RENDER_DEPLOY_HOOK" ]; then
             curl -X POST "$RENDER_DEPLOY_HOOK"
-            echo "✅ Backend deployed on Render"
+            echo "Backend deployed on Render"
           else
-            echo "⚠️ RENDER_DEPLOY_HOOK not set"
+            echo "RENDER_DEPLOY_HOOK not set"
           fi
 
   # ---------------------------------------------------------
@@ -92,7 +91,6 @@ jobs:
     needs: backend-build
 
     env:
-      NODE_ENV: production
       VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
       VITE_APP_NAME: SadakSathi
       VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -106,14 +104,13 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Install and build frontend
+      - name: Build frontend
         run: |
           cd frontend
-          npm install
-          ./node_modules/.bin/vite build
+          npm run build
 
       - name: Copy boundary file
         run: |
