@@ -71,7 +71,7 @@ jobs:
           echo "No forbidden files"
 
       - name: Trigger Render deployment (backend)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'build and deploy')
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
@@ -118,7 +118,7 @@ jobs:
           cp backend/data/boundary.geojson frontend/dist/boundary/
 
       - name: Deploy to Firebase Hosting
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'build and deploy')
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
