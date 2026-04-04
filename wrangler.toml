@@ -1,4 +1,4 @@
-name = "sadaksathi"
+name = "merosadak"
 main = "backend/cloudflare/cf-worker.js"
 compatibility_date = "2025-12-29"
 account_id = "052a34d4627b5c02d0bff84ff1c0f906"
@@ -6,7 +6,7 @@ workers_dev = true
 
 # Optional: Environment variables (only if you use them in Worker)
 [vars]
-FIREBASE_BACKEND = "https://sadaksathi.web.app"
+FIREBASE_BACKEND = "https://merosadak.web.app"
 RENDER_BACKEND = "https://sadaksathi.onrender.com"
 
 # Cron job (runs every 5 minutes)
