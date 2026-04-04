@@ -106,10 +106,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install and Build frontend
-        run: |
-          npm install
-          cd frontend && npm install && npx vite build
+      - name: Install backend deps
+        run: npm install
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npx vite build
 
       - name: Copy boundary file
         run: |
