@@ -7,7 +7,7 @@ workers_dev = true
 # Optional: Environment variables (only if you use them in Worker)
 [vars]
 FIREBASE_BACKEND = "https://sadaksathi.web.app"
-RENDER_BACKEND = "" # put your render backend URL if you have one
+RENDER_BACKEND = "https://merosadak-backend.onrender.com"
 
 # Cron job (runs every 5 minutes)
 [triggers]
