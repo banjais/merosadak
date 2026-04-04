@@ -253,6 +253,20 @@ const Map3DToggle = ({ layer }: { layer: MapLayerType }) => {
 };
 
 // ==========================
+// Helper: Convert API URL to WebSocket URL
+// ==========================
+const getWebSocketUrl = (): string => {
+  const apiUrl = APP_CONFIG.apiBaseUrl;
+  const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
+  try {
+    const url = new URL(apiUrl);
+    return `${wsProtocol}//${url.host}/ws/live`;
+  } catch {
+    return 'ws://localhost:4000/ws/live';
+  }
+};
+
+// ==========================
 // Main App
 // ==========================
 const App: React.FC = () => {
@@ -343,18 +357,6 @@ const App: React.FC = () => {
   const handleMapClick = (latlng: { lat: number; lng: number }) => {
     if (isCalculatorOpen) {
       setCalcPoints((prev) => [...prev, latlng]);
-    }
-  };
-
-  // Helper for WebSocket
-  const getWebSocketUrl = (): string => {
-    const apiUrl = APP_CONFIG.apiBaseUrl;
-    const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
-    try {
-      const url = new URL(apiUrl);
-      return `${wsProtocol}//${url.host}/ws/live`;
-    } catch {
-      return 'ws://localhost:4000/ws/live';
     }
   };
 
