@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, ErrorInfo, useMemo } from 'react';
-import { MapContainer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { ShieldAlert } from 'lucide-react';
 import L from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -158,38 +158,30 @@ const getMarkerIcon = (type: string, severity: string) => {
 };
 
 // ==========================
-// Tile Layer Switcher — swaps tiles based on mapLayer, mapEngine, and dark mode
+// Tile Layer Component — renders tile layer based on props
 // ==========================
-const TileLayerSwitcher = ({ layer, isDarkMode, mapEngine }: { layer: MapLayerType; isDarkMode: boolean; mapEngine: MapEngine | null }) => {
-  const map = useMap();
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
-
+const TileLayerComponent = ({ layer, isDarkMode, mapEngine }: { layer: MapLayerType; isDarkMode: boolean; mapEngine: MapEngine | null }) => {
   const tileUrls: Record<string, string> = {
-    standard: mapEngine === 'nepal' 
-      ? APP_CONFIG.map.nepalTile 
+    standard: mapEngine === 'nepal'
+      ? APP_CONFIG.map.nepalTile
       : (isDarkMode ? APP_CONFIG.map.darkTile : APP_CONFIG.map.streetTile),
     satellite: APP_CONFIG.map.satelliteTile,
     terrain: APP_CONFIG.map.terrainTile,
     '3d': isDarkMode ? APP_CONFIG.map.darkTile : APP_CONFIG.map.streetTile,
   };
 
-  useEffect(() => {
-    const url = tileUrls[layer] || tileUrls.standard;
+  const url = tileUrls[layer] || tileUrls.standard;
 
-    if (!tileLayerRef.current) {
-      tileLayerRef.current = L.tileLayer(url, { 
-        maxZoom: 19,
-        minZoom: 6,
-        maxBounds: mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined,
-        bounds: mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
-    } else {
-      tileLayerRef.current.setUrl(url);
-    }
-  }, [layer, map, isDarkMode, mapEngine]);
-
-  return null;
+  return (
+    <TileLayer
+      url={url}
+      maxZoom={19}
+      minZoom={6}
+      maxBounds={mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined}
+      bounds={mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined}
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    />
+  );
 };
 
 // ==========================
@@ -465,9 +457,9 @@ const App: React.FC = () => {
                 </Marker>
               )}
 
+              <TileLayerComponent layer={mapLayer} isDarkMode={isDarkMode} mapEngine={mapEngine} />
               <MapController target={targetLocation} />
               <GeoAutoCenter lat={geo.lat} lng={geo.lng} loading={geo.loading || mapEngine === 'world'} engine={mapEngine} />
-              <TileLayerSwitcher layer={mapLayer} isDarkMode={isDarkMode} mapEngine={mapEngine} />
               <Map3DToggle layer={mapLayer} />
               <MapEngineChanger engine={mapEngine} geoLat={geo.lat} geoLng={geo.lng} geoLoading={geo.loading} />
               <MapControls userLocation={geo.loading ? null : { lat: geo.lat, lng: geo.lng }} />
