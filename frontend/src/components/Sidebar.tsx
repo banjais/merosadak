@@ -279,10 +279,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 )}
                 
-                {(serviceType ? (serviceResults || []) : incidents).length === 0 ? (
+                {(serviceType ? (serviceResults || []) : (incidents || [])).length === 0 ? (
                   <div className="text-center py-10 text-on-surface-variant/50 text-sm italic font-body">No active {serviceType || 'safety'} items found in this region</div>
                 ) : (
-                  (serviceType ? serviceResults || [] : incidents).map((incident: any) => (
+                  (serviceType ? serviceResults || [] : (incidents || [])).map((incident: any) => (
                     <div 
                       key={incident.id} 
                       onClick={() => onSelectIncident(incident)}
