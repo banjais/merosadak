@@ -96,7 +96,13 @@ export async function mergeData() {
 
     const rawData = await fetchSheetData();
     if (!rawData.length) {
-      logInfo("[mergeData] No data returned from sheet. Skipping merge.");
+      logInfo("[mergeData] No data returned from sheet. Writing empty collection.");
+      await ensureCacheDir();
+      await fs.writeFile(
+        CACHE_FILE,
+        JSON.stringify({ type: "FeatureCollection", features: [] }, null, 2),
+        "utf-8"
+      );
       return;
     }
 

@@ -68,10 +68,10 @@ const userLocationIcon = L.divIcon({
 // ==========================
 // Error Boundary
 // ==========================
-class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; retryCount: number }> {
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, retryCount: 0 };
   }
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -80,7 +80,7 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
     console.error('MapErrorBoundary caught:', error);
   }
   handleRetry = () => {
-    this.setState({ hasError: false });
+    this.setState(prev => ({ hasError: false, retryCount: prev.retryCount + 1 }));
   };
   render() {
     if (this.state.hasError) {
@@ -98,7 +98,7 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
         </div>
       );
     }
-    return this.props.children;
+    return React.cloneElement(this.props.children as React.ReactElement, { key: `map-${this.state.retryCount}` });
   }
 }
 
@@ -479,10 +479,10 @@ const App: React.FC = () => {
           <MapErrorBoundary>
             <MapContainer
               center={geo.loading || (geo.lat === 0 && geo.lng === 0) ? NEPAL_CENTER : [geo.lat, geo.lng]}
-              zoom={geo.loading || (geo.lat === 0 && geo.lng === 0) ? 7 : 12}
-              minZoom={6}
+              zoom={geo.loading || (geo.lat === 0 && geo.lng === 0) ? (mapEngine === 'world' ? 5 : 7) : 12}
+              minZoom={mapEngine === 'world' ? 3 : 6}
               maxZoom={18}
-              maxBounds={NEPAL_MAX_BOUNDS}
+              maxBounds={mapEngine === 'world' ? [[-90, -180], [90, 180]] : NEPAL_MAX_BOUNDS}
               maxBoundsViscosity={0.9}        // Higher = stronger restriction
               zoomControl={false}
               className="h-full w-full"
