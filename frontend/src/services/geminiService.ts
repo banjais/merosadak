@@ -38,8 +38,8 @@ export async function getTravelAdvice(
     "Safety First Mode: Prioritize landslide, monsoon, and construction warnings. Use empathetic tone for stressed drivers.";
 
   const incidentContext =
-    incidents.length > 0
-      ? incidents.map((i) => `- ${i.type}: ${i.title} (${i.description})`).join("\n")
+    (incidents || []).length > 0
+      ? (incidents || []).map((i) => `- ${i.type}: ${i.title} (${i.description})`).join("\n")
       : "No major incidents reported currently.";
 
   const systemPrompt = `
