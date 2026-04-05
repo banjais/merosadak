@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "pdfkit": "^0.18.0",
     "rimraf": "^6.1.2",
     "ws": "^8.19.0"
   },
