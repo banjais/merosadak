@@ -12,13 +12,20 @@
     "check-env": "node -e \"console.log('VITE_API_BASE_URL =', process.env.VITE_API_BASE_URL)\""
   },
   "dependencies": {
+    "@google/genai": "^1.38.0",
+    "@types/leaflet": "^1.9.8",
+    "isomorphic-ws": "^5.0.0",
     "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
+    "lucide-react": "^0.563.0",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "react-leaflet": "^4.2.1",
+    "react-leaflet-cluster": "^2.0.0",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@google/genai": "^1.38.0",
     "@types/leaflet.markercluster": "^1.5.6",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
@@ -28,14 +35,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
     "globals": "^14.0.0",
-    "isomorphic-ws": "^5.0.0",
-    "leaflet.markercluster": "^1.5.3",
-    "lucide-react": "^0.563.0",
     "postcss": "8.4.38",
-    "react-leaflet": "^4.2.1",
-    "react-leaflet-cluster": "^2.0.0",
     "tailwindcss": "3.4.4",
-    "vite": "^7.3.1",
-    "ws": "^8.19.0"
+    "vite": "^7.3.1"
   }
 }

@@ -68,32 +68,33 @@ const userLocationIcon = L.divIcon({
 // ==========================
 // Error Boundary
 // ==========================
-class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; retryCount: number }> {
+class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; retryCount: number; error: Error | null }> {
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false, retryCount: 0 };
+    this.state = { hasError: false, retryCount: 0, error: null };
   }
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
-  componentDidCatch(error: Error) {
-    console.error('MapErrorBoundary caught:', error);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('MapErrorBoundary caught:', error, errorInfo);
   }
   handleRetry = () => {
-    this.setState(prev => ({ hasError: false, retryCount: prev.retryCount + 1 }));
+    this.setState(prev => ({ hasError: false, retryCount: prev.retryCount + 1, error: null }));
   };
   render() {
     if (this.state.hasError) {
       return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 font-bold bg-white/80 p-4">
-          <div className="text-center mb-4">
-            Map failed to load. Please refresh.
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 font-bold bg-white/80 p-4 z-50">
+          <div className="text-center mb-4 max-w-md">
+            <p className="text-lg mb-2">Map failed to load</p>
+            <p className="text-sm opacity-70 mb-4">{this.state.error?.message || 'Unknown error'}</p>
           </div>
           <button
             onClick={this.handleRetry}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+            className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold shadow-lg"
           >
-            Retry
+            Retry Loading Map
           </button>
         </div>
       );
