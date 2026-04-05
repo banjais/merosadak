@@ -31,12 +31,12 @@ export const APP_CONFIG = {
     minZoom: 6,
     maxZoom: 19,
 
-    // Tile URLs
-    darkTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    streetTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    // Tile URLs - using reliable OSM tile servers
+    darkTile: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    streetTile: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     satelliteTile: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    terrainTile: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-    nepalTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",   // Default for Nepal
+    terrainTile: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
+    nepalTile: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",   // Default for Nepal
 
     // Offline settings (if you use PouchDB caching later)
     offline: {

@@ -62,7 +62,7 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-// Fixed TileLayer with explicit subdomains
+// TileLayer component for map tiles
 const TileLayerComponent = ({ 
   layer, 
   isDarkMode, 
@@ -72,17 +72,18 @@ const TileLayerComponent = ({
   isDarkMode: boolean; 
   mapEngine: MapEngine | null;
 }) => {
-  let url: string = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const subdomains: string | string[] = 'abc';
+  // Default reliable tile URL
+  const defaultTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  let url: string = defaultTileUrl;
 
   if (layer === 'satellite') {
-    url = APP_CONFIG.map.satelliteTile || url;
+    url = APP_CONFIG.map.satelliteTile || defaultTileUrl;
   } else if (mapEngine === 'nepal') {
-    url = APP_CONFIG.map.nepalTile || url;
+    url = APP_CONFIG.map.nepalTile || defaultTileUrl;
   } else {
     url = isDarkMode 
-      ? (APP_CONFIG.map.darkTile || url)
-      : (APP_CONFIG.map.streetTile || url);
+      ? (APP_CONFIG.map.darkTile || defaultTileUrl)
+      : (APP_CONFIG.map.streetTile || defaultTileUrl);
   }
 
   return (
@@ -92,7 +93,6 @@ const TileLayerComponent = ({
       maxZoom={19}
       minZoom={6}
       bounds={mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined}
-      subdomains={subdomains}
       errorTileUrl="https://via.placeholder.com/256?text=Tile+Unavailable"
       updateWhenIdle={false}
       zIndex={1}
