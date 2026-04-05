@@ -3,7 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Make Leaflet available globally for plugins
+window.L = L;
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error("Root element not found");
