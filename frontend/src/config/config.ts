@@ -30,7 +30,7 @@ export const APP_CONFIG = {
     maxZoom: 18,
     darkTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     streetTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    satelliteTile: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    satelliteTile: "https://{s}.server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     terrainTile: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     nepalTile: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     offline: {

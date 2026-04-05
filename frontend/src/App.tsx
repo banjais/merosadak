@@ -169,6 +169,7 @@ const TileLayerComponent = ({
       maxZoom={19}
       minZoom={6}
       bounds={mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined}
+      subdomains={layer === 'satellite' ? 'abc' : undefined}
       errorTileUrl="https://via.placeholder.com/256?text=Tile+Unavailable" // Fallback for broken tiles
       updateWhenIdle={false}
       zIndex={1}
