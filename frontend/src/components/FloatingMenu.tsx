@@ -10,12 +10,14 @@ import {
   Ruler,
   TrafficCone as TrafficIcon,
   ShieldBan,
+  Megaphone,
 } from 'lucide-react';
 import { TravelIncident } from '../types';
 
 interface FloatingMenuProps {
   onServiceSelect: (service: string) => void;
   onOpenCalculator: () => void;
+  onOpenReport?: () => void;
   activeService: string | null;
   incidents?: TravelIncident[];
 }
@@ -29,7 +31,13 @@ const services = [
   { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500' },
 ];
 
-export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onServiceSelect, onOpenCalculator, activeService, incidents = [] }) => {
+export const FloatingMenu: React.FC<FloatingMenuProps> = ({ 
+  onServiceSelect, 
+  onOpenCalculator, 
+  onOpenReport,
+  activeService, 
+  incidents = [] 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const roadCounts = useMemo(() => {
@@ -92,6 +100,15 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onServiceSelect, onO
             </button>
           );
         })}
+
+        <button
+          onClick={() => { onOpenReport?.(); setIsOpen(false); }}
+          className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-xl transition-all bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-lg"
+          title="Report Incident"
+        >
+          <Megaphone size={20} />
+          <span className="text-[8px] font-bold uppercase font-label">Report</span>
+        </button>
 
         <div className="w-px h-8 bg-outline/15 mx-0.5" />
 

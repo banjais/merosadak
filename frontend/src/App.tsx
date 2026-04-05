@@ -27,6 +27,8 @@ import { SOSOverlay } from './components/SOSOverlay';
 import { MonsoonRiskOverlay } from './components/MonsoonRiskOverlay';
 import { BottomInfoArea } from './components/BottomInfoArea';
 import { RoadOverlay } from './components/RoadOverlay';
+import { ToastContainer, useToast } from './components/Toast';
+import ReportIncidentOverlay from './components/ReportIncidentOverlay';
 
 import { APP_CONFIG } from './config/config';
 import { useNepalData } from './hooks/useNepalData';
@@ -213,6 +215,7 @@ const App: React.FC = () => {
   const { messages, ask, isProcessing } = useGemini();
   const { isConnected } = useWebSocket('wss://merosadak.banjays.workers.dev/ws/live');
   const geo = useGeolocation();
+  const toast = useToast();
 
   const [targetLocation, setTargetLocation] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -231,6 +234,7 @@ const App: React.FC = () => {
   const [activeService, setActiveService] = useState<string | null>(null);
   const [selectedIncident, setSelectedIncident] = useState<TravelIncident | null>(null);
   const [activeSidebarTab, setActiveSidebarTab] = useState<'alerts' | 'chat'>('alerts');
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const [aiPersona, setAiPersona] = useState('safety');
   const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('female');
@@ -270,6 +274,10 @@ const App: React.FC = () => {
     setActiveSidebarTab('chat');
     setIsSidebarOpen(true);
     ask(query, { lat: geo.lat, lng: geo.lng }, incidents, aiPersona);
+  };
+
+  const handleReportSuccess = () => {
+    toast.success('Incident reported successfully! Thank you for helping others.');
   };
 
   const handleMapClick = (latlng: { lat: number; lng: number }) => {
@@ -320,6 +328,7 @@ const App: React.FC = () => {
         <FloatingMenu
           onServiceSelect={handleServiceSelect}
           onOpenCalculator={() => { closeOverlays(); setIsCalculatorOpen(true); setCalcPoints([]); }}
+          onOpenReport={() => setIsReportOpen(true)}
           activeService={activeService}
           incidents={incidents}
         />
@@ -435,6 +444,17 @@ const App: React.FC = () => {
         onAskAI={handleAskAI}
         isDarkMode={isDarkMode}
       />
+
+      {/* Report Incident Overlay */}
+      <ReportIncidentOverlay
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        location={geo.lat !== 0 ? { lat: geo.lat, lng: geo.lng } : undefined}
+        onSuccess={handleReportSuccess}
+      />
+
+      {/* Toast Notifications */}
+      {toast.ToastContainer}
 
       {isLoading && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white z-50">Loading map data...</div>}
     </div>

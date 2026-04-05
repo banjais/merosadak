@@ -27,6 +27,11 @@ import otpRouter from "./otpRouter.js";
 import superadminRouter from "./superadminRouter.js";
 
 // ----------------------
+// USER REPORTING
+// ----------------------
+import incidentRouter from "./incidentRouter.js";
+
+// ----------------------
 // MAIN API ROUTER
 // ----------------------
 const apiRouter = Router();
@@ -55,6 +60,11 @@ apiRouter.use("/search", searchRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/otp", otpRouter);
 apiRouter.use("/superadmin", superadminRouter);
+
+// ----------------------
+// USER REPORTING
+// ----------------------
+apiRouter.use("/incidents", incidentRouter);
 
 // ----------------------
 // Helper: Extract routes recursively
