@@ -1,18 +1,13 @@
 // src/components/NepalBounds.tsx
 import { useEffect, useMemo } from "react";
-import { useMap, Polygon } from "react-leaflet";
+import { useMap, GeoJSON } from "react-leaflet";
 import L from "leaflet";
-import type { FeatureCollection, Position } from "geojson";
+import type { FeatureCollection, Position, Feature, Polygon } from "geojson";
 
 interface Props {
   boundary: FeatureCollection | null;
   isDarkMode?: boolean;
 }
-
-// World bounds for the mask (covers everything)
-const WORLD_BOUNDS: Position[] = [
-  [-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]
-];
 
 // Hardcoded reliable Nepal boundary as fallback
 const FALLBACK_NEPAL_BOUNDARY: Position[] = [
@@ -54,6 +49,11 @@ const FALLBACK_NEPAL_BOUNDARY: Position[] = [
   [80.088425, 28.79447]
 ];
 
+// World bounds for the mask
+const WORLD_BOUNDS: Position[] = [
+  [-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]
+];
+
 export const NepalBounds: React.FC<Props> = ({ boundary, isDarkMode = false }) => {
   const map = useMap();
 
@@ -86,14 +86,12 @@ export const NepalBounds: React.FC<Props> = ({ boundary, isDarkMode = false }) =
   // Extract Nepal outer boundary from boundary data or use fallback
   const nepalBoundary = useMemo((): Position[] => {
     if (boundary && boundary.features && boundary.features.length > 0) {
-      // Find the country feature (not province)
       const countryFeature = boundary.features.find(f => 
         f.properties?.type === 'country'
       );
       if (countryFeature && countryFeature.geometry.type === 'Polygon') {
         return countryFeature.geometry.coordinates[0] as Position[];
       }
-      // If no country feature, use the first feature's boundary
       const firstFeature = boundary.features[0];
       if (firstFeature && firstFeature.geometry.type === 'Polygon') {
         return firstFeature.geometry.coordinates[0] as Position[];
@@ -103,57 +101,79 @@ export const NepalBounds: React.FC<Props> = ({ boundary, isDarkMode = false }) =
   }, [boundary]);
 
   // Extract province boundaries for display
-  const provinceBoundaries = useMemo(() => {
+  const provinceFeatures = useMemo(() => {
     if (!boundary || !boundary.features) return [];
     return boundary.features.filter(f => f.properties?.type === 'province');
   }, [boundary]);
 
-  // Create mask polygon coordinates (world with Nepal cut out)
-  const maskCoordinates = useMemo((): Position[][] => {
-    // Reverse Nepal boundary to create a hole in the world polygon
-    const nepalReversed = [...nepalBoundary].reverse();
-    return [WORLD_BOUNDS, nepalReversed];
+  // Create mask GeoJSON (world polygon with Nepal as a hole)
+  const maskGeoJSON = useMemo((): Feature<Polygon> => {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          WORLD_BOUNDS,  // Outer ring (world)
+          [...nepalBoundary].reverse()  // Inner ring (Nepal - reversed for hole)
+        ]
+      }
+    };
+  }, [nepalBoundary]);
+
+  // Create Nepal border line GeoJSON
+  const nepalBorderGeoJSON = useMemo((): Feature<Polygon> => {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [nepalBoundary]
+      }
+    };
   }, [nepalBoundary]);
 
   return (
     <>
       {/* Mask overlay - covers everything outside Nepal */}
-      <Polygon
-        positions={maskCoordinates}
-        color="transparent"
-        fillColor={isDarkMode ? "#0f172a" : "#f8fafc"}
-        fillOpacity={0.8}
-        weight={0}
+      <GeoJSON
+        data={maskGeoJSON}
+        style={{
+          color: 'transparent',
+          fillColor: isDarkMode ? '#0f172a' : '#f8fafc',
+          fillOpacity: 0.8,
+          weight: 0
+        }}
         interactive={false}
       />
       
       {/* Nepal outer border highlight */}
-      <Polygon
-        positions={nepalBoundary}
-        color="#ef4444"
-        fillColor="transparent"
-        fillOpacity={0}
-        weight={2.5}
+      <GeoJSON
+        data={nepalBorderGeoJSON}
+        style={{
+          color: '#ef4444',
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          weight: 2.5
+        }}
         interactive={false}
       />
       
-      {/* Province boundaries - subtle lines between provinces */}
-      {provinceBoundaries.map((feature, index) => {
-        if (feature.geometry.type !== 'Polygon') return null;
-        const coords = feature.geometry.coordinates[0] as Position[];
-        return (
-          <Polygon
-            key={`province-${index}`}
-            positions={coords}
-            color={isDarkMode ? "#475569" : "#94a3b8"}
-            fillColor="transparent"
-            fillOpacity={0}
-            weight={1}
-            dashArray="5, 5"
-            interactive={false}
-          />
-        );
-      })}
+      {/* Province boundaries - subtle dashed lines */}
+      {provinceFeatures.map((feature, index) => (
+        <GeoJSON
+          key={`province-${index}`}
+          data={feature}
+          style={{
+            color: isDarkMode ? '#475569' : '#94a3b8',
+            fillColor: 'transparent',
+            fillOpacity: 0,
+            weight: 1,
+            dashArray: '5, 5'
+          }}
+          interactive={false}
+        />
+      ))}
     </>
   );
 };
