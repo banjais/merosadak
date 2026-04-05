@@ -33,12 +33,12 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ onServiceSelect, onO
   const [isOpen, setIsOpen] = useState(false);
 
   const roadCounts = useMemo(() => {
-    const roadIncidents = incidents.filter(i => {
+    const roadIncidents = (incidents || []).filter(i => {
       const s = (i.status || i.type || '').toLowerCase();
-      return s.includes('block') || s.includes('one') || s.includes('resum') || i.type === 'Road Block' || i.type === 'One-Lane';
+      return s.includes('block') || s.includes('one') || s.includes('resum');
     });
     return {
-      blocked: roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block') || i.type === 'Road Block').length,
+      blocked: roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block')).length,
       total: roadIncidents.length,
     };
   }, [incidents]);

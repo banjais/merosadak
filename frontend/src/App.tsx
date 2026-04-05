@@ -389,7 +389,7 @@ const App: React.FC = () => {
         onToggleMenu={() => { if (!isSidebarOpen) closeOverlays(); setIsSidebarOpen(!isSidebarOpen); }}
         onToggleSystemMenu={() => { if (!isSystemMenuOpen) closeOverlays(); setIsSystemMenuOpen(!isSystemMenuOpen); }}
         onOpenNotifications={openNotifications}
-        noticeCount={incidents.filter(i => i.severity === 'high').length}
+        noticeCount={(incidents || []).filter(i => i.severity === 'high').length}
       />
 
       <SOSOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} userLocation={{ lat: geo.lat, lng: geo.lng }} />
@@ -505,7 +505,7 @@ const App: React.FC = () => {
               )}
 
               <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
-                {incidents.map((i) => (
+                {(incidents || []).map((i) => (
                   <Marker
                     key={i.id}
                     position={[i.lat, i.lng]}

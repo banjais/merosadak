@@ -13,36 +13,28 @@ export const RoadStatusDashboard: React.FC<RoadStatusDashboardProps> = ({
   onSelectIncident,
 }) => {
   const roadIncidents = useMemo(() => {
-    return incidents.filter((i) => {
+    return (incidents || []).filter((i) => {
       const text = `${i.type || ''} ${i.status || ''}`.toLowerCase();
-      return (
-        text.includes('block') ||
-        text.includes('one') ||
-        text.includes('resum') ||
-        i.type === 'Road Block' ||
-        i.type === 'One-Lane' ||
-        i.type === 'Resumed'
-      );
+      return text.includes('block') || text.includes('one') || text.includes('resum');
     });
   }, [incidents]);
 
   const blocked = useMemo(() => 
     roadIncidents.filter((i) => {
       const text = `${i.type || ''} ${i.status || ''}`.toLowerCase();
-      return text.includes('block') || i.type === 'Road Block';
+      return text.includes('block');
     }), [roadIncidents]);
 
   const oneLane = useMemo(() => 
     roadIncidents.filter((i) => {
       const text = `${i.type || ''} ${i.status || ''}`.toLowerCase();
-      return text.includes('one') || i.type === 'One-Lane';
+      return text.includes('one');
     }), [roadIncidents]);
 
   const resumed = useMemo(() => 
     roadIncidents.filter((i) => {
       const text = `${i.type || ''} ${i.status || ''}`.toLowerCase();
-      return (text.includes('resum') || i.type === 'Resumed') &&
-             !text.includes('block') && !text.includes('one');
+      return text.includes('resum') && !text.includes('block') && !text.includes('one');
     }), [roadIncidents]);
 
   const groups = [

@@ -8,7 +8,7 @@ interface MonsoonRiskOverlayProps {
 }
 
 export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incidents }) => {
-  const monsoonIncidents = incidents.filter(i => i.type === 'MONSOON');
+  const monsoonIncidents = (incidents || []).filter(i => i.type === 'MONSOON');
 
   if (monsoonIncidents.length === 0) return null;
 

@@ -18,15 +18,16 @@ export function useNepalData() {
   const pois = usePOIs();
   const boundaryHook = useBoundary();
 
-  // Combine incidents from all sources
+  // Combine incidents from all sources (ensure arrays are never undefined)
   const incidents: TravelIncident[] = useMemo(() => {
-    return [
-      ...roads.data,
-      ...traffic.data,
-      ...weather.data,
-      ...monsoon.data,
-      ...pois.data
-    ].sort((a, b) => (b.timestamp ? new Date(b.timestamp).getTime() : 0) - (a.timestamp ? new Date(a.timestamp).getTime() : 0));
+    const allIncidents = [
+      ...(roads.data || []),
+      ...(traffic.data || []),
+      ...(weather.data || []),
+      ...(monsoon.data || []),
+      ...(pois.data || [])
+    ];
+    return allIncidents.sort((a, b) => (b.timestamp ? new Date(b.timestamp).getTime() : 0) - (a.timestamp ? new Date(a.timestamp).getTime() : 0));
   }, [roads.data, traffic.data, weather.data, monsoon.data, pois.data]);
 
   // Loading state

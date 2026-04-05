@@ -191,13 +191,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-3">
             {/* Road Status Summary Bar */}
             {(() => {
-              const roadIncidents = incidents.filter(i => {
+              const roadIncidents = (incidents || []).filter(i => {
                 const s = (i.status || i.type || '').toLowerCase();
-                return s.includes('block') || s.includes('one') || s.includes('resum') || i.type === 'Road Block' || i.type === 'One-Lane';
+                return s.includes('block') || s.includes('one') || s.includes('resum');
               });
-              const blockedCount = roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block') || i.type === 'Road Block').length;
-              const oneLaneCount = roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('one') || i.type === 'One-Lane').length;
-              const resumedCount = roadIncidents.filter(i => ((i.status || i.type || '').toLowerCase().includes('resum') || i.type === 'Resumed') && !(i.status || i.type || '').toLowerCase().includes('block') && !(i.status || i.type || '').toLowerCase().includes('one')).length;
+              const blockedCount = roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block')).length;
+              const oneLaneCount = roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('one')).length;
+              const resumedCount = roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('resum') && !(i.status || i.type || '').toLowerCase().includes('block') && !(i.status || i.type || '').toLowerCase().includes('one')).length;
               return (
                 <div className="flex gap-1.5 p-2 rounded-xl bg-surface-container-low border border-outline/10 mb-2">
                   <button onClick={() => onSelectService('roads')} className="flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 transition-all">

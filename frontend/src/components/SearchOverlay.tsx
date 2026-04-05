@@ -52,7 +52,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         } catch (err) {}
 
         const lowerQuery = query.toLowerCase();
-        const hits = incidents.filter(i => {
+        const hits = (incidents || []).filter(i => {
           const titleMatch = i.title?.toLowerCase().includes(lowerQuery);
           const descMatch = i.description?.toLowerCase().includes(lowerQuery);
           const locationMatch = i.location?.toLowerCase().includes(lowerQuery);
