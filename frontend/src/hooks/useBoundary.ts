@@ -1,6 +1,7 @@
 // frontend/src/hooks/useBoundary.ts
 import { useEffect, useState } from "react";
 import { GeoData } from "../services/apiService";
+import { APP_CONFIG } from "../config/config";
 
 /**
  * Custom Hook to fetch Nepal boundary from static file.
@@ -17,11 +18,11 @@ export function useBoundary() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch('/boundary/boundary.geojson');
+        const response = await fetch(`${APP_CONFIG.apiBaseUrl}/api/boundary`);
         if (response.ok) {
-          const data = await response.json();
-          if (!cancelled && data) {
-            setBoundary(data as GeoData);
+          const result = await response.json();
+          if (!cancelled && result.success && result.data) {
+            setBoundary(result.data as GeoData);
           }
         } else {
           if (!cancelled) {
