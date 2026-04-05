@@ -1,4 +1,4 @@
-// App.tsx
+// src/App.tsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   MapContainer, 
@@ -42,22 +42,17 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 
-// Fix default marker icons
-try {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconUrl: markerIcon,
-    iconRetinaUrl: markerIcon2x,
-    shadowUrl: markerShadow,
-  });
-} catch (error) {
-  console.error('Error fixing marker icons:', error);
-}
+// Fix Leaflet default markers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 const NEPAL_CENTER: [number, number] = [28.3949, 84.1240];
 const NEPAL_MAX_BOUNDS: [[number, number], [number, number]] = [[26.0, 79.5], [30.5, 88.5]];
 
-// User location icon
 const userLocationIcon = L.divIcon({
   className: 'user-location-icon',
   html: `<div style="background:#4285F4;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(66,133,244,0.6);"></div>`,
@@ -65,103 +60,7 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-// ==========================
-// Error Boundary
-// ==========================
-class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; retryCount: number; error: Error | null }> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, retryCount: 0, error: null };
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('MapErrorBoundary caught:', error, errorInfo);
-  }
-  handleRetry = () => {
-    this.setState(prev => ({ hasError: false, retryCount: prev.retryCount + 1, error: null }));
-  };
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 font-bold bg-white/80 p-4 z-50">
-          <div className="text-center mb-4 max-w-md">
-            <p className="text-lg mb-2">Map failed to load</p>
-            <p className="text-sm opacity-70 mb-4">{this.state.error?.message || 'Unknown error'}</p>
-          </div>
-          <button
-            onClick={this.handleRetry}
-            className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold shadow-lg"
-          >
-            Retry Loading Map
-          </button>
-        </div>
-      );
-    }
-    return React.cloneElement(this.props.children as React.ReactElement, { key: `map-${this.state.retryCount}` });
-  }
-}
-
-// ==========================
-// Map Resize Handler (fixes gray tiles on load/refresh)
-// ==========================
-const MapResizeHandler = () => {
-  const map = useMap();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize({ animate: false });
-    }, 300); // Small delay after mount
-
-    return () => clearTimeout(timer);
-  }, [map]);
-
-  return null;
-};
-
-// ==========================
-// Map Click Handler
-// ==========================
-const MapEvents = ({ onClick }: { onClick: (latlng: { lat: number; lng: number }) => void }) => {
-  useMapEvents({
-    click(e) {
-      onClick({ lat: e.latlng.lat, lng: e.latlng.lng });
-    },
-  });
-  return null;
-};
-
-// ==========================
-// Marker Icon Generator
-// ==========================
-const getMarkerIcon = (type: string, severity: string) => {
-  const color = severity === 'high' ? '#ac3434' : severity === 'medium' ? '#f59e0b' : '#0062a2';
-  let iconHtml = '📍';
-  const t = type.toLowerCase();
-
-  if (t.includes('road') || t.includes('block')) iconHtml = '🚧';
-  else if (t.includes('traffic')) iconHtml = '🚗';
-  else if (t.includes('weather') || t.includes('flood') || t.includes('landslide')) iconHtml = '⛈️';
-  else if (t.includes('hospital')) iconHtml = '🏥';
-  else if (t.includes('fuel')) iconHtml = '⛽';
-  else if (t.includes('food')) iconHtml = '🍛';
-  else if (t.includes('temple')) iconHtml = '🛕';
-
-  return L.divIcon({
-    className: 'custom-div-icon',
-    html: `<div style="background-color: ${color}; width: 34px; height: 34px; border-radius: 50%; display:flex;align-items:center;justify-content:center;border:2px solid white;">
-             <div style="font-size:16px;">${iconHtml}</div>
-           </div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -34],
-  });
-};
-
-// ==========================
-// Tile Layer Component
-// ==========================
+// Fixed TileLayer with explicit subdomains
 const TileLayerComponent = ({ 
   layer, 
   isDarkMode, 
@@ -171,16 +70,18 @@ const TileLayerComponent = ({
   isDarkMode: boolean; 
   mapEngine: MapEngine | null;
 }) => {
-  const tileUrls: Record<MapLayerType, string> = {
-    standard: mapEngine === 'nepal' 
-      ? APP_CONFIG.map.nepalTile 
-      : (isDarkMode ? APP_CONFIG.map.darkTile : APP_CONFIG.map.streetTile),
-    satellite: APP_CONFIG.map.satelliteTile,
-    terrain: APP_CONFIG.map.terrainTile,
-    '3d': isDarkMode ? APP_CONFIG.map.darkTile : APP_CONFIG.map.streetTile,
-  };
+  let url: string = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const subdomains: string | string[] = 'abc';
 
-  const url = tileUrls[layer] || tileUrls.standard;
+  if (layer === 'satellite') {
+    url = APP_CONFIG.map.satelliteTile || url;
+  } else if (mapEngine === 'nepal') {
+    url = APP_CONFIG.map.nepalTile || url;
+  } else {
+    url = isDarkMode 
+      ? (APP_CONFIG.map.darkTile || url)
+      : (APP_CONFIG.map.streetTile || url);
+  }
 
   return (
     <TileLayer
@@ -189,63 +90,80 @@ const TileLayerComponent = ({
       maxZoom={19}
       minZoom={6}
       bounds={mapEngine === 'nepal' ? NEPAL_MAX_BOUNDS : undefined}
-      subdomains={layer === 'satellite' ? 'abc' : undefined}
-      errorTileUrl="https://via.placeholder.com/256?text=Tile+Unavailable" // Fallback for broken tiles
+      subdomains={subdomains}
+      errorTileUrl="https://via.placeholder.com/256?text=Tile+Unavailable"
       updateWhenIdle={false}
       zIndex={1}
     />
   );
 };
 
-// ==========================
-// Map Controller Components (unchanged but kept clean)
-// ==========================
+const MapResizeHandler = () => {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => map.invalidateSize({ animate: true }), 400);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+};
+
+const MapEvents = ({ onClick }: { onClick: (latlng: { lat: number; lng: number }) => void }) => {
+  useMapEvents({ click: (e) => onClick({ lat: e.latlng.lat, lng: e.latlng.lng }) });
+  return null;
+};
+
+const getMarkerIcon = (type: string, severity: string) => {
+  const color = severity === 'high' ? '#ac3434' : severity === 'medium' ? '#f59e0b' : '#0062a2';
+  let iconHtml = '📍';
+  const t = type.toLowerCase();
+  if (t.includes('road') || t.includes('block')) iconHtml = '🚧';
+  else if (t.includes('traffic')) iconHtml = '🚗';
+  else if (t.includes('weather') || t.includes('flood') || t.includes('landslide')) iconHtml = '⛈️';
+  else if (t.includes('hospital')) iconHtml = '🏥';
+  else if (t.includes('fuel')) iconHtml = '⛽';
+  else if (t.includes('food')) iconHtml = '🍛';
+
+  return L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div style="background-color:${color};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;"><div style="font-size:16px;">${iconHtml}</div></div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -34],
+  });
+};
+
 const MapController = ({ target }: { target: { lat: number; lng: number; zoom?: number } | null }) => {
   const map = useMap();
   useEffect(() => {
-    if (target) {
-      map.setView([target.lat, target.lng], target.zoom || 12, { animate: true });
-    }
+    if (target) map.setView([target.lat, target.lng], target.zoom || 12, { animate: true });
   }, [target, map]);
   return null;
 };
 
-const GeoAutoCenter = ({ lat, lng, loading, engine }: { 
-  lat: number; lng: number; loading: boolean; engine: MapEngine | null;
-}) => {
+const GeoAutoCenter = ({ lat, lng, loading, engine }: { lat: number; lng: number; loading: boolean; engine: MapEngine | null }) => {
   const map = useMap();
   const hasFlown = useRef(false);
-
   useEffect(() => {
     if (!loading && !hasFlown.current && lat !== 0 && lng !== 0) {
       hasFlown.current = true;
-      const targetZoom = engine === 'world' ? 7 : 12;
-      map.flyTo([lat, lng], targetZoom, { duration: 1.5 });
+      map.flyTo([lat, lng], engine === 'world' ? 7 : 12, { duration: 1.5 });
     }
   }, [loading, lat, lng, map, engine]);
-
   return null;
 };
 
-const MapEngineChanger = ({ engine, geoLat, geoLng, geoLoading }: { 
-  engine: MapEngine | null; geoLat: number; geoLng: number; geoLoading: boolean;
-}) => {
+const MapEngineChanger = ({ engine, geoLat, geoLng, geoLoading }: { engine: MapEngine | null; geoLat: number; geoLng: number; geoLoading: boolean }) => {
   const map = useMap();
   const prevEngine = useRef(engine);
-
   useEffect(() => {
     if (engine && engine !== prevEngine.current) {
       prevEngine.current = engine;
-      if (engine === 'world') {
-        map.flyTo([28, 84], 6, { duration: 1.5 });
-      } else {
-        const targetLat = (!geoLoading && geoLat !== 0) ? geoLat : NEPAL_CENTER[0];
-        const targetLng = (!geoLoading && geoLng !== 0) ? geoLng : NEPAL_CENTER[1];
-        map.flyTo([targetLat, targetLng], 7, { duration: 1.5 });
-      }
+      const targetZoom = engine === 'world' ? 6 : 7;
+      const targetLat = (!geoLoading && geoLat !== 0) ? geoLat : NEPAL_CENTER[0];
+      const targetLng = (!geoLoading && geoLng !== 0) ? geoLng : NEPAL_CENTER[1];
+      map.flyTo([targetLat, targetLng], targetZoom, { duration: 1.5 });
     }
   }, [engine, map, geoLat, geoLng, geoLoading]);
-
   return null;
 };
 
@@ -255,7 +173,6 @@ const Map3DToggle = ({ layer }: { layer: MapLayerType }) => {
     const container = map.getContainer();
     const parent = container.parentElement;
     if (!parent) return;
-
     if (layer === '3d') {
       parent.classList.add('map-3d-container');
       container.classList.add('map-3d-active');
@@ -263,37 +180,38 @@ const Map3DToggle = ({ layer }: { layer: MapLayerType }) => {
       parent.classList.remove('map-3d-container');
       container.classList.remove('map-3d-active');
     }
-
-    return () => {
-      parent.classList.remove('map-3d-container');
-      container.classList.remove('map-3d-active');
-    };
   }, [layer, map]);
-
   return null;
 };
 
-// ==========================
-// Helper: Convert API URL to WebSocket URL
-// ==========================
-const getWebSocketUrl = (): string => {
-  const apiUrl = APP_CONFIG.apiBaseUrl;
-  const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:';
-  try {
-    const url = new URL(apiUrl);
-    return `${wsProtocol}//${url.host}/ws/live`;
-  } catch {
-    return 'ws://localhost:4000/ws/live';
+class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; retryCount: number }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, retryCount: 0 };
   }
-};
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  handleRetry = () => this.setState(prev => ({ hasError: false, retryCount: prev.retryCount + 1 }));
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-50 p-4">
+          <p className="text-red-600 text-lg mb-4">Map failed to load</p>
+          <button onClick={this.handleRetry} className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Retry Loading Map
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
-// ==========================
-// Main App
-// ==========================
 const App: React.FC = () => {
   const { incidents, isLoading, boundary } = useNepalData();
-  const { messages, ask, isProcessing, clearChat } = useGemini();
-  const { isConnected } = useWebSocket(getWebSocketUrl());
+  const { messages, ask, isProcessing } = useGemini();
+  const { isConnected } = useWebSocket('wss://merosadak.banjays.workers.dev/ws/live');
   const geo = useGeolocation();
 
   const [targetLocation, setTargetLocation] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
@@ -323,26 +241,6 @@ const App: React.FC = () => {
 
   const serviceData = useServiceData(activeService, geo.lat, geo.lng, geo.loading);
 
-  const serviceResultsForSidebar = useMemo(() => {
-    if (!activeService) return [];
-    return serviceData.data.map(s => ({
-      id: s.id,
-      type: s.type,
-      title: s.name,
-      description: s.address || s.description || `${s.type} service point`,
-      lat: s.lat,
-      lng: s.lng,
-      severity: 'success' as const,
-      timestamp: new Date().toISOString(),
-      distance: s.distance,
-      phone: s.phone,
-      hours: s.hours,
-      rating: s.rating,
-      status: s.status,
-      source: s.source,
-    }));
-  }, [activeService, serviceData.data]);
-
   const handleMapEngineSelect = (engine: MapEngine) => {
     setMapEngine(engine);
     localStorage.setItem('merosadak-map-engine', engine);
@@ -358,7 +256,6 @@ const App: React.FC = () => {
   const openNotifications = () => {
     closeOverlays();
     setActiveSidebarTab('alerts');
-    setActiveService(null);
     setIsSidebarOpen(true);
   };
 
@@ -369,16 +266,14 @@ const App: React.FC = () => {
     setActiveSidebarTab('alerts');
   };
 
-  const handleAskAI = (query: string, image?: string) => {
+  const handleAskAI = (query: string) => {
     setActiveSidebarTab('chat');
     setIsSidebarOpen(true);
-    ask(query, { lat: geo.lat, lng: geo.lng }, incidents, aiPersona, image);
+    ask(query, { lat: geo.lat, lng: geo.lng }, incidents, aiPersona);
   };
 
   const handleMapClick = (latlng: { lat: number; lng: number }) => {
-    if (isCalculatorOpen) {
-      setCalcPoints((prev) => [...prev, latlng]);
-    }
+    if (isCalculatorOpen) setCalcPoints(prev => [...prev, latlng]);
   };
 
   return (
@@ -386,8 +281,8 @@ const App: React.FC = () => {
       <Header
         isDarkMode={isDarkMode}
         onTogglePilot={() => { closeOverlays(); setShowDriverDashboard(true); }}
-        onToggleMenu={() => { if (!isSidebarOpen) closeOverlays(); setIsSidebarOpen(!isSidebarOpen); }}
-        onToggleSystemMenu={() => { if (!isSystemMenuOpen) closeOverlays(); setIsSystemMenuOpen(!isSystemMenuOpen); }}
+        onToggleMenu={() => setIsSidebarOpen(!isSidebarOpen)}
+        onToggleSystemMenu={() => setIsSystemMenuOpen(!isSystemMenuOpen)}
         onOpenNotifications={openNotifications}
         noticeCount={(incidents || []).filter(i => i.severity === 'high').length}
       />
@@ -422,59 +317,53 @@ const App: React.FC = () => {
           />
         )}
 
-        {!showDriverDashboard && (
-          <FloatingMenu
-            onServiceSelect={handleServiceSelect}
-            onOpenCalculator={() => { closeOverlays(); setIsCalculatorOpen(true); setCalcPoints([]); }}
-            activeService={activeService}
-            incidents={incidents}
-          />
-        )}
+        <FloatingMenu
+          onServiceSelect={handleServiceSelect}
+          onOpenCalculator={() => { closeOverlays(); setIsCalculatorOpen(true); setCalcPoints([]); }}
+          activeService={activeService}
+          incidents={incidents}
+        />
 
-        {!showDriverDashboard && (
-          <MapLayersToggle 
-            currentLayer={mapLayer} 
-            onLayerChange={setMapLayer} 
-            activeFilters={roadFilters} 
-            onFilterToggle={(f) => setRoadFilters(prev => ({ ...prev, [f]: !prev[f] }))} 
-            isDarkMode={isDarkMode}
-            mapEngine={mapEngine} 
-            onMapEngineChange={handleMapEngineSelect} 
-            onResetEngine={() => { setMapEngine(null); localStorage.removeItem('merosadak-map-engine'); }} 
-          />
-        )}
+        <MapLayersToggle 
+          currentLayer={mapLayer} 
+          onLayerChange={setMapLayer} 
+          activeFilters={roadFilters} 
+          onFilterToggle={(f) => setRoadFilters(prev => ({ ...prev, [f]: !prev[f] }))} 
+          isDarkMode={isDarkMode}
+          mapEngine={mapEngine} 
+          onMapEngineChange={handleMapEngineSelect} 
+          onResetEngine={() => { setMapEngine(null); localStorage.removeItem('merosadak-map-engine'); }} 
+        />
 
-        {!showDriverDashboard && (
-          <Sidebar
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-            activeTab={activeSidebarTab}
-            setActiveTab={setActiveSidebarTab}
-            incidents={incidents}
-            serviceType={activeService}
-            serviceResults={activeService ? serviceResultsForSidebar : incidents}
-            onSelectService={handleServiceSelect}
-            onSelectIncident={(loc) => {
-              setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 14 });
-              setSelectedIncident(loc);
-            }}
-            chatMessages={messages}
-            onSendMessage={handleAskAI}
-            activePersona={aiPersona}
-            onPersonaChange={setAiPersona}
-            voiceGender={voiceGender}
-            onGenderChange={setVoiceGender}
-            isProcessing={isProcessing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          activeTab={activeSidebarTab}
+          setActiveTab={setActiveSidebarTab}
+          incidents={incidents}
+          serviceType={activeService}
+          serviceResults={activeService ? serviceData.data : incidents}
+          onSelectService={handleServiceSelect}
+          onSelectIncident={(loc) => {
+            setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 14 });
+            setSelectedIncident(loc);
+          }}
+          chatMessages={messages}
+          onSendMessage={handleAskAI}
+          activePersona={aiPersona}
+          onPersonaChange={setAiPersona}
+          voiceGender={voiceGender}
+          onGenderChange={setVoiceGender}
+          isProcessing={isProcessing}
+          isDarkMode={isDarkMode}
+        />
 
         <main className={`flex-1 relative ${isSidebarOpen ? 'ml-80' : 'ml-0'}`}>
           <SearchOverlay
             incidents={incidents}
             onSelectLocation={(loc) => setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 12 })}
             onAskAI={handleAskAI}
-            onSelectItem={(item) => setSelectedIncident(item)}
+            onSelectItem={setSelectedIncident}
           />
 
           <MapErrorBoundary>
@@ -482,27 +371,21 @@ const App: React.FC = () => {
               center={geo.loading || (geo.lat === 0 && geo.lng === 0) ? NEPAL_CENTER : [geo.lat, geo.lng]}
               zoom={geo.loading || (geo.lat === 0 && geo.lng === 0) ? (mapEngine === 'world' ? 5 : 7) : 12}
               minZoom={mapEngine === 'world' ? 3 : 6}
-              maxZoom={18}
+              maxZoom={19}
               maxBounds={mapEngine === 'world' ? [[-90, -180], [90, 180]] : NEPAL_MAX_BOUNDS}
-              maxBoundsViscosity={0.9}        // Higher = stronger restriction
+              maxBoundsViscosity={0.95}
               zoomControl={false}
               className="h-full w-full"
-              whenCreated={(map) => {
-                // Extra safety for tile loading
-                setTimeout(() => map.invalidateSize(), 100);
-              }}
             >
               <MapResizeHandler />
               <MapEvents onClick={handleMapClick} />
 
+              {/* Nepal Boundary Mask - ONLY shown when Nepal map is selected */}
               {mapEngine === 'nepal' && <NepalBounds boundary={boundary} isDarkMode={isDarkMode} />}
+
+              {/* Road & Monsoon overlays only on Nepal map */}
               {mapEngine === 'nepal' && <MonsoonRiskOverlay incidents={incidents} />}
-              {mapEngine === 'nepal' && (
-                <RoadOverlay 
-                  isVisible={true} 
-                  filters={roadFilters} 
-                />
-              )}
+              {mapEngine === 'nepal' && <RoadOverlay isVisible={true} filters={roadFilters} />}
 
               <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
                 {(incidents || []).map((i) => (
@@ -510,20 +393,13 @@ const App: React.FC = () => {
                     key={i.id}
                     position={[i.lat, i.lng]}
                     icon={getMarkerIcon(i.type, i.severity)}
-                    eventHandlers={{ 
-                      click: () => {
-                        setSelectedIncident(i);
-                        setTargetLocation({ lat: i.lat, lng: i.lng, zoom: 14 });
-                      }
-                    }}
+                    eventHandlers={{ click: () => setSelectedIncident(i) }}
                   />
                 ))}
               </MarkerClusterGroup>
 
               {!geo.loading && geo.lat !== 0 && geo.lng !== 0 && (
-                <Marker position={[geo.lat, geo.lng]} icon={userLocationIcon}>
-                  <Popup>You are here</Popup>
-                </Marker>
+                <Marker position={[geo.lat, geo.lng]} icon={userLocationIcon} />
               )}
 
               <TileLayerComponent 
@@ -542,18 +418,14 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      {/* SOS Button */}
-      {!showDriverDashboard && !isSOSOpen && (
-        <div className="fixed bottom-10 right-4 z-[1500]">
-          <button
-            onClick={() => { closeOverlays(); setIsSOSOpen(true); }}
-            className="relative group flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-[0_8px_30px_rgba(220,38,38,0.5)] active:scale-90 transition-all"
-          >
-            <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20" />
-            <ShieldAlert size={20} className="relative z-10" />
-            <span className="relative z-10 text-sm font-black uppercase tracking-wider">SOS</span>
-          </button>
-        </div>
+      {!showDriverDashboard && (
+        <button
+          onClick={() => setIsSOSOpen(true)}
+          className="fixed bottom-10 right-4 z-[1500] flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-xl active:scale-90 transition-all"
+        >
+          <ShieldAlert size={20} />
+          <span className="font-black uppercase tracking-wider">SOS</span>
+        </button>
       )}
 
       <BottomInfoArea
@@ -564,11 +436,7 @@ const App: React.FC = () => {
         isDarkMode={isDarkMode}
       />
 
-      {isLoading && (
-        <div className="absolute inset-0 bg-surface/80 backdrop-blur-sm flex items-center justify-center text-primary font-bold z-50">
-          Syncing Map Data...
-        </div>
-      )}
+      {isLoading && <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white z-50">Loading map data...</div>}
     </div>
   );
 };

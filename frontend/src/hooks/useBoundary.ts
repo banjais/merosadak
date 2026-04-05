@@ -1,13 +1,11 @@
-// frontend/src/hooks/useBoundary.ts
+// src/hooks/useBoundary.ts
 import { useEffect, useState } from "react";
-import { GeoData } from "../services/apiService";
-import { APP_CONFIG } from "../config/config";
+import type { FeatureCollection } from "geojson";
 
 /**
- * Hardcoded Nepal boundary fallback - ensures map always has bounds even if all fetches fail
- * Coordinates in [lat, lng] format for Leaflet
+ * Hardcoded Nepal boundary fallback - ensures the mask always works
  */
-const FALLBACK_BOUNDARY: GeoData = {
+const FALLBACK_NEPAL_BOUNDARY: FeatureCollection = {
   type: "FeatureCollection",
   features: [{
     type: "Feature",
@@ -56,12 +54,8 @@ const FALLBACK_BOUNDARY: GeoData = {
   }]
 };
 
-/**
- * Custom Hook to fetch Nepal boundary from static file with fallback.
- * Always returns a valid boundary - either from file, API, or hardcoded fallback.
- */
 export function useBoundary() {
-  const [boundary, setBoundary] = useState<GeoData | null>(null);
+  const [boundary, setBoundary] = useState<FeatureCollection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,48 +65,35 @@ export function useBoundary() {
     const fetchBoundary = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        // Try to load from static file first (for Firebase hosting)
-        const staticResponse = await fetch('/boundary/boundary.geojson');
-        if (staticResponse.ok) {
-          const data = await staticResponse.json();
+        // Try static file first (recommended for production)
+        const staticRes = await fetch('/boundary/boundary.geojson', { 
+          cache: 'no-cache' 
+        });
+
+        if (staticRes.ok) {
+          const data = await staticRes.json();
           if (!cancelled) {
-            setBoundary(data as GeoData);
+            setBoundary(data);
             setLoading(false);
             return;
           }
         }
-        
-        // Fallback to API
-        try {
-          const apiResponse = await fetch(`${APP_CONFIG.apiBaseUrl}/boundary`);
-          if (apiResponse.ok) {
-            const result = await apiResponse.json();
-            if (!cancelled && result.success && result.data) {
-              setBoundary(result.data as GeoData);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch (apiError) {
-          console.warn('[useBoundary] API fallback failed:', apiError);
-        }
 
-        // Final fallback: use hardcoded boundary
+        // Fallback: use hardcoded boundary
         if (!cancelled) {
-          console.warn('[useBoundary] Using hardcoded boundary fallback');
-          setBoundary(FALLBACK_BOUNDARY);
+          console.warn("[useBoundary] Using hardcoded fallback boundary");
+          setBoundary(FALLBACK_NEPAL_BOUNDARY);
         }
       } catch (err: any) {
         if (!cancelled) {
-          console.error("[useBoundary] Error:", err.message);
-          // Always provide a boundary, even on error
-          setBoundary(FALLBACK_BOUNDARY);
+          console.error("[useBoundary] Failed to load boundary:", err.message);
+          setBoundary(FALLBACK_NEPAL_BOUNDARY);
+          setError(err.message);
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 

@@ -1,17 +1,18 @@
-// components/RoadOverlay.tsx
+// src/components/RoadOverlay.tsx
 import { useEffect, useState, useMemo } from "react";
 import { useMap, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
 import { apiFetch } from "../api";
+import { TravelIncident } from "../types";
 
 interface RoadSegment {
   id: string;
-  name: string;
+  name?: string;
   geometry: {
     type: string;
     coordinates: [number, number][];
   };
-  status: string;
+  status?: string;
   properties: {
     road_refno?: string;
     road_name?: string;
@@ -49,38 +50,58 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch roads data
   useEffect(() => {
     const fetchRoads = async () => {
+      if (!isVisible) {
+        setRoads([]);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
+
         const data = await apiFetch<any>("/roads/all");
-        setRoads(data.merged || []);
-      } catch (err) {
+
+        // Handle different possible response formats safely
+        let roadData: RoadSegment[] = [];
+        if (data?.merged && Array.isArray(data.merged)) {
+          roadData = data.merged;
+        } else if (Array.isArray(data)) {
+          roadData = data;
+        } else if (data?.data && Array.isArray(data.data)) {
+          roadData = data.data;
+        }
+
+        setRoads(roadData);
+      } catch (err: any) {
         console.error("[RoadOverlay] Failed to fetch roads:", err);
-        setError("Failed to load road data");
+        setError(err.message || "Failed to load road data");
+        setRoads([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (isVisible) {
-      fetchRoads();
-    }
+    fetchRoads();
   }, [isVisible]);
 
-  const getStatusColor = (status: string): string => {
-    const s = status?.toLowerCase() || "";
-    if (s.includes("block")) return "#dc2626"; // Red
-    if (s.includes("one")) return "#f59e0b";   // Orange
-    return "#16a34a";                          // Green
+  // Determine line color based on status
+  const getStatusColor = (status: string = ""): string => {
+    const s = status.toLowerCase();
+    if (s.includes("block") || s.includes("blocked")) return "#ef4444"; // Red
+    if (s.includes("one") || s.includes("oneway") || s.includes("single")) return "#f59e0b"; // Orange
+    return "#16a34a"; // Green (clear/resumed)
   };
 
+  // Process and filter roads
   const filteredRoads = useMemo(() => {
-    if (!isVisible || !roads.length) return [];
+    if (!isVisible || roads.length === 0) return [];
 
     return roads
       .filter((road) => {
+        // Must have valid LineString geometry
         if (!road.geometry?.coordinates || road.geometry.type !== "LineString") {
           return false;
         }
@@ -91,8 +112,9 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
           ""
         ).toLowerCase();
 
+        // Apply filters
         if (status.includes("block") && !filters.blocked) return false;
-        if (status.includes("one") && !filters.oneway) return false;
+        if ((status.includes("one") || status.includes("oneway")) && !filters.oneway) return false;
         if (!status.includes("block") && !status.includes("one") && !filters.resumed) {
           return false;
         }
@@ -101,6 +123,7 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
       })
       .map((road) => {
         try {
+          // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
           const latlngs: [number, number][] = road.geometry.coordinates.map(
             (coord) => [coord[1], coord[0]] as [number, number]
           );
@@ -114,34 +137,36 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             "Unknown Road";
 
           return {
-            id: road.id,
+            id: road.id || `road-${Math.random().toString(36).substr(2, 9)}`,
             latlngs,
             color,
-            weight: 4,
-            opacity: 0.85,
+            weight: 5.5,
+            opacity: 0.92,
             roadName,
             statusText,
-            properties: road.properties,
+            properties: road.properties || {},
           };
-        } catch (error) {
-          console.error('Error processing road segment:', road.id, error);
+        } catch (err) {
+          console.error("Error processing road segment:", road.id, err);
           return null;
         }
-      }).filter(Boolean)
+      })
+      .filter(Boolean) as any[];
   }, [roads, isVisible, filters]);
 
+  // Do not render anything while loading or if hidden
   if (!isVisible || isLoading) {
     return null;
   }
 
   if (error) {
-    console.warn(error);
+    console.warn("[RoadOverlay]", error);
     return null;
   }
 
   return (
     <>
-      {filteredRoads.map((road) => (
+      {filteredRoads.map((road: any) => (
         <Polyline
           key={road.id}
           positions={road.latlngs}
@@ -149,14 +174,18 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             color: road.color,
             weight: road.weight,
             opacity: road.opacity,
+            lineCap: "round",
+            lineJoin: "round",
           }}
         >
           <Popup>
-            <div className="text-xs min-w-[200px] max-w-[280px]">
-              <strong className="block mb-1">{road.roadName}</strong>
+            <div className="text-xs min-w-[220px] max-w-[300px] p-1 leading-relaxed">
+              <strong className="block text-base mb-2 text-slate-900 dark:text-white">
+                {road.roadName}
+              </strong>
 
               <div
-                className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold mb-2"
+                className="inline-block px-3 py-1 rounded text-xs font-bold mb-3"
                 style={{
                   backgroundColor: road.color + "20",
                   color: road.color,
@@ -166,8 +195,8 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
               </div>
 
               {road.properties.road_refno && (
-                <div className="text-[10px] text-gray-500 mb-1">
-                  Ref: {road.properties.road_refno}
+                <div className="text-[10px] text-slate-500 mb-1">
+                  Ref: <span className="font-mono">{road.properties.road_refno}</span>
                 </div>
               )}
 
@@ -187,16 +216,16 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
                 <div>Est. Restoration: {road.properties.estimatedRestoration}</div>
               )}
               {road.properties.resumedDate && (
-                <div>Resumed: {road.properties.resumedDate}</div>
+                <div className="text-emerald-600">Resumed: {road.properties.resumedDate}</div>
               )}
               {road.properties.blockedHours && (
-                <div>Blocked Hours: {road.properties.blockedHours}</div>
+                <div>Blocked Hours: {road.properties.blockedHours}h</div>
               )}
               {road.properties.contactPerson && (
                 <div>Contact: {road.properties.contactPerson}</div>
               )}
               {road.properties.remarks && (
-                <div className="mt-2 text-[10px] italic text-gray-600">
+                <div className="mt-3 text-[10px] italic text-slate-600 border-t pt-2">
                   "{road.properties.remarks}"
                 </div>
               )}

@@ -1,31 +1,42 @@
-// backend/cloudflare/cf-worker.js
-// MeroSadak Cloudflare Worker – Production
-// Version: 2026-01-09
+// cf-worker.js
+// MeroSadak Cloudflare Worker – Fixed Version (April 2026)
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',                    // Change to 'https://merosadak.web.app' for production
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+  'X-Worker-Version': '2026-04-05',
+};
 
 export default {
   async fetch(request, env, ctx) {
-    const cache = caches.default;
-
     const url = new URL(request.url);
     const path = url.pathname + url.search;
 
-    // ------------------- API Proxy -------------------
-    if (path.startsWith("/api")) {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: CORS_HEADERS });
+    }
+
+    // ==================== API Proxy (v1 routes) ====================
+    if (path.startsWith("/api") || path.startsWith("/v1")) {
       const isGet = request.method === "GET";
       let backendName = "none";
 
-      // Fetch helper
       const fetchFromBackend = async (baseURL, name) => {
         if (!baseURL) return null;
 
-        const targetURL = baseURL.replace(/\/$/, "") + path;
-        const cacheKey = new Request(targetURL, request);
+        let targetURL = baseURL.replace(/\/$/, "");
+        targetURL += path.startsWith('/v1') ? path : `/v1${path}`;
 
-        // Cache HIT
+        const cacheKey = new Request(targetURL, { method: request.method });
+
         if (isGet) {
-          const cached = await cache.match(cacheKey);
+          const cached = await caches.default.match(cacheKey);
           if (cached) {
             const headers = new Headers(cached.headers);
+            Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v));
             headers.set("X-Cache-Status", "HIT");
             headers.set("X-Backend", name);
             return new Response(cached.body, { status: cached.status, headers });
@@ -33,7 +44,7 @@ export default {
         }
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
 
         try {
           const res = await fetch(targetURL, {
@@ -45,94 +56,84 @@ export default {
 
           clearTimeout(timeout);
 
-          if (res.status >= 500) throw new Error("5xx");
-
           backendName = name;
 
-          // Cache store
           if (isGet && res.ok) {
+            const responseClone = res.clone();
             const headers = new Headers(res.headers);
+            Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v));
             headers.set("Cache-Control", "public, max-age=300");
             headers.set("X-Cache-Status", "MISS");
             headers.set("X-Backend", name);
 
-            const cacheable = new Response(res.body, {
-              status: res.status,
-              headers,
-            });
-
-            ctx.waitUntil(cache.put(cacheKey, cacheable.clone()));
-            return cacheable;
+            ctx.waitUntil(caches.default.put(cacheKey, responseClone));
           }
 
-          return res;
-        } catch {
+          const finalHeaders = new Headers(res.headers);
+          Object.entries(CORS_HEADERS).forEach(([k, v]) => finalHeaders.set(k, v));
+          finalHeaders.set("X-Served-By", "Cloudflare-Worker");
+          finalHeaders.set("X-Backend", backendName);
+
+          return new Response(res.body, {
+            status: res.status,
+            headers: finalHeaders,
+          });
+
+        } catch (err) {
           clearTimeout(timeout);
+          console.error(`[Worker] ${name} backend failed:`, err.message);
           return null;
         }
       };
 
-      // Try backends
-      const response =
+      const response = 
         (await fetchFromBackend(env.FIREBASE_BACKEND, "Firebase")) ||
         (await fetchFromBackend(env.RENDER_BACKEND, "Render"));
 
       if (!response) {
         return new Response(
-          JSON.stringify({
-            error: "All API backends unavailable",
-            time: new Date().toISOString(),
-          }),
-          {
-            status: 503,
-            headers: {
-              "Content-Type": "application/json",
-              "X-Worker-Version": "2026-01-09",
-            },
+          JSON.stringify({ success: false, error: "All backends unavailable" }),
+          { 
+            status: 503, 
+            headers: { ...CORS_HEADERS, "Content-Type": "application/json" } 
           }
         );
       }
 
-      const headers = new Headers(response.headers);
-      headers.set("X-Served-By", "Cloudflare-Worker");
-      headers.set("X-Backend", backendName);
-      headers.set("X-Worker-Version", "2026-01-09");
-
-      return new Response(response.body, {
-        status: response.status,
-        headers,
-      });
+      return response;
     }
 
-    // ------------------- Frontend Fallback -------------------
-    const frontendURL = new URL(path || "/", "https://sadaksathi.web.app");
+    // ==================== Frontend Static Serving ====================
+    const frontendURL = new URL(url.pathname + url.search, "https://merosadak.web.app");
 
-    const frontendReq = new Request(frontendURL, {
-      method: request.method,
-      headers: request.headers,
-      body: request.method === "GET" ? undefined : await request.clone().arrayBuffer(),
-    });
+    try {
+      const frontendReq = new Request(frontendURL, {
+        method: request.method,
+        headers: request.headers,
+        body: request.method === "GET" ? undefined : await request.clone().arrayBuffer(),
+      });
 
-    const res = await fetch(frontendReq);
-    const headers = new Headers(res.headers);
-    headers.set("X-Served-By", "Cloudflare-Worker");
-    headers.set("X-Worker-Version", "2026-01-09");
+      const res = await fetch(frontendReq);
+      const headers = new Headers(res.headers);
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v));
+      headers.set("X-Served-By", "Cloudflare-Worker");
 
-    return new Response(res.body, {
-      status: res.status,
-      headers,
-    });
+      return new Response(res.body, { status: res.status, headers });
+    } catch (err) {
+      return new Response("Frontend unavailable", { 
+        status: 502, 
+        headers: CORS_HEADERS 
+      });
+    }
   },
 
-  // ------------------- Cron Job -------------------
   async scheduled(event, env, ctx) {
     const urls = [];
-
     if (env.FIREBASE_BACKEND) urls.push(env.FIREBASE_BACKEND + "/api/health");
     if (env.RENDER_BACKEND) urls.push(env.RENDER_BACKEND + "/health");
 
     ctx.waitUntil(
-      Promise.allSettled(urls.map(url => fetch(url).catch(() => null)))
+      Promise.allSettled(urls.map(u => fetch(u).catch(() => null)))
     );
   },
 };
