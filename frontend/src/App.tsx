@@ -43,12 +43,16 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
 
 // Fix default marker icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+try {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon2x,
+    shadowUrl: markerShadow,
+  });
+} catch (error) {
+  console.error('Error fixing marker icons:', error);
+}
 
 const NEPAL_CENTER: [number, number] = [28.3949, 84.1240];
 const NEPAL_MAX_BOUNDS: [[number, number], [number, number]] = [[26.0, 79.5], [30.5, 88.5]];
@@ -75,9 +79,24 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
   componentDidCatch(error: Error) {
     console.error('MapErrorBoundary caught:', error);
   }
+  handleRetry = () => {
+    this.setState({ hasError: false });
+  };
   render() {
     if (this.state.hasError) {
-      return <div className="absolute inset-0 flex items-center justify-center text-red-500 font-bold bg-white/80">Map failed to load. Please refresh.</div>;
+      return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-red-500 font-bold bg-white/80 p-4">
+          <div className="text-center mb-4">
+            Map failed to load. Please refresh.
+          </div>
+          <button
+            onClick={this.handleRetry}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
     }
     return this.props.children;
   }
@@ -459,7 +478,6 @@ const App: React.FC = () => {
 
           <MapErrorBoundary>
             <MapContainer
-              key={mapEngine || 'default'}   // Important: forces remount on engine change
               center={geo.loading || (geo.lat === 0 && geo.lng === 0) ? NEPAL_CENTER : [geo.lat, geo.lng]}
               zoom={geo.loading || (geo.lat === 0 && geo.lng === 0) ? 7 : 12}
               minZoom={6}

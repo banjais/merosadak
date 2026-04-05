@@ -100,29 +100,34 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
         return true;
       })
       .map((road) => {
-        const latlngs: [number, number][] = road.geometry.coordinates.map(
-          (coord) => [coord[1], coord[0]] as [number, number]
-        );
+        try {
+          const latlngs: [number, number][] = road.geometry.coordinates.map(
+            (coord) => [coord[1], coord[0]] as [number, number]
+          );
 
-        const statusText = road.status || road.properties?.status || "Unknown";
-        const color = getStatusColor(statusText);
-        const roadName =
-          road.properties?.road_name ||
-          road.properties?.road_refno ||
-          road.name ||
-          "Unknown Road";
+          const statusText = road.status || road.properties?.status || "Unknown";
+          const color = getStatusColor(statusText);
+          const roadName =
+            road.properties?.road_name ||
+            road.properties?.road_refno ||
+            road.name ||
+            "Unknown Road";
 
-        return {
-          id: road.id,
-          latlngs,
-          color,
-          weight: 4,
-          opacity: 0.85,
-          roadName,
-          statusText,
-          properties: road.properties,
-        };
-      });
+          return {
+            id: road.id,
+            latlngs,
+            color,
+            weight: 4,
+            opacity: 0.85,
+            roadName,
+            statusText,
+            properties: road.properties,
+          };
+        } catch (error) {
+          console.error('Error processing road segment:', road.id, error);
+          return null;
+        }
+      }).filter(Boolean)
   }, [roads, isVisible, filters]);
 
   if (!isVisible || isLoading) {

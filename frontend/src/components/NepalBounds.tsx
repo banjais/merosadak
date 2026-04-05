@@ -130,13 +130,31 @@ export const NepalBounds: React.FC<Props> = ({ boundary, isDarkMode }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (boundary && boundary.features && boundary.features.length > 0) {
-      const geoLayer = new L.GeoJSON(boundary);
-      // Only constrain bounds — do NOT fitBounds here, GeoAutoCenter handles centering to user's city
-      map.setMaxBounds(geoLayer.getBounds());
-      map.setMinZoom(6);
-    } else {
-      // Fallback: use hardcoded Nepal bounds for map constraints
+    try {
+      if (boundary && boundary.features && boundary.features.length > 0) {
+        const geoLayer = new L.GeoJSON(boundary);
+        // Only constrain bounds — do NOT fitBounds here, GeoAutoCenter handles centering to user's city
+        map.setMaxBounds(geoLayer.getBounds());
+        map.setMinZoom(6);
+      } else {
+        // Fallback: use hardcoded Nepal bounds for map constraints
+        const fallbackLayer = new L.GeoJSON({
+          type: "FeatureCollection",
+          features: [{
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [FALLBACK_NEPAL_BOUNDARY.map(([lat, lng]) => [lng, lat])],
+            },
+          }],
+        } as any);
+        map.setMaxBounds(fallbackLayer.getBounds());
+        map.setMinZoom(6);
+      }
+    } catch (error) {
+      console.error('Error setting map bounds:', error);
+      // Fallback to hardcoded bounds
       const fallbackLayer = new L.GeoJSON({
         type: "FeatureCollection",
         features: [{
