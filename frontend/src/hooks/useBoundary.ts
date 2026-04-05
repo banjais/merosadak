@@ -18,15 +18,25 @@ export function useBoundary() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${APP_CONFIG.apiBaseUrl}/api/boundary`);
-        if (response.ok) {
-          const result = await response.json();
-          if (!cancelled && result.success && result.data) {
-            setBoundary(result.data as GeoData);
+        // Try to load from static file first (for Firebase hosting)
+        const staticResponse = await fetch('/boundary/boundary.geojson');
+        if (staticResponse.ok) {
+          const data = await staticResponse.json();
+          if (!cancelled) {
+            setBoundary(data as GeoData);
           }
         } else {
-          if (!cancelled) {
-            setError("Failed to load boundary file");
+          // Fallback to API
+          const apiResponse = await fetch(`${APP_CONFIG.apiBaseUrl}/api/boundary`);
+          if (apiResponse.ok) {
+            const result = await apiResponse.json();
+            if (!cancelled && result.success && result.data) {
+              setBoundary(result.data as GeoData);
+            }
+          } else {
+            if (!cancelled) {
+              setError("Failed to load boundary file");
+            }
           }
         }
       } catch (err: any) {
