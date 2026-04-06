@@ -20,7 +20,7 @@ export default {
     }
 
     // ==================== API Proxy (v1 routes) ====================
-    if (path.startsWith("/api") || path.startsWith("/v1")) {
+    if (path.startsWith("/api") || path.startsWith("/v1") || path.startsWith("/health")) {
       const isGet = request.method === "GET";
       let backendName = "none";
 
@@ -28,7 +28,7 @@ export default {
         if (!baseURL) return null;
 
         let targetURL = baseURL.replace(/\/$/, "");
-        targetURL += path.startsWith('/v1') ? path : `/v1${path}`;
+        targetURL += path;
 
         const cacheKey = new Request(targetURL, { method: request.method });
 
@@ -87,8 +87,8 @@ export default {
       };
 
       const response = 
-        (await fetchFromBackend(env.FIREBASE_BACKEND, "Firebase")) ||
-        (await fetchFromBackend(env.RENDER_BACKEND, "Render"));
+        (await fetchFromBackend(env.FIREBASE_BACKEND + "/api", "Firebase")) ||
+        (await fetchFromBackend(env.RENDER_BACKEND + "/api", "Render"));
 
       if (!response) {
         return new Response(
