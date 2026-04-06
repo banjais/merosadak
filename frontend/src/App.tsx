@@ -216,13 +216,12 @@ const App: React.FC = () => {
   const { incidents, isLoading } = useNepalData();
   const { messages, ask, isProcessing } = useGemini();
   
-  // Build WebSocket URL from environment variable
+  // Use relative WebSocket URL - works with Firebase Hosting
   const wsUrl = React.useMemo(() => {
-    const apiBaseUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL || 'https://merosadak.banjays.workers.dev';
-    // Convert http/https to ws/wss
-    const wsProtocol = apiBaseUrl.startsWith('https') ? 'wss:' : apiBaseUrl.startsWith('http') ? 'ws:' : 'wss:';
-    const wsHost = apiBaseUrl.replace(/^https?:\/\//, '');
-    return `${wsProtocol}//${wsHost}/ws/live`;
+    // Use relative path for WebSocket - browser will use same host
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}/ws/live`;
   }, []);
   
   const { isConnected } = useWebSocket(wsUrl);
