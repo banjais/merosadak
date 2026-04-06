@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, MoreVertical, Navigation, Sparkles, Zap } from 'lucide-react';
+import { Bell, Globe, MoreVertical, Navigation, Sparkles, Zap } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -10,7 +11,18 @@ interface HeaderProps {
   noticeCount?: number;
 }
 
+const LANGUAGES = [
+  { code: 'en', name: 'English', native: 'English' },
+  { code: 'ne', name: 'Nepali', native: 'नेपाली' },
+  { code: 'hi', name: 'Hindi', native: 'हिंदी' },
+  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी' },
+  { code: 'mai', name: 'Maithili', native: 'मैथिली' },
+  { code: 'new', name: 'Newari', native: 'नेपाल भाषा' },
+];
+
 const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, noticeCount = 3 }) => {
+  const { language, setLanguage } = useTranslation();
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [geoActive, setGeoActive] = useState(false);
 
   useEffect(() => {
@@ -58,6 +70,36 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Language Selector Dropdown */}
+        <div className="relative">
+          <button 
+            onClick={() => setShowLangMenu(!showLangMenu)}
+            className="flex items-center gap-1 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
+          >
+            <Globe size={18} className="sm:w-[20px] sm:h-[20px]" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase hidden sm:block">
+              {LANGUAGES.find(l => l.code === language)?.native || 'EN'}
+            </span>
+          </button>
+          
+          {showLangMenu && (
+            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 min-w-[160px] z-[1100]">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => { setLanguage(lang.code as any); setShowLangMenu(false); }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 transition-colors flex items-center gap-2 ${
+                    language === lang.code ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
+                  }`}
+                >
+                  <span>{lang.native}</span>
+                  <span className="text-xs text-gray-400">{lang.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="relative group cursor-pointer" onClick={onOpenNotifications}>
           <div className="p-2 sm:p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all">
             <Bell size={20} className="sm:w-[22px] sm:h-[22px]" />
