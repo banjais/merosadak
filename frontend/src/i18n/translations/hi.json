@@ -1,0 +1,163 @@
+{
+  "app": {
+    "name": "मेरो सडक",
+    "tagline": "आपका सड़क साथी"
+  },
+  "nav": {
+    "home": "होम",
+    "map": "नक्शा",
+    "roads": "सड़कें",
+    "highways": "राजमार्ग",
+    "weather": "मौसम",
+    "alerts": "चेतावनियां",
+    "ai": "AI सहायक",
+    "settings": "सेटिंग्स",
+    "profile": "प्रोफ़ाइल",
+    "logout": "लॉगआउट"
+  },
+  "alerts": {
+    "title": "सुरक्षा चेतावनियां",
+    "blocked": "सड़क अवरुद्ध",
+    "oneLane": "एक लेन खुला",
+    "resumed": "सड़क साफ",
+    "landslide": "भूस्खलन जोखिम",
+    "flood": "बाढ़ चेतावनी",
+    "accident": "दुर्घटना रिपोर्ट",
+    "construction": "निर्माण क्षेत्र",
+    "nearby": "आपके पास चेतावनियां",
+    "none": "कोई सक्रिय चेतावनी नहीं"
+  },
+  "weather": {
+    "title": "मौसम",
+    "current": "वर्तमान मौसम",
+    "temperature": "तापमान",
+    "humidity": "आर्द्रता",
+    "wind": "हवा",
+    "rain": "वर्षा",
+    "feelsLike": "महसूस होता है",
+    "search": "स्थान खोजें..."
+  },
+  "roads": {
+    "title": "सड़क स्थिति",
+    "status": "स्थिति",
+    "location": "स्थान",
+    "updated": "अंतिम अपडेट",
+    "report": "दुर्घटना रिपोर्ट करें",
+    "blocked": "अवरुद्ध",
+    "clear": "साफ",
+    "caution": "सावधानी"
+  },
+  "highways": {
+    "title": "राजमार्ग",
+    "code": "राजमार्ग कोड",
+    "distance": "दूरी",
+    "duration": "अवधि",
+    "bridges": "पुल",
+    "tunnels": "सुरंगें",
+    "rivers": "नदियां",
+    "status": "समग्र स्थिति"
+  },
+  "ai": {
+    "title": "AI सहायक",
+    "placeholder": "सड़क, मौसम, या यात्रा के बारे में कुछ भी पूछें...",
+    "listening": "सुन रहा हूं...",
+    "speaking": "बोल रहा हूं...",
+    "settings": "AI सेटिंग्स",
+    "voice": "आवाज",
+    "male": "पुरुष",
+    "female": "महिला",
+    "speed": "बोलने की गति",
+    "slow": "धीमी",
+    "normal": "सामान्य",
+    "fast": "तेज"
+  },
+  "search": {
+    "placeholder": "सड़कें, स्थान, POI खोजें...",
+    "results": "खोज परिणाम",
+    "noResults": "कोई परिणाम नहीं मिला"
+  },
+  "pois": {
+    "title": "रुचि के बिंदु",
+    "restaurants": "रेस्तरां",
+    "hospitals": "अस्पताल",
+    "fuelStations": "ईंधन स्टेशन",
+    "hotels": "होटल",
+    "touristSpots": "पर्यटन स्थल",
+    "atm": "एटीएम",
+    "police": "पुलिस स्टेशन",
+    "openingHours": "खुलने का समय",
+    "entryFee": "प्रवेश शुल्क",
+    "adult": "वयस्क",
+    "child": "बच्चा",
+    "senior": "वरिष्ठ नागरिक",
+    "foreigner": "विदेशी",
+    "amenities": "सुविधाएं",
+    "contact": "संपर्क",
+    "website": "वेबसाइट",
+    "rating": "रेटिंग"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "signup": "साइन अप",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "noAccount": "खाता नहीं है?",
+    "haveAccount": "पहले से खाता है?",
+    "otpSent": "OTP आपके फोन पर भेजा गया",
+    "verifyOtp": "OTP सत्यापित करें",
+    "resendOtp": "OTP पुनः भेजें"
+  },
+  "errors": {
+    "generic": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    "network": "नेटवर्क त्रुटि। अपना कनेक्शन जांचें।",
+    "notFound": "नहीं मिला",
+    "unauthorized": "जारी रखने के लिए कृपया लॉगिन करें",
+    "serverError": "सर्वर त्रुटि। बाद में पुनः प्रयास करें।",
+    "locationDenied": "स्थान पहुंच अस्वीकार की गई",
+    "gpsOff": "GPS बंद है"
+  },
+  "messages": {
+    "loading": "लोड हो रहा है...",
+    "success": "सफल!",
+    "saved": "सफलतापूर्वक सहेजा गया",
+    "deleted": "सफलतापूर्वक हटाया गया",
+    "confirmDelete": "क्या आप हटाना चाहते हैं?",
+    "cancel": "रद्द करें",
+    "ok": "ठीक है",
+    "yes": "हाँ",
+    "no": "नहीं"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "language": "भाषा",
+    "nepali": "नेपाली",
+    "english": "English",
+    "hindi": "हिंदी",
+    "bhojpuri": "भोजपुरी",
+    "maithili": "मैथिली",
+    "notifications": "सूचनाएं",
+    "sound": "ध्वनि",
+    "vibration": "कंपन",
+    "darkMode": "डार्क मोड",
+    "units": "इकाइयां",
+    "metric": "मेट्रिक (किमी, °से)",
+    "imperial": "इम्पीरियल (मील, °फ)"
+  },
+  "navigation": {
+    "start": "नेविगेशन शुरू करें",
+    "stop": "नेविगेशन रोकें",
+    "reroute": "पुनः रूट करें",
+    "eta": "पहुंचने का समय",
+    "distance": "दूरी",
+    "arriving": "पहुंच रहे हैं"
+  },
+  "suggestions": {
+    "nearby": "पास के सुझाव",
+    "tourist": "पर्यटन आकर्षण",
+    "food": "खाना और डाइनिंग",
+    "fuel": "ईंधन स्टेशन",
+    "hospital": "अस्पताल",
+    "rest": "विश्राम क्षेत्र"
+  }
+}

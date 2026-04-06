@@ -1,0 +1,163 @@
+{
+  "app": {
+    "name": "हमर सड़क",
+    "tagline": "अहाँक सड़क साथी"
+  },
+  "nav": {
+    "home": "घर",
+    "map": "नकाशा",
+    "roads": "सड़क",
+    "highways": "राजमार्ग",
+    "weather": "मौसम",
+    "alerts": "चेतावनी",
+    "ai": "AI सहायक",
+    "settings": "सेटिंग",
+    "profile": "प्रोफाइल",
+    "logout": "लॉगआउट"
+  },
+  "alerts": {
+    "title": "सुरक्षा चेतावनी",
+    "blocked": "सड़क बंद",
+    "oneLane": "एक लेन खुलल",
+    "resumed": "सड़क साफ",
+    "landslide": "भूस्खलन खतरा",
+    "flood": "बाढ़ि चेतावनी",
+    "accident": "दुर्घटना रिपोर्ट",
+    "construction": "निर्माण क्षेत्र",
+    "nearby": "अहाँक लग चेतावनी",
+    "none": "कोनो सक्रिय चेतावनी नहि"
+  },
+  "weather": {
+    "title": "मौसम",
+    "current": "वर्तमान मौसम",
+    "temperature": "तापमान",
+    "humidity": "नमी",
+    "wind": "हवा",
+    "rain": "वर्षा",
+    "feelsLike": "एहन लागैत अछि",
+    "search": "स्थान खोजी..."
+  },
+  "roads": {
+    "title": "सड़क स्थिति",
+    "status": "स्थिति",
+    "location": "स्थान",
+    "updated": "अंतिम अपडेट",
+    "report": "दुर्घटना रिपोर्ट करी",
+    "blocked": "बंद",
+    "clear": "साफ",
+    "caution": "सावधानी"
+  },
+  "highways": {
+    "title": "राजमार्ग",
+    "code": "राजमार्ग कोड",
+    "distance": "दूरी",
+    "duration": "समय",
+    "bridges": "पुल",
+    "tunnels": "सुरंग",
+    "rivers": "नदी",
+    "status": "समग्र स्थिति"
+  },
+  "ai": {
+    "title": "AI सहायक",
+    "placeholder": "सड़क, मौसम, या यात्रा के बारे में किछू पूछी...",
+    "listening": "सुनि रहल छी...",
+    "speaking": "बोलि रहल छी...",
+    "settings": "AI सेटिंग",
+    "voice": "आवाज",
+    "male": "पुरुष",
+    "female": "महिला",
+    "speed": "बोलबाक गति",
+    "slow": "धीमी",
+    "normal": "सामान्य",
+    "fast": "तेज"
+  },
+  "search": {
+    "placeholder": "सड़क, स्थान, POI खोजी...",
+    "results": "खोज परिणाम",
+    "noResults": "कोनो परिणाम नहि भेटल"
+  },
+  "pois": {
+    "title": "रुचि के बिंदु",
+    "restaurants": "रेस्टोरेंट",
+    "hospitals": "अस्पताल",
+    "fuelStations": "पेट्रोल पंप",
+    "hotels": "होटल",
+    "touristSpots": "पर्यटन स्थल",
+    "atm": "एटीएम",
+    "police": "पुलिस स्टेशन",
+    "openingHours": "खुलबाक समय",
+    "entryFee": "प्रवेश शुल्क",
+    "adult": "वयस्क",
+    "child": "बच्चा",
+    "senior": "वरिष्ठ नागरिक",
+    "foreigner": "विदेशी",
+    "amenities": "सुविधा",
+    "contact": "संपर्क",
+    "website": "वेबसाइट",
+    "rating": "रेटिंग"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "signup": "साइन अप",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "forgotPassword": "पासवर्ड बिर्सि गेलाह?",
+    "noAccount": "खाता नहि अछि?",
+    "haveAccount": "पहिने सँ खाता अछि?",
+    "otpSent": "OTP अहाँक फोन पर भेजल गेल",
+    "verifyOtp": "OTP सत्यापित करी",
+    "resendOtp": "OTP पुनः भेजी"
+  },
+  "errors": {
+    "generic": "किछू गलत भेल। कृपया पुनः प्रयास करी।",
+    "network": "नेटवर्क त्रुटि। अपन कनेक्शन जाँची।",
+    "notFound": "नहि भेटल",
+    "unauthorized": "जारी रखबाक लेल कृपया लॉगिन करी",
+    "serverError": "सर्वर त्रुटि। बाद में पुनः प्रयास करी।",
+    "locationDenied": "स्थान पहुंच अस्वीकार भेल",
+    "gpsOff": "GPS बंद अछि"
+  },
+  "messages": {
+    "loading": "लोड भऽ रहल अछि...",
+    "success": "सफल!",
+    "saved": "सफलतापूर्वक सहेजल गेल",
+    "deleted": "सफलतापूर्वक हटाइल गेल",
+    "confirmDelete": "की अहाँ हटेबा चाहैत छी?",
+    "cancel": "रद्द करी",
+    "ok": "ठीक अछि",
+    "yes": "हाँ",
+    "no": "नहि"
+  },
+  "settings": {
+    "title": "सेटिंग",
+    "language": "भाषा",
+    "nepali": "नेपाली",
+    "english": "English",
+    "hindi": "हिंदी",
+    "bhojpuri": "भोजपुरी",
+    "maithili": "मैथिली",
+    "notifications": "सूचना",
+    "sound": "आवाज",
+    "vibration": "कंपन",
+    "darkMode": "डार्क मोड",
+    "units": "इकाई",
+    "metric": "मेट्रिक (किमी, °से)",
+    "imperial": "इम्पीरियल (मील, °फ)"
+  },
+  "navigation": {
+    "start": "नेविगेशन शुरू करी",
+    "stop": "नेविगेशन रोक",
+    "reroute": "पुनः रूट करी",
+    "eta": "पहुंचबाक समय",
+    "distance": "दूरी",
+    "arriving": "पहुंचि रहल छी"
+  },
+  "suggestions": {
+    "nearby": "पास के सुझाव",
+    "tourist": "पर्यटन आकर्षण",
+    "food": "खाना आ डाइनिंग",
+    "fuel": "पेट्रोल पंप",
+    "hospital": "अस्पताल",
+    "rest": "विश्राम क्षेत्र"
+  }
+}

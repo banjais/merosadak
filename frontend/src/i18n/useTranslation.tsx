@@ -1,11 +1,14 @@
-// frontend/src/i18n/useTranslation.ts
+// frontend/src/i18n/useTranslation.tsx
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import en from './translations/en.json';
 import ne from './translations/ne.json';
+import hi from './translations/hi.json';
+import bho from './translations/bho.json';
+import mai from './translations/mai.json';
 
-type Language = 'en' | 'ne';
+type Language = 'en' | 'ne' | 'hi' | 'bho' | 'mai';
 
-const translations: Record<Language, Record<string, any>> = { en, ne };
+const translations: Record<Language, Record<string, any>> = { en, ne, hi, bho, mai };
 
 // Helper to get nested value from dot notation key
 function getNestedValue(obj: Record<string, any>, key: string): string {
@@ -29,7 +32,8 @@ const TranslationContext = createContext<TranslationContextType>({
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('merosadak-language');
-    return (saved === 'ne' || saved === 'en') ? saved : 'en';
+    const validLanguages: Language[] = ['en', 'ne', 'hi', 'bho', 'mai'];
+    return validLanguages.includes(saved as Language) ? saved as Language : 'en';
   });
 
   useEffect(() => {
