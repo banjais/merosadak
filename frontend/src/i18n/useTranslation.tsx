@@ -5,10 +5,11 @@ import ne from './translations/ne.json';
 import hi from './translations/hi.json';
 import bho from './translations/bho.json';
 import mai from './translations/mai.json';
+import newari from './translations/new.json';
 
-type Language = 'en' | 'ne' | 'hi' | 'bho' | 'mai';
+type Language = 'en' | 'ne' | 'hi' | 'bho' | 'mai' | 'new';
 
-const translations: Record<Language, Record<string, any>> = { en, ne, hi, bho, mai };
+const translations: Record<Language, Record<string, any>> = { en, ne, hi, bho, mai, new: newari };
 
 // Helper to get nested value from dot notation key
 function getNestedValue(obj: Record<string, any>, key: string): string {
@@ -32,7 +33,7 @@ const TranslationContext = createContext<TranslationContextType>({
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('merosadak-language');
-    const validLanguages: Language[] = ['en', 'ne', 'hi', 'bho', 'mai'];
+    const validLanguages: Language[] = ['en', 'ne', 'hi', 'bho', 'mai', 'new'];
     return validLanguages.includes(saved as Language) ? saved as Language : 'en';
   });
 
