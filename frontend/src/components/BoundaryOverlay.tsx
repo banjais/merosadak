@@ -42,6 +42,16 @@ export const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({
         ...baseStyle,
         color: isDarkMode ? '#cbd5e1' : '#64748b',
       };
+    } else if (type === 'country') {
+      // Nepal country border - more prominent
+      return {
+        fillOpacity: 0.05,
+        fillColor: isDarkMode ? '#0062a2' : '#0062a2',
+        weight: 3,
+        color: isDarkMode ? '#4fc3f7' : '#0062a2',
+        opacity: 0.9,
+        dashArray: '',
+      };
     }
 
     return baseStyle;

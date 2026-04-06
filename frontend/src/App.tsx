@@ -334,6 +334,7 @@ const App: React.FC = () => {
           onServiceSelect={handleServiceSelect}
           onOpenCalculator={() => { closeOverlays(); setIsCalculatorOpen(true); setCalcPoints([]); }}
           onOpenReport={() => setIsReportOpen(true)}
+          onTogglePilot={() => { closeOverlays(); setShowDriverDashboard(true); }}
           activeService={activeService}
           incidents={incidents}
         />

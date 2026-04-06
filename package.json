@@ -9,9 +9,8 @@
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run dev -w merosadak-backend\" \"npm run dev -w merosadak-frontend\"",
     "install-all": "npm install",
     "clean": "rimraf node_modules frontend/node_modules merosadak-backend/node_modules",
-    "merge": "npm run merge -w merosadak-backend",
-    "build": "cross-env NODE_ENV=production npm run merge -w merosadak-backend && npm run deploy -w merosadak-backend && cross-env VITE_API_BASE_URL=https://merosadak.banjays.workers.dev npm run build -w merosadak-frontend && firebase deploy --only hosting && powershell -Command \"if (-not $env:CI) { git add .; git commit -m 'Auto-build'; git push origin main }\"",
-    "build:skip-merge": "npm run build -w merosadak-backend && npm run build -w merosadak-frontend",
+    "build": "npm run deploy -w merosadak-backend && cross-env VITE_API_BASE_URL=https://merosadak.banjays.workers.dev npm run build -w merosadak-frontend && firebase deploy --only hosting && powershell -Command \"if (-not $env:CI) { git add .; git commit -m 'Auto-build'; git push origin main }\"",
+    "build:skip-deploy": "npm run build -w merosadak-backend && npm run build -w merosadak-frontend",
     "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run start -w merosadak-backend\" \"npm run start -w merosadak-frontend\"",
     "stop": "npx kill-port 4000 5000 || true"
   },

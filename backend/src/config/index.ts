@@ -136,7 +136,12 @@ const envSchema = z.object({
   LOG_DIR: z.string().default("data/logs"),
   CACHE_DIR: z.string().default("data/cache"),
 
-  BASE_DATA: z.string().default("data/master.geojson"),
+  BASE_DATA: z.string().default("data/highways_base.geojson"),
+  BOUNDARY_DATA: z.string().default("data/boundary.geojson"),
+  HIGHWAY_DATA: z.string().default("data/highway/index.json"),
+  DISTRICT_DATA: z.string().default("data/districts.geojson"),
+  LOCAL_DATA: z.string().default("data/local.geojson"),
+  PROVINCE_DATA: z.string().default("data/provinces.geojson"),
 
   CACHE_ROAD: z.string().default("data/cache/cacheRoad.json"),
   CACHE_DISTRICTS: z.string().default("data/cache/cacheDistricts.json"),
@@ -173,6 +178,16 @@ export const GAS_URL = config.GAS_URL || "";
 export const SHEET_ID = config.SHEET_ID || "";
 export const SHEET_TAB = config.SHEET_TAB || "";
 export const JWT_EXPIRES_IN = config.JWT_EXPIRES_IN || "7d";
+
+// -----------------------------
+// Data file paths
+// -----------------------------
+export const BASE_DATA = config.BASE_DATA || "data/highways_base.geojson";
+export const BOUNDARY_DATA = config.BOUNDARY_DATA || "data/boundary.geojson";
+export const HIGHWAY_DATA = config.HIGHWAY_DATA || "data/highway/index.json";
+export const DISTRICT_DATA = config.DISTRICT_DATA || "data/districts.geojson";
+export const LOCAL_DATA = config.LOCAL_DATA || "data/local.geojson";
+export const PROVINCE_DATA = config.PROVINCE_DATA || "data/provinces.geojson";
 
 export const UPSTASH = {
   REST_URL: config.UPSTASH_REDIS_REST_URL,

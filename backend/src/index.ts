@@ -60,19 +60,20 @@ app.get("/health", async (_req: Request, res: Response) => {
 });
 
 // -----------------------------
-// 4️⃣ Load GeoJSON
+// 4️⃣ Load GeoJSON (Boundary files)
 // -----------------------------
-const geoFiles = [
-  { name: "Boundary", path: paths.BOUNDARY_DATA },
-  { name: "Master Roads", path: paths.BASE_DATA },
+const boundaryFiles = [
+  { name: "Districts", path: paths.DISTRICT_DATA },
+  { name: "Provinces", path: paths.PROVINCE_DATA },
+  { name: "Local", path: paths.LOCAL_DATA },
 ];
 
-geoFiles.forEach((file) => {
+boundaryFiles.forEach((file) => {
   try {
     const data = fs.existsSync(file.path) ? loadGeoJSON(file.path) : null;
-    logInfo(`${file.name} loaded`, { features: data?.features?.length ?? 0 });
+    logInfo(`${file.name} boundary loaded`, { features: data?.features?.length ?? 0 });
   } catch (err: any) {
-    logError(`Failed to load ${file.name}`, { error: err.message });
+    logError(`Failed to load ${file.name} boundary`, { error: err.message });
   }
 });
 

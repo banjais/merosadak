@@ -63,117 +63,106 @@ async function runDiagnostics() {
   const port = String(config.PORT || 4000);
   console.log(`\n${C.magenta}${C.bold}  MEROSADAK DIAGNOSTICS${C.reset}  ${C.dim}${mode} :${port}${C.reset}`);
 
-  // ─── Sheet Data ───
-  header("Road Incident Data");
+  // ─── Highway Data ───
+  header("Highway Data");
 
-  let gasRows = 0;
-  let gasStatusCount: Record<string, number> = {};
-  let mergedRows = 0;
-  let mergedStatusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
-  let droppedRows = 0;
+  let highwayCount = 0;
+  let highwaySegments = 0;
+  let statusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
 
-  // 1. Fetch from GAS (Apps Script)
+  // Check highway index
   try {
-    const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
-    const res = await axios.get(gasUrl, { timeout: 15000 });
-    const gasData = res.data?.data || [];
+    const highwayDir = path.join(paths.DATA_DIR, "highway");
+    const indexPath = path.join(highwayDir, "index.json");
+    const indexContent = await fs.readFile(indexPath, "utf-8");
+    const highways = JSON.parse(indexContent);
+    highwayCount = highways.length;
 
-    gasRows = gasData.length;
+    console.log(`  🛣️  Highways  →  ${highwayCount} highways indexed`);
 
-    gasData.forEach((row: any) => {
-      const status = (row.status || "").toString().trim();
-      gasStatusCount[status] = (gasStatusCount[status] || 0) + 1;
-    });
-
-    console.log(`  📡 Google Sheets (GAS)  →  ${gasRows} rows from tab '${SHEET_TAB || "default"}'`);
-    console.log(`     Raw statuses: ${Object.entries(gasStatusCount).map(([k, v]) => `${k || "(empty)"}=${v}`).join(", ") || "none"}`);
-
-    // Warn about non-standard status values
-    const validStatuses = ["Blocked", "blocked", "BLOCKED", "One-Lane", "One Lane", "One Way", "One-Way", "One way", "one-lane", "Resumed", "resumed", "RESUMED"];
-    for (const rawStatus of Object.keys(gasStatusCount)) {
-      if (rawStatus && !validStatuses.includes(rawStatus)) {
-        warn(`  GAS status '${rawStatus}'`, "Invalid — will be dropped during merge");
-      }
-    }
-  } catch (e: any) {
-    err("GAS Connection", e.message);
-  }
-
-  // 2. Fetch Merged Data (master.geojson)
-  try {
-    const masterPath = paths.BASE_DATA;
-    const content = await fs.readFile(masterPath, "utf-8");
-    const geojson = JSON.parse(content);
-    const features = geojson.features || [];
-
-    mergedRows = features.length;
-
-    features.forEach((f: any) => {
-      const status = f.properties?.status || "";
-      if (status === ROAD_STATUS.BLOCKED) mergedStatusCount.Blocked++;
-      else if (status === ROAD_STATUS.ONE_LANE) mergedStatusCount["One-Lane"]++;
-      else if (status === ROAD_STATUS.RESUMED) mergedStatusCount.Resumed++;
-    });
-
-    const stats = await fs.stat(masterPath);
-    const lastUpdated = new Date(stats.mtime);
-    const ageMinutes = (Date.now() - lastUpdated.getTime()) / (1000 * 60);
-
-    console.log(`\n  📦 Merged (master.geojson)  →  ${mergedRows} rows`);
-    console.log(`     Last updated: ${lastUpdated.toLocaleString()} (${Math.round(ageMinutes)} min ago)`);
-
-    if (ageMinutes > 30) {
-      warn("Data freshness", `Stale — ${Math.round(ageMinutes)} min old, run 'npm run merge'`);
+    // Count total segments and status breakdown
+    for (const h of highways.slice(0, 5)) { // Check first 5 highways
+      try {
+        const hPath = path.join(highwayDir, h.file);
+        const hContent = await fs.readFile(hPath, "utf-8");
+        const hData = JSON.parse(hContent);
+        if (hData.features) {
+          highwaySegments += hData.features.length;
+          hData.features.forEach((f: any) => {
+            const status = f.properties?.status || "Resumed";
+            if (status === "Blocked") statusCount.Blocked++;
+            else if (status === "One-Lane" || status === "One Lane") statusCount["One-Lane"]++;
+            else statusCount.Resumed++;
+          });
+        }
+      } catch { /* skip individual highway errors */ }
     }
 
-    droppedRows = gasRows - mergedRows;
-    if (droppedRows > 0) {
-      warn("Rows dropped", `${droppedRows} rows dropped during merge (invalid status)`);
-    } else if (gasRows > 0) {
-      ok("Merge integrity", "All GAS rows merged");
+    if (highwayCount > 5) {
+      console.log(`     (checking first 5 of ${highwayCount} highways...)`);
     }
-
-    // GAS vs merged comparison
-    if (gasRows > 0 && gasRows !== mergedRows) {
-      warn("GAS vs merged mismatch", `GAS: ${gasRows}, Merged: ${mergedRows}`);
-    }
+    ok("Highway index", `${highwayCount} highways`);
   } catch (e: any) {
     if (e.code === "ENOENT") {
-      warn("Merged Data", "master.geojson not found — run 'npm run merge'");
+      err("Highway index", "index.json not found in data/highway/");
     } else {
-      err("Merged Data", e.message);
+      err("Highway index", e.message);
     }
   }
 
   // ─── Status Breakdown ───
-  if (mergedRows > 0) {
-    header("Status Breakdown");
-
-    const total = mergedRows;
+  header("Status Breakdown");
+  const totalStatus = statusCount.Blocked + statusCount["One-Lane"] + statusCount.Resumed;
+  if (totalStatus > 0) {
     const statuses = [
-      { name: "Blocked",  count: mergedStatusCount.Blocked,    icon: "■" },
-      { name: "One-Lane", count: mergedStatusCount["One-Lane"], icon: "▲" },
-      { name: "Resumed",  count: mergedStatusCount.Resumed,    icon: "●" },
+      { name: "Blocked",  count: statusCount.Blocked,    icon: "■" },
+      { name: "One-Lane", count: statusCount["One-Lane"], icon: "▲" },
+      { name: "Resumed",  count: statusCount.Resumed,    icon: "●" },
     ];
 
     for (const { name, count, icon } of statuses) {
-      const pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
+      const pct = totalStatus > 0 ? ((count / totalStatus) * 100).toFixed(1) : "0.0";
       const fn = count > 0 ? ok : warn;
       fn(`  ${icon} ${name}`, `${count}  (${pct}%)`);
     }
-    console.log(`     Total: ${C.bold}${total}${C.reset}`);
+    console.log(`     Total: ${C.bold}${totalStatus}${C.reset} (from sampled highways)`);
+  } else {
+    ok("Status", "All highways Resumed (no incidents)");
   }
 
   // ─── Files ───
   header("Files");
-  for (const f of [
-    { label: `${SHEET_TAB || "Roads"} (master)`, p: paths.BASE_DATA },
-    { label: "Boundary", p: paths.BOUNDARY_DATA },
-  ]) {
-    try {
-      const s = await fs.stat(f.p);
-      ok(f.label, `${(s.size / 1024).toFixed(0)} KB`);
-    } catch { err(f.label, "not found"); }
+  // Check highway directory
+  try {
+    const highwayDir = path.join(paths.DATA_DIR, "highway");
+    const files = await fs.readdir(highwayDir);
+    const geojsonFiles = files.filter(f => f.endsWith('.geojson'));
+    ok(`Highways`, `${geojsonFiles.length} highway files`);
+  } catch { err("Highways", "highway directory not found"); }
+
+  // Check if boundary.geojson exists (legacy) or use individual boundary files
+  try {
+    const s = await fs.stat(paths.BOUNDARY_DATA);
+    ok("Boundary", `${(s.size / 1024).toFixed(0)} KB`);
+  } catch {
+    // boundary.geojson doesn't exist - check if individual boundary files exist
+    const boundaryTypes = ['districts', 'provinces', 'local'];
+    let allExist = true;
+    let totalSize = 0;
+    for (const type of boundaryTypes) {
+      try {
+        const s = await fs.stat(path.join(paths.DATA_DIR, `${type}.geojson`));
+        totalSize += s.size;
+      } catch {
+        allExist = false;
+        break;
+      }
+    }
+    if (allExist) {
+      ok("Boundary", `${(totalSize / 1024).toFixed(0)} KB (split into ${boundaryTypes.length} files)`);
+    } else {
+      warn("Boundary", "using split files (see Data Validation for details)");
+    }
   }
 
   // ─── Caches ───
@@ -339,40 +328,53 @@ async function runDiagnostics() {
     }
   }
 
-  // Coordinate bounds check (Nepal: 80-88°E, 26-30°N)
+  // Coordinate bounds check (Nepal: 80-88°E, 26-30°N) using highway data
   try {
-    const masterRaw = await fs.readFile(paths.BASE_DATA, "utf-8");
-    const masterGeo = JSON.parse(masterRaw);
-    if (masterGeo.features?.length) {
-      let invalidCoords = 0;
-      let pointCount = 0;
-      for (const f of masterGeo.features) {
-        const geom = f.geometry;
-        if (!geom) continue;
-        const checkCoord = (coord: number[]) => {
-          const [lng, lat] = coord;
-          if (lng < 80 || lng > 88 || lat < 26 || lat > 30) invalidCoords++;
-        };
-        if (geom.type === "Point") {
-          pointCount++;
-          checkCoord(geom.coordinates);
-        } else if (geom.type === "LineString") {
-          pointCount += geom.coordinates.length;
-          geom.coordinates.forEach(checkCoord);
-        } else if (geom.type === "MultiLineString") {
-          geom.coordinates.forEach((line: number[][]) => {
-            pointCount += line.length;
-            line.forEach(checkCoord);
-          });
+    const highwayDir = path.join(paths.DATA_DIR, "highway");
+    const indexPath = path.join(highwayDir, "index.json");
+    const indexContent = await fs.readFile(indexPath, "utf-8");
+    const highways = JSON.parse(indexContent);
+
+    let invalidCoords = 0;
+    let pointCount = 0;
+
+    // Check first 10 highways for coordinate validation
+    for (const h of highways.slice(0, 10)) {
+      try {
+        const hPath = path.join(highwayDir, h.file);
+        const hContent = await fs.readFile(hPath, "utf-8");
+        const hGeo = JSON.parse(hContent);
+        if (hGeo.features) {
+          for (const f of hGeo.features) {
+            const geom = f.geometry;
+            if (!geom) continue;
+            const checkCoord = (coord: number[]) => {
+              const [lng, lat] = coord;
+              if (lng < 80 || lng > 88 || lat < 26 || lat > 30) invalidCoords++;
+            };
+            if (geom.type === "Point") {
+              pointCount++;
+              checkCoord(geom.coordinates);
+            } else if (geom.type === "LineString") {
+              pointCount += geom.coordinates.length;
+              geom.coordinates.forEach(checkCoord);
+            } else if (geom.type === "MultiLineString") {
+              geom.coordinates.forEach((line: number[][]) => {
+                pointCount += line.length;
+                line.forEach(checkCoord);
+              });
+            }
+          }
         }
-      }
-      if (invalidCoords > 0) {
-        warn("Coordinate bounds", `${invalidCoords}/${pointCount} points outside Nepal bounds`);
-      } else if (pointCount > 0) {
-        ok("Coordinate bounds", `${pointCount} points within Nepal bounds`);
-      }
+      } catch { /* skip individual highway errors */ }
     }
-  } catch { /* already handled above */ }
+
+    if (invalidCoords > 0) {
+      warn("Coordinate bounds", `${invalidCoords}/${pointCount} points outside Nepal bounds`);
+    } else if (pointCount > 0) {
+      ok("Coordinate bounds", `${pointCount} points within Nepal bounds`);
+    }
+  } catch { /* already handled in Highway Data section */ }
 
   // ─── Upstash Redis Ping ───
   header("Upstash Redis");

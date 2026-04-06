@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist",
-    "merge": "tsx src/scripts/mergeData.ts",
     "diag": "tsx src/scripts/diagnostics.ts",
     "validate-sheet": "tsx src/scripts/validateSheet.ts",
+    "refresh-caches": "tsx src/scripts/refreshCaches.ts",
     "build": "cross-env NODE_ENV=production npm run clean && tsup && cross-env NODE_ENV=production npm run diag",
     "deploy": "npm run build && npx wrangler deploy",
     "build:dev": "npm run clean && tsup && npm run diag",

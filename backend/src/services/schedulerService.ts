@@ -5,9 +5,6 @@ import {
   getCachedRoads
 } from "./roadService.js";
 import {
-  mergeData
-} from "../scripts/mergeData.js";
-import {
   getCachedTraffic,
   refreshTrafficCache
 } from "./trafficService.js";
@@ -45,23 +42,11 @@ export const syncSheetsToGeoJSON = async (): Promise<boolean> => {
   broadcastProgress("Starting full system sync", 0);
   logInfo("Full System Data synchronization started...");
 
-  // 1️⃣ Merge Step first! (Writes to BASE_DATA)
+  // 1️⃣ Refresh Road Cache (reads from highway files)
   try {
-    broadcastProgress("Merging sheet data", 10);
-    await mergeData();
-    broadcastProgress("Sheet data merged", 30);
-    logInfo("Sheet data merged.");
-  } catch (err: any) {
-    logError("Sheet merge failed", err.message);
-    broadcastLiveLog({ type: "error", message: `Sheet merge failed: ${err.message}`, level: "error" });
-    hasErrors = true;
-  }
-
-  // 2️⃣ Refresh Cache (Reads from BASE_DATA)
-  try {
-    broadcastProgress("Refreshing road cache", 40);
+    broadcastProgress("Refreshing road cache", 20);
     await refreshRoadCache();
-    broadcastProgress("Road data synced", 50);
+    broadcastProgress("Road data synced", 40);
     logInfo("Roads synced.");
   } catch (err: any) {
     logError("Road sync failed", err.message);

@@ -15,13 +15,18 @@ export const ROOT = isSource
   ? path.resolve(__dirname, "../..")   // src/config → backend/
   : path.resolve(__dirname, "..");     // dist → backend/
 
-// 📁 Core directories (NO ENV NEEDED)
+// 📁 Core directories
 export const DATA_DIR = path.join(ROOT, "data");
 export const CACHE_DIR = path.join(DATA_DIR, "cache");
 export const LOG_DIR = path.join(DATA_DIR, "logs");
 
 // 📄 Core data files
-export const BASE_DATA = path.join(DATA_DIR, "master.geojson");
+export const BASE_DATA = path.join(DATA_DIR, "highways_base.geojson");
+export const BOUNDARY_DATA = path.join(DATA_DIR, "boundary.geojson");
+export const HIGHWAY_DATA = path.join(DATA_DIR, "highway", "index.json");
+export const DISTRICT_DATA = path.join(DATA_DIR, "districts.geojson");
+export const LOCAL_DATA = path.join(DATA_DIR, "local.geojson");
+export const PROVINCE_DATA = path.join(DATA_DIR, "provinces.geojson");
 
 // ⚡ Cache files
 export const CACHE_ROAD = path.join(CACHE_DIR, "road.json");
@@ -48,6 +53,11 @@ export default {
   CACHE_DIR,
   LOG_DIR,
   BASE_DATA,
+  BOUNDARY_DATA,
+  HIGHWAY_DATA,
+  DISTRICT_DATA,
+  LOCAL_DATA,
+  PROVINCE_DATA,
   CACHE_ROAD,
   CACHE_DISTRICTS,
   CACHE_PROVINCES,
