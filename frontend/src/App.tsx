@@ -20,6 +20,7 @@ import { ToastContainer, useToast } from './components/Toast';
 import ReportIncidentOverlay from './components/ReportIncidentOverlay';
 import { SOSOverlay } from './components/SOSOverlay';
 import { SystemMenu } from './components/SystemMenu';
+import { FloatingMenu } from './components/FloatingMenu';
 
 import { APP_CONFIG } from './config/config';
 import { useNepalData } from './hooks/useNepalData';
