@@ -110,8 +110,8 @@ async function runDiagnostics() {
     }
   }
 
-  // ─── Status Breakdown ───
-  header("Status Breakdown");
+  // ─── Status Breakdown (Highway Files) ───
+  header("Status Breakdown (Highway Files)");
   const totalStatus = statusCount.Blocked + statusCount["One-Lane"] + statusCount.Resumed;
   if (totalStatus > 0) {
     const statuses = [
@@ -127,25 +127,79 @@ async function runDiagnostics() {
     }
     console.log(`     Total: ${C.bold}${totalStatus}${C.reset} (from sampled highways)`);
   } else {
-    ok("Status", "All highways Resumed (no incidents)");
+    ok("Status", "All highways Resumed (no incidents in files)");
+  }
+
+  // ─── Real-Time Sheet Incidents ───
+  header("Real-Time Sheet Incidents");
+  try {
+    const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
+    const res = await axios.get(gasUrl, { timeout: 15000 });
+    const sheetData = res.data?.data || [];
+    
+    const sheetStatusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
+    const STATUS_NORMALIZE: Record<string, string> = {
+      "Blocked": "Blocked", "blocked": "Blocked", "BLOCKED": "Blocked",
+      "One-Lane": "One-Lane", "One Lane": "One-Lane", "One Way": "One-Lane", "One-Way": "One-Lane", "one-lane": "One-Lane",
+      "Resumed": "Resumed", "resumed": "Resumed", "RESUMED": "Resumed",
+    };
+    
+    sheetData.forEach((row: any) => {
+      const rawStatus = String(row.status || "").trim();
+      const status = STATUS_NORMALIZE[rawStatus] || "";
+      if (status) sheetStatusCount[status as keyof typeof sheetStatusCount]++;
+    });
+    
+    const totalSheet = sheetStatusCount.Blocked + sheetStatusCount["One-Lane"] + sheetStatusCount.Resumed;
+    console.log(`  📡 Google Sheets (GAS)  →  ${totalSheet} rows from tab '${SHEET_TAB || "Roads"}'`);
+    console.log(`     Raw statuses: Blocked=${sheetStatusCount.Blocked}, Resumed=${sheetStatusCount.Resumed}, One-Lane=${sheetStatusCount["One-Lane"]}`);
+    
+    if (totalSheet > 0) {
+      const sheetStatuses = [
+        { name: "Blocked",  count: sheetStatusCount.Blocked,    icon: "■" },
+        { name: "One-Lane", count: sheetStatusCount["One-Lane"], icon: "▲" },
+        { name: "Resumed",  count: sheetStatusCount.Resumed,    icon: "●" },
+      ];
+      
+      for (const { name, count, icon } of sheetStatuses) {
+        const pct = totalSheet > 0 ? ((count / totalSheet) * 100).toFixed(1) : "0.0";
+        const fn = count > 0 ? ok : warn;
+        fn(`  ${icon} ${name}`, `${count}  (${pct}%)`);
+      }
+      console.log(`     Total: ${C.bold}${totalSheet}${C.reset} (real-time from Google Sheets)`);
+    } else {
+      warn("No incidents", "Google Sheets returned no data");
+    }
+  } catch (e: any) {
+    err("Google Sheets", `Failed to fetch: ${e.message}`);
   }
 
   // ─── Files ───
   header("Files");
-  // Check highway directory
-  try {
-    const highwayDir = path.join(paths.DATA_DIR, "highway");
-    const files = await fs.readdir(highwayDir);
-    const geojsonFiles = files.filter(f => f.endsWith('.geojson'));
-    ok(`Highways`, `${geojsonFiles.length} highway files`);
-  } catch { err("Highways", "highway directory not found"); }
+  
+  // Check all configured data files from environment
+  const dataFiles = [
+    { label: "Base Highways", path: paths.BASE_DATA },
+    { label: "Highway Index", path: paths.HIGHWAY_DATA },
+    { label: "Districts", path: paths.DISTRICT_DATA },
+    { label: "Provinces", path: paths.PROVINCE_DATA },
+    { label: "Local", path: paths.LOCAL_DATA },
+  ];
+  
+  for (const { label, path: filePath } of dataFiles) {
+    try {
+      const s = await fs.stat(filePath);
+      ok(label, `${(s.size / 1024).toFixed(0)} KB`);
+    } catch {
+      err(label, "not found");
+    }
+  }
 
-  // Check if boundary.geojson exists (legacy) or use individual boundary files
+  // Check boundary files (split or combined)
   try {
     const s = await fs.stat(paths.BOUNDARY_DATA);
-    ok("Boundary", `${(s.size / 1024).toFixed(0)} KB`);
+    ok("Boundary (combined)", `${(s.size / 1024).toFixed(0)} KB`);
   } catch {
-    // boundary.geojson doesn't exist - check if individual boundary files exist
     const boundaryTypes = ['districts', 'provinces', 'local'];
     let allExist = true;
     let totalSize = 0;
@@ -159,11 +213,19 @@ async function runDiagnostics() {
       }
     }
     if (allExist) {
-      ok("Boundary", `${(totalSize / 1024).toFixed(0)} KB (split into ${boundaryTypes.length} files)`);
+      ok("Boundary (split)", `${(totalSize / 1024).toFixed(0)} KB (${boundaryTypes.length} files)`);
     } else {
-      warn("Boundary", "using split files (see Data Validation for details)");
+      warn("Boundary", "not found");
     }
   }
+  
+  // Check highway directory
+  try {
+    const highwayDir = path.join(paths.DATA_DIR, "highway");
+    const files = await fs.readdir(highwayDir);
+    const geojsonFiles = files.filter(f => f.endsWith('.geojson'));
+    ok(`Highway Segments`, `${geojsonFiles.length} files`);
+  } catch { err("Highway Segments", "directory not found"); }
 
   // ─── Caches ───
   header("Caches");
