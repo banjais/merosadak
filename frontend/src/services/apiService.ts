@@ -199,7 +199,22 @@ export const api = {
       };
     }).filter((i: any) => i.lat !== 0);
   },
-  getBoundary: async () => await apiFetch<GeoData>('/boundary'),
+  getBoundaryDistricts: async (): Promise<GeoData> => {
+    const result = await apiFetch<any>('/boundary/districts');
+    return result.data;
+  },
+  getBoundaryProvinces: async (): Promise<GeoData> => {
+    const result = await apiFetch<any>('/boundary/provinces');
+    return result.data;
+  },
+  getBoundaryLocal: async (): Promise<GeoData> => {
+    const result = await apiFetch<any>('/boundary/local');
+    return result.data;
+  },
+  getBoundaryCountry: async (): Promise<GeoData> => {
+    const result = await apiFetch<any>('/boundary/country');
+    return result.data;
+  },
   getPois: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
     if (APP_CONFIG.useMocks) return POI_MOCKS;
     const qLat = lat ?? NEPAL_CENTER[0];
@@ -264,8 +279,8 @@ export const api = {
       type: a.type || IncidentType.WEATHER,
       title: a.title || a.message || 'Alert',
       description: a.message || '',
-      lat: a.lat || 0,
-      lng: a.lng || 0,
+      lat: a.lat, // Keep as undefined if no coordinates
+      lng: a.lng, // Keep as undefined if no coordinates
       severity: a.severity || 'medium',
       timestamp: a.timestamp || new Date().toISOString(),
       source: 'sheet',
@@ -283,7 +298,21 @@ export const api = {
       status: a.extra?.status || '',
       reportDate: a.extra?.reportDate || '',
       div_name: a.extra?.div_name || '',
-    })).filter((i: TravelIncident) => i.lat !== 0);
+      hasExactLocation: a.extra?.hasExactLocation || false, // Flag for exact location availability
+    })).filter((i: TravelIncident) => i.lat !== undefined || i.road_refno); // Keep alerts with road_refno even if no coordinates
+  },
+  getHighwayList: async (): Promise<Array<{code: string, file: string, name?: string}>> => {
+    const result = await apiFetch<any>('/highways');
+    return result.data || [];
+  },
+  getHighwayByCode: async (code: string): Promise<GeoData | null> => {
+    try {
+      const result = await apiFetch<any>(`/highways/${code}`);
+      return result.data || null;
+    } catch (err) {
+      console.error(`Failed to load highway ${code}:`, err);
+      return null;
+    }
   }
 };
 

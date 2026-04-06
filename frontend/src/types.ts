@@ -19,11 +19,11 @@ export type DataSource = 'live' | 'cache' | 'mock';
 
 export interface TravelIncident {
   id: string;
-  type: string; 
+  type: string;
   title: string;
   description: string;
-  lat: number;
-  lng: number;
+  lat?: number; // Made optional for incidents without exact coordinates
+  lng?: number; // Made optional for incidents without exact coordinates
   severity: 'low' | 'medium' | 'high' | 'success';
   timestamp: string;
   source?: string;
@@ -45,6 +45,7 @@ export interface TravelIncident {
   phone?: string;
   hours?: string;
   rating?: number;
+  hasExactLocation?: boolean; // Flag indicating if exact coordinates are available
 }
 
 export interface MapSettings {

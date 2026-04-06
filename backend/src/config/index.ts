@@ -137,10 +137,11 @@ const envSchema = z.object({
   CACHE_DIR: z.string().default("data/cache"),
 
   BASE_DATA: z.string().default("data/master.geojson"),
-  BOUNDARY_DATA: z.string().default("data/boundary.geojson"),
 
   CACHE_ROAD: z.string().default("data/cache/cacheRoad.json"),
-  CACHE_BOUNDARY: z.string().default("data/cache/cacheBoundary.json"),
+  CACHE_DISTRICTS: z.string().default("data/cache/cacheDistricts.json"),
+  CACHE_PROVINCES: z.string().default("data/cache/cacheProvinces.json"),
+  CACHE_LOCAL: z.string().default("data/cache/cacheLocal.json"),
   CACHE_POI: z.string().default("data/cache/cachePOIs.json"),
   CACHE_TRAFFIC: z.string().default("data/cache/cacheTraffic.json"),
   CACHE_WEATHER: z.string().default("data/cache/cacheWeather.json"),

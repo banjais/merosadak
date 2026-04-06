@@ -5,6 +5,7 @@ import { Router } from "express";
 // MAP DATA & INFO ROUTERS
 // ----------------------
 import roadRouter from "./roadRouter.js";
+import highwayRouter from "./highwayRouter.js";
 import boundaryRouter from "./boundaryRouter.js";
 import poiRouter from "./poiRouter.js";
 import weatherRouter from "./weatherRouter.js";
@@ -40,6 +41,7 @@ const apiRouter = Router();
 // MAP DATA ENDPOINTS
 // ----------------------
 apiRouter.use("/roads", roadRouter);
+apiRouter.use("/highways", highwayRouter);
 apiRouter.use("/boundary", boundaryRouter);
 apiRouter.use("/pois", poiRouter);
 apiRouter.use("/weather", weatherRouter);

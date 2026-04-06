@@ -14,19 +14,8 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import { NepalBounds } from './components/NepalBounds';
-import SearchOverlay from './components/SearchOverlay';
-import { DriverDashboard } from './components/DriverDashboard';
-import { FloatingMenu } from './components/FloatingMenu';
-import { DistanceCalculator } from './components/DistanceCalculator';
-import { MapLayersToggle, MapLayerType } from './components/MapLayersToggle';
-import { MapEngineSelector, MapEngine } from './components/MapEngineSelector';
-import { SystemMenu } from './components/SystemMenu';
-import { MapControls } from './components/MapControls';
-import { SOSOverlay } from './components/SOSOverlay';
-import { MonsoonRiskOverlay } from './components/MonsoonRiskOverlay';
-import { BottomInfoArea } from './components/BottomInfoArea';
-import { RoadOverlay } from './components/RoadOverlay';
+import { BoundaryOverlay } from './components/BoundaryOverlay';
+import { HighwayBrowser } from './components/HighwayBrowser';
 import { ToastContainer, useToast } from './components/Toast';
 import ReportIncidentOverlay from './components/ReportIncidentOverlay';
 
@@ -211,7 +200,7 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 }
 
 const App: React.FC = () => {
-  const { incidents, isLoading, boundary } = useNepalData();
+  const { incidents, isLoading } = useNepalData();
   const { messages, ask, isProcessing } = useGemini();
   const { isConnected } = useWebSocket('wss://merosadak.banjays.workers.dev/ws/live');
   const geo = useGeolocation();
@@ -235,6 +224,8 @@ const App: React.FC = () => {
   const [selectedIncident, setSelectedIncident] = useState<TravelIncident | null>(null);
   const [activeSidebarTab, setActiveSidebarTab] = useState<'alerts' | 'chat'>('alerts');
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [showHighways, setShowHighways] = useState(false);
+  const [isHighwayBrowserOpen, setIsHighwayBrowserOpen] = useState(false);
 
   const [aiPersona, setAiPersona] = useState('safety');
   const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('female');
@@ -284,6 +275,13 @@ const App: React.FC = () => {
     if (isCalculatorOpen) setCalcPoints(prev => [...prev, latlng]);
   };
 
+  const handleSelectHighway = (highwayCode: string) => {
+    // For now, just close the browser and show highways
+    setIsHighwayBrowserOpen(false);
+    setShowHighways(true);
+    // TODO: Zoom to highway bounds and highlight it
+  };
+
   return (
     <div className={`h-screen w-screen flex flex-col ${isDarkMode ? 'dark' : ''}`}>
       <Header
@@ -296,6 +294,13 @@ const App: React.FC = () => {
       />
 
       <SOSOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} userLocation={{ lat: geo.lat, lng: geo.lng }} />
+
+      <HighwayBrowser
+        isOpen={isHighwayBrowserOpen}
+        onClose={() => setIsHighwayBrowserOpen(false)}
+        onSelectHighway={handleSelectHighway}
+        incidents={incidents}
+      />
 
       {mapEngine === null && <MapEngineSelector onSelect={handleMapEngineSelect} />}
 
@@ -333,15 +338,18 @@ const App: React.FC = () => {
           incidents={incidents}
         />
 
-        <MapLayersToggle 
-          currentLayer={mapLayer} 
-          onLayerChange={setMapLayer} 
-          activeFilters={roadFilters} 
-          onFilterToggle={(f) => setRoadFilters(prev => ({ ...prev, [f]: !prev[f] }))} 
+        <MapLayersToggle
+          currentLayer={mapLayer}
+          onLayerChange={setMapLayer}
+          activeFilters={roadFilters}
+          onFilterToggle={(f) => setRoadFilters(prev => ({ ...prev, [f]: !prev[f] }))}
           isDarkMode={isDarkMode}
-          mapEngine={mapEngine} 
-          onMapEngineChange={handleMapEngineSelect} 
-          onResetEngine={() => { setMapEngine(null); localStorage.removeItem('merosadak-map-engine'); }} 
+          mapEngine={mapEngine}
+          onMapEngineChange={handleMapEngineSelect}
+          onResetEngine={() => { setMapEngine(null); localStorage.removeItem('merosadak-map-engine'); }}
+          showHighways={showHighways}
+          onToggleHighways={() => setShowHighways(!showHighways)}
+          onOpenHighwayBrowser={() => setIsHighwayBrowserOpen(true)}
         />
 
         <Sidebar
@@ -389,18 +397,36 @@ const App: React.FC = () => {
               <MapResizeHandler />
               <MapEvents onClick={handleMapClick} />
 
-              {/* Nepal Boundary Mask - ONLY shown when Nepal map is selected */}
-              {mapEngine === 'nepal' && <NepalBounds boundary={boundary} isDarkMode={isDarkMode} />}
+              {/* Nepal Boundary Layers - ONLY shown when Nepal map is selected */}
+              {mapEngine === 'nepal' && (
+                <BoundaryOverlay
+                  showDistricts={false}
+                  showProvinces={true}
+                  showLocal={false}
+                  isDarkMode={isDarkMode}
+                />
+              )}
+
+              {/* Highway Highlight Overlay - show all highways or only incident highways */}
+              {mapEngine === 'nepal' && showHighways && (
+                <HighwayHighlightOverlay
+                  incidents={showHighways ? [] : incidents} // Empty array shows all highways, incidents array shows only incident highways
+                  isVisible={true}
+                />
+              )}
 
               {/* Road & Monsoon overlays only on Nepal map */}
               {mapEngine === 'nepal' && <MonsoonRiskOverlay incidents={incidents} />}
               {mapEngine === 'nepal' && <RoadOverlay isVisible={true} filters={roadFilters} />}
+              {mapEngine === 'nepal' && <HighwayHighlightOverlay incidents={incidents} isVisible={true} />}
 
               <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
-                {(incidents || []).map((i) => (
+                {(incidents || [])
+                  .filter(i => i.hasExactLocation && i.lat !== undefined && i.lng !== undefined)
+                  .map((i) => (
                   <Marker
                     key={i.id}
-                    position={[i.lat, i.lng]}
+                    position={[i.lat!, i.lng!]}
                     icon={getMarkerIcon(i.type, i.severity)}
                     eventHandlers={{ click: () => setSelectedIncident(i) }}
                   />

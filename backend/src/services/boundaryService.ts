@@ -1,54 +1,51 @@
 // backend/src/services/boundaryService.ts
-
 import fs from "fs/promises";
+import path from "path";
+import { DATA_DIR, CACHE_DISTRICTS, CACHE_PROVINCES, CACHE_LOCAL } from "../config/paths.js";
 import { logError, logInfo } from "../logs/logs.js";
 import type { FeatureCollection } from "../types.js";
-import { CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
 import { withCache } from "./cacheService.js";
 
-export async function getBoundaryData(): Promise<FeatureCollection> {
-  return withCache("nepal_boundary", async () => {
+const BOUNDARY_FILES = {
+  districts: path.join(DATA_DIR, "districts.geojson"),
+  provinces: path.join(DATA_DIR, "provinces.geojson"),
+  local: path.join(DATA_DIR, "local.geojson"),
+};
+
+/**
+ * Get boundary data by type
+ */
+export async function getBoundaryData(type: "districts" | "provinces" | "local"): Promise<FeatureCollection> {
+  const cacheKeys = {
+    districts: CACHE_DISTRICTS,
+    provinces: CACHE_PROVINCES,
+    local: CACHE_LOCAL,
+  };
+
+  const cacheKey = cacheKeys[type];
+  const filePath = BOUNDARY_FILES[type];
+
+  if (!filePath || !cacheKey) {
+    throw new Error(`Unknown boundary type: ${type}`);
+  }
+
+  return withCache(`boundary:${type}`, async () => {
     try {
-      const primaryPath = BOUNDARY_DATA;
+      logInfo(`[BoundaryService] Loading ${type} boundary data from ${filePath}`);
 
-      // 🔹 Try PRIMARY source (backend/data/boundary.geojson)
-      try {
-        const raw = await fs.readFile(primaryPath, "utf-8");
-        const data = JSON.parse(raw) as FeatureCollection;
+      const raw = await fs.readFile(filePath, "utf-8");
+      const data = JSON.parse(raw) as FeatureCollection;
 
-        // 🔹 Save to disk cache (non-blocking)
-        fs.writeFile(CACHE_BOUNDARY, JSON.stringify(data)).catch((err) =>
-          logError("[boundaryService] Disk cache write failed", {
-            error: err.message,
-          })
-        );
+      logInfo(`[BoundaryService] Loaded ${type} boundary with ${data.features?.length || 0} features`);
 
-        logInfo("[boundaryService] Loaded from PRIMARY source");
-        return data;
-      } catch {
-        logInfo(
-          `[boundaryService] Primary missing at ${primaryPath}, checking Disk CACHE`
-        );
-      }
-
-      // 🔹 Fallback to disk cache
-      try {
-        const raw = await fs.readFile(CACHE_BOUNDARY, "utf-8");
-        logInfo("[boundaryService] Loaded from Disk CACHE");
-        return JSON.parse(raw) as FeatureCollection;
-      } catch (err: any) {
-        logError("[boundaryService] Disk cache load failed", {
-          error: err.message,
-        });
-      }
-
-      // 🔹 Final fallback (empty data)
-      return { type: "FeatureCollection", features: [] };
+      return data;
     } catch (err: any) {
-      logError("[boundaryService] Unexpected error", {
+      logError(`[BoundaryService] Failed to load ${type} boundary data`, {
         error: err.message,
+        filePath
       });
 
+      // Return empty FeatureCollection as fallback
       return { type: "FeatureCollection", features: [] };
     }
   }, 86400); // cache for 24 hours

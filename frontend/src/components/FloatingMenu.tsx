@@ -23,12 +23,12 @@ interface FloatingMenuProps {
 }
 
 const services = [
-  { id: 'fuel', icon: <Fuel size={20} />, label: 'Fuel', color: 'bg-primary' },
-  { id: 'food', icon: <ChefHat size={20} />, label: 'Food', color: 'bg-secondary' },
-  { id: 'hospital', icon: <Stethoscope size={20} />, label: 'Medical', color: 'bg-error' },
-  { id: 'traffic', icon: <TrafficIcon size={20} />, label: 'Traffic', color: 'bg-primary' },
-  { id: 'monsoon', icon: <CloudRain size={20} />, label: 'Weather', color: 'bg-tertiary' },
-  { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500' },
+  { id: 'fuel', icon: <Fuel size={20} />, label: 'Fuel', color: 'bg-primary', count: serviceStats.fuel },
+  { id: 'food', icon: <ChefHat size={20} />, label: 'Food', color: 'bg-secondary', count: 0 },
+  { id: 'hospital', icon: <Stethoscope size={20} />, label: 'Medical', color: 'bg-error', count: serviceStats.medical },
+  { id: 'traffic', icon: <TrafficIcon size={20} />, label: 'Traffic', color: 'bg-primary', count: serviceStats.traffic },
+  { id: 'monsoon', icon: <CloudRain size={20} />, label: 'Weather', color: 'bg-tertiary', count: serviceStats.weather },
+  { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500', count: serviceStats.roads.blocked },
 ];
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({ 
@@ -40,14 +40,26 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const roadCounts = useMemo(() => {
+  const serviceStats = useMemo(() => {
     const roadIncidents = (incidents || []).filter(i => {
       const s = (i.status || i.type || '').toLowerCase();
       return s.includes('block') || s.includes('one') || s.includes('resum');
     });
+
+    const fuelStations = (incidents || []).filter(i => i.type?.toLowerCase().includes('fuel') || i.title?.toLowerCase().includes('fuel')).length;
+    const medicalFacilities = (incidents || []).filter(i => i.type?.toLowerCase().includes('medical') || i.title?.toLowerCase().includes('hospital')).length;
+    const trafficIncidents = (incidents || []).filter(i => i.type?.toLowerCase().includes('traffic') || i.title?.toLowerCase().includes('traffic')).length;
+    const weatherAlerts = (incidents || []).filter(i => i.type?.toLowerCase().includes('weather') || i.type?.toLowerCase().includes('monsoon')).length;
+
     return {
-      blocked: roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block')).length,
-      total: roadIncidents.length,
+      roads: {
+        blocked: roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block')).length,
+        total: roadIncidents.length,
+      },
+      fuel: fuelStations,
+      medical: medicalFacilities,
+      traffic: trafficIncidents,
+      weather: weatherAlerts,
     };
   }, [incidents]);
 
@@ -61,7 +73,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
   };
 
   return (
-    <div className="fixed bottom-10 right-40 z-[2000] flex flex-row-reverse items-center gap-2 pointer-events-none">
+    <div className="fixed bottom-4 right-4 md:bottom-10 md:right-40 z-[2000] flex flex-row-reverse items-center gap-2 pointer-events-none">
       
       {/* Main FAB Button */}
       <div className="pointer-events-auto">
@@ -91,10 +103,10 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
             >
               {s.icon}
               <span className="text-[8px] font-bold uppercase font-label">{s.label}</span>
-              {/* Road status badge */}
-              {s.id === 'roads' && roadCounts.blocked > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-error text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-md animate-pulse">
-                  {roadCounts.blocked}
+              {/* Service count badge */}
+              {s.count > 0 && (
+                <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 ${s.id === 'roads' ? 'bg-error' : 'bg-primary'} text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-md ${s.id === 'roads' ? 'animate-pulse' : ''}`}>
+                  {s.count}
                 </span>
               )}
             </button>

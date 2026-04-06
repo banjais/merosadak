@@ -9,13 +9,14 @@ interface MonsoonRiskOverlayProps {
 }
 
 export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incidents }) => {
-  // Filter only monsoon-related incidents
-  const monsoonIncidents = (incidents || []).filter(i => 
-    i.type?.toUpperCase().includes('MONSOON') || 
+  // Filter only monsoon-related incidents with coordinates
+  const monsoonIncidents = (incidents || []).filter(i =>
+    (i.type?.toUpperCase().includes('MONSOON') ||
     i.title?.toUpperCase().includes('MONSOON') ||
     i.title?.toUpperCase().includes('RAIN') ||
     i.title?.toUpperCase().includes('FLOOD') ||
-    i.title?.toUpperCase().includes('LANDSLIDE')
+    i.title?.toUpperCase().includes('LANDSLIDE')) &&
+    i.lat !== undefined && i.lng !== undefined
   );
 
   if (monsoonIncidents.length === 0) return null;
@@ -32,7 +33,7 @@ export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incident
             {/* Pulsing risk circle */}
             {(isExtreme || isHigh) && (
               <Circle
-                center={[i.lat, i.lng]}
+                center={[i.lat!, i.lng!]}
                 pathOptions={{
                   fillColor: color,
                   fillOpacity: 0.12,
@@ -45,8 +46,8 @@ export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incident
             )}
 
             {/* Custom Monsoon Marker */}
-            <Marker 
-              position={[i.lat, i.lng]} 
+            <Marker
+              position={[i.lat!, i.lng!]} 
               icon={L.divIcon({
                 className: 'monsoon-risk-icon',
                 html: `

@@ -5,6 +5,8 @@ import { CACHE_ALERTS } from "../config/paths.js";
 import { logInfo, logError } from "../logs/logs.js";
 import { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_API_URL } from "../config/index.js";
 import { getCachedRoads } from "./roadService.js";
+import { getHighwayByCode } from "./highwayService.js";
+import { calculateIncidentLocation } from "../utils/incidentLocation.js";
 import { ROAD_STATUS } from "../constants/sheets.js";
 
 export interface AlertEntry {
@@ -45,7 +47,33 @@ export const updateAlerts = async (lat?: number, lng?: number): Promise<AlertEnt
         const isBlocked = status.toLowerCase().includes("block");
 
         let coords: { lat: number; lng: number } | undefined;
-        if (road.geometry?.coordinates) {
+
+        // Try to get exact coordinates using the incident location calculator
+        if (props.road_refno) {
+          try {
+            const highwayData = await getHighwayByCode(props.road_refno);
+            if (highwayData) {
+              const calculatedCoords = calculateIncidentLocation(highwayData, {
+                chainage: props.chainage,
+                incidentCoordinate: props.incidentCoordinate,
+                incidentPlace: props.incidentPlace,
+                road_refno: props.road_refno
+              });
+
+              if (calculatedCoords) {
+                coords = calculatedCoords;
+              }
+            }
+          } catch (err: any) {
+            logError("[AlertService] Failed to calculate incident location", {
+              road_refno: props.road_refno,
+              error: err.message
+            });
+          }
+        }
+
+        // Fallback to geometry-based coordinates if calculation failed
+        if (!coords && road.geometry?.coordinates) {
           if (road.geometry.type === "Point") {
             coords = { lat: road.geometry.coordinates[1], lng: road.geometry.coordinates[0] };
           } else if (road.geometry.type === "LineString" && road.geometry.coordinates.length > 0) {
@@ -66,8 +94,8 @@ export const updateAlerts = async (lat?: number, lng?: number): Promise<AlertEnt
           title: props.road_name || road.name || "Road Alert",
           message: props.remarks || `${status} — ${props.road_name || road.name}`,
           severity: isBlocked ? "high" : "medium",
-          lat: coords?.lat,
-          lng: coords?.lng,
+          lat: coords?.lat, // Keep as undefined if no coordinates available
+          lng: coords?.lng, // Keep as undefined if no coordinates available
           extra: {
             road_refno: props.road_refno,
             incidentDistrict: props.incidentDistrict,
@@ -82,6 +110,7 @@ export const updateAlerts = async (lat?: number, lng?: number): Promise<AlertEnt
             status: status,
             div_name: props.div_name,
             reportDate: props.reportDate,
+            hasExactLocation: !!coords, // Flag to indicate if exact location is available
           },
           timestamp: props.reportDate || new Date().toISOString(),
         });

@@ -5,7 +5,6 @@ import { useTraffic } from './useTraffic';
 import { useWeather } from './useWeather';
 import { useMonsoon } from './useMonsoon';
 import { usePOIs } from './usePOIs';
-import { useBoundary } from './useBoundary';
 import { TravelIncident } from '../types';
 
 export function useNepalData() {
@@ -15,7 +14,6 @@ export function useNepalData() {
   const weather = useWeather();
   const monsoon = useMonsoon();
   const pois = usePOIs();
-  const boundaryHook = useBoundary();
 
   // Combined incidents (only show road-related data when Nepal map is active)
   const incidents: TravelIncident[] = useMemo(() => {
@@ -33,12 +31,11 @@ export function useNepalData() {
     );
   }, [roads.data, traffic.data, weather.data, monsoon.data, pois.data]);
 
-  const isLoading = roads.isLoading || 
-                    traffic.isLoading || 
-                    weather.isLoading || 
-                    monsoon.isLoading || 
-                    pois.isLoading || 
-                    boundaryHook.loading;
+  const isLoading = roads.isLoading ||
+                    traffic.isLoading ||
+                    weather.isLoading ||
+                    monsoon.isLoading ||
+                    pois.isLoading;
 
   const lastSync = roads.lastSync || traffic.lastSync || weather.lastSync || monsoon.lastSync || pois.lastSync;
 
@@ -51,7 +48,6 @@ export function useNepalData() {
   }, [roads, traffic, weather, monsoon, pois]);
 
   return {
-    boundary: boundaryHook.boundary,
     incidents,
     isLoading,
     lastSync,

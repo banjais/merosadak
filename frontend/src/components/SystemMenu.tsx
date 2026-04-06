@@ -43,10 +43,10 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   if (!isOpen) return null;
 
   const menuItems = [
-    { id: 'profile', icon: <User size={18} />, label: 'Traveler Profile', sub: 'Managed by SadakID' },
-    { id: 'offline', icon: <Smartphone size={18} />, label: 'Offline Maps', sub: 'Download regions' },
-    { id: 'privacy', icon: <ShieldCheck size={18} />, label: 'Safety & Privacy', sub: 'Encryption active' },
-    { id: 'lang', icon: <Languages size={18} />, label: 'Language', sub: 'English / Nepali' },
+    { id: 'profile', icon: <User size={18} />, label: 'Traveler Profile', sub: 'Emergency contacts, preferences' },
+    { id: 'offline', icon: <Smartphone size={18} />, label: 'Offline Maps', sub: 'Nepal regions available' },
+    { id: 'privacy', icon: <ShieldCheck size={18} />, label: 'Safety & Privacy', sub: 'End-to-end encrypted' },
+    { id: 'lang', icon: <Languages size={18} />, label: 'Language Settings', sub: 'English / नेपाली / हिन्दी' },
   ];
 
   return (

@@ -320,21 +320,23 @@ async function runDiagnostics() {
   // ─── Data Validation ───
   header("Data Validation");
 
-  // Boundary validation
-  try {
-    const boundaryRaw = await fs.readFile(paths.BOUNDARY_DATA, "utf-8");
-    const boundaryGeo = JSON.parse(boundaryRaw);
-    if (boundaryGeo.type === "FeatureCollection" && Array.isArray(boundaryGeo.features)) {
-      ok("Boundary GeoJSON", `${boundaryGeo.features.length} feature(s)`);
-    } else if (boundaryGeo.type === "Feature") {
-      ok("Boundary GeoJSON", "single Feature");
-    } else {
-      warn("Boundary GeoJSON", `unexpected type: ${boundaryGeo.type}`);
+  // Boundary validation - check all boundary files
+  const boundaryTypes = ['districts', 'provinces', 'local'];
+  for (const type of boundaryTypes) {
+    try {
+      const boundaryPath = path.join(paths.DATA_DIR, `${type}.geojson`);
+      const boundaryRaw = await fs.readFile(boundaryPath, "utf-8");
+      const boundaryGeo = JSON.parse(boundaryRaw);
+      if (boundaryGeo.type === "FeatureCollection" && Array.isArray(boundaryGeo.features)) {
+        ok(`${type} Boundary`, `${boundaryGeo.features.length} feature(s)`);
+      } else {
+        warn(`${type} Boundary`, `unexpected type: ${boundaryGeo.type}`);
+      }
+    } catch (e: any) {
+      if (e.code === "ENOENT") warn(`${type} Boundary`, "file not found");
+      else if (e instanceof SyntaxError) err(`${type} Boundary`, "invalid JSON");
+      else err(`${type} Boundary`, e.message);
     }
-  } catch (e: any) {
-    if (e.code === "ENOENT") warn("Boundary GeoJSON", "file not found");
-    else if (e instanceof SyntaxError) err("Boundary GeoJSON", "invalid JSON");
-    else err("Boundary GeoJSON", e.message);
   }
 
   // Coordinate bounds check (Nepal: 80-88°E, 26-30°N)

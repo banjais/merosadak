@@ -22,11 +22,12 @@ export const LOG_DIR = path.join(DATA_DIR, "logs");
 
 // 📄 Core data files
 export const BASE_DATA = path.join(DATA_DIR, "master.geojson");
-export const BOUNDARY_DATA = path.join(DATA_DIR, "boundary.geojson");
 
 // ⚡ Cache files
 export const CACHE_ROAD = path.join(CACHE_DIR, "road.json");
-export const CACHE_BOUNDARY = path.join(CACHE_DIR, "boundary.json");
+export const CACHE_DISTRICTS = path.join(CACHE_DIR, "districts.json");
+export const CACHE_PROVINCES = path.join(CACHE_DIR, "provinces.json");
+export const CACHE_LOCAL = path.join(CACHE_DIR, "local.json");
 export const CACHE_POI = path.join(CACHE_DIR, "poi.json");
 export const CACHE_TRAFFIC = path.join(CACHE_DIR, "traffic.json");
 export const CACHE_WEATHER = path.join(CACHE_DIR, "weather.json");
@@ -47,9 +48,10 @@ export default {
   CACHE_DIR,
   LOG_DIR,
   BASE_DATA,
-  BOUNDARY_DATA,
   CACHE_ROAD,
-  CACHE_BOUNDARY,
+  CACHE_DISTRICTS,
+  CACHE_PROVINCES,
+  CACHE_LOCAL,
   CACHE_POI,
   CACHE_TRAFFIC,
   CACHE_WEATHER,

@@ -1,6 +1,6 @@
 // src/components/MapLayersToggle.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Layers, Map as MapIcon, Globe, Mountain, ShieldAlert, Navigation2, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Layers, Map as MapIcon, Globe, Mountain, ShieldAlert, Navigation2, CheckCircle2, ChevronDown, Route, Search } from 'lucide-react';
 import type { MapEngine } from './MapEngineSelector';
 
 export type MapLayerType = 'standard' | 'satellite' | 'terrain' | '3d';
@@ -14,17 +14,23 @@ interface MapLayersToggleProps {
   mapEngine: MapEngine | null;
   onMapEngineChange: (engine: MapEngine) => void;
   onResetEngine: () => void;
+  showHighways?: boolean;
+  onToggleHighways?: () => void;
+  onOpenHighwayBrowser?: () => void;
 }
 
-export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({ 
-  currentLayer, 
-  onLayerChange, 
-  activeFilters, 
+export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
+  currentLayer,
+  onLayerChange,
+  activeFilters,
   onFilterToggle,
   isDarkMode,
   mapEngine,
   onMapEngineChange,
-  onResetEngine
+  onResetEngine,
+  showHighways = false,
+  onToggleHighways,
+  onOpenHighwayBrowser
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,7 +60,7 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
   ];
 
   return (
-    <div ref={containerRef} className="absolute top-36 right-4 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
+    <div ref={containerRef} className="absolute top-20 md:top-36 right-2 md:right-4 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
       
       <button 
         onClick={() => setIsOpen(!isOpen)}
@@ -98,17 +104,35 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
 
         {/* Road Filters - Only relevant for Nepal map */}
         {mapEngine === 'nepal' && (
-          <div className="flex gap-1.5 pt-2 border-t border-slate-200">
-            {filters.map(f => (
+          <>
+            <div className="flex gap-1.5 pt-2 border-t border-slate-200">
+              {filters.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => onFilterToggle(f.id as any)}
+                  className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${f.active ? 'bg-white border border-indigo-200 text-indigo-700 shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  <span className={f.active ? f.color : ''}>{f.icon}</span> {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Highway Controls */}
+            <div className="flex gap-1.5 pt-2 border-t border-slate-200">
               <button
-                key={f.id}
-                onClick={() => onFilterToggle(f.id as any)}
-                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${f.active ? 'bg-white border border-indigo-200 text-indigo-700 shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                onClick={onToggleHighways}
+                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${showHighways ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
               >
-                <span className={f.active ? f.color : ''}>{f.icon}</span> {f.label}
+                <Route size={12} /> Highways
               </button>
-            ))}
-          </div>
+              <button
+                onClick={onOpenHighwayBrowser}
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 hover:bg-slate-200 text-slate-700"
+              >
+                <Search size={12} /> Browse
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
