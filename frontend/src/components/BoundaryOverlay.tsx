@@ -1,61 +1,34 @@
-// src/components/BoundaryOverlay.tsx
-import React, { useEffect, useState } from 'react';
-import { GeoJSON, Tooltip, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import React, { useEffect, useState } from "react";
+import { GeoJSON } from "react-leaflet";
 
 interface BoundaryOverlayProps {
   isDarkMode: boolean;
 }
 
-export const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
+const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
   const [boundaryData, setBoundaryData] = useState<any>(null);
-  const map = useMap();
 
   useEffect(() => {
-    fetch('/data/boundary.geojson')
+    // Load boundary.geojson from public folder
+    fetch("/data/boundary.geojson")
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to load boundary.geojson');
+        if (!res.ok) throw new Error("Failed to fetch boundary.geojson");
         return res.json();
       })
       .then((data) => setBoundaryData(data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("[BoundaryOverlay] Error:", err));
   }, []);
 
-  const onEachFeature = (feature: any, layer: L.Layer) => {
-    const name = feature.properties?.name || feature.properties?.district || 'Unknown';
-    layer.bindTooltip(name, { sticky: true });
-
-    layer.on({
-      mouseover: (e: L.LeafletMouseEvent) => {
-        const target = e.target;
-        target.setStyle({
-          weight: 3,
-          color: isDarkMode ? '#FFD700' : '#FF4500',
-          fillOpacity: 0.1,
-        });
-        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-          target.bringToFront();
-        }
-      },
-      mouseout: (e: L.LeafletMouseEvent) => {
-        const target = e.target;
-        target.setStyle({
-          weight: 1,
-          color: isDarkMode ? '#888' : '#555',
-          fillOpacity: 0,
-        });
-      },
-    });
-  };
-
-  const geoStyle = {
-    color: isDarkMode ? '#888' : '#555',
-    weight: 1,
-    fillColor: isDarkMode ? '#333' : '#f5f5f5',
-    fillOpacity: 0,
+  // Styling for polygons based on dark/light mode
+  const boundaryStyle = {
+    color: isDarkMode ? "#ffcc00" : "#0078ff",
+    weight: 2,
+    fillOpacity: 0.1,
   };
 
   if (!boundaryData) return null;
 
-  return <GeoJSON data={boundaryData} style={geoStyle} onEachFeature={onEachFeature} />;
+  return <GeoJSON data={boundaryData} style={boundaryStyle} />;
 };
+
+export default BoundaryOverlay;
