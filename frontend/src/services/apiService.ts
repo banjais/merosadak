@@ -201,7 +201,7 @@ export const api = {
   },
   getNepalBoundary: async (): Promise<GeoData> => {
     const result = await apiFetch<any>('/boundary');
-    return result.data;
+    return result;
   },
   getPois: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
     if (APP_CONFIG.useMocks) return POI_MOCKS;

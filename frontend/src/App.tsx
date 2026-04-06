@@ -1,13 +1,38 @@
-// backend/src/App.tsx
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, GeoJSON } from 'react-leaflet';
+// src/App.tsx
+import React, { useState } from 'react';
+import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import { BoundaryOverlay } from './components/BoundaryOverlay';
+import { HighwayHighlightOverlay } from './components/HighwayHighlightOverlay';
+import { MapControls } from './components/MapControls';
+import { BottomInfoArea } from './components/BottomInfoArea';
+import ReportIncidentOverlay from './components/ReportIncidentOverlay';
+import { SOSOverlay } from './components/SOSOverlay';
+import { FloatingMenu } from './components/FloatingMenu';
+import { MapLayersToggle } from './components/MapLayersToggle';
+import { DriverDashboard } from './components/DriverDashboard';
+import { DistanceCalculator } from './components/DistanceCalculator';
+import SearchOverlay from './components/SearchOverlay';
+import { MonsoonRiskOverlay } from './components/MonsoonRiskOverlay';
+import { RoadOverlay } from './components/RoadOverlay';
+
+import { useNepalData } from './hooks/useNepalData';
+import { useGemini } from './hooks/useGemini';
+import { useWebSocket } from './hooks/useWebSocket';
+import { useGeolocation } from './hooks/useGeolocation';
+import { useServiceData } from './hooks/useServiceData';
+import { TravelIncident } from './types';
+
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/leaflet.css';
 
-// Fix default Leaflet marker icons
+// Fix default Leaflet marker
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
@@ -25,118 +50,131 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-// Component: Dynamic boundary using preloaded GeoJSONs
-const DynamicBoundary: React.FC<{ province: any; district: any; local: any; isDarkMode: boolean }> = ({ province, district, local, isDarkMode }) => {
-  const [currentLevel, setCurrentLevel] = useState<'province' | 'district' | 'local'>('province');
-  const map = useMapEvents({
-    zoomend: () => {
-      const zoom = map.getZoom();
-      if (zoom < 8) setCurrentLevel('province');
-      else if (zoom >= 8 && zoom < 12) setCurrentLevel('district');
-      else setCurrentLevel('local');
-    }
+const getMarkerIcon = (type: string, severity: string) => {
+  const color = severity === 'high' ? '#ac3434' : severity === 'medium' ? '#f59e0b' : '#0062a2';
+  let iconHtml = '📍';
+  const t = type.toLowerCase();
+  if (t.includes('road') || t.includes('block')) iconHtml = '🚧';
+  else if (t.includes('traffic')) iconHtml = '🚗';
+  else if (t.includes('weather') || t.includes('flood') || t.includes('landslide')) iconHtml = '⛈️';
+  else if (t.includes('hospital')) iconHtml = '🏥';
+  else if (t.includes('fuel')) iconHtml = '⛽';
+  else if (t.includes('food')) iconHtml = '🍛';
+
+  return L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div style="background-color:${color};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;"><div style="font-size:16px;">${iconHtml}</div></div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -34],
   });
-
-  const style = {
-    color: isDarkMode ? '#FFD700' : '#2b7a78',
-    weight: 2,
-    fillOpacity: 0.1,
-  };
-
-  let data = province;
-  if (currentLevel === 'district') data = district;
-  if (currentLevel === 'local') data = local;
-
-  return <GeoJSON data={data} style={style} />;
 };
 
 const App: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [geo, setGeo] = useState({ lat: 28.3949, lng: 84.1240, loading: false });
+  const { incidents, isLoading } = useNepalData();
+  const { messages, ask, isProcessing } = useGemini();
+  const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/live`;
+  const { isConnected } = useWebSocket(wsUrl);
+  const geo = useGeolocation();
+  const toast = useServiceData('', geo.lat, geo.lng); // reuse service data hook for now
 
-  const [provinceData, setProvinceData] = useState<any>(null);
-  const [districtData, setDistrictData] = useState<any>(null);
-  const [localData, setLocalData] = useState<any>(null);
+  const [targetLocation, setTargetLocation] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showDriverDashboard, setShowDriverDashboard] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [calcPoints, setCalcPoints] = useState<{ lat: number; lng: number }[]>([]);
+  const [mapLayer, setMapLayer] = useState<'standard' | 'satellite' | '3d'>('standard');
+  const [mapEngine, setMapEngine] = useState<'nepal' | 'world'>(() => 'nepal');
+  const [roadFilters, setRoadFilters] = useState({ blocked: true, oneway: true, resumed: true });
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<TravelIncident | null>(null);
+  const [showHighways, setShowHighways] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
-  // Load all boundaries at startup
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [prov, dist, local] = await Promise.all([
-          fetch('/data/province.geojson').then(res => res.json()),
-          fetch('/data/district.geojson').then(res => res.json()),
-          fetch('/data/local.geojson').then(res => res.json()),
-        ]);
-        setProvinceData(prov);
-        setDistrictData(dist);
-        setLocalData(local);
-      } catch (e) {
-        console.error('Failed to load boundary data', e);
-      }
-    };
-    fetchAll();
-  }, []);
+  const serviceData = useServiceData('', geo.lat, geo.lng);
 
-  // Get browser geolocation
-  useEffect(() => {
-    if (navigator.geolocation) {
-      setGeo(prev => ({ ...prev, loading: true }));
-      navigator.geolocation.getCurrentPosition(
-        (position) => setGeo({ lat: position.coords.latitude, lng: position.coords.longitude, loading: false }),
-        () => setGeo(prev => ({ ...prev, loading: false }))
-      );
-    }
-  }, []);
-
-  if (!provinceData || !districtData || !localData) {
-    return <div className="flex items-center justify-center h-screen text-xl">Loading map data...</div>;
-  }
+  const handleMapClick = (latlng: { lat: number; lng: number }) => {
+    if (isCalculatorOpen) setCalcPoints(prev => [...prev, latlng]);
+  };
 
   return (
-    <div className={`h-screen w-screen flex flex-col ${isDarkMode ? 'dark' : ''}`}>
-      <header className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-800">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Sadak-Sathi Map</h1>
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
-        >
-          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-        </button>
-      </header>
+    <div className="h-screen w-screen flex flex-col">
+      <Header
+        isDarkMode={false}
+        onTogglePilot={() => setShowDriverDashboard(true)}
+        onToggleMenu={() => setIsSidebarOpen(!isSidebarOpen)}
+        onOpenNotifications={() => setIsSidebarOpen(true)}
+        noticeCount={(incidents || []).filter(i => i.severity === 'high').length}
+      />
+
+      <SOSOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} userLocation={{ lat: geo.lat, lng: geo.lng }} />
+
+      <FloatingMenu onOpenCalculator={() => setIsCalculatorOpen(true)} />
+
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        incidents={incidents}
+        onSelectIncident={(loc) => setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 14 })}
+        chatMessages={messages}
+        onSendMessage={(msg) => ask(msg, { lat: geo.lat, lng: geo.lng }, incidents)}
+        isProcessing={isProcessing}
+      />
+
+      {showDriverDashboard && <DriverDashboard onClose={() => setShowDriverDashboard(false)} speed={42} isLive={isConnected} />}
+
+      {isCalculatorOpen && <DistanceCalculator points={calcPoints} onClose={() => setIsCalculatorOpen(false)} clearPoints={() => setCalcPoints([])} />}
 
       <main className="flex-1 relative">
+        <SearchOverlay incidents={incidents} onSelectLocation={(loc) => setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 12 })} onAskAI={(msg) => ask(msg, { lat: geo.lat, lng: geo.lng }, incidents)} />
+
         <MapContainer
-          center={[geo.lat, geo.lng]}
-          zoom={7}
+          center={geo.loading || geo.lat === 0 ? NEPAL_CENTER : [geo.lat, geo.lng]}
+          zoom={geo.loading || geo.lat === 0 ? 7 : 12}
           minZoom={6}
           maxZoom={19}
           maxBounds={NEPAL_MAX_BOUNDS}
-          maxBoundsViscosity={0.95}
-          zoomControl={true}
           className="h-full w-full"
+          zoomControl={false}
         >
-          {/* Base Tile Layer */}
           <TileLayer
-            url={isDarkMode
-              ? 'https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png'
-              : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'}
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+            url={mapLayer === 'satellite' ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'}
+            attribution='&copy; OpenStreetMap contributors'
           />
 
-          {/* Dynamic boundary overlay */}
-          <DynamicBoundary
-            province={provinceData}
-            district={districtData}
-            local={localData}
-            isDarkMode={isDarkMode}
-          />
+          <BoundaryOverlay isDarkMode={false} />
 
-          {/* User Location Marker */}
-          {!geo.loading && geo.lat !== 0 && geo.lng !== 0 && (
-            <Marker position={[geo.lat, geo.lng]} icon={userLocationIcon} />
-          )}
+          {showHighways && <HighwayHighlightOverlay incidents={incidents} isVisible={true} />}
+
+          <MonsoonRiskOverlay incidents={incidents} />
+          <RoadOverlay isVisible={true} filters={roadFilters} />
+
+          <MarkerClusterGroup>
+            {(incidents || [])
+              .filter(i => i.hasExactLocation && i.lat && i.lng)
+              .map((i) => (
+                <Marker key={i.id} position={[i.lat!, i.lng!]} icon={getMarkerIcon(i.type, i.severity)} eventHandlers={{ click: () => setSelectedIncident(i) }} />
+              ))}
+          </MarkerClusterGroup>
+
+          {!geo.loading && geo.lat !== 0 && geo.lng !== 0 && <Marker position={[geo.lat, geo.lng]} icon={userLocationIcon} />}
+
+          <MapControls userLocation={!geo.loading ? { lat: geo.lat, lng: geo.lng } : null} />
         </MapContainer>
       </main>
+
+      {!showDriverDashboard && (
+        <button
+          onClick={() => setIsSOSOpen(true)}
+          className="fixed bottom-10 right-4 z-[1500] flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-xl"
+        >
+          SOS
+        </button>
+      )}
+
+      <BottomInfoArea selectedItem={selectedIncident} onClose={() => setSelectedIncident(null)} onSelectLocation={(loc) => setTargetLocation({ lat: loc.lat, lng: loc.lng, zoom: 14 })} onAskAI={(msg) => ask(msg, { lat: geo.lat, lng: geo.lng }, incidents)} />
+
+      <ReportIncidentOverlay isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} location={geo.lat !== 0 ? { lat: geo.lat, lng: geo.lng } : undefined} onSuccess={() => console.log('Reported')} />
     </div>
   );
 };
