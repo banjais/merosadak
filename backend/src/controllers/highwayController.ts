@@ -1,9 +1,9 @@
 // backend/src/controllers/highwayController.ts
 import { Request, Response } from "express";
 import { 
-  getHighwayList, 
-  getHighwayByCode, 
-  getHighwayReport, 
+  getHighwayList as getHighwayListService, 
+  getHighwayByCode as getHighwayByCodeService, 
+  getHighwayReport as getHighwayReportService, 
   getAllHighwaysSummary,
   suggestAlternativeRoutes 
 } from "../services/highwayService.js";
@@ -15,7 +15,7 @@ import { logError } from "../logs/logs.js";
  */
 export const getHighwayList = async (_req: Request, res: Response) => {
   try {
-    const highways = await getHighwayList();
+    const highways = await getHighwayListService();
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -39,7 +39,7 @@ export const getHighwayList = async (_req: Request, res: Response) => {
 export const getHighwayByCode = async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
-    const highway = await getHighwayByCode(code.toUpperCase());
+    const highway = await getHighwayByCodeService(code.toUpperCase());
 
     if (!highway) {
       return res.status(404).json({
@@ -73,7 +73,7 @@ export const getHighwayByCode = async (req: Request, res: Response) => {
 export const getHighwayReport = async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
-    const report = await getHighwayReport(code.toUpperCase());
+    const report = await getHighwayReportService(code.toUpperCase());
     
     if (report.error) {
       return res.status(404).json({

@@ -24,6 +24,12 @@ let disableTime = 0;
 const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ────────────────────────────────
+// Size limit for Redis (Upstash free tier: 10MB max per key)
+// We use 5MB as a safe limit to avoid "max request size exceeded" errors
+// ────────────────────────────────
+const REDIS_MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
+// ────────────────────────────────
 // LEVEL 2: Upstash Redis
 // ────────────────────────────────
 let _redisClient: Redis | null = null;
@@ -143,12 +149,22 @@ export async function withCache<T>(
 
   localCache.set(key, { value: fresh, expiry: now + ttlSeconds * 1000 });
 
+  // Store in Redis only if data is small enough
   if (!isRedisDisabled) {
     try {
-      await redisClient.set(key, fresh, { ex: ttlSeconds });
-      logCacheUpdate(key);
+      const serialized = JSON.stringify(fresh);
+      if (Buffer.byteLength(serialized, "utf8") > REDIS_MAX_SIZE_BYTES) {
+        logInfo(`⚠️ [Cache] Skipping Redis for large key: ${key} (${(Buffer.byteLength(serialized) / 1024 / 1024).toFixed(2)}MB)`);
+      } else {
+        await redisClient.set(key, fresh, { ex: ttlSeconds });
+        logCacheUpdate(key);
+      }
     } catch (err: any) {
-      logError("❌ [Cache] Failed to update Redis", { error: err.message });
+      if (err.message?.toLowerCase().includes("limit") || err.message?.toLowerCase().includes("size")) {
+        logError("⚠️ [Cache] Redis size limit hit - large data will use L1 + Disk only", { key, error: err.message });
+      } else {
+        logError("❌ [Cache] Failed to update Redis", { error: err.message });
+      }
     }
   }
 
