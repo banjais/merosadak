@@ -12,12 +12,12 @@ interface HeaderProps {
 }
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'ne', name: 'Nepali', native: 'नेपाली' },
-  { code: 'hi', name: 'Hindi', native: 'हिंदी' },
-  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी' },
-  { code: 'mai', name: 'Maithili', native: 'मैथिली' },
-  { code: 'new', name: 'Newari', native: 'नेपाल भाषा' },
+  { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
+  { code: 'ne', name: 'Nepali', native: 'नेपाली', flag: '🇳🇵' },
+  { code: 'hi', name: 'Hindi', native: 'हिंदी', flag: '🇮🇳' },
+  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', flag: '🇮🇳' },
+  { code: 'mai', name: 'Maithili', native: 'मैथिली', flag: '🇮🇳' },
+  { code: 'new', name: 'Newari', native: 'नेपाल भाषा', flag: '🇳🇵' },
 ];
 
 const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, noticeCount = 3 }) => {
@@ -54,7 +54,12 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
               <Zap className="w-3 h-3 text-amber-400" title="Ready" />
             )}
           </div>
-          <span className="text-[9px] sm:text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80 hidden xs:block">Travel Safety Engine</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80 hidden xs:block">Travel Safety Engine</span>
+            <span className="text-[10px] font-bold text-white/80 flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full">
+              {LANGUAGES.find(l => l.code === language)?.flag} {LANGUAGES.find(l => l.code === language)?.native}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -83,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
           </button>
           
           {showLangMenu && (
-            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 min-w-[160px] z-[1100]">
+            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 min-w-[180px] z-[1100]">
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
@@ -92,8 +97,9 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
                     language === lang.code ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
                   }`}
                 >
-                  <span>{lang.native}</span>
-                  <span className="text-xs text-gray-400">{lang.name}</span>
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className="font-medium">{lang.native}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{lang.name}</span>
                 </button>
               ))}
             </div>
