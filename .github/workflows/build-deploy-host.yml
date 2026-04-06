@@ -115,10 +115,22 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Copy boundary file
+      - name: Setup boundary data
         run: |
           mkdir -p frontend/dist/boundary
-          cp backend/data/boundary.geojson frontend/dist/boundary/
+          # Copy boundary data from backend/data (districts.geojson contains Nepal boundary)
+          if [ -f "backend/data/districts.geojson" ]; then
+            cp backend/data/districts.geojson frontend/dist/boundary/boundary.geojson
+            echo "Boundary file copied from districts.geojson"
+          elif [ -f "backend/data/boundary.geojson" ]; then
+            cp backend/data/boundary.geojson frontend/dist/boundary/boundary.geojson
+            echo "Boundary file copied from boundary.geojson"
+          else
+            echo "Warning: No boundary file found, creating empty placeholder"
+            echo '{"type":"FeatureCollection","features":[]}' > frontend/dist/boundary/boundary.geojson
+          fi
+          echo "Boundary file ready:"
+          ls -la frontend/dist/boundary/
 
       - name: Deploy to Firebase Hosting
         if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'build and deploy')
