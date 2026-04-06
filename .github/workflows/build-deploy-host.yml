@@ -46,15 +46,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Clear npm cache
-        run: npm cache clean --force
-
-      - name: Remove node_modules for clean install
-        run: rm -rf node_modules package-lock.json
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm install
 
       - name: Lint backend
         run: cd backend && npm run lint
@@ -112,15 +107,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Clear npm cache
-        run: npm cache clean --force
-
-      - name: Remove node_modules for clean install
-        run: rm -rf node_modules package-lock.json
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm install
 
       - name: Build frontend
         run: |
