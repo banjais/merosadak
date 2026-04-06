@@ -17,6 +17,47 @@ export interface POIResult {
   address: string;
   source: "tomtom" | "overpass";
   isTouristFriendly: boolean;
+  
+  // Enhanced POI details
+  details?: {
+    openingHours?: string;           // "Mon-Fri: 9AM-5PM" or "24/7"
+    isOpenNow?: boolean;             // Real-time open status
+    phone?: string;                  // Contact number
+    website?: string;                // Official website
+    rating?: number;                 // 1-5 star rating
+    priceLevel?: number;             // 1-4 ($ to $$$$)
+    
+    // For tourist attractions
+    entryFee?: {
+      adult: number;                 // NPR for adults
+      child: number;                 // NPR for children
+      seniorCitizen: number;         // NPR for seniors
+      foreigner: number;             // NPR for foreigners (if different)
+      currency: string;              // "NPR" or "USD"
+    };
+    
+    // For restaurants/hotels
+    cuisine?: string[];              // ["Nepali", "Indian", "Chinese"]
+    amenities?: string[];            // ["WiFi", "Parking", "AC", "Vegetarian"]
+    
+    // For hospitals
+    emergency?: boolean;             // 24/7 emergency services
+    specialties?: string[];          // ["Cardiology", "Orthopedics"]
+    
+    // For fuel stations
+    fuelTypes?: string[];            // ["Petrol", "Diesel", "CNG"]
+    services?: string[];             // ["Air Pump", "Car Wash", "Shop"]
+    
+    // Accessibility
+    wheelchairAccessible?: boolean;  // Wheelchair access
+    parkingAvailable?: boolean;      // Parking available
+    
+    // Additional info
+    description?: string;            // Brief description
+    bestTimeToVisit?: string;        // "Oct-Nov" or "Morning"
+    averageVisitDuration?: string;   // "2-3 hours"
+    crowdLevel?: "low" | "medium" | "high"; // Typical crowd level
+  };
 }
 
 const POI_CACHE_TTL = 30 * 60; // 30 mins
