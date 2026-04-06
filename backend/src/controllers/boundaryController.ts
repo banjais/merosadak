@@ -71,16 +71,11 @@ export const getLocal = async (_req: Request, res: Response) => {
 
 /**
  * GET /api/boundary/country
- * Returns Nepal country boundary (fallback)
+ * Returns Nepal country boundary (using provinces data)
  */
 export const getCountry = async (_req: Request, res: Response) => {
   try {
-    // For now, return empty FeatureCollection as fallback
-    // In the future, this could be derived from the districts/provinces data
-    const data = {
-      type: "FeatureCollection",
-      features: []
-    };
+    const data = await getBoundaryData("country");
 
     res.json({
       success: true,

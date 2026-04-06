@@ -7,6 +7,7 @@ interface BoundaryOverlayProps {
   showDistricts?: boolean;
   showProvinces?: boolean;
   showLocal?: boolean;
+  showCountry?: boolean;
   isDarkMode?: boolean;
 }
 
@@ -14,6 +15,7 @@ export const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({
   showDistricts = false,
   showProvinces = true,
   showLocal = false,
+  showCountry = false,
   isDarkMode = false,
 }) => {
   const map = useMap();
@@ -95,6 +97,14 @@ export const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({
       layersToAdd.push(localLayer);
     }
 
+    if (showCountry && boundaries.country) {
+      const countryLayer = new L.GeoJSON(boundaries.country as any, {
+        style: () => getBoundaryStyle('country'),
+        boundaryType: 'country',
+      });
+      layersToAdd.push(countryLayer);
+    }
+
     // Add layers to map
     layersToAdd.forEach(layer => {
       layer.addTo(map);
@@ -108,7 +118,7 @@ export const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({
         }
       });
     };
-  }, [boundaries, showDistricts, showProvinces, showLocal, isDarkMode, map, loading, error]);
+  }, [boundaries, showDistricts, showProvinces, showLocal, showCountry, isDarkMode, map, loading, error]);
 
   return null; // This component doesn't render anything directly
 };

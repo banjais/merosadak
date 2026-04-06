@@ -85,6 +85,9 @@ export const CACHE_MONSOON = path.isAbsolute(config.CACHE_MONSOON || "")
 export const CACHE_WAZE = path.isAbsolute(config.CACHE_WAZE || "")
   ? config.CACHE_WAZE
   : path.join(ROOT, config.CACHE_WAZE || "data/cache/cacheWaze.json");
+export const CACHE_BOUNDARY = path.isAbsolute(config.CACHE_BOUNDARY || "")
+  ? config.CACHE_BOUNDARY
+  : path.join(ROOT, config.CACHE_BOUNDARY || "data/cache/cacheBoundary.json");
 
 // 📁 Ensure directories exist
 [DATA_DIR, CACHE_DIR, LOG_DIR].forEach((dir) => {
@@ -108,6 +111,7 @@ export default {
   CACHE_DISTRICTS,
   CACHE_PROVINCES,
   CACHE_LOCAL,
+  CACHE_BOUNDARY,
   CACHE_POI,
   CACHE_TRAFFIC,
   CACHE_WEATHER,

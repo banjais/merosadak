@@ -1,7 +1,7 @@
 // backend/src/services/boundaryService.ts
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR, CACHE_DISTRICTS, CACHE_PROVINCES, CACHE_LOCAL } from "../config/paths.js";
+import { DATA_DIR, CACHE_DISTRICTS, CACHE_PROVINCES, CACHE_LOCAL, CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
 import { logError, logInfo } from "../logs/logs.js";
 import type { FeatureCollection } from "../types.js";
 import { withCache } from "./cacheService.js";
@@ -10,16 +10,18 @@ const BOUNDARY_FILES = {
   districts: path.join(DATA_DIR, "districts.geojson"),
   provinces: path.join(DATA_DIR, "provinces.geojson"),
   local: path.join(DATA_DIR, "local.geojson"),
+  country: BOUNDARY_DATA,
 };
 
 /**
  * Get boundary data by type
  */
-export async function getBoundaryData(type: "districts" | "provinces" | "local"): Promise<FeatureCollection> {
+export async function getBoundaryData(type: "districts" | "provinces" | "local" | "country"): Promise<FeatureCollection> {
   const cacheKeys = {
     districts: CACHE_DISTRICTS,
     provinces: CACHE_PROVINCES,
     local: CACHE_LOCAL,
+    country: CACHE_BOUNDARY,
   };
 
   const cacheKey = cacheKeys[type];

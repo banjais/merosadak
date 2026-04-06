@@ -424,8 +424,9 @@ const App: React.FC = () => {
               {mapEngine === 'nepal' && (
                 <BoundaryOverlay
                   showDistricts={false}
-                  showProvinces={true}
+                  showProvinces={false}
                   showLocal={false}
+                  showCountry={true}
                   isDarkMode={isDarkMode}
                 />
               )}
