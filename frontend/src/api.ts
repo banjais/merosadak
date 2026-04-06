@@ -1,9 +1,21 @@
 // src/api.ts
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://merosadak.banjays.workers.dev";
+let BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://merosadak.banjays.workers.dev";
+
+// Ensure BASE_URL doesn't have trailing slash
+BASE_URL = BASE_URL.replace(/\/$/, '');
+
+// Check if BASE_URL already includes /api prefix
+const hasApiPrefix = BASE_URL.endsWith('/api');
 
 export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${BASE_URL}${cleanEndpoint.startsWith('/v1') ? '' : '/v1'}${cleanEndpoint}`;
+  // Remove leading /v1 or /api from endpoint to avoid duplication
+  const normalizedEndpoint = cleanEndpoint.replace(/^\/api/, '').replace(/^\/v1/, '');
+  
+  // Build URL: add /api if not already in BASE_URL
+  const url = hasApiPrefix 
+    ? `${BASE_URL}/v1${normalizedEndpoint}` 
+    : `${BASE_URL}/api/v1${normalizedEndpoint}`;
 
   const res = await fetch(url, {
     ...options,

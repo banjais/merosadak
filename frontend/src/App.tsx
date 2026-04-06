@@ -215,7 +215,17 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 const App: React.FC = () => {
   const { incidents, isLoading } = useNepalData();
   const { messages, ask, isProcessing } = useGemini();
-  const { isConnected } = useWebSocket('wss://merosadak.banjays.workers.dev/ws/live');
+  
+  // Build WebSocket URL from environment variable
+  const wsUrl = React.useMemo(() => {
+    const apiBaseUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL || 'https://merosadak.banjays.workers.dev';
+    // Convert http/https to ws/wss
+    const wsProtocol = apiBaseUrl.startsWith('https') ? 'wss:' : apiBaseUrl.startsWith('http') ? 'ws:' : 'wss:';
+    const wsHost = apiBaseUrl.replace(/^https?:\/\//, '');
+    return `${wsProtocol}//${wsHost}/ws/live`;
+  }, []);
+  
+  const { isConnected } = useWebSocket(wsUrl);
   const geo = useGeolocation();
   const toast = useToast();
 
