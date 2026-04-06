@@ -11,6 +11,7 @@ import {
   TrafficCone as TrafficIcon,
   ShieldBan,
   Megaphone,
+  Navigation,
 } from 'lucide-react';
 import { TravelIncident, IncidentType } from '../types';
 
