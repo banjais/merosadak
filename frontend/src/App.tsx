@@ -21,6 +21,16 @@ import ReportIncidentOverlay from './components/ReportIncidentOverlay';
 import { SOSOverlay } from './components/SOSOverlay';
 import { SystemMenu } from './components/SystemMenu';
 import { FloatingMenu } from './components/FloatingMenu';
+import { MapEngineSelector } from './components/MapEngineSelector';
+import { DriverDashboard } from './components/DriverDashboard';
+import { DistanceCalculator } from './components/DistanceCalculator';
+import { MapLayersToggle } from './components/MapLayersToggle';
+import SearchOverlay from './components/SearchOverlay';
+import { MonsoonRiskOverlay } from './components/MonsoonRiskOverlay';
+import { RoadOverlay } from './components/RoadOverlay';
+import { HighwayHighlightOverlay } from './components/HighwayHighlightOverlay';
+import { MapControls } from './components/MapControls';
+import { BottomInfoArea } from './components/BottomInfoArea';
 
 import { APP_CONFIG } from './config/config';
 import { useNepalData } from './hooks/useNepalData';
