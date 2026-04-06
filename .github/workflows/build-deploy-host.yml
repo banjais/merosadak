@@ -47,8 +47,11 @@ jobs:
         with:
           node-version: 24
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Lint backend
         run: cd backend && npm run lint
@@ -107,8 +110,11 @@ jobs:
         with:
           node-version: 24
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Build frontend
         run: |
