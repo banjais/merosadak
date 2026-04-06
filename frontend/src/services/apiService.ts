@@ -199,20 +199,8 @@ export const api = {
       };
     }).filter((i: any) => i.lat !== 0);
   },
-  getBoundaryDistricts: async (): Promise<GeoData> => {
-    const result = await apiFetch<any>('/boundary/districts');
-    return result.data;
-  },
-  getBoundaryProvinces: async (): Promise<GeoData> => {
-    const result = await apiFetch<any>('/boundary/provinces');
-    return result.data;
-  },
-  getBoundaryLocal: async (): Promise<GeoData> => {
-    const result = await apiFetch<any>('/boundary/local');
-    return result.data;
-  },
-  getBoundaryCountry: async (): Promise<GeoData> => {
-    const result = await apiFetch<any>('/boundary/country');
+  getNepalBoundary: async (): Promise<GeoData> => {
+    const result = await apiFetch<any>('/boundary');
     return result.data;
   },
   getPois: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {

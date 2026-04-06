@@ -1,54 +1,31 @@
 // backend/src/services/boundaryService.ts
 import fs from "fs/promises";
-import path from "path";
-import { DATA_DIR, CACHE_DISTRICTS, CACHE_PROVINCES, CACHE_LOCAL, CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
+import { CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
 import { logError, logInfo } from "../logs/logs.js";
 import type { FeatureCollection } from "../types.js";
 import { withCache } from "./cacheService.js";
 
-const BOUNDARY_FILES = {
-  districts: path.join(DATA_DIR, "districts.geojson"),
-  provinces: path.join(DATA_DIR, "provinces.geojson"),
-  local: path.join(DATA_DIR, "local.geojson"),
-  country: BOUNDARY_DATA,
-};
-
 /**
- * Get boundary data by type
+ * Get Nepal boundary data for map display
  */
-export async function getBoundaryData(type: "districts" | "provinces" | "local" | "country"): Promise<FeatureCollection> {
-  const cacheKeys = {
-    districts: CACHE_DISTRICTS,
-    provinces: CACHE_PROVINCES,
-    local: CACHE_LOCAL,
-    country: CACHE_BOUNDARY,
-  };
-
-  const cacheKey = cacheKeys[type];
-  const filePath = BOUNDARY_FILES[type];
-
-  if (!filePath || !cacheKey) {
-    throw new Error(`Unknown boundary type: ${type}`);
-  }
-
-  return withCache(`boundary:${type}`, async () => {
+export async function getNepalBoundary(): Promise<FeatureCollection> {
+  return withCache(`boundary:nepal`, async () => {
     try {
-      logInfo(`[BoundaryService] Loading ${type} boundary data from ${filePath}`);
+      logInfo(`[BoundaryService] Loading Nepal boundary from ${BOUNDARY_DATA}`);
 
-      const raw = await fs.readFile(filePath, "utf-8");
+      const raw = await fs.readFile(BOUNDARY_DATA, "utf-8");
       const data = JSON.parse(raw) as FeatureCollection;
 
-      logInfo(`[BoundaryService] Loaded ${type} boundary with ${data.features?.length || 0} features`);
+      logInfo(`[BoundaryService] Loaded Nepal boundary with ${data.features?.length || 0} features`);
 
       return data;
     } catch (err: any) {
-      logError(`[BoundaryService] Failed to load ${type} boundary data`, {
+      logError(`[BoundaryService] Failed to load Nepal boundary`, {
         error: err.message,
-        filePath
+        filePath: BOUNDARY_DATA
       });
 
-      // Return empty FeatureCollection as fallback
       return { type: "FeatureCollection", features: [] };
     }
-  }, 86400); // cache for 24 hours
+  }, 86400);
 }

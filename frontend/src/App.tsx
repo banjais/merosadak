@@ -423,10 +423,6 @@ const App: React.FC = () => {
               {/* Nepal Boundary Layers - ONLY shown when Nepal map is selected */}
               {mapEngine === 'nepal' && (
                 <BoundaryOverlay
-                  showDistricts={false}
-                  showProvinces={false}
-                  showLocal={false}
-                  showCountry={true}
                   isDarkMode={isDarkMode}
                 />
               )}

@@ -4,18 +4,12 @@ import { api } from '../services/apiService';
 import type { GeoData } from '../services/apiService';
 
 export interface BoundaryData {
-  districts: GeoData | null;
-  provinces: GeoData | null;
-  local: GeoData | null;
-  country: GeoData | null;
+  nepal: GeoData | null;
 }
 
 export function useBoundary() {
   const [boundaries, setBoundaries] = useState<BoundaryData>({
-    districts: null,
-    provinces: null,
-    local: null,
-    country: null,
+    nepal: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,19 +19,10 @@ export function useBoundary() {
       setLoading(true);
       setError(null);
 
-      // Load all boundary types in parallel
-      const [districtsData, provincesData, localData, countryData] = await Promise.all([
-        api.getBoundaryDistricts().catch(() => null),
-        api.getBoundaryProvinces().catch(() => null),
-        api.getBoundaryLocal().catch(() => null),
-        api.getBoundaryCountry().catch(() => null),
-      ]);
+      const nepalData = await api.getNepalBoundary().catch(() => null);
 
       setBoundaries({
-        districts: districtsData,
-        provinces: provincesData,
-        local: localData,
-        country: countryData,
+        nepal: nepalData,
       });
 
     } catch (err: any) {
