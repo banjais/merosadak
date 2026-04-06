@@ -15,8 +15,8 @@ const LANGUAGES = [
   { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
   { code: 'ne', name: 'Nepali', native: 'नेपाली', flag: '🇳🇵' },
   { code: 'hi', name: 'Hindi', native: 'हिंदी', flag: '🇮🇳' },
-  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', flag: '🇮🇳' },
-  { code: 'mai', name: 'Maithili', native: 'मैथिली', flag: '🇮🇳' },
+  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', flag: '🇳🇵' },
+  { code: 'mai', name: 'Maithili', native: 'मैथिली', flag: '🇳🇵' },
   { code: 'new', name: 'Newari', native: 'नेपाल भाषा', flag: '🇳🇵' },
 ];
 
