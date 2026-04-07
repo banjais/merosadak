@@ -187,6 +187,7 @@ const MainApp: React.FC = () => {
 
         <MapEventHandler onMapClick={handleMapClick} />
         <BoundaryOverlay isDarkMode={isDarkMode} />
+        <MapControls userLocation={userLocation} />
       </MapContainer>
 
       <Header
@@ -258,8 +259,6 @@ const MainApp: React.FC = () => {
         onAskAI={handleAskAI}
         isDarkMode={isDarkMode}
       />
-
-      <MapControls userLocation={userLocation} />
 
       <HighwayBrowser
         isOpen={highwayBrowserOpen}
