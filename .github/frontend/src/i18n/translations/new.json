@@ -1,0 +1,164 @@
+{
+  "app": {
+    "name": "जिगु सतक",
+    "tagline": "छिगु सतक साथी"
+  },
+  "nav": {
+    "home": "छेँ",
+    "map": "नक्सा",
+    "roads": "सतक",
+    "highways": "राजमार्ग",
+    "weather": "मौसम",
+    "alerts": "चेतावनी",
+    "ai": "AI साथी",
+    "settings": "सेटिङ",
+    "profile": "प्रोफाइल",
+    "logout": "लगआउट"
+  },
+  "alerts": {
+    "title": "सुरक्षा चेतावनी",
+    "blocked": "सतक बन्द",
+    "oneLane": "छगू लेन खुला",
+    "resumed": "सतक सफा",
+    "landslide": "भूस्खलन खतरा",
+    "flood": "बाढी चेतावनी",
+    "accident": "दुर्घटना रिपोर्ट",
+    "construction": "निर्माण क्षेत्र",
+    "nearby": "छिगु लग चेतावनी",
+    "none": "मेगु सक्रिय चेतावनी मदु"
+  },
+  "weather": {
+    "title": "मौसम",
+    "current": "थौंकन्हं मौसम",
+    "temperature": "तापक्रम",
+    "humidity": "आर्द्रता",
+    "wind": "सि",
+    "rain": "वर्षा",
+    "feelsLike": "थज्याःगु अनुभव",
+    "search": "स्थान मालादिसँ..."
+  },
+  "roads": {
+    "title": "सतक स्थिति",
+    "status": "स्थिति",
+    "location": "स्थान",
+    "updated": "लिपांगु अपडेट",
+    "report": "दुर्घटना रिपोर्ट यानादिसँ",
+    "blocked": "बन्द",
+    "clear": "सफा",
+    "caution": "सावधानी"
+  },
+  "highways": {
+    "title": "राजमार्ग",
+    "code": "राजमार्ग कोड",
+    "distance": "दूरी",
+    "duration": "समय",
+    "bridges": "पुल",
+    "tunnels": "सुरंग",
+    "rivers": "खुसि",
+    "status": "समग्र स्थिति"
+  },
+  "ai": {
+    "title": "AI साथी",
+    "placeholder": "सतक, मौसम, वा यात्रा बारे छुं नं सोधनादिसँ...",
+    "listening": "न्यनाच्वना...",
+    "speaking": "ल्हाच्वना...",
+    "settings": "AI सेटिङ",
+    "voice": "सः",
+    "male": "मिजं",
+    "female": "म्ह्याय्",
+    "speed": "ल्हायेगु गति",
+    "slow": "बिस्तारं",
+    "normal": "सामान्य",
+    "fast": "च्वरो"
+  },
+  "search": {
+    "placeholder": "सतक, स्थान, POI मालादिसँ...",
+    "results": "मालेगु नतिजा",
+    "noResults": "छुं नं नतिजा मदु"
+  },
+  "pois": {
+    "title": "रुचि याःगु थाय्",
+    "restaurants": "रेस्टुरेन्ट",
+    "hospitals": "अस्पताल",
+    "fuelStations": "पेट्रोल पम्प",
+    "hotels": "होटल",
+    "touristSpots": "पर्यटकीय स्थल",
+    "atm": "एटीएम",
+    "police": "प्रहरी स्टेशन",
+    "openingHours": "च्वनेगु इलय्",
+    "entryFee": "प्रवेश शुल्क",
+    "adult": "वयस्क",
+    "child": "कचा",
+    "senior": "ज्येष्ठ नागरिक",
+    "foreigner": "विदेशी",
+    "amenities": "सुविधा",
+    "contact": "सम्पर्क",
+    "website": "वेबसाइट",
+    "rating": "रेटिङ"
+  },
+  "auth": {
+    "login": "लगइन",
+    "signup": "साइन अप",
+    "email": "इमेल",
+    "password": "पासवर्ड",
+    "forgotPassword": "पासवर्ड बिर्सनादिसँला?",
+    "noAccount": "खाता मदुला?",
+    "haveAccount": "पहिले हे खाता दुला?",
+    "otpSent": "OTP छिगु फोनय् छ्वयातल",
+    "verifyOtp": "OTP सत्यापित यानादिसँ",
+    "resendOtp": "OTP हिसँ छ्वयादिसँ"
+  },
+  "errors": {
+    "generic": "छुं गलत जुल। लित छकः कुतः यानादिसँ।",
+    "network": "नेटवर्क त्रुटि। छिगु जडान जाँच यानादिसँ।",
+    "notFound": "मदु",
+    "unauthorized": "जारी तयेत कृपया लगइन यानादिसँ",
+    "serverError": "सर्वर त्रुटि। लिपा छकः कुतः यानादिसँ।",
+    "locationDenied": "स्थान पहुंच अस्वीकार जुल",
+    "gpsOff": "GPS बन्द दु"
+  },
+  "messages": {
+    "loading": "लोड जुयाच्वंगु दु...",
+    "success": "सफल!",
+    "saved": "सफलतापूर्वक तयातल",
+    "deleted": "सफलतापूर्वक हटेयातल",
+    "confirmDelete": "छिं हटे यायेत चाहनादिसँला?",
+    "cancel": "रद्द यानादिसँ",
+    "ok": "ठीक दु",
+    "yes": "हँ",
+    "no": "मखु"
+  },
+  "settings": {
+    "title": "सेटिङ",
+    "language": "भाय्",
+    "nepali": "नेपाली",
+    "english": "English",
+    "hindi": "हिंदी",
+    "bhojpuri": "भोजपुरी",
+    "maithili": "मैथिली",
+    "newari": "नेपाल भाषा",
+    "notifications": "सूचना",
+    "sound": "सः",
+    "vibration": "कम्पन",
+    "darkMode": "डार्क मोड",
+    "units": "इकाई",
+    "metric": "मेट्रिक (किमी, °से)",
+    "imperial": "इम्पीरियल (माइल, °फ)"
+  },
+  "navigation": {
+    "start": "नेभिगेसन न्ह्यथनादिसँ",
+    "stop": "नेभिगेसन त्वःतादिसँ",
+    "reroute": "हिसँ रुट यानादिसँ",
+    "eta": "थ्यनेगु इलय्",
+    "distance": "दूरी",
+    "arriving": "थ्यनाच्वना"
+  },
+  "suggestions": {
+    "nearby": "पास याःगु सुझाव",
+    "tourist": "पर्यटकीय आकर्षण",
+    "food": "नसात्वँसा",
+    "fuel": "पेट्रोल पम्प",
+    "hospital": "अस्पताल",
+    "rest": "विश्राम क्षेत्र"
+  }
+}

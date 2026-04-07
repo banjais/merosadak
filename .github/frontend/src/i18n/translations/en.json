@@ -1,0 +1,160 @@
+{
+  "app": {
+    "name": "Mero Sadak",
+    "tagline": "Your Road Companion"
+  },
+  "nav": {
+    "home": "Home",
+    "map": "Map",
+    "roads": "Roads",
+    "highways": "Highways",
+    "weather": "Weather",
+    "alerts": "Alerts",
+    "ai": "AI Assistant",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "alerts": {
+    "title": "Safety Alerts",
+    "blocked": "Road Blocked",
+    "oneLane": "One Lane Open",
+    "resumed": "Road Clear",
+    "landslide": "Landslide Risk",
+    "flood": "Flood Warning",
+    "accident": "Accident Reported",
+    "construction": "Construction Zone",
+    "nearby": "Alerts Near You",
+    "none": "No active alerts"
+  },
+  "weather": {
+    "title": "Weather",
+    "current": "Current Weather",
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "rain": "Rain",
+    "feelsLike": "Feels like",
+    "search": "Search location..."
+  },
+  "roads": {
+    "title": "Road Conditions",
+    "status": "Status",
+    "location": "Location",
+    "updated": "Last updated",
+    "report": "Report Incident",
+    "blocked": "Blocked",
+    "clear": "Clear",
+    "caution": "Caution"
+  },
+  "highways": {
+    "title": "Highways",
+    "code": "Highway Code",
+    "distance": "Distance",
+    "duration": "Duration",
+    "bridges": "Bridges",
+    "tunnels": "Tunnels",
+    "rivers": "Rivers",
+    "status": "Overall Status"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "placeholder": "Ask me anything about roads, weather, or travel...",
+    "listening": "Listening...",
+    "speaking": "Speaking...",
+    "settings": "AI Settings",
+    "voice": "Voice",
+    "male": "Male",
+    "female": "Female",
+    "speed": "Speech Speed",
+    "slow": "Slow",
+    "normal": "Normal",
+    "fast": "Fast"
+  },
+  "search": {
+    "placeholder": "Search roads, locations, POIs...",
+    "results": "Search Results",
+    "noResults": "No results found"
+  },
+  "pois": {
+    "title": "Points of Interest",
+    "restaurants": "Restaurants",
+    "hospitals": "Hospitals",
+    "fuelStations": "Fuel Stations",
+    "hotels": "Hotels",
+    "touristSpots": "Tourist Spots",
+    "atm": "ATMs",
+    "police": "Police Stations",
+    "openingHours": "Opening Hours",
+    "entryFee": "Entry Fee",
+    "adult": "Adult",
+    "child": "Child",
+    "senior": "Senior Citizen",
+    "foreigner": "Foreigner",
+    "amenities": "Amenities",
+    "contact": "Contact",
+    "website": "Website",
+    "rating": "Rating"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "otpSent": "OTP sent to your phone",
+    "verifyOtp": "Verify OTP",
+    "resendOtp": "Resend OTP"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Check your connection.",
+    "notFound": "Not found",
+    "unauthorized": "Please login to continue",
+    "serverError": "Server error. Try again later.",
+    "locationDenied": "Location access denied",
+    "gpsOff": "GPS is turned off"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "success": "Success!",
+    "saved": "Saved successfully",
+    "deleted": "Deleted successfully",
+    "confirmDelete": "Are you sure you want to delete?",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "nepali": "नेपाली",
+    "english": "English",
+    "notifications": "Notifications",
+    "sound": "Sound",
+    "vibration": "Vibration",
+    "darkMode": "Dark Mode",
+    "units": "Units",
+    "metric": "Metric (km, °C)",
+    "imperial": "Imperial (mi, °F)"
+  },
+  "navigation": {
+    "start": "Start Navigation",
+    "stop": "Stop Navigation",
+    "reroute": "Reroute",
+    "eta": "ETA",
+    "distance": "Distance",
+    "arriving": "Arriving in"
+  },
+  "suggestions": {
+    "nearby": "Nearby Suggestions",
+    "tourist": "Tourist Attractions",
+    "food": "Food & Dining",
+    "fuel": "Fuel Stations",
+    "hospital": "Hospitals",
+    "rest": "Rest Areas"
+  }
+}
