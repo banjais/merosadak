@@ -1,14 +1,68 @@
-name = "merosadak"
-main = "backend/cloudflare/cf-worker.js"
-compatibility_date = "2025-12-29"
-account_id = "052a34d4627b5c02d0bff84ff1c0f906"
-workers_dev = true
+name = "merosadak-worker"
+main = "functions/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
 
-# Optional: Environment variables (only if you use them in Worker)
-[vars]
-FIREBASE_BACKEND = "https://merosadak.web.app"
-RENDER_BACKEND = "https://sadaksathi.onrender.com"
+# Account configuration
+account_id = ""
 
-# Cron job (runs every 5 minutes)
+# Environment configuration
+[env.production]
+name = "merosadak-worker-prod"
+route = { pattern = "merosadak.com/*", zone_name = "merosadak.com" }
+
+[env.staging]
+name = "merosadak-worker-staging"
+route = { pattern = "staging.merosadak.com/*", zone_name = "merosadak.com" }
+
+# Site configuration for static assets
+[site]
+bucket = "./frontend/dist"
+entry-point = "functions"
+
+# KV Namespace bindings
+[[kv_namespaces]]
+binding = "MEROSADAK_KV"
+id = ""
+preview_id = ""
+
+# D1 Database bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "merosadak-db"
+database_id = ""
+
+# R2 Bucket bindings
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "merosadak-assets"
+
+# Durable Objects
+[durable_objects]
+bindings = [
+  { name = "SESSION", class_name = "SessionManager" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["SessionManager"]
+
+# Triggers for scheduled events
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["0 */6 * * *"]
+
+[[env.production.triggers]]
+crons = ["0 */6 * * *"]
+
+# Vars for environment-specific configuration
+[vars]
+ENVIRONMENT = "development"
+API_BASE_URL = "http://localhost:3000"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+API_BASE_URL = "https://api.merosadak.com"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+API_BASE_URL = "https://staging-api.merosadak.com"
