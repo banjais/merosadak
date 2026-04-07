@@ -1,7 +1,0 @@
-{
-  "name": "Nepal Road Companion",
-  "description": "A comprehensive travel companion for Nepal featuring real-time highway updates, traffic alerts, and AI-powered travel assistance.",
-  "requestFramePermissions": [
-    "geolocation"
-  ]
-}
