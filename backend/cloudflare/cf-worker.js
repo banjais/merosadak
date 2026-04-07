@@ -2,17 +2,19 @@
 // MeroSadak Cloudflare Worker – Fixed Version (April 2026)
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',                    // Change to 'https://merosadak.web.app' for production
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   'Access-Control-Max-Age': '86400',
-  'X-Worker-Version': '2026-04-05',
+  'X-Worker-Version': '2026-04-06',
 };
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname + url.search;
+
+    console.log(`[Worker] Incoming request: ${request.method} ${path}`);
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
@@ -22,26 +24,24 @@ export default {
     // ==================== API Proxy (v1 routes) ====================
     if (path.startsWith("/api") || path.startsWith("/v1") || path.startsWith("/health")) {
       const isGet = request.method === "GET";
-      let backendName = "none";
+
+      // Normalize path: /api/v1/boundary -> /v1/boundary
+      let normalizedPath = path;
+      if (path.startsWith("/api/v1")) {
+        normalizedPath = "/v1" + path.slice(8);
+      } else if (path.startsWith("/api/")) {
+        normalizedPath = "/v1" + path.slice(5);
+      }
+
+      console.log(`[Worker] Proxying ${request.method} ${path} -> ${normalizedPath}`);
 
       const fetchFromBackend = async (baseURL, name) => {
         if (!baseURL) return null;
 
         let targetURL = baseURL.replace(/\/$/, "");
-        targetURL += path;
+        targetURL += normalizedPath;
 
-        const cacheKey = new Request(targetURL, { method: request.method });
-
-        if (isGet) {
-          const cached = await caches.default.match(cacheKey);
-          if (cached) {
-            const headers = new Headers(cached.headers);
-            Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v));
-            headers.set("X-Cache-Status", "HIT");
-            headers.set("X-Backend", name);
-            return new Response(cached.body, { status: cached.status, headers });
-          }
-        }
+        console.log(`[Worker] Fetching from ${name}: ${targetURL}`);
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
@@ -56,23 +56,10 @@ export default {
 
           clearTimeout(timeout);
 
-          backendName = name;
-
-          if (isGet && res.ok) {
-            const responseClone = res.clone();
-            const headers = new Headers(res.headers);
-            Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v));
-            headers.set("Cache-Control", "public, max-age=300");
-            headers.set("X-Cache-Status", "MISS");
-            headers.set("X-Backend", name);
-
-            ctx.waitUntil(caches.default.put(cacheKey, responseClone));
-          }
-
           const finalHeaders = new Headers(res.headers);
           Object.entries(CORS_HEADERS).forEach(([k, v]) => finalHeaders.set(k, v));
           finalHeaders.set("X-Served-By", "Cloudflare-Worker");
-          finalHeaders.set("X-Backend", backendName);
+          finalHeaders.set("X-Backend", name);
 
           return new Response(res.body, {
             status: res.status,
