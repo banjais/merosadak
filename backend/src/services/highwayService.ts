@@ -10,43 +10,108 @@ import { getCachedMonsoonRisk } from "./monsoonService.js";
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 
-// District to Province mapping
+// District to Province mapping (from Nepal government data)
 const DISTRICT_TO_PROVINCE: Record<string, string> = {
   // Province 1
   "Jhapa": "Province 1", "Morang": "Province 1", "Sunsari": "Province 1", "Dhankuta": "Province 1",
   "Terhathum": "Province 1", "Sankhuwasabha": "Province 1", "Bhojpur": "Province 1", "Khotang": "Province 1",
   "Okhaldhunga": "Province 1", "Solukhumbu": "Province 1", "Ilam": "Province 1", "Panchthar": "Province 1",
-  "Taplejung": "Province 1", "Kavrepalanchok": "Province 1",
+  "Taplejung": "Province 1", "Kavrepalanchok": "Province 1", "Udayapur": "Province 1",
   // Province 2
   "Saptari": "Province 2", "Siraha": "Province 2", "Dhanusha": "Province 2", "Mahottari": "Province 2",
   "Sarlahi": "Province 2", "Bara": "Province 2", "Parsa": "Province 2", "Rautahat": "Province 2",
-  // Province 3
+  // Province 3 (Bagmati)
   "Chitwan": "Province 3", "Makwanpur": "Province 3", "Dhading": "Province 3", "Nuwakot": "Province 3",
   "Rasuwa": "Province 3", "Kathmandu": "Province 3", "Lalitpur": "Province 3", "Bhaktapur": "Province 3",
-  // Province 4
+  "Sindhuli": "Province 3", "Ramechhap": "Province 3", "Dolakha": "Province 3",
+  // Province 4 (Gandaki)
   "Gorkha": "Province 4", "Manang": "Province 4", "Mustang": "Province 4", "Myagdi": "Province 4",
   "Kaski": "Province 4", "Lamjung": "Province 4", "Tanahu": "Province 4", "Nawalparasi": "Province 4",
-  // Province 5
-  "Parbat": "Province 5", "Baglung": "Province 5", "Pytharia": "Province 5", "Pyuthan": "Province 5",
-  "Rolpa": "Province 5", "Rukum": "Province 5", "Salyantar": "Province 5", "Dang": "Province 5",
-  "Banke": "Province 5", "Bardiya": "Province 5", "Kapilvastu": "Province 5", "Rupandehi": "Province 5",
-  "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5", "Piuthan": "Province 5",
-  // Province 6
+  "Parbat": "Province 4", "Baglung": "Province 4",
+  // Province 5 (Lumbini)
+  "Pyuthan": "Province 5", "Rolpa": "Province 5", "Rukum": "Province 5", "Salyantar": "Province 5",
+  "Dang": "Province 5", "Banke": "Province 5", "Bardiya": "Province 5", "Kapilvastu": "Province 5",
+  "Rupandehi": "Province 5", "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5",
+  // Province 6 (Karnali)
   "Dolpa": "Province 6", "Mugu": "Province 6", "Jumla": "Province 6", "Kalikot": "Province 6",
   "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6", "Sindhuli": "Province 6",
-  // Province 7
-  "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Mahendranagar": "Province 7",
-  "Kanchanpur": "Province 7", "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7",
-  "Dadeldhura": "Province 7", "Baitadi": "Province 7",
+  // Province 7 (Sudurpashchim)
+  "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Kanchanpur": "Province 7",
+  "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7", "Dadeldhura": "Province 7",
+  "Baitadi": "Province 7",
 };
 
+// Also check if input matches key (case-insensitive)
 function getProvincesByDistricts(districts: string[]): string[] {
   const provinces = new Set<string>();
   for (const d of districts) {
-    const p = DISTRICT_TO_PROVINCE[d];
-    if (p) provinces.add(p);
+    // Try exact match first, then case-insensitive
+    let province = DISTRICT_TO_PROVINCE[d];
+    if (!province) {
+      // Try case-insensitive search
+      for (const [dist, prov] of Object.entries(DISTRICT_TO_PROVINCE)) {
+        if (dist.toLowerCase() === d.toLowerCase()) {
+          province = prov;
+          break;
+        }
+      }
+    }
+    if (province) provinces.add(province);
   }
-  return Array.from(provinces);
+  return Array.from(provinces).sort();
+}
+
+/**
+ * Get linked data from multiple sources for a highway
+ */
+export async function getHighwayLinkedData(code: string): Promise<any> {
+  const geojson = await getHighwayByCode(code);
+  if (!geojson || !geojson.features) return null;
+  
+  // Collect unique districts and divisions from highway segments
+  const districts = new Set<string>();
+  const divisions = new Set<string>();
+  const paveTypes = new Set<string>();
+  const years: number[] = [];
+  const segmentLengths: number[] = [];
+  
+  for (const f of geojson.features) {
+    const props = f.properties || {};
+    if (props.dist_name) districts.add(props.dist_name);
+    if (props.div_name) divisions.add(props.div_name);
+    if (props.pave_type) paveTypes.add(props.pave_type);
+    if (props.dyear) {
+      const yr = parseInt(props.dyear);
+      if (!isNaN(yr)) years.push(yr);
+    }
+    if (props.link_len) {
+      const len = parseFloat(props.link_len);
+      if (!isNaN(len)) segmentLengths.push(len);
+    }
+  }
+  
+  const districtArray = Array.from(districts).sort();
+  const provinceArray = getProvincesByDistricts(districtArray);
+  
+  return {
+    highway: { code, name: geojson.features[0]?.properties?.road_name || code },
+    route: {
+      districts: districtArray,
+      provinces: provinceArray,
+      divisions: Array.from(divisions).sort(),
+    },
+    segments: {
+      total: geojson.features.length,
+      totalLengthKm: Math.round(segmentLengths.reduce((a,b) => a+b, 0) * 10) / 10,
+      avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null,
+      pavementTypes: Array.from(paveTypes).sort(),
+    },
+    linkedSources: {
+      districts: "/api/boundaries/districts",
+      provinces: "/api/boundaries/provinces", 
+      local: "/api/boundaries/local",
+    }
+  };
 }
 
 /**

@@ -163,3 +163,35 @@ export const getAlternativeRoutes = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * GET /api/highways/:code/linked
+ * Returns highway data linked from multiple sources
+ */
+export const getHighwayLinkedData = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    const { getHighwayLinkedData: getLinked } = await import("../services/highwayService.js");
+    const data = await getLinked(code.toUpperCase());
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: `Highway ${code} not found`,
+      });
+    }
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data,
+    });
+  } catch (err: any) {
+    logError("[HighwayController] Failed to get linked data", { error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve linked data",
+      error: err.message,
+    });
+  }
+};

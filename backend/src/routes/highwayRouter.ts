@@ -34,4 +34,10 @@ router.get("/:code", highwayController.getHighwayByCode);
  */
 router.get("/:code/report", highwayController.getHighwayReport);
 
+/**
+ * GET /api/highways/:code/linked
+ * Returns highway data linked from multiple sources (districts, provinces, local)
+ */
+router.get("/:code/linked", highwayController.getHighwayLinkedData);
+
 export default router;
