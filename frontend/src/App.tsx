@@ -177,8 +177,8 @@ const MainApp: React.FC = () => {
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
         maxBounds={[
-          [26.0, 79.5],
-          [30.5, 88.5]
+          [26.35, 80.06],
+          [30.47, 88.20]
         ]}
         maxBoundsViscosity={1.0}
       >
