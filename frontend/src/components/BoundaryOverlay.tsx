@@ -11,20 +11,20 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
   useEffect(() => {
     const loadBoundary = async () => {
       try {
-        const res = await fetch("/data/boundary.geojson");
-        if (!res.ok) throw new Error("Failed to fetch from public");
+        const res = await fetch("/api/v1/boundary");
+        if (!res.ok) throw new Error("Failed to fetch from API");
         const data = await res.json();
         setBoundaryData(data);
       } catch (primaryErr) {
-        console.warn("[BoundaryOverlay] Public fetch failed, trying API:", primaryErr);
+        console.warn("[BoundaryOverlay] API fetch failed, trying public folder:", primaryErr);
         try {
-          const apiRes = await fetch("/api/v1/boundary");
-          if (apiRes.ok) {
-            const data = await apiRes.json();
+          const publicRes = await fetch("/data/boundary.geojson");
+          if (publicRes.ok) {
+            const data = await publicRes.json();
             setBoundaryData(data);
           }
         } catch (fallbackErr) {
-          console.error("[BoundaryOverlay] API fallback also failed:", fallbackErr);
+          console.error("[BoundaryOverlay] Public fallback also failed:", fallbackErr);
         }
       }
     };
