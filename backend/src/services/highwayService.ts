@@ -62,81 +62,37 @@ function getProvincesByDistricts(districts: string[]): string[] {
 }
 
 /**
- * Get linked data from multiple sources for a highway
+ * Get linked data from multiple sources for a highway - FAST (no incidents)
  */
 export async function getHighwayLinkedData(code: string): Promise<any> {
-  const geojson = await getHighwayByCode(code);
-  if (!geojson || !geojson.features) return null;
-  
-  // Collect unique districts and divisions from highway segments
-  const districts = new Set<string>();
-  const divisions = new Set<string>();
-  const paveTypes = new Set<string>();
-  const years: number[] = [];
-  const segmentLengths: number[] = [];
-  
-  for (const f of geojson.features) {
-    const props = f.properties || {};
-    if (props.dist_name) districts.add(props.dist_name);
-    if (props.div_name) divisions.add(props.div_name);
-    if (props.pave_type) paveTypes.add(props.pave_type);
-    if (props.dyear) {
-      const yr = parseInt(props.dyear);
-      if (!isNaN(yr)) years.push(yr);
-    }
-    if (props.link_len) {
-      const len = parseFloat(props.link_len);
-      if (!isNaN(len)) segmentLengths.push(len);
-    }
-  }
-  
-  const districtArray = Array.from(districts).sort();
-  const provinceArray = getProvincesByDistricts(districtArray);
-  
-    // Get all road data with incidents
-    const roadData = await getCachedRoads();
-    const allRoads = roadData.merged;
+  try {
+    const geojson = await getHighwayByCode(code);
+    if (!geojson || !geojson.features) return null;
     
-    // 1. Incidents from highway segments (by dist_name in the segment)
-    const segmentIncidentsByDistrict: Record<string, any> = {};
-    for (const road of allRoads) {
-      if (road.source === "highway" && road.status !== "Resumed") {
-        const dist = road.properties?.dist_name || "Unknown";
-        if (!segmentIncidentsByDistrict[dist]) {
-          segmentIncidentsByDistrict[dist] = { blocked: 0, oneLane: 0, segments: [] };
-        }
-        if (road.status === "Blocked") segmentIncidentsByDistrict[dist].blocked++;
-        else if (road.status === "One-Lane") segmentIncidentsByDistrict[dist].oneLane++;
-        segmentIncidentsByDistrict[dist].segments.push({
-          roadRefno: road.properties?.road_refno,
-          roadName: road.properties?.road_name,
-          linkName: road.properties?.link_name,
-          status: road.status,
-        });
+    // Collect unique districts and divisions from highway segments
+    const districts = new Set<string>();
+    const divisions = new Set<string>();
+    const paveTypes = new Set<string>();
+    const years: number[] = [];
+    const segmentLengths: number[] = [];
+    
+    for (const f of geojson.features) {
+      const props = f.properties || {};
+      if (props.dist_name) districts.add(props.dist_name);
+      if (props.div_name) divisions.add(props.div_name);
+      if (props.pave_type) paveTypes.add(props.pave_type);
+      if (props.dyear) {
+        const yr = parseInt(props.dyear);
+        if (!isNaN(yr)) years.push(yr);
+      }
+      if (props.link_len) {
+        const len = parseFloat(props.link_len);
+        if (!isNaN(len)) segmentLengths.push(len);
       }
     }
     
-    // 2. Incidents from sheet (by incidentDistrict)
-    const sheetIncidentsByDistrict: Record<string, any> = {};
-    for (const road of allRoads) {
-      if (road.source === "sheet" && road.status !== "Resumed") {
-        const dist = road.properties?.incidentDistrict || "Unknown";
-        if (!sheetIncidentsByDistrict[dist]) {
-          sheetIncidentsByDistrict[dist] = { blocked: 0, oneLane: 0, incidents: [] };
-        }
-        if (road.status === "Blocked") sheetIncidentsByDistrict[dist].blocked++;
-        else if (road.status === "One-Lane") sheetIncidentsByDistrict[dist].oneLane++;
-        sheetIncidentsByDistrict[dist].incidents.push({
-          place: road.properties?.incidentPlace || road.properties?.place || "",
-          chainage: road.properties?.chainage,
-          coordinates: road.geometry?.coordinates,
-        });
-      }
-    }
-    
-    // Count totals
-    const totalActiveFromSegments = Object.values(segmentIncidentsByDistrict).reduce((sum: number, d: any) => sum + d.blocked + d.oneLane, 0);
-    const totalActiveFromSheet = Object.values(sheetIncidentsByDistrict).reduce((sum: number, d: any) => sum + d.blocked + d.oneLane, 0);
+    const districtArray = Array.from(districts).sort();
+    const provinceArray = getProvincesByDistricts(districtArray);
     
     return {
       highway: { code, name: geojson.features[0]?.properties?.road_name || code },
@@ -151,15 +107,11 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
         avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null,
         pavementTypes: Array.from(paveTypes).sort(),
       },
-      incidents: {
-        totalActive: totalActiveFromSegments + totalActiveFromSheet,
-        fromHighwaySegments: segmentIncidentsByDistrict,
-        fromSheet: sheetIncidentsByDistrict,
-      },
       linkedSources: {
         districts: "/api/boundaries/districts",
         provinces: "/api/boundaries/provinces", 
         local: "/api/boundaries/local",
+        incidents: `/api/highways/${code}/incidents`,
       }
     };
   } catch (err: any) {
@@ -167,46 +119,63 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
     return null;
   }
 }
-  }
-  
-  // Group incidents by district
-  const incidentsByDistrict: Record<string, any> = {};
-  for (const inc of incidentDetails) {
-    const d = inc.district || "Unknown";
-    if (!incidentsByDistrict[d]) {
-      incidentsByDistrict[d] = { blocked: 0, oneLane: 0, locations: [] };
-    }
-    if (inc.status === "Blocked") incidentsByDistrict[d].blocked++;
-    else if (inc.status === "One-Lane") incidentsByDistrict[d].oneLane++;
-    if (inc.place) incidentsByDistrict[d].locations.push(inc.place);
-  }
-  
-    return {
-      highway: { code, name: geojson.features[0]?.properties?.road_name || code },
-      route: {
-        districts: districtArray,
-        provinces: provinceArray,
-        divisions: Array.from(divisions).sort(),
-      },
-      segments: {
-        total: geojson.features.length,
-        totalLengthKm: Math.round(segmentLengths.reduce((a,b) => a+b, 0) * 10) / 10,
-        avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null,
-        pavementTypes: Array.from(paveTypes).sort(),
-      },
-      incidents: {
-        totalActive: totalActiveFromSegments + totalActiveFromSheet,
-        fromHighwaySegments: segmentIncidentsByDistrict,
-        fromSheet: sheetIncidentsByDistrict,
-      },
-      linkedSources: {
-        districts: "/api/boundaries/districts",
-        provinces: "/api/boundaries/provinces", 
-        local: "/api/boundaries/local",
+
+/**
+ * Get incidents for a specific highway - fast endpoint
+ */
+export async function getHighwayIncidents(code: string): Promise<any> {
+  try {
+    // Get highway to know which districts it passes through
+    const indexData = await getHighwayList();
+    const metadata = indexData.find(h => h.code === code.toUpperCase());
+    if (!metadata) return null;
+    
+    const highwayFile = path.join(HIGHWAY_DIR, metadata.file);
+    const geojson: FeatureCollection = JSON.parse(await fs.readFile(highwayFile, "utf-8"));
+    
+    // Get road data - only filter by this highway
+    const roadData = await getCachedRoads();
+    const highwayRoads = roadData.merged.filter((r: any) => 
+      r.properties?.road_refno === code.toUpperCase()
+    );
+    
+    // Count by district (from highway segment dist_name)
+    const byDistrict: Record<string, any> = {};
+    for (const road of highwayRoads) {
+      if (road.source === "highway" && road.status !== "Resumed") {
+        const dist = road.properties?.dist_name || "Unknown";
+        if (!byDistrict[dist]) byDistrict[dist] = { blocked: 0, oneLane: 0 };
+        if (road.status === "Blocked") byDistrict[dist].blocked++;
+        else if (road.status === "One-Lane") byDistrict[dist].oneLane++;
       }
+    }
+    
+    // Get sheet incidents (any sheet incident for this highway)
+    const sheetIncidents = highwayRoads.filter((r: any) => r.source === "sheet" && r.status !== "Resumed");
+    const byDistrictFromSheet: Record<string, any> = {};
+    for (const inc of sheetIncidents) {
+      const dist = inc.properties?.incidentDistrict || "Unknown";
+      if (!byDistrictFromSheet[dist]) byDistrictFromSheet[dist] = { blocked: 0, oneLane: 0, places: [] };
+      if (inc.status === "Blocked") byDistrictFromSheet[dist].blocked++;
+      else if (inc.status === "One-Lane") byDistrictFromSheet[dist].oneLane++;
+      const place = inc.properties?.incidentPlace || inc.properties?.place || "";
+      if (place) byDistrictFromSheet[dist].places.push(place);
+    }
+    
+    const totalBlocked = Object.values(byDistrict).reduce((s: number, d: any) => s + d.blocked, 0);
+    const totalOneLane = Object.values(byDistrict).reduce((s: number, d: any) => s + d.oneLane, 0);
+    
+    return {
+      code,
+      totalActive: totalBlocked + totalOneLane,
+      blocked: totalBlocked,
+      oneLane: totalOneLane,
+      fromSegments: byDistrict,
+      fromSheet: byDistrictFromSheet,
+      timestamp: new Date().toISOString()
     };
   } catch (err: any) {
-    logError("[HighwayService] Failed to get linked data", err.message);
+    logError("[HighwayService] Failed to get incidents", err.message);
     return null;
   }
 }

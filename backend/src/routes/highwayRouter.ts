@@ -40,4 +40,10 @@ router.get("/:code/report", highwayController.getHighwayReport);
  */
 router.get("/:code/linked", highwayController.getHighwayLinkedData);
 
+/**
+ * GET /api/highways/:code/incidents
+ * Returns fast incident data for a specific highway
+ */
+router.get("/:code/incidents", highwayController.getHighwayIncidents);
+
 export default router;

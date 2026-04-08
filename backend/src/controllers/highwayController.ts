@@ -195,3 +195,35 @@ export const getHighwayLinkedData = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * GET /api/highways/:code/incidents
+ * Returns fast incident data for a highway
+ */
+export const getHighwayIncidents = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    const { getHighwayIncidents: getIncidents } = await import("../services/highwayService.js");
+    const data = await getIncidents(code.toUpperCase());
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: `Highway ${code} not found`,
+      });
+    }
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data,
+    });
+  } catch (err: any) {
+    logError("[HighwayController] Failed to get incidents", { error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve incidents",
+      error: err.message,
+    });
+  }
+};
