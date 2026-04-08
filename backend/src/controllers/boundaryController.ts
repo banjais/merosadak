@@ -4,7 +4,7 @@ import { getNepalBoundary as getNepalBoundaryService } from "../services/boundar
 import { logError } from "../logs/logs.js";
 
 /**
- * GET /api/v1/boundary
+ * GET /api/boundary
  * Returns Nepal boundary GeoJSON for map display
  */
 export const getNepalBoundary = async (_req: Request, res: Response) => {

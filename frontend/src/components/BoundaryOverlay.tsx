@@ -11,10 +11,10 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
   useEffect(() => {
     const loadBoundary = async () => {
       try {
-        const res = await fetch("/api/v1/boundary");
+        const res = await fetch("/api/boundary");
         if (!res.ok) throw new Error("Failed to fetch from API");
-        const data = await res.json();
-        setBoundaryData(data);
+        const json = await res.json();
+        setBoundaryData(json.data || json);
       } catch (primaryErr) {
         console.warn("[BoundaryOverlay] API fetch failed, trying public folder:", primaryErr);
         try {

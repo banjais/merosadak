@@ -5,7 +5,7 @@ import { getNepalBoundary } from "../controllers/boundaryController.js";
 const router = Router();
 
 /**
- * GET /api/v1/boundary
+ * GET /api/boundary
  * Returns Nepal boundary GeoJSON for map display
  */
 router.get("/", getNepalBoundary);
