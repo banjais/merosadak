@@ -291,10 +291,6 @@ export const GOOGLE_MAPS_API_URL = config.GOOGLE_MAPS_API_URL || "https://maps.g
 export const TOMTOM_API_KEY = config.TOMTOM_API_KEY || "";
 
 // -----------------------------
-// Waze
-export const WAZE_JSON = config.WAZE_JSON || "";
-
-// -----------------------------
 // Firebase
 export const FIREBASE_API_KEY = config.FIREBASE_API_KEY || "";
 export const FIREBASE_TOKEN = config.FIREBASE_TOKEN || "";
