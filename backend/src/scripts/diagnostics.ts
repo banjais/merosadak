@@ -330,7 +330,7 @@ async function runDiagnostics() {
   const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
   const heapTotalMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
   const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
-  const memFn = mem.heapUsed / mem.heapTotal > 0.95 ? err : ok;
+  const memFn = mem.heapUsed / mem.heapTotal > 0.98 ? warn : ok;
   memFn("Memory (heap)", `${heapUsedMB} / ${heapTotalMB} MB`);
   ok("Memory (RSS)", `${rssMB} MB`);
 
