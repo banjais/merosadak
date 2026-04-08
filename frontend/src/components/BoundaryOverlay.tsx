@@ -9,14 +9,26 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
   const [boundaryData, setBoundaryData] = useState<any>(null);
 
   useEffect(() => {
-    // Load boundary.geojson from public folder
-    fetch("/data/boundary.geojson")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch boundary.geojson");
-        return res.json();
-      })
-      .then((data) => setBoundaryData(data))
-      .catch((err) => console.error("[BoundaryOverlay] Error:", err));
+    const loadBoundary = async () => {
+      try {
+        const res = await fetch("/data/boundary.geojson");
+        if (!res.ok) throw new Error("Failed to fetch from public");
+        const data = await res.json();
+        setBoundaryData(data);
+      } catch (primaryErr) {
+        console.warn("[BoundaryOverlay] Public fetch failed, trying API:", primaryErr);
+        try {
+          const apiRes = await fetch("/api/v1/boundary");
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            setBoundaryData(data);
+          }
+        } catch (fallbackErr) {
+          console.error("[BoundaryOverlay] API fallback also failed:", fallbackErr);
+        }
+      }
+    };
+    loadBoundary();
   }, []);
 
   // Styling for polygons based on dark/light mode
