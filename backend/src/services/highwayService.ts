@@ -10,6 +10,45 @@ import { getCachedMonsoonRisk } from "./monsoonService.js";
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 
+// District to Province mapping
+const DISTRICT_TO_PROVINCE: Record<string, string> = {
+  // Province 1
+  "Jhapa": "Province 1", "Morang": "Province 1", "Sunsari": "Province 1", "Dhankuta": "Province 1",
+  "Terhathum": "Province 1", "Sankhuwasabha": "Province 1", "Bhojpur": "Province 1", "Khotang": "Province 1",
+  "Okhaldhunga": "Province 1", "Solukhumbu": "Province 1", "Ilam": "Province 1", "Panchthar": "Province 1",
+  "Taplejung": "Province 1", "Kavrepalanchok": "Province 1",
+  // Province 2
+  "Saptari": "Province 2", "Siraha": "Province 2", "Dhanusha": "Province 2", "Mahottari": "Province 2",
+  "Sarlahi": "Province 2", "Bara": "Province 2", "Parsa": "Province 2", "Rautahat": "Province 2",
+  // Province 3
+  "Chitwan": "Province 3", "Makwanpur": "Province 3", "Dhading": "Province 3", "Nuwakot": "Province 3",
+  "Rasuwa": "Province 3", "Kathmandu": "Province 3", "Lalitpur": "Province 3", "Bhaktapur": "Province 3",
+  // Province 4
+  "Gorkha": "Province 4", "Manang": "Province 4", "Mustang": "Province 4", "Myagdi": "Province 4",
+  "Kaski": "Province 4", "Lamjung": "Province 4", "Tanahu": "Province 4", "Nawalparasi": "Province 4",
+  // Province 5
+  "Parbat": "Province 5", "Baglung": "Province 5", "Pytharia": "Province 5", "Pyuthan": "Province 5",
+  "Rolpa": "Province 5", "Rukum": "Province 5", "Salyantar": "Province 5", "Dang": "Province 5",
+  "Banke": "Province 5", "Bardiya": "Province 5", "Kapilvastu": "Province 5", "Rupandehi": "Province 5",
+  "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5", "Piuthan": "Province 5",
+  // Province 6
+  "Dolpa": "Province 6", "Mugu": "Province 6", "Jumla": "Province 6", "Kalikot": "Province 6",
+  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6", "Sindhuli": "Province 6",
+  // Province 7
+  "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Mahendranagar": "Province 7",
+  "Kanchanpur": "Province 7", "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7",
+  "Dadeldhura": "Province 7", "Baitadi": "Province 7",
+};
+
+function getProvincesByDistricts(districts: string[]): string[] {
+  const provinces = new Set<string>();
+  for (const d of districts) {
+    const p = DISTRICT_TO_PROVINCE[d];
+    if (p) provinces.add(p);
+  }
+  return Array.from(provinces);
+}
+
 /**
  * Get list of available highways with metadata
  */
@@ -146,51 +185,64 @@ export async function getHighwayReport(code: string): Promise<any> {
     const districtCount = districts.length;
     
     // Analyze road conditions from features
-    let pavementStats = { blacktopped: 0, gravel: 0, earthen: 0, unknown: 0 };
+    let pavementStats = { blacktopped: 0, gravel: 0, earthen: 0, unknown: 0, byType: {} as Record<string, number> };
     let conditionStats = { good: 0, fair: 0, poor: 0, unknown: 0 };
     let widthStats = { single_lane: 0, two_lane: 0, four_lane: 0, unknown: 0 };
     let totalSegments = 0;
+    
+    // Collect unique values
+    const uniqueDivisions = new Set<string>();
+    const uniqueDistricts = new Set<string>();
+    const paveTypes = new Set<string>();
+    const years: number[] = [];
+    const segmentLengths: number[] = [];
     
     for (const feature of geojson.features) {
       const props = feature.properties || {};
       totalSegments++;
       
+      // Collect unique values
+      if (props.div_name) uniqueDivisions.add(props.div_name);
+      if (props.dist_name) uniqueDistricts.add(props.dist_name);
+      if (props.pave_type) paveTypes.add(props.pave_type);
+      if (props.dyear) {
+        const yr = parseInt(props.dyear);
+        if (!isNaN(yr)) years.push(yr);
+      }
+      if (props.link_len) {
+        const len = parseFloat(props.link_len);
+        if (!isNaN(len)) segmentLengths.push(len);
+      }
+      
       // Pavement type
-      const surface = (props.surface || props.pavement || '').toLowerCase();
-      if (surface.includes('asphalt') || surface.includes('blacktopped') || surface.includes('paved')) {
+      const paveType = props.pave_type || props.surface || props.pavement || 'Unknown';
+      pavementStats.byType[paveType] = (pavementStats.byType[paveType] || 0) + 1;
+      
+      if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
         pavementStats.blacktopped++;
-      } else if (surface.includes('gravel') || surface.includes('unpaved')) {
+      } else if (paveType.toLowerCase().includes('gravel') || paveType.toLowerCase().includes('wbm')) {
         pavementStats.gravel++;
-      } else if (surface.includes('earth') || surface.includes('dirt')) {
+      } else if (paveType.toLowerCase().includes('earth') || paveType.toLowerCase().includes('unpaved')) {
         pavementStats.earthen++;
-      } else {
+      } else if (paveType !== 'Unknown') {
         pavementStats.unknown++;
       }
       
-      // Condition
-      const condition = (props.condition || props.road_condition || '').toLowerCase();
-      if (condition.includes('good') || condition.includes('excellent')) {
-        conditionStats.good++;
-      } else if (condition.includes('fair') || condition.includes('average')) {
-        conditionStats.fair++;
-      } else if (condition.includes('poor') || condition.includes('bad')) {
-        conditionStats.poor++;
-      } else {
-        conditionStats.unknown++;
-      }
-      
       // Width/Lanes
-      const lanes = props.lanes || props.width || '';
-      if (lanes === 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
+      const lanes = props.no_lanes || props.lanes || props.for_width || '';
+      if (lanes == 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
         widthStats.single_lane++;
-      } else if (lanes === 2 || (typeof lanes === 'string' && lanes.includes('two'))) {
+      } else if (lanes == 2 || lanes == 4 || (typeof lanes === 'string' && (lanes.includes('two') || lanes.includes('four')))) {
         widthStats.two_lane++;
-      } else if (lanes >= 4 || (typeof lanes === 'string' && lanes.includes('four'))) {
+      } else if (lanes >= 4) {
         widthStats.four_lane++;
       } else {
         widthStats.unknown++;
       }
     }
+    
+    const avgYear = years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null;
+    const totalSegmentLength = segmentLengths.reduce((a,b) => a+b, 0);
     
     // Get real-time incidents for this highway
     const roadData = await getCachedRoads();
@@ -223,11 +275,19 @@ export async function getHighwayReport(code: string): Promise<any> {
       code: metadata.code,
       name: metadata.name,
       route: metadata.route,
+      startToEnd: metadata.route, // start to end location
+      provinces: metadata.provinces || getProvincesByDistricts(districts),
       districts: districts,
       districtCount: districtCount,
-      lengthKm: lengthKm,
+      divisions: Array.from(uniqueDivisions),
+      lengthKm: Math.round(lengthKm * 10) / 10,
+      segmentLengthKm: Math.round(totalSegmentLength * 10) / 10,
       totalSegments: totalSegments,
-      pavementStats,
+      avgConstructionYear: avgYear,
+      pavementStats: {
+        ...pavementStats,
+        types: Object.fromEntries(paveTypes),
+      },
       conditionStats,
       widthStats,
       incidentStats,
