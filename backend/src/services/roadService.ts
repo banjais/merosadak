@@ -50,16 +50,22 @@ const STATUS_NORMALIZE: Record<string, string> = {
 async function fetchSheetIncidents(): Promise<any[]> {
   try {
     const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
-    const res = await axios.get(gasUrl, { timeout: 15000 });
+    const res = await axios.get(gasUrl, { timeout: 15000, maxRedirects: 5 });
     const data = res.data?.data || [];
 
     return data.map((row: any) => {
-      const rawStatus = (row[SHEET_HEADERS.STATUS] || "").toString().trim();
+      // Try multiple status key variations (case-insensitive)
+      const statusKeys = Object.keys(row).filter(k => k.toLowerCase() === "status");
+      const rawStatus = statusKeys.length > 0 ? String(row[statusKeys[0]] || "").trim() : "";
       const status = STATUS_NORMALIZE[rawStatus] || "";
 
+      // Try multiple road code key variations
+      const roadCodeKeys = Object.keys(row).filter(k => k.toLowerCase().includes("road") && k.toLowerCase().includes("ref"));
+      const roadCode = roadCodeKeys.length > 0 ? row[roadCodeKeys[0]] || "" : "";
+
       return {
-        road_refno: row[SHEET_HEADERS.ROAD_CODE] || "",
-        road_name: row[SHEET_HEADERS.ROAD_NAME] || "",
+        road_refno: roadCode,
+        road_name: row.road_name || "",
         incidentDistrict: row[SHEET_HEADERS.DISTRICT] || "",
         incidentPlace: row[SHEET_HEADERS.PLACE] || "",
         status: status,
