@@ -1,28 +1,51 @@
 /**
  * 📊 GOOGLE SHEETS MASTER CONFIGURATION
- * These keys match your sheet column headers exactly.
+ * Values loaded from environment variables (.env.development / .env.production)
  */
+import {
+  HEADER_ROADCODE,
+  HEADER_STATUS,
+  HEADER_CHAINAGE,
+  HEADER_INCIDENT_STARTED,
+  HEADER_INCIDENT_DISTRICT,
+  HEADER_INCIDENT_PLACE,
+  HEADER_INCIDENT_COORDINATE,
+  HEADER_ESTIMATED_RESTORATION,
+  HEADER_RESTORATION_EFFORTS,
+  HEADER_DATA_PULLED_DATE,
+  HEADER_REMARKS,
+  STATUS_BLOCKED,
+  STATUS_ONE_LANE,
+  STATUS_RESUMED,
+  TAB_TOLL,
+} from "../config/index.js";
+
 export const SHEET_HEADERS = {
   SUBMISSION_DATE: "reportDate",
   DIVISION: "div_name",
-  ROAD_CODE: "road_refno",          
+  ROAD_CODE: HEADER_ROADCODE,          
   ROAD_NAME: "road_name",
-  DISTRICT: "dist_name",      // Fixed: was "incidentDistrict"     
-  PLACE: "incidentPlace",           
-  CHAINAGE: "chainage",
-  COORDINATES: "incidentCoordinate", 
-  START_DATE: "incidentStarted",
-  ESTIMATED_RESTORATION: "estimatedRestoration",
-  STATUS: "status",
+  DISTRICT: HEADER_INCIDENT_DISTRICT,      
+  PLACE: HEADER_INCIDENT_PLACE,           
+  CHAINAGE: HEADER_CHAINAGE,
+  COORDINATES: HEADER_INCIDENT_COORDINATE, 
+  START_DATE: HEADER_INCIDENT_STARTED,
+  ESTIMATED_RESTORATION: HEADER_ESTIMATED_RESTORATION,
+  STATUS: HEADER_STATUS,
   RESUMED_DATE: "resumedDate",
   BLOCKED_HOURS: "blockedHours",
   CONTACT: "contactPerson",
-  EFFORTS: "restorationEfforts",
-  REMARKS: "remarks"
+  EFFORTS: HEADER_RESTORATION_EFFORTS,
+  REMARKS: HEADER_REMARKS
 };
 
 export const ROAD_STATUS = {
-  BLOCKED: 'Blocked',
-  ONE_LANE: 'One-Lane',
-  RESUMED: 'Resumed'
+  BLOCKED: STATUS_BLOCKED,
+  ONE_LANE: STATUS_ONE_LANE,
+  RESUMED: STATUS_RESUMED
+};
+
+export const TAB_NAMES = {
+  ROADS: "Roads",
+  TOLL: TAB_TOLL,
 };

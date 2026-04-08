@@ -37,9 +37,36 @@ const envSchema = z.object({
     : z.string().default("super-secret-key"),
   JWT_EXPIRES_IN: z.string().default("7d"),
 
-  GAS_URL: z.string().url().default("https://script.google.com/macros/s/AKfycbzhvgeBiFIlNXghAleTLQP82UENBZ1BsO0reZ-nH5uAb556RzScoFjhy-5UTY2KjRPG/exec"),
+  GAS_URL: z.string().url().optional(),
   SHEET_ID: z.string().optional(),
   SHEET_TAB: z.string().default("Roads"),
+
+  // Sheet Header Mappings
+  HEADER_ROADCODE: z.string().optional(),
+  HEADER_STATUS: z.string().optional(),
+  HEADER_CHAINAGE: z.string().optional(),
+  HEADER_INCIDENT_STARTED: z.string().optional(),
+  HEADER_INCIDENT_DISTRICT: z.string().optional(),
+  HEADER_INCIDENT_PLACE: z.string().optional(),
+  HEADER_INCIDENT_COORDINATE: z.string().optional(),
+  HEADER_ESTIMATED_RESTORATION: z.string().optional(),
+  HEADER_RESTORATION_EFFORTS: z.string().optional(),
+  HEADER_DATA_PULLED_DATE: z.string().optional(),
+  HEADER_REMARKS: z.string().optional(),
+
+  // Status Values
+  STATUS_BLOCKED: z.string().optional(),
+  STATUS_ONE_LANE: z.string().optional(),
+  STATUS_RESUMED: z.string().optional(),
+
+  // Tab Mappings
+  TAB_TOLL: z.string().optional(),
+
+  // Cloudflare
+  CLOUDFLARE_URL: z.string().url().optional(),
+
+  // Waze
+  WAZE_XML: z.string().url().optional(),
 
   // Upstash
   UPSTASH_REDIS_REST_URL: z.string().optional(),
@@ -76,13 +103,14 @@ const envSchema = z.object({
   // Firebase
   FIREBASE_API_KEY: z.string().optional(),
   FIREBASE_TOKEN: z.string().optional(),
-  FIREBASE_BASE_URL: z.string().url().optional(),
+  FIREBASE_BASE_URL: z.string().optional(),
   FIREBASE_AUTH_DOMAIN: z.string().optional(),
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_STORAGE_BUCKET: z.string().optional(),
   FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
   FIREBASE_APP_ID: z.string().optional(),
   FIREBASE_MEASUREMENT_ID: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
   FIREBASE_BACKEND: z.string().url().optional(),
 
   // Render
@@ -180,6 +208,44 @@ export const SHEET_TAB = config.SHEET_TAB || "";
 export const JWT_EXPIRES_IN = config.JWT_EXPIRES_IN || "7d";
 
 // -----------------------------
+// Sheet Header Mappings
+// -----------------------------
+export const HEADER_ROADCODE = config.HEADER_ROADCODE || "RoadCode";
+export const HEADER_STATUS = config.HEADER_STATUS || "Status";
+export const HEADER_CHAINAGE = config.HEADER_CHAINAGE || "Chainage";
+export const HEADER_INCIDENT_STARTED = config.HEADER_INCIDENT_STARTED || "Incident Started";
+export const HEADER_INCIDENT_DISTRICT = config.HEADER_INCIDENT_DISTRICT || "District";
+export const HEADER_INCIDENT_PLACE = config.HEADER_INCIDENT_PLACE || "Place";
+export const HEADER_INCIDENT_COORDINATE = config.HEADER_INCIDENT_COORDINATE || "Coordinate";
+export const HEADER_ESTIMATED_RESTORATION = config.HEADER_ESTIMATED_RESTORATION || "Estimated Restoration";
+export const HEADER_RESTORATION_EFFORTS = config.HEADER_RESTORATION_EFFORTS || "Restoration Efforts";
+export const HEADER_DATA_PULLED_DATE = config.HEADER_DATA_PULLED_DATE || "Data Pulled Date";
+export const HEADER_REMARKS = config.HEADER_REMARKS || "Remarks";
+
+// -----------------------------
+// Status Values
+// -----------------------------
+export const STATUS_BLOCKED = config.STATUS_BLOCKED || "Blocked";
+export const STATUS_ONE_LANE = config.STATUS_ONE_LANE || "One Lane";
+export const STATUS_RESUMED = config.STATUS_RESUMED || "Resumed";
+
+// -----------------------------
+// Tab Mappings
+// -----------------------------
+export const TAB_TOLL = config.TAB_TOLL || "Toll";
+
+// -----------------------------
+// Cloudflare
+// -----------------------------
+export const CLOUDFLARE_URL = config.CLOUDFLARE_URL || "";
+
+// -----------------------------
+// Waze
+// -----------------------------
+export const WAZE_JSON = config.WAZE_JSON || "";
+export const WAZE_XML = config.WAZE_XML || "";
+
+// -----------------------------
 // Data file paths
 // -----------------------------
 export const BASE_DATA = config.BASE_DATA || "data/highways_base.geojson";
@@ -239,6 +305,7 @@ export const FIREBASE_STORAGE_BUCKET = config.FIREBASE_STORAGE_BUCKET || "";
 export const FIREBASE_MESSAGING_SENDER_ID = config.FIREBASE_MESSAGING_SENDER_ID || "";
 export const FIREBASE_APP_ID = config.FIREBASE_APP_ID || "";
 export const FIREBASE_MEASUREMENT_ID = config.FIREBASE_MEASUREMENT_ID || "";
+export const FIREBASE_SERVICE_ACCOUNT = config.FIREBASE_SERVICE_ACCOUNT || "";
 export const FIREBASE_BACKEND = config.FIREBASE_BACKEND || "";
 
 // -----------------------------
