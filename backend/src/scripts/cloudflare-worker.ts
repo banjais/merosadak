@@ -1,49 +1,50 @@
 /**
- * Cloudflare Worker - API Proxy
- * Proxies requests from merosadak.banjays.workers.dev to Render backend
+ * Cloudflare Worker - API Proxy + Static fallback
  */
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     
-    // CORS headers
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     };
 
-    // Handle preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Proxy to Render backend
-    const renderBackend = "https://merosadak.onrender.com";
-    const targetUrl = `${renderBackend}${url.pathname}${url.search}`;
-    
+    // Try Render backend first
     try {
-      const response = await fetch(targetUrl, {
+      const renderUrl = `https://merosadak.onrender.com${url.pathname}${url.search}`;
+      const response = await fetch(renderUrl, {
         method: request.method,
-        headers: {
-          ...Object.fromEntries(request.headers.entries()),
-          "Host": "merosadak.onrender.com",
-        },
-        body: request.body,
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(8000),
       });
-
-      return new Response(response.body, {
+      const body = await response.text();
+      return new Response(body, {
         status: response.status,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": response.headers.get("Content-Type") || "application/json",
-        },
-      });
-    } catch (err) {
-      return new Response(JSON.stringify({ error: "Backend unavailable", message: String(err) }), {
-        status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    } catch (err) {
+      // Render not available - return offline message with sample data
+      if (url.pathname === "/api/highways") {
+        return new Response(JSON.stringify({
+          success: true,
+          message: "Backend offline - showing cached demo data",
+          count: 2,
+          data: [
+            { code: "NH01", name: "Mahendra Highway", route: "Kakarbhitta - Mahendranagar" },
+            { code: "NH02", name: "Pushpalal Highway", route: "East-West corridor" }
+          ]
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ 
+        error: "Backend offline", 
+        message: "Render server not responding. Please try again later."
+      }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
   },
 };
