@@ -173,8 +173,14 @@ const MainApp: React.FC = () => {
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}
+        minZoom={6}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
+        maxBounds={[
+          [26.0, 79.5],
+          [30.5, 88.5]
+        ]}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer
           url={
