@@ -1,6 +1,6 @@
 // backend/src/routes/cacheRouter.ts
 import { Router } from "express";
-import { listCache, handleClearCache } from "../controllers/cacheController.js";
+import { listCache, handleClearCache, handleRefreshCache } from "../controllers/cacheController.js";
 
 const router = Router();
 
@@ -9,6 +9,12 @@ const router = Router();
  * List all cache keys and stats
  */
 router.get("/", listCache);
+
+/**
+ * POST /api/cache/refresh
+ * Refresh specific cache (e.g., roads, weather, traffic)
+ */
+router.post("/refresh", handleRefreshCache);
 
 /**
  * DELETE /api/cache/:key?

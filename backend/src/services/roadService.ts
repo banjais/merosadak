@@ -63,11 +63,15 @@ async function fetchSheetIncidents(): Promise<any[]> {
       const roadCodeKeys = Object.keys(row).filter(k => k.toLowerCase().includes("road") && k.toLowerCase().includes("ref"));
       const roadCode = roadCodeKeys.length > 0 ? row[roadCodeKeys[0]] || "" : "";
 
+      // Try multiple district key variations
+      const districtKeys = Object.keys(row).filter(k => k.toLowerCase().includes("district") || k.toLowerCase() === "dist_name");
+      const incidentDistrict = districtKeys.length > 0 ? row[districtKeys[0]] || "" : "";
+
       return {
         road_refno: roadCode,
         road_name: row.road_name || "",
-        incidentDistrict: row[SHEET_HEADERS.DISTRICT] || "",
-        incidentPlace: row[SHEET_HEADERS.PLACE] || "",
+        incidentDistrict: incidentDistrict,
+        incidentPlace: row.incidentplace || "",
         status: status,
         chainage: row[SHEET_HEADERS.CHAINAGE] || "",
         incidentCoordinate: row[SHEET_HEADERS.COORDINATES] || "",
@@ -110,11 +114,23 @@ export async function getCachedRoads(): Promise<{
       const incidents = await fetchSheetIncidents();
       logInfo(`[RoadService] Fetched ${incidents.length} incidents from Google Sheets`);
 
-      // Build a map: road_refno -> status (only for non-Resumed)
+      // Build maps: road_refno -> status, and road_refno + district -> status
       const roadStatusMap = new Map<string, string>();
+      const roadDistrictStatusMap = new Map<string, string>();
+      
       for (const inc of incidents) {
-        if (inc.status && inc.status !== "Resumed" && inc.road_refno) {
-          roadStatusMap.set(inc.road_refno.toUpperCase(), inc.status);
+        if (inc.status && inc.incidentDistrict) {
+          const roadCode = inc.road_refno?.toUpperCase() || "";
+          const district = inc.incidentDistrict.toUpperCase();
+          
+          // Map: road_refno + district -> status
+          if (roadCode && district) {
+            roadDistrictStatusMap.set(`${roadCode}|${district}`, inc.status);
+          }
+          // Map: road_refno -> status (fallback)
+          if (roadCode && inc.status !== "Resumed") {
+            roadStatusMap.set(roadCode, inc.status);
+          }
         }
       }
 
@@ -123,9 +139,19 @@ export async function getCachedRoads(): Promise<{
           const highwayData = await getHighwayByCode(highway.code);
           if (highwayData && highwayData.features) {
             const segments = highwayData.features.map((f: any) => {
-              // Check if this highway has an incident from sheet
               const highwayCodeUpper = highway.code.toUpperCase();
-              const incidentStatus = roadStatusMap.get(highwayCodeUpper);
+              const segmentDistrict = f.properties?.dist_name?.toUpperCase() || "";
+              
+              // First try: exact match (road + district)
+              let incidentStatus = segmentDistrict 
+                ? roadDistrictStatusMap.get(`${highwayCodeUpper}|${segmentDistrict}`) 
+                : null;
+              
+              // Fallback: road_refno only
+              if (!incidentStatus) {
+                incidentStatus = roadStatusMap.get(highwayCodeUpper);
+              }
+              
               const segmentStatus = incidentStatus || (f.properties?.status as RoadSegment["status"]) || "Resumed";
 
               return {
