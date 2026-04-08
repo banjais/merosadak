@@ -2,6 +2,7 @@ services:
   - type: web
     name: merosadak-backend
     env: node
+    nodeVersion: "20"
     buildCommand: npm run build
     startCommand: npm run start
     envVars:
