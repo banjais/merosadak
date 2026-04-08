@@ -93,6 +93,51 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
   const districtArray = Array.from(districts).sort();
   const provinceArray = getProvincesByDistricts(districtArray);
   
+  // Get incidents and find local levels (GaPa/Nagarpalika) from incidents
+  const roadData = await getCachedRoads();
+  const incidents = roadData.merged.filter((r: any) => 
+    r.properties?.road_refno === code || r.source === "sheet"
+  );
+  
+  // Extract unique local levels from incidents
+  const localLevels = new Set<string>();
+  const incidentDetails: any[] = [];
+  
+  for (const inc of incidents) {
+    if (inc.status && inc.status !== "Resumed") {
+      // Check multiple possible place field names
+      const place = inc.properties?.incidentPlace || 
+                    inc.properties?.place || 
+                    inc.properties?.incident_place ||
+                    inc.properties?.PLACE || "";
+      const district = inc.properties?.incidentDistrict || 
+                       inc.properties?.district || 
+                       inc.properties?.DISTRICT || "";
+      if (place) localLevels.add(place);
+      incidentDetails.push({
+        district,
+        place,
+        status: inc.status,
+        roadRefno: inc.properties?.road_refno,
+        roadName: inc.properties?.road_name,
+        chainage: inc.properties?.chainage,
+        coordinates: inc.geometry?.coordinates,
+      });
+    }
+  }
+  
+  // Group incidents by district
+  const incidentsByDistrict: Record<string, any> = {};
+  for (const inc of incidentDetails) {
+    const d = inc.district || "Unknown";
+    if (!incidentsByDistrict[d]) {
+      incidentsByDistrict[d] = { blocked: 0, oneLane: 0, locations: [] };
+    }
+    if (inc.status === "Blocked") incidentsByDistrict[d].blocked++;
+    else if (inc.status === "One-Lane") incidentsByDistrict[d].oneLane++;
+    if (inc.place) incidentsByDistrict[d].locations.push(inc.place);
+  }
+  
   return {
     highway: { code, name: geojson.features[0]?.properties?.road_name || code },
     route: {
@@ -105,6 +150,11 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
       totalLengthKm: Math.round(segmentLengths.reduce((a,b) => a+b, 0) * 10) / 10,
       avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null,
       pavementTypes: Array.from(paveTypes).sort(),
+    },
+    incidents: {
+      totalActive: incidentDetails.length,
+      byDistrict: incidentsByDistrict,
+      activeLocations: Array.from(localLevels).sort(),
     },
     linkedSources: {
       districts: "/api/boundaries/districts",
