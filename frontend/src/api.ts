@@ -7,8 +7,8 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
   // Remove leading /v1 or /api from endpoint to avoid duplication
   const normalizedEndpoint = cleanEndpoint.replace(/^\/api/, '').replace(/^\/v1/, '');
   
-  // Build URL: /api/v1/...
-  const url = `${API_BASE}/v1${normalizedEndpoint}`;
+  // Build URL: /api/...
+  const url = `${API_BASE}${normalizedEndpoint}`;
 
   const res = await fetch(url, {
     ...options,
