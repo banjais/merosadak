@@ -100,23 +100,43 @@ export async function getCachedRoads(): Promise<{
       const highways = await getHighwayList();
       logInfo(`[RoadService] Loading ${highways.length} highways...`);
 
+      // First, fetch incidents from sheet to get status mappings
+      const incidents = await fetchSheetIncidents();
+      logInfo(`[RoadService] Fetched ${incidents.length} incidents from Google Sheets`);
+
+      // Build a map: road_refno -> status (only for non-Resumed)
+      const roadStatusMap = new Map<string, string>();
+      for (const inc of incidents) {
+        if (inc.status && inc.status !== "Resumed" && inc.road_refno) {
+          roadStatusMap.set(inc.road_refno.toUpperCase(), inc.status);
+        }
+      }
+
       for (const highway of highways) {
         try {
           const highwayData = await getHighwayByCode(highway.code);
           if (highwayData && highwayData.features) {
-            const segments = highwayData.features.map((f: any) => ({
-              id: f.properties?.id ?? `${highway.code}-${Math.random().toString(36).substr(2, 9)}`,
-              name: f.properties?.name ?? highway.name ?? highway.code,
-              geometry: f.geometry,
-              status: (f.properties?.status as RoadSegment["status"]) ?? "Resumed",
-              source: "highway",
-              properties: {
-                ...f.properties,
-                highway_code: highway.code,
-                road_refno: highway.code,
-                road_name: f.properties?.name ?? highway.name,
-              },
-            }));
+            const segments = highwayData.features.map((f: any) => {
+              // Check if this highway has an incident from sheet
+              const highwayCodeUpper = highway.code.toUpperCase();
+              const incidentStatus = roadStatusMap.get(highwayCodeUpper);
+              const segmentStatus = incidentStatus || (f.properties?.status as RoadSegment["status"]) || "Resumed";
+
+              return {
+                id: f.properties?.id ?? `${highway.code}-${Math.random().toString(36).substr(2, 9)}`,
+                name: f.properties?.name ?? highway.name ?? highway.code,
+                geometry: f.geometry,
+                status: segmentStatus,
+                source: "highway",
+                properties: {
+                  ...f.properties,
+                  highway_code: highway.code,
+                  road_refno: highway.code,
+                  road_name: f.properties?.name ?? highway.name,
+                  incident_status: incidentStatus || null,
+                },
+              };
+            });
             merged.push(...segments);
           }
         } catch (err: any) {

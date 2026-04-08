@@ -4,6 +4,7 @@ import path from "path";
 import axios from "axios";
 import paths from "../config/paths.js";
 import { ROAD_STATUS } from "../constants/sheets.js";
+import { getCachedRoads } from "../services/roadService.js";
 import {
   config, isProd, GAS_URL, SHEET_TAB, UPSTASH,
   OPENWEATHERMAP_API_KEY, OPENWEATHERMAP_API_URL,
@@ -80,23 +81,16 @@ async function runDiagnostics() {
 
     console.log(`  🛣️  Highways  →  ${highwayCount} highways indexed`);
 
-    // Count total segments and status breakdown
-    for (const h of highways.slice(0, 5)) { // Check first 5 highways
-      try {
-        const hPath = path.join(highwayDir, h.file);
-        const hContent = await fs.readFile(hPath, "utf-8");
-        const hData = JSON.parse(hContent);
-        if (hData.features) {
-          highwaySegments += hData.features.length;
-          hData.features.forEach((f: any) => {
-            const status = f.properties?.status || "Resumed";
-            if (status === "Blocked") statusCount.Blocked++;
-            else if (status === "One-Lane" || status === "One Lane") statusCount["One-Lane"]++;
-            else statusCount.Resumed++;
-          });
-        }
-      } catch { /* skip individual highway errors */ }
-    }
+    // Get status from cached roads (which includes sheet incidents)
+    try {
+      const { merged } = await getCachedRoads();
+      highwaySegments = merged.length;
+      for (const road of merged) {
+        if (road.status === "Blocked") statusCount.Blocked++;
+        else if (road.status === "One-Lane" || road.status === "One Lane") statusCount["One-Lane"]++;
+        else statusCount.Resumed++;
+      }
+    } catch { /* fallback to file check */ }
 
     if (highwayCount > 5) {
       console.log(`     (checking first 5 of ${highwayCount} highways...)`);
