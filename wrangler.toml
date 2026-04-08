@@ -2,15 +2,11 @@ name = "merosadak"
 main = "backend/src/scripts/cloudflare-worker.ts"
 compatibility_date = "2025-12-29"
 account_id = "052a34d4627b5c02d0bff84ff1c0f906"
-workers_dev = false
-
-routes = [
-  { pattern = "merosadak.banjays.workers.dev", zone_name = "banjays.workers.dev" }
-]
+workers_dev = true
 
 [vars]
 FIREBASE_BACKEND = "https://merosadak.web.app"
 RENDER_BACKEND = "https://merosadak.web.app"
 
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/2 * * * *"]
