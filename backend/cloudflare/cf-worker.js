@@ -21,16 +21,14 @@ export default {
       return new Response(null, { headers: CORS_HEADERS });
     }
 
-    // ==================== API Proxy (v1 routes) ====================
-    if (path.startsWith("/api") || path.startsWith("/v1") || path.startsWith("/health")) {
+    // ==================== API Proxy ====================
+    if (path.startsWith("/api") || path.startsWith("/health")) {
       const isGet = request.method === "GET";
 
-      // Normalize path: /api/v1/boundary -> /v1/boundary
+      // Normalize path: /api/boundary -> /boundary
       let normalizedPath = path;
-      if (path.startsWith("/api/v1")) {
-        normalizedPath = "/v1" + path.slice(8);
-      } else if (path.startsWith("/api/")) {
-        normalizedPath = "/v1" + path.slice(5);
+      if (path.startsWith("/api/")) {
+        normalizedPath = path.slice(4); // remove /api
       }
 
       console.log(`[Worker] Proxying ${request.method} ${path} -> ${normalizedPath}`);
