@@ -27,11 +27,25 @@ window.addEventListener('unhandledrejection', (event) => {
   event.preventDefault();
 });
 
-// Register service worker for PWA + offline support
+// Service Worker Management - Production Only
+// Check if we should enable service worker
+const ENABLE_SW = import.meta.env.PROD && import.meta.env.VITE_ENABLE_SW !== 'false';
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(reg => console.log('[SW] Registered:', reg.scope))
-      .catch(err => console.warn('[SW] Registration failed:', err));
+    if (ENABLE_SW) {
+      // Register service worker for PWA + offline support (Production only)
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(reg => console.log('[SW] Registered:', reg.scope))
+        .catch(err => console.warn('[SW] Registration failed:', err));
+    } else {
+      // Dev mode: Unregister any existing service workers
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.unregister();
+          console.log('[SW] Unregistered for dev mode');
+        }
+      });
+    }
   });
 }
