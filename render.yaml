@@ -9,6 +9,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
-        value: ms_prod_8f3a9c2e5d7b1f4a6c8e2d9b7a3f5e8c1d4b7a9f2c5e8a1d4b7f9c2e5a8d1
+        # ⚠️ SET THIS IN RENDER DASHBOARD - never commit secrets to git
+        # Generate with: openssl rand -hex 64
+        sync: false
       - key: RATE_LIMIT_MAX
         value: "100"

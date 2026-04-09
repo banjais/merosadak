@@ -39,7 +39,7 @@ export class GeminiService {
         };
       }
 
-      const response = await axios.post(url, requestBody);
+      const response = await axios.post(url, requestBody, { timeout: 30000 }); // 30s timeout
 
       // Safely pick text
       const result = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;

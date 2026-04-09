@@ -37,7 +37,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-white shadow-2xl border border-white/20 min-w-[280px] max-w-sm animate-in slide-in-from-right-8 fade-in duration-300"
+            className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-white shadow-2xl border border-white/20 min-w-[200px] max-w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-right-8 fade-in duration-300"
           >
             <div className={`p-1.5 rounded-full ${colorMap[toast.type]} text-white shrink-0`}>
               <Icon size={14} />

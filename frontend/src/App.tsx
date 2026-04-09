@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useNepalData } from "./hooks/useNepalData";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { TravelIncident, ChatMessage } from "./types";
 import { apiFetch } from "./api";
 import { useTranslation } from "./i18n";
@@ -19,6 +20,8 @@ import { ReportIncidentOverlay } from "./components/ReportIncidentOverlay";
 import { SOSOverlay } from "./components/SOSOverlay";
 import { HighwayBrowser } from "./components/HighwayBrowser";
 import { ToastContainer } from "./components/Toast";
+import { OfflineBanner } from "./components/OfflineBanner";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { Toast } from "./components/Toast";
 
 const MapEventHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
@@ -34,6 +37,7 @@ const MainApp: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { incidents, isLoading, refresh } = useNepalData();
+  const { isOffline } = useNetworkStatus();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -94,6 +98,17 @@ const MainApp: React.FC = () => {
   const handleTogglePilot = useCallback(() => {
     setPilotMode(prev => !prev);
   }, []);
+
+  const handleDownloadOfflineMap = useCallback(() => {
+    // Trigger PouchDB tile caching for the current map view
+    // This downloads map tiles for offline use
+    if ((window as any).triggerOfflineMapDownload) {
+      (window as any).triggerOfflineMapDownload();
+    } else {
+      // Fallback: show toast
+      addToast('info', 'Offline maps: Navigate to an area to cache tiles');
+    }
+  }, [addToast]);
 
   const handleSelectIncident = useCallback((incident: TravelIncident) => {
     setSelectedItem(incident);
@@ -201,7 +216,7 @@ const MainApp: React.FC = () => {
         onTogglePilot={handleTogglePilot}
         onToggleMenu={toggleSidebar}
         onToggleSystemMenu={toggleSystemMenu}
-        onOpenNotifications={() => {}}
+        onOpenNotifications={() => { }}
         noticeCount={incidents.filter(i => i.severity === 'high').length}
       />
 
@@ -256,6 +271,7 @@ const MainApp: React.FC = () => {
         setVerbosity={setVerbosity}
         moodEQ={moodEQ}
         setMoodEQ={setMoodEQ}
+        onDownloadOfflineMap={handleDownloadOfflineMap}
       />
 
       <BottomInfoArea
@@ -305,15 +321,20 @@ const MainApp: React.FC = () => {
           <span className="text-xl">🛣️</span>
         </button>
       </div>
+
+      {/* Offline Banner */}
+      {isOffline && <OfflineBanner />}
     </div>
   );
 };
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

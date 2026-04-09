@@ -33,10 +33,10 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
 
   return (
     <header className="h-16 sm:h-20 bg-indigo-600 relative flex items-center justify-between px-4 sm:px-6 shadow-2xl z-[1001] border-b border-indigo-500/30">
-      
+
       {/* Left: Branding & Menu */}
       <div className="flex items-center gap-3">
-        <button 
+        <button
           onClick={onToggleMenu}
           className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white"
         >
@@ -55,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80 hidden xs:block">Travel Safety Engine</span>
+            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80 hidden sm:block">Travel Safety Engine</span>
             <span className="text-[10px] font-bold text-white/80 flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full">
               {LANGUAGES.find(l => l.code === language)?.flag} {LANGUAGES.find(l => l.code === language)?.native}
             </span>
@@ -65,11 +65,11 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
 
       {/* Center: The "Notch" Pilot */}
       <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 sm:h-10 w-32 sm:w-44 bg-slate-950 rounded-b-[20px] sm:rounded-b-[24px] flex items-center justify-center border-x border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-all hover:h-12 group cursor-pointer z-10"
-           onClick={onTogglePilot}>
+        onClick={onTogglePilot}>
         <div className="flex items-center gap-1 sm:gap-2">
-            <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500 animate-pulse" />
-            <span className="text-[7px] sm:text-[9px] font-black text-white uppercase tracking-[0.1em] sm:tracking-[0.2em] group-hover:text-indigo-400">Pilot</span>
-            <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-indigo-500" />
+          <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500 animate-pulse" />
+          <span className="text-[7px] sm:text-[9px] font-black text-white uppercase tracking-[0.1em] sm:tracking-[0.2em] group-hover:text-indigo-400">Pilot</span>
+          <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-indigo-500" />
         </div>
       </div>
 
@@ -77,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Language Selector Dropdown */}
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowLangMenu(!showLangMenu)}
             className="flex items-center gap-1 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
           >
@@ -86,16 +86,15 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
               {LANGUAGES.find(l => l.code === language)?.native || 'EN'}
             </span>
           </button>
-          
+
           {showLangMenu && (
             <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 min-w-[180px] z-[1100]">
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => { setLanguage(lang.code as any); setShowLangMenu(false); }}
-                  className={`w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 transition-colors flex items-center gap-2 ${
-                    language === lang.code ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
-                  }`}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 transition-colors flex items-center gap-2 ${language === lang.code ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
+                    }`}
                 >
                   <span className="text-lg">{lang.flag}</span>
                   <span className="font-medium">{lang.native}</span>
@@ -116,8 +115,8 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
             </span>
           )}
         </div>
-        
-        <button 
+
+        <button
           onClick={onToggleSystemMenu}
           className="p-2 sm:p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
         >

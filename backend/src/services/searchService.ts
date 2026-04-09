@@ -139,8 +139,8 @@ async function searchHighways(query: string): Promise<SearchResult[]> {
       if (!highwayMap.has(key)) {
         const geomCoords = f.geometry?.type === "LineString" ? f.geometry.coordinates[0]
           : f.geometry?.type === "MultiLineString" ? f.geometry.coordinates[0]?.[0]
-          : f.geometry?.type === "Point" ? f.geometry.coordinates
-          : null;
+            : f.geometry?.type === "Point" ? f.geometry.coordinates
+              : null;
 
         if (!geomCoords || geomCoords.length < 2) return;
 
@@ -236,7 +236,13 @@ export async function searchLocation(query: string) {
   try {
     if (!query) return [];
     const url = `${NOMINATIM_API_URL}/search?format=json&q=${encodeURIComponent(query)}&viewbox=80,26,89,31&bounded=1&limit=5`;
-    const response = await fetch(url, { headers: { "User-Agent": "MeroSadak-App/1.1.0", "Accept-Language": "en" } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const response = await fetch(url, {
+      headers: { "User-Agent": "MeroSadak-App/1.1.0", "Accept-Language": "en" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     if (!response.ok) throw new Error(`Geocoding error: ${response.status} ${response.statusText}`);
     const data = await response.json();
     return data.map((item: any) => {
