@@ -34,7 +34,7 @@ const DISTRICT_TO_PROVINCE: Record<string, string> = {
   "Rupandehi": "Province 5", "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5",
   // Province 6 (Karnali)
   "Dolpa": "Province 6", "Mugu": "Province 6", "Jumla": "Province 6", "Kalikot": "Province 6",
-  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6", "Sindhuli": "Province 6",
+  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6",
   // Province 7 (Sudurpashchim)
   "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Kanchanpur": "Province 7",
   "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7", "Dadeldhura": "Province 7",
@@ -68,14 +68,14 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
   try {
     const geojson = await getHighwayByCode(code);
     if (!geojson || !geojson.features) return null;
-    
+
     // Collect unique districts and divisions from highway segments
     const districts = new Set<string>();
     const divisions = new Set<string>();
     const paveTypes = new Set<string>();
     const years: number[] = [];
     const segmentLengths: number[] = [];
-    
+
     for (const f of geojson.features) {
       const props = f.properties || {};
       if (props.dist_name) districts.add(props.dist_name);
@@ -90,10 +90,10 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
         if (!isNaN(len)) segmentLengths.push(len);
       }
     }
-    
+
     const districtArray = Array.from(districts).sort();
     const provinceArray = getProvincesByDistricts(districtArray);
-    
+
     return {
       highway: { code, name: geojson.features[0]?.properties?.road_name || code },
       route: {
@@ -103,13 +103,13 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
       },
       segments: {
         total: geojson.features.length,
-        totalLengthKm: Math.round(segmentLengths.reduce((a,b) => a+b, 0) * 10) / 10,
-        avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null,
+        totalLengthKm: Math.round(segmentLengths.reduce((a, b) => a + b, 0) * 10) / 10,
+        avgConstructionYear: years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : null,
         pavementTypes: Array.from(paveTypes).sort(),
       },
       linkedSources: {
         districts: "/api/boundaries/districts",
-        provinces: "/api/boundaries/provinces", 
+        provinces: "/api/boundaries/provinces",
         local: "/api/boundaries/local",
         incidents: `/api/highways/${code}/incidents`,
       }
@@ -129,16 +129,16 @@ export async function getHighwayIncidents(code: string): Promise<any> {
     const indexData = await getHighwayList();
     const metadata = indexData.find(h => h.code === code.toUpperCase());
     if (!metadata) return null;
-    
+
     const highwayFile = path.join(HIGHWAY_DIR, metadata.file);
     const geojson: FeatureCollection = JSON.parse(await fs.readFile(highwayFile, "utf-8"));
-    
+
     // Get road data - only filter by this highway
     const roadData = await getCachedRoads();
-    const highwayRoads = roadData.merged.filter((r: any) => 
+    const highwayRoads = roadData.merged.filter((r: any) =>
       r.properties?.road_refno === code.toUpperCase()
     );
-    
+
     // Count by district (from highway segment dist_name)
     const byDistrict: Record<string, any> = {};
     for (const road of highwayRoads) {
@@ -149,7 +149,7 @@ export async function getHighwayIncidents(code: string): Promise<any> {
         else if (road.status === "One-Lane") byDistrict[dist].oneLane++;
       }
     }
-    
+
     // Get sheet incidents (any sheet incident for this highway)
     const sheetIncidents = highwayRoads.filter((r: any) => r.source === "sheet" && r.status !== "Resumed");
     const byDistrictFromSheet: Record<string, any> = {};
@@ -161,10 +161,10 @@ export async function getHighwayIncidents(code: string): Promise<any> {
       const place = inc.properties?.incidentPlace || inc.properties?.place || "";
       if (place) byDistrictFromSheet[dist].places.push(place);
     }
-    
+
     const totalBlocked = Object.values(byDistrict).reduce((s: number, d: any) => s + d.blocked, 0);
     const totalOneLane = Object.values(byDistrict).reduce((s: number, d: any) => s + d.oneLane, 0);
-    
+
     return {
       code,
       totalActive: totalBlocked + totalOneLane,
@@ -183,7 +183,7 @@ export async function getHighwayIncidents(code: string): Promise<any> {
 /**
  * Get list of available highways with metadata
  */
-export async function getHighwayList(): Promise<Array<{code: string, file: string, name?: string}>> {
+export async function getHighwayList(): Promise<Array<{ code: string, file: string, name?: string }>> {
   try {
     const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
     return indexData;
@@ -236,7 +236,7 @@ export async function getHighwayByCode(code: string): Promise<FeatureCollection 
 /**
  * Get highway metadata for a given code
  */
-export async function getHighwayMetadata(code: string): Promise<{code: string, file: string, name?: string} | null> {
+export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string } | null> {
   const highways = await getHighwayList();
   return highways.find(h => h.code === code) || null;
 }
@@ -246,11 +246,11 @@ export async function getHighwayMetadata(code: string): Promise<{code: string, f
  */
 function calculateHighwayLength(geojson: FeatureCollection): number {
   let totalLength = 0;
-  
+
   for (const feature of geojson.features) {
     const geom = feature.geometry;
     if (!geom) continue;
-    
+
     if (geom.type === 'LineString') {
       totalLength += calculateLineStringLength(geom.coordinates);
     } else if (geom.type === 'MultiLineString') {
@@ -259,7 +259,7 @@ function calculateHighwayLength(geojson: FeatureCollection): number {
       }
     }
   }
-  
+
   return Math.round(totalLength * 100) / 100; // Round to 2 decimal places
 }
 
@@ -268,13 +268,13 @@ function calculateHighwayLength(geojson: FeatureCollection): number {
  */
 function calculateLineStringLength(coordinates: number[][]): number {
   let length = 0;
-  
+
   for (let i = 1; i < coordinates.length; i++) {
     const [lng1, lat1] = coordinates[i - 1];
     const [lng2, lat2] = coordinates[i];
     length += haversineDistance(lat1, lng1, lat2, lng2);
   }
-  
+
   return length;
 }
 
@@ -302,36 +302,36 @@ export async function getHighwayReport(code: string): Promise<any> {
     if (!metadata) {
       return { error: 'Highway not found' };
     }
-    
+
     const geojson = await getHighwayByCode(code);
     if (!geojson || !geojson.features) {
       return { error: 'Highway data not available' };
     }
-    
+
     // Calculate length
     const lengthKm = calculateHighwayLength(geojson);
-    
+
     // Count districts
     const districts = metadata.districts || [];
     const districtCount = districts.length;
-    
+
     // Analyze road conditions from features
     let pavementStats = { blacktopped: 0, gravel: 0, earthen: 0, unknown: 0, byType: {} as Record<string, number> };
     let conditionStats = { good: 0, fair: 0, poor: 0, unknown: 0 };
     let widthStats = { single_lane: 0, two_lane: 0, four_lane: 0, unknown: 0 };
     let totalSegments = 0;
-    
+
     // Collect unique values
     const uniqueDivisions = new Set<string>();
     const uniqueDistricts = new Set<string>();
     const paveTypes = new Set<string>();
     const years: number[] = [];
     const segmentLengths: number[] = [];
-    
+
     for (const feature of geojson.features) {
       const props = feature.properties || {};
       totalSegments++;
-      
+
       // Collect unique values
       if (props.div_name) uniqueDivisions.add(props.div_name);
       if (props.dist_name) uniqueDistricts.add(props.dist_name);
@@ -344,11 +344,11 @@ export async function getHighwayReport(code: string): Promise<any> {
         const len = parseFloat(props.link_len);
         if (!isNaN(len)) segmentLengths.push(len);
       }
-      
+
       // Pavement type
       const paveType = props.pave_type || props.surface || props.pavement || 'Unknown';
       pavementStats.byType[paveType] = (pavementStats.byType[paveType] || 0) + 1;
-      
+
       if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
         pavementStats.blacktopped++;
       } else if (paveType.toLowerCase().includes('gravel') || paveType.toLowerCase().includes('wbm')) {
@@ -358,7 +358,7 @@ export async function getHighwayReport(code: string): Promise<any> {
       } else if (paveType !== 'Unknown') {
         pavementStats.unknown++;
       }
-      
+
       // Width/Lanes
       const lanes = props.no_lanes || props.lanes || props.for_width || '';
       if (lanes == 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
@@ -371,37 +371,37 @@ export async function getHighwayReport(code: string): Promise<any> {
         widthStats.unknown++;
       }
     }
-    
-    const avgYear = years.length > 0 ? Math.round(years.reduce((a,b) => a+b, 0) / years.length) : null;
-    const totalSegmentLength = segmentLengths.reduce((a,b) => a+b, 0);
-    
+
+    const avgYear = years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : null;
+    const totalSegmentLength = segmentLengths.reduce((a, b) => a + b, 0);
+
     // Get real-time incidents for this highway
     const roadData = await getCachedRoads();
     const incidents = roadData.merged.filter((f: any) => {
       const props = f.properties || {};
-      return props.road_refno === code || 
-             (props.road_name && props.road_name.toLowerCase().includes(metadata.name?.toLowerCase() || ''));
+      return props.road_refno === code ||
+        (props.road_name && props.road_name.toLowerCase().includes(metadata.name?.toLowerCase() || ''));
     });
-    
+
     const incidentStats = {
       blocked: incidents.filter((f: any) => f.properties?.status === 'Blocked').length,
       one_lane: incidents.filter((f: any) => f.properties?.status === 'One-Lane').length,
       resumed: incidents.filter((f: any) => f.properties?.status === 'Resumed').length,
     };
-    
+
     // Get monsoon risk for this highway
     const monsoonRisks = await getCachedMonsoonRisk();
-    const highwayMonsoonRisks = monsoonRisks.filter((r: any) => 
+    const highwayMonsoonRisks = monsoonRisks.filter((r: any) =>
       r.roadId === code || r.roadName?.toLowerCase().includes(metadata.name?.toLowerCase() || '')
     );
-    
+
     // Calculate quality score (0-100)
     const qualityScore = Math.round(
       (pavementStats.blacktopped / totalSegments) * 40 +
       (conditionStats.good / totalSegments) * 40 +
       (widthStats.two_lane / totalSegments) * 20
     );
-    
+
     return {
       code: metadata.code,
       name: metadata.name,
@@ -427,7 +427,7 @@ export async function getHighwayReport(code: string): Promise<any> {
       qualityGrade: qualityScore >= 80 ? 'A' : qualityScore >= 60 ? 'B' : qualityScore >= 40 ? 'C' : qualityScore >= 20 ? 'D' : 'F',
       lastUpdated: new Date().toISOString()
     };
-    
+
   } catch (err: any) {
     logError("[HighwayService] Failed to generate highway report", err.message);
     return { error: 'Failed to generate report' };
@@ -441,7 +441,7 @@ export async function getAllHighwaysSummary(): Promise<any[]> {
   try {
     const highways = await getHighwayList();
     const summaries = [];
-    
+
     for (const highway of highways.slice(0, 20)) { // Limit to first 20 for performance
       try {
         const report = await getHighwayReport(highway.code);
@@ -452,9 +452,9 @@ export async function getAllHighwaysSummary(): Promise<any[]> {
         // Skip if individual highway fails
       }
     }
-    
+
     return summaries.sort((a, b) => b.qualityScore - a.qualityScore);
-    
+
   } catch (err: any) {
     logError("[HighwayService] Failed to get highways summary", err.message);
     return [];
@@ -468,7 +468,7 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
   try {
     const highways = await getHighwayList();
     const alternatives = [];
-    
+
     // Find highways that pass through both districts
     for (const highway of highways) {
       const districts = highway.districts || [];
@@ -492,10 +492,10 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
         }
       }
     }
-    
+
     // Sort by quality score (best first)
     return alternatives.sort((a, b) => b.qualityScore - a.qualityScore).slice(0, 3);
-    
+
   } catch (err: any) {
     logError("[HighwayService] Failed to suggest alternatives", err.message);
     return [];
