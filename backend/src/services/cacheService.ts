@@ -25,9 +25,16 @@ const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ────────────────────────────────
 // Size limit for Redis (Upstash free tier: 10MB max per key)
-// Keep at 5MB to stay safe - large data uses L1 + L3 cache only
+// Increased to 25MB to accommodate large road:merged cache (25.59MB)
+// Consider compression or splitting data if it grows beyond 30MB
 // ────────────────────────────────
-const REDIS_MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const REDIS_MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
+
+// ────────────────────────────────
+// Max age cap for disk cache (prevent stale data)
+// Even if TTL says 1h, disk cache won't serve data older than this
+// ────────────────────────────────
+const DISK_CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // ────────────────────────────────
 // LEVEL 2: Upstash Redis
@@ -74,15 +81,29 @@ export const redisClient = new Proxy({} as Redis, {
 async function readDiskCache<T>(filePath: string, now: number): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, "utf-8");
-    const entry = JSON.parse(raw) as { value: T; expireAt: number };
-    if (entry.expireAt > now) return entry.value;
+    const entry = JSON.parse(raw) as { value: T; expireAt: number; createdAt?: number };
+
+    // Check if expired by original TTL
+    if (entry.expireAt <= now) return null;
+
+    // Check max-age cap (prevent stale data from lingering on disk)
+    if (entry.createdAt && (now - entry.createdAt > DISK_CACHE_MAX_AGE_MS)) {
+      logInfo(`[Cache] Disk cache exceeded max-age cap, treating as expired: ${path.basename(filePath)}`);
+      return null;
+    }
+
+    return entry.value;
   } catch { }
   return null;
 }
 
 async function writeDiskCache<T>(filePath: string, value: T, ttlSeconds: number): Promise<void> {
   try {
-    const entry = { value, expireAt: Date.now() + ttlSeconds * 1000 };
+    const entry = {
+      value,
+      expireAt: Date.now() + ttlSeconds * 1000,
+      createdAt: Date.now()
+    };
     await fs.writeFile(filePath, JSON.stringify(entry, null, 2), "utf-8");
     logInfo(`[Cache] Disk saved: ${path.basename(filePath)}`);
   } catch (err: any) {
