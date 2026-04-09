@@ -33,6 +33,16 @@ import superadminRouter from "./superadminRouter.js";
 import incidentRouter from "./incidentRouter.js";
 
 // ----------------------
+// NEW FEATURES (Tier 2 & 3)
+// ----------------------
+import analyticsRouter from "./analyticsRouter.js";
+import etaRouter from "./etaRouter.js";
+import routePlanningRouter from "./routePlanningRouter.js";
+import userRouter from "./userRouter.js";
+import webPushRouter from "./webPushRouter.js";
+import cacheRouter from "./cacheRouter.js";
+
+// ----------------------
 // MAIN API ROUTER
 // ----------------------
 const apiRouter = Router();
@@ -67,6 +77,16 @@ apiRouter.use("/superadmin", superadminRouter);
 // USER REPORTING
 // ----------------------
 apiRouter.use("/incidents", incidentRouter);
+
+// ----------------------
+// NEW FEATURES
+// ----------------------
+apiRouter.use("/analytics", analyticsRouter);
+apiRouter.use("/eta", etaRouter);
+apiRouter.use("/routes", routePlanningRouter);
+apiRouter.use("/users", userRouter);
+apiRouter.use("/push", webPushRouter);
+apiRouter.use("/cache", cacheRouter);
 
 // ----------------------
 // Helper: Extract routes recursively

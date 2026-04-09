@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: merosadak-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+      - "${WS_PORT:-8080}:8080"
+    env_file:
+      - ./backend/.env.${NODE_ENV:-development}
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=4000
+    volumes:
+      - ./backend/data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - merosadak-network
+    depends_on:
+      - redis
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: merosadak-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://backend:4000
+      - VITE_WS_URL=ws://backend:8080
+    networks:
+      - merosadak-network
+    depends_on:
+      - backend
+
+  # Redis (for caching)
+  redis:
+    image: redis:7-alpine
+    container_name: merosadak-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - merosadak-network
+
+  # PostgreSQL (for future use - user data, analytics, etc.)
+  postgres:
+    image: postgres:15-alpine
+    container_name: merosadak-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: merosadak
+      POSTGRES_USER: merosadak_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-merosadak_secret}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U merosadak_user -d merosadak"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - merosadak-network
+    profiles:
+      - database
+
+networks:
+  merosadak-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:

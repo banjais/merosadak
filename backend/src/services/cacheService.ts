@@ -25,7 +25,7 @@ const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ────────────────────────────────
 // Size limit for Redis (Upstash free tier: 10MB max per key)
-// We use 5MB as a safe limit to avoid "max request size exceeded" errors
+// Keep at 5MB to stay safe - large data uses L1 + L3 cache only
 // ────────────────────────────────
 const REDIS_MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 

@@ -14,6 +14,11 @@ import { logInfo, logError } from "./logs/logs.js";
 import apiRouter from "./routes/routerIndex.js";
 import { getCachedRoads } from "./services/roadService.js";
 import { forceRefresh, startAutoRefresh } from "./services/schedulerService.js";
+import { generalLimiter } from "./middleware/rateLimiter.js";
+import { errorHandler, notFoundHandler, initializeGlobalErrorHandlers } from "./middleware/errorHandler.js";
+import { initializeWebPush } from "./services/webPushService.js";
+import { initializeProfiles } from "./services/userProfileService.js";
+import { initializeAnalytics } from "./services/analyticsService.js";
 
 // -----------------------------
 // 1️⃣ Initialize Sentry (Optional)
@@ -31,20 +36,29 @@ if (SENTRY_DSN) {
 // -----------------------------
 const app = express();
 
+// Security headers
 if (isProd) {
   app.use(helmet());
 }
 
+// CORS configuration
 app.use(cors({
   origin: ['https://merosadak.web.app', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }));
 
-app.use(express.json());
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting for all routes
+app.use(generalLimiter);
 
 // -----------------------------
-// 3️⃣ Health Check
+// 3️⃣ Health Checks
 // -----------------------------
+
+// Basic health check (for load balancers)
 app.get("/health", async (_req: Request, res: Response) => {
   try {
     const roads = await getCachedRoads();
@@ -58,6 +72,52 @@ app.get("/health", async (_req: Request, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Liveness probe - is the server alive?
+app.get("/health/live", (_req: Request, res: Response) => {
+  res.json({
+    status: "alive",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+  });
+});
+
+// Readiness probe - is the server ready to serve traffic?
+app.get("/health/ready", async (_req: Request, res: Response) => {
+  try {
+    // Check if critical services are initialized
+    const roads = await getCachedRoads();
+    const isReady = roads.merged.length > 0;
+
+    if (!isReady) {
+      return res.status(503).json({
+        status: "not_ready",
+        message: "Road cache not yet initialized",
+        checks: {
+          roadCache: false,
+        },
+      });
+    }
+
+    res.json({
+      status: "ready",
+      timestamp: new Date().toISOString(),
+      checks: {
+        roadCache: true,
+        totalRoads: roads.merged.length,
+      },
+    });
+  } catch (err: any) {
+    res.status(503).json({
+      status: "not_ready",
+      message: "Health check failed",
+      error: err.message,
+    });
+  }
+});
+
+// Detailed health (existing endpoint moved to /api/v1/health/)
 
 // -----------------------------
 // 4️⃣ Load GeoJSON (Boundary files)
@@ -83,7 +143,17 @@ boundaryFiles.forEach((file) => {
 app.use(`${API_PREFIX}/v1`, apiRouter);
 
 // -----------------------------
-// 6️⃣ HTTP & WebSocket
+// 6️⃣ 404 Handler
+// -----------------------------
+app.use(notFoundHandler);
+
+// -----------------------------
+// 7️⃣ Global Error Handler
+// -----------------------------
+app.use(errorHandler);
+
+// -----------------------------
+// 8️⃣ HTTP & WebSocket
 // -----------------------------
 const server = http.createServer(app);
 
@@ -94,6 +164,9 @@ if (WS_ENABLED) {
 // -----------------------------
 // 7️⃣ Start Server
 // -----------------------------
+// Initialize global error handlers
+initializeGlobalErrorHandlers();
+
 server.listen(PORT, async () => {
   logInfo(`Backend running on port ${PORT}`);
   console.log(`🚀 Backend listening at http://localhost:${PORT}`);
@@ -103,6 +176,28 @@ server.listen(PORT, async () => {
     logInfo("Initial roads cache loaded");
   } catch (err: any) {
     logError("Initial roads load failed", { error: err.message });
+  }
+
+  // Initialize new services
+  try {
+    await initializeWebPush();
+    logInfo("✅ Web Push service initialized");
+  } catch (err: any) {
+    logError("Web Push init failed", { error: err.message });
+  }
+
+  try {
+    await initializeProfiles();
+    logInfo("✅ User Profile service initialized");
+  } catch (err: any) {
+    logError("User Profile init failed", { error: err.message });
+  }
+
+  try {
+    await initializeAnalytics();
+    logInfo("✅ Analytics service initialized");
+  } catch (err: any) {
+    logError("Analytics init failed", { error: err.message });
   }
 
   try {

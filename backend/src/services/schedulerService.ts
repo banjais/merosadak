@@ -17,6 +17,10 @@ import {
 import { getWeather } from "./weatherService.js";
 import { clearCache } from "./cacheService.js";
 import { refreshIndexFromCaches } from "./searchService.js";
+import { captureSnapshot } from "./analyticsService.js";
+import { initializeWebPush } from "./webPushService.js";
+import { initializeProfiles } from "./userProfileService.js";
+import { initializeAnalytics } from "./analyticsService.js";
 import paths, {
   CACHE_POI,
   CACHE_WEATHER,
@@ -125,6 +129,14 @@ export const syncSheetsToGeoJSON = async (): Promise<boolean> => {
   await refreshIndexFromCaches();
 
   (["roads", "traffic", "weather", "pois", "waze"] as const).forEach(type => broadcastMapUpdate(type));
+
+  // Capture analytics snapshot after sync
+  try {
+    broadcastProgress("Capturing analytics snapshot", 98);
+    await captureSnapshot();
+  } catch (err: any) {
+    logError("Analytics snapshot failed", err.message);
+  }
 
   broadcastProgress("Sync complete", 100);
 

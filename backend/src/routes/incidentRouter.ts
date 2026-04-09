@@ -1,6 +1,8 @@
 // backend/src/routes/incidentRouter.ts
 import { Router, Request, Response } from "express";
 import { logInfo, logError } from "../logs/logs.js";
+import { incidentLimiter } from "../middleware/rateLimiter.js";
+import { validate, incidentSchema } from "../middleware/validation.js";
 
 const router = Router();
 
@@ -16,54 +18,90 @@ interface IncidentReport {
  * POST /incidents
  * Submit a new incident report from users
  */
-router.post("/", async (req: Request, res: Response) => {
+router.post(
+  "/",
+  incidentLimiter,
+  validate(incidentSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { type, description, lat, lng, timestamp, severity, images }: IncidentReport & { severity?: string; images?: string[] } = req.body;
+
+      const incident = {
+        id: `incident_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        description,
+        lat,
+        lng,
+        timestamp: timestamp || new Date().toISOString(),
+        severity: severity || "medium",
+        status: "pending",
+        source: "user_report",
+        images: images || [],
+        votes: {
+          up: 0,
+          down: 0,
+          verified: false,
+        },
+      };
+
+      logInfo("User incident report received", {
+        incidentId: incident.id,
+        type,
+        location: { lat, lng }
+      });
+
+      // Broadcast via WebSocket if available
+      try {
+        const { broadcastMapUpdate } = await import("../services/websocketService.js");
+        broadcastMapUpdate("incidents");
+      } catch {
+        // WebSocket not available
+      }
+
+      res.json({
+        success: true,
+        data: incident,
+        message: "Incident reported successfully. Thank you for helping other travelers!",
+      });
+    } catch (error: any) {
+      logError("Incident report error", { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+);
+
+/**
+ * POST /incidents/:id/vote
+ * Vote on an incident (community verification)
+ */
+router.post("/:id/vote", async (req: Request, res: Response) => {
   try {
-    const { type, description, lat, lng, timestamp }: IncidentReport = req.body;
+    const { id } = req.params;
+    const { vote } = req.body;
 
-    if (!type || !description || !lat || !lng) {
-      res.status(400).json({
+    if (!vote || !["up", "down"].includes(vote)) {
+      return res.status(400).json({
         success: false,
-        error: "Type, description, and location are required",
+        error: "Vote must be 'up' or 'down'",
       });
-      return;
     }
 
-    // Validate lat/lng ranges
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      res.status(400).json({
-        success: false,
-        error: "Invalid coordinates",
-      });
-      return;
-    }
-
-    const incident = {
-      id: `incident_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      description,
-      lat,
-      lng,
-      timestamp: timestamp || new Date().toISOString(),
-      status: "pending",
-      source: "user_report",
-    };
-
-    logInfo("User incident report received", { 
-      incidentId: incident.id, 
-      type, 
-      location: { lat, lng } 
+    logInfo("Incident vote received", {
+      incidentId: id,
+      vote,
     });
 
-    // In production, save to database and/or broadcast via WebSocket
-    // For now, log and return success
-
+    // In production, store vote in database
     res.json({
       success: true,
-      data: incident,
-      message: "Incident reported successfully. Thank you for helping other travelers!",
+      message: "Vote recorded",
+      incidentId: id,
     });
   } catch (error: any) {
-    logError("Incident report error", { error: error.message });
+    logError("Incident vote error", { error: error.message });
     res.status(500).json({
       success: false,
       error: error.message,
@@ -87,6 +125,7 @@ router.get("/", async (_req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       status: "verified",
       source: "user_report",
+      votes: { up: 12, down: 1, verified: true },
     },
   ];
 

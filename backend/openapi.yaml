@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: MeroSadak API
+  description: |
+    Nepal's intelligent road monitoring and safety platform.
+    Provides real-time road conditions, weather alerts, route planning, and incident reporting.
+  version: 1.0.0
+  contact:
+    name: MeroSadak Team
+    email: support@merosadak.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Development server
+  - url: https://merosadak.onrender.com/api/v1
+    description: Production server
+
+tags:
+  - name: Roads
+    description: Road status and conditions
+  - name: Highways
+    description: Highway data and reports
+  - name: Traffic
+    description: Real-time traffic information
+  - name: Weather
+    description: Weather conditions and forecasts
+  - name: Monsoon
+    description: Monsoon and landslide risk assessment
+  - name: Alerts
+    description: Safety alerts and notifications
+  - name: POIs
+    description: Points of interest (hospitals, fuel, hotels)
+  - name: Search
+    description: Full-text search across all data
+  - name: Incidents
+    description: User-reported incidents
+  - name: ETA
+    description: Estimated time of arrival calculations
+  - name: Routes
+    description: Route planning and comparison
+  - name: Analytics
+    description: Historical data and trends
+  - name: Users
+    description: User profiles and preferences
+  - name: Push
+    description: Push notification subscriptions
+  - name: Auth
+    description: Authentication and OTP
+  - name: Admin
+    description: Admin and superadmin operations
+
+paths:
+  # ────────────────────────────────
+  # ROADS
+  # ────────────────────────────────
+  /roads/all:
+    get:
+      tags: [Roads]
+      summary: Get all road segments
+      description: Returns merged road data from highways and Google Sheets
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+
+  /roads/search:
+    get:
+      tags: [Roads]
+      summary: Search roads
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+
+  # ────────────────────────────────
+  # HIGHWAYS
+  # ────────────────────────────────
+  /highways:
+    get:
+      tags: [Highways]
+      summary: List all highways
+      responses:
+        '200':
+          description: List of highways with metadata
+
+  /highways/{code}:
+    get:
+      tags: [Highways]
+      summary: Get highway GeoJSON by code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            example: NH01
+      responses:
+        '200':
+          description: Highway GeoJSON
+
+  /highways/{code}/report:
+    get:
+      tags: [Highways]
+      summary: Get comprehensive highway report
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Highway report
+
+  /highways/{code}/incidents:
+    get:
+      tags: [Highways]
+      summary: Get incidents for specific highway
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Highway incidents
+
+  /highways/summary:
+    get:
+      tags: [Highways]
+      summary: Get all highways summary
+      responses:
+        '200':
+          description: Summary statistics
+
+  /highways/alternatives:
+    get:
+      tags: [Highways]
+      summary: Suggest alternative routes
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alternative routes
+
+  # ────────────────────────────────
+  # TRAFFIC
+  # ────────────────────────────────
+  /traffic/summary:
+    get:
+      tags: [Traffic]
+      summary: Get unified traffic summary
+      responses:
+        '200':
+          description: Traffic summary
+
+  /traffic/nearby:
+    get:
+      tags: [Traffic]
+      summary: Get nearby traffic info
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Nearby traffic
+
+  # ────────────────────────────────
+  # WEATHER
+  # ────────────────────────────────
+  /weather:
+    get:
+      tags: [Weather]
+      summary: Get current weather
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+        - name: city
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current weather data
+
+  # ────────────────────────────────
+  # MONSOON
+  # ────────────────────────────────
+  /monsoon/risk:
+    get:
+      tags: [Monsoon]
+      summary: Get current monsoon/landslide risk
+      responses:
+        '200':
+          description: Monsoon risk data
+
+  # ────────────────────────────────
+  # ALERTS
+  # ────────────────────────────────
+  /alerts:
+    get:
+      tags: [Alerts]
+      summary: Get active alerts
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Active alerts
+
+  # ────────────────────────────────
+  # INCIDENTS
+  # ────────────────────────────────
+  /incidents:
+    get:
+      tags: [Incidents]
+      summary: Get recent user-reported incidents
+      responses:
+        '200':
+          description: List of incidents
+    post:
+      tags: [Incidents]
+      summary: Submit incident report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, description, lat, lng]
+              properties:
+                type:
+                  type: string
+                  enum: [blockage, accident, traffic, construction, weather, other]
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                lat:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                lng:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+      responses:
+        '201':
+          description: Incident reported
+
+  /incidents/types:
+    get:
+      tags: [Incidents]
+      summary: Get incident types
+      responses:
+        '200':
+          description: Available incident types
+
+  # ────────────────────────────────
+  # ETA
+  # ────────────────────────────────
+  /eta/calculate:
+    post:
+      tags: [ETA]
+      summary: Calculate ETA between two points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin, destination]
+              properties:
+                origin:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                    name:
+                      type: string
+                destination:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                    name:
+                      type: string
+                options:
+                  type: object
+                  properties:
+                    avoidBlocked:
+                      type: boolean
+                    prioritizeSafety:
+                      type: boolean
+                    vehicleType:
+                      type: string
+                      enum: [car, motorcycle, truck, bus]
+      responses:
+        '200':
+          description: ETA calculation
+
+  /eta/quick:
+    post:
+      tags: [ETA]
+      summary: Quick ETA calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin, destination]
+              properties:
+                origin:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                destination:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+      responses:
+        '200':
+          description: Quick ETA
+
+  # ────────────────────────────────
+  # ROUTE PLANNING
+  # ────────────────────────────────
+  /routes/plan:
+    post:
+      tags: [Routes]
+      summary: Plan route with alternatives
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin, destination]
+              properties:
+                origin:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                destination:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                options:
+                  type: object
+                  properties:
+                    avoidBlocked:
+                      type: boolean
+                    prioritizeSafety:
+                      type: boolean
+      responses:
+        '200':
+          description: Route plan with alternatives
+
+  /routes/compare:
+    post:
+      tags: [Routes]
+      summary: Compare two routes
+      responses:
+        '200':
+          description: Route comparison
+
+  /routes/safety:
+    post:
+      tags: [Routes]
+      summary: Get route safety details
+      responses:
+        '200':
+          description: Route safety info
+
+  # ────────────────────────────────
+  # ANALYTICS
+  # ────────────────────────────────
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Get analytics summary
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 7d
+      responses:
+        '200':
+          description: Analytics summary
+
+  /analytics/trends:
+    get:
+      tags: [Analytics]
+      summary: Get trend analysis
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+      responses:
+        '200':
+          description: Trend data
+
+  /analytics/districts:
+    get:
+      tags: [Analytics]
+      summary: Get most affected districts
+      responses:
+        '200':
+          description: District stats
+
+  /analytics/highways:
+    get:
+      tags: [Analytics]
+      summary: Get most affected highways
+      responses:
+        '200':
+          description: Highway stats
+
+  # ────────────────────────────────
+  # USERS
+  # ────────────────────────────────
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+
+  /users/profile/preferences:
+    put:
+      tags: [Users]
+      summary: Update user preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                notificationPreferences:
+                  type: object
+                  properties:
+                    push:
+                      type: boolean
+                    email:
+                      type: boolean
+                    weatherAlerts:
+                      type: boolean
+                    roadBlockAlerts:
+                      type: boolean
+      responses:
+        '200':
+          description: Preferences updated
+
+  /users/leaderboard:
+    get:
+      tags: [Users]
+      summary: Get community leaderboard
+      responses:
+        '200':
+          description: Leaderboard
+
+  # ────────────────────────────────
+  # PUSH NOTIFICATIONS
+  # ────────────────────────────────
+  /push/subscribe:
+    post:
+      tags: [Push]
+      summary: Subscribe to push notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscription]
+              properties:
+                subscription:
+                  type: object
+                  properties:
+                    endpoint:
+                      type: string
+                    keys:
+                      type: object
+                      properties:
+                        p256dh:
+                          type: string
+                        auth:
+                          type: string
+      responses:
+        '200':
+          description: Subscribed
+
+  /push/vapid-public-key:
+    get:
+      tags: [Push]
+      summary: Get VAPID public key
+      responses:
+        '200':
+          description: VAPID public key
+
+  # ────────────────────────────────
+  # AUTH
+  # ────────────────────────────────
+  /auth/request-otp:
+    post:
+      tags: [Auth]
+      summary: Request OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                chatId:
+                  type: string
+      responses:
+        '200':
+          description: OTP sent
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp]
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+
+  # ────────────────────────────────
+  # SEARCH
+  # ────────────────────────────────
+  /search:
+    get:
+      tags: [Search]
+      summary: Full-text search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lng
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Search results
+
+  # ────────────────────────────────
+  # HEALTH
+  # ────────────────────────────────
+  /health:
+    get:
+      summary: Basic health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is healthy
+
+  /health/live:
+    get:
+      summary: Liveness probe
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is alive
+
+  /health/ready:
+    get:
+      summary: Readiness probe
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is ready
+        '503':
+          description: Server not ready
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+
+    Incident:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+        source:
+          type: string
