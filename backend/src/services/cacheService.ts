@@ -24,11 +24,12 @@ let disableTime = 0;
 const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ────────────────────────────────
-// Size limit for Redis (Upstash free tier: 10MB max per key)
-// Increased to 25MB to accommodate large road:merged cache (25.59MB)
-// Consider compression or splitting data if it grows beyond 30MB
+// Size limit for Redis
+// Increased to 30MB to accommodate road:merged cache (25.59MB + growth)
+// ⚠️ Upstash free tier: 100MB total storage - monitor usage!
+// If approaching limit, consider compression or splitting keys
 // ────────────────────────────────
-const REDIS_MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
+const REDIS_MAX_SIZE_BYTES = 30 * 1024 * 1024; // 30MB
 
 // ────────────────────────────────
 // Max age cap for disk cache (prevent stale data)
@@ -87,8 +88,10 @@ async function readDiskCache<T>(filePath: string, now: number): Promise<T | null
     if (entry.expireAt <= now) return null;
 
     // Check max-age cap (prevent stale data from lingering on disk)
-    if (entry.createdAt && (now - entry.createdAt > DISK_CACHE_MAX_AGE_MS)) {
-      logInfo(`[Cache] Disk cache exceeded max-age cap, treating as expired: ${path.basename(filePath)}`);
+    // For old caches without createdAt, use expireAt - ttl as proxy
+    const cacheAge = now - (entry.createdAt ?? (entry.expireAt - 3600 * 1000)); // assume 1h TTL fallback
+    if (cacheAge > DISK_CACHE_MAX_AGE_MS) {
+      logInfo(`[Cache] Disk cache exceeded max-age cap (${(cacheAge / 3600000).toFixed(1)}h), treating as expired: ${path.basename(filePath)}`);
       return null;
     }
 

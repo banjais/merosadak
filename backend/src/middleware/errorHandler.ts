@@ -117,7 +117,9 @@ export const notFoundHandler = (req: Request, res: Response, next: NextFunction)
  * Async route handler wrapper
  * Eliminates need for try/catch in every controller
  */
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
+) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
