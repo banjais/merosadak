@@ -283,8 +283,8 @@ export async function getMostAffectedDistricts(limit: number = 10): Promise<
   for (const road of roadData.merged) {
     if (road.status === "Resumed") continue;
 
-    const district = road.properties?.dist_name || road.properties?.incidentDistrict?.en || "Unknown";
-    if (!district) continue;
+    const district = String(road.properties?.dist_name || road.properties?.incidentDistrict || "Unknown");
+    if (!district || district === "Unknown") continue;
 
     if (!districtStats[district]) {
       districtStats[district] = { blocked: 0, oneLane: 0, total: 0 };

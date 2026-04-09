@@ -77,16 +77,16 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
     const segmentLengths: number[] = [];
 
     for (const f of geojson.features) {
-      const props = f.properties || {};
-      if (props.dist_name) districts.add(props.dist_name);
-      if (props.div_name) divisions.add(props.div_name);
-      if (props.pave_type) paveTypes.add(props.pave_type);
+      const props: any = f.properties || {};
+      if (props.dist_name) districts.add(String(props.dist_name));
+      if (props.div_name) divisions.add(String(props.div_name));
+      if (props.pave_type) paveTypes.add(String(props.pave_type));
       if (props.dyear) {
-        const yr = parseInt(props.dyear);
+        const yr = parseInt(String(props.dyear));
         if (!isNaN(yr)) years.push(yr);
       }
       if (props.link_len) {
-        const len = parseFloat(props.link_len);
+        const len = parseFloat(String(props.link_len));
         if (!isNaN(len)) segmentLengths.push(len);
       }
     }
@@ -183,7 +183,7 @@ export async function getHighwayIncidents(code: string): Promise<any> {
 /**
  * Get list of available highways with metadata
  */
-export async function getHighwayList(): Promise<Array<{ code: string, file: string, name?: string }>> {
+export async function getHighwayList(): Promise<Array<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[] }>> {
   try {
     const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
     return indexData;
@@ -236,7 +236,7 @@ export async function getHighwayByCode(code: string): Promise<FeatureCollection 
 /**
  * Get highway metadata for a given code
  */
-export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string } | null> {
+export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[] } | null> {
   const highways = await getHighwayList();
   return highways.find(h => h.code === code) || null;
 }
@@ -329,24 +329,24 @@ export async function getHighwayReport(code: string): Promise<any> {
     const segmentLengths: number[] = [];
 
     for (const feature of geojson.features) {
-      const props = feature.properties || {};
+      const props: any = feature.properties || {};
       totalSegments++;
 
       // Collect unique values
-      if (props.div_name) uniqueDivisions.add(props.div_name);
-      if (props.dist_name) uniqueDistricts.add(props.dist_name);
-      if (props.pave_type) paveTypes.add(props.pave_type);
+      if (props.div_name) uniqueDivisions.add(String(props.div_name));
+      if (props.dist_name) uniqueDistricts.add(String(props.dist_name));
+      if (props.pave_type) paveTypes.add(String(props.pave_type));
       if (props.dyear) {
-        const yr = parseInt(props.dyear);
+        const yr = parseInt(String(props.dyear));
         if (!isNaN(yr)) years.push(yr);
       }
       if (props.link_len) {
-        const len = parseFloat(props.link_len);
+        const len = parseFloat(String(props.link_len));
         if (!isNaN(len)) segmentLengths.push(len);
       }
 
       // Pavement type
-      const paveType = props.pave_type || props.surface || props.pavement || 'Unknown';
+      const paveType = String(props.pave_type || props.surface || props.pavement || 'Unknown');
       pavementStats.byType[paveType] = (pavementStats.byType[paveType] || 0) + 1;
 
       if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
@@ -361,14 +361,26 @@ export async function getHighwayReport(code: string): Promise<any> {
 
       // Width/Lanes
       const lanes = props.no_lanes || props.lanes || props.for_width || '';
-      if (lanes == 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
+      const lanesNum = typeof lanes === 'string' ? parseFloat(lanes) : lanes;
+      if (lanesNum == 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
         widthStats.single_lane++;
-      } else if (lanes == 2 || lanes == 4 || (typeof lanes === 'string' && (lanes.includes('two') || lanes.includes('four')))) {
+      } else if (lanesNum == 2 || lanesNum == 4 || (typeof lanes === 'string' && (lanes.includes('two') || lanes.includes('four')))) {
         widthStats.two_lane++;
-      } else if (lanes >= 4) {
+      } else if (typeof lanesNum === 'number' && lanesNum >= 4) {
         widthStats.four_lane++;
       } else {
         widthStats.unknown++;
+      }
+
+      // Road condition (based on pavement type as proxy)
+      if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
+        conditionStats.good++;
+      } else if (paveType.toLowerCase().includes('gravel') || paveType.toLowerCase().includes('wbm')) {
+        conditionStats.fair++;
+      } else if (paveType.toLowerCase().includes('earth') || paveType.toLowerCase().includes('unpaved')) {
+        conditionStats.poor++;
+      } else {
+        conditionStats.unknown++;
       }
     }
 
@@ -379,8 +391,9 @@ export async function getHighwayReport(code: string): Promise<any> {
     const roadData = await getCachedRoads();
     const incidents = roadData.merged.filter((f: any) => {
       const props = f.properties || {};
+      const highwayName = metadata.name?.toLowerCase();
       return props.road_refno === code ||
-        (props.road_name && props.road_name.toLowerCase().includes(metadata.name?.toLowerCase() || ''));
+        (highwayName && props.road_name && props.road_name.toLowerCase().includes(highwayName));
     });
 
     const incidentStats = {
@@ -391,16 +404,17 @@ export async function getHighwayReport(code: string): Promise<any> {
 
     // Get monsoon risk for this highway
     const monsoonRisks = await getCachedMonsoonRisk();
-    const highwayMonsoonRisks = monsoonRisks.filter((r: any) =>
-      r.roadId === code || r.roadName?.toLowerCase().includes(metadata.name?.toLowerCase() || '')
-    );
+    const highwayMonsoonRisks = monsoonRisks.filter((r: any) => {
+      const highwayName = metadata.name?.toLowerCase();
+      return r.roadId === code || (highwayName && r.roadName?.toLowerCase().includes(highwayName));
+    });
 
-    // Calculate quality score (0-100)
-    const qualityScore = Math.round(
+    // Calculate quality score (0-100) - guard against division by zero
+    const qualityScore = totalSegments > 0 ? Math.round(
       (pavementStats.blacktopped / totalSegments) * 40 +
       (conditionStats.good / totalSegments) * 40 +
       (widthStats.two_lane / totalSegments) * 20
-    );
+    ) : 0;
 
     return {
       code: metadata.code,
@@ -417,7 +431,7 @@ export async function getHighwayReport(code: string): Promise<any> {
       avgConstructionYear: avgYear,
       pavementStats: {
         ...pavementStats,
-        types: Object.fromEntries(paveTypes),
+        types: Object.fromEntries(Array.from(paveTypes).map(t => [t, pavementStats.byType[t] || 0])),
       },
       conditionStats,
       widthStats,
@@ -448,7 +462,8 @@ export async function getAllHighwaysSummary(): Promise<any[]> {
         if (!report.error) {
           summaries.push(report);
         }
-      } catch {
+      } catch (err: any) {
+        logError(`[HighwayService] Failed to get report for ${highway.code}`, err.message);
         // Skip if individual highway fails
       }
     }
@@ -487,7 +502,8 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
               recommendation: report.qualityScore >= 70 ? 'Recommended' : report.qualityScore >= 40 ? 'Alternative' : 'Avoid if possible'
             });
           }
-        } catch {
+        } catch (err: any) {
+          logError(`[HighwayService] Failed to evaluate ${highway.code} for alternative route`, err.message);
           // Skip if fails
         }
       }

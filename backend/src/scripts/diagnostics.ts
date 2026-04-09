@@ -32,8 +32,8 @@ const WARN = `${C.yellow}○${C.reset}`;
 
 let passed = 0, failed = 0, warnings = 0;
 
-const ok   = (l: string, d = "") => { passed++;   console.log(`  ${PASS} ${l}${d ? `  ${C.dim}${d}${C.reset}` : ""}`); };
-const err  = (l: string, d = "") => { failed++;   console.log(`  ${FAIL} ${l}${d ? `  ${C.red}${d}${C.reset}` : ""}`); };
+const ok = (l: string, d = "") => { passed++; console.log(`  ${PASS} ${l}${d ? `  ${C.dim}${d}${C.reset}` : ""}`); };
+const err = (l: string, d = "") => { failed++; console.log(`  ${FAIL} ${l}${d ? `  ${C.red}${d}${C.reset}` : ""}`); };
 const warn = (l: string, d = "") => { warnings++; console.log(`  ${WARN} ${l}${d ? `  ${C.dim}${d}${C.reset}` : ""}`); };
 
 function header(title: string) {
@@ -87,7 +87,7 @@ async function runDiagnostics() {
       highwaySegments = merged.length;
       for (const road of merged) {
         if (road.status === "Blocked") statusCount.Blocked++;
-        else if (road.status === "One-Lane" || road.status === "One Lane") statusCount["One-Lane"]++;
+        else if (road.status === "One-Lane") statusCount["One-Lane"]++;
         else statusCount.Resumed++;
       }
     } catch { /* fallback to file check */ }
@@ -109,9 +109,9 @@ async function runDiagnostics() {
   const totalStatus = statusCount.Blocked + statusCount["One-Lane"] + statusCount.Resumed;
   if (totalStatus > 0) {
     const statuses = [
-      { name: "Blocked",  count: statusCount.Blocked,    icon: "■" },
+      { name: "Blocked", count: statusCount.Blocked, icon: "■" },
       { name: "One-Lane", count: statusCount["One-Lane"], icon: "▲" },
-      { name: "Resumed",  count: statusCount.Resumed,    icon: "●" },
+      { name: "Resumed", count: statusCount.Resumed, icon: "●" },
     ];
 
     for (const { name, count, icon } of statuses) {
@@ -130,31 +130,31 @@ async function runDiagnostics() {
     const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
     const res = await axios.get(gasUrl, { timeout: 15000 });
     const sheetData = res.data?.data || [];
-    
+
     const sheetStatusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
     const STATUS_NORMALIZE: Record<string, string> = {
       "Blocked": "Blocked", "blocked": "Blocked", "BLOCKED": "Blocked",
       "One-Lane": "One-Lane", "One Lane": "One-Lane", "One Way": "One-Lane", "One-Way": "One-Lane", "one-lane": "One-Lane",
       "Resumed": "Resumed", "resumed": "Resumed", "RESUMED": "Resumed",
     };
-    
+
     sheetData.forEach((row: any) => {
       const rawStatus = String(row.status || "").trim();
       const status = STATUS_NORMALIZE[rawStatus] || "";
       if (status) sheetStatusCount[status as keyof typeof sheetStatusCount]++;
     });
-    
+
     const totalSheet = sheetStatusCount.Blocked + sheetStatusCount["One-Lane"] + sheetStatusCount.Resumed;
     console.log(`  📡 Google Sheets (GAS)  →  ${totalSheet} rows from tab '${SHEET_TAB || "Roads"}'`);
     console.log(`     Raw statuses: Blocked=${sheetStatusCount.Blocked}, Resumed=${sheetStatusCount.Resumed}, One-Lane=${sheetStatusCount["One-Lane"]}`);
-    
+
     if (totalSheet > 0) {
       const sheetStatuses = [
-        { name: "Blocked",  count: sheetStatusCount.Blocked,    icon: "■" },
+        { name: "Blocked", count: sheetStatusCount.Blocked, icon: "■" },
         { name: "One-Lane", count: sheetStatusCount["One-Lane"], icon: "▲" },
-        { name: "Resumed",  count: sheetStatusCount.Resumed,    icon: "●" },
+        { name: "Resumed", count: sheetStatusCount.Resumed, icon: "●" },
       ];
-      
+
       for (const { name, count, icon } of sheetStatuses) {
         const pct = totalSheet > 0 ? ((count / totalSheet) * 100).toFixed(1) : "0.0";
         const fn = count > 0 ? ok : warn;
@@ -170,7 +170,7 @@ async function runDiagnostics() {
 
   // ─── Files ───
   header("Files");
-  
+
   // Check all configured data files from environment
   const dataFiles = [
     { label: "Base Highways", path: paths.BASE_DATA },
@@ -179,7 +179,7 @@ async function runDiagnostics() {
     { label: "Provinces", path: paths.PROVINCE_DATA },
     { label: "Local", path: paths.LOCAL_DATA },
   ];
-  
+
   for (const { label, path: filePath } of dataFiles) {
     try {
       const s = await fs.stat(filePath);
@@ -212,7 +212,7 @@ async function runDiagnostics() {
       warn("Boundary", "not found");
     }
   }
-  
+
   // Check highway directory
   try {
     const highwayDir = path.join(paths.DATA_DIR, "highway");
@@ -225,12 +225,12 @@ async function runDiagnostics() {
   header("Caches");
   for (const c of [
     { label: SHEET_TAB || "Roads", p: paths.CACHE_ROAD },
-    { label: "Traffic",  p: paths.CACHE_TRAFFIC },
-    { label: "Weather",  p: paths.CACHE_WEATHER },
-    { label: "POI",      p: paths.CACHE_POI },
-    { label: "Alerts",   p: paths.CACHE_ALERTS },
-    { label: "Monsoon",  p: paths.CACHE_MONSOON },
-    { label: "Waze",     p: paths.CACHE_WAZE },
+    { label: "Traffic", p: paths.CACHE_TRAFFIC },
+    { label: "Weather", p: paths.CACHE_WEATHER },
+    { label: "POI", p: paths.CACHE_POI },
+    { label: "Alerts", p: paths.CACHE_ALERTS },
+    { label: "Monsoon", p: paths.CACHE_MONSOON },
+    { label: "Waze", p: paths.CACHE_WAZE },
   ]) {
     try {
       const stat = await fs.stat(c.p);
@@ -468,9 +468,9 @@ async function runDiagnostics() {
   console.log(`  ${C.bold}Total:    ${passed + warnings + failed}${C.reset}`);
 
   const status =
-    failed > 0       ? `${C.red}${C.bold}DEGRADED${C.reset}` :
-    warnings > 0     ? `${C.yellow}${C.bold}HEALTHY (with warnings)${C.reset}` :
-                       `${C.green}${C.bold}HEALTHY${C.reset}`;
+    failed > 0 ? `${C.red}${C.bold}DEGRADED${C.reset}` :
+      warnings > 0 ? `${C.yellow}${C.bold}HEALTHY (with warnings)${C.reset}` :
+        `${C.green}${C.bold}HEALTHY${C.reset}`;
 
   console.log(`\n  Status: ${status}\n`);
 }

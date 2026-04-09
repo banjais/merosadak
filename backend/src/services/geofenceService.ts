@@ -1,6 +1,6 @@
 // backend/src/services/geofenceService.ts
 import { logInfo, logError } from "../logs/logs.js";
-import { getCachedWeather } from "./weatherService.js";
+import { getWeather } from "./weatherService.js";
 import { getCachedRoads } from "./roadService.js";
 
 // ────────────────────────────────

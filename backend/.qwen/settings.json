@@ -19,7 +19,11 @@
       "Bash(gh *)",
       "Bash(curl *)",
       "Bash(timeout *)",
-      "Bash(findstr *)"
+      "Bash(findstr *)",
+      "Bash(tasklist *)",
+      "Bash(taskkill *)",
+      "Bash(select-object *)",
+      "Bash(select-string *)"
     ]
   },
   "$version": 3

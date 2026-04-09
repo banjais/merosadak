@@ -1,37 +1,31 @@
 // backend/src/routes/trafficRouter.ts
 import { Router } from "express";
-import * as trafficController from "../controllers/trafficController.js";
+import * as TrafficController from "../controllers/trafficController.js";
 
 const router = Router();
 
-// -----------------------------
-// Nearby incidents within a radius (km)
-// Example: /traffic/incidents?lat=27.7&lng=85.3&radius=5
-// -----------------------------
-router.get("/incidents", trafficController.findNearbyIncidents);
+/**
+ * GET /traffic/flow
+ * Get real-time traffic flow with colored polylines
+ */
+router.get("/flow", TrafficController.getTrafficFlow);
 
-// -----------------------------
-// Nearby roads within ~2 km
-// Example: /traffic/nearby?lat=27.7&lng=85.3
-// -----------------------------
-router.get("/nearby", trafficController.getNearbyTraffic);
+/**
+ * GET /traffic/alerts
+ * Get Waze traffic alerts
+ */
+router.get("/alerts", TrafficController.getTrafficAlerts);
 
-// -----------------------------
-// Road status by refno
-// Example: /traffic/road/NH01
-// -----------------------------
-router.get("/road/:refno", trafficController.getRoadStatus);
+/**
+ * GET /traffic/summary
+ * Get traffic summary
+ */
+router.get("/summary", TrafficController.getTrafficSummary);
 
-// -----------------------------
-// Highway traffic by refno (includes live flow)
-// Example: /traffic/highway/NH01
-// -----------------------------
-router.get("/highway/:refno", trafficController.getHighwayTraffic);
-
-// -----------------------------
-// Unified traffic summary (all roads)
-// Example: /traffic/summary
-// -----------------------------
-router.get("/summary", trafficController.getUnifiedTrafficStatus);
+/**
+ * POST /traffic/refresh
+ * Manually refresh traffic cache
+ */
+router.post("/refresh", TrafficController.refreshTraffic);
 
 export default router;

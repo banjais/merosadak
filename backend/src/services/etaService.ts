@@ -235,7 +235,7 @@ export async function calculateETA(
       segments,
       conditionAdjusted: totalDelay > 0,
       reliability,
-      alternativeAvailable: !hasBlockingRoads || !avoidBlocked,
+      alternativeAvailable: !hasBlockedRoads || !avoidBlocked,
       warnings,
       calculatedAt: new Date().toISOString(),
     };

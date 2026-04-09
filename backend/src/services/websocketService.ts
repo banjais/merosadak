@@ -135,7 +135,7 @@ export const broadcastMapUpdateSegment = (
  * 🌍 Global map update
  */
 export const broadcastMapUpdate = (
-  dataType: "roads" | "traffic" | "weather" | "pois" | "alerts" | "waze"
+  dataType: "roads" | "traffic" | "weather" | "pois" | "alerts" | "waze" | "incidents"
 ) => {
   broadcast({
     type: "data_update",

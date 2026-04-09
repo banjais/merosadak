@@ -146,16 +146,17 @@ export const captureSnapshot = async (req: Request, res: Response) => {
 export const getDailyAnalytics = async (req: Request, res: Response) => {
   try {
     const { date } = req.params;
+    const dateStr = Array.isArray(date) ? date[0] : date;
 
     // Validate date format (YYYY-MM-DD)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return res.status(400).json({
         success: false,
         message: "Invalid date format. Use YYYY-MM-DD",
       });
     }
 
-    const analytics = await AnalyticsService.getDailyAnalytics(date);
+    const analytics = await AnalyticsService.getDailyAnalytics(dateStr);
 
     if (!analytics) {
       return res.status(404).json({

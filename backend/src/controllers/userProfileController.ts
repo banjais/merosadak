@@ -135,6 +135,7 @@ export const removeSavedLocation = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id as string;
     const { name } = req.params;
+    const locationName = Array.isArray(name) ? name[0] : name;
 
     if (!userId) {
       return res.status(401).json({
@@ -143,7 +144,7 @@ export const removeSavedLocation = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const profile = await UserProfileService.removeSavedLocation(userId, name);
+    const profile = await UserProfileService.removeSavedLocation(userId, locationName);
 
     if (!profile) {
       return res.status(404).json({

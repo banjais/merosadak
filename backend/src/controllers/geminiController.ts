@@ -2,22 +2,68 @@
 
 import { Request, Response } from "express";
 import { geminiService } from "../services/geminiService.js";
+import { logError } from "../logs/logs.js";
 
 export const GeminiController = {
   /**
-   * Handle chat-style text prompt
-   * POST /api/gemini/query
+   * Handle chat-style text prompt with context
+   * POST /api/v1/gemini/query
    */
   handleQuery: async (req: Request, res: Response) => {
     try {
-      const { prompt } = req.body;
-      if (!prompt) return res.status(400).json({ success: false, message: "Prompt is required" });
+      const { prompt, systemPrompt, image, mode, verbosity, moodEQ } = req.body;
 
-      const result = await geminiService.generateText(prompt);
+      if (!prompt) {
+        return res.status(400).json({ success: false, message: "Prompt is required" });
+      }
 
-      res.json({ success: true, response: result });
+      // Build the full prompt with context
+      let fullPrompt = prompt;
+
+      if (systemPrompt) {
+        fullPrompt = `${systemPrompt}\n\n---\n\nUser question: ${prompt}\n\nRemember to follow the system context above and be helpful.`;
+      }
+
+      // Adjust response based on mode
+      if (mode === 'safe') {
+        fullPrompt += '\n\nPrioritize safety recommendations and conservative advice.';
+      } else if (mode === 'pro') {
+        fullPrompt += '\n\nProvide detailed, expert-level analysis with alternatives.';
+      }
+
+      // Adjust verbosity
+      if (verbosity === 'brief') {
+        fullPrompt += '\n\nKeep your response concise (2-3 sentences max).';
+      } else {
+        fullPrompt += '\n\nProvide a detailed, thorough response.';
+      }
+
+      // Mood EQ adjustment
+      if (moodEQ) {
+        fullPrompt += '\n\nBe empathetic and understanding. Use a warm, supportive tone.';
+      } else {
+        fullPrompt += '\n\nBe factual and direct.';
+      }
+
+      const result = await geminiService.generateText(fullPrompt);
+
+      res.json({
+        success: true,
+        response: result || "I'm sorry, I couldn't process that request. Please try again.",
+        metadata: {
+          mode,
+          verbosity,
+          moodEQ,
+          timestamp: new Date().toISOString()
+        }
+      });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      logError('[GeminiController] Query failed', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        fallback: "I'm having trouble connecting to my AI brain. Please check your internet connection and try again."
+      });
     }
   },
 

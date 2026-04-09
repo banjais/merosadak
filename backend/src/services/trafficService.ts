@@ -1,152 +1,285 @@
 // backend/src/services/trafficService.ts
-import fs from "fs/promises";
-import axios from "axios";
-import { CACHE_TRAFFIC } from "../config/paths.js";
-import { logInfo, logError } from "../logs/logs.js"; 
-import { withCache } from "./cacheService.js";
-import { TOMTOM_API_URL, TOMTOM_API_KEY, OVERPASS_API_URL, WAZE_JSON } from "../config/index.js";
+// Enhanced traffic service with TomTom flow polylines and Waze alerts
 
-export interface TrafficResult {
+import axios from "axios";
+import { logInfo, logError } from "../logs/logs.js";
+import { TOMTOM_API_KEY, TOMTOM_API_URL } from "../config/index.js";
+import { getCachedRoads } from "./roadService.js";
+
+export interface TrafficFlowSegment {
   id: string;
+  coordinates: [number, number][]; // [lat, lng] pairs for polyline
+  currentSpeed: number; // km/h
+  freeFlowSpeed: number; // km/h
+  congestionLevel: 'low' | 'medium' | 'high' | 'extreme';
+  color: 'green' | 'yellow' | 'orange' | 'red';
+  delay: number; // seconds
+  confidence: number; // 0-1
+}
+
+export interface WazeAlert {
+  id: string;
+  type: string; // ACCIDENT, JAM, HAZARD, etc.
+  subtype: string;
   location: { lat: number; lng: number };
   description: string;
-  severity: "low" | "medium" | "high";
-  source: "waze" | "tomtom" | "overpass";
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
 }
 
-const TRAFFIC_CACHE_TTL = 5 * 60; // 5 min
-let cachedTraffic: TrafficResult[] = [];
-
-// -----------------------------
-// Main trafficService object (for controller imports)
-export const trafficService = {
-  getTrafficFlow: async (lat: number, lng: number): Promise<TrafficResult[]> => {
-    return getTrafficData(lat, lng);
-  },
-};
-
-// -----------------------------
-// Cached access for scheduler / other services
-export function getCachedTraffic(): TrafficResult[] {
-  return cachedTraffic;
+export interface TrafficResult {
+  flowSegments: TrafficFlowSegment[];
+  wazeAlerts: WazeAlert[];
+  summary: {
+    totalSegments: number;
+    congestedSegments: number;
+    averageSpeed: number;
+    averageDelay: number;
+  };
+  lastUpdated: string;
 }
 
-// -----------------------------
-// Main fetcher
-export async function getTrafficData(lat: number, lng: number, radius = 25_000): Promise<TrafficResult[]> {
-  const key = `traffic:${lat.toFixed(3)}:${lng.toFixed(3)}`;
+// Cache for traffic data (5 minutes)
+let trafficCache: TrafficResult | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  return withCache(key, async () => {
-    // 1️⃣ Waze
-    try {
-      if (WAZE_JSON) {
-        const res = await axios.get(WAZE_JSON, { timeout: 10000 });
-        const alerts = res.data?.alerts ?? [];
-        if (alerts.length) {
-          cachedTraffic = alerts.map((a: any) => ({
-            id: `wz-${a.id}`,
-            location: { lat: a.location.lat, lng: a.location.lng },
-            description: a.comment || "Traffic alert",
-            severity: mapSeverity(a.level),
-            source: "waze",
-          }));
-          if (cachedTraffic.length) return cachedTraffic;
-        }
-      }
-    } catch (err: any) {
-      logInfo("[Traffic] Waze fetch failed, fallback to TomTom/Overpass");
-    }
+/**
+ * Get comprehensive traffic data with TomTom flow + Waze alerts
+ */
+export async function getTrafficData(
+  lat: number,
+  lng: number,
+  radius: number = 10
+): Promise<TrafficResult> {
+  // Check cache first
+  const now = Date.now();
+  if (trafficCache && (now - cacheTimestamp) < CACHE_TTL) {
+    logInfo("[TrafficService] Using cached traffic data");
+    return trafficCache;
+  }
 
-    // 2️⃣ TomTom
-    try {
-      if (TOMTOM_API_KEY) {
-        const res = await axios.get(
-          `${TOMTOM_API_URL}/traffic/services/4/flowSegmentData/absolute/10/json`,
-          { params: { point: `${lat},${lng}`, key: TOMTOM_API_KEY }, timeout: 10000 }
-        );
-        const flow = res.data?.flowSegmentData;
-        if (flow) {
-          cachedTraffic = [
-            {
-              id: `tt-${lat}-${lng}`,
-              location: { lat, lng },
-              description: `Current speed: ${flow.currentSpeed} km/h`,
-              severity: mapTomTomSeverity(flow),
-              source: "tomtom",
-            },
-          ];
-          return cachedTraffic;
-        }
-      }
-    } catch {
-      logInfo("[Traffic] TomTom fetch failed, fallback to Overpass");
-    }
-
-    // 3️⃣ Fallback: Overpass
-    cachedTraffic = await fetchOverpassTraffic(lat, lng, radius);
-    return cachedTraffic;
-  }, TRAFFIC_CACHE_TTL);
-}
-
-// -----------------------------
-// Overpass fetch
-async function fetchOverpassTraffic(lat: number, lng: number, radius: number): Promise<TrafficResult[]> {
-  const query = `
-    [out:json][timeout:25];
-    (
-      node["highway"="traffic_signals"](around:${radius},${lat},${lng});
-      node["highway"="stop"](around:${radius},${lat},${lng});
-      node["highway"="speed_camera"](around:${radius},${lat},${lng});
-      way["highway"]["maxspeed"](around:${radius},${lat},${lng});
-    );
-    out center tags;
-  `;
   try {
-    const res = await axios.get(`${OVERPASS_API_URL}/interpreter`, { params: { data: query }, timeout: 20000 });
-    return res.data.elements
-      .map((e: any) => {
-        const latVal = e.lat ?? e.center?.lat;
-        const lngVal = e.lon ?? e.center?.lon;
-        if (!latVal || !lngVal) return null;
+    const [tomtomSegments, wazeAlerts] = await Promise.allSettled([
+      fetchTomTomFlowSegments(lat, lng, radius),
+      fetchWazeAlerts()
+    ]);
 
-        let description = "Traffic info";
-        if (e.tags?.highway === "traffic_signals") description = "Traffic signal";
-        else if (e.tags?.highway === "stop") description = "Stop sign";
-        else if (e.tags?.highway === "speed_camera") description = "Speed camera";
-        else if (e.tags?.maxspeed) description = `Max speed: ${e.tags.maxspeed} km/h`;
+    const segments = tomtomSegments.status === 'fulfilled' ? tomtomSegments.value : [];
+    const alerts = wazeAlerts.status === 'fulfilled' ? wazeAlerts.value : [];
 
-        return { id: `op-${e.id}`, location: { lat: latVal, lng: lngVal }, description, severity: "medium", source: "overpass" };
-      })
-      .filter(Boolean) as TrafficResult[];
+    // Calculate summary
+    const congested = segments.filter(s =>
+      s.congestionLevel === 'medium' || s.congestionLevel === 'high' || s.congestionLevel === 'extreme'
+    );
+
+    const result: TrafficResult = {
+      flowSegments: segments,
+      wazeAlerts: alerts,
+      summary: {
+        totalSegments: segments.length,
+        congestedSegments: congested.length,
+        averageSpeed: segments.length > 0
+          ? Math.round(segments.reduce((sum, s) => sum + s.currentSpeed, 0) / segments.length)
+          : 0,
+        averageDelay: segments.length > 0
+          ? Math.round(segments.reduce((sum, s) => sum + s.delay, 0) / segments.length)
+          : 0
+      },
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Update cache
+    trafficCache = result;
+    cacheTimestamp = now;
+
+    logInfo(`[TrafficService] Fetched traffic: ${segments.length} segments, ${alerts.length} alerts`);
+    return result;
   } catch (err: any) {
-    logError("[Traffic] Overpass fetch failed", err.message);
+    logError("[TrafficService] Failed to fetch traffic data", { error: err.message });
+    // Return cached data even if expired on error
+    return trafficCache || createEmptyTrafficResult();
+  }
+}
+
+/**
+ * Fetch TomTom traffic flow segments with polylines
+ */
+async function fetchTomTomFlowSegments(
+  lat: number,
+  lng: number,
+  radius: number
+): Promise<TrafficFlowSegment[]> {
+  if (!TOMTOM_API_KEY) {
+    logInfo("[TrafficService] TomTom API key not configured");
+    return [];
+  }
+
+  try {
+    const url = `${TOMTOM_API_URL}/traffic/flow/segment/json?point=${lat},${lng}&radius=${radius}&key=${TOMTOM_API_KEY}`;
+
+    const response = await axios.get(url, { timeout: 10000 });
+    const flowSegments = response.data?.flowSegments || [];
+
+    return flowSegments.map((segment: any, index: number) => {
+      const currentSpeed = segment.currentSpeed || 0;
+      const freeFlowSpeed = segment.freeFlowSpeed || 60;
+      const speedRatio = currentSpeed / freeFlowSpeed;
+
+      // Determine congestion level and color
+      let congestionLevel: TrafficFlowSegment['congestionLevel'];
+      let color: TrafficFlowSegment['color'];
+
+      if (speedRatio > 0.8) {
+        congestionLevel = 'low';
+        color = 'green';
+      } else if (speedRatio > 0.5) {
+        congestionLevel = 'medium';
+        color = 'yellow';
+      } else if (speedRatio > 0.3) {
+        congestionLevel = 'high';
+        color = 'orange';
+      } else {
+        congestionLevel = 'extreme';
+        color = 'red';
+      }
+
+      // Decode polyline coordinates from TomTom response
+      const coordinates = decodePolyline(segment.polyline || segment.coordinates || '');
+
+      return {
+        id: `tomtom-${segment.id || index}`,
+        coordinates,
+        currentSpeed: Math.round(currentSpeed),
+        freeFlowSpeed: Math.round(freeFlowSpeed),
+        congestionLevel,
+        color,
+        delay: segment.delaySeconds || 0,
+        confidence: segment.confidence || 0.5
+      };
+    }).filter((s: TrafficFlowSegment) => s.coordinates.length > 1);
+  } catch (err: any) {
+    logError("[TrafficService] TomTom fetch failed", { error: err.message });
     return [];
   }
 }
 
-// -----------------------------
-// Force cache (cron / build)
-export async function refreshTrafficCache() {
-  logInfo("[TrafficService] Pre-warming cache...");
-  const lat = 27.7172;
-  const lng = 85.3240;
-  const results = await getTrafficData(lat, lng);
-  await fs.writeFile(CACHE_TRAFFIC, JSON.stringify(results, null, 2), "utf-8");
-  logInfo(`[TrafficService] Cached ${results.length} traffic points`);
-  return results;
+/**
+ * Fetch Waze real-time alerts
+ */
+async function fetchWazeAlerts(): Promise<WazeAlert[]> {
+  try {
+    // Use Waze Partner Hub feed
+    const WAZE_URL = process.env.WAZE_JSON ||
+      'https://www.waze.com/row-partnerhub-api/partners/19031804998/waze-feeds/75887a4e-e8fc-4329-a4c8-7f84be88914e?format=1';
+
+    const response = await axios.get(WAZE_URL, {
+      timeout: 10000,
+      headers: { 'Accept': 'application/json' }
+    });
+
+    const alerts = response.data?.alerts || response.data || [];
+
+    return alerts
+      .filter((alert: any) => alert.location?.lat && alert.location?.lon)
+      .map((alert: any, index: number) => {
+        const type = (alert.type || '').toUpperCase();
+        let severity: WazeAlert['severity'] = 'low';
+
+        if (type.includes('ACCIDENT') || type.includes('ROAD_CLOSED')) {
+          severity = 'high';
+        } else if (type.includes('HAZARD') || type.includes('JAM')) {
+          severity = 'medium';
+        }
+
+        return {
+          id: alert.uuid || alert.id || `waze-${index}`,
+          type,
+          subtype: alert.subType || '',
+          location: {
+            lat: alert.location.lat,
+            lng: alert.location.lon
+          },
+          description: alert.description || alert.comment || alert.type || 'Traffic alert',
+          severity,
+          timestamp: alert.pubDate || new Date().toISOString()
+        };
+      });
+  } catch (err: any) {
+    logError("[TrafficService] Waze fetch failed", { error: err.message });
+    return [];
+  }
 }
 
-// -----------------------------
-// Helpers
-function mapSeverity(level: number): "low" | "medium" | "high" {
-  if (level <= 2) return "low";
-  if (level === 3) return "medium";
-  return "high";
+/**
+ * Decode TomTom polyline string to [lat, lng] coordinates
+ */
+function decodePolyline(encoded: string): [number, number][] {
+  if (!encoded) return [];
+
+  const coordinates: [number, number][] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < encoded.length) {
+    let b;
+    let shift = 0;
+    let result = 0;
+
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    const deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += deltaLat;
+
+    shift = 0;
+    result = 0;
+
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    const deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += deltaLng;
+
+    coordinates.push([lat / 1E5, lng / 1E5]);
+  }
+
+  return coordinates;
 }
 
-function mapTomTomSeverity(flow: any): "low" | "medium" | "high" {
-  if (!flow) return "medium";
-  if (flow.freeFlowSpeed && flow.currentSpeed < flow.freeFlowSpeed / 2) return "high";
-  if (flow.currentSpeed < flow.freeFlowSpeed * 0.8) return "medium";
-  return "low";
+/**
+ * Create empty traffic result
+ */
+function createEmptyTrafficResult(): TrafficResult {
+  return {
+    flowSegments: [],
+    wazeAlerts: [],
+    summary: {
+      totalSegments: 0,
+      congestedSegments: 0,
+      averageSpeed: 0,
+      averageDelay: 0
+    },
+    lastUpdated: new Date().toISOString()
+  };
 }
+
+/**
+ * Clear traffic cache (for manual refresh)
+ */
+export function clearTrafficCache(): void {
+  trafficCache = null;
+  cacheTimestamp = 0;
+  logInfo("[TrafficService] Cache cleared");
+}
+
+// Aliases for backward compatibility
+export const refreshTrafficCache = clearTrafficCache;
+export const getCachedTraffic = getTrafficData;

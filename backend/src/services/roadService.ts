@@ -117,12 +117,12 @@ export async function getCachedRoads(): Promise<{
       // Build maps: road_refno -> status, and road_refno + district -> status
       const roadStatusMap = new Map<string, string>();
       const roadDistrictStatusMap = new Map<string, string>();
-      
+
       for (const inc of incidents) {
         if (inc.status && inc.incidentDistrict) {
           const roadCode = inc.road_refno?.toUpperCase() || "";
           const district = inc.incidentDistrict.toUpperCase();
-          
+
           // Map: road_refno + district -> status
           if (roadCode && district) {
             roadDistrictStatusMap.set(`${roadCode}|${district}`, inc.status);
@@ -141,24 +141,24 @@ export async function getCachedRoads(): Promise<{
             const segments = highwayData.features.map((f: any) => {
               const highwayCodeUpper = highway.code.toUpperCase();
               const segmentDistrict = f.properties?.dist_name?.toUpperCase() || "";
-              
+
               // First try: exact match (road + district)
-              let incidentStatus = segmentDistrict 
-                ? roadDistrictStatusMap.get(`${highwayCodeUpper}|${segmentDistrict}`) 
+              let incidentStatus = segmentDistrict
+                ? roadDistrictStatusMap.get(`${highwayCodeUpper}|${segmentDistrict}`)
                 : null;
-              
+
               // Fallback: road_refno only
               if (!incidentStatus) {
                 incidentStatus = roadStatusMap.get(highwayCodeUpper);
               }
-              
+
               const segmentStatus = incidentStatus || (f.properties?.status as RoadSegment["status"]) || "Resumed";
 
-              return {
+              const segment: RoadSegment = {
                 id: f.properties?.id ?? `${highway.code}-${Math.random().toString(36).substr(2, 9)}`,
                 name: f.properties?.name ?? highway.name ?? highway.code,
                 geometry: f.geometry,
-                status: segmentStatus,
+                status: segmentStatus as RoadSegment["status"],
                 source: "highway",
                 properties: {
                   ...f.properties,
@@ -168,6 +168,7 @@ export async function getCachedRoads(): Promise<{
                   incident_status: incidentStatus || null,
                 },
               };
+              return segment;
             });
             merged.push(...segments);
           }
@@ -187,6 +188,7 @@ export async function getCachedRoads(): Promise<{
 
       for (const incident of incidents) {
         let geometry: GeoJSON.Point | null = null;
+
         if (incident.incidentCoordinate) {
           const [lat, lng] = incident.incidentCoordinate.split(",").map(Number);
           if (!isNaN(lat) && !isNaN(lng)) {
@@ -194,14 +196,17 @@ export async function getCachedRoads(): Promise<{
           }
         }
 
+        // Tag with Official Government Source
         merged.push({
           id: `sheet-${incident.road_refno || Math.random().toString(36).substr(2, 9)}`,
           name: incident.road_name || incident.incidentPlace || "Unknown Location",
           geometry: geometry || { type: "Point", coordinates: [0, 0] },
           status: incident.status as RoadSegment["status"],
-          source: "sheet",
+          source: "Department of Roads", // ✅ OFFICIAL SOURCE
           properties: {
             ...incident,
+            sourceType: "government",
+            confidence: "high",
           },
         });
       }
@@ -274,7 +279,7 @@ async function fetchOverpassRoad(name: string): Promise<RoadSegment | null> {
         road_refno: way.tags?.ref,
         road_name: way.tags?.name,
         incidentDistrict: way.tags?.["addr:district"],
-      status: "" as const,
+        status: "" as const,
       },
     };
   } catch (err: any) {

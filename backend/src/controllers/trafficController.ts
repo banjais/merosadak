@@ -1,135 +1,117 @@
 // backend/src/controllers/trafficController.ts
+// Updated to use enhanced traffic service
+
 import { Request, Response } from "express";
-import { logError } from "../logs/logs.js";
-import { getCachedRoads } from "../services/roadService.js";
-import { trafficService } from "../services/trafficService.js";
-import { ROAD_STATUS } from "../constants/sheets.js";
+import * as TrafficService from "../services/trafficService.js";
+import { logError, logInfo } from "../logs/logs.js";
 
 /**
- * Approx distance in KM (fast & good enough)
+ * GET /traffic/flow?lat=&lng=&radius=
+ * Get real-time traffic flow with colored polylines
  */
-function approxKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const dx = (lat1 - lat2) * 111;
-  const dy = (lng1 - lng2) * 111;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function getFirstCoord(feature: any): [number, number] | null {
-  const g = feature.geometry;
-  if (!g) return null;
-
-  if (g.type === "Point") return g.coordinates; // Added Point support
-  if (g.type === "LineString") return g.coordinates[0];
-  if (g.type === "MultiLineString") return g.coordinates[0][0];
-  return null;
-}
-
-// -----------------------------
-// Nearby Incidents
-// -----------------------------
-export const findNearbyIncidents = async (req: Request, res: Response) => {
+export const getTrafficFlow = async (req: Request, res: Response) => {
   try {
-    const lat = Number(req.query.lat);
-    const lng = Number(req.query.lng);
-    const radius = Number(req.query.radius ?? 5);
+    const { lat, lng, radius } = req.query;
 
-    if (isNaN(lat) || isNaN(lng))
-      return res.status(400).json({ error: "lat/lng required" });
-
-    const roads = await getCachedRoads();
-    const nearby = roads.merged.filter((f) => {
-      if (!f.properties || f.properties.status === ROAD_STATUS.RESUMED) return false;
-      const coord = getFirstCoord(f);
-      if (!coord) return false;
-      return approxKm(lat, lng, coord[1], coord[0]) <= radius;
-    });
-
-    res.json({ count: nearby.length, incidents: nearby });
-  } catch (err: any) {
-    logError("findNearbyIncidents failed", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// -----------------------------
-// Nearby Roads
-// -----------------------------
-export const getNearbyTraffic = async (req: Request, res: Response) => {
-  try {
-    const lat = Number(req.query.lat);
-    const lng = Number(req.query.lng);
-
-    if (isNaN(lat) || isNaN(lng))
-      return res.status(400).json({ error: "lat/lng required" });
-
-    const roads = await getCachedRoads();
-    const nearby = roads.merged.filter((f) => {
-      const coord = getFirstCoord(f);
-      if (!coord) return false;
-      return approxKm(lat, lng, coord[1], coord[0]) <= 2;
-    });
-
-    res.json({ count: nearby.length, roads: nearby });
-  } catch (err: any) {
-    logError("getNearbyTraffic failed", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// -----------------------------
-// Road status by refno
-// -----------------------------
-export const getRoadStatus = async (req: Request, res: Response) => {
-  try {
-    const { refno } = req.params;
-    const roads = await getCachedRoads();
-    const road = roads.merged.find((r) => r.properties && r.properties.road_refno === refno);
-    res.json({ refno, road });
-  } catch (err: any) {
-    logError("getRoadStatus failed", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// -----------------------------
-// Highway traffic by refno (new, includes live flow)
-// -----------------------------
-export const getHighwayTraffic = async (req: Request, res: Response) => {
-  try {
-    const { refno } = req.params;
-    const roads = await getCachedRoads();
-    const road = roads.merged.find((r) => r.properties && r.properties.road_refno === refno);
-
-    if (!road) return res.status(404).json({ error: "Road not found" });
-
-    // Get traffic flow at first coordinate (optional)
-    const coord = getFirstCoord(road);
-    let flow = null;
-    if (coord) {
-      flow = await trafficService.getTrafficFlow(coord[1], coord[0]);
+    if (!lat || !lng) {
+      return res.status(400).json({
+        success: false,
+        message: "lat and lng parameters required"
+      });
     }
 
-    res.json({ refno, road, flow });
+    const traffic = await TrafficService.getTrafficData(
+      Number(lat),
+      Number(lng),
+      Number(radius) || 10
+    );
+
+    res.json({
+      success: true,
+      data: traffic
+    });
   } catch (err: any) {
-    logError("getHighwayTraffic failed", err.message);
-    res.status(500).json({ error: "Internal server error" });
+    logError("[TrafficController] getTrafficFlow failed", { error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };
 
-// -----------------------------
-// Unified summary
-// -----------------------------
-export const getUnifiedTrafficStatus = async (_req: Request, res: Response) => {
+/**
+ * GET /traffic/summary
+ * Get traffic summary (congestion stats)
+ */
+export const getTrafficSummary = async (_req: Request, res: Response) => {
   try {
-    const roads = await getCachedRoads();
+    // Use Kathmandu as default center
+    const traffic = await TrafficService.getTrafficData(27.7172, 85.3240, 50);
+
     res.json({
-      total: roads.merged.length,
-      blocked: roads.merged.filter((f) => f.properties?.status === ROAD_STATUS.BLOCKED).length,
-      oneLane: roads.merged.filter((f) => f.properties?.status === ROAD_STATUS.ONE_LANE).length,
-      resumed: roads.merged.filter((f) => f.properties?.status === ROAD_STATUS.RESUMED).length,
+      success: true,
+      data: {
+        summary: traffic.summary,
+        lastUpdated: traffic.lastUpdated,
+        wazeAlertCount: traffic.wazeAlerts.length,
+        congestedCount: traffic.summary.congestedSegments
+      }
     });
   } catch (err: any) {
-    logError("getUnifiedTrafficStatus failed", err.message);
-    res.status(500).json({ error: "Internal server error" });
+    logError("[TrafficController] getTrafficSummary failed", { error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+/**
+ * POST /traffic/refresh
+ * Manually refresh traffic cache
+ */
+export const refreshTraffic = async (_req: Request, res: Response) => {
+  try {
+    TrafficService.clearTrafficCache();
+    logInfo("[TrafficController] Traffic cache cleared");
+
+    res.json({
+      success: true,
+      message: "Traffic cache cleared. Next request will fetch fresh data."
+    });
+  } catch (err: any) {
+    logError("[TrafficController] refreshTraffic failed", { error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+/**
+ * GET /traffic/alerts?lat=&lng=&radius=
+ * Get Waze traffic alerts only
+ */
+export const getTrafficAlerts = async (req: Request, res: Response) => {
+  try {
+    const { lat, lng, radius } = req.query;
+
+    const traffic = await TrafficService.getTrafficData(
+      Number(lat) || 27.7172,
+      Number(lng) || 85.3240,
+      Number(radius) || 10
+    );
+
+    res.json({
+      success: true,
+      count: traffic.wazeAlerts.length,
+      data: traffic.wazeAlerts
+    });
+  } catch (err: any) {
+    logError("[TrafficController] getTrafficAlerts failed", { error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 };

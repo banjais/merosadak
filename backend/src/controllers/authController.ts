@@ -30,7 +30,7 @@ export const requestOTP = async (req: Request, res: Response) => {
 
     await OtpService.issueTelegramOTP(email, chatId);
 
-    logAuth(email, role, "OTP issued via Telegram");
+    logAuth("OTP issued via Telegram", { email, role });
 
     return res.json({
       success: true,
@@ -83,7 +83,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = await OtpService.generateSessionToken(email, role);
 
-    logAuth(email, role, "Login successful");
+    logAuth("Login successful", { email, role });
 
     return res.json({
       success: true,

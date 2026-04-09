@@ -7,13 +7,13 @@ import path from "path";
 import { CACHE_DIR } from "../config/paths.js";
 import { logInfo, logError } from "../logs/logs.js";
 import { withCache, clearCache } from "../services/cacheService.js";
-import { refreshPOICache } from "../services/poiService.ts";
-import { refreshWazeCache } from "../services/wazeService.ts";
-import { getWeather } from "../services/weatherService.ts";
-import { refreshRoadCache } from "../services/roadService.ts";
-import { refreshTrafficCache } from "../services/trafficService.ts";
-import { refreshAlertCache } from "../services/alertService.ts";
-import { refreshMonsoonCache } from "../services/monsoonService.ts";
+import { refreshPOICache } from "../services/poiService.js";
+import { refreshWazeCache } from "../services/wazeService.js";
+import { getWeather } from "../services/weatherService.js";
+import { refreshRoadCache } from "../services/roadService.js";
+import { refreshTrafficCache } from "../services/trafficService.js";
+import { refreshAlertCache } from "../services/alertService.js";
+import { refreshMonsoonCache } from "../services/monsoonService.js";
 
 // ANSI colors
 const C = {

@@ -1,6 +1,7 @@
 // backend/src/controllers/searchController.ts
 import { Request, Response } from "express";
 import { searchEntities, SearchResult } from "../services/searchService.js";
+import { logError } from "../logs/logs.js";
 
 /**
  * @route   GET /api/search
@@ -28,7 +29,7 @@ export const handleSearch = async (req: Request, res: Response) => {
       data: results
     });
   } catch (err: any) {
-    console.error("[SearchController] Error:", err);
+    logError("[SearchController] Search failed", { error: err.message, stack: err.stack });
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
