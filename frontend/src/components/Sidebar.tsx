@@ -1,18 +1,18 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { 
-  X, 
-  MessageSquare, 
-  Bell, 
-  Send, 
-  Navigation, 
-  AlertTriangle, 
-  Fuel, 
-  ChefHat, 
-  Stethoscope, 
-  TrafficCone as TrafficIcon, 
-  CloudRain, 
-  Ban, 
-  Settings, 
+import {
+  X,
+  MessageSquare,
+  Bell,
+  Send,
+  Navigation,
+  AlertTriangle,
+  Fuel,
+  ChefHat,
+  Stethoscope,
+  TrafficCone as TrafficIcon,
+  CloudRain,
+  Ban,
+  Settings,
   Zap,
   Camera,
   ShieldBan,
@@ -121,41 +121,59 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const baseClasses = `
-    absolute top-0 left-0 h-full z-[2000] shadow-[30px_0_60px_rgba(27,51,85,0.08)] transform transition-transform duration-300 ease-in-out
-    flex flex-col border-r bg-white/85 backdrop-blur-xl border-white/40
+    absolute top-0 left-0 h-full z-[1800] shadow-[30px_0_60px_rgba(27,51,85,0.08)] transform transition-transform duration-300 ease-in-out
+    flex flex-col border-r backdrop-blur-xl transition-colors duration-300
     w-full sm:w-80 md:w-96
     ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    ${isDarkMode
+      ? 'bg-slate-900/90 border-slate-700'
+      : 'bg-white/85 border-white/40'
+    }
   `;
 
   return (
     <div className={baseClasses}>
       {/* Header Tabs */}
-      <div className="flex items-center p-4 gap-2 border-b border-outline/10 shrink-0">
-        <button 
+      <div className={`flex items-center p-4 gap-2 border-b shrink-0 transition-colors ${isDarkMode ? 'border-slate-700' : 'border-outline/10'
+        }`}>
+        <button
           onClick={() => setActiveTab('alerts')}
-          className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl text-[10px] font-bold font-label transition-all ${activeTab === 'alerts' ? 'bg-gradient-to-br from-primary to-primary-dim text-white shadow-lg' : 'bg-surface-container-low text-on-surface-variant'}`}
+          className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl text-[10px] font-bold font-label transition-all ${activeTab === 'alerts'
+            ? 'bg-gradient-to-br from-primary to-primary-dim text-white shadow-lg'
+            : isDarkMode
+              ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              : 'bg-surface-container-low text-on-surface-variant'
+            }`}
         >
           <div className="flex items-center gap-2">
             <Bell className="w-3.5 h-3.5" />
             <span>{serviceType ? serviceType.toUpperCase() : 'SAFETY'}</span>
           </div>
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('chat')}
-          className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl text-[10px] font-bold font-label transition-all ${activeTab === 'chat' ? 'bg-gradient-to-br from-primary to-primary-dim text-white shadow-lg' : 'bg-surface-container-low text-on-surface-variant'}`}
+          className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl text-[10px] font-bold font-label transition-all ${activeTab === 'chat'
+            ? 'bg-gradient-to-br from-primary to-primary-dim text-white shadow-lg'
+            : isDarkMode
+              ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              : 'bg-surface-container-low text-on-surface-variant'
+            }`}
         >
           <div className="flex items-center gap-2">
             <MessageSquare className="w-3.5 h-3.5" />
             <span>AI CHAT</span>
           </div>
         </button>
-        <button onClick={onClose} className="p-2 hover:bg-surface-container-low rounded-lg text-on-surface-variant">
+        <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${isDarkMode
+          ? 'hover:bg-slate-800 text-slate-400'
+          : 'hover:bg-surface-container-low text-on-surface-variant'
+          }`}>
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Content Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 custom-scrollbar relative"
         onTouchStart={handleTouchStart}
@@ -163,27 +181,27 @@ const Sidebar: React.FC<SidebarProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         {/* Pull Indicator */}
-        <div 
+        <div
           className="absolute top-0 left-0 w-full flex justify-center overflow-hidden transition-all duration-200 pointer-events-none z-50"
           style={{ height: pullDistance + 'px', opacity: pullDistance / 60 }}
         >
           <div className="flex flex-col items-center justify-center gap-1">
-             <div className={`p-2 rounded-full bg-gradient-to-br from-primary to-tertiary text-white shadow-lg transition-transform ${pullDistance > 60 ? 'scale-110 rotate-180' : 'scale-100'}`}>
-                <AlertTriangle className="w-5 h-5 pointer-events-none" />
-             </div>
-             <span className="text-[10px] font-bold text-primary uppercase tracking-tighter font-label">
-                {pullDistance > 60 ? 'Release to Refresh' : 'Pull for Updates'}
-             </span>
+            <div className={`p-2 rounded-full bg-gradient-to-br from-primary to-tertiary text-white shadow-lg transition-transform ${pullDistance > 60 ? 'scale-110 rotate-180' : 'scale-100'}`}>
+              <AlertTriangle className="w-5 h-5 pointer-events-none" />
+            </div>
+            <span className="text-[10px] font-bold text-primary uppercase tracking-tighter font-label">
+              {pullDistance > 60 ? 'Release to Refresh' : 'Pull for Updates'}
+            </span>
           </div>
         </div>
 
         {/* Global Refreshing State */}
         {isRefreshing && (
           <div className="sticky top-0 left-0 w-full flex justify-center py-2 z-50 animate-in fade-in slide-in-from-top-4">
-             <div className="bg-gradient-to-br from-primary to-tertiary text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl font-label">
-                <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                Syncing Live...
-             </div>
+            <div className="bg-gradient-to-br from-primary to-tertiary text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl font-label">
+              <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+              Syncing Live...
+            </div>
           </div>
         )}
 
@@ -237,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {cat.icon}
                 </button>
               ))}
-              <button 
+              <button
                 onClick={() => onSelectService(null)}
                 className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-xl transition-all ${!serviceType ? 'bg-surface-container-high' : 'bg-surface-container-low text-on-surface-variant hover:text-error'}`}
               >
@@ -252,15 +270,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest font-label flex items-center gap-1.5">
                     <AlertTriangle size={12} /> Road Status Dashboard
                   </span>
-                  <button 
-                    onClick={() => onSelectService(null)} 
+                  <button
+                    onClick={() => onSelectService(null)}
                     className="text-[9px] font-bold text-on-surface-variant hover:text-error uppercase transition-colors font-label"
                   >
                     Clear
                   </button>
                 </div>
-                <RoadStatusDashboard 
-                  incidents={incidents} 
+                <RoadStatusDashboard
+                  incidents={incidents}
                   onSelectIncident={(incident) => onSelectIncident(incident)}
                 />
               </div>
@@ -270,30 +288,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {serviceType && (
                   <div className="flex items-center justify-between mb-2 bg-primary/5 p-2.5 rounded-xl border border-primary/10">
                     <span className="text-[10px] font-bold text-primary uppercase tracking-widest font-label">Showing {serviceType}</span>
-                    <button 
-                      onClick={() => onSelectService(null)} 
+                    <button
+                      onClick={() => onSelectService(null)}
                       className="text-[9px] font-bold text-on-surface-variant hover:text-error uppercase transition-colors font-label"
                     >
                       Clear
                     </button>
                   </div>
                 )}
-                
+
                 {(serviceType ? (serviceResults || []) : (incidents || [])).length === 0 ? (
                   <div className="text-center py-10 text-on-surface-variant/50 text-sm italic font-body">No active {serviceType || 'safety'} items found in this region</div>
                 ) : (
                   (serviceType ? serviceResults || [] : (incidents || [])).map((incident: any) => (
-                    <div 
-                      key={incident.id} 
+                    <div
+                      key={incident.id}
                       onClick={() => onSelectIncident(incident)}
                       className="p-4 rounded-[1.5rem] border border-outline/10 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group bg-surface-container-lowest shadow-sm hover:border-primary/40"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full font-label ${incident.severity==='high'?'bg-error/10 text-error':incident.severity==='medium'?'bg-amber-500/10 text-amber-600':incident.severity==='success'?'bg-secondary/10 text-secondary':'bg-secondary/10 text-secondary'}`}>
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full font-label ${incident.severity === 'high' ? 'bg-error/10 text-error' : incident.severity === 'medium' ? 'bg-amber-500/10 text-amber-600' : incident.severity === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-secondary/10 text-secondary'}`}>
                           {incident.status || incident.severity || 'Normal'}
                         </span>
                         <span className="text-[10px] text-on-surface-variant/40 font-mono italic">
-                          {incident.timestamp ? new Date(incident.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Live'}
+                          {incident.timestamp ? new Date(incident.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
                         </span>
                       </div>
                       <h4 className="text-sm font-headline font-bold text-primary mb-1 group-hover:text-primary-dim">
@@ -307,7 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <p className="text-xs text-on-surface-variant/70 line-clamp-2 leading-relaxed font-body">
                         {incident.description || incident.subtitle || 'Infrastructure detail for current region.'}
                       </p>
-                      
+
                       {/* Sheet data fields */}
                       <div className="mt-2 space-y-0.5">
                         {incident.incidentDistrict && (
@@ -353,7 +371,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           </div>
                         )}
                       </div>
-                      
+
                       {incident.distance && (
                         <div className="mt-3 pt-3 border-t border-outline/10 flex items-center gap-2 text-[10px] font-bold text-primary font-label">
                           <Navigation size={10} />
@@ -370,45 +388,45 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex flex-col h-full">
             {/* AI Personality Toggle */}
             <div className="mb-4 flex items-center justify-between px-1">
-               <button 
-                 onClick={() => setShowSettings(!showSettings)}
-                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold font-label transition-all ${showSettings ? 'bg-gradient-to-br from-primary to-primary-dim text-white' : 'bg-surface-container-low text-on-surface-variant'}`}
-               >
-                  <Settings size={12} className={showSettings ? 'animate-spin-slow' : ''} />
-                  <span>AI CONFIG</span>
-               </button>
-               {activePersona && (
-                 <div className="flex items-center gap-2 text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest italic font-label">
-                    Current: {activePersona}
-                 </div>
-               )}
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold font-label transition-all ${showSettings ? 'bg-gradient-to-br from-primary to-primary-dim text-white' : 'bg-surface-container-low text-on-surface-variant'}`}
+              >
+                <Settings size={12} className={showSettings ? 'animate-spin-slow' : ''} />
+                <span>AI CONFIG</span>
+              </button>
+              {activePersona && (
+                <div className="flex items-center gap-2 text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest italic font-label">
+                  Current: {activePersona}
+                </div>
+              )}
             </div>
 
             {showSettings && (
-               <div className="mb-6 p-3 bg-primary/5 rounded-2xl border border-primary/10 animate-in slide-in-from-top-2 duration-300">
-                  <div className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 flex items-center gap-2 font-label">
-                     <Zap size={12} /> Personality Mode
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                     {[
-                       { id: 'safety', label: 'Safety', desc: 'Alerts First' },
-                       { id: 'expert', label: 'Expert', desc: 'Route Pro' },
-                       { id: 'brief', label: 'Brief', desc: 'Action Only' }
-                     ].map(p => (
-                       <button
-                         key={p.id}
-                         onClick={() => {
-                            onPersonaChange(p.id);
-                            setShowSettings(false);
-                         }}
-                         className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${activePersona === p.id ? 'bg-white border-primary shadow-md scale-105' : 'border-transparent opacity-50 hover:opacity-100'}`}
-                       >
-                          <span className="text-[11px] font-bold text-primary leading-tight font-headline">{p.label}</span>
-                          <span className="text-[8px] text-on-surface-variant/60 leading-tight font-body">{p.desc}</span>
-                       </button>
-                     ))}
-                  </div>
-               </div>
+              <div className="mb-6 p-3 bg-primary/5 rounded-2xl border border-primary/10 animate-in slide-in-from-top-2 duration-300">
+                <div className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3 flex items-center gap-2 font-label">
+                  <Zap size={12} /> Personality Mode
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'safety', label: 'Safety', desc: 'Alerts First' },
+                    { id: 'expert', label: 'Expert', desc: 'Route Pro' },
+                    { id: 'brief', label: 'Brief', desc: 'Action Only' }
+                  ].map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        onPersonaChange(p.id);
+                        setShowSettings(false);
+                      }}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${activePersona === p.id ? 'bg-white border-primary shadow-md scale-105' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                    >
+                      <span className="text-[11px] font-bold text-primary leading-tight font-headline">{p.label}</span>
+                      <span className="text-[8px] text-on-surface-variant/60 leading-tight font-body">{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="flex-1 space-y-4">
@@ -426,13 +444,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ))}
               {isProcessing && (
-                 <div className="flex justify-start">
-                   <div className="bg-surface-container-low p-3 rounded-2xl rounded-bl-none flex gap-1">
-                     <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce"></span>
-                     <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce delay-75"></span>
-                     <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce delay-150"></span>
-                   </div>
-                 </div>
+                <div className="flex justify-start">
+                  <div className="bg-surface-container-low p-3 rounded-2xl rounded-bl-none flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce delay-75"></span>
+                    <span className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce delay-150"></span>
+                  </div>
+                </div>
               )}
               <div ref={chatEndRef} />
             </div>
@@ -444,14 +462,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       {activeTab === 'chat' && (
         <div className="p-4 border-t border-outline/10 bg-surface-container-low">
           <div className="flex gap-2">
-            <input 
+            <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               placeholder="Type your message..."
               className="flex-1 px-4 py-2.5 rounded-full text-xs outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest border border-outline/10 font-body text-on-surface"
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={!input.trim() || isProcessing}
               className="p-2.5 bg-gradient-to-br from-primary to-primary-dim disabled:opacity-50 text-white rounded-full hover:shadow-lg transition-all shadow-md shadow-primary/20"

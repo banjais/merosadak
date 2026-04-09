@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Phone, MapPin, Share2, X, AlertTriangle, Radio } from 'lucide-react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface SOSOverlayProps {
   isOpen: boolean;
@@ -10,6 +11,9 @@ interface SOSOverlayProps {
 export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLocation }) => {
   const [isSending, setIsSending] = useState(false);
   const [complete, setComplete] = useState(false);
+
+  // Close on Escape key
+  useEscapeKey(handleClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -36,12 +40,12 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
   ];
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[3500] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-red-950/80 backdrop-blur-xl animate-in fade-in duration-500" />
 
       <button
         onClick={handleClose}
-        className="absolute top-6 right-6 z-[5002] p-2 text-slate-500 hover:text-white transition-colors"
+        className="absolute top-6 right-6 z-[10] p-2 text-slate-500 hover:text-white transition-colors"
       >
         <X size={24} />
       </button>
@@ -97,7 +101,7 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
           ) : (
             <div className="animate-in slide-in-from-bottom-5 duration-500">
               <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                 <Radio size={32} className="text-emerald-500 animate-pulse" />
+                <Radio size={32} className="text-emerald-500 animate-pulse" />
               </div>
               <h3 className="text-xl font-black text-white uppercase mb-2">Signal Received</h3>
               <p className="text-slate-400 text-sm leading-relaxed mb-8">

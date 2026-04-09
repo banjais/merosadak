@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Globe, MoreVertical, Navigation, Sparkles, Zap } from 'lucide-react';
+import { Bell, Globe, MoreVertical, Navigation, Sparkles, Zap, ClipboardList } from 'lucide-react';
 import { useTranslation } from '../i18n';
 
 interface HeaderProps {
@@ -8,6 +8,8 @@ interface HeaderProps {
   onToggleMenu: () => void;
   onToggleSystemMenu: () => void;
   onOpenNotifications: () => void;
+  onToggleMyPlans?: () => void;
+  plansCount?: number;
   noticeCount?: number;
 }
 
@@ -20,7 +22,7 @@ const LANGUAGES = [
   { code: 'new', name: 'Newari', native: 'नेपाल भाषा', flag: '🇳🇵' },
 ];
 
-const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, noticeCount = 3 }) => {
+const Header: React.FC<HeaderProps> = ({ isDarkMode, onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, onToggleMyPlans, plansCount = 0, noticeCount = 3 }) => {
   const { language, setLanguage } = useTranslation();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [geoActive, setGeoActive] = useState(false);
@@ -32,22 +34,32 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
   }, []);
 
   return (
-    <header className="h-16 sm:h-20 bg-indigo-600 relative flex items-center justify-between px-4 sm:px-6 shadow-2xl z-[1001] border-b border-indigo-500/30">
+    <header className={`h-16 sm:h-20 relative flex items-center justify-between px-4 sm:px-6 shadow-2xl z-[800] border-b transition-colors duration-300 ${isDarkMode
+      ? 'bg-slate-800 border-slate-700'
+      : 'bg-indigo-600 border-indigo-500/30'
+      }`}>
 
       {/* Left: Branding & Menu */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMenu}
-          className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white"
+          className={`p-2 rounded-xl transition-all ${isDarkMode
+            ? 'bg-white/10 hover:bg-white/20 text-white'
+            : 'bg-white/10 hover:bg-white/20 text-white'
+            }`}
         >
           <Navigation className="w-5 h-5 rotate-90" />
         </button>
-        <div className="bg-white p-2 rounded-2xl shadow-lg ring-4 ring-white/10 shrink-0">
-          <Navigation className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 fill-current" />
+        <div className={`p-2 rounded-2xl shadow-lg ring-4 shrink-0 transition-colors ${isDarkMode
+          ? 'bg-slate-700 ring-white/10 text-indigo-400'
+          : 'bg-white ring-white/10 text-indigo-600'
+          }`}>
+          <Navigation className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="font-black tracking-tighter text-lg sm:text-2xl text-white leading-none truncate">MEROSADAK</h1>
+            <h1 className={`font-black tracking-tighter text-lg sm:text-2xl leading-none truncate transition-colors ${isDarkMode ? 'text-white' : 'text-white'
+              }`}>MEROSADAK</h1>
             {geoActive ? (
               <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.6)]" title="Location Active" />
             ) : (
@@ -55,8 +67,12 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] sm:text-[10px] font-bold text-indigo-100 uppercase tracking-widest opacity-80 hidden sm:block">Travel Safety Engine</span>
-            <span className="text-[10px] font-bold text-white/80 flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full">
+            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-80 hidden sm:block transition-colors ${isDarkMode ? 'text-slate-300' : 'text-indigo-100'
+              }`}>Travel Safety Engine</span>
+            <span className={`text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors ${isDarkMode
+              ? 'bg-white/10 text-white/80'
+              : 'bg-white/10 text-white/80'
+              }`}>
               {LANGUAGES.find(l => l.code === language)?.flag} {LANGUAGES.find(l => l.code === language)?.native}
             </span>
           </div>
@@ -79,7 +95,8 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
         <div className="relative">
           <button
             onClick={() => setShowLangMenu(!showLangMenu)}
-            className="flex items-center gap-1 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
+            className={`flex items-center gap-1 p-1.5 sm:p-2 rounded-xl text-white transition-all ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'
+              }`}
           >
             <Globe size={18} className="sm:w-[20px] sm:h-[20px]" />
             <span className="text-[10px] sm:text-xs font-bold uppercase hidden sm:block">
@@ -88,29 +105,55 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
           </button>
 
           {showLangMenu && (
-            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1 min-w-[180px] z-[1100]">
+            <div className={`absolute right-0 top-full mt-2 rounded-xl shadow-2xl border py-1 min-w-[180px] z-[900] transition-colors ${isDarkMode
+              ? 'bg-slate-800 border-slate-700'
+              : 'bg-white border-gray-100'
+              }`}>
               {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => { setLanguage(lang.code as any); setShowLangMenu(false); }}
-                  className={`w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 transition-colors flex items-center gap-2 ${language === lang.code ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'
+                  className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${language === lang.code
+                    ? isDarkMode
+                      ? 'bg-indigo-900/50 text-indigo-300 font-semibold'
+                      : 'bg-indigo-100 text-indigo-700 font-semibold'
+                    : isDarkMode
+                      ? 'text-slate-200 hover:bg-slate-700'
+                      : 'text-gray-700 hover:bg-indigo-50'
                     }`}
                 >
                   <span className="text-lg">{lang.flag}</span>
                   <span className="font-medium">{lang.native}</span>
-                  <span className="text-xs text-gray-400 ml-auto">{lang.name}</span>
+                  <span className={`text-xs ml-auto ${isDarkMode ? 'text-slate-400' : 'text-gray-400'
+                    }`}>{lang.name}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
+        {/* My Plans Badge */}
+        {onToggleMyPlans && plansCount > 0 && (
+          <button
+            onClick={onToggleMyPlans}
+            className="relative p-2 sm:p-2.5 rounded-xl text-white transition-all bg-white/10 hover:bg-white/20"
+            title="My Travel Plans"
+          >
+            <ClipboardList size={20} className="sm:w-[22px] sm:h-[22px]" />
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 border-2 border-indigo-600 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg">
+              {plansCount}
+            </span>
+          </button>
+        )}
+
         <div className="relative group cursor-pointer" onClick={onOpenNotifications}>
-          <div className="p-2 sm:p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all">
+          <div className={`p-2 sm:p-2.5 rounded-xl text-white transition-all ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'
+            }`}>
             <Bell size={20} className="sm:w-[22px] sm:h-[22px]" />
           </div>
           {noticeCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 border-2 border-indigo-600 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg">
+            <span className={`absolute -top-1 -right-1 w-5 h-5 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg ${isDarkMode ? 'bg-red-500 border-2 border-slate-800' : 'bg-red-500 border-2 border-indigo-600'
+              }`}>
               {noticeCount}
             </span>
           )}
@@ -118,7 +161,8 @@ const Header: React.FC<HeaderProps> = ({ onTogglePilot, onToggleMenu, onToggleSy
 
         <button
           onClick={onToggleSystemMenu}
-          className="p-2 sm:p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
+          className={`p-2 sm:p-2.5 rounded-xl text-white transition-all ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'
+            }`}
         >
           <MoreVertical size={20} className="sm:w-[22px] sm:h-[22px]" />
         </button>

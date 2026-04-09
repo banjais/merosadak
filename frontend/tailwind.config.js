@@ -8,6 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Light mode colors (Material Design 3)
         "surface-bright": "#f9f9ff",
         "on-secondary": "#eaffe2",
         "primary-fixed": "#91c5ff",
@@ -59,21 +60,6 @@ export default {
         "on-error": "#fff7f6",
         "surface-container": "#e7eeff",
         "surface-container-high": "#dfe8ff",
-      },
-      fontFamily: {
-        "headline": ["Plus Jakarta Sans", "sans-serif"],
-        "body": ["Manrope", "sans-serif"],
-        "label": ["Manrope", "sans-serif"],
-      },
-      borderRadius: {
-        "DEFAULT": "0.25rem",
-        "lg": "0.5rem",
-        "xl": "0.75rem",
-        "2xl": "1rem",
-        "3xl": "1.5rem",
-        "4xl": "2rem",
-        "5xl": "2.5rem",
-        "full": "9999px",
       },
     },
   },

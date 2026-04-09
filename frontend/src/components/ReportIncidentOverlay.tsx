@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, Camera, MapPin, Send, Loader2 } from 'lucide-react';
 import { apiFetch } from '../api';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface ReportIncidentOverlayProps {
   isOpen: boolean;
@@ -32,6 +33,9 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
   const [useCurrentLocation, setUseCurrentLocation] = useState(!!location);
   const [manualLat, setManualLat] = useState(location?.lat?.toString() || '');
   const [manualLng, setManualLng] = useState(location?.lng?.toString() || '');
+
+  // Close on Escape key
+  useEscapeKey(handleClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -78,9 +82,9 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={handleClose}
       />
@@ -114,11 +118,10 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
-                  selectedType === type.id
-                    ? `${type.color} border-transparent text-white shadow-lg scale-105`
-                    : 'border-outline/20 bg-surface-container-low text-on-surface hover:border-primary/40'
-                }`}
+                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${selectedType === type.id
+                  ? `${type.color} border-transparent text-white shadow-lg scale-105`
+                  : 'border-outline/20 bg-surface-container-low text-on-surface hover:border-primary/40'
+                  }`}
               >
                 <span className="text-2xl">{type.icon}</span>
                 <span className="text-[10px] font-bold text-center">{type.label}</span>
@@ -144,14 +147,13 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
         {/* Location */}
         <div className="mb-6">
           <label className="text-sm font-bold text-on-surface mb-3 block">Location</label>
-          
+
           <button
             onClick={() => setUseCurrentLocation(!useCurrentLocation)}
-            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all mb-3 ${
-              useCurrentLocation
-                ? 'border-primary bg-primary/5'
-                : 'border-outline/20 bg-surface-container-low hover:border-primary/40'
-            }`}
+            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all mb-3 ${useCurrentLocation
+              ? 'border-primary bg-primary/5'
+              : 'border-outline/20 bg-surface-container-low hover:border-primary/40'
+              }`}
           >
             <MapPin size={20} className={useCurrentLocation ? 'text-primary' : 'text-on-surface-variant'} />
             <div className="flex-1 text-left">
@@ -164,9 +166,8 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
                 </div>
               )}
             </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-              useCurrentLocation ? 'border-primary bg-primary' : 'border-outline/40'
-            }`}>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useCurrentLocation ? 'border-primary bg-primary' : 'border-outline/40'
+              }`}>
               {useCurrentLocation && <div className="w-2 h-2 rounded-full bg-white" />}
             </div>
           </button>

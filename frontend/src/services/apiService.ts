@@ -56,13 +56,13 @@ export const alertService = {
       alertListeners = alertListeners.filter(l => l !== listener);
     };
   },
-  
+
   notify: (type: AppAlert['type'], message: string, duration = 4000) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newAlert: AppAlert = { id, type, message, duration };
     currentAlerts = [...currentAlerts, newAlert];
     alertListeners.forEach(l => l(currentAlerts));
-    
+
     if (duration > 0) {
       setTimeout(() => {
         alertService.dismiss(id);
@@ -210,18 +210,18 @@ export const api = {
     const result = await apiFetch<any>(`/pois?q=hospital&lat=${qLat}&lng=${qLng}`);
     const features = Array.isArray(result) ? result : (result.features || []);
     return features.map((f: any) => {
-       const p = f.properties || {};
-       return {
-         id: f.id || Math.random(),
-         type: IncidentType.POI,
-         title: p.name || "Point of Interest",
-         source: f.source || 'community', // Source added
-         description: p.amenity || p.category || "Service point",
-         lat: f.geometry?.coordinates?.[1] || 0,
-         lng: f.geometry?.coordinates?.[0] || 0,
-         severity: 'success',
-         timestamp: new Date().toISOString()
-       };
+      const p = f.properties || {};
+      return {
+        id: f.id || Math.random(),
+        type: IncidentType.POI,
+        title: p.name || "Point of Interest",
+        source: f.source || 'community', // Source added
+        description: p.amenity || p.category || "Service point",
+        lat: f.geometry?.coordinates?.[1] || 0,
+        lng: f.geometry?.coordinates?.[0] || 0,
+        severity: 'success',
+        timestamp: new Date().toISOString()
+      };
     }).filter((i: any) => i.lat !== 0);
   },
   getTraffic: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
@@ -289,11 +289,21 @@ export const api = {
       hasExactLocation: a.extra?.hasExactLocation || false, // Flag for exact location availability
     })).filter((i: TravelIncident) => i.lat !== undefined || i.road_refno); // Keep alerts with road_refno even if no coordinates
   },
-  getHighwayList: async (): Promise<Array<{code: string, file: string, name?: string}>> => {
-    const result = await apiFetch<any>('/highways');
-    return result.data || [];
+  getHighwayList: async (): Promise<Array<{ code: string, file: string, name?: string }>> => {
+    try {
+      const result = await apiFetch<any>('/highways');
+      return result.data || [];
+    } catch (err) {
+      console.error('Failed to load highway list:', err);
+      throw err; // Re-throw so caller can handle
+    }
   },
   getHighwayByCode: async (code: string): Promise<GeoData | null> => {
+    if (!code || code.trim() === '') {
+      console.warn('getHighwayByCode called with empty code');
+      return null;
+    }
+
     try {
       const result = await apiFetch<any>(`/highways/${code}`);
       return result.data || null;
@@ -316,7 +326,7 @@ export const authService = {
     const saved = localStorage.getItem(USER_KEY);
     return saved ? JSON.parse(saved) : null;
   },
-  
+
   login: async (phone: string, name: string): Promise<any> => {
     try {
       const user = await apiFetch<any>("/auth", {

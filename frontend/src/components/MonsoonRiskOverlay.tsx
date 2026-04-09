@@ -6,16 +6,17 @@ import { TravelIncident } from '../types';
 
 interface MonsoonRiskOverlayProps {
   incidents: TravelIncident[];
+  isDarkMode?: boolean;
 }
 
-export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incidents }) => {
+export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incidents = [], isDarkMode = false }) => {
   // Filter only monsoon-related incidents with coordinates
   const monsoonIncidents = (incidents || []).filter(i =>
     (i.type?.toUpperCase().includes('MONSOON') ||
-    i.title?.toUpperCase().includes('MONSOON') ||
-    i.title?.toUpperCase().includes('RAIN') ||
-    i.title?.toUpperCase().includes('FLOOD') ||
-    i.title?.toUpperCase().includes('LANDSLIDE')) &&
+      i.title?.toUpperCase().includes('MONSOON') ||
+      i.title?.toUpperCase().includes('RAIN') ||
+      i.title?.toUpperCase().includes('FLOOD') ||
+      i.title?.toUpperCase().includes('LANDSLIDE')) &&
     i.lat !== undefined && i.lng !== undefined
   );
 
@@ -47,7 +48,7 @@ export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incident
 
             {/* Custom Monsoon Marker */}
             <Marker
-              position={[i.lat!, i.lng!]} 
+              position={[i.lat!, i.lng!]}
               icon={L.divIcon({
                 className: 'monsoon-risk-icon',
                 html: `

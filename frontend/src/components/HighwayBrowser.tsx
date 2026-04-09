@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useHighways } from '../hooks/useHighways';
 import { useNepalData } from '../hooks/useNepalData';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface HighwayBrowserProps {
   isOpen: boolean;
@@ -27,9 +28,12 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({
   onSelectHighway,
   incidents = []
 }) => {
-  const { highwayList, isLoadingList } = useHighways();
+  const { highwayList, isLoadingList, listError } = useHighways();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'clear' | 'issues'>('all');
+
+  // Close on Escape key
+  useEscapeKey(onClose, isOpen);
 
   // Calculate highway status based on incidents
   const highwayStatuses = useMemo(() => {
@@ -56,12 +60,12 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({
   const filteredHighways = useMemo(() => {
     return highwayList.filter(highway => {
       const matchesSearch = highway.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (highway.name && highway.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        (highway.name && highway.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const status = highwayStatuses[highway.code];
       const matchesStatus = statusFilter === 'all' ||
-                           (statusFilter === 'clear' && status?.status === 'clear') ||
-                           (statusFilter === 'issues' && status?.status === 'issues');
+        (statusFilter === 'clear' && status?.status === 'clear') ||
+        (statusFilter === 'issues' && status?.status === 'issues');
 
       return matchesSearch && matchesStatus;
     });
@@ -128,11 +132,10 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({
                 <button
                   key={filter.id}
                   onClick={() => setStatusFilter(filter.id as any)}
-                  className={`px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
-                    statusFilter === filter.id
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-surface-container-low border border-outline/20 text-on-surface-variant hover:bg-primary/10'
-                  }`}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${statusFilter === filter.id
+                    ? 'bg-primary text-white shadow-lg'
+                    : 'bg-surface-container-low border border-outline/20 text-on-surface-variant hover:bg-primary/10'
+                    }`}
                 >
                   {filter.label} ({filter.count})
                 </button>
@@ -147,6 +150,18 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="ml-3 text-on-surface-variant">Loading highways...</span>
+            </div>
+          ) : listError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <AlertTriangle size={48} className="text-error mb-4" />
+              <p className="text-on-surface font-bold mb-2">Failed to load highways</p>
+              <p className="text-on-surface-variant text-sm mb-4">{listError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+              >
+                Retry
+              </button>
             </div>
           ) : filteredHighways.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

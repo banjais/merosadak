@@ -22,15 +22,17 @@ interface FloatingMenuProps {
   onTogglePilot?: () => void; // Driver mode toggle
   activeService: string | null;
   incidents?: TravelIncident[];
+  isDarkMode?: boolean;
 }
 
-export const FloatingMenu: React.FC<FloatingMenuProps> = ({ 
-  onServiceSelect, 
-  onOpenCalculator, 
+export const FloatingMenu: React.FC<FloatingMenuProps> = ({
+  onServiceSelect,
+  onOpenCalculator,
   onOpenReport,
   onTogglePilot,
-  activeService, 
-  incidents = [] 
+  activeService,
+  incidents = [],
+  isDarkMode = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -76,8 +78,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
   };
 
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 lg:bottom-10 lg:right-40 z-[2000] flex flex-row-reverse items-end gap-2 pointer-events-none">
-      
+    <div className="fixed bottom-20 right-4 md:bottom-24 md:right-6 lg:bottom-10 lg:right-40 z-[1200] flex flex-row-reverse items-end gap-2 pointer-events-none">
+
       {/* Main FAB Button */}
       <div className="pointer-events-auto flex-shrink-0">
         <button
@@ -96,11 +98,12 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
             <button
               key={s.id}
               onClick={() => handleServiceClick(s.id)}
-              className={`relative flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all flex-shrink-0 ${
-                isActive
-                  ? `${s.color} text-white shadow-lg scale-105 md:scale-110`
+              className={`relative flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all flex-shrink-0 ${isActive
+                ? `${s.color} text-white shadow-lg scale-105 md:scale-110`
+                : isDarkMode
+                  ? 'bg-slate-900/80 backdrop-blur-xl border border-slate-700/40 text-slate-400 hover:bg-slate-700/50 hover:text-primary'
                   : 'bg-white/80 backdrop-blur-xl border border-white/40 text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-              }`}
+                }`}
               title={s.label}
               style={{ transitionDelay: isOpen ? `${i * 30}ms` : '0ms' }}
             >
@@ -129,7 +132,10 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
 
         <button
           onClick={() => { onOpenCalculator(); setIsOpen(false); }}
-          className="flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all bg-white/80 backdrop-blur-xl border border-white/40 text-on-surface-variant hover:bg-primary/10 hover:text-primary flex-shrink-0"
+          className={`flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all backdrop-blur-xl border flex-shrink-0 ${isDarkMode
+            ? 'bg-slate-900/80 border-slate-700/40 text-slate-400 hover:bg-slate-700/50 hover:text-primary'
+            : 'bg-white/80 border-white/40 text-on-surface-variant hover:bg-primary/10 hover:text-primary'
+            }`}
           title="Measure Distance"
         >
           <Ruler size={16} className="md:w-5 md:h-5" />

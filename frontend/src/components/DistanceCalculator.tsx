@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Ruler, X, MapPin, Navigation } from 'lucide-react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface DistanceCalculatorProps {
   onClose: () => void;
@@ -10,16 +11,19 @@ interface DistanceCalculatorProps {
 export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose, points, clearPoints }) => {
   const [distance, setDistance] = useState<number | null>(null);
 
+  // Close on Escape key
+  useEscapeKey(onClose);
+
   // Haversine Formula
-  const calculateDistance = (p1: {lat: number, lng: number}, p2: {lat: number, lng: number}) => {
+  const calculateDistance = (p1: { lat: number, lng: number }, p2: { lat: number, lng: number }) => {
     const R = 6371; // Earth's radius in km
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
     const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * 
-      Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
@@ -27,7 +31,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
     if (points.length >= 2) {
       let total = 0;
       for (let i = 0; i < points.length - 1; i++) {
-        total += calculateDistance(points[i], points[i+1]);
+        total += calculateDistance(points[i], points[i + 1]);
       }
       setDistance(total);
     } else {
@@ -67,7 +71,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
                     <MapPin size={10} className="text-indigo-400" />
                     <span className="font-mono text-slate-300">{p.lat.toFixed(4)}, {p.lng.toFixed(4)}</span>
                   </div>
-                  <span className="text-[8px] bg-indigo-500 text-white px-1.5 py-0.5 rounded">P{i+1}</span>
+                  <span className="text-[8px] bg-indigo-500 text-white px-1.5 py-0.5 rounded">P{i + 1}</span>
                 </div>
               ))
             )}
@@ -75,7 +79,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
         </div>
 
         {points.length > 0 && (
-          <button 
+          <button
             onClick={clearPoints}
             className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-red-500/20"
           >
@@ -85,10 +89,10 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
       </div>
 
       <div className="mt-6 flex items-center gap-3 p-3 bg-indigo-600/10 rounded-2xl border border-indigo-500/20">
-         <Navigation size={16} className="text-indigo-500" />
-         <span className="text-[10px] font-bold text-indigo-100/70 leading-tight tracking-wide">
-            Points are connected in sequence. Distances are calculated using standard geodesic curves.
-         </span>
+        <Navigation size={16} className="text-indigo-500" />
+        <span className="text-[10px] font-bold text-indigo-100/70 leading-tight tracking-wide">
+          Points are connected in sequence. Distances are calculated using standard geodesic curves.
+        </span>
       </div>
     </div>
   );

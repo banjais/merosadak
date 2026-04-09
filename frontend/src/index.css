@@ -17,6 +17,13 @@ body,
 body {
   background-color: #f9f9ff;
   font-family: 'Manrope', sans-serif;
+  transition: background-color 300ms, color 300ms;
+}
+
+/* Dark mode body styles */
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
 }
 
 /* Ensure Leaflet takes full space and matches theme */
@@ -25,6 +32,12 @@ body {
   width: 100% !important;
   background-color: #f0f3ff !important;
   outline: none;
+  transition: background-color 300ms;
+}
+
+/* Dark mode Leaflet */
+.dark .leaflet-container {
+  background-color: #1e293b !important;
 }
 
 /* 🟢 Smooth transitions for theme switching */
@@ -93,11 +106,22 @@ body {
   background: rgba(214, 227, 255, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: background 300ms, border-color 300ms;
+}
+
+.dark .glass-pilot {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glass-card {
   background: rgba(214, 227, 255, 0.7);
   backdrop-filter: blur(20px);
+  transition: background 300ms;
+}
+
+.dark .glass-card {
+  background: rgba(30, 41, 59, 0.7);
 }
 
 .neon-border-indigo {

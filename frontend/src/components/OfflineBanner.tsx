@@ -7,7 +7,7 @@ interface OfflineBannerProps {
 
 export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onDownloadMap }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white px-4 py-3 shadow-lg animate-slide-down">
+    <div className="fixed top-0 left-0 right-0 z-[9998] bg-red-600 text-white px-4 py-3 shadow-lg animate-slide-down">
       <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <WifiOff size={18} className="animate-pulse" />

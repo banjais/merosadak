@@ -1,104 +1,116 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-type MessageData = any;
+interface WebSocketMessage {
+  type: string;
+  dataType?: string;
+  message?: string;
+  timestamp?: string;
+  level?: string;
+  [key: string]: any;
+}
 
-export const useWebSocket = (url: string = 'ws://localhost:8080') => {
+interface UseWebSocketReturn {
+  isConnected: boolean;
+  lastMessage: WebSocketMessage | null;
+  messageCount: number;
+  sendMessage: (data: any) => void;
+  reconnect: () => void;
+}
+
+export function useWebSocket(url: string, autoConnect: boolean = true): UseWebSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<MessageData[]>([]);
+  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeout = useRef<number | null>(null);
-  const connectAttemptRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Safe browser check
-  const isBrowser = typeof window !== 'undefined';
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-  useEffect(() => {
-    if (!isBrowser) return;
+    try {
+      // Convert http/https to ws/wss
+      const wsUrl = url
+        .replace('http://', 'ws://')
+        .replace('https://', 'wss://')
+        .replace(/\/$/, '') + '/ws/live';
 
-    let isMounted = true;
-    const attemptId = ++connectAttemptRef.current;
-
-    const cleanup = () => {
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-        reconnectTimeout.current = null;
-      }
-      const ws = wsRef.current;
-      if (ws) {
-        wsRef.current = null;
-        ws.onopen = null;
-        ws.onclose = null;
-        ws.onerror = null;
-        ws.onmessage = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-          ws.close();
-        }
-      }
-    };
-
-    const connect = () => {
-      if (!isMounted || connectAttemptRef.current !== attemptId) return;
-
-      cleanup();
-
-      let ws: WebSocket;
-      try {
-        ws = new WebSocket(url);
-      } catch (err) {
-        console.warn('[WebSocket] Failed to create connection, retrying in 3s...');
-        reconnectTimeout.current = window.setTimeout(connect, 3000);
-        return;
-      }
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (!isMounted || connectAttemptRef.current !== attemptId) {
-          ws.close();
-          return;
-        }
-        setIsConnected(true);
         console.log('[WebSocket] Connected');
-      };
-
-      ws.onclose = () => {
-        if (!isMounted || connectAttemptRef.current !== attemptId) return;
-        setIsConnected(false);
-        console.log('[WebSocket] Disconnected, retrying in 3s...');
-        reconnectTimeout.current = window.setTimeout(connect, 3000);
-      };
-
-      ws.onerror = () => {
-        // Error events are normal when server is unavailable; don't log verbosely
+        setIsConnected(true);
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
       };
 
       ws.onmessage = (event) => {
-        if (!isMounted || connectAttemptRef.current !== attemptId) return;
         try {
           const data = JSON.parse(event.data);
-          setMessages((prev) => [...prev, data]);
-        } catch {
-          console.warn('[WebSocket] Non-JSON message:', event.data);
+          setLastMessage(data);
+          setMessageCount(prev => prev + 1);
+        } catch (err) {
+          console.error('[WebSocket] Failed to parse message:', err);
         }
       };
-    };
 
-    // Small delay to avoid React StrictMode double-mount race
-    const delayTimer = window.setTimeout(connect, 50);
+      ws.onclose = () => {
+        console.log('[WebSocket] Disconnected');
+        setIsConnected(false);
+        // Auto-reconnect after 5 seconds
+        reconnectTimeoutRef.current = setTimeout(connect, 5000);
+      };
 
-    return () => {
-      isMounted = false;
-      clearTimeout(delayTimer);
-      cleanup();
-    };
-  }, [url, isBrowser]);
+      ws.onerror = (error) => {
+        console.error('[WebSocket] Error:', error);
+        ws.close();
+      };
+    } catch (err) {
+      console.error('[WebSocket] Connection failed:', err);
+      // Retry after 5 seconds
+      reconnectTimeoutRef.current = setTimeout(connect, 5000);
+    }
+  }, [url]);
+
+  const disconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    setIsConnected(false);
+  }, []);
+
+  const reconnect = useCallback(() => {
+    disconnect();
+    connect();
+  }, [disconnect, connect]);
 
   const sendMessage = useCallback((data: any) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
     } else {
-      console.warn('[WebSocket] Cannot send, connection not open');
+      console.warn('[WebSocket] Not connected, cannot send message');
     }
   }, []);
 
-  return { isConnected, messages, sendMessage };
-};
+  useEffect(() => {
+    if (autoConnect) {
+      connect();
+    }
+    return () => disconnect();
+  }, [autoConnect, connect, disconnect]);
+
+  return {
+    isConnected,
+    lastMessage,
+    messageCount,
+    sendMessage,
+    reconnect
+  };
+}
