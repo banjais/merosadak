@@ -1,0 +1,11 @@
+name = "merosadak-backend"
+main = "cloudflare/cf-worker.js"
+compatibility_date = "2026-04-10"
+
+[vars]
+FIREBASE_BACKEND = "https://sadaksathi.web.app"
+RENDER_BACKEND = "https://sadaksathi.onrender.com"
+
+# Scheduled trigger for health checks (every 30 minutes)
+[triggers]
+crons = ["*/30 * * * *"]
