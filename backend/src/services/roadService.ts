@@ -18,7 +18,7 @@ export interface RoadSegment {
   chainageEnd?: number;
   geometry: GeoJSON.LineString | GeoJSON.Point;
   status: "Blocked" | "One-Lane" | "Resumed";
-  source: "highway" | "sheet" | "overpass";
+  source: "highway" | "sheet" | "overpass" | "Department of Roads";
   properties: {
     road_refno?: string;
     road_name?: string;
