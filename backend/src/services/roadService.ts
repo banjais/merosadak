@@ -42,6 +42,12 @@ const STATUS_NORMALIZE: Record<string, string> = {
   "Resumed": ROAD_STATUS.RESUMED,
   "resumed": ROAD_STATUS.RESUMED,
   "RESUMED": ROAD_STATUS.RESUMED,
+  "Open": ROAD_STATUS.RESUMED,
+  "open": ROAD_STATUS.RESUMED,
+  "Clear": ROAD_STATUS.RESUMED,
+  "clear": ROAD_STATUS.RESUMED,
+  "Normal": ROAD_STATUS.RESUMED,
+  "normal": ROAD_STATUS.RESUMED,
 };
 
 /**
@@ -49,6 +55,10 @@ const STATUS_NORMALIZE: Record<string, string> = {
  */
 async function fetchSheetIncidents(): Promise<any[]> {
   try {
+    if (!GAS_URL) {
+      logInfo("[RoadService] GAS_URL not set, skipping sheet fetch");
+      return [];
+    }
     const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
     const res = await axios.get(gasUrl, { timeout: 15000, maxRedirects: 5 });
     const data = res.data?.data || [];

@@ -163,5 +163,82 @@
     "weatherConditions": "Clouds",
     "temperature": 20.15,
     "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:29:37.101Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:30:54.976Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:32:12.850Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:33:31.927Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:34:52.169Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:36:12.631Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  },
+  {
+    "timestamp": "2026-04-10T12:39:19.084Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 19.15,
+    "incidentsCount": 4
   }
 ]

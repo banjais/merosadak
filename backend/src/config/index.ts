@@ -25,6 +25,15 @@ if (isProduction && !jwtSecret) {
   process.exit(1);
 }
 
+// Helper to parse boolean from string (dotenv quirk)
+const boolSchema = z.preprocess((val) => {
+  if (typeof val === "string") {
+    if (val.toLocaleLowerCase() === "true") return true;
+    if (val.toLocaleLowerCase() === "false") return false;
+  }
+  return val;
+}, z.boolean());
+
 // -----------------------------
 // Environment Schema
 // -----------------------------
@@ -147,18 +156,22 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().optional(),
 
   // WebSocket
-  WS_ENABLED: z.union([z.boolean(), z.string()]).optional(),
-  WS_PORT: z.coerce.number().optional(),
+  WS_ENABLED: boolSchema.default(true),
+  WS_PORT: z.coerce.number().default(8080),
+
+  // Web Push
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
 
   // Feature Flags
-  FORCE_FETCH: z.union([z.boolean(), z.string()]).optional(),
-  DEFAULT_LANGUAGE: z.string().optional(),
-  ENABLE_3D_MODE: z.union([z.boolean(), z.string()]).optional(),
-  SHOW_DEV_PANEL: z.union([z.boolean(), z.string()]).optional(),
-  MASTER_UPDATE_INTERVAL_MS: z.coerce.number().optional(),
+  FORCE_FETCH: boolSchema.default(false),
+  DEFAULT_LANGUAGE: z.string().default("en"),
+  ENABLE_3D_MODE: boolSchema.default(false),
+  SHOW_DEV_PANEL: boolSchema.default(false),
+  MASTER_UPDATE_INTERVAL_MS: z.coerce.number().default(300000),
 
   // Mock data
-  USE_MOCK: z.union([z.boolean(), z.string()]).optional(),
+  USE_MOCK: boolSchema.default(false),
 
   // Paths (driven by .env)
   DATA_DIR: z.string().default("data"),
@@ -227,7 +240,7 @@ export const HEADER_REMARKS = config.HEADER_REMARKS || "Remarks";
 // Status Values
 // -----------------------------
 export const STATUS_BLOCKED = config.STATUS_BLOCKED || "Blocked";
-export const STATUS_ONE_LANE = config.STATUS_ONE_LANE || "One Lane";
+export const STATUS_ONE_LANE = config.STATUS_ONE_LANE || "One-Lane";
 export const STATUS_RESUMED = config.STATUS_RESUMED || "Resumed";
 
 // -----------------------------
@@ -356,6 +369,8 @@ export const DEFAULT_LANGUAGE = config.DEFAULT_LANGUAGE || "en";
 export const ENABLE_3D_MODE = config.ENABLE_3D_MODE ?? false;
 export const SHOW_DEV_PANEL = config.SHOW_DEV_PANEL ?? false;
 export const MASTER_UPDATE_INTERVAL_MS = config.MASTER_UPDATE_INTERVAL_MS ?? 300000;
+export const VAPID_PUBLIC_KEY = config.VAPID_PUBLIC_KEY || "";
+export const VAPID_PRIVATE_KEY = config.VAPID_PRIVATE_KEY || "";
 
 // -----------------------------
 // Mock data

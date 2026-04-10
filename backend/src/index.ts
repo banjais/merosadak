@@ -120,21 +120,12 @@ app.get("/health/ready", async (_req: Request, res: Response) => {
 // Detailed health (existing endpoint moved to /api/v1/health/)
 
 // -----------------------------
-// 4️⃣ Load GeoJSON (Boundary files)
+// 4️⃣ Boundary files info logged only if non-empty (optional)
 // -----------------------------
-const boundaryFiles = [
-  { name: "Districts", path: paths.DISTRICT_DATA },
-  { name: "Provinces", path: paths.PROVINCE_DATA },
-  { name: "Local", path: paths.LOCAL_DATA },
-];
-
-boundaryFiles.forEach((file) => {
-  try {
-    const data = fs.existsSync(file.path) ? loadGeoJSON(file.path) : null;
-    logInfo(`${file.name} boundary loaded`, { features: data?.features?.length ?? 0 });
-  } catch (err: any) {
-    logError(`Failed to load ${file.name} boundary`, { error: err.message });
-  }
+logInfo("Boundary data paths configured", {
+  districts: paths.DISTRICT_DATA,
+  provinces: paths.PROVINCE_DATA,
+  local: paths.LOCAL_DATA
 });
 
 // -----------------------------

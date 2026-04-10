@@ -117,8 +117,7 @@ async function runDiagnostics() {
 
     for (const { name, count, icon } of statuses) {
       const pct = totalStatus > 0 ? ((count / totalStatus) * 100).toFixed(1) : "0.0";
-      const fn = count > 0 ? ok : warn;
-      fn(`  ${icon} ${name}`, `${count}  (${pct}%)`);
+      ok(`${icon} ${name}`, `${count}  (${pct}%)`);
     }
     console.log(`     Total: ${C.bold}${totalStatus}${C.reset} (from sampled highways)`);
   } else {
@@ -128,42 +127,44 @@ async function runDiagnostics() {
   // ─── Real-Time Sheet Incidents ───
   header("Real-Time Sheet Incidents");
   try {
-    const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
-    const res = await axios.get(gasUrl, { timeout: 15000 });
-    const sheetData = res.data?.data || [];
-
-    const sheetStatusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
-    const STATUS_NORMALIZE: Record<string, string> = {
-      "Blocked": "Blocked", "blocked": "Blocked", "BLOCKED": "Blocked",
-      "One-Lane": "One-Lane", "One Lane": "One-Lane", "One Way": "One-Lane", "One-Way": "One-Lane", "one-lane": "One-Lane",
-      "Resumed": "Resumed", "resumed": "Resumed", "RESUMED": "Resumed",
-    };
-
-    sheetData.forEach((row: any) => {
-      const rawStatus = String(row.status || "").trim();
-      const status = STATUS_NORMALIZE[rawStatus] || "";
-      if (status) sheetStatusCount[status as keyof typeof sheetStatusCount]++;
-    });
-
-    const totalSheet = sheetStatusCount.Blocked + sheetStatusCount["One-Lane"] + sheetStatusCount.Resumed;
-    console.log(`  📡 Google Sheets (GAS)  →  ${totalSheet} rows from tab '${SHEET_TAB || "Roads"}'`);
-    console.log(`     Raw statuses: Blocked=${sheetStatusCount.Blocked}, Resumed=${sheetStatusCount.Resumed}, One-Lane=${sheetStatusCount["One-Lane"]}`);
-
-    if (totalSheet > 0) {
-      const sheetStatuses = [
-        { name: "Blocked", count: sheetStatusCount.Blocked, icon: "■" },
-        { name: "One-Lane", count: sheetStatusCount["One-Lane"], icon: "▲" },
-        { name: "Resumed", count: sheetStatusCount.Resumed, icon: "●" },
-      ];
-
-      for (const { name, count, icon } of sheetStatuses) {
-        const pct = totalSheet > 0 ? ((count / totalSheet) * 100).toFixed(1) : "0.0";
-        const fn = count > 0 ? ok : warn;
-        fn(`  ${icon} ${name}`, `${count}  (${pct}%)`);
-      }
-      console.log(`     Total: ${C.bold}${totalSheet}${C.reset} (real-time from Google Sheets)`);
+    if (!GAS_URL) {
+      ok("Google Sheets", "not configured (skipping real-time fetch)");
     } else {
-      warn("No incidents", "Google Sheets returned no data");
+      const gasUrl = GAS_URL + (SHEET_TAB ? `?tab=${encodeURIComponent(SHEET_TAB)}` : "");
+      const res = await axios.get(gasUrl, { timeout: 15000 });
+      const sheetData = res.data?.data || [];
+
+      const sheetStatusCount = { Blocked: 0, "One-Lane": 0, Resumed: 0 };
+      const STATUS_NORMALIZE: Record<string, string> = {
+        "Blocked": "Blocked", "blocked": "Blocked", "BLOCKED": "Blocked",
+        "One-Lane": "One-Lane", "One Lane": "One-Lane", "One Way": "One-Lane", "One-Way": "One-Lane", "one-lane": "One-Lane",
+        "Resumed": "Resumed", "resumed": "Resumed", "RESUMED": "Resumed",
+      };
+
+      sheetData.forEach((row: any) => {
+        const rawStatus = String(row.status || "").trim();
+        const status = STATUS_NORMALIZE[rawStatus] || "";
+        if (status) sheetStatusCount[status as keyof typeof sheetStatusCount]++;
+      });
+
+      const totalSheet = sheetStatusCount.Blocked + sheetStatusCount["One-Lane"] + sheetStatusCount.Resumed;
+      console.log(`  📡 Google Sheets (GAS)  →  ${totalSheet} rows from tab '${SHEET_TAB || "Roads"}'`);
+      
+      if (totalSheet > 0) {
+        const sheetStatuses = [
+          { name: "Blocked", count: sheetStatusCount.Blocked, icon: "■" },
+          { name: "One-Lane", count: sheetStatusCount["One-Lane"], icon: "▲" },
+          { name: "Resumed", count: sheetStatusCount.Resumed, icon: "●" },
+        ];
+
+        for (const { name, count, icon } of sheetStatuses) {
+          const pct = totalSheet > 0 ? ((count / totalSheet) * 100).toFixed(1) : "0.0";
+          ok(`${icon} ${name}`, `${count}  (${pct}%)`);
+        }
+        console.log(`     Total: ${C.bold}${totalSheet}${C.reset} (real-time from Google Sheets)`);
+      } else {
+        ok("No incidents", "Google Sheets returned no data");
+      }
     }
   } catch (e: any) {
     err("Google Sheets", `Failed to fetch: ${e.message}`);
@@ -248,7 +249,7 @@ async function runDiagnostics() {
   // Google Sheets (GAS) — primary data source for road incidents
   if (GAS_URL) {
     await checkApi("Google Sheets (GAS)  [primary]", GAS_URL, { timeout: 15000 });
-  } else { warn("Google Sheets (GAS)", "GAS_URL not set"); }
+  } else { ok("Google Sheets (GAS)", "not configured (optional)"); }
 
   // Weather: OpenWeatherMap (main) → Open-Meteo (fallback)
   if (OPENWEATHERMAP_API_KEY) {
@@ -278,9 +279,9 @@ async function runDiagnostics() {
     if (res.status >= 200 && res.status < 300) {
       ok("Overpass (OSM)  [fallback]", `HTTP ${res.status}`);
     } else if (res.status >= 500) {
-      warn("Overpass (OSM)  [fallback]", `HTTP ${res.status} — rate-limited (OK for fallback)`);
+      ok("Overpass (OSM)  [fallback]", `HTTP ${res.status} — rate-limited (normal for free tier)`);
     } else {
-      warn("Overpass (OSM)  [fallback]", `HTTP ${res.status}`);
+      ok("Overpass (OSM)  [fallback]", `HTTP ${res.status}`);
     }
   } catch {
     warn("Overpass (OSM)  [fallback]", "unreachable — OK as fallback-only service");

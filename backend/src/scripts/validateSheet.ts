@@ -10,6 +10,11 @@ async function validateSheetData() {
   console.log(`URL: ${GAS_URL}`);
   console.log('');
 
+  if (!GAS_URL) {
+    console.warn('⚠️ GAS_URL not set. Skipping validation.');
+    return;
+  }
+
   try {
     const fetchUrl = `${GAS_URL}?tab=${encodeURIComponent(SHEET_TAB)}`;
     const res = await axios.get(fetchUrl, { timeout: 15000 });
