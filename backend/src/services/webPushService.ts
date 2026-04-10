@@ -1,8 +1,8 @@
-// backend/src/services/webPushService.ts
 import { logInfo, logError } from "../logs/logs.js";
 import fs from "fs/promises";
 import path from "path";
 import { DATA_DIR } from "../config/paths.js";
+import webpush from "../utils/push.js";
 
 // ────────────────────────────────
 // Web Push Notification Service
@@ -173,17 +173,33 @@ export async function sendPushToUser(
 
   for (const userSub of userSubs) {
     try {
-      // In production, use web-push library to send via VAPID
-      // For now, log the notification (WebSocket will deliver in real-time)
-      logInfo("[WebPush] Sending push notification", {
-        userId,
+      const payload = JSON.stringify({
         title,
         body,
-        endpoint: userSub.subscription.endpoint.substring(0, 50) + "...",
+        data: data || {},
+        timestamp: new Date().toISOString()
+      });
+
+      await webpush.sendNotification(userSub.subscription, payload);
+      
+      logInfo("[WebPush] Notification sent successfully", {
+        userId,
+        title,
+        endpoint: userSub.subscription.endpoint.substring(0, 50) + "..."
       });
       sent++;
     } catch (err: any) {
-      logError("[WebPush] Failed to send push notification", err.message);
+      logError("[WebPush] Failed to send push notification", { 
+        userId, 
+        error: err.message,
+        statusCode: err.statusCode 
+      });
+      
+      // If subscription is expired or invalid, remove it
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        logInfo("[WebPush] Removing expired subscription", { userId, endpoint: userSub.subscription.endpoint });
+        await unsubscribeUser(userId, userSub.subscription.endpoint);
+      }
     }
   }
 
