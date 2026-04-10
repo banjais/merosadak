@@ -16,7 +16,7 @@ import { getCachedRoads } from "./services/roadService.js";
 import { forceRefresh, startAutoRefresh } from "./services/schedulerService.js";
 import { generalLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler, notFoundHandler, initializeGlobalErrorHandlers } from "./middleware/errorHandler.js";
-import { initializeWebPush } from "./services/webPushService.js";
+import { initializeWebPush } from "./services/pushService.js";
 import { initializeProfiles } from "./services/userProfileService.js";
 import { initializeAnalytics } from "./services/analyticsService.js";
 

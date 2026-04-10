@@ -18,7 +18,7 @@ import { getWeather } from "./weatherService.js";
 import { clearCache } from "./cacheService.js";
 import { refreshIndexFromCaches } from "./searchService.js";
 import { captureSnapshot } from "./analyticsService.js";
-import { initializeWebPush } from "./webPushService.js";
+import { initializeWebPush } from "./pushService.js";
 import { initializeProfiles } from "./userProfileService.js";
 import { initializeAnalytics } from "./analyticsService.js";
 import paths, {

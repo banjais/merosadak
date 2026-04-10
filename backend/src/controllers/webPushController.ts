@@ -1,6 +1,6 @@
 // backend/src/controllers/webPushController.ts
 import { Request, Response } from "express";
-import * as WebPushService from "../services/webPushService.js";
+import * as WebPushService from "../services/pushService.js";
 import { logError, logInfo } from "../logs/logs.js";
 import { AuthRequest } from "../middleware/auth.js";
 
