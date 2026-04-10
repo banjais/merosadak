@@ -43,11 +43,12 @@ import { UserPreferencesScreen } from "./components/UserPreferencesScreen";
 import { POICategorySelector } from "./components/POICategorySelector";
 import { POIOverlay } from "./components/POIOverlay";
 import { TrafficFlowOverlay } from "./components/TrafficFlowOverlay";
+import DeployDashboard from "./components/DeployDashboard";
+import { registerPushNotifications } from "./services/pushNotificationService";
 import type { Toast } from "./components/Toast";
 import type { SearchResult, RouteInfo } from "./services/enhancedSearchService";
 import type { TravelPlan, TripBriefing, ChecklistItem } from "./types/travelPlan";
 import type { IntentResult } from "./services/searchIntent";
-import type { TravelPlan, TripBriefing, ChecklistItem } from "./types/travelPlan";
 import {
   saveTravelPlan,
   getActivePlansCount,
@@ -63,7 +64,7 @@ import type { UserPOIPreferences, POICategory } from "./types/poi";
 
 // Haversine distance calculation
 function calculateHaversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371; // Earth's radius in km
+  const EARTH_RADIUS_KM = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a =
@@ -71,7 +72,7 @@ function calculateHaversineDistance(lat1: number, lng1: number, lat2: number, ln
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c * 10) / 10;
+  return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
 }
 
 const MapEventHandler: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
@@ -119,7 +120,8 @@ const MainApp: React.FC = () => {
   const [reportIncidentOpen, setReportIncidentOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
   const [pilotMode, setPilotMode] = useState(false);
-  const [mapLayersOpen, setMapLayersOpen] = useState(false);
+  const [showDeployDashboard, setShowDeployDashboard] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
   const [distanceCalcOpen, setDistanceCalcOpen] = useState(false);
   const [distancePoints, setDistancePoints] = useState<{ lat: number; lng: number }[]>([]);
@@ -156,6 +158,28 @@ const MainApp: React.FC = () => {
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = useCallback((type: Toast['type'], message: string) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 5000);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const mapCenter = useMemo(() => {
+    if (userLocation) return [userLocation.lat, userLocation.lng];
+    return [28.3949, 84.1240];
+  }, [userLocation]);
+
+  const mapZoom = useMemo(() => {
+    return userLocation ? 13 : 7;
+  }, [userLocation]);
+
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -178,6 +202,15 @@ const MainApp: React.FC = () => {
       );
     }
   }, []);
+
+  // Register push notifications
+  useEffect(() => {
+    if (appReady) {
+      registerPushNotifications().then(sub => {
+        if (sub) setPushSubscribed(true);
+      });
+    }
+  }, [appReady]);
 
   // Initialize storage services on mount
   useEffect(() => {
@@ -600,26 +633,9 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
     });
   }, [serviceType, incidents]);
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 5000);
-  }, []);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
 
-  const mapCenter = useMemo(() => {
-    if (userLocation) return [userLocation.lat, userLocation.lng];
-    return [28.3949, 84.1240];
-  }, [userLocation]);
 
-  const mapZoom = useMemo(() => {
-    return userLocation ? 13 : 7;
-  }, [userLocation]);
 
   return (
     <>
@@ -832,6 +848,7 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           setMoodEQ={setMoodEQ}
           onDownloadOfflineMap={handleDownloadOfflineMap}
           onToggleLayers={handleToggleMapLayers}
+          onToggleDeployDashboard={() => { setShowDeployDashboard(!showDeployDashboard); setSystemMenuOpen(false); }}
         />
 
         <BottomInfoArea
@@ -939,6 +956,21 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
         )}
 
         <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+        {/* Deploy Dashboard Overlay */}
+        {showDeployDashboard && (
+          <div className="fixed bottom-20 right-4 z-[1000] w-[90vw] md:w-[400px] max-h-[70vh] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 animate-in slide-in-from-bottom-10 backdrop-blur-3xl">
+            <div className="absolute top-4 right-4 z-10">
+              <button 
+                onClick={() => setShowDeployDashboard(false)}
+                className="w-8 h-8 rounded-full bg-slate-800/80 text-white flex items-center justify-center hover:bg-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+            <DeployDashboard isDarkMode={isDarkMode} />
+          </div>
+        )}
 
         {/* Quick Action FABs */}
         <div className="fixed bottom-4 left-4 z-[1000] flex flex-col gap-2">

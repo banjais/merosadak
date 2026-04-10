@@ -16,7 +16,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
 
   // Haversine Formula
   const calculateDistance = (p1: { lat: number, lng: number }, p2: { lat: number, lng: number }) => {
-    const R = 6371; // Earth's radius in km
+    const EARTH_RADIUS_KM = 6371; // Earth's radius in km
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
     const dLng = (p2.lng - p1.lng) * Math.PI / 180;
     const a =
@@ -24,7 +24,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
       Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    return EARTH_RADIUS_KM * c;
   };
 
   useEffect(() => {

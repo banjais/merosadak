@@ -27,6 +27,7 @@ interface SystemMenuProps {
   setMoodEQ: (m: boolean) => void;
   onDownloadOfflineMap?: () => void;
   onToggleLayers?: () => void;
+  onToggleDeployDashboard?: () => void;
 }
 
 export const SystemMenu: React.FC<SystemMenuProps> = ({
@@ -45,12 +46,14 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   setMoodEQ,
   onDownloadOfflineMap,
   onToggleLayers,
+  onToggleDeployDashboard,
 }) => {
   if (!isOpen) return null;
 
   const menuItems = [
     { id: 'profile', icon: <User size={18} />, label: 'Traveler Profile', sub: 'Emergency contacts, preferences' },
     { id: 'offline', icon: <Smartphone size={18} />, label: 'Offline Maps', sub: 'Download for offline use', action: onDownloadOfflineMap, badge: 'New' },
+    { id: 'deploy', icon: <ShieldCheck size={18} />, label: 'System Health', sub: 'Deploy status & CI/CD logs', action: onToggleDeployDashboard },
     { id: 'layers', icon: <Download size={18} />, label: 'Map Layers', sub: 'Monsoon, road status, distance tool', action: onToggleLayers },
     { id: 'privacy', icon: <ShieldCheck size={18} />, label: 'Safety & Privacy', sub: 'End-to-end encrypted' },
     { id: 'lang', icon: <Languages size={18} />, label: 'Language Settings', sub: 'English / नेपाली / हिन्दी' },

@@ -110,3 +110,50 @@ self.addEventListener('message', (event) => {
     });
   }
 });
+
+// Push notification handler
+self.addEventListener('push', (event) => {
+  try {
+    const data = event.data ? event.data.json() : { title: 'MeroSadak Update', body: 'New information available.' };
+    
+    const options = {
+      body: data.body,
+      icon: data.icon || '/logo.png',
+      badge: '/badge.png', // Small icon for notification bar
+      data: data.data || {},
+      vibrate: [100, 50, 100],
+      actions: [
+        { action: 'view', title: 'View Details' },
+        { action: 'close', title: 'Close' }
+      ]
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  } catch (err) {
+    console.error('[SW] Push event error:', err);
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'close') return;
+
+  // Open the app or handle specific action
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(windowClients => {
+        if (windowClients.length > 0) {
+          windowClients[0].focus();
+          return windowClients[0].postMessage({
+            type: 'NOTIFICATION_CLICK',
+            data: event.notification.data
+          });
+        }
+        return clients.openWindow('/');
+      })
+  );
+});

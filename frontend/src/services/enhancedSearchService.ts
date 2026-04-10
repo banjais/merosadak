@@ -397,7 +397,7 @@ export function saveRecentSearch(result: SearchResult) {
 
 // Utility: Haversine distance
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
+  const EARTH_RADIUS_KM = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a =
@@ -405,7 +405,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c * 10) / 10;
+  return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
 }
 
 // Utility: Get POI icon

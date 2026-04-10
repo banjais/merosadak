@@ -13,7 +13,7 @@ const apiProxy = createProxyMiddleware({
   target: TARGET,
   changeOrigin: true,
   pathRewrite: {
-    '^/api': '/api', // Keep the /api path
+    '^/api': '/api/v1', // Map /api to /api/v1 on backend
   },
   onError: (err, req, res) => {
     console.error('Proxy error:', err);

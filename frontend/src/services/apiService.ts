@@ -163,7 +163,7 @@ const POI_MOCKS: any[] = [
 export const api = {
   getRoads: async (): Promise<TravelIncident[]> => {
     if (APP_CONFIG.useMocks) return ROAD_MOCKS;
-    const result = await apiFetch<any>('/roads');
+    const result = await apiFetch<any>('/roads/all');
     // Result is { merged: RoadSegment[], raw: [], rowIssues: [] }
     const features = result.merged || result.features || [];
     return features.map((f: any) => {

@@ -28,12 +28,19 @@ export function useWebSocket(url: string, autoConnect: boolean = true): UseWebSo
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      // Convert http/https to ws/wss
-      const wsUrl = url
-        .replace('http://', 'ws://')
-        .replace('https://', 'wss://')
-        .replace(/\/$/, '') + '/ws/live';
+      // Build absolute URL if relative
+      let absoluteUrl = url;
+      if (url.startsWith('/')) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        absoluteUrl = `${protocol}//${window.location.host}${url}`;
+      } else {
+        // Convert http/https to ws/wss
+        absoluteUrl = url
+          .replace('http://', 'ws://')
+          .replace('https://', 'wss://');
+      }
 
+      const wsUrl = absoluteUrl.replace(/\/$/, '') + '/ws/live';
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
