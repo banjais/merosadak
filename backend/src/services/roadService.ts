@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import axios from "axios";
 import path from "path";
 import { CACHE_DIR, CACHE_ROAD, DATA_DIR } from "../config/paths.js";
-import { OVERPASS_API_URL, GAS_URL, SHEET_TAB } from "../config/index.js";
+import { OVERPASS_API_URL, OVERPASS_FALLBACK_URL, GAS_URL, SHEET_TAB } from "../config/index.js";
 import { logInfo, logError } from "../logs/logs.js";
 import { withCache } from "./cacheService.js";
 import type { LineString } from "geojson";
@@ -252,8 +252,9 @@ async function fetchOverpassRoad(name: string): Promise<RoadSegment | null> {
     way["name"~"${sanitized}",i];
     out geom tags;
   `;
-  try {
-    const res = await axios.get(`${OVERPASS_API_URL}/interpreter`, {
+
+  const tryFetch = async (baseUrl: string): Promise<RoadSegment | null> => {
+    const res = await axios.get(`${baseUrl}/interpreter`, {
       params: { data: query },
       timeout: 20_000,
     });
@@ -282,6 +283,16 @@ async function fetchOverpassRoad(name: string): Promise<RoadSegment | null> {
         status: "" as const,
       },
     };
+  };
+
+  try {
+    // Try main instance
+    const result = await tryFetch(OVERPASS_API_URL);
+    if (result) return result;
+
+    // Try fallback
+    logInfo("[RoadService] Overpass main failed, trying fallback...");
+    return await tryFetch(OVERPASS_FALLBACK_URL);
   } catch (err: any) {
     logError("[RoadService] Overpass fetch failed", err.message);
     return null;

@@ -1,0 +1,13 @@
+[
+  {
+    "timestamp": "2026-04-10T12:06:37.966Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 0,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 4
+  }
+]

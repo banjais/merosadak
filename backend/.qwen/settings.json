@@ -26,7 +26,10 @@
       "Bash(select-string *)",
       "Bash(type *)",
       "Bash(node *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(dir *)",
+      "Bash(echo.)",
+      "Bash(start *)"
     ]
   },
   "$version": 3

@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import { L } from '../lib/leaflet';
+import { SourceBadge } from './SourceBadge';
 
 interface TrafficFlowSegment {
   id: string;
@@ -104,13 +105,16 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
         >
           <Popup>
             <div className="p-2 min-w-[180px]">
-              <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                <span className={`inline-block w-3 h-3 rounded-full ${segment.color === 'green' ? 'bg-green-500' :
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h4 className="font-bold text-sm flex items-center gap-2">
+                  <span className={`inline-block w-3 h-3 rounded-full ${segment.color === 'green' ? 'bg-green-500' :
                     segment.color === 'yellow' ? 'bg-yellow-500' :
                       segment.color === 'orange' ? 'bg-orange-500' : 'bg-red-500'
-                  }`}></span>
-                {segment.congestionLevel.toUpperCase()} Congestion
-              </h4>
+                    }`}></span>
+                  {segment.congestionLevel.toUpperCase()} Congestion
+                </h4>
+                <SourceBadge source="tomtom" />
+              </div>
               <div className="space-y-1 text-xs">
                 <p className="text-gray-700 dark:text-gray-300">
                   Current Speed: <span className="font-bold">{segment.currentSpeed} km/h</span>
@@ -141,16 +145,19 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
         >
           <Popup>
             <div className="p-2 min-w-[200px]">
-              <h4 className="font-bold text-sm mb-1">
-                {getWazeIcon(alert.type)} {alert.type.replace(/_/g, ' ')}
-              </h4>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h4 className="font-bold text-sm">
+                  {getWazeIcon(alert.type)} {alert.type.replace(/_/g, ' ')}
+                </h4>
+                <SourceBadge source="waze" />
+              </div>
               <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">
                 {alert.description}
               </p>
               <div className="flex items-center gap-2 text-xs">
                 <span className={`px-2 py-0.5 rounded-full font-bold ${alert.severity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' :
-                    alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' :
-                      'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                  alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' :
+                    'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
                   }`}>
                   {alert.severity.toUpperCase()}
                 </span>
@@ -192,7 +199,10 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
             <span className="flex items-center gap-1"><span className="w-3 h-1 bg-red-500 rounded"></span> Severe</span>
           </div>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-            {flowSegments.length} segments · {wazeAlerts.length} alerts
+            {flowSegments.length} segments (TomTom) · {wazeAlerts.length} alerts (Waze)
+          </p>
+          <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 italic">
+            Live traffic on all roads · DOR highways shown separately
           </p>
         </div>
       )}

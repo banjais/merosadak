@@ -9,6 +9,9 @@ import { TravelIncident, ChatMessage } from "./types";
 import { apiFetch } from "./api";
 import { useTranslation } from "./i18n";
 
+// Storage services
+import { initializeStorage, mapStateService, themeService, offlineSearchService } from "./services/storageIndexService";
+
 import BoundaryOverlay from "./components/BoundaryOverlay";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -176,6 +179,22 @@ const MainApp: React.FC = () => {
     }
   }, []);
 
+  // Initialize storage services on mount
+  useEffect(() => {
+    initializeStorage();
+  }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(themeService.isDark());
+    };
+    window.addEventListener('merosadak_theme_change', handleThemeChange);
+    // Set initial dark mode from service
+    setIsDarkMode(themeService.isDark());
+    return () => window.removeEventListener('merosadak_theme_change', handleThemeChange);
+  }, []);
+
   // Apply dark mode class to document root
   useEffect(() => {
     if (isDarkMode) {
@@ -185,7 +204,10 @@ const MainApp: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), []);
+  const toggleDarkMode = useCallback(() => {
+    themeService.toggle();
+    setIsDarkMode(themeService.isDark());
+  }, []);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     console.log("Map clicked at:", lat, lng);

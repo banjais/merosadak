@@ -273,9 +273,17 @@ async function runDiagnostics() {
   // Overpass — fallback for traffic, POI, road geometry
   // Overpass is rate-limited and can be slow, so we use a longer timeout and warn instead of fail
   try {
-    await checkApi("Overpass (OSM)  [fallback]", `${OVERPASS_API_URL}/interpreter?data=[out:json];node(27.7,85.3,27.71,85.31);out%201;`, { timeout: 15000 });
+    const overpassUrl = `${OVERPASS_API_URL}/interpreter?data=[out:json];node(27.7,85.3,27.71,85.31);out%201;`;
+    const res = await axios.get(overpassUrl, { timeout: 15000, validateStatus: () => true });
+    if (res.status >= 200 && res.status < 300) {
+      ok("Overpass (OSM)  [fallback]", `HTTP ${res.status}`);
+    } else if (res.status >= 500) {
+      warn("Overpass (OSM)  [fallback]", `HTTP ${res.status} — rate-limited (OK for fallback)`);
+    } else {
+      warn("Overpass (OSM)  [fallback]", `HTTP ${res.status}`);
+    }
   } catch {
-    warn("Overpass (OSM)  [fallback]", "rate-limited or slow (OK — used as fallback only)");
+    warn("Overpass (OSM)  [fallback]", "unreachable — OK as fallback-only service");
   }
 
   // POI: TomTom (main) → Overpass (fallback) — TomTom checked above

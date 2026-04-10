@@ -17,9 +17,10 @@ router.get("/", listCache);
 router.post("/refresh", handleRefreshCache);
 
 /**
- * DELETE /api/cache/:key?
+ * DELETE /api/cache or /api/cache/:key
  * Clear cache for a specific key or all cache if no key provided
  */
-router.delete("/:key?", handleClearCache);
+router.delete("/", handleClearCache);
+router.delete("/:key", handleClearCache);
 
 export default router;

@@ -42,7 +42,7 @@ export const handleRefreshCache = async (req: Request, res: Response) => {
 
   try {
     logInfo(`[CacheController] Refreshing cache: ${type}`);
-    
+
     if (type === "all" || type === "roads") {
       const { refreshRoadCache } = await import("../services/roadService.js");
       await refreshRoadCache();
@@ -89,7 +89,7 @@ export const handleRefreshCache = async (req: Request, res: Response) => {
 };
 
 /**
- * DELETE /api/cache/:key?
+ * DELETE /api/cache or /api/cache/:key
  * Clear cache for a specific key or all cache if no key provided
  */
 export const handleClearCache = async (req: Request, res: Response) => {

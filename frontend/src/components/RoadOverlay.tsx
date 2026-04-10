@@ -4,10 +4,12 @@ import { useMap, Polyline, Popup } from "react-leaflet";
 import { L } from "../lib/leaflet";
 import { apiFetch } from "../api";
 import { TravelIncident } from "../types";
+import { SourceBadge } from "./SourceBadge";
 
 interface RoadSegment {
   id: string;
   name?: string;
+  source?: string;
   geometry: {
     type: string;
     coordinates: [number, number][];
@@ -144,6 +146,7 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             opacity: 0.92,
             roadName,
             statusText,
+            source: road.source || road.properties?.source || "",
             properties: road.properties || {},
           };
         } catch (err) {
@@ -180,9 +183,12 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
         >
           <Popup>
             <div className="text-xs min-w-[220px] max-w-[300px] p-1 leading-relaxed">
-              <strong className="block text-base mb-2 text-slate-900 dark:text-white">
-                {road.roadName}
-              </strong>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <strong className="block text-base text-slate-900 dark:text-white flex-1">
+                  {road.roadName}
+                </strong>
+                <SourceBadge source={road.source} size="md" />
+              </div>
 
               <div
                 className="inline-block px-3 py-1 rounded text-xs font-bold mb-3"

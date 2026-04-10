@@ -17,6 +17,26 @@ export enum IncidentType {
 // Added DataSource type definition
 export type DataSource = 'live' | 'cache' | 'mock';
 
+/**
+ * Data source for incidents and road status
+ * - DOR / Department of Roads: Official government data from 80 highways
+ * - TomTom: Real-time traffic flow/speed data
+ * - Waze: Community-reported traffic alerts
+ * - Community / User Report: User-submitted incidents
+ * - OSM / Overpass: OpenStreetMap fallback geometry
+ */
+export type IncidentSource =
+  | 'DOR'
+  | 'Department of Roads'
+  | 'sheets'
+  | 'highway'
+  | 'tomtom'
+  | 'waze'
+  | 'community'
+  | 'user'
+  | 'overpass'
+  | 'Verified';
+
 export interface TravelIncident {
   id: string;
   type: string;
@@ -26,7 +46,7 @@ export interface TravelIncident {
   lng?: number; // Made optional for incidents without exact coordinates
   severity: 'low' | 'medium' | 'high' | 'success';
   timestamp: string;
-  source?: string;
+  source?: IncidentSource | string;
   road_refno?: string;
   incidentDistrict?: string;
   incidentPlace?: string;

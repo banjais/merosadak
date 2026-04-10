@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { TravelIncident, ChatMessage } from '../types';
 import { RoadStatusDashboard } from './RoadStatusDashboard';
+import { SourceBadge } from './SourceBadge';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -307,9 +308,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                       className="p-4 rounded-[1.5rem] border border-outline/10 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group bg-surface-container-lowest shadow-sm hover:border-primary/40"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full font-label ${incident.severity === 'high' ? 'bg-error/10 text-error' : incident.severity === 'medium' ? 'bg-amber-500/10 text-amber-600' : incident.severity === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-secondary/10 text-secondary'}`}>
-                          {incident.status || incident.severity || 'Normal'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full font-label ${incident.severity === 'high' ? 'bg-error/10 text-error' : incident.severity === 'medium' ? 'bg-amber-500/10 text-amber-600' : incident.severity === 'success' ? 'bg-secondary/10 text-secondary' : 'bg-secondary/10 text-secondary'}`}>
+                            {incident.status || incident.severity || 'Normal'}
+                          </span>
+                          <SourceBadge source={incident.source} />
+                        </div>
                         <span className="text-[10px] text-on-surface-variant/40 font-mono italic">
                           {incident.timestamp ? new Date(incident.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
                         </span>
