@@ -1,6 +1,7 @@
 // backend/src/scripts/diagnostics.ts
 import fs from "fs/promises";
 import path from "path";
+import v8 from "v8";
 import axios from "axios";
 import paths from "../config/paths.js";
 import { ROAD_STATUS } from "../constants/sheets.js";
@@ -330,8 +331,15 @@ async function runDiagnostics() {
   const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
   const heapTotalMB = (mem.heapTotal / 1024 / 1024).toFixed(1);
   const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
-  const memFn = mem.heapUsed / mem.heapTotal > 0.98 ? warn : ok;
+  const maxHeapMB = Math.round(v8.getHeapStatistics().heap_size_limit / 1024 / 1024);
+  const heapRatio = mem.heapUsed / mem.heapTotal;
+  const memFn = heapRatio > 0.98 && maxHeapMB < 512 ? warn : ok;
   memFn("Memory (heap)", `${heapUsedMB} / ${heapTotalMB} MB`);
+  if (maxHeapMB < 512) {
+    warn("Memory limit", `${maxHeapMB} MB — consider NODE_OPTIONS=--max-old-space-size=2048`);
+  } else {
+    ok("Memory limit", `${maxHeapMB} MB`);
+  }
   ok("Memory (RSS)", `${rssMB} MB`);
 
   // ─── Security ───
