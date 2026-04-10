@@ -8,17 +8,27 @@
   "scripts": {
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run dev -w merosadak-backend\" \"npm run dev -w merosadak-frontend\"",
     "install-all": "npm install",
-    "clean": "rimraf node_modules frontend/node_modules merosadak-backend/node_modules",
-    "build": "npm run deploy -w merosadak-backend && cross-env VITE_API_BASE_URL=https://sadaksathi.onrender.com/api npm run build -w merosadak-frontend && firebase deploy --only hosting && powershell -Command \"if (-not $env:CI) { git add .; git commit -m 'Auto-build'; git push origin main }\"",
-    "build:skip-deploy": "npm run build -w merosadak-backend && npm run build -w merosadak-frontend",
+    "clean": "rimraf node_modules frontend/node_modules backend/node_modules backend/dist frontend/dist",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cross-env VITE_API_BASE_URL=https://sadaksathi.onrender.com/api npm run build -w merosadak-frontend",
+    "build:backend": "npm run build -w merosadak-backend",
+    "deploy:worker": "npm run deploy -w merosadak-backend",
+    "deploy:firebase": "firebase deploy --only hosting",
+    "deploy:render": "curl -X POST \"%RENDER_DEPLOY_HOOK%\"",
+    "deploy:all": "npm run build:backend && npm run build:frontend && npm run deploy:worker && npm run deploy:firebase",
     "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run start -w merosadak-backend\" \"npm run start -w merosadak-frontend\"",
-    "stop": "npx kill-port 4000 5000 || true"
+    "start:backend": "npm run start -w merosadak-backend",
+    "start:frontend": "npm run start -w merosadak-frontend",
+    "stop": "npx kill-port 4000 5174 || true",
+    "commit": "git add . && git commit -m",
+    "push": "git push origin main --force-with-lease",
+    "deploy:all:push": "npm run deploy:all && git add . && git commit -m \"Auto-build $(date)\" && git push origin main --force-with-lease",
+    "reset:remote": "git push origin main --force"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "pdfkit": "^0.18.0",
     "rimraf": "^6.1.2",
-    "ws": "^8.19.0"
+    "cross-env": "^7.0.3"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.56.0",

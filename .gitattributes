@@ -1,0 +1,28 @@
+# Auto-detect text files and normalize line endings
+* text=auto eol=crlf
+
+# Explicitly declare text files
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+*.css text
+*.html text
+*.md text
+*.yaml text eol=lf
+*.toml text eol=lf
+*.env text
+
+# Binary files (no conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.woff2 binary
+*.woff binary
+*.ttf binary
+*.eot binary
+*.geojson text

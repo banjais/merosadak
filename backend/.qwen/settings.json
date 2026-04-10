@@ -29,7 +29,8 @@
       "Bash(grep *)",
       "Bash(dir *)",
       "Bash(echo.)",
-      "Bash(start *)"
+      "Bash(start *)",
+      "Bash(git config *)"
     ]
   },
   "$version": 3
