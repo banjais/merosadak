@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist",
-    "diag": "node --max-old-space-size=2048 --import tsx src/scripts/diagnostics.ts",
-    "validate-sheet": "node --max-old-space-size=2048 --import tsx src/scripts/validateSheet.ts",
-    "refresh-caches": "node --max-old-space-size=2048 --import tsx src/scripts/refreshCaches.ts",
+    "diag": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/diagnostics.ts",
+    "validate-sheet": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/validateSheet.ts",
+    "refresh-caches": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/refreshCaches.ts",
     "build": "cross-env NODE_ENV=production npm run clean && tsup && cross-env NODE_ENV=production npm run diag",
     "deploy": "npm run build && npx wrangler deploy",
     "build:dev": "npm run clean && tsup && npm run diag",
