@@ -1,7 +1,7 @@
 // src/components/RoadOverlay.tsx
 import { useEffect, useState, useMemo } from "react";
 import { useMap, Polyline, Popup } from "react-leaflet";
-import L from "leaflet";
+import { L } from "../lib/leaflet";
 import { apiFetch } from "../api";
 import { TravelIncident } from "../types";
 

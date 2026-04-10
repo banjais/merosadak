@@ -1,6 +1,6 @@
 import React from "react";
 import { Marker } from "react-leaflet";
-import L from "leaflet";
+import { L } from "../lib/leaflet";
 
 interface MapLabelProps {
   position: [number, number];

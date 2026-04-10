@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Polyline, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { L } from '../lib/leaflet';
 
 interface TrafficFlowSegment {
   id: string;
@@ -96,8 +96,8 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
           positions={segment.coordinates}
           pathOptions={{
             color: getPolylineColor(segment.color),
-            weight: segment.congestionLevel === 'extreme' ? 8 : 
-                    segment.congestionLevel === 'high' ? 6 : 5,
+            weight: segment.congestionLevel === 'extreme' ? 8 :
+              segment.congestionLevel === 'high' ? 6 : 5,
             opacity: segment.confidence > 0.7 ? 0.9 : 0.6,
             smoothFactor: 1
           }}
@@ -105,11 +105,10 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
           <Popup>
             <div className="p-2 min-w-[180px]">
               <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                <span className={`inline-block w-3 h-3 rounded-full ${
-                  segment.color === 'green' ? 'bg-green-500' :
-                  segment.color === 'yellow' ? 'bg-yellow-500' :
-                  segment.color === 'orange' ? 'bg-orange-500' : 'bg-red-500'
-                }`}></span>
+                <span className={`inline-block w-3 h-3 rounded-full ${segment.color === 'green' ? 'bg-green-500' :
+                    segment.color === 'yellow' ? 'bg-yellow-500' :
+                      segment.color === 'orange' ? 'bg-orange-500' : 'bg-red-500'
+                  }`}></span>
                 {segment.congestionLevel.toUpperCase()} Congestion
               </h4>
               <div className="space-y-1 text-xs">
@@ -149,11 +148,10 @@ export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
                 {alert.description}
               </p>
               <div className="flex items-center gap-2 text-xs">
-                <span className={`px-2 py-0.5 rounded-full font-bold ${
-                  alert.severity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' :
-                  alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' :
-                  'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                }`}>
+                <span className={`px-2 py-0.5 rounded-full font-bold ${alert.severity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' :
+                    alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300' :
+                      'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                  }`}>
                   {alert.severity.toUpperCase()}
                 </span>
                 <span className="text-gray-500 dark:text-gray-400">
@@ -216,8 +214,8 @@ function getPolylineColor(color: string): string {
 // Create Waze alert icon
 function createWazeIcon(alert: WazeAlert): L.DivIcon {
   const icon = getWazeIcon(alert.type);
-  const borderColor = alert.severity === 'high' ? 'red' : 
-                      alert.severity === 'medium' ? 'orange' : 'yellow';
+  const borderColor = alert.severity === 'high' ? 'red' :
+    alert.severity === 'medium' ? 'orange' : 'yellow';
 
   return L.divIcon({
     className: 'waze-alert-marker',

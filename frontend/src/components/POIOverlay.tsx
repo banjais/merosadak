@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { L } from '../lib/leaflet';
 import { EnhancedPOI, POICategory, UserPOIPreferences, TripContext } from '../types/poi';
 import { searchEnhancedPOIs, getCategoryColorClass } from '../services/enhancedPOIService';
 
@@ -107,9 +107,8 @@ export const POIOverlay: React.FC<POIOverlayProps> = ({
                 </p>
               )}
               {poi.isOpen !== undefined && (
-                <p className={`text-xs font-bold mb-1 ${
-                  poi.isOpen ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <p className={`text-xs font-bold mb-1 ${poi.isOpen ? 'text-green-600' : 'text-red-600'
+                  }`}>
                   {poi.isOpen ? '✅ Open Now' : '❌ Closed'}
                 </p>
               )}
@@ -140,7 +139,7 @@ export const POIOverlay: React.FC<POIOverlayProps> = ({
 function createPOIIcon(poi: EnhancedPOI, category: POICategory): L.DivIcon {
   const categoryInfo = POI_CATEGORIES.find(c => c.id === category);
   const icon = categoryInfo?.icon || '📍';
-  
+
   return L.divIcon({
     className: 'custom-poi-marker',
     html: `

@@ -32,7 +32,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(4000),
   API_PREFIX: z.string().default("/api"),
-  JWT_SECRET: isProduction 
+  JWT_SECRET: isProduction
     ? z.string().min(32, "JWT_SECRET must be at least 32 characters in production")
     : z.string().default("super-secret-key"),
   JWT_EXPIRES_IN: z.string().default("7d"),
@@ -86,6 +86,7 @@ const envSchema = z.object({
   OPEN_METEO_API_BASE: z.string().default("https://api.open-meteo.com/v1"),
   TOMTOM_API_URL: z.string().default("https://api.tomtom.com"),
   OVERPASS_API_URL: z.string().default("https://overpass-api.de/api"),
+  OVERPASS_FALLBACK_URL: z.string().default("https://overpass.kumi.systems/api"),
   NOMINATIM_API_URL: z.string().default("https://nominatim.openstreetmap.org"),
   WAZE_API_BASE: z.string().default("https://www.waze.com"),
   TELEGRAM_API_URL: z.string().default("https://api.telegram.org"),
@@ -277,6 +278,7 @@ export const OPENWEATHERMAP_API_URL = config.OPENWEATHERMAP_API_URL || "https://
 export const OPEN_METEO_API_BASE = config.OPEN_METEO_API_BASE || "https://api.open-meteo.com/v1";
 export const TOMTOM_API_URL = config.TOMTOM_API_URL || "https://api.tomtom.com";
 export const OVERPASS_API_URL = config.OVERPASS_API_URL || "https://overpass-api.de/api";
+export const OVERPASS_FALLBACK_URL = config.OVERPASS_FALLBACK_URL || "https://overpass.kumi.systems/api";
 export const NOMINATIM_API_URL = config.NOMINATIM_API_URL || "https://nominatim.openstreetmap.org";
 export const WAZE_API_BASE = config.WAZE_API_BASE || "https://www.waze.com";
 export const TELEGRAM_API_URL = config.TELEGRAM_API_URL || "https://api.telegram.org";

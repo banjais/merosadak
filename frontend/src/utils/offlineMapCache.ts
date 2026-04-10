@@ -1,7 +1,7 @@
 // frontend/src/utils/offlineMapCache.ts
 // Integrates PouchDB + Leaflet.TileLayer.PouchDBCached for offline map tiles
 
-import L from 'leaflet';
+import { L } from '../lib/leaflet';
 
 interface OfflineCacheOptions {
   bounds: L.LatLngBounds;

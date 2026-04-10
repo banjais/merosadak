@@ -23,7 +23,10 @@
       "Bash(tasklist *)",
       "Bash(taskkill *)",
       "Bash(select-object *)",
-      "Bash(select-string *)"
+      "Bash(select-string *)",
+      "Bash(type *)",
+      "Bash(node *)",
+      "Bash(grep *)"
     ]
   },
   "$version": 3

@@ -271,7 +271,12 @@ async function runDiagnostics() {
   } else { ok("TomTom Traffic", "not configured (using OSM fallback)"); }
 
   // Overpass — fallback for traffic, POI, road geometry
-  await checkApi("Overpass (OSM)  [fallback]", `${OVERPASS_API_URL}/status`, { timeout: 8000 });
+  // Overpass is rate-limited and can be slow, so we use a longer timeout and warn instead of fail
+  try {
+    await checkApi("Overpass (OSM)  [fallback]", `${OVERPASS_API_URL}/interpreter?data=[out:json];node(27.7,85.3,27.71,85.31);out%201;`, { timeout: 15000 });
+  } catch {
+    warn("Overpass (OSM)  [fallback]", "rate-limited or slow (OK — used as fallback only)");
+  }
 
   // POI: TomTom (main) → Overpass (fallback) — TomTom checked above
 

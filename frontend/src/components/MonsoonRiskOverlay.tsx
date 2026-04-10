@@ -1,7 +1,7 @@
 // src/components/MonsoonRiskOverlay.tsx
 import React from 'react';
 import { Marker, Popup, Circle } from 'react-leaflet';
-import L from 'leaflet';
+import { L } from '../lib/leaflet';
 import { TravelIncident } from '../types';
 
 interface MonsoonRiskOverlayProps {
