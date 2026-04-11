@@ -29,22 +29,22 @@ env:
   NODE_VERSION: '24'
 
 concurrency:
-  group: deploy-${{ github.ref }}-${{ github.event.inputs.environment || 'prod' }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
+# ---------------------------------------------------------
+# BACKEND
+# ---------------------------------------------------------
 jobs:
-
-  # ---------------------------------------------------------
-  # BACKEND
-  # ---------------------------------------------------------
   backend:
     name: 🔧 Backend
     runs-on: ubuntu-latest
 
-    if: |
+    if: >
       github.event_name == 'push' ||
       github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'backend'
+      github.event.inputs.deploy_target == 'backend' ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
@@ -56,25 +56,25 @@ jobs:
       - run: npm install
 
       - name: Build backend
-        run: |
-          cd backend
-          npm run build
+        run: cd backend && npm run build
 
       - name: Deploy Render
         if: github.event.inputs.environment != 'dev'
         run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
-  # ---------------------------------------------------------
-  # WORKER
-  # ---------------------------------------------------------
+# ---------------------------------------------------------
+# WORKER
+# ---------------------------------------------------------
   worker:
     name: ☁️ Worker
     runs-on: ubuntu-latest
+    needs: backend
 
-    if: |
+    if: >
       github.event_name == 'push' ||
       github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'worker'
+      github.event.inputs.deploy_target == 'worker' ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
@@ -86,17 +86,19 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-  # ---------------------------------------------------------
-  # FRONTEND
-  # ---------------------------------------------------------
+# ---------------------------------------------------------
+# FRONTEND
+# ---------------------------------------------------------
   frontend:
     name: 🎨 Frontend
     runs-on: ubuntu-latest
+    needs: worker
 
-    if: |
+    if: >
       github.event_name == 'push' ||
       github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'frontend'
+      github.event.inputs.deploy_target == 'frontend' ||
+      github.event_name == 'workflow_dispatch'
 
     env:
       VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
@@ -112,9 +114,7 @@ jobs:
       - run: npm install
 
       - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
+        run: cd frontend && npm run build
 
       - name: Deploy Firebase
         if: github.event.inputs.environment != 'dev'
@@ -126,9 +126,9 @@ jobs:
           channelId: live
           entryPoint: "./frontend"
 
-  # ---------------------------------------------------------
-  # TELEGRAM ALERT (FAILURE ONLY 🚨)
-  # ---------------------------------------------------------
+# ---------------------------------------------------------
+# TELEGRAM FAILURE ALERT
+# ---------------------------------------------------------
   notify-failure:
     name: 🚨 Failure Alert
     runs-on: ubuntu-latest
@@ -143,9 +143,9 @@ jobs:
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG"
 
-  # ---------------------------------------------------------
-  # SUCCESS LOG (CLEAN)
-  # ---------------------------------------------------------
+# ---------------------------------------------------------
+# SUCCESS LOG
+# ---------------------------------------------------------
   success:
     name: ✅ Success
     runs-on: ubuntu-latest
