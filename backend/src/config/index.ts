@@ -73,6 +73,7 @@ const envSchema = z.object({
 
   // Cloudflare
   CLOUDFLARE_URL: z.string().url().optional(),
+  CLOUDFLARE_API_TOKEN: z.string().optional(),
 
   // Waze
   WAZE_XML: z.string().url().optional(),
@@ -248,10 +249,10 @@ export const STATUS_RESUMED = config.STATUS_RESUMED || "Resumed";
 // -----------------------------
 export const TAB_TOLL = config.TAB_TOLL || "Toll";
 
-// -----------------------------
 // Cloudflare
 // -----------------------------
 export const CLOUDFLARE_URL = config.CLOUDFLARE_URL || "";
+export const CLOUDFLARE_API_TOKEN = config.CLOUDFLARE_API_TOKEN || "";
 
 // -----------------------------
 // Waze
