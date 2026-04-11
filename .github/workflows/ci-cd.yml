@@ -3,6 +3,7 @@ name: MeroSadak PRO Deploy
 on:
   push:
     branches: [main]
+
   workflow_dispatch:
     inputs:
       deploy_target:
@@ -15,6 +16,7 @@ on:
           - backend
           - worker
           - frontend
+
       environment:
         description: "Environment"
         required: true
@@ -26,7 +28,7 @@ on:
           - prod
 
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: "24"
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -57,6 +59,9 @@ jobs:
 
       - name: Build backend
         run: cd backend && npm run build
+        env:
+          NODE_ENV: production
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       - name: Deploy Render
         if: github.event.inputs.environment != 'dev'
@@ -68,7 +73,6 @@ jobs:
   worker:
     name: ☁️ Worker
     runs-on: ubuntu-latest
-    needs: backend
 
     if: >
       github.event_name == 'push' ||
@@ -92,17 +96,12 @@ jobs:
   frontend:
     name: 🎨 Frontend
     runs-on: ubuntu-latest
-    needs: worker
 
     if: >
       github.event_name == 'push' ||
       github.event.inputs.deploy_target == 'all' ||
       github.event.inputs.deploy_target == 'frontend' ||
       github.event_name == 'workflow_dispatch'
-
-    env:
-      VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-      VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +114,9 @@ jobs:
 
       - name: Build frontend
         run: cd frontend && npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Deploy Firebase
         if: github.event.inputs.environment != 'dev'
@@ -127,7 +129,7 @@ jobs:
           entryPoint: "./frontend"
 
 # ---------------------------------------------------------
-# TELEGRAM FAILURE ALERT
+# TELEGRAM ALERT (FAILURE ONLY)
 # ---------------------------------------------------------
   notify-failure:
     name: 🚨 Failure Alert
