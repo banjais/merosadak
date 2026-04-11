@@ -126,7 +126,6 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: sadak-sathi-3ab73
           channelId: live
-          entryPoint: "./frontend"
 
 # ---------------------------------------------------------
 # TELEGRAM ALERT (FAILURE ONLY)
