@@ -120,6 +120,7 @@ const MainApp: React.FC = () => {
   const [reportIncidentOpen, setReportIncidentOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
   const [pilotMode, setPilotMode] = useState(false);
+  const [mapLayersOpen, setMapLayersOpen] = useState(false);
   const [showDeployDashboard, setShowDeployDashboard] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
