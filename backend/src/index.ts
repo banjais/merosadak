@@ -36,6 +36,9 @@ if (SENTRY_DSN) {
 // -----------------------------
 const app = express();
 
+// Fix for redirect loops - ensure proper handling
+app.set("trust proxy", 1);
+
 // Security headers
 if (isProd) {
   app.use(helmet());
@@ -53,6 +56,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting for all routes
 app.use(generalLimiter);
+
+// Root endpoint for testing
+app.get("/", (_req: Request, res: Response) => {
+  res.json({ 
+    status: "ok", 
+    message: "Mero Sadak API is running",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // -----------------------------
 // 3️⃣ Health Checks
