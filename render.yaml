@@ -3,14 +3,12 @@ services:
     name: merosadak-backend
     env: node
     nodeVersion: "20"
-    buildCommand: npm run build
+    region: singapore
+    buildCommand: npm install && npm run build
     startCommand: npm run start
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: JWT_SECRET
-        # ⚠️ SET THIS IN RENDER DASHBOARD - never commit secrets to git
-        # Generate with: openssl rand -hex 64
-        sync: false
       - key: RATE_LIMIT_MAX
         value: "100"
