@@ -82,11 +82,12 @@ async function runDiagnostics() {
 
     console.log(`  🛣️  Highways  →  ${highwayCount} highways indexed`);
 
-    // Get status from cached roads (which includes sheet incidents)
+    // Get status from cached roads (highway files ONLY - exclude sheet incidents)
     try {
       const { merged } = await getCachedRoads();
-      highwaySegments = merged.length;
-      for (const road of merged) {
+      const highwayOnlyRoads = merged.filter(road => road.source === "highway");
+      highwaySegments = highwayOnlyRoads.length;
+      for (const road of highwayOnlyRoads) {
         if (road.status === "Blocked") statusCount.Blocked++;
         else if (road.status === "One-Lane") statusCount["One-Lane"]++;
         else statusCount.Resumed++;
@@ -139,6 +140,9 @@ async function runDiagnostics() {
         "Blocked": "Blocked", "blocked": "Blocked", "BLOCKED": "Blocked",
         "One-Lane": "One-Lane", "One Lane": "One-Lane", "One Way": "One-Lane", "One-Way": "One-Lane", "one-lane": "One-Lane",
         "Resumed": "Resumed", "resumed": "Resumed", "RESUMED": "Resumed",
+        "Open": "Resumed", "open": "Resumed",
+        "Clear": "Resumed", "clear": "Resumed",
+        "Normal": "Resumed", "normal": "Resumed",
       };
 
       sheetData.forEach((row: any) => {

@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      minify: "terser",
       rollupOptions: {
         output: {
           manualChunks(id) {
