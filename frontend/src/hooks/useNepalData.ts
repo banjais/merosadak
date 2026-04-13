@@ -5,7 +5,7 @@ import { useTraffic } from './useTraffic';
 import { useWeather } from './useWeather';
 import { useMonsoon } from './useMonsoon';
 import { usePOIs } from './usePOIs';
-import { TravelIncident } from '../types';
+import type { TravelIncident } from '../types';
 
 export function useNepalData() {
   // Individual data hooks

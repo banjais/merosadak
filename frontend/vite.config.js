@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import circularDependency from 'vite-plugin-circular-dependency';
 
 // Polyfill WebSocket in Node dev
 if (process.env.NODE_ENV === "development" && typeof WebSocket === "undefined") {
@@ -27,7 +28,13 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      circularDependency({
+        exclude: [/node_modules/],
+        throwOnError: true
+      })
+    ],
     resolve: {
       dedupe: ["react", "react-dom", "leaflet", "react-leaflet"],
     },
@@ -51,8 +58,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      minify: false,
-      sourcemap: false,
+      minify: "terser",
+      terserOptions: {
+        compress: false,
+        mangle: false
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
