@@ -2,6 +2,8 @@
 import { Redis } from "@upstash/redis";
 import fs from "fs/promises";
 import path from "path";
+import zlib from "zlib";
+import { promisify } from "util";
 import { UPSTASH } from "../config/index.js";
 import {
   logInfo,
@@ -10,6 +12,9 @@ import {
   logCacheMiss,
   logCacheUpdate,
 } from "../logs/logs.js";
+
+const gzip = promisify(zlib.gzip);
+const gunzip = promisify(zlib.gunzip);
 
 // ────────────────────────────────
 // LEVEL 1: Local RAM cache
@@ -25,11 +30,12 @@ const DISABLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 // ────────────────────────────────
 // Size limit for Redis
-// Increased to 30MB to accommodate road:merged cache (25.59MB + growth)
-// ⚠️ Upstash free tier: 100MB total storage - monitor usage!
-// If approaching limit, consider compression or splitting keys
+// ⚠️ Upstash free tier HARD LIMIT: 10MB PER REQUEST
+// Values exceeding this will return errors even if total storage is available
+// Use compression for larger values
 // ────────────────────────────────
-const REDIS_MAX_SIZE_BYTES = 30 * 1024 * 1024; // 30MB
+const REDIS_MAX_SIZE_BYTES = 9.5 * 1024 * 1024; // 9.5MB (safe buffer under 10MB limit)
+const REDIS_COMPRESSION_THRESHOLD = 1 * 1024 * 1024; // 1MB - compress values larger than this
 
 // ────────────────────────────────
 // Max age cap for disk cache (prevent stale data)
@@ -140,11 +146,22 @@ export async function withCache<T>(
   // L2: Redis
   if (!isRedisDisabled) {
     try {
-      const cached = await redisClient.get<T>(key);
+      const cached = await redisClient.get<string | Buffer>(key);
       if (cached !== null) {
         logCacheHit("L2", key);
-        localCache.set(key, { value: cached, expiry: now + ttlSeconds * 1000 });
-        return cached;
+        
+        let value: T;
+        if (typeof cached === 'string' && cached.startsWith('gzip:')) {
+          // Decompress gzipped value
+          const compressed = Buffer.from(cached.slice(5), 'base64');
+          const decompressed = await gunzip(compressed);
+          value = JSON.parse(decompressed.toString('utf8'));
+        } else {
+          value = cached as T;
+        }
+        
+        localCache.set(key, { value, expiry: now + ttlSeconds * 1000 });
+        return value;
       }
     } catch (err: any) {
       if (err.message?.toLowerCase().includes("limit")) {
@@ -177,10 +194,21 @@ export async function withCache<T>(
   if (!isRedisDisabled) {
     try {
       const serialized = JSON.stringify(fresh);
-      if (Buffer.byteLength(serialized, "utf8") > REDIS_MAX_SIZE_BYTES) {
-        logInfo(`⚠️ [Cache] Skipping Redis for large key: ${key} (${(Buffer.byteLength(serialized) / 1024 / 1024).toFixed(2)}MB)`);
+      let dataToStore: string | T = fresh;
+      let sizeBytes = Buffer.byteLength(serialized, "utf8");
+      
+      // Compress if above threshold
+      if (sizeBytes > REDIS_COMPRESSION_THRESHOLD) {
+        const compressed = await gzip(serialized, { level: 6 });
+        dataToStore = `gzip:${compressed.toString('base64')}`;
+        sizeBytes = Buffer.byteLength(dataToStore as string, "utf8");
+        logInfo(`[Cache] Compressed ${key}: ${(Buffer.byteLength(serialized) / 1024 / 1024).toFixed(2)}MB → ${(sizeBytes / 1024 / 1024).toFixed(2)}MB (${Math.round((1 - sizeBytes / Buffer.byteLength(serialized)) * 100)}% reduction)`);
+      }
+      
+      if (sizeBytes > REDIS_MAX_SIZE_BYTES) {
+        logInfo(`⚠️ [Cache] Skipping Redis for large key: ${key} (${(sizeBytes / 1024 / 1024).toFixed(2)}MB exceeds 9.5MB Upstash limit)`);
       } else {
-        await redisClient.set(key, fresh, { ex: ttlSeconds });
+        await redisClient.set(key, dataToStore, { ex: ttlSeconds });
         logCacheUpdate(key);
       }
     } catch (err: any) {
