@@ -217,6 +217,7 @@ const MainApp: React.FC = () => {
   // Initialize storage services on mount
   useEffect(() => {
     initializeStorage();
+    themeService.applyToDocument();
   }, []);
 
   // Listen for theme changes

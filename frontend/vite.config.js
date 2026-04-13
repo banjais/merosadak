@@ -60,8 +60,10 @@ export default defineConfig(({ mode }) => {
     build: {
       minify: "terser",
       terserOptions: {
-        compress: false,
-        mangle: false
+        compress: {
+          hoist_vars: false,
+          hoist_funs: false
+        }
       },
       rollupOptions: {
         output: {

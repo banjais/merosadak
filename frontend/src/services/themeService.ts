@@ -97,7 +97,4 @@ export const themeService = {
   },
 };
 
-// Auto-apply on load
-if (typeof document !== 'undefined') {
-  themeService.applyToDocument();
-}
+// Auto-apply is called explicitly from App.tsx on mount
