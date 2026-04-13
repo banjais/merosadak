@@ -42,8 +42,7 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
   // const { location } = useLocation();
   const location = { lat: 0, lng: 0 }; // Temporary placeholder
 
-  // ✅ Fixed: handleClose DECLARED BEFORE it is used in handleSubmit
-  const handleClose = () => {
+  function handleClose() {
     setSelectedType(null);
     setDescription('');
     onClose();

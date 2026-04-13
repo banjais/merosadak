@@ -735,5 +735,82 @@
     "weatherConditions": "Haze",
     "temperature": 21.15,
     "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:49:30.373Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:52:22.420Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:53:33.457Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:54:44.694Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:55:56.630Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:57:10.858Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T13:58:22.504Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Haze",
+    "temperature": 21.15,
+    "incidentsCount": 145
   }
 ]
