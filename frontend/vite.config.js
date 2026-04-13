@@ -51,22 +51,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      minify: "terser",
-      terserOptions: {
-        compress: {
-          hoist_vars: false,
-          hoist_funs: false,
-          toplevel: false,
-          reduce_vars: false,
-          inline: false,
-          loops: false,
-          collapse_vars: false
-        },
-        mangle: {
-          keep_classnames: true,
-          keep_fnames: true
-        }
-      },
+      minify: false,
+      sourcemap: false,
       rollupOptions: {
         output: {
           manualChunks(id) {
