@@ -1,44 +1,12 @@
 {
-  "name": "merosadak-monorepo",
+  "name": "merosadak-snapdeploy",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "scripts": {
-    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run dev -w merosadak-backend\" \"npm run dev -w merosadak-frontend\"",
-    "install-all": "npm install",
-    "clean": "rimraf node_modules frontend/node_modules backend/node_modules backend/dist frontend/dist",
-    "build": "npm run build:backend && npm run build:frontend && wrangler deploy && firebase deploy --only hosting && npm run deploy:render",
-    "build:frontend": "npm run build -w merosadak-frontend",
-    "build:backend": "npm run build -w merosadak-backend",
-    "deploy:worker": "wrangler deploy",
-    "deploy:firebase": "firebase deploy --only hosting",
-    "deploy:render": "curl -X POST https://api.render.com/deploy/srv-d58ikeili9vc73a3do9g?key=yV8ulRzIZWk",
-    "deploy:all": "npm run build && npm run deploy:render",
-    "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue,bgMagenta\" \"npm run start -w merosadak-backend\" \"npm run start -w merosadak-frontend\"",
-    "start:backend": "npm run start -w merosadak-backend",
-    "start:frontend": "npm run start -w merosadak-frontend",
-    "stop": "npx kill-port 4000 5174 || true",
-    "commit": "git add . && git commit -m",
-    "push": "git push origin main --force-with-lease",
-    "deploy:all:push": "npm run deploy:all && git add . && git commit -m \"Auto-build $(date)\" && git push origin main --force-with-lease",
-    "reset:remote": "git push origin main --force"
+    "start": "cd backend && npm run start",
+    "build": "cd backend && npm run build"
   },
-  "devDependencies": {
-    "concurrently": "^9.2.1",
-    "cross-env": "^7.0.3",
-    "rimraf": "^6.1.2"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.56.0",
-    "@rollup/rollup-win32-x64-gnu": "4.56.0"
-  },
-  "overrides": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-leaflet": "4.2.1",
-    "leaflet": "1.9.4",
-    "@react-leaflet/core": "2.1.0"
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
