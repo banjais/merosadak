@@ -5,22 +5,8 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist",
-    "diag": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/diagnostics.ts",
-    "validate-sheet": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/validateSheet.ts",
-    "refresh-caches": "cross-env NODE_OPTIONS=--max-old-space-size=2048 tsx src/scripts/refreshCaches.ts",
-    "build": "cross-env NODE_ENV=production npm run clean && tsup && cross-env NODE_ENV=production npm run diag",
-    "deploy": "npm run build && npx wrangler deploy",
-    "build:dev": "npm run clean && tsup && npm run diag",
-    "prestart": "npx kill-port 4000 || true",
+    "build": "npm run clean && tsup",
     "start": "node --max-old-space-size=2048 dist/index.js",
-    "start:prod": "NODE_ENV=production node --max-old-space-size=2048 dist/index.js",
-    "start:bg": "nohup node --max-old-space-size=2048 dist/index.js > server.log 2>&1 &",
-    "predev": "npx kill-port 4000 || true",
-    "dev": "cross-env NODE_ENV=development tsup --watch --onSuccess \"node --max-old-space-size=2048 dist/index.js\"",
-    "lint": "eslint . --quiet",
-    "format": "prettier --write .",
-    "stop:bg": "npx kill-port 4000 || true"
-  },
   "dependencies": {
     "@sentry/node": "^10.38.0",
     "@upstash/redis": "^1.36.2",

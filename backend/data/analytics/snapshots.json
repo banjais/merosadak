@@ -1384,5 +1384,16 @@
     "weatherConditions": "Clouds",
     "temperature": 20.15,
     "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-13T16:07:56.300Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 0,
+    "weatherConditions": "Clouds",
+    "temperature": 20.15,
+    "incidentsCount": 145
   }
 ]
