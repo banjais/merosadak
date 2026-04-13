@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Phone, MapPin, Share2, X, AlertTriangle, Radio } from 'lucide-react';
-import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface SOSOverlayProps {
   isOpen: boolean;
@@ -18,8 +17,16 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
     onClose();
   }
 
-  // Close on Escape key
-  useEscapeKey(handleClose, isOpen);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
