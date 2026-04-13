@@ -1,6 +1,6 @@
 // src/api.ts
 // Use relative path for API requests - works with Firebase Hosting proxy
-const API_BASE = '/api';
+const API_BASE = '/api/v1';
 
 export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
