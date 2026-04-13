@@ -1,47 +1,57 @@
-import React, { useState } from 'react';
-import { X, AlertTriangle, Camera, MapPin, Send, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, AlertTriangle, Camera, MapPin, Phone, Send, Loader2 } from 'lucide-react';
+import { toast } from './Toast';
 import { apiFetch } from '../api';
-import { useEscapeKey } from '../hooks/useEscapeKey';
+// import { useLocation } from '../hooks/useLocation';
 
 interface ReportIncidentOverlayProps {
   isOpen: boolean;
   onClose: () => void;
-  location?: { lat: number; lng: number };
   onSuccess?: () => void;
+  coordinates?: { lat: number; lng: number };
+  locationName?: string;
 }
 
-type IncidentType = 'blockage' | 'accident' | 'traffic' | 'construction' | 'weather' | 'other';
-
-const incidentTypes: { id: IncidentType; label: string; icon: string; color: string }[] = [
-  { id: 'blockage', label: 'Road Block', icon: '🚧', color: 'bg-red-500' },
-  { id: 'accident', label: 'Accident', icon: '🚗', color: 'bg-orange-500' },
-  { id: 'traffic', label: 'Heavy Traffic', icon: '🚙', color: 'bg-amber-500' },
-  { id: 'construction', label: 'Construction', icon: '🏗️', color: 'bg-blue-500' },
-  { id: 'weather', label: 'Weather Hazard', icon: '⛈️', color: 'bg-purple-500' },
-  { id: 'other', label: 'Other', icon: '📝', color: 'bg-gray-500' },
+const incidentTypes = [
+  { id: 'pothole', label: 'Pothole', icon: AlertTriangle, color: 'from-yellow-500 to-orange-500' },
+  { id: 'blocked', label: 'Road Blocked', icon: AlertTriangle, color: 'from-red-500 to-red-600' },
+  { id: 'accident', label: 'Accident', icon: AlertTriangle, color: 'from-red-600 to-red-700' },
+  { id: 'landslide', label: 'Landslide', icon: AlertTriangle, color: 'from-orange-500 to-red-500' },
+  { id: 'flood', label: 'Flooded Road', icon: AlertTriangle, color: 'from-blue-500 to-blue-600' },
+  { id: 'other', label: 'Other Issue', icon: AlertTriangle, color: 'from-gray-500 to-gray-600' },
 ];
 
 export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
   isOpen,
   onClose,
-  location,
   onSuccess,
+  coordinates: initialCoordinates,
+  locationName: initialLocationName,
 }) => {
-  const [selectedType, setSelectedType] = useState<IncidentType | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [description, setDescription] = useState('');
+  const [coordinates, setCoordinates] = useState(initialCoordinates || null);
+  const [locationName, setLocationName] = useState(initialLocationName || '');
+  const [images, setImages] = useState<string[]>([]);
+  const [contactNumber, setContactNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [useCurrentLocation, setUseCurrentLocation] = useState(!!location);
-  const [manualLat, setManualLat] = useState(location?.lat?.toString() || '');
-  const [manualLng, setManualLng] = useState(location?.lng?.toString() || '');
+  const [useCurrentLocation, setUseCurrentLocation] = useState(!initialCoordinates);
+  const [manualLat, setManualLat] = useState('');
+  const [manualLng, setManualLng] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const { location } = useLocation();
+  const location = { lat: 0, lng: 0 }; // Temporary placeholder
 
-  // Close on Escape key
-  useEscapeKey(handleClose, isOpen);
+  // ✅ Fixed: handleClose DECLARED BEFORE it is used in handleSubmit
+  const handleClose = () => {
+    setSelectedType(null);
+    setDescription('');
+    onClose();
+  };
 
-  if (!isOpen) return null;
-
-  const handleSubmit = async () => {
-    if (!selectedType || !description.trim()) return;
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedType) return;
     setIsSubmitting(true);
     try {
       const lat = useCurrentLocation ? location?.lat : parseFloat(manualLat);
@@ -75,11 +85,7 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
     }
   };
 
-  const handleClose = () => {
-    setSelectedType(null);
-    setDescription('');
-    onClose();
-  };
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center">
@@ -98,131 +104,136 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
               <AlertTriangle size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-on-surface">Report Incident</h2>
-              <p className="text-xs text-on-surface-variant">Help other travelers stay safe</p>
+              <h2 className="text-xl font-bold">Report Road Incident</h2>
+              <p className="text-sm text-gray-500">Help improve road safety for everyone</p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-surface-container-low rounded-full transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Incident Type Selection */}
-        <div className="mb-6">
-          <label className="text-sm font-bold text-on-surface mb-3 block">What happened?</label>
-          <div className="grid grid-cols-3 gap-2">
-            {incidentTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setSelectedType(type.id)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${selectedType === type.id
-                  ? `${type.color} border-transparent text-white shadow-lg scale-105`
-                  : 'border-outline/20 bg-surface-container-low text-on-surface hover:border-primary/40'
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Incident Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Incident Type</label>
+            <div className="grid grid-cols-3 gap-2">
+              {incidentTypes.map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => setSelectedType(type.id)}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    selectedType === type.id
+                      ? `border-transparent bg-gradient-to-br ${type.color} text-white`
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
-              >
-                <span className="text-2xl">{type.icon}</span>
-                <span className="text-[10px] font-bold text-center">{type.label}</span>
-              </button>
-            ))}
+                >
+                  <type.icon size={20} className="mx-auto mb-1" />
+                  <span className="text-xs font-medium">{type.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Description */}
-        <div className="mb-6">
-          <label className="text-sm font-bold text-on-surface mb-2 block">
-            Describe the situation <span className="text-on-surface-variant font-normal">(optional)</span>
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="E.g., Road blocked due to landslide, expected clearance in 2 hours..."
-            className="w-full p-4 rounded-2xl border border-outline/20 bg-surface-container-lowest text-on-surface text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-            rows={4}
-          />
-        </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the issue..."
+              className="w-full p-3 border border-gray-200 rounded-xl resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
 
-        {/* Location */}
-        <div className="mb-6">
-          <label className="text-sm font-bold text-on-surface mb-3 block">Location</label>
+          {/* Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  checked={useCurrentLocation}
+                  onChange={() => setUseCurrentLocation(true)}
+                  className="text-blue-500"
+                />
+                <span className="text-sm">Use my current location</span>
+                {location && useCurrentLocation && (
+                  <span className="ml-auto text-xs text-green-600">✓ Available</span>
+                )}
+              </label>
+              <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  checked={!useCurrentLocation}
+                  onChange={() => setUseCurrentLocation(false)}
+                  className="text-blue-500"
+                />
+                <span className="text-sm">Enter coordinates manually</span>
+              </label>
 
-          <button
-            onClick={() => setUseCurrentLocation(!useCurrentLocation)}
-            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all mb-3 ${useCurrentLocation
-              ? 'border-primary bg-primary/5'
-              : 'border-outline/20 bg-surface-container-low hover:border-primary/40'
-              }`}
-          >
-            <MapPin size={20} className={useCurrentLocation ? 'text-primary' : 'text-on-surface-variant'} />
-            <div className="flex-1 text-left">
-              <div className={`text-sm font-bold ${useCurrentLocation ? 'text-primary' : 'text-on-surface'}`}>
-                Use current location
-              </div>
-              {location && (
-                <div className="text-[10px] text-on-surface-variant">
-                  {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+              {!useCurrentLocation && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Latitude"
+                    value={manualLat}
+                    onChange={(e) => setManualLat(e.target.value)}
+                    className="p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="Longitude"
+                    value={manualLng}
+                    onChange={(e) => setManualLng(e.target.value)}
+                    className="p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               )}
             </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${useCurrentLocation ? 'border-primary bg-primary' : 'border-outline/40'
-              }`}>
-              {useCurrentLocation && <div className="w-2 h-2 rounded-full bg-white" />}
-            </div>
+          </div>
+
+          {/* Contact Number (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Phone size={16} className="inline mr-1" />
+              Contact Number (Optional)
+            </label>
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              placeholder="Your phone number for updates"
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting || !selectedType}
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send size={20} />
+                Submit Report
+              </>
+            )}
           </button>
-
-          {!useCurrentLocation && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
-                  Latitude
-                </label>
-                <input
-                  type="number"
-                  value={manualLat}
-                  onChange={(e) => setManualLat(e.target.value)}
-                  placeholder="27.7172"
-                  className="w-full p-3 rounded-xl border border-outline/20 bg-surface-container-lowest text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1 block">
-                  Longitude
-                </label>
-                <input
-                  type="number"
-                  value={manualLng}
-                  onChange={(e) => setManualLng(e.target.value)}
-                  placeholder="85.3240"
-                  className="w-full p-3 rounded-xl border border-outline/20 bg-surface-container-lowest text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Submit Button */}
-        <button
-          onClick={handleSubmit}
-          disabled={!selectedType || isSubmitting}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gradient-to-br from-primary to-tertiary text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98]"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 size={20} className="animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            <>
-              <Send size={20} />
-              Submit Report
-            </>
-          )}
-        </button>
+        </form>
       </div>
     </div>
   );
 };
-
-export default ReportIncidentOverlay;
