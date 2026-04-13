@@ -12,16 +12,16 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
   const [isSending, setIsSending] = useState(false);
   const [complete, setComplete] = useState(false);
 
+  function handleClose() {
+    setIsSending(false);
+    setComplete(false);
+    onClose();
+  }
+
   // Close on Escape key
   useEscapeKey(handleClose, isOpen);
 
   if (!isOpen) return null;
-
-  const handleClose = () => {
-    setIsSending(false);
-    setComplete(false);
-    onClose();
-  };
 
   const handleTriggerSOS = () => {
     setIsSending(true);
