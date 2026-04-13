@@ -57,7 +57,10 @@ export default defineConfig(({ mode }) => {
           hoist_vars: false,
           hoist_funs: false,
           toplevel: false,
-          reduce_vars: false
+          reduce_vars: false,
+          inline: false,
+          loops: false,
+          collapse_vars: false
         },
         mangle: {
           keep_classnames: true,
