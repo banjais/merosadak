@@ -586,69 +586,75 @@ jobs:
           fi
 
 # ---------------------------------------------------------
-# TELEGRAM ALERT (FAILURE ONLY)
+# TELEGRAM ALERTS (Always runs, checks status internally)
 # ---------------------------------------------------------
-  notify-failure:
-    name: 🚨 Failure Alert
-    runs-on: ubuntu-latest
-    needs: [backend, worker, frontend]
-    if: failure()
-
-    steps:
-      - name: Send Telegram Alert
-        continue-on-error: true
-        run: |
-          MSG="🚨 DEPLOY FAILED%0ARepo: ${{ github.repository }}%0ABranch: ${{ github.ref_name }}%0ATarget: ${{ github.event.inputs.deploy_target || 'auto' }}%0ACommit: ${{ github.event.head_commit.message || 'manual' }}%0AActor: ${{ github.actor }}%0A%0A🔗 Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MSG" \
-          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
-
-# ---------------------------------------------------------
-# TELEGRAM ALERT (SECRETS MISSING)
-# ---------------------------------------------------------
-  notify-secrets-missing:
-    name: ⚠️ Secrets Missing Alert
-    runs-on: ubuntu-latest
-    needs: [preflight]
-    if: failure()
-
-    steps:
-      - name: Send Telegram Alert
-        continue-on-error: true
-        run: |
-          MSG="⚠️ DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A🔧 Check configured secrets at:%0Ahttps://github.com/${{ github.repository }}/settings/secrets/actions%0A%0A📊 Status: ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌' }}%0A• FIREBASE_SERVICE_ACCOUNT ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌' }}%0A• JWT_SECRET ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌' }}%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️' }}%0A• TELEGRAM_BOT_TOKEN%0A• TELEGRAM_CHAT_ID"
-          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MSG" \
-          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
-
-# ---------------------------------------------------------
-# TELEGRAM ALERT (SUCCESS)
-# ---------------------------------------------------------
-  notify-success:
-    name: ✅ Success Notification
+  notify:
+    name: 📱 Telegram Notifications
     runs-on: ubuntu-latest
     needs: [preflight, backend, worker, frontend]
-    if: >-
-      needs.preflight.result == 'success' &&
-      needs.backend.result == 'success' &&
-      needs.worker.result == 'success' &&
-      needs.frontend.result == 'success'
+    if: always()
 
     steps:
-      - name: Send Telegram Success Alert
-        continue-on-error: true
+      - name: Determine status and send alert
         run: |
-          WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjays.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
-          KEEP_ALIVE="Render (10m) + UptimeRobot (5m)"
-          if [ "${{ needs.preflight.outputs.worker_configured }}" = "true" ]; then
-            KEEP_ALIVE="$KEEP_ALIVE + Worker (2m)"
+          # Collect job results
+          PREFLIGHT="${{ needs.preflight.result }}"
+          BACKEND="${{ needs.backend.result }}"
+          WORKER="${{ needs.worker.result }}"
+          FRONTEND="${{ needs.frontend.result }}"
+          MISSING="${{ needs.preflight.outputs.missing_count }}"
+          CONFIGURED="${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }}"
+
+          echo "📊 Job Results:"
+          echo "  Preflight: $PREFLIGHT"
+          echo "  Backend: $BACKEND"
+          echo "  Worker: $WORKER"
+          echo "  Frontend: $FRONTEND"
+          echo "  Secrets: $CONFIGURED configured, $MISSING missing"
+          echo ""
+
+          # Determine status type
+          if [ "$PREFLIGHT" = "failure" ] || [ "$MISSING" -gt 0 ] 2>/dev/null; then
+            STATUS="🚨 SECRETS MISSING"
+            COLOR="⚠️"
+            MSG="$COLOR DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A📊 Secrets: $CONFIGURED configured%0A❌ Required missing: $MISSING%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ MISSING' }}%0A• FIREBASE_SERVICE_ACCOUNT ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ MISSING' }}%0A• JWT_SECRET ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌ MISSING' }}%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️ Missing (UptimeRobot fallback)' }}%0A%0A🔧 Fix at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+          elif [ "$BACKEND" = "failure" ] || [ "$WORKER" = "failure" ] || [ "$FRONTEND" = "failure" ]; then
+            STATUS="🚨 DEPLOY FAILED"
+            COLOR="🔴"
+            FAILED_JOBS=""
+            [ "$BACKEND" = "failure" ] && FAILED_JOBS="$FAILED_JOBS%0A• 🔧 Backend"
+            [ "$WORKER" = "failure" ] && FAILED_JOBS="$FAILED_JOBS%0A• ☁️ Worker"
+            [ "$FRONTEND" = "failure" ] && FAILED_JOBS="$FAILED_JOBS%0A• 🎨 Frontend"
+            MSG="$COLOR DEPLOY FAILED%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 Actor: ${{ github.actor }}%0A%0A❌ Failed:$FAILED_JOBS%0A%0A🔗 Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          elif [ "$BACKEND" = "success" ] && [ "$FRONTEND" = "success" ]; then
+            STATUS="✅ DEPLOY SUCCESS"
+            COLOR="✅"
+            WORKER_STATUS="${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}"
+            MSG="$COLOR DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 Actor: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A☁️ Worker: https://merosadak.banjays.workers.dev%0A📊 Monitor: https://uptimerobot.com/ZaSzISaXMt%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + $WORKER_STATUS%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
           else
-            KEEP_ALIVE="$KEEP_ALIVE + N/A"
+            STATUS="⏭️ SKIPPED"
+            COLOR="⏭️"
+            MSG="$COLOR DEPLOY SKIPPED%0A%0APreflight: $PREFLIGHT%0ABackend: $BACKEND%0AWorker: $WORKER%0AFrontend: $FRONTEND%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}"
           fi
-          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: $WORKER_URL%0A%0A🔄 Keep-Alive: $KEEP_ALIVE%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
-          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MSG" \
-          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
+
+          echo "📤 Sending Telegram alert: $STATUS"
+          echo ""
+          echo "Message: $(echo -e "$MSG" | sed 's/%0A/\n/g' | head -20)..."
+          echo ""
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\", \"text\": \"$MSG\", \"parse_mode\": \"HTML\"}" 2>/dev/null || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Telegram alert sent successfully"
+          elif [ "$HTTP_CODE" = "403" ]; then
+            echo "❌ Telegram bot is BLOCKED (HTTP 403)"
+            echo "   Fix: Open Telegram → Find bot → Send /start"
+          elif [ "$HTTP_CODE" = "400" ]; then
+            echo "❌ Invalid chat ID or token (HTTP 400)"
+            echo "   Fix: Check TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID secrets"
+          else
+            echo "⚠️ Telegram failed (HTTP $HTTP_CODE)"
+          fi
