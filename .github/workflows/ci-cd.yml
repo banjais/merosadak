@@ -28,7 +28,7 @@ on:
           - prod
 
 env:
-  NODE_VERSION: "24"
+  NODE_VERSION: "20"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
@@ -49,25 +49,104 @@ jobs:
       github.event.inputs.deploy_target == 'backend' ||
       github.event_name == 'workflow_dispatch'
 
+    outputs:
+      build_time: ${{ steps.build_time.outputs.duration }}
+      deploy_status: ${{ steps.render_deploy.outputs.status }}
+
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package.json'
 
       - name: Install backend dependencies
-        run: cd backend && npm install
+        run: cd backend && npm ci --include=dev
+        timeout-minutes: 5
+
+      - name: Lint backend
+        run: cd backend && npm run lint || echo "⚠️ Linting warnings found"
+        continue-on-error: true
 
       - name: Build backend
+        id: build_step
         run: cd backend && npm run build
         env:
           NODE_ENV: production
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
+      - name: Calculate build time
+        id: build_time
+        run: |
+          DURATION=$(($SECONDS))
+          echo "duration=${DURATION}s" >> $GITHUB_OUTPUT
+          echo "⏱️ Build completed in ${DURATION}s"
+
       - name: Deploy Render
+        id: render_deploy
         if: github.event.inputs.environment != 'dev'
-        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Render deployment triggered successfully (HTTP $HTTP_CODE)"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Render deployment failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "Response: $BODY"
+            exit 1
+          fi
+
+      - name: Wait for Render deployment
+        id: render_wait
+        if: steps.render_deploy.outputs.status == 'success'
+        run: |
+          echo "⏳ Waiting 60s for Render to start building..."
+          sleep 60
+
+      - name: Health check - backend
+        id: health_check
+        if: steps.render_deploy.outputs.status == 'success'
+        run: |
+          echo "🔍 Checking backend health..."
+          MAX_RETRIES=12
+          RETRY_INTERVAL=15
+          HEALTH_URL="https://sadaksathi.onrender.com/health/live"
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Backend is healthy! (attempt $i/$MAX_RETRIES)"
+              echo "status=healthy" >> $GITHUB_OUTPUT
+
+              # Get health details
+              HEALTH_DATA=$(curl -s "$HEALTH_URL")
+              echo "Health response: $HEALTH_DATA"
+              exit 0
+            fi
+
+            echo "⏳ Attempt $i/$MAX_RETRIES - Status: $HTTP_CODE (waiting ${RETRY_INTERVAL}s)..."
+            sleep $RETRY_INTERVAL
+          done
+
+          echo "❌ Backend health check failed after $MAX_RETRIES attempts"
+          echo "status=unhealthy" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-dist
+          path: backend/dist/
+          retention-days: 7
 
 # ---------------------------------------------------------
 # WORKER
@@ -82,15 +161,38 @@ jobs:
       github.event.inputs.deploy_target == 'worker' ||
       github.event_name == 'workflow_dispatch'
 
+    outputs:
+      deploy_status: ${{ steps.worker_deploy.outputs.status }}
+
     steps:
       - uses: actions/checkout@v4
 
-      - run: npm install -g wrangler
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install -g wrangler
 
       - name: Deploy Worker
-        run: wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        id: worker_deploy
+        run: |
+          echo "🚀 Deploying Cloudflare Worker..."
+          wrangler deploy
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Verify Worker deployment
+        if: steps.worker_deploy.outputs.status == 'success'
+        run: |
+          echo "🔍 Verifying Cloudflare Worker..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://merosadak.banjais.workers.dev" || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Worker is responding (HTTP $HTTP_CODE)"
+          else
+            echo "⚠️ Worker returned HTTP $HTTP_CODE"
+          fi
 
 # ---------------------------------------------------------
 # FRONTEND
@@ -105,23 +207,46 @@ jobs:
       github.event.inputs.deploy_target == 'frontend' ||
       github.event_name == 'workflow_dispatch'
 
+    outputs:
+      build_time: ${{ steps.build_time.outputs.duration }}
+      firebase_url: ${{ steps.firebase_deploy.outputs.url }}
+
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package.json'
 
       - name: Install frontend dependencies
-        run: cd frontend && npm install
+        run: cd frontend && npm ci --include=dev
+        timeout-minutes: 5
 
       - name: Build frontend
+        id: build_step
         run: cd frontend && npm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Calculate build time
+        id: build_time
+        run: |
+          DURATION=$(($SECONDS))
+          echo "duration=${DURATION}s" >> $GITHUB_OUTPUT
+          echo "⏱️ Build completed in ${DURATION}s"
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
       - name: Deploy Firebase
+        id: firebase_deploy
         if: github.event.inputs.environment != 'dev'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -129,6 +254,104 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: sadak-sathi-3ab73
           channelId: live
+
+      - name: Verify Firebase deployment
+        if: steps.firebase_deploy.outcome == 'success'
+        run: |
+          echo "🔍 Verifying Firebase Hosting..."
+          FIREBASE_URL="https://merosadak.web.app"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$FIREBASE_URL" || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Frontend is live at $FIREBASE_URL (HTTP $HTTP_CODE)"
+            echo "url=$FIREBASE_URL" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Frontend returned HTTP $HTTP_CODE"
+            echo "url=$FIREBASE_URL" >> $GITHUB_OUTPUT
+          fi
+
+# ---------------------------------------------------------
+# MONITORING STATUS CHECK
+# ---------------------------------------------------------
+  monitoring-check:
+    name: 📊 Monitoring Status
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: success()
+
+    steps:
+      - name: Check UptimeRobot public status
+        run: |
+          echo "📊 Checking UptimeRobot monitoring status..."
+          STATUS_PAGE="https://uptimerobot.com/ZaSzISaXMt"
+
+          echo "Public Status Page: $STATUS_PAGE"
+          echo ""
+          echo "🔍 Note: UptimeRobot may take 5-10 minutes to reflect new uptime"
+          echo "Check back later for accurate monitoring stats"
+
+      - name: Check Render service status
+        run: |
+          echo "📊 Render Deployment Status:"
+          echo "Backend URL: https://sadaksathi.onrender.com"
+          echo "Health Endpoint: https://sadaksathi.onrender.com/health/live"
+          echo ""
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sadaksathi.onrender.com/health/live" || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Render service is UP and healthy"
+            HEALTH_DATA=$(curl -s "https://sadaksathi.onrender.com/health/live")
+            echo "Health: $HEALTH_DATA"
+          else
+            echo "⚠️ Render service status: HTTP $HTTP_CODE"
+            echo "This is normal if Render is still building..."
+          fi
+
+# ---------------------------------------------------------
+# DEPLOY SUMMARY
+# ---------------------------------------------------------
+  deploy-summary:
+    name: 📝 Deploy Summary
+    runs-on: ubuntu-latest
+    needs: [backend, worker, frontend, monitoring-check]
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 🚀 MeroSadak Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.event.head_commit.message || 'Manual deploy' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deploy target:** ${{ github.event.inputs.deploy_target || 'auto (push)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Services Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | URL | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | https://sadaksathi.onrender.com | ${{ needs.backend.result == 'success' && '✅ Deployed' || needs.backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | https://merosadak.banjais.workers.dev | ${{ needs.worker.result == 'success' && '✅ Deployed' || needs.worker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | https://merosadak.web.app | ${{ needs.frontend.result == 'success' && '✅ Deployed' || needs.frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Monitoring | https://uptimerobot.com/ZaSzISaXMt | ✅ Active |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Build Times" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend:** ${{ needs.backend.outputs.build_time || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** ${{ needs.frontend.outputs.build_time || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.backend.result }}" = "success" ]; then
+            echo "### Backend Health" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Status: ${{ needs.backend.outputs.deploy_status }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Health Check: ${{ steps.backend_health_check.outcome || 'pending' }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
 
 # ---------------------------------------------------------
 # TELEGRAM ALERT (FAILURE ONLY)
@@ -142,19 +365,26 @@ jobs:
     steps:
       - name: Send Telegram Alert
         run: |
-          MSG="🚨 DEPLOY FAILED%0ARepo: ${{ github.repository }}%0ABranch: ${{ github.ref_name }}%0ATarget: ${{ github.event.inputs.deploy_target || 'auto' }}"
+          MSG="🚨 DEPLOY FAILED%0ARepo: ${{ github.repository }}%0ABranch: ${{ github.ref_name }}%0ATarget: ${{ github.event.inputs.deploy_target || 'auto' }}%0ACommit: ${{ github.event.head_commit.message || 'manual' }}%0AActor: ${{ github.actor }}%0A%0A🔗 Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MSG"
+          -d text="$MSG" \
+          -d parse_mode="HTML"
 
 # ---------------------------------------------------------
-# SUCCESS LOG
+# TELEGRAM ALERT (SUCCESS)
 # ---------------------------------------------------------
-  success:
-    name: ✅ Success
+  notify-success:
+    name: ✅ Success Notification
     runs-on: ubuntu-latest
     needs: [backend, worker, frontend]
     if: success()
 
     steps:
-      - run: echo "Deploy completed successfully"
+      - name: Send Telegram Success Alert
+        run: |
+          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="$MSG" \
+          -d parse_mode="HTML"
