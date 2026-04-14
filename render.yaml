@@ -5,6 +5,7 @@ services:
     nodeVersion: "20"
     region: oregon
     branch: main
+    rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm run start
     healthCheckPath: /health/live

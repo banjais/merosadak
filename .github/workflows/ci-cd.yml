@@ -56,7 +56,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: npm install
+      - name: Install backend dependencies
+        run: cd backend && npm install
 
       - name: Build backend
         run: cd backend && npm run build
@@ -111,7 +112,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - run: npm install
+      - name: Install frontend dependencies
+        run: cd frontend && npm install
 
       - name: Build frontend
         run: cd frontend && npm run build
