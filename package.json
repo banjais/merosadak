@@ -1,10 +1,12 @@
 {
-  "name": "merosadak-snapdeploy",
+  "name": "merosadak",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "cd backend && npm install --omit=dev && npm run build",
-    "start": "cd backend && npm run start"
+    "start": "cd backend && npm run start",
+    "deploy:render": "echo 'Deploy to Render via GitHub integration'",
+    "monitor:status": "echo 'Check UptimeRobot status at https://uptimerobot.com/ZaSzISaXMt'"
   },
   "engines": {
     "node": ">=20.0.0"

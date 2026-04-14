@@ -212,7 +212,26 @@ server.listen(PORT, async () => {
 });
 
 // -----------------------------
-// 8️⃣ Graceful Shutdown
+// 8️⃣ Self-Ping Keep-Warm (prevents Render free tier sleep)
+// -----------------------------
+if (isProd) {
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  const PING_INTERVAL_MS = 10 * 60 * 1000; // every 10 minutes
+
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${SELF_URL}/health/live`);
+      logInfo(`[KeepWarm] Self-ping OK — ${res.status}`);
+    } catch (err: any) {
+      logInfo(`[KeepWarm] Self-ping failed (non-critical): ${err.message}`);
+    }
+  }, PING_INTERVAL_MS);
+
+  logInfo(`[KeepWarm] Self-ping scheduled every 10 min → ${SELF_URL}/health/live`);
+}
+
+// -----------------------------
+// 9️⃣ Graceful Shutdown
 // -----------------------------
 const shutdown = () => {
   logInfo("Shutting down server...");

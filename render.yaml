@@ -3,10 +3,28 @@ services:
     name: merosadak-backend
     env: node
     nodeVersion: "20"
-    buildCommand: npm run build
+    region: oregon
+    branch: main
+    buildCommand: npm install && npm run build
     startCommand: npm run start
+    healthCheckPath: /health/live
+    autoDeploy: true
+    disk:
+      name: merosadak-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: RATE_LIMIT_MAX
         value: "100"
+      - key: PORT
+        fromService:
+          name: merosadak-backend
+          type: web
+          property: port
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: merosadak-backend
+          type: web
+          property: hostport

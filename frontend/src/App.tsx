@@ -45,6 +45,7 @@ import { POICategorySelector } from "./components/POICategorySelector";
 import { POIOverlay } from "./components/POIOverlay";
 import { TrafficFlowOverlay } from "./components/TrafficFlowOverlay";
 import DeployDashboard from "./components/DeployDashboard";
+import { UptimeRobotStats } from "./components/UptimeRobotStats";
 import { registerPushNotifications } from "./services/pushNotificationService";
 import type { Toast } from "./components/Toast";
 import type { SearchResult, RouteInfo } from "./services/enhancedSearchService";
@@ -123,6 +124,7 @@ const MainApp: React.FC = () => {
   const [pilotMode, setPilotMode] = useState(false);
   const [mapLayersOpen, setMapLayersOpen] = useState(false);
   const [showDeployDashboard, setShowDeployDashboard] = useState(false);
+  const [showMonitoringStats, setShowMonitoringStats] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
   const [distanceCalcOpen, setDistanceCalcOpen] = useState(false);
@@ -662,10 +664,10 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           <TileLayer
             url={
               isDarkMode
-                ? "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             }
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
 
           <MapEventHandler onMapClick={handleMapClick} />
@@ -852,6 +854,7 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           onDownloadOfflineMap={handleDownloadOfflineMap}
           onToggleLayers={handleToggleMapLayers}
           onToggleDeployDashboard={() => { setShowDeployDashboard(!showDeployDashboard); setSystemMenuOpen(false); }}
+          onToggleMonitoring={() => { setShowMonitoringStats(!showMonitoringStats); setSystemMenuOpen(false); }}
         />
 
         <BottomInfoArea
@@ -964,7 +967,7 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
         {showDeployDashboard && (
           <div className="fixed bottom-20 right-4 z-[1000] w-[90vw] md:w-[400px] max-h-[70vh] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 animate-in slide-in-from-bottom-10 backdrop-blur-3xl">
             <div className="absolute top-4 right-4 z-10">
-              <button 
+              <button
                 onClick={() => setShowDeployDashboard(false)}
                 className="w-8 h-8 rounded-full bg-slate-800/80 text-white flex items-center justify-center hover:bg-slate-700"
               >
@@ -974,6 +977,12 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
             <DeployDashboard isDarkMode={isDarkMode} />
           </div>
         )}
+
+        {/* UptimeRobot Monitoring Stats */}
+        <UptimeRobotStats
+          isOpen={showMonitoringStats}
+          onClose={() => setShowMonitoringStats(false)}
+        />
 
         {/* Quick Action FABs */}
         <div className="fixed bottom-4 left-4 z-[1000] flex flex-col gap-2">

@@ -6,7 +6,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && tsup",
-    "start": "node --max-old-space-size=2048 dist/index.js",
+    "start": "node --max-old-space-size=2048 dist/index.js"
+  },
   "dependencies": {
     "@sentry/node": "^10.38.0",
     "@upstash/redis": "^1.36.2",
