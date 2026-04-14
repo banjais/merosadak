@@ -592,7 +592,7 @@ jobs:
     name: 📱 Telegram Notifications
     runs-on: ubuntu-latest
     needs: [preflight, backend, worker, frontend]
-    if: always()
+    if: '!cancelled()'
 
     steps:
       - name: Determine status and send alert
