@@ -219,7 +219,7 @@ jobs:
           cache-dependency-path: '**/package.json'
 
       - name: Install backend dependencies
-        run: cd backend && npm ci --include=dev
+        run: cd backend && npm install --include=dev
         timeout-minutes: 5
 
       - name: Build backend
@@ -379,7 +379,7 @@ jobs:
           cache-dependency-path: '**/package.json'
 
       - name: Install frontend dependencies
-        run: cd frontend && npm ci --include=dev
+        run: cd frontend && npm install --include=dev
         timeout-minutes: 5
 
       - name: Build frontend
