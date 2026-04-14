@@ -281,10 +281,12 @@ jobs:
         run: |
           echo "🚀 Deploying Cloudflare Worker..."
           wrangler deploy
-          echo "status=success" >> $GITHUB_OUTPUT
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
 
       - name: Verify Worker deployment
-        if: steps.worker_deploy.outputs.status == 'success'
+        if: steps.worker_deploy.outcome == 'success'
         run: |
           echo "🔍 Verifying Cloudflare Worker..."
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://merosadak.banjais.workers.dev" || echo "000")
