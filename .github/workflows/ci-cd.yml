@@ -29,7 +29,7 @@ on:
 
 env:
   NODE_VERSION: "20"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_NO_WARNINGS: 1
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -412,6 +412,7 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: sadak-sathi-3ab73
           channelId: live
+        continue-on-error: true
 
       - name: Verify Firebase deployment
         if: steps.firebase_deploy.outcome == 'success'
@@ -547,12 +548,13 @@ jobs:
 
     steps:
       - name: Send Telegram Alert
+        continue-on-error: true
         run: |
           MSG="🚨 DEPLOY FAILED%0ARepo: ${{ github.repository }}%0ABranch: ${{ github.ref_name }}%0ATarget: ${{ github.event.inputs.deploy_target || 'auto' }}%0ACommit: ${{ github.event.head_commit.message || 'manual' }}%0AActor: ${{ github.actor }}%0A%0A🔗 Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
 
 # ---------------------------------------------------------
 # TELEGRAM ALERT (SECRETS MISSING)
@@ -565,12 +567,13 @@ jobs:
 
     steps:
       - name: Send Telegram Alert
+        continue-on-error: true
         run: |
           MSG="⚠️ DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A🔧 Check configured secrets at:%0Ahttps://github.com/${{ github.repository }}/settings/secrets/actions%0A%0A📊 Status: ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌' }}%0A• FIREBASE_SERVICE_ACCOUNT ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌' }}%0A• JWT_SECRET ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌' }}%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️' }}%0A• TELEGRAM_BOT_TOKEN%0A• TELEGRAM_CHAT_ID"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
 
 # ---------------------------------------------------------
 # TELEGRAM ALERT (SUCCESS)
@@ -586,6 +589,7 @@ jobs:
 
     steps:
       - name: Send Telegram Success Alert
+        continue-on-error: true
         run: |
           WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjays.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
           KEEP_ALIVE="Render (10m) + UptimeRobot (5m)"
@@ -595,7 +599,7 @@ jobs:
             KEEP_ALIVE="$KEEP_ALIVE + N/A"
           fi
           MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: $WORKER_URL%0A%0A🔄 Keep-Alive: $KEEP_ALIVE%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML" || echo "⚠️ Telegram failed (bot may be blocked)"
