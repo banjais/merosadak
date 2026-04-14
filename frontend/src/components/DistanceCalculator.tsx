@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Ruler, X, MapPin, Navigation } from 'lucide-react';
+import { Ruler, X, MapPin, Navigation, Clock, Loader2 } from 'lucide-react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import type { ETAResult } from '../services/etaService';
 
 interface DistanceCalculatorProps {
   onClose: () => void;
   points: { lat: number, lng: number }[];
   clearPoints: () => void;
+  eta?: ETAResult | null;
+  etaLoading?: boolean;
+  etaError?: string | null;
+  onCalculateETA?: (origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) => Promise<any>;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose, points, clearPoints }) => {
+export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({
+  onClose, points, clearPoints, eta, etaLoading, etaError, onCalculateETA, userLocation
+}) => {
   const [distance, setDistance] = useState<number | null>(null);
 
   // Close on Escape key
@@ -56,6 +64,60 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onClose,
             {distance !== null ? distance.toFixed(2) : '0.00'} <span className="text-sm">km</span>
           </div>
         </div>
+
+        {/* ETA Section */}
+        {eta && (
+          <div className="bg-slate-950/50 p-4 rounded-2xl border border-emerald-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={14} className="text-emerald-400" />
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estimated Travel Time</div>
+            </div>
+            {etaLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-indigo-400" />
+                <span className="text-sm text-slate-400">Calculating...</span>
+              </div>
+            ) : (
+              <div>
+                <div className="text-2xl font-black text-emerald-500 tabular-nums">
+                  {eta.durationHours.toFixed(2)} <span className="text-sm">hours</span>
+                </div>
+                {eta.distanceKm && (
+                  <div className="text-xs text-slate-400 mt-1">
+                    Route: {eta.distanceKm.toFixed(1)} km via {eta.routeName || 'recommended route'}
+                  </div>
+                )}
+                {eta.safetyScore !== undefined && (
+                  <div className="flex items-center gap-1 mt-2">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-500">Safety:</span>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${i <= (eta.safetyScore || 0) ? 'bg-emerald-400' : 'bg-slate-700'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick ETA calculation button */}
+        {onCalculateETA && userLocation && points.length > 0 && (
+          <button
+            onClick={() => {
+              const lastPoint = points[points.length - 1];
+              onCalculateETA(userLocation, lastPoint);
+            }}
+            disabled={etaLoading}
+            className="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-emerald-500/20 disabled:opacity-50"
+          >
+            {etaLoading ? 'Calculating...' : 'Calculate ETA'}
+          </button>
+        )}
 
         <div className="space-y-2">
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Selected Points ({points.length})</div>

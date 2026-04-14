@@ -1,35 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { GeoJSON } from "react-leaflet";
+import { useBoundary } from "../hooks/useBoundary";
 
 interface BoundaryOverlayProps {
   isDarkMode: boolean;
 }
 
 const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
-  const [boundaryData, setBoundaryData] = useState<any>(null);
-
-  useEffect(() => {
-    const loadBoundary = async () => {
-      try {
-        const res = await fetch("/api/boundary");
-        if (!res.ok) throw new Error("Failed to fetch from API");
-        const json = await res.json();
-        setBoundaryData(json.data || json);
-      } catch (primaryErr) {
-        console.warn("[BoundaryOverlay] API fetch failed, trying public folder:", primaryErr);
-        try {
-          const publicRes = await fetch("/boundary.geojson");
-          if (publicRes.ok) {
-            const data = await publicRes.json();
-            setBoundaryData(data);
-          }
-        } catch (fallbackErr) {
-          console.error("[BoundaryOverlay] Public fallback also failed:", fallbackErr);
-        }
-      }
-    };
-    loadBoundary();
-  }, []);
+  const { boundaries, loading, error } = useBoundary();
 
   // Styling for polygons based on dark/light mode
   const boundaryStyle = {
@@ -38,7 +16,10 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
     fillOpacity: 0.1,
   };
 
-  if (!boundaryData) return null;
+  // Use boundary data from the hook (falls back to local fetch if hook data not available)
+  const boundaryData = boundaries.nepal;
+
+  if (loading || error || !boundaryData) return null;
 
   return <GeoJSON data={boundaryData} style={boundaryStyle} />;
 };

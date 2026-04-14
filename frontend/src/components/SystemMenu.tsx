@@ -8,9 +8,19 @@ import {
   ShieldCheck,
   Smartphone,
   Download,
-  Activity
+  Activity,
+  Megaphone,
+  Trash2,
+  Info
 } from 'lucide-react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+
+interface UserProfile {
+  email?: string;
+  name?: string;
+  preferences?: any;
+  savedLocations?: Array<{ name: string; lat: number; lng: number }>;
+}
 
 interface SystemMenuProps {
   isDarkMode: boolean;
@@ -30,6 +40,13 @@ interface SystemMenuProps {
   onToggleLayers?: () => void;
   onToggleDeployDashboard?: () => void;
   onToggleMonitoring?: () => void;
+  // New props for user profile and superadmin
+  userProfile?: UserProfile | null;
+  isSuperadmin?: boolean;
+  onBroadcast?: (msg: string) => void;
+  onPurgeCache?: () => void;
+  superadminBusy?: boolean;
+  onToggleInfoBoard?: () => void;
 }
 
 export const SystemMenu: React.FC<SystemMenuProps> = ({
@@ -50,17 +67,33 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   onToggleLayers,
   onToggleDeployDashboard,
   onToggleMonitoring,
+  userProfile,
+  isSuperadmin,
+  onBroadcast,
+  onPurgeCache,
+  superadminBusy,
+  onToggleInfoBoard,
 }) => {
   if (!isOpen) return null;
 
+  const userName = userProfile?.name || userProfile?.email || 'Guest Traveler';
+  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'GT';
+
   const menuItems = [
-    { id: 'profile', icon: <User size={18} />, label: 'Traveler Profile', sub: 'Emergency contacts, preferences' },
+    { id: 'profile', icon: <User size={18} />, label: 'Traveler Profile', sub: userProfile ? `${userProfile.email || 'No email'} · ${userProfile.savedLocations?.length || 0} saved locations` : 'Emergency contacts, preferences' },
+    { id: 'info', icon: <Info size={18} />, label: 'App Directory', sub: 'Browse all services', action: onToggleInfoBoard, badge: 'New' },
     { id: 'offline', icon: <Smartphone size={18} />, label: 'Offline Maps', sub: 'Download for offline use', action: onDownloadOfflineMap, badge: 'New' },
     { id: 'deploy', icon: <ShieldCheck size={18} />, label: 'System Health', sub: 'Deploy status & CI/CD logs', action: onToggleDeployDashboard },
     { id: 'monitoring', icon: <Activity size={18} />, label: 'Monitoring Status', sub: 'Uptime & performance stats', action: onToggleMonitoring, badge: 'Live' },
     { id: 'layers', icon: <Download size={18} />, label: 'Map Layers', sub: 'Monsoon, road status, distance tool', action: onToggleLayers },
     { id: 'privacy', icon: <ShieldCheck size={18} />, label: 'Safety & Privacy', sub: 'End-to-end encrypted' },
     { id: 'lang', icon: <Languages size={18} />, label: 'Language Settings', sub: 'English / नेपाली / हिन्दी' },
+  ];
+
+  // Superadmin items
+  const superadminItems = [
+    { id: 'broadcast', icon: <Megaphone size={18} />, label: 'Broadcast Update', sub: 'Send system-wide message', action: () => onBroadcast?.('System maintenance scheduled') },
+    { id: 'purge', icon: <Trash2 size={18} />, label: 'Purge Cache', sub: 'Clear all CDN/edge caches', action: onPurgeCache },
   ];
 
   // Close on Escape key
@@ -77,10 +110,10 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
         {/* User Header */}
         <div className="flex items-center gap-3 mb-6 p-1">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-tertiary flex items-center justify-center font-headline font-bold text-white shadow-lg ring-2 ring-white/20">
-            SS
+            {userInitials}
           </div>
           <div>
-            <div className="text-xs font-headline font-bold text-on-surface leading-none">Guest Traveler</div>
+            <div className="text-xs font-headline font-bold text-on-surface leading-none">{userName}</div>
             <div className="text-[9px] font-label font-bold text-on-surface-variant uppercase tracking-widest mt-1">v4.0 Build</div>
           </div>
         </div>
@@ -182,6 +215,34 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
             </button>
           ))}
         </div>
+
+        {/* Superadmin Section */}
+        {isSuperadmin && (
+          <div className="mb-6">
+            <h4 className={`text-[9px] font-label font-bold uppercase tracking-[0.2em] px-1 mb-2 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+              Superadmin Tools
+            </h4>
+            <div className="space-y-1">
+              {superadminItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => item.action?.()}
+                  disabled={superadminBusy}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left ${superadminBusy ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'hover:bg-amber-900/20' : 'hover:bg-amber-50'
+                    }`}
+                >
+                  <div className="text-amber-500">
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[11px] font-headline font-bold text-on-surface tracking-wide">{item.label}</div>
+                    <div className="text-[9px] text-on-surface-variant">{item.sub}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Toggles */}
         <div className={`pt-5 border-t space-y-2 transition-colors duration-300 ${isDarkMode ? 'border-slate-700/30' : 'border-outline/10'}`}>

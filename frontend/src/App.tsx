@@ -6,6 +6,15 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useNepalData } from "./hooks/useNepalData";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useWebSocket } from "./hooks/useWebSocket";
+import { useAlert } from "./hooks/useAlert";
+import { usePushNotifications } from "./hooks/usePushNotifications";
+import { useUserProfile, useLeaderboard } from "./hooks/useUserProfile";
+import { useAnalytics } from "./hooks/useAnalytics";
+import { useSuperadmin } from "./hooks/useSuperadmin";
+import { useGemini } from "./hooks/useGemini";
+import { useRoutePlanning } from "./hooks/useRoutePlanning";
+import { useETA, useQuickETA } from "./hooks/useETA";
+import { useServiceData } from "./hooks/useServiceData";
 import { TravelIncident, ChatMessage } from "./types";
 import { apiFetch } from "./api";
 import { useTranslation } from "./i18n";
@@ -46,6 +55,10 @@ import { POIOverlay } from "./components/POIOverlay";
 import { TrafficFlowOverlay } from "./components/TrafficFlowOverlay";
 import DeployDashboard from "./components/DeployDashboard";
 import { UptimeRobotStats } from "./components/UptimeRobotStats";
+import { MapEngineSelector, type MapEngine } from "./components/MapEngineSelector";
+import { MapLayersToggle, type MapLayerType } from "./components/MapLayersToggle";
+import { InfoBoard } from "./components/InfoBoard";
+import { MapLabel } from "./components/MapLabel";
 import { recordPOIInteraction } from "./services/userPreferencesService";
 import { registerPushNotifications } from "./services/pushNotificationService";
 import type { Toast } from "./components/Toast";
@@ -93,6 +106,19 @@ const MainApp: React.FC = () => {
   const { incidents, isLoading, refresh } = useNepalData();
   const { isOffline } = useNetworkStatus();
 
+  // Integrated unused hooks
+  const { alerts, dismiss: dismissAlert, success: alertSuccess, error: alertError, info: alertInfo, warning: alertWarning } = useAlert();
+  const { subscribed: pushSubscribed, loading: pushLoading, error: pushError, supported: pushSupported, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications();
+  const { profile: userProfile, loading: profileLoading, error: profileError, refetch: refetchProfile, updatePreferences, addSavedLocation, removeSavedLocation } = useUserProfile();
+  const { leaderboard, loading: leaderboardLoading, error: leaderboardError, refetch: refetchLeaderboard } = useLeaderboard(10);
+  const { summary: analyticsSummary, trends: analyticsTrends, topDistricts, topHighways, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics('7d');
+  const { isSuperadmin, broadcast: broadcastMessage, purge: purgeCache, isBusy: superadminBusy } = useSuperadmin();
+  const { messages: geminiMessages, isProcessing: geminiProcessing, ask: geminiAsk, getSummary: geminiSummary, clearChat: geminiClearChat } = useGemini();
+  const { plan: routePlan, loading: routePlanningLoading, error: routePlanningError, planRoute, compareRoutes: compareRouteRoutes, getSafety: getRouteSafety } = useRoutePlanning();
+  const { eta, loading: etaLoading, error: etaError, calculate: calculateETA } = useETA();
+  const { eta: quickEta, loading: quickEtaLoading, error: quickEtaError, calculate: calculateQuickETA } = useQuickETA();
+  const { data: serviceData, isLoading: serviceDataLoading, error: serviceDataError, lastSync: serviceLastSync, refresh: refreshServiceData } = useServiceData(serviceType, userLocation?.lat || 0, userLocation?.lng || 0, isLoading);
+
   // WebSocket for real-time updates
   const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
   const { isConnected: wsConnected, lastMessage } = useWebSocket(apiBaseUrl, true);
@@ -126,12 +152,21 @@ const MainApp: React.FC = () => {
   const [mapLayersOpen, setMapLayersOpen] = useState(false);
   const [showDeployDashboard, setShowDeployDashboard] = useState(false);
   const [showMonitoringStats, setShowMonitoringStats] = useState(false);
-  const [pushSubscribed, setPushSubscribed] = useState(false);
+  // pushSubscribed now comes from usePushNotifications hook
   const [monsoonVisible, setMonsoonVisible] = useState(false);
   const [distanceCalcOpen, setDistanceCalcOpen] = useState(false);
   const [distancePoints, setDistancePoints] = useState<{ lat: number; lng: number }[]>([]);
   const [appReady, setAppReady] = useState(false);
   const [selectedHighway, setSelectedHighway] = useState<string | null>(null);
+
+  // Map engine & layer states (for MapEngineSelector + MapLayersToggle)
+  const [mapEngine, setMapEngine] = useState<MapEngine>('nepal');
+  const [mapLayer, setMapLayer] = useState<MapLayerType>('standard');
+  const [showHighways, setShowHighways] = useState(false);
+  const [roadFilters, setRoadFilters] = useState<{ blocked: boolean; oneway: boolean; resumed: boolean }>({ blocked: false, oneway: false, resumed: false });
+  const [showMapEngineSelector, setShowMapEngineSelector] = useState(true);
+  const [infoBoardOpen, setInfoBoardOpen] = useState(false);
+  const [mapLabels, setMapLabels] = useState<Array<{ position: [number, number]; text: string; fontSize?: number; color?: string }>>([]);
 
   // Enhanced search states
   const [selectedDestination, setSelectedDestination] = useState<SearchResult | null>(null);
@@ -208,14 +243,12 @@ const MainApp: React.FC = () => {
     }
   }, []);
 
-  // Register push notifications
+  // Register push notifications using the hook
   useEffect(() => {
-    if (appReady) {
-      registerPushNotifications().then(sub => {
-        if (sub) setPushSubscribed(true);
-      });
+    if (appReady && pushSupported) {
+      pushSubscribe().catch(() => { });
     }
-  }, [appReady]);
+  }, [appReady, pushSupported, pushSubscribe]);
 
   // Initialize storage services on mount
   useEffect(() => {
@@ -302,6 +335,36 @@ const MainApp: React.FC = () => {
       }
       return !prev;
     });
+  }, []);
+
+  // Map engine & layer handlers
+  const handleMapEngineChange = useCallback((engine: MapEngine) => {
+    setMapEngine(engine);
+  }, []);
+
+  const handleLayerChange = useCallback((layer: MapLayerType) => {
+    setMapLayer(layer);
+  }, []);
+
+  const handleFilterToggle = useCallback((filter: 'blocked' | 'oneway' | 'resumed') => {
+    setRoadFilters(prev => ({ ...prev, [filter]: !prev[filter] }));
+  }, []);
+
+  const handleResetEngine = useCallback(() => {
+    setMapEngine('nepal');
+  }, []);
+
+  const handleToggleHighways = useCallback(() => {
+    setShowHighways(prev => !prev);
+  }, []);
+
+  const handleOpenHighwayBrowser = useCallback(() => {
+    setHighwayBrowserOpen(true);
+  }, []);
+
+  const handleMapEngineSelect = useCallback((engine: MapEngine) => {
+    setMapEngine(engine);
+    setShowMapEngineSelector(false);
   }, []);
 
   const handleSelectHighway = useCallback((code: string) => {
@@ -643,8 +706,13 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
 
   return (
     <>
+      {/* Map Engine Selector - splash screen on first load */}
+      {showMapEngineSelector && (
+        <MapEngineSelector onSelect={handleMapEngineSelect} />
+      )}
+
       {/* Loading Screen - shown until geolocation + initial data loaded */}
-      {!appReady && <LoadingScreen onComplete={() => setAppReady(true)} />}
+      {!appReady && !showMapEngineSelector && <LoadingScreen onComplete={() => setAppReady(true)} />}
 
       <div className={`h-screen w-screen relative transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
         }`} style={{ opacity: appReady ? 1 : 0, transition: 'opacity 0.5s ease' }}>
@@ -662,9 +730,15 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
         >
           <TileLayer
             url={
-              isDarkMode
-                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              mapEngine === 'world'
+                ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                : mapLayer === 'satellite'
+                  ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  : mapLayer === 'terrain'
+                    ? "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                    : isDarkMode
+                      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             }
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
@@ -712,10 +786,21 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
             />
           )}
 
+          {/* Map Labels for selected highway */}
+          {selectedHighway && mapLabels.map((label, idx) => (
+            <MapLabel
+              key={`label-${idx}`}
+              position={label.position}
+              text={label.text}
+              fontSize={label.fontSize}
+              color={label.color}
+            />
+          ))}
+
           {/* Monsoon/Rain Risk Overlay - toggled via SystemMenu */}
           {monsoonVisible && <MonsoonRiskOverlay incidents={incidents} isDarkMode={isDarkMode} />}
 
-          {/* Map Layers Panel */}
+          {/* Map Layers Panel + Toggle */}
           {mapLayersOpen && (
             <MapLayersPanel
               isDarkMode={isDarkMode}
@@ -725,6 +810,23 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
               onToggleTraffic={() => setShowTraffic(prev => !prev)}
               trafficVisible={showTraffic}
               onOpenDistanceCalc={handleOpenDistanceCalc}
+            />
+          )}
+
+          {/* MapLayersToggle - comprehensive layers panel */}
+          {!mapLayersOpen && (
+            <MapLayersToggle
+              currentLayer={mapLayer}
+              onLayerChange={handleLayerChange}
+              activeFilters={roadFilters}
+              onFilterToggle={handleFilterToggle}
+              isDarkMode={isDarkMode}
+              mapEngine={mapEngine}
+              onMapEngineChange={handleMapEngineChange}
+              onResetEngine={handleResetEngine}
+              showHighways={showHighways}
+              onToggleHighways={handleToggleHighways}
+              onOpenHighwayBrowser={handleOpenHighwayBrowser}
             />
           )}
         </MapContainer>
@@ -778,6 +880,17 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           onAskAI={handleAskAI}
           onIntentChange={handleSearchIntent}
         />
+
+        {/* Original SearchOverlay - Voice search + AI button + incident filtering */}
+        {!selectedDestination && (
+          <SearchOverlay
+            isDarkMode={isDarkMode}
+            incidents={incidents}
+            onSelectLocation={handleSelectIncident}
+            onAskAI={handleAskAI}
+            onSelectItem={handleSelectIncident}
+          />
+        )}
 
         {/* POI Category Selector - shows below search when active */}
         {!showContextCards && (
@@ -854,6 +967,12 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           onToggleLayers={handleToggleMapLayers}
           onToggleDeployDashboard={() => { setShowDeployDashboard(!showDeployDashboard); setSystemMenuOpen(false); }}
           onToggleMonitoring={() => { setShowMonitoringStats(!showMonitoringStats); setSystemMenuOpen(false); }}
+          userProfile={userProfile}
+          isSuperadmin={isSuperadmin}
+          onBroadcast={broadcastMessage}
+          onPurgeCache={purgeCache}
+          superadminBusy={superadminBusy}
+          onToggleInfoBoard={() => setInfoBoardOpen(prev => !prev)}
         />
 
         <BottomInfoArea
@@ -861,6 +980,16 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           onClose={() => setSelectedItem(null)}
           onSelectLocation={handleSelectLocation}
           onAskAI={handleAskAI}
+          isDarkMode={isDarkMode}
+        />
+
+        {/* InfoBoard - App directory showing services */}
+        <InfoBoard
+          onServiceSelect={(service) => {
+            setServiceType(service);
+            setInfoBoardOpen(!!service);
+          }}
+          activeService={serviceType}
           isDarkMode={isDarkMode}
         />
 
@@ -973,7 +1102,19 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
                 ✕
               </button>
             </div>
-            <DeployDashboard isDarkMode={isDarkMode} />
+            <DeployDashboard
+              isDarkMode={isDarkMode}
+              analyticsSummary={analyticsSummary}
+              analyticsTrends={analyticsTrends}
+              topDistricts={topDistricts}
+              topHighways={topHighways}
+              analyticsLoading={analyticsLoading}
+              onRefetchAnalytics={refetchAnalytics}
+              isSuperadmin={isSuperadmin}
+              onBroadcast={broadcastMessage}
+              onPurgeCache={purgeCache}
+              superadminBusy={superadminBusy}
+            />
           </div>
         )}
 
@@ -1016,6 +1157,11 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
             onClose={() => setDistanceCalcOpen(false)}
             points={distancePoints}
             clearPoints={() => setDistancePoints([])}
+            eta={eta}
+            etaLoading={etaLoading}
+            etaError={etaError}
+            onCalculateETA={calculateETA}
+            userLocation={userLocation}
           />
         )}
 

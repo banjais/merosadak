@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { apiFetch } from "../api";
+import { useOtp } from "../hooks/useOtp";
 
 type UserRole = "user" | "admin" | "superadmin";
 
@@ -14,6 +15,12 @@ type AuthContextType = {
   login: (email: string, otp: string) => Promise<boolean>;
   logout: () => void;
   getAuthHeaders: () => Record<string, string>;
+  // OTP integration
+  sendOtp: (phone: string) => Promise<boolean>;
+  verifyOtp: (phone: string, code: string) => Promise<boolean>;
+  otpSending: boolean;
+  otpVerifying: boolean;
+  otpCooldown: number;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +31,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return saved ? JSON.parse(saved) : null;
   });
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+
+  // OTP hook integration
+  const { send: sendOtp, verify: verifyOtp, isSending: otpSending, isVerifying: otpVerifying, cooldown: otpCooldown } = useOtp();
 
   // Login using OTP
   const login = async (email: string, otp: string): Promise<boolean> => {
@@ -65,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, getAuthHeaders }}>
+    <AuthContext.Provider value={{ user, token, login, logout, getAuthHeaders, sendOtp, verifyOtp, otpSending, otpVerifying, otpCooldown }}>
       {children}
     </AuthContext.Provider>
   );

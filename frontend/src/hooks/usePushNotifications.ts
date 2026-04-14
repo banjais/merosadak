@@ -1,6 +1,12 @@
 // frontend/src/hooks/usePushNotifications.ts
 import { useState, useCallback, useEffect } from "react";
-import { pushNotificationService, type NotificationPreferences } from "../services/pushNotificationService";
+import { registerPushNotifications } from "../services/pushNotificationService";
+
+export interface NotificationPreferences {
+  incidents?: boolean;
+  weather?: boolean;
+  traffic?: boolean;
+}
 
 export function usePushNotifications() {
   const [subscribed, setSubscribed] = useState(false);
@@ -23,7 +29,8 @@ export function usePushNotifications() {
       setLoading(true);
       setError(null);
       try {
-        const success = await pushNotificationService.requestPermissionAndSubscribe(preferences);
+        const subscription = await registerPushNotifications();
+        const success = subscription !== null;
         setSubscribed(success);
         return success;
       } catch (err: any) {
@@ -45,7 +52,6 @@ export function usePushNotifications() {
 
       if (subscription) {
         await subscription.unsubscribe();
-        await pushNotificationService.unsubscribe(subscription.endpoint);
         setSubscribed(false);
         return true;
       }
