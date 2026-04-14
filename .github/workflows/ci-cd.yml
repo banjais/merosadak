@@ -133,7 +133,7 @@ jobs:
           echo "Service URLs:"
           echo "  Frontend: https://merosadak.web.app"
           echo "  Backend:  https://sadaksathi.onrender.com"
-          echo "  Worker:   https://merosadak.banjais.workers.dev"
+          echo "  Worker:   https://merosadak.banjays.workers.dev"
           echo "  Monitor:  https://uptimerobot.com/ZaSzISaXMt"
 
 # ---------------------------------------------------------
@@ -289,7 +289,7 @@ jobs:
         if: steps.worker_deploy.outcome == 'success'
         run: |
           echo "🔍 Verifying Cloudflare Worker..."
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://merosadak.banjais.workers.dev" || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://merosadak.banjays.workers.dev" || echo "000")
 
           if [ "$HTTP_CODE" = "200" ]; then
             echo "✅ Worker is responding (HTTP $HTTP_CODE)"
@@ -456,7 +456,7 @@ jobs:
           echo "| Service | URL | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend | https://sadaksathi.onrender.com | ${{ needs.backend.result == 'success' && '✅ Deployed' || needs.backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Worker | https://merosadak.banjais.workers.dev | ${{ needs.worker.result == 'success' && '✅ Deployed' || needs.worker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | https://merosadak.banjays.workers.dev | ${{ needs.worker.result == 'success' && '✅ Deployed' || needs.worker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend | https://merosadak.web.app | ${{ needs.frontend.result == 'success' && '✅ Deployed' || needs.frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Monitoring | https://uptimerobot.com/ZaSzISaXMt | ✅ Active |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -529,7 +529,7 @@ jobs:
     steps:
       - name: Send Telegram Success Alert
         run: |
-          WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjais.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
+          WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjays.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
           KEEP_ALIVE="Render (10m) + UptimeRobot (5m)"
           if [ "${{ needs.preflight.outputs.worker_configured }}" = "true" ]; then
             KEEP_ALIVE="$KEEP_ALIVE + Worker (2m)"
