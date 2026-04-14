@@ -40,6 +40,7 @@ on:
 
 env:
   NODE_VERSION: "20"
+  NODE_NO_WARNINGS: 1
   CACHE_KEY: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
 
 concurrency:
@@ -546,6 +547,7 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: sadak-sathi-3ab73
           channelId: live
+        continue-on-error: true
 
       - name: Deploy Firebase Preview (PR)
         id: firebase_preview
@@ -556,6 +558,7 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: sadak-sathi-3ab73
           channelId: preview-${{ github.event.pull_request.number }}
+        continue-on-error: true
 
       - name: Verify Frontend
         if: steps.firebase_deploy.outcome == 'success' || steps.firebase_preview.outcome == 'success'
@@ -726,12 +729,19 @@ jobs:
 
     steps:
       - name: Send Telegram Alert
+        continue-on-error: true
         run: |
           MSG="⚠️ DEPLOY BLOCKED%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A%0A📊 ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0A🔧 https://github.com/${{ github.repository }}/settings/secrets/actions"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Telegram alert sent"
+          else
+            echo "⚠️ Telegram failed (HTTP $HTTP_CODE) - bot may be blocked"
+          fi
 
 # ---------------------------------------------------------
 # TELEGRAM: FAILURE
@@ -744,12 +754,19 @@ jobs:
 
     steps:
       - name: Send Telegram Alert
+        continue-on-error: true
         run: |
           MSG="🚨 DEPLOY FAILED%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A🎯 ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 ${{ github.actor }}%0A%0A🔗 Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Telegram alert sent"
+          else
+            echo "⚠️ Telegram failed (HTTP $HTTP_CODE) - bot may be blocked"
+          fi
 
 # ---------------------------------------------------------
 # TELEGRAM: SUCCESS
@@ -765,10 +782,17 @@ jobs:
 
     steps:
       - name: Send Telegram Alert
+        continue-on-error: true
         run: |
           WORKER_STATUS="${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}"
           MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A🎯 ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitor: https://uptimerobot.com/ZaSzISaXMt%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + $WORKER_STATUS%0A%0A📝 ${{ github.event.head_commit.message || 'manual deploy' }}"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
-          -d parse_mode="HTML"
+          -d parse_mode="HTML")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Telegram alert sent"
+          else
+            echo "⚠️ Telegram failed (HTTP $HTTP_CODE) - bot may be blocked"
+          fi
