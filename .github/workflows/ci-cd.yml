@@ -431,41 +431,87 @@ jobs:
           fi
 
 # ---------------------------------------------------------
-# MONITORING STATUS CHECK
+# MONITORING & STATUS CHECKER
 # ---------------------------------------------------------
   monitoring-check:
-    name: 📊 Monitoring Status
+    name: 📊 Monitoring & Status Checker
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: success()
+    needs: [backend, worker, frontend]
+    if: always()
 
     steps:
-      - name: Check UptimeRobot public status
+      - name: Run full status check
         run: |
-          echo "📊 Checking UptimeRobot monitoring status..."
-          STATUS_PAGE="https://uptimerobot.com/ZaSzISaXMt"
-
-          echo "Public Status Page: $STATUS_PAGE"
-          echo ""
-          echo "🔍 Note: UptimeRobot may take 5-10 minutes to reflect new uptime"
-          echo "Check back later for accurate monitoring stats"
-
-      - name: Check Render service status
-        run: |
-          echo "📊 Render Deployment Status:"
-          echo "Backend URL: https://sadaksathi.onrender.com"
-          echo "Health Endpoint: https://sadaksathi.onrender.com/health/live"
+          echo "============================================="
+          echo "  🔍 MEROSADAK STATUS CHECK"
+          echo "============================================="
           echo ""
 
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sadaksathi.onrender.com/health/live" || echo "000")
+          PASS=0
+          FAIL=0
+          SKIP=0
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Render service is UP and healthy"
-            HEALTH_DATA=$(curl -s "https://sadaksathi.onrender.com/health/live")
-            echo "Health: $HEALTH_DATA"
+          check_service() {
+            local name=$1
+            local url=$2
+            local expected=${3:-200}
+            local timeout=${4:-10}
+
+            echo -n "Checking $name... "
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time $timeout "$url" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "$expected" ]; then
+              echo "✅ HTTP $HTTP_CODE"
+              PASS=$((PASS + 1))
+            elif [ "$HTTP_CODE" = "000" ]; then
+              echo "⏳ Not ready yet"
+              SKIP=$((SKIP + 1))
+            else
+              echo "❌ HTTP $HTTP_CODE (expected $expected)"
+              FAIL=$((FAIL + 1))
+            fi
+          }
+
+          echo "--- 📦 BACKEND SERVICES ---"
+          check_service "Backend (Render Health)" "https://sadaksathi.onrender.com/health/live"
+          check_service "Backend (Render Ready)" "https://sadaksathi.onrender.com/health/ready"
+          check_service "Backend (API)" "https://sadaksathi.onrender.com/api/v1/roads"
+          echo ""
+
+          echo "--- 🎨 FRONTEND ---"
+          check_service "Frontend (Firebase)" "https://merosadak.web.app"
+          echo ""
+
+          echo "--- ☁️ WORKER ---"
+          check_service "Cloudflare Worker" "https://merosadak.banjays.workers.dev"
+          echo ""
+
+          echo "--- 📊 MONITORING ---"
+          check_service "UptimeRobot Status" "https://uptimerobot.com/ZaSzISaXMt"
+          echo ""
+
+          echo "--- 🔧 ENVIRONMENT ---"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Deploy target: ${{ github.event.inputs.deploy_target || 'auto' }}"
+          echo ""
+
+          echo "============================================="
+          echo "  📊 STATUS SUMMARY"
+          echo "============================================="
+          echo "✅ Passed: $PASS"
+          echo "❌ Failed: $FAIL"
+          echo "⏳ Skipped: $SKIP"
+          echo ""
+
+          if [ "$FAIL" -gt 0 ]; then
+            echo "⚠️ $FAIL service(s) not responding"
+            echo "💡 UptimeRobot continues monitoring: https://uptimerobot.com/ZaSzISaXMt"
+          elif [ "$SKIP" -gt 0 ]; then
+            echo "ℹ️ Some services still building (Render takes 2-5 min)"
           else
-            echo "⚠️ Render service status: HTTP $HTTP_CODE"
-            echo "This is normal if Render is still building..."
+            echo "✅ All services operational!"
           fi
 
 # ---------------------------------------------------------
