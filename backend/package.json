@@ -34,6 +34,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.3",
     "@types/nodemailer": "^6.4.17",
+    "@types/web-push": "^3.6.4",
     "@types/ws": "^8.5.14",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
@@ -44,6 +45,7 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.0.0",
+    "vitest": "^4.1.4",
     "web-push": "^3.6.7",
     "wrangler": "^4.13.2"
   },
