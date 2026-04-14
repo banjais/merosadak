@@ -71,16 +71,16 @@ export default {
         }
       };
 
-      const response = 
+      const response =
         (await fetchFromBackend(env.FIREBASE_BACKEND + "/api", "Firebase")) ||
         (await fetchFromBackend(env.RENDER_BACKEND + "/api", "Render"));
 
       if (!response) {
         return new Response(
           JSON.stringify({ success: false, error: "All backends unavailable" }),
-          { 
-            status: 503, 
-            headers: { ...CORS_HEADERS, "Content-Type": "application/json" } 
+          {
+            status: 503,
+            headers: { ...CORS_HEADERS, "Content-Type": "application/json" }
           }
         );
       }
@@ -105,20 +105,48 @@ export default {
 
       return new Response(res.body, { status: res.status, headers });
     } catch (err) {
-      return new Response("Frontend unavailable", { 
-        status: 502, 
-        headers: CORS_HEADERS 
+      return new Response("Frontend unavailable", {
+        status: 502,
+        headers: CORS_HEADERS
       });
     }
   },
 
   async scheduled(event, env, ctx) {
-    const urls = [];
-    if (env.FIREBASE_BACKEND) urls.push(env.FIREBASE_BACKEND + "/api/health");
-    if (env.RENDER_BACKEND) urls.push(env.RENDER_BACKEND + "/health");
+    console.log("[Worker] Scheduled keep-alive ping triggered");
 
-    ctx.waitUntil(
-      Promise.allSettled(urls.map(u => fetch(u).catch(() => null)))
-    );
+    const urls = [
+      { url: env.RENDER_BACKEND + "/health/live", name: "Render (live)" },
+      { url: env.RENDER_BACKEND + "/health", name: "Render (health)" },
+      { url: "https://merosadak.web.app", name: "Firebase" },
+    ];
+
+    // Optional: ping UptimeRobot API for stats tracking (if configured)
+    if (env.UPTIMEROBOT_API_KEY) {
+      urls.push({
+        url: "https://api.uptimerobot.com/v2/getMonitors",
+        name: "UptimeRobot API",
+        method: "POST",
+        body: JSON.stringify({ api_key: env.UPTIMEROBOT_API_KEY, format: "json" })
+      });
+    }
+
+    const results = [];
+    for (const target of urls) {
+      try {
+        const res = await fetch(target.url, {
+          method: target.method || "GET",
+          body: target.body || undefined,
+        });
+        results.push({ name: target.name, status: res.status, ok: res.ok });
+        console.log(`[Worker] ✓ ${target.name}: ${res.status}`);
+      } catch (err) {
+        results.push({ name: target.name, error: err.message, ok: false });
+        console.log(`[Worker] ✗ ${target.name}: ${err.message}`);
+      }
+    }
+
+    console.log("[Worker] Keep-alive results:", JSON.stringify(results));
+    ctx.waitUntil(Promise.resolve());
   },
 };

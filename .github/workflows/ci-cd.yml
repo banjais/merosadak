@@ -78,12 +78,14 @@ jobs:
             echo "firebase_ok=false" >> $GITHUB_OUTPUT
           fi
 
-          # Check Cloudflare API token
+          # Check Cloudflare API token (optional - fallback to UptimeRobot)
           if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
-            echo "✅ CLOUDFLARE_API_TOKEN: Configured"
+            echo "✅ CLOUDFLARE_API_TOKEN: Configured (Worker keep-alive)"
             echo "worker_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ CLOUDFLARE_API_TOKEN: Missing (Worker deploy will fail)"
+            echo "🔄 CLOUDFLARE_API_TOKEN: Missing"
+            echo "   Fallback: UptimeRobot will handle keep-alive (every 5 min)"
+            echo "   See: https://uptimerobot.com/ZaSzISaXMt"
             echo "worker_ok=false" >> $GITHUB_OUTPUT
           fi
 
@@ -432,11 +434,19 @@ jobs:
 
           echo "### Configuration Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ Missing' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ Missing' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️ Missing' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret | Status | Purpose |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ Missing' }} | Deploy backend |" >> $GITHUB_STEP_SUMMARY
+          echo "| FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ Missing' }} | Deploy frontend |" >> $GITHUB_STEP_SUMMARY
+          echo "| CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Worker' || '🔄 UptimeRobot fallback' }} | Keep-alive pinger |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Keep-Alive Fallback Chain" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Layer | Mechanism | Interval | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 1️⃣ | Render Self-Ping (built-in) | 10 min | ✅ Always active |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2️⃣ | UptimeRobot (public monitor) | 5 min | ✅ https://uptimerobot.com/ZaSzISaXMt |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3️⃣ | Cloudflare Worker (cron) | 2 min | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Active' || '🔄 Skipped (UptimeRobot fallback)' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### Services Deployed" >> $GITHUB_STEP_SUMMARY
@@ -514,7 +524,7 @@ jobs:
     steps:
       - name: Send Telegram Success Alert
         run: |
-          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
+          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: ${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjais.workers.dev' || 'Skipped (UptimeRobot fallback)' }}%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + ${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
