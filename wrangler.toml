@@ -5,7 +5,6 @@ account_id = "052a34d4627b5c02d0bff84ff1c0f906"
 workers_dev = true
 
 [vars]
-FIREBASE_BACKEND = "https://us-central1-merosadak.cloudfunctions.net"
 RENDER_BACKEND = "https://sadaksathi.onrender.com"
 
 [triggers]
