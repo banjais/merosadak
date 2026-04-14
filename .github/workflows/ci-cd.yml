@@ -48,6 +48,10 @@ jobs:
       render_configured: ${{ steps.check_secrets.outputs.render_ok }}
       firebase_configured: ${{ steps.check_secrets.outputs.firebase_ok }}
       worker_configured: ${{ steps.check_secrets.outputs.worker_ok }}
+      telegram_configured: ${{ steps.check_secrets.outputs.telegram_ok }}
+      jwt_configured: ${{ steps.check_secrets.outputs.jwt_ok }}
+      missing_count: ${{ steps.check_secrets.outputs.missing_count }}
+      total_count: ${{ steps.check_secrets.outputs.total_count }}
 
     steps:
       - name: Check required secrets
@@ -56,69 +60,119 @@ jobs:
           echo "🔍 Verifying required secrets and environment variables..."
           echo ""
 
-          ALL_OK=true
+          REQUIRED_MISSING=0
+          OPTIONAL_MISSING=0
+          CONFIGURED=0
+          TOTAL=0
 
-          # Check Render deploy hook
+          echo "============================================="
+          echo "  🔐 SECRETS STATUS CHECK"
+          echo "============================================="
+          echo ""
+
+          echo "--- 🎨 RENDER ---"
+          TOTAL=$((TOTAL + 1))
           if [ -n "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
             echo "✅ RENDER_DEPLOY_HOOK: Configured"
+            CONFIGURED=$((CONFIGURED + 1))
             echo "render_ok=true" >> $GITHUB_OUTPUT
           else
             echo "❌ RENDER_DEPLOY_HOOK: Missing"
-            ALL_OK=false
+            REQUIRED_MISSING=$((REQUIRED_MISSING + 1))
             echo "render_ok=false" >> $GITHUB_OUTPUT
           fi
+          echo ""
 
-          # Check Firebase service account
+          echo "--- 🔥 FIREBASE ---"
+          TOTAL=$((TOTAL + 1))
           if [ -n "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
             echo "✅ FIREBASE_SERVICE_ACCOUNT: Configured"
+            CONFIGURED=$((CONFIGURED + 1))
             echo "firebase_ok=true" >> $GITHUB_OUTPUT
           else
             echo "❌ FIREBASE_SERVICE_ACCOUNT: Missing"
-            ALL_OK=false
+            REQUIRED_MISSING=$((REQUIRED_MISSING + 1))
             echo "firebase_ok=false" >> $GITHUB_OUTPUT
           fi
+          echo ""
 
-          # Check Cloudflare API token (optional - fallback to UptimeRobot)
+          echo "--- 🔑 JWT AUTH ---"
+          TOTAL=$((TOTAL + 1))
+          if [ -n "${{ secrets.JWT_SECRET }}" ]; then
+            echo "✅ JWT_SECRET: Configured"
+            CONFIGURED=$((CONFIGURED + 1))
+            echo "jwt_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ JWT_SECRET: Missing"
+            REQUIRED_MISSING=$((REQUIRED_MISSING + 1))
+            echo "jwt_ok=false" >> $GITHUB_OUTPUT
+          fi
+          echo ""
+
+          echo "--- ☁️ CLOUDFLARE WORKER ---"
+          TOTAL=$((TOTAL + 1))
           if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
             echo "✅ CLOUDFLARE_API_TOKEN: Configured (Worker keep-alive)"
+            CONFIGURED=$((CONFIGURED + 1))
             echo "worker_ok=true" >> $GITHUB_OUTPUT
           else
             echo "🔄 CLOUDFLARE_API_TOKEN: Missing"
-            echo "   Fallback: UptimeRobot will handle keep-alive (every 5 min)"
+            echo "   Fallback: UptimeRobot handles keep-alive (every 5 min)"
             echo "   See: https://uptimerobot.com/ZaSzISaXMt"
+            OPTIONAL_MISSING=$((OPTIONAL_MISSING + 1))
             echo "worker_ok=false" >> $GITHUB_OUTPUT
           fi
-
-          # Check JWT Secret
-          if [ -n "${{ secrets.JWT_SECRET }}" ]; then
-            echo "✅ JWT_SECRET: Configured"
-          else
-            echo "❌ JWT_SECRET: Missing (backend auth will break)"
-            ALL_OK=false
-          fi
-
-          # Check Telegram Bot Token (optional)
-          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
-            echo "✅ TELEGRAM_BOT_TOKEN: Configured"
-          else
-            echo "⚠️ TELEGRAM_BOT_TOKEN: Missing (notifications disabled)"
-          fi
-
-          # Check Telegram Chat ID (optional)
-          if [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
-            echo "✅ TELEGRAM_CHAT_ID: Configured"
-          else
-            echo "⚠️ TELEGRAM_CHAT_ID: Missing (notifications disabled)"
-          fi
-
           echo ""
 
-          if [ "$ALL_OK" = true ]; then
-            echo "✅ All critical secrets are configured"
+          echo "--- 📱 TELEGRAM NOTIFICATIONS ---"
+          TOTAL=$((TOTAL + 1))
+          TELEGRAM_OK=true
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
+            echo "✅ TELEGRAM_BOT_TOKEN: Configured"
+            CONFIGURED=$((CONFIGURED + 1))
+          else
+            echo "⚠️ TELEGRAM_BOT_TOKEN: Missing (notifications disabled)"
+            OPTIONAL_MISSING=$((OPTIONAL_MISSING + 1))
+            TELEGRAM_OK=false
+          fi
+
+          TOTAL=$((TOTAL + 1))
+          if [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "✅ TELEGRAM_CHAT_ID: Configured"
+            CONFIGURED=$((CONFIGURED + 1))
+          else
+            echo "⚠️ TELEGRAM_CHAT_ID: Missing (notifications disabled)"
+            OPTIONAL_MISSING=$((OPTIONAL_MISSING + 1))
+            TELEGRAM_OK=false
+          fi
+
+          if [ "$TELEGRAM_OK" = true ]; then
+            echo "telegram_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "telegram_ok=false" >> $GITHUB_OUTPUT
+          fi
+          echo ""
+
+          echo "============================================="
+          echo "  📊 SUMMARY"
+          echo "============================================="
+          echo "Total secrets checked: $TOTAL"
+          echo "✅ Configured: $CONFIGURED"
+          echo "❌ Required missing: $REQUIRED_MISSING"
+          echo "⚠️ Optional missing: $OPTIONAL_MISSING"
+          echo ""
+
+          echo "missing_count=$REQUIRED_MISSING" >> $GITHUB_OUTPUT
+          echo "optional_missing_count=$OPTIONAL_MISSING" >> $GITHUB_OUTPUT
+          echo "configured_count=$CONFIGURED" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+
+          if [ "$REQUIRED_MISSING" -eq 0 ]; then
+            echo "✅ All required secrets configured - ready to deploy!"
             echo "status=ready" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ Some secrets are missing (deploy may fail)"
-            echo "status=missing_secrets" >> $GITHUB_OUTPUT
+            echo "❌ $REQUIRED_MISSING required secret(s) missing - deploy will fail!"
+            echo "status=missing_required" >> $GITHUB_OUTPUT
           fi
 
       - name: Display environment summary
@@ -431,16 +485,20 @@ jobs:
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "**Deploy target:** ${{ github.event.inputs.deploy_target || 'auto (push)' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Secrets status:** ${{ needs.preflight.outputs.secrets_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔐 Secrets Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          echo "### Configuration Status" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall:** ${{ needs.preflight.outputs.secrets_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Configured:** ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Missing (required):** ${{ needs.preflight.outputs.missing_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Secret | Status | Purpose |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ Missing' }} | Deploy backend |" >> $GITHUB_STEP_SUMMARY
-          echo "| FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ Missing' }} | Deploy frontend |" >> $GITHUB_STEP_SUMMARY
-          echo "| CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Worker' || '🔄 UptimeRobot fallback' }} | Keep-alive pinger |" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Secret | Status | Impact if Missing |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|--------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎨 Render | RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.render_configured == 'true' && 'Deploy works' || 'Deploy will fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔥 Firebase | FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.firebase_configured == 'true' && 'Deploy works' || 'Deploy will fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔑 Auth | JWT_SECRET | ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.jwt_configured == 'true' && 'Auth works' || 'Auth will break' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ☁️ Cloudflare | CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Worker active' || '🔄 Using UptimeRobot fallback' }} | ${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker pings every 2 min' || 'UptimeRobot handles keep-alive' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 Telegram | TELEGRAM_BOT_TOKEN | ${{ needs.preflight.outputs.telegram_configured == 'true' && '✅ Notifications on' || '⚠️ Notifications off' }} | ${{ needs.preflight.outputs.telegram_configured == 'true' && 'Alerts sent' || 'No deploy alerts' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 Telegram | TELEGRAM_CHAT_ID | ${{ needs.preflight.outputs.telegram_configured == 'true' && '✅ Chat configured' || '⚠️ Chat ID missing' }} | ${{ needs.preflight.outputs.telegram_configured == 'true' && 'Messages delivered' || 'Messages not sent' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔄 Keep-Alive Fallback Chain" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -508,7 +566,7 @@ jobs:
     steps:
       - name: Send Telegram Alert
         run: |
-          MSG="⚠️ DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A🔧 Check configured secrets at:%0Ahttps://github.com/${{ github.repository }}/settings/secrets/actions%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK%0A• FIREBASE_SERVICE_ACCOUNT%0A• JWT_SECRET%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN (Worker)%0A• TELEGRAM_BOT_TOKEN%0A• TELEGRAM_CHAT_ID"
+          MSG="⚠️ DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A🔧 Check configured secrets at:%0Ahttps://github.com/${{ github.repository }}/settings/secrets/actions%0A%0A📊 Status: ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌' }}%0A• FIREBASE_SERVICE_ACCOUNT ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌' }}%0A• JWT_SECRET ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌' }}%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️' }}%0A• TELEGRAM_BOT_TOKEN%0A• TELEGRAM_CHAT_ID"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
