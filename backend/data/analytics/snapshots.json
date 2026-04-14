@@ -2913,5 +2913,82 @@
     "weatherConditions": "Clouds",
     "temperature": 23.15,
     "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:14:29.408Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:15:40.510Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:16:50.989Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:18:07.318Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:19:18.450Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:22:10.790Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:23:20.017Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
   }
 ]
