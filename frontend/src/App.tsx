@@ -117,7 +117,6 @@ const MainApp: React.FC = () => {
   const { plan: routePlan, loading: routePlanningLoading, error: routePlanningError, planRoute, compareRoutes: compareRouteRoutes, getSafety: getRouteSafety } = useRoutePlanning();
   const { eta, loading: etaLoading, error: etaError, calculate: calculateETA } = useETA();
   const { eta: quickEta, loading: quickEtaLoading, error: quickEtaError, calculate: calculateQuickETA } = useQuickETA();
-  const { data: serviceData, isLoading: serviceDataLoading, error: serviceDataError, lastSync: serviceLastSync, refresh: refreshServiceData } = useServiceData(serviceType, userLocation?.lat || 0, userLocation?.lng || 0, isLoading);
 
   // WebSocket for real-time updates
   const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
@@ -145,6 +144,7 @@ const MainApp: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TravelIncident | null>(null);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const { data: serviceData, isLoading: serviceDataLoading, error: serviceDataError, lastSync: serviceLastSync, refresh: refreshServiceData } = useServiceData(serviceType, userLocation?.lat || 0, userLocation?.lng || 0, isLoading);
   const [highwayBrowserOpen, setHighwayBrowserOpen] = useState(false);
   const [reportIncidentOpen, setReportIncidentOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
