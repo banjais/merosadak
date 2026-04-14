@@ -1,9 +1,14 @@
 name: MeroSadak PRO Deploy
 
+# ---------------------------------------------------------
+# TRIGGERS
+# ---------------------------------------------------------
 on:
   push:
+    branches: [main, develop, staging]
+  pull_request:
     branches: [main]
-
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
     inputs:
       deploy_target:
@@ -27,12 +32,18 @@ on:
           - staging
           - prod
 
+      force_deploy:
+        description: "Skip health checks and force deploy"
+        required: false
+        default: false
+        type: boolean
+
 env:
   NODE_VERSION: "20"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CACHE_KEY: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # ---------------------------------------------------------
@@ -52,23 +63,22 @@ jobs:
       jwt_configured: ${{ steps.check_secrets.outputs.jwt_ok }}
       missing_count: ${{ steps.check_secrets.outputs.missing_count }}
       total_count: ${{ steps.check_secrets.outputs.total_count }}
+      environment: ${{ steps.detect_env.outputs.env }}
+      is_pr: ${{ github.event_name == 'pull_request' }}
 
     steps:
       - name: Check required secrets
         id: check_secrets
         run: |
-          echo "🔍 Verifying required secrets and environment variables..."
+          echo "============================================="
+          echo "  🔐 SECRETS STATUS CHECK"
+          echo "============================================="
           echo ""
 
           REQUIRED_MISSING=0
           OPTIONAL_MISSING=0
           CONFIGURED=0
           TOTAL=0
-
-          echo "============================================="
-          echo "  🔐 SECRETS STATUS CHECK"
-          echo "============================================="
-          echo ""
 
           echo "--- 🎨 RENDER ---"
           TOTAL=$((TOTAL + 1))
@@ -116,9 +126,7 @@ jobs:
             CONFIGURED=$((CONFIGURED + 1))
             echo "worker_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "🔄 CLOUDFLARE_API_TOKEN: Missing"
-            echo "   Fallback: UptimeRobot handles keep-alive (every 5 min)"
-            echo "   See: https://uptimerobot.com/ZaSzISaXMt"
+            echo "🔄 CLOUDFLARE_API_TOKEN: Missing (UptimeRobot fallback)"
             OPTIONAL_MISSING=$((OPTIONAL_MISSING + 1))
             echo "worker_ok=false" >> $GITHUB_OUTPUT
           fi
@@ -171,43 +179,119 @@ jobs:
             echo "✅ All required secrets configured - ready to deploy!"
             echo "status=ready" >> $GITHUB_OUTPUT
           else
-            echo "❌ $REQUIRED_MISSING required secret(s) missing - deploy will fail!"
+            echo "❌ $REQUIRED_MISSING required secret(s) missing!"
             echo "status=missing_required" >> $GITHUB_OUTPUT
           fi
 
-      - name: Display environment summary
+      - name: Detect environment
+        id: detect_env
         run: |
-          echo "📋 Environment Summary"
-          echo "====================="
-          echo "Node.js Version: ${{ env.NODE_VERSION }}"
-          echo "Deploy Target: ${{ github.event.inputs.deploy_target || 'auto (push)' }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo ""
-          echo "Service URLs:"
-          echo "  Frontend: https://merosadak.web.app"
-          echo "  Backend:  https://sadaksathi.onrender.com"
-          echo "  Worker:   https://merosadak.banjays.workers.dev"
-          echo "  Monitor:  https://uptimerobot.com/ZaSzISaXMt"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "env=preview" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            echo "env=staging" >> $GITHUB_OUTPUT
+          else
+            echo "env=dev" >> $GITHUB_OUTPUT
+          fi
 
 # ---------------------------------------------------------
-# BACKEND
+# COMMIT LINT
+# ---------------------------------------------------------
+  commit-lint:
+    name: 📝 Commit Message Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Lint commit messages
+        run: |
+          echo "📝 Checking commit messages..."
+          COMMITS=$(git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          echo "$COMMITS"
+
+          INVALID=0
+          while IFS= read -r line; do
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+            if ! echo "$MSG" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+"; then
+              echo "⚠️ Invalid: $MSG"
+              INVALID=$((INVALID + 1))
+            else
+              echo "✅ Valid: $MSG"
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$INVALID" -gt 0 ]; then
+            echo ""
+            echo "❌ $INVALID commit(s) don't follow Conventional Commits"
+            echo "Format: type(scope): description"
+            echo "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            exit 1
+          fi
+          echo ""
+          echo "✅ All commit messages valid!"
+
+# ---------------------------------------------------------
+# PATH DETECTION
+# ---------------------------------------------------------
+  detect-changes:
+    name: 📂 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      worker: ${{ steps.filter.outputs.worker }}
+      all: ${{ steps.filter.outputs.all }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'package.json'
+              - 'render.yaml'
+              - '.github/workflows/ci-cd.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci-cd.yml'
+            worker:
+              - 'backend/cloudflare/**'
+              - 'wrangler.toml'
+              - '.github/workflows/ci-cd.yml'
+            all:
+              - '**'
+
+# ---------------------------------------------------------
+# BACKEND (PARALLEL)
 # ---------------------------------------------------------
   backend:
     name: 🔧 Backend
     runs-on: ubuntu-latest
-    needs: [preflight]
+    needs: [preflight, detect-changes]
 
     if: >
-      github.event_name == 'push' ||
-      github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'backend' ||
-      github.event_name == 'workflow_dispatch'
+      (github.event_name == 'push' ||
+       github.event.inputs.deploy_target == 'all' ||
+       github.event.inputs.deploy_target == 'backend' ||
+       github.event.inputs.force_deploy == true) &&
+      (needs.detect-changes.outputs.backend == 'true' ||
+       needs.preflight.outputs.is_pr == 'true' ||
+       github.event.inputs.force_deploy == true)
 
     outputs:
       build_time: ${{ steps.build_time.outputs.duration }}
       deploy_status: ${{ steps.render_deploy.outputs.status }}
       health_status: ${{ steps.health_check.outputs.status }}
+      preview_url: ${{ steps.render_deploy.outputs.preview_url }}
 
     steps:
       - uses: actions/checkout@v5
@@ -218,9 +302,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package.json'
 
+      - name: Restore backend cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/node_modules
+            backend/dist
+          key: backend-${{ env.CACHE_KEY }}
+          restore-keys: |
+            backend-${{ runner.os }}-node-
+
       - name: Install backend dependencies
         run: cd backend && npm install --include=dev
         timeout-minutes: 5
+
+      - name: Save backend cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            backend/node_modules
+            backend/dist
+          key: backend-${{ env.CACHE_KEY }}
 
       - name: Build backend
         id: build_step
@@ -236,9 +338,11 @@ jobs:
           echo "duration=${DURATION}s" >> $GITHUB_OUTPUT
           echo "⏱️ Build completed in ${DURATION}s"
 
-      - name: Deploy Render
+      - name: Deploy Render (Production)
         id: render_deploy
-        if: github.event.inputs.environment != 'dev'
+        if: >
+          github.event_name != 'pull_request' &&
+          needs.preflight.outputs.environment != 'dev'
         run: |
           echo "🚀 Triggering Render deployment..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}")
@@ -246,7 +350,7 @@ jobs:
           BODY=$(echo "$RESPONSE" | head -n-1)
 
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "✅ Render deployment triggered successfully (HTTP $HTTP_CODE)"
+            echo "✅ Render deployment triggered (HTTP $HTTP_CODE)"
             echo "status=success" >> $GITHUB_OUTPUT
           else
             echo "❌ Render deployment failed (HTTP $HTTP_CODE)"
@@ -264,7 +368,9 @@ jobs:
 
       - name: Health check - backend
         id: health_check
-        if: steps.render_deploy.outputs.status == 'success'
+        if: >
+          steps.render_deploy.outputs.status == 'success' &&
+          github.event.inputs.force_deploy != true
         continue-on-error: true
         run: |
           echo "🔍 Checking backend health..."
@@ -276,25 +382,32 @@ jobs:
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
 
             if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ Backend is healthy! (attempt $i/$MAX_RETRIES)"
+              echo "✅ Backend healthy! (attempt $i/$MAX_RETRIES)"
               echo "status=healthy" >> $GITHUB_OUTPUT
-
-              # Get health details
               HEALTH_DATA=$(curl -s "$HEALTH_URL")
-              echo "Health response: $HEALTH_DATA"
+              echo "Health: $HEALTH_DATA"
               exit 0
             fi
 
-            echo "⏳ Attempt $i/$MAX_RETRIES - Status: $HTTP_CODE (waiting ${RETRY_INTERVAL}s)..."
+            echo "⏳ Attempt $i/$MAX_RETRIES - Status: $HTTP_CODE"
             sleep $RETRY_INTERVAL
           done
 
-          echo "⚠️ Backend health check not yet ready after $MAX_RETRIES attempts"
-          echo "This is normal — Render may still be building"
+          echo "⚠️ Backend not ready yet (Render still building)"
           echo "status=building" >> $GITHUB_OUTPUT
-          echo "✅ UptimeRobot will continue monitoring: https://uptimerobot.com/ZaSzISaXMt"
 
-      - name: Upload backend build artifacts
+      - name: Rollback on health failure
+        id: rollback
+        if: >
+          steps.health_check.outcome == 'failure' &&
+          steps.health_check.outputs.status != 'building' &&
+          github.event.inputs.force_deploy != true
+        run: |
+          echo "🔄 Rolling back failed deployment..."
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}?rollback=true"
+          echo "✅ Rollback triggered"
+
+      - name: Upload backend artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -303,31 +416,34 @@ jobs:
           retention-days: 7
 
 # ---------------------------------------------------------
-# WORKER
+# WORKER (PARALLEL)
 # ---------------------------------------------------------
   worker:
     name: ☁️ Worker
     runs-on: ubuntu-latest
-    needs: [preflight]
+    needs: [preflight, detect-changes]
 
     if: >
-      github.event_name == 'push' ||
-      github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'worker' ||
-      github.event_name == 'workflow_dispatch'
+      (github.event_name == 'push' ||
+       github.event.inputs.deploy_target == 'all' ||
+       github.event.inputs.deploy_target == 'worker' ||
+       github.event.inputs.force_deploy == true) &&
+      (needs.detect-changes.outputs.worker == 'true' ||
+       needs.preflight.outputs.is_pr == 'true' ||
+       github.event.inputs.force_deploy == true)
 
     outputs:
       deploy_status: ${{ steps.worker_deploy.outputs.status }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install wrangler
         run: npm install -g wrangler
 
       - name: Deploy Worker
@@ -335,39 +451,44 @@ jobs:
         run: |
           echo "🚀 Deploying Cloudflare Worker..."
           wrangler deploy
+          echo "status=success" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         continue-on-error: true
 
-      - name: Verify Worker deployment
-        if: steps.worker_deploy.outcome == 'success'
+      - name: Verify Worker
+        if: steps.worker_deploy.outputs.status == 'success'
         run: |
           echo "🔍 Verifying Cloudflare Worker..."
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://merosadak.banjays.workers.dev" || echo "000")
 
           if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Worker is responding (HTTP $HTTP_CODE)"
+            echo "✅ Worker responding (HTTP $HTTP_CODE)"
           else
             echo "⚠️ Worker returned HTTP $HTTP_CODE"
           fi
 
 # ---------------------------------------------------------
-# FRONTEND
+# FRONTEND (PARALLEL)
 # ---------------------------------------------------------
   frontend:
     name: 🎨 Frontend
     runs-on: ubuntu-latest
-    needs: [preflight]
+    needs: [preflight, detect-changes]
 
     if: >
-      github.event_name == 'push' ||
-      github.event.inputs.deploy_target == 'all' ||
-      github.event.inputs.deploy_target == 'frontend' ||
-      github.event_name == 'workflow_dispatch'
+      (github.event_name == 'push' ||
+       github.event.inputs.deploy_target == 'all' ||
+       github.event.inputs.deploy_target == 'frontend' ||
+       github.event.inputs.force_deploy == true) &&
+      (needs.detect-changes.outputs.frontend == 'true' ||
+       needs.preflight.outputs.is_pr == 'true' ||
+       github.event.inputs.force_deploy == true)
 
     outputs:
       build_time: ${{ steps.build_time.outputs.duration }}
-      firebase_url: ${{ steps.firebase_deploy.outputs.url }}
+      firebase_url: ${{ steps.firebase_deploy.outputs.details_url }}
+      preview_url: ${{ steps.firebase_preview.outputs.details_url }}
 
     steps:
       - uses: actions/checkout@v5
@@ -378,9 +499,27 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package.json'
 
+      - name: Restore frontend cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            frontend/dist
+          key: frontend-${{ env.CACHE_KEY }}
+          restore-keys: |
+            frontend-${{ runner.os }}-node-
+
       - name: Install frontend dependencies
         run: cd frontend && npm install --include=dev
         timeout-minutes: 5
+
+      - name: Save frontend cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            frontend/dist
+          key: frontend-${{ env.CACHE_KEY }}
 
       - name: Build frontend
         id: build_step
@@ -396,16 +535,11 @@ jobs:
           echo "duration=${DURATION}s" >> $GITHUB_OUTPUT
           echo "⏱️ Build completed in ${DURATION}s"
 
-      - name: Upload frontend build
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist/
-          retention-days: 7
-
-      - name: Deploy Firebase
+      - name: Deploy Firebase (Production)
         id: firebase_deploy
-        if: github.event.inputs.environment != 'dev'
+        if: >
+          github.event_name != 'pull_request' &&
+          needs.preflight.outputs.environment != 'dev'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -413,8 +547,18 @@ jobs:
           projectId: sadak-sathi-3ab73
           channelId: live
 
-      - name: Verify Firebase deployment
-        if: steps.firebase_deploy.outcome == 'success'
+      - name: Deploy Firebase Preview (PR)
+        id: firebase_preview
+        if: github.event_name == 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: sadak-sathi-3ab73
+          channelId: preview-${{ github.event.pull_request.number }}
+
+      - name: Verify Frontend
+        if: steps.firebase_deploy.outcome == 'success' || steps.firebase_preview.outcome == 'success'
         run: |
           echo "🔍 Verifying Firebase Hosting..."
           FIREBASE_URL="https://merosadak.web.app"
@@ -422,49 +566,77 @@ jobs:
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$FIREBASE_URL" || echo "000")
 
           if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Frontend is live at $FIREBASE_URL (HTTP $HTTP_CODE)"
-            echo "url=$FIREBASE_URL" >> $GITHUB_OUTPUT
+            echo "✅ Frontend live (HTTP $HTTP_CODE)"
           else
             echo "⚠️ Frontend returned HTTP $HTTP_CODE"
-            echo "url=$FIREBASE_URL" >> $GITHUB_OUTPUT
           fi
 
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
 # ---------------------------------------------------------
-# MONITORING STATUS CHECK
+# POST-DEPLOY VERIFICATION MATRIX
 # ---------------------------------------------------------
-  monitoring-check:
-    name: 📊 Monitoring Status
+  verify-deploy:
+    name: ✅ Post-Deploy Verification
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: success()
+    needs: [preflight, backend, worker, frontend]
+    if: >
+      always() &&
+      needs.preflight.result == 'success' &&
+      github.event_name != 'pull_request'
 
     steps:
-      - name: Check UptimeRobot public status
+      - name: Run verification matrix
         run: |
-          echo "📊 Checking UptimeRobot monitoring status..."
-          STATUS_PAGE="https://uptimerobot.com/ZaSzISaXMt"
-
-          echo "Public Status Page: $STATUS_PAGE"
-          echo ""
-          echo "🔍 Note: UptimeRobot may take 5-10 minutes to reflect new uptime"
-          echo "Check back later for accurate monitoring stats"
-
-      - name: Check Render service status
-        run: |
-          echo "📊 Render Deployment Status:"
-          echo "Backend URL: https://sadaksathi.onrender.com"
-          echo "Health Endpoint: https://sadaksathi.onrender.com/health/live"
+          echo "============================================="
+          echo "  ✅ POST-DEPLOY VERIFICATION MATRIX"
+          echo "============================================="
           echo ""
 
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sadaksathi.onrender.com/health/live" || echo "000")
+          PASS=0
+          FAIL=0
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Render service is UP and healthy"
-            HEALTH_DATA=$(curl -s "https://sadaksathi.onrender.com/health/live")
-            echo "Health: $HEALTH_DATA"
+          check_service() {
+            local name=$1
+            local url=$2
+            local expected=${3:-200}
+
+            echo -n "Checking $name... "
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "$expected" ]; then
+              echo "✅ HTTP $HTTP_CODE"
+              PASS=$((PASS + 1))
+            else
+              echo "❌ HTTP $HTTP_CODE (expected $expected)"
+              FAIL=$((FAIL + 1))
+            fi
+          }
+
+          check_service "Backend Health" "https://sadaksathi.onrender.com/health/live"
+          check_service "Backend Ready" "https://sadaksathi.onrender.com/health/ready"
+          check_service "Frontend" "https://merosadak.web.app"
+          check_service "Worker" "https://merosadak.banjays.workers.dev"
+          check_service "UptimeRobot" "https://uptimerobot.com/ZaSzISaXMt"
+
+          echo ""
+          echo "============================================="
+          echo "  📊 RESULTS"
+          echo "============================================="
+          echo "✅ Passed: $PASS"
+          echo "❌ Failed: $FAIL"
+          echo ""
+
+          if [ "$FAIL" -gt 0 ]; then
+            echo "⚠️ $FAIL service(s) not responding - UptimeRobot will continue monitoring"
           else
-            echo "⚠️ Render service status: HTTP $HTTP_CODE"
-            echo "This is normal if Render is still building..."
+            echo "✅ All services operational!"
           fi
 
 # ---------------------------------------------------------
@@ -473,7 +645,7 @@ jobs:
   deploy-summary:
     name: 📝 Deploy Summary
     runs-on: ubuntu-latest
-    needs: [preflight, backend, worker, frontend, monitoring-check]
+    needs: [preflight, detect-changes, backend, worker, frontend, verify-deploy]
     if: always()
 
     steps:
@@ -484,81 +656,70 @@ jobs:
           echo "**Commit:** ${{ github.event.head_commit.message || 'Manual deploy' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.preflight.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Deploy target:** ${{ github.event.inputs.deploy_target || 'auto (push)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
           echo "### 🔐 Secrets Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Overall:** ${{ needs.preflight.outputs.secrets_status }}" >> $GITHUB_STEP_SUMMARY
           echo "**Configured:** ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Missing (required):** ${{ needs.preflight.outputs.missing_count }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | Secret | Status | Impact if Missing |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|--------|--------|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎨 Render | RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.render_configured == 'true' && 'Deploy works' || 'Deploy will fail' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔥 Firebase | FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.firebase_configured == 'true' && 'Deploy works' || 'Deploy will fail' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔑 Auth | JWT_SECRET | ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌ Missing' }} | ${{ needs.preflight.outputs.jwt_configured == 'true' && 'Auth works' || 'Auth will break' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ☁️ Cloudflare | CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Worker active' || '🔄 Using UptimeRobot fallback' }} | ${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker pings every 2 min' || 'UptimeRobot handles keep-alive' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 Telegram | TELEGRAM_BOT_TOKEN | ${{ needs.preflight.outputs.telegram_configured == 'true' && '✅ Notifications on' || '⚠️ Notifications off' }} | ${{ needs.preflight.outputs.telegram_configured == 'true' && 'Alerts sent' || 'No deploy alerts' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 Telegram | TELEGRAM_CHAT_ID | ${{ needs.preflight.outputs.telegram_configured == 'true' && '✅ Chat configured' || '⚠️ Chat ID missing' }} | ${{ needs.preflight.outputs.telegram_configured == 'true' && 'Messages delivered' || 'Messages not sent' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔄 Keep-Alive Fallback Chain" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Layer | Mechanism | Interval | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 1️⃣ | Render Self-Ping (built-in) | 10 min | ✅ Always active |" >> $GITHUB_STEP_SUMMARY
-          echo "| 2️⃣ | UptimeRobot (public monitor) | 5 min | ✅ https://uptimerobot.com/ZaSzISaXMt |" >> $GITHUB_STEP_SUMMARY
-          echo "| 3️⃣ | Cloudflare Worker (cron) | 2 min | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅ Active' || '🔄 Skipped (UptimeRobot fallback)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Secret | Status | Impact |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎨 Render | RENDER_DEPLOY_HOOK | ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌' }} | Deploy |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔥 Firebase | FIREBASE_SERVICE_ACCOUNT | ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌' }} | Deploy |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔑 Auth | JWT_SECRET | ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌' }} | Backend auth |" >> $GITHUB_STEP_SUMMARY
+          echo "| ☁️ Worker | CLOUDFLARE_API_TOKEN | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '🔄' }} | Keep-alive |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📱 Telegram | TELEGRAM_BOT_TOKEN | ${{ needs.preflight.outputs.telegram_configured == 'true' && '✅' || '⚠️' }} | Alerts |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "### Services Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "### 📂 Changed Paths" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Service | URL | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|---------|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend | https://sadaksathi.onrender.com | ${{ needs.backend.result == 'success' && '✅ Deployed' || needs.backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Worker | https://merosadak.banjays.workers.dev | ${{ needs.worker.result == 'success' && '✅ Deployed' || needs.worker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | https://merosadak.web.app | ${{ needs.frontend.result == 'success' && '✅ Deployed' || needs.frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Monitoring | https://uptimerobot.com/ZaSzISaXMt | ✅ Active |" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend:** ${{ needs.detect-changes.outputs.backend == 'true' && '✅ Changed' || '⏭️ Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** ${{ needs.detect-changes.outputs.frontend == 'true' && '✅ Changed' || '⏭️ Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker:** ${{ needs.detect-changes.outputs.worker == 'true' && '✅ Changed' || '⏭️ Skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "### Build Times" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Services Deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend:** ${{ needs.backend.outputs.build_time || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend:** ${{ needs.frontend.outputs.build_time || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | URL | Status | Build Time |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | https://sadaksathi.onrender.com | ${{ needs.backend.result == 'success' && '✅' || needs.backend.result == 'skipped' && '⏭️' || '❌' }} | ${{ needs.backend.outputs.build_time || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | https://merosadak.web.app | ${{ needs.frontend.result == 'success' && '✅' || needs.frontend.result == 'skipped' && '⏭️' || '❌' }} | ${{ needs.frontend.outputs.build_time || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | https://merosadak.banjays.workers.dev | ${{ needs.worker.result == 'success' && '✅' || needs.worker.result == 'skipped' && '⏭️' || '❌' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Monitor | https://uptimerobot.com/ZaSzISaXMt | ✅ | - |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "### 🔍 PR Preview" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Frontend Preview:** ${{ needs.frontend.outputs.preview_url || 'Check PR comments' }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "### 🔄 Keep-Alive Chain" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Layer | Interval | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 1️⃣ Render Self-Ping | 10 min | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2️⃣ UptimeRobot | 5 min | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3️⃣ Cloudflare Worker | 2 min | ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '🔄' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.backend.result }}" = "success" ]; then
-            echo "### Backend Health" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔍 Backend Health" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Deploy Status: ${{ needs.backend.outputs.deploy_status }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Health Check: ${{ needs.backend.outputs.health_status || 'Render building (check UptimeRobot)' }}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "> 💡 Render takes 2-5 minutes to build. UptimeRobot monitors continuously:" >> $GITHUB_STEP_SUMMARY
-            echo "> https://uptimerobot.com/ZaSzISaXMt" >> $GITHUB_STEP_SUMMARY
+            echo "- Deploy: ${{ needs.backend.outputs.deploy_status }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Health: ${{ needs.backend.outputs.health_status || 'pending' }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
 # ---------------------------------------------------------
-# TELEGRAM ALERT (FAILURE ONLY)
-# ---------------------------------------------------------
-  notify-failure:
-    name: 🚨 Failure Alert
-    runs-on: ubuntu-latest
-    needs: [backend, worker, frontend]
-    if: failure()
-
-    steps:
-      - name: Send Telegram Alert
-        run: |
-          MSG="🚨 DEPLOY FAILED%0ARepo: ${{ github.repository }}%0ABranch: ${{ github.ref_name }}%0ATarget: ${{ github.event.inputs.deploy_target || 'auto' }}%0ACommit: ${{ github.event.head_commit.message || 'manual' }}%0AActor: ${{ github.actor }}%0A%0A🔗 Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MSG" \
-          -d parse_mode="HTML"
-
-# ---------------------------------------------------------
-# TELEGRAM ALERT (SECRETS MISSING)
+# TELEGRAM: SECRETS MISSING
 # ---------------------------------------------------------
   notify-secrets-missing:
-    name: ⚠️ Secrets Missing Alert
+    name: ⚠️ Secrets Missing
     runs-on: ubuntu-latest
     needs: [preflight]
     if: failure()
@@ -566,17 +727,35 @@ jobs:
     steps:
       - name: Send Telegram Alert
         run: |
-          MSG="⚠️ DEPLOY BLOCKED - MISSING SECRETS%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A%0A🔧 Check configured secrets at:%0Ahttps://github.com/${{ github.repository }}/settings/secrets/actions%0A%0A📊 Status: ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0ARequired secrets:%0A• RENDER_DEPLOY_HOOK ${{ needs.preflight.outputs.render_configured == 'true' && '✅' || '❌' }}%0A• FIREBASE_SERVICE_ACCOUNT ${{ needs.preflight.outputs.firebase_configured == 'true' && '✅' || '❌' }}%0A• JWT_SECRET ${{ needs.preflight.outputs.jwt_configured == 'true' && '✅' || '❌' }}%0A%0AOptional secrets:%0A• CLOUDFLARE_API_TOKEN ${{ needs.preflight.outputs.worker_configured == 'true' && '✅' || '⚠️' }}%0A• TELEGRAM_BOT_TOKEN%0A• TELEGRAM_CHAT_ID"
+          MSG="⚠️ DEPLOY BLOCKED%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A%0A📊 ${{ needs.preflight.outputs.configured_count }}/${{ needs.preflight.outputs.total_count }} configured%0A❌ Required missing: ${{ needs.preflight.outputs.missing_count }}%0A%0A🔧 https://github.com/${{ github.repository }}/settings/secrets/actions"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
           -d parse_mode="HTML"
 
 # ---------------------------------------------------------
-# TELEGRAM ALERT (SUCCESS)
+# TELEGRAM: FAILURE
+# ---------------------------------------------------------
+  notify-failure:
+    name: 🚨 Deploy Failed
+    runs-on: ubuntu-latest
+    needs: [backend, worker, frontend]
+    if: failure()
+
+    steps:
+      - name: Send Telegram Alert
+        run: |
+          MSG="🚨 DEPLOY FAILED%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A🎯 ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 ${{ github.actor }}%0A%0A🔗 Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="$MSG" \
+          -d parse_mode="HTML"
+
+# ---------------------------------------------------------
+# TELEGRAM: SUCCESS
 # ---------------------------------------------------------
   notify-success:
-    name: ✅ Success Notification
+    name: ✅ Deploy Success
     runs-on: ubuntu-latest
     needs: [preflight, backend, worker, frontend]
     if: >-
@@ -585,16 +764,10 @@ jobs:
       needs.frontend.result == 'success'
 
     steps:
-      - name: Send Telegram Success Alert
+      - name: Send Telegram Alert
         run: |
-          WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjays.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
-          KEEP_ALIVE="Render (10m) + UptimeRobot (5m)"
-          if [ "${{ needs.preflight.outputs.worker_configured }}" = "true" ]; then
-            KEEP_ALIVE="$KEEP_ALIVE + Worker (2m)"
-          else
-            KEEP_ALIVE="$KEEP_ALIVE + N/A"
-          fi
-          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: $WORKER_URL%0A%0A🔄 Keep-Alive: $KEEP_ALIVE%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
+          WORKER_STATUS="${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}"
+          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 ${{ github.repository }}%0A🌿 ${{ github.ref_name }}%0A🎯 ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitor: https://uptimerobot.com/ZaSzISaXMt%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + $WORKER_STATUS%0A%0A📝 ${{ github.event.head_commit.message || 'manual deploy' }}"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
