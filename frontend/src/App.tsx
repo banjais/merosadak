@@ -144,7 +144,6 @@ const MainApp: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TravelIncident | null>(null);
   const [serviceType, setServiceType] = useState<string | null>(null);
-  const { data: serviceData, isLoading: serviceDataLoading, error: serviceDataError, lastSync: serviceLastSync, refresh: refreshServiceData } = useServiceData(serviceType, userLocation?.lat || 0, userLocation?.lng || 0, isLoading);
   const [highwayBrowserOpen, setHighwayBrowserOpen] = useState(false);
   const [reportIncidentOpen, setReportIncidentOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
@@ -197,6 +196,7 @@ const MainApp: React.FC = () => {
   const [currentSearchIntent, setCurrentSearchIntent] = useState<IntentResult | null>(null);
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { data: serviceData, isLoading: serviceDataLoading, error: serviceDataError, lastSync: serviceLastSync, refresh: refreshServiceData } = useServiceData(serviceType, userLocation?.lat || 0, userLocation?.lng || 0, isLoading);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((type: Toast['type'], message: string) => {
