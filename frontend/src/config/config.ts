@@ -2,7 +2,7 @@
  * 🏔️ MeroSadak - Unified Configuration
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://merosadak.banjays.workers.dev";
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export const APP_CONFIG = {
   name: import.meta.env.VITE_APP_NAME || "MeroSadak",

@@ -1,4 +1,4 @@
-import { APP_CONFIG } from '../config/config';
+import { apiFetch } from '../api';
 
 export interface ServiceItem {
   id: string;
@@ -45,33 +45,25 @@ async function fetchFromBackend(
   lat: number,
   lng: number
 ): Promise<ServiceItem[]> {
-  const base = APP_CONFIG.apiBaseUrl;
   const query = SERVICE_TYPES[serviceType] || serviceType;
-  
+
   // Build URL with query params
   const params = new URLSearchParams({ q: query });
   if (lat && lng) {
     params.append('lat', lat.toString());
     params.append('lng', lng.toString());
   }
-  
-  const url = `${base}/v1/pois?${params.toString()}`;
+
+  const url = `/v1/pois?${params.toString()}`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) {
-      console.warn(`[gasService] Backend returned ${res.status} for ${serviceType}`);
-      return [];
-    }
-
-    const json = await res.json();
-    const items = json.data || json.merged || json.features || json.results || (Array.isArray(json) ? json : []);
+    const json = await apiFetch(url);
+    const items = (json as any)?.data || (json as any)?.merged || (json as any)?.features || (json as any)?.results || (Array.isArray(json) ? json : []);
 
     return items.map((item: any, i: number) => {
-      // Handle different response formats
       const props = item.properties || item.poi || item;
       const loc = item.location || item.geometry?.coordinates || item.position || {};
-      
+
       const poiLat = loc.lat || loc.latitude || (Array.isArray(loc) ? loc[1] : 0);
       const poiLng = loc.lng || loc.lon || loc.longitude || (Array.isArray(loc) ? loc[0] : 0);
 
@@ -104,21 +96,16 @@ async function fetchTrafficData(
   lat: number,
   lng: number
 ): Promise<ServiceItem[]> {
-  const base = APP_CONFIG.apiBaseUrl;
-  const url = `${base}/v1/traffic/nearby?lat=${lat}&lng=${lng}`;
+  const url = `/v1/traffic/nearby?lat=${lat}&lng=${lng}`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return [];
-
-    const json = await res.json();
-    // Handle { count, roads } format
-    const items = json.roads || json.incidents || json.data || json.features || [];
+    const json = await apiFetch(url);
+    const items = (json as any)?.roads || (json as any)?.incidents || (json as any)?.data || (json as any)?.features || [];
 
     return items.map((item: any, i: number) => {
       const props = item.properties || item;
       const loc = item.geometry?.coordinates || {};
-      
+
       return {
         id: item.id || `traffic-${i}`,
         name: props.road_name || props.name || props.title || 'Traffic Point',
@@ -143,21 +130,16 @@ async function fetchRoadData(
   lat: number,
   lng: number
 ): Promise<ServiceItem[]> {
-  const base = APP_CONFIG.apiBaseUrl;
-  const url = `${base}/v1/roads/all`;
+  const url = `/v1/roads/all`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return [];
-
-    const json = await res.json();
-    // Handle both array and object with merged property
-    const items = Array.isArray(json) ? json : (json.merged || json.data || json.features || []);
+    const json = await apiFetch(url);
+    const items = Array.isArray(json) ? json : ((json as any)?.merged || (json as any)?.data || (json as any)?.features || []);
 
     return items.map((item: any, i: number) => {
       const props = item.properties || item;
       const loc = item.geometry?.coordinates || {};
-      
+
       return {
         id: item.id || `road-${i}`,
         name: props.road_name || props.name || 'Road Alert',

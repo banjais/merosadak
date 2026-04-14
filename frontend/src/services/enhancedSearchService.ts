@@ -311,18 +311,11 @@ async function searchTraffic(userLocation: { lat: number; lng: number } | null):
   if (!userLocation) return [];
 
   try {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    const response = await fetch(
-      `${apiBaseUrl}/api/v1/traffic/flow?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=20`
-    );
+    const result = await apiFetch(`/v1/traffic/flow?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=20`);
 
-    if (!response.ok) return [];
+    if (!(result as any)?.success || !(result as any)?.data) return [];
 
-    const result = await response.json();
-
-    if (!result.success || !result.data) return [];
-
-    const traffic = result.data;
+    const traffic = (result as any).data;
     const results: SearchResult[] = [];
 
     // Add traffic summary as a result
