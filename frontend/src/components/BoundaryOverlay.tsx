@@ -18,7 +18,7 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
       } catch (primaryErr) {
         console.warn("[BoundaryOverlay] API fetch failed, trying public folder:", primaryErr);
         try {
-          const publicRes = await fetch("/data/boundary.geojson");
+          const publicRes = await fetch("/boundary.geojson");
           if (publicRes.ok) {
             const data = await publicRes.json();
             setBoundaryData(data);

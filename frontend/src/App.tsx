@@ -46,6 +46,7 @@ import { POIOverlay } from "./components/POIOverlay";
 import { TrafficFlowOverlay } from "./components/TrafficFlowOverlay";
 import DeployDashboard from "./components/DeployDashboard";
 import { UptimeRobotStats } from "./components/UptimeRobotStats";
+import { recordPOIInteraction } from "./services/userPreferencesService";
 import { registerPushNotifications } from "./services/pushNotificationService";
 import type { Toast } from "./components/Toast";
 import type { SearchResult, RouteInfo } from "./services/enhancedSearchService";
@@ -93,7 +94,7 @@ const MainApp: React.FC = () => {
   const { isOffline } = useNetworkStatus();
 
   // WebSocket for real-time updates
-  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
   const { isConnected: wsConnected, lastMessage } = useWebSocket(apiBaseUrl, true);
 
   // Auto-refresh data every 5 minutes
@@ -525,8 +526,6 @@ const MainApp: React.FC = () => {
   // Handle POI category selection
   const handlePOICategorySelect = useCallback((category: POICategory) => {
     setSelectedPOICategory(prev => prev === category ? null : category);
-    // Record interaction for learning
-    const { recordPOIInteraction } = require('./services/userPreferencesService');
     recordPOIInteraction(category, 'select');
   }, []);
 
