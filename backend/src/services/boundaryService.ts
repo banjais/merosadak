@@ -1,12 +1,13 @@
 // backend/src/services/boundaryService.ts
 import fs from "fs/promises";
-import { CACHE_BOUNDARY, BOUNDARY_DATA } from "../config/paths.js";
+import { BOUNDARY_DATA } from "../config/paths.js";
 import { logError, logInfo } from "../logs/logs.js";
 import type { FeatureCollection } from "../types.js";
 import { withCache } from "./cacheService.js";
 
 /**
  * Get Nepal boundary data for map display
+ * Uses districts.geojson which contains all 77 districts with administrative boundaries
  */
 export async function getNepalBoundary(): Promise<FeatureCollection> {
   return withCache(`boundary:nepal`, async () => {
@@ -16,7 +17,7 @@ export async function getNepalBoundary(): Promise<FeatureCollection> {
       const raw = await fs.readFile(BOUNDARY_DATA, "utf-8");
       const data = JSON.parse(raw) as FeatureCollection;
 
-      logInfo(`[BoundaryService] Loaded Nepal boundary with ${data.features?.length || 0} features`);
+      logInfo(`[BoundaryService] Loaded Nepal boundary with ${data.features?.length || 0} districts`);
 
       return data;
     } catch (err: any) {

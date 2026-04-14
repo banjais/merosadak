@@ -183,7 +183,7 @@ const envSchema = z.object({
   CACHE_DIR: z.string().default("data/cache"),
 
   BASE_DATA: z.string().default("data/highways_base.geojson"),
-  BOUNDARY_DATA: z.string().default("data/boundary.geojson"),
+  BOUNDARY_DATA: z.string().default("data/districts.geojson"),
   HIGHWAY_DATA: z.string().default("data/highway/index.json"),
   DISTRICT_DATA: z.string().default("data/districts.geojson"),
   LOCAL_DATA: z.string().default("data/local.geojson"),
