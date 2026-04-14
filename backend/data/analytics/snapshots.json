@@ -3111,5 +3111,27 @@
     "weatherConditions": "Clouds",
     "temperature": 23.15,
     "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:38:59.332Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:40:09.356Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
   }
 ]
