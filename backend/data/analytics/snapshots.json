@@ -3133,5 +3133,60 @@
     "weatherConditions": "Clouds",
     "temperature": 23.15,
     "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:41:17.553Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 23.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:44:02.332Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 22.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:45:13.920Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 22.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:46:25.594Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 22.15,
+    "incidentsCount": 145
+  },
+  {
+    "timestamp": "2026-04-14T12:47:35.179Z",
+    "totalRoads": 1440,
+    "blockedCount": 4,
+    "oneLaneCount": 141,
+    "resumedCount": 1295,
+    "monsoonRiskCount": 1434,
+    "weatherConditions": "Clouds",
+    "temperature": 22.15,
+    "incidentsCount": 145
   }
 ]
