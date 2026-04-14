@@ -483,7 +483,7 @@ jobs:
     name: 🚨 Failure Alert
     runs-on: ubuntu-latest
     needs: [backend, worker, frontend]
-    if: failure() && needs.preflight.result == 'success'
+    if: failure()
 
     steps:
       - name: Send Telegram Alert
@@ -518,13 +518,23 @@ jobs:
   notify-success:
     name: ✅ Success Notification
     runs-on: ubuntu-latest
-    needs: [backend, worker, frontend]
-    if: success() && needs.preflight.result == 'success'
+    needs: [preflight, backend, worker, frontend]
+    if: >-
+      needs.preflight.result == 'success' &&
+      needs.backend.result == 'success' &&
+      needs.frontend.result == 'success'
 
     steps:
       - name: Send Telegram Success Alert
         run: |
-          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: ${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjais.workers.dev' || 'Skipped (UptimeRobot fallback)' }}%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + ${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
+          WORKER_URL="${{ needs.preflight.outputs.worker_configured == 'true' && 'https://merosadak.banjais.workers.dev' || 'Skipped (UptimeRobot fallback)' }}"
+          KEEP_ALIVE="Render (10m) + UptimeRobot (5m)"
+          if [ "${{ needs.preflight.outputs.worker_configured }}" = "true" ]; then
+            KEEP_ALIVE="$KEEP_ALIVE + Worker (2m)"
+          else
+            KEEP_ALIVE="$KEEP_ALIVE + N/A"
+          fi
+          MSG="✅ DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 By: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A📊 Monitoring: https://uptimerobot.com/ZaSzISaXMt%0A☁️ Worker: $WORKER_URL%0A%0A🔄 Keep-Alive: $KEEP_ALIVE%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d text="$MSG" \
