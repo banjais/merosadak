@@ -3,9 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd backend && npm install --omit=dev && npm run build",
-    "start": "cd backend && npm run start",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "build:backend": "npm run install:backend && cd backend && npm run build",
+    "build:frontend": "npm run install:frontend && cd frontend && npm run build",
+    "build:local": "npm run build:backend && npm run build:frontend",
+    "build": "npm run diag && npm run build:local && git add . && git commit --allow-empty -m \"Auto-deploy update\" && git push origin main && npm run monitor:status",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "start": "npm run start:backend",
+    "start:all": "npx concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "deploy:wrangler": "cd backend && npx wrangler deploy",
+    "deploy:firebase": "firebase deploy --only hosting",
     "deploy:render": "echo 'Deploy to Render via GitHub integration'",
+    "diag": "echo \"Diagnostics ready\" && node -v",
     "monitor:status": "echo 'Check UptimeRobot status at https://uptimerobot.com/ZaSzISaXMt'"
   },
   "engines": {
