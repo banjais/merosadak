@@ -21,6 +21,7 @@ import { getCachedMonsoonRisk } from "./monsoonService.js";
 import { getCachedRoads } from "./roadService.js";
 
 const ANALYTICS_FILE = path.join(CACHE_DIR, "analytics.json");
+let analyticsQueue: Promise<void> = Promise.resolve();
 
 /**
  * 📑 Master PDF Generation
@@ -33,8 +34,8 @@ export async function generateMasterReport(): Promise<Buffer> {
     // ✅ Use getCacheHealth via cacheService alias
     const cacheHealth = cacheService.getCacheHealth();
 
-    const risks = await getCachedMonsoonRisk();
-    const roadsGeo = await getCachedRoads();
+    const risks = (await getCachedMonsoonRisk()) || [];
+    const roadsGeo = (await getCachedRoads()) || { merged: [] };
 
     const extremeCount = risks.filter(r => r.riskLevel === "EXTREME").length;
     const highCount = risks.filter(r => r.riskLevel === "HIGH").length;
@@ -45,12 +46,18 @@ export async function generateMasterReport(): Promise<Buffer> {
 
     const activeIncidents = roadsGeo.merged.filter(f => f.properties && f.properties.status !== ROAD_STATUS.RESUMED).length;
 
-    const doc = new PDFDocument({ margin: 40, info: { Title: 'MeroSadak Admin Report', Author: 'MeroSadak System' } });
-    const chunks: Buffer[] = [];
+    const doc = new PDFDocument({
+      margin: 40,
+      info: { Title: 'MeroSadak Admin Report', Author: 'MeroSadak System' },
+      bufferPages: true
+    });
 
-    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("end", () => { });
-    doc.on("error", (err: Error) => { throw err; });
+    const chunks: Buffer[] = [];
+    const pdfPromise = new Promise<Buffer>((resolve, reject) => {
+      doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", (err: Error) => reject(err));
+    });
 
     doc.fontSize(22).fillColor('#2c3e50').text("MeroSadak Management Report", { align: "center" });
     doc.fontSize(10).fillColor('#7f8c8d').text(`Generated: ${new Date().toLocaleString()}`, { align: "center" });
@@ -64,7 +71,11 @@ export async function generateMasterReport(): Promise<Buffer> {
     doc.fontSize(10).fillColor('#000');
     doc.text(`System Cache Status: ${cacheHealth.status}`);
     doc.text(`Local RAM Cache Items: ${cacheHealth.l1_items}`);
-    // upstashStats is always null since admin API is not configured
+
+    if (upstashStats && upstashStats.status) {
+      doc.text(`Cloud Cache (Upstash): ${upstashStats.status || 'Active'}`);
+      doc.text(`Cloud Usage: ${upstashStats.usage_pct || 0}% of daily quota`);
+    }
 
     const cacheFiles = [CACHE_ROAD, CACHE_TRAFFIC, CACHE_POI, CACHE_WEATHER, CACHE_MONSOON, CACHE_WAZE];
     for (const file of cacheFiles) {
@@ -120,16 +131,7 @@ export async function generateMasterReport(): Promise<Buffer> {
     }
 
     doc.end();
-
-    // Wait for the PDF to be fully generated and return it
-    return new Promise<Buffer>((resolve, reject) => {
-      doc.on("end", () => {
-        resolve(Buffer.concat(chunks));
-      });
-      doc.on("error", (err: Error) => {
-        reject(err);
-      });
-    });
+    return pdfPromise;
   } catch (err: any) {
     logError("[superadminService] PDF generation failed", { error: err.message });
     throw err;
@@ -138,30 +140,51 @@ export async function generateMasterReport(): Promise<Buffer> {
 
 /* ---------------- Analytics & Logs ---------------- */
 export async function recordAnalytics(event: string, meta?: any) {
-  try {
-    const raw = await fs.readFile(ANALYTICS_FILE, "utf-8").catch(() => "{}");
-    const data = JSON.parse(raw);
-    data[event] = (data[event] || 0) + 1;
-    data[`last_${event}`] = new Date().toISOString();
-    await fs.writeFile(ANALYTICS_FILE, JSON.stringify(data, null, 2));
-  } catch (err: any) {
-    logError("[superadminService] recordAnalytics failed", { error: err.message });
-  }
+  analyticsQueue = analyticsQueue.then(async () => {
+    try {
+      const raw = await fs.readFile(ANALYTICS_FILE, "utf-8").catch(() => "{}");
+      const data = JSON.parse(raw);
+
+      if (meta) {
+        logError(`[superadminService] Analytics Event: ${event}`, { meta });
+      }
+
+      data[event] = (data[event] || 0) + 1;
+      data[`last_${event}`] = new Date().toISOString();
+
+      // Atomic write: write to temp file then rename to avoid corruption
+      const tempFile = `${ANALYTICS_FILE}.tmp`;
+      await fs.writeFile(tempFile, JSON.stringify(data, null, 2));
+      await fs.rename(tempFile, ANALYTICS_FILE);
+    } catch (err: any) {
+      logError("[superadminService] recordAnalytics failed", { error: err.message });
+    }
+  }).catch(() => {
+    // Catch queue errors to ensure subsequent analytics calls can still proceed
+  });
+  return analyticsQueue;
 }
 
 export async function getHistoricalLogs(limit: number = 100): Promise<string[]> {
   try {
     const files = await fs.readdir(LOG_DIR);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const relevantFiles = files.filter(f => f.includes(dateStr) && (f.startsWith("admin") || f.startsWith("superadmin")));
+
+    // Include error and app logs to ensure logError output is captured in reports
+    const allowedPrefixes = ["admin", "superadmin", "error", "app"];
+    const relevantFiles = files
+      .filter(f => allowedPrefixes.some(p => f.startsWith(p)))
+      .sort() // Sort alphabetically to maintain approximate chronological order
+      .reverse(); // Newest files first
 
     let logs: string[] = [];
     for (const file of relevantFiles) {
       const content = await fs.readFile(path.join(LOG_DIR, file), "utf-8");
-      logs = logs.concat(content.trim().split("\n").filter(l => l.length > 0));
+      const lines = content.trim().split("\n").filter(l => l.length > 0).reverse();
+      logs = logs.concat(lines);
+      if (logs.length >= limit) break;
     }
 
-    return logs.reverse().slice(0, limit);
+    return logs.slice(0, limit);
   } catch (err: any) {
     logError("[superadminService] Failed to read historical logs", { error: err.message });
     return [];

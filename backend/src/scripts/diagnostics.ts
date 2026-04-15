@@ -41,10 +41,16 @@ function header(title: string) {
   console.log(`\n${C.cyan}${C.bold}── ${title} ${"─".repeat(Math.max(0, 54 - title.length))}${C.reset}`);
 }
 
+const NEPAL_BOUNDS = { minLng: 80, maxLng: 89, minLat: 26, maxLat: 31 };
+const validateCoords = (lng: number, lat: number) => lng >= NEPAL_BOUNDS.minLng && lng <= NEPAL_BOUNDS.maxLng && lat >= NEPAL_BOUNDS.minLat && lat <= NEPAL_BOUNDS.maxLat;
+
 // ─── API Check Helper ───
 async function checkApi(label: string, url: string, opts?: { method?: string; timeout?: number; headers?: Record<string, string> }) {
+  const method = (opts?.method || 'GET').toLowerCase();
   try {
-    const res = await axios.get(url, {
+    const res = await axios({
+      method: method,
+      url: url,
       timeout: opts?.timeout ?? 8000,
       headers: opts?.headers ?? {},
       validateStatus: () => true,
@@ -65,6 +71,9 @@ async function runDiagnostics() {
   const port = String(config.PORT || 4000);
   console.log(`\n${C.magenta}${C.bold}  MEROSADAK DIAGNOSTICS${C.reset}  ${C.dim}${mode} :${port}${C.reset}`);
 
+  const HIGHWAY_DIR = path.join(paths.DATA_DIR, "highway");
+  const BOUNDARY_TYPES = ['districts', 'provinces', 'local'];
+
   // ─── Highway Data ───
   header("Highway Data");
 
@@ -74,8 +83,7 @@ async function runDiagnostics() {
 
   // Check highway index
   try {
-    const highwayDir = path.join(paths.DATA_DIR, "highway");
-    const indexPath = path.join(highwayDir, "index.json");
+    const indexPath = path.join(HIGHWAY_DIR, "index.json");
     const indexContent = await fs.readFile(indexPath, "utf-8");
     const highways = JSON.parse(indexContent);
     highwayCount = highways.length;
@@ -153,7 +161,7 @@ async function runDiagnostics() {
 
       const totalSheet = sheetStatusCount.Blocked + sheetStatusCount["One-Lane"] + sheetStatusCount.Resumed;
       console.log(`  📡 Google Sheets (GAS)  →  ${totalSheet} rows from tab '${SHEET_TAB || "Roads"}'`);
-      
+
       if (totalSheet > 0) {
         const sheetStatuses = [
           { name: "Blocked", count: sheetStatusCount.Blocked, icon: "■" },
@@ -200,10 +208,8 @@ async function runDiagnostics() {
     const s = await fs.stat(paths.BOUNDARY_DATA);
     ok("Boundary (combined)", `${(s.size / 1024).toFixed(0)} KB`);
   } catch {
-    const boundaryTypes = ['districts', 'provinces', 'local'];
-    let allExist = true;
-    let totalSize = 0;
-    for (const type of boundaryTypes) {
+    let allExist = true, totalSize = 0;
+    for (const type of BOUNDARY_TYPES) {
       try {
         const s = await fs.stat(path.join(paths.DATA_DIR, `${type}.geojson`));
         totalSize += s.size;
@@ -213,7 +219,7 @@ async function runDiagnostics() {
       }
     }
     if (allExist) {
-      ok("Boundary (split)", `${(totalSize / 1024).toFixed(0)} KB (${boundaryTypes.length} files)`);
+      ok("Boundary (split)", `${(totalSize / 1024).toFixed(0)} KB (${BOUNDARY_TYPES.length} files)`);
     } else {
       warn("Boundary", "not found");
     }
@@ -221,8 +227,7 @@ async function runDiagnostics() {
 
   // Check highway directory
   try {
-    const highwayDir = path.join(paths.DATA_DIR, "highway");
-    const files = await fs.readdir(highwayDir);
+    const files = await fs.readdir(HIGHWAY_DIR);
     const geojsonFiles = files.filter(f => f.endsWith('.geojson'));
     ok(`Highway Segments`, `${geojsonFiles.length} files`);
   } catch { err("Highway Segments", "directory not found"); }
@@ -302,15 +307,6 @@ async function runDiagnostics() {
   if (GEMINI_API_KEY) {
     ok("Gemini AI  [ai]", "configured");
   } else { ok("Gemini AI", "not configured (optional feature)"); }
-
-  // Upstash Redis
-  if (UPSTASH.REST_URL && UPSTASH.REST_TOKEN) {
-    const redisUrl = UPSTASH.REST_URL.replace(/\/$/, "");
-    await checkApi("Upstash Redis  [cache]", `${redisUrl}/get/diag_test`, {
-      timeout: 5000,
-      headers: { Authorization: `Bearer ${UPSTASH.REST_TOKEN}` },
-    });
-  } else { ok("Upstash Redis", "not configured (using in-memory cache)"); }
 
   // Google Maps
   if (GOOGLE_MAPS_API_KEY) {
@@ -392,28 +388,51 @@ async function runDiagnostics() {
   header("Data Validation");
 
   // Boundary validation - check all boundary files
-  const boundaryTypes = ['districts', 'provinces', 'local'];
-  for (const type of boundaryTypes) {
+  const allBoundaryPaths = [...BOUNDARY_TYPES.map(t => path.join(paths.DATA_DIR, `${t}.geojson`)), paths.BOUNDARY_DATA];
+  for (const boundaryPath of allBoundaryPaths) {
+    const label = path.basename(boundaryPath);
     try {
-      const boundaryPath = path.join(paths.DATA_DIR, `${type}.geojson`);
       const boundaryRaw = await fs.readFile(boundaryPath, "utf-8");
       const boundaryGeo = JSON.parse(boundaryRaw);
+
+      let validFeatures = 0;
+      let invalidCoords = 0;
+
       if (boundaryGeo.type === "FeatureCollection" && Array.isArray(boundaryGeo.features)) {
-        ok(`${type} Boundary`, `${boundaryGeo.features.length} feature(s)`);
+        validFeatures = boundaryGeo.features.length;
+
+        // Quick coordinate sanity check on first feature
+        if (validFeatures > 0) {
+          const firstGeom = boundaryGeo.features[0].geometry;
+          const coords = firstGeom.type === "Polygon" ? firstGeom.coordinates[0][0] :
+            firstGeom.type === "MultiPolygon" ? firstGeom.coordinates[0][0][0] : null;
+
+          if (coords && Array.isArray(coords)) {
+            if (!validateCoords(coords[0], coords[1])) invalidCoords++;
+          }
+        }
+
+        if (invalidCoords > 0) {
+          warn(label, `${validFeatures} features, but coordinates seem outside Nepal bounds`);
+        } else {
+          ok(label, `${validFeatures} feature(s)`);
+        }
       } else {
-        warn(`${type} Boundary`, `unexpected type: ${boundaryGeo.type}`);
+        warn(label, `unexpected type: ${boundaryGeo.type}`);
       }
     } catch (e: any) {
-      if (e.code === "ENOENT") warn(`${type} Boundary`, "file not found");
-      else if (e instanceof SyntaxError) err(`${type} Boundary`, "invalid JSON");
-      else err(`${type} Boundary`, e.message);
+      if (e.code === "ENOENT") {
+        if (boundaryPath === paths.BOUNDARY_DATA) err(label, "missing (required for frontend)");
+        else warn(label, "file not found");
+      }
+      else if (e instanceof SyntaxError) err(label, "invalid JSON");
+      else err(label, e.message);
     }
   }
 
-  // Coordinate bounds check (Nepal: 80-88°E, 26-30°N) using highway data
+  // Coordinate bounds check using highway data
   try {
-    const highwayDir = path.join(paths.DATA_DIR, "highway");
-    const indexPath = path.join(highwayDir, "index.json");
+    const indexPath = path.join(HIGHWAY_DIR, "index.json");
     const indexContent = await fs.readFile(indexPath, "utf-8");
     const highways = JSON.parse(indexContent);
 
@@ -423,7 +442,7 @@ async function runDiagnostics() {
     // Check first 10 highways for coordinate validation
     for (const h of highways.slice(0, 10)) {
       try {
-        const hPath = path.join(highwayDir, h.file);
+        const hPath = path.join(HIGHWAY_DIR, h.file);
         const hContent = await fs.readFile(hPath, "utf-8");
         const hGeo = JSON.parse(hContent);
         if (hGeo.features) {
@@ -432,7 +451,7 @@ async function runDiagnostics() {
             if (!geom) continue;
             const checkCoord = (coord: number[]) => {
               const [lng, lat] = coord;
-              if (lng < 80 || lng > 88 || lat < 26 || lat > 30) invalidCoords++;
+              if (!validateCoords(lng, lat)) invalidCoords++;
             };
             if (geom.type === "Point") {
               pointCount++;
@@ -458,10 +477,16 @@ async function runDiagnostics() {
     }
   } catch { /* already handled in Highway Data section */ }
 
-  // ─── Upstash Redis Ping ───
-  header("Upstash Redis");
+  // ─── Upstash Redis ───
+  header("Upstash Redis (Cache)");
   if (UPSTASH.REST_URL && UPSTASH.REST_TOKEN) {
     const redisUrl = UPSTASH.REST_URL.replace(/\/$/, "");
+    // Basic API Check
+    await checkApi("Upstash Connectivity", `${redisUrl}/get/diag_test`, {
+      timeout: 5000,
+      headers: { Authorization: `Bearer ${UPSTASH.REST_TOKEN}` },
+    });
+    // Read/Write Ping
     try {
       await axios.post(`${redisUrl}/set/diag_ping`, "ok", {
         timeout: 5000,
@@ -484,6 +509,8 @@ async function runDiagnostics() {
     } catch (e: any) {
       err("Redis read/write", e.code || e.message);
     }
+  } else {
+    ok("Upstash Redis", "not configured (using in-memory cache)");
   }
 
   // ─── Summary ───

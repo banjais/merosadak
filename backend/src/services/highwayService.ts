@@ -6,6 +6,7 @@ import { logError, logInfo } from "../logs/logs.js";
 import type { FeatureCollection } from "../types.js";
 import { getCachedRoads } from "./roadService.js";
 import { getCachedMonsoonRisk } from "./monsoonService.js";
+import { ROAD_STATUS } from "../constants/sheets.js";
 
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
@@ -16,25 +17,28 @@ const DISTRICT_TO_PROVINCE: Record<string, string> = {
   "Jhapa": "Province 1", "Morang": "Province 1", "Sunsari": "Province 1", "Dhankuta": "Province 1",
   "Terhathum": "Province 1", "Sankhuwasabha": "Province 1", "Bhojpur": "Province 1", "Khotang": "Province 1",
   "Okhaldhunga": "Province 1", "Solukhumbu": "Province 1", "Ilam": "Province 1", "Panchthar": "Province 1",
-  "Taplejung": "Province 1", "Kavrepalanchok": "Province 1", "Udayapur": "Province 1",
+  "Taplejung": "Province 1", "Udayapur": "Province 1",
   // Province 2
   "Saptari": "Province 2", "Siraha": "Province 2", "Dhanusha": "Province 2", "Mahottari": "Province 2",
   "Sarlahi": "Province 2", "Bara": "Province 2", "Parsa": "Province 2", "Rautahat": "Province 2",
   // Province 3 (Bagmati)
   "Chitwan": "Province 3", "Makwanpur": "Province 3", "Dhading": "Province 3", "Nuwakot": "Province 3",
   "Rasuwa": "Province 3", "Kathmandu": "Province 3", "Lalitpur": "Province 3", "Bhaktapur": "Province 3",
-  "Sindhuli": "Province 3", "Ramechhap": "Province 3", "Dolakha": "Province 3",
+  "Sindhuli": "Province 3", "Ramechhap": "Province 3", "Dolakha": "Province 3", "Kavrepalanchok": "Province 3",
+  "Sindhupalchok": "Province 3",
   // Province 4 (Gandaki)
   "Gorkha": "Province 4", "Manang": "Province 4", "Mustang": "Province 4", "Myagdi": "Province 4",
-  "Kaski": "Province 4", "Lamjung": "Province 4", "Tanahu": "Province 4", "Nawalparasi": "Province 4",
-  "Parbat": "Province 4", "Baglung": "Province 4",
+  "Kaski": "Province 4", "Lamjung": "Province 4", "Tanahu": "Province 4", "Nawalpur": "Province 4",
+  "Parbat": "Province 4", "Baglung": "Province 4", "Syangja": "Province 4",
   // Province 5 (Lumbini)
-  "Pyuthan": "Province 5", "Rolpa": "Province 5", "Rukum": "Province 5", "Salyantar": "Province 5",
+  "Pyuthan": "Province 5", "Rolpa": "Province 5", "Rukum East": "Province 5",
   "Dang": "Province 5", "Banke": "Province 5", "Bardiya": "Province 5", "Kapilvastu": "Province 5",
   "Rupandehi": "Province 5", "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5",
+  "Parasi": "Province 5",
   // Province 6 (Karnali)
   "Dolpa": "Province 6", "Mugu": "Province 6", "Jumla": "Province 6", "Kalikot": "Province 6",
-  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6",
+  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6", "Salyan": "Province 6",
+  "Humla": "Province 6", "Rukum West": "Province 6",
   // Province 7 (Sudurpashchim)
   "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Kanchanpur": "Province 7",
   "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7", "Dadeldhura": "Province 7",
@@ -65,8 +69,9 @@ function getProvincesByDistricts(districts: string[]): string[] {
  * Get linked data from multiple sources for a highway - FAST (no incidents)
  */
 export async function getHighwayLinkedData(code: string): Promise<any> {
+  const normalizedCode = code.toUpperCase();
   try {
-    const geojson = await getHighwayByCode(code);
+    const geojson = await getHighwayByCode(normalizedCode);
     if (!geojson || !geojson.features) return null;
 
     // Collect unique districts and divisions from highway segments
@@ -108,10 +113,11 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
         pavementTypes: Array.from(paveTypes).sort(),
       },
       linkedSources: {
-        districts: "/api/boundaries/districts",
-        provinces: "/api/boundaries/provinces",
-        local: "/api/boundaries/local",
-        incidents: `/api/highways/${code}/incidents`,
+        nepal: "/api/v1/boundary",
+        districts: "/api/v1/boundaries/districts",
+        provinces: "/api/v1/boundaries/provinces",
+        local: "/api/v1/boundaries/local",
+        incidents: `/api/v1/highways/${normalizedCode}/incidents`,
       }
     };
   } catch (err: any) {
@@ -124,10 +130,11 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
  * Get incidents for a specific highway - fast endpoint
  */
 export async function getHighwayIncidents(code: string): Promise<any> {
+  const normalizedCode = code.toUpperCase();
   try {
     // Get highway to know which districts it passes through
     const indexData = await getHighwayList();
-    const metadata = indexData.find(h => h.code === code.toUpperCase());
+    const metadata = indexData.find(h => h.code === normalizedCode);
     if (!metadata) return null;
 
     const highwayFile = path.join(HIGHWAY_DIR, metadata.file);
@@ -136,28 +143,28 @@ export async function getHighwayIncidents(code: string): Promise<any> {
     // Get road data - only filter by this highway
     const roadData = await getCachedRoads();
     const highwayRoads = roadData.merged.filter((r: any) =>
-      r.properties?.road_refno === code.toUpperCase()
+      r.properties?.road_refno === normalizedCode
     );
 
     // Count by district (from highway segment dist_name)
     const byDistrict: Record<string, any> = {};
     for (const road of highwayRoads) {
-      if (road.source === "highway" && road.status !== "Resumed") {
+      if (road.source === "highway" && road.status !== ROAD_STATUS.RESUMED) {
         const dist = road.properties?.dist_name || "Unknown";
         if (!byDistrict[dist]) byDistrict[dist] = { blocked: 0, oneLane: 0 };
-        if (road.status === "Blocked") byDistrict[dist].blocked++;
-        else if (road.status === "One-Lane") byDistrict[dist].oneLane++;
+        if (road.status === ROAD_STATUS.BLOCKED) byDistrict[dist].blocked++;
+        else if (road.status === ROAD_STATUS.ONE_LANE) byDistrict[dist].oneLane++;
       }
     }
 
     // Get sheet incidents (any sheet incident for this highway)
-    const sheetIncidents = highwayRoads.filter((r: any) => r.source === "sheet" && r.status !== "Resumed");
+    const sheetIncidents = highwayRoads.filter((r: any) => r.source === "sheet" && r.status !== ROAD_STATUS.RESUMED);
     const byDistrictFromSheet: Record<string, any> = {};
     for (const inc of sheetIncidents) {
       const dist = inc.properties?.incidentDistrict || "Unknown";
       if (!byDistrictFromSheet[dist]) byDistrictFromSheet[dist] = { blocked: 0, oneLane: 0, places: [] };
-      if (inc.status === "Blocked") byDistrictFromSheet[dist].blocked++;
-      else if (inc.status === "One-Lane") byDistrictFromSheet[dist].oneLane++;
+      if (inc.status === ROAD_STATUS.BLOCKED) byDistrictFromSheet[dist].blocked++;
+      else if (inc.status === ROAD_STATUS.ONE_LANE) byDistrictFromSheet[dist].oneLane++;
       const place = inc.properties?.incidentPlace || inc.properties?.place || "";
       if (place) byDistrictFromSheet[dist].places.push(place);
     }
@@ -166,7 +173,7 @@ export async function getHighwayIncidents(code: string): Promise<any> {
     const totalOneLane = Object.values(byDistrict).reduce((s: number, d: any) => s + d.oneLane, 0);
 
     return {
-      code,
+      code: normalizedCode,
       totalActive: totalBlocked + totalOneLane,
       blocked: totalBlocked,
       oneLane: totalOneLane,
@@ -197,13 +204,14 @@ export async function getHighwayList(): Promise<Array<{ code: string, file: stri
  * Get specific highway geojson by code
  */
 export async function getHighwayByCode(code: string): Promise<FeatureCollection | null> {
+  const normalizedCode = code.toUpperCase();
   try {
     // Load index to find the file
     const indexData = await getHighwayList();
-    const highwayEntry = indexData.find(h => h.code === code);
+    const highwayEntry = indexData.find(h => h.code === normalizedCode);
 
     if (!highwayEntry) {
-      logInfo(`[HighwayService] Highway ${code} not found in index`);
+      logInfo(`[HighwayService] Highway ${normalizedCode} not found in index`);
       return null;
     }
 
@@ -216,17 +224,17 @@ export async function getHighwayByCode(code: string): Promise<FeatureCollection 
     if (geojsonData.features) {
       geojsonData.features.forEach(feature => {
         if (feature.properties) {
-          feature.properties.highway_code = code;
+          feature.properties.highway_code = normalizedCode;
         }
       });
     }
 
-    logInfo(`[HighwayService] Loaded highway ${code} from ${highwayEntry.file}`);
+    logInfo(`[HighwayService] Loaded highway ${normalizedCode} from ${highwayEntry.file}`);
     return geojsonData;
 
   } catch (err: any) {
     logError("[HighwayService] Failed to load highway by code", {
-      code,
+      code: normalizedCode,
       error: err.message
     });
     return null;
@@ -238,7 +246,7 @@ export async function getHighwayByCode(code: string): Promise<FeatureCollection 
  */
 export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[] } | null> {
   const highways = await getHighwayList();
-  return highways.find(h => h.code === code) || null;
+  return highways.find(h => h.code === code.toUpperCase()) || null;
 }
 
 /**
@@ -297,13 +305,14 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
  * Get comprehensive highway statistics and report
  */
 export async function getHighwayReport(code: string): Promise<any> {
+  const normalizedCode = code.toUpperCase();
   try {
-    const metadata = await getHighwayMetadata(code);
+    const metadata = await getHighwayMetadata(normalizedCode);
     if (!metadata) {
       return { error: 'Highway not found' };
     }
 
-    const geojson = await getHighwayByCode(code);
+    const geojson = await getHighwayByCode(normalizedCode);
     if (!geojson || !geojson.features) {
       return { error: 'Highway data not available' };
     }
@@ -392,21 +401,21 @@ export async function getHighwayReport(code: string): Promise<any> {
     const incidents = roadData.merged.filter((f: any) => {
       const props = f.properties || {};
       const highwayName = metadata.name?.toLowerCase();
-      return props.road_refno === code ||
+      return props.road_refno === normalizedCode ||
         (highwayName && props.road_name && props.road_name.toLowerCase().includes(highwayName));
     });
 
     const incidentStats = {
-      blocked: incidents.filter((f: any) => f.properties?.status === 'Blocked').length,
-      one_lane: incidents.filter((f: any) => f.properties?.status === 'One-Lane').length,
-      resumed: incidents.filter((f: any) => f.properties?.status === 'Resumed').length,
+      blocked: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.BLOCKED).length,
+      one_lane: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.ONE_LANE).length,
+      resumed: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.RESUMED).length,
     };
 
     // Get monsoon risk for this highway
     const monsoonRisks = await getCachedMonsoonRisk();
     const highwayMonsoonRisks = monsoonRisks.filter((r: any) => {
       const highwayName = metadata.name?.toLowerCase();
-      return r.roadId === code || (highwayName && r.roadName?.toLowerCase().includes(highwayName));
+      return r.roadId === normalizedCode || (highwayName && r.roadName?.toLowerCase().includes(highwayName));
     });
 
     // Calculate quality score (0-100) - guard against division by zero
@@ -417,7 +426,7 @@ export async function getHighwayReport(code: string): Promise<any> {
     ) : 0;
 
     return {
-      code: metadata.code,
+      code: normalizedCode,
       name: metadata.name,
       route: metadata.route,
       startToEnd: metadata.route, // start to end location

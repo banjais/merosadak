@@ -11,7 +11,7 @@ export const GeminiController = {
    */
   handleQuery: async (req: Request, res: Response) => {
     try {
-      const { prompt, systemPrompt, image, mode, verbosity, moodEQ } = req.body;
+      const { prompt, systemPrompt, mode, verbosity, moodEQ } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ success: false, message: "Prompt is required" });
@@ -89,7 +89,7 @@ export const GeminiController = {
    */
   analyzeRoadImage: async (req: Request, res: Response) => {
     try {
-      const { base64Image, prompt } = req.body;
+      const { base64Image, prompt, systemPrompt } = req.body;
       if (!base64Image) return res.status(400).json({ success: false, message: "Image is required" });
 
       const parts = [
@@ -97,10 +97,14 @@ export const GeminiController = {
         { text: prompt || "Analyze this road for safety hazards and potholes." }
       ];
 
-      const result = await geminiService.generateMultimodalContent(parts);
+      const result = await geminiService.generateMultimodalContent(parts, systemPrompt);
 
-      res.json({ success: true, analysis: result });
+      res.json({
+        success: true,
+        analysis: result || "Visual analysis completed but no hazards were identified."
+      });
     } catch (error: any) {
+      logError('[GeminiController] Image analysis failed', { error: error.message, stack: error.stack });
       res.status(500).json({ success: false, error: error.message });
     }
   },
@@ -123,8 +127,12 @@ export const GeminiController = {
 
       const result = await geminiService.generateMultimodalContent(parts, systemPrompt);
 
-      res.json({ success: true, emotionData: result });
+      res.json({
+        success: true,
+        emotionData: result || "Could not detect distinct emotion from the provided audio."
+      });
     } catch (error: any) {
+      logError('[GeminiController] Emotion detection failed', { error: error.message, stack: error.stack });
       res.status(500).json({ success: false, error: error.message });
     }
   }

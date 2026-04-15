@@ -114,9 +114,6 @@ const ROAD_MOCKS: TravelIncident[] = [
   }
 ];
 
-// Similar mocks for TRAFFIC, WEATHER, MONSOON, POI
-// ... define TRAFFIC_MOCKS, WEATHER_MOCKS, MONSOON_MOCKS, POI_MOCKS here exactly as you had them
-
 /**
  * -------------------------
  * API Methods (Frontend)
@@ -160,6 +157,22 @@ const POI_MOCKS: any[] = [
   }
 ];
 
+const BOUNDARY_MOCK: GeoData = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      properties: { name: "Nepal Boundary Mock" },
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [[80.05, 26.34], [88.2, 26.34], [88.2, 30.45], [80.05, 30.45], [80.05, 26.34]]
+        ]
+      }
+    }
+  ]
+};
+
 export const api = {
   getRoads: async (): Promise<TravelIncident[]> => {
     if (APP_CONFIG.useMocks) return ROAD_MOCKS;
@@ -200,8 +213,9 @@ export const api = {
     }).filter((i: any) => i.lat !== 0);
   },
   getNepalBoundary: async (): Promise<GeoData> => {
+    if (APP_CONFIG.useMocks) return BOUNDARY_MOCK;
     const result = await apiFetch<any>('/boundary');
-    return result;
+    return result.data || result;
   },
   getPois: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
     if (APP_CONFIG.useMocks) return POI_MOCKS;
