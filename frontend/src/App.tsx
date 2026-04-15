@@ -14,6 +14,7 @@ import { useAnalytics } from "./hooks/useAnalytics";
 import { useSuperadmin } from "./hooks/useSuperadmin";
 import { useGemini } from "./hooks/useGemini";
 import { useRoutePlanning } from "./hooks/useRoutePlanning";
+import { usePullToRefresh } from "./hooks/usePullToRefresh";
 import { useETA, useQuickETA } from "./hooks/useETA";
 import { useServiceData } from "./hooks/useServiceData";
 
@@ -151,9 +152,21 @@ const MainApp: React.FC = () => {
   const [showTraffic, setShowTraffic] = useState(false);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
 
+  // Pull to refresh
+  const { isPulling, isRefreshing } = usePullToRefresh({
+    onRefresh: refresh,
+    distance: 80
+  });
+
   const [showMapEngineSelector, setShowMapEngineSelector] = useState(true);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [activeTab, setActiveTab] = useState<'alerts' | 'chat'>('alerts');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [serviceType, setServiceType] = useState<string | null>(null);
+  const [serviceResults, setServiceResults] = useState<any[]>([]);
+  const [activePersona, setActivePersona] = useState('safety');
+  const [voiceGender, setVoiceGender] = useState<'male' | 'female'>('female');
 
   const [toasts, setToasts] = useState<any[]>([]);
 
@@ -170,6 +183,15 @@ const MainApp: React.FC = () => {
     initializeStorage();
     themeService.applyToDocument();
     HotUpdateManager.init();
+
+    // Listen for service worker updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'SW_UPDATED') {
+          addToast('info', `App updated to v${event.data.version} - refresh to see changes`);
+        }
+      });
+    }
 
     navigator.geolocation?.getCurrentPosition((pos) => {
       setUserLocation({
@@ -300,8 +322,29 @@ const MainApp: React.FC = () => {
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           incidents={incidents}
+          onSelectIncident={(incident) => {
+            // Handle incident selection - could center map on incident
+            if (incident.lat && incident.lng) {
+              // Map centering logic would go here
+            }
+          }}
+          chatMessages={chatMessages}
           onSendMessage={handleAskAI}
+          isProcessing={isProcessing}
+          isDarkMode={isDarkMode}
+          serviceType={serviceType}
+          serviceResults={serviceResults}
+          onSelectService={(service) => {
+            setServiceType(service);
+            handleServiceSelect(service || '');
+          }}
+          activePersona={activePersona}
+          onPersonaChange={setActivePersona}
+          voiceGender={voiceGender}
+          onGenderChange={setVoiceGender}
         />
 
         <FloatingMenu onServiceSelect={handleServiceSelect} />

@@ -1,55 +1,70 @@
-import { useEffect, useRef } from "react";
-import { checkForUpdate, applyUpdate } from "../utils/updateManager";
+// frontend/src/hooks/usePullToRefresh.ts
+import { useState, useCallback, useEffect, useRef } from "react";
 
-export function usePullToRefresh() {
+interface PullToRefreshOptions {
+  onRefresh: () => Promise<void>;
+  distance?: number;
+  disabled?: boolean;
+}
+
+export function usePullToRefresh({ onRefresh, distance = 80, disabled = false }: PullToRefreshOptions) {
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const startY = useRef(0);
   const pulling = useRef(false);
+  const pullDistance = useRef(0);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (disabled || window.scrollY !== 0) return;
+    startY.current = e.touches[0].clientY;
+    pulling.current = true;
+    pullDistance.current = 0;
+  }, [disabled]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!pulling.current || disabled) return;
+
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+
+    if (diff > 0) {
+      pullDistance.current = diff;
+      setIsPulling(diff > distance * 0.3);
+    }
+  }, [disabled, distance]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (!pulling.current || disabled) {
+      pulling.current = false;
+      setIsPulling(false);
+      return;
+    }
+
+    pulling.current = false;
+    setIsPulling(false);
+
+    if (pullDistance.current > distance) {
+      setIsRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setIsRefreshing(false);
+      }
+    }
+    pullDistance.current = 0;
+  }, [disabled, distance, onRefresh]);
 
   useEffect(() => {
-    const threshold = 80; // pull distance
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
-        startY.current = e.touches[0].clientY;
-        pulling.current = true;
-      }
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!pulling.current) return;
-
-      const currentY = e.touches[0].clientY;
-      const diff = currentY - startY.current;
-
-      if (diff > threshold) {
-        pulling.current = false;
-
-        checkForUpdate().then((hasUpdate) => {
-          if (hasUpdate) {
-            const confirmUpdate = window.confirm(
-              "🚀 New update available! Refresh now?"
-            );
-
-            if (confirmUpdate) {
-              applyUpdate();
-            }
-          }
-        });
-      }
-    };
-
-    const onTouchEnd = () => {
-      pulling.current = false;
-    };
-
-    window.addEventListener("touchstart", onTouchStart);
-    window.addEventListener("touchmove", onTouchMove);
-    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, []);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  return { isPulling, isRefreshing, pullDistance: pullDistance.current };
 }

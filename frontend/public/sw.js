@@ -1,9 +1,10 @@
 // frontend/public/sw.js - MeroSadak PWA Service Worker v3.1
+// Version injected at build time - see vite.config.js
 
-const CACHE_NAME = 'merosadak-v2';
-const RUNTIME_CACHE = 'merosadak-runtime-v2';
+const CACHE_NAME = 'merosadak-v000';
+const RUNTIME_CACHE = 'merosadak-runtime-v3';
 
-const APP_VERSION = 'v2';
+const APP_VERSION = '0.0.0' || 'v3';
 
 // Precache shell
 const PRECACHE_URLS = [
