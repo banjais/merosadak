@@ -1,5 +1,5 @@
 // src/api.ts
-const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api/v1';
 
 export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
