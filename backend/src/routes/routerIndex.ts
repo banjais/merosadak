@@ -42,6 +42,8 @@ import userRouter from "./userRouter.js";
 import webPushRouter from "./webPushRouter.js";
 import cacheRouter from "./cacheRouter.js";
 import uptimeRouter from "./uptimeRouter.js";
+import aiUIRouter from "./aiUIRouter.js";
+import governmentRouter from "./governmentRouter.js";
 
 // ----------------------
 // MAIN API ROUTER
@@ -89,6 +91,8 @@ apiRouter.use("/users", userRouter);
 apiRouter.use("/push", webPushRouter);
 apiRouter.use("/cache", cacheRouter);
 apiRouter.use("/monitoring", uptimeRouter);
+apiRouter.use("/ai", aiUIRouter);
+apiRouter.use("/government", governmentRouter);
 
 // ----------------------
 // Helper: Extract routes recursively

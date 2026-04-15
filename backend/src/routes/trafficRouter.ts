@@ -28,4 +28,10 @@ router.get("/summary", TrafficController.getTrafficSummary);
  */
 router.post("/refresh", TrafficController.refreshTraffic);
 
+/**
+ * GET /traffic/nearby
+ * Get nearby traffic incidents (frontend compatibility alias)
+ */
+router.get("/nearby", TrafficController.getTrafficNearby);
+
 export default router;

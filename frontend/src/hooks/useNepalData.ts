@@ -1,5 +1,5 @@
 // src/hooks/useNepalData.ts
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useRoads } from './useRoads';
 import { useTraffic } from './useTraffic';
 import { useWeather } from './useWeather';
@@ -7,13 +7,30 @@ import { useMonsoon } from './useMonsoon';
 import { usePOIs } from './usePOIs';
 import type { TravelIncident } from '../types';
 
-export function useNepalData() {
+const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
+
+export function useNepalData(autoRefresh = true) {
   // Individual data hooks
   const roads = useRoads();
   const traffic = useTraffic();
   const weather = useWeather();
   const monsoon = useMonsoon();
   const pois = usePOIs();
+
+  // Auto-refresh polling
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      roads.refresh();
+      traffic.refresh();
+      weather.refresh();
+      monsoon.refresh();
+      pois.refresh();
+    }, AUTO_REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, roads, traffic, weather, monsoon, pois]);
 
   // Combined incidents (only show road-related data when Nepal map is active)
   const incidents: TravelIncident[] = useMemo(() => {

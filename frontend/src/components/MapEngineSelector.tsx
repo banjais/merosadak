@@ -1,6 +1,6 @@
 // src/components/MapEngineSelector.tsx
 import React, { useState, useEffect } from 'react';
-import { Map as MapIcon, Globe, Mountain, ChevronRight } from 'lucide-react';
+import { Globe, Mountain, ChevronRight } from 'lucide-react';
 
 export type MapEngine = 'nepal' | 'world';
 
@@ -42,28 +42,21 @@ export const MapEngineSelector: React.FC<MapEngineSelectorProps> = ({ onSelect }
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex overflow-hidden bg-gradient-to-b from-[#030e20] via-[#0a1628] to-[#0f172a]">
+    <div className="fixed inset-0 z-[9999] flex flex-col overflow-hidden bg-gradient-to-b from-[#030e20] via-[#0a1628] to-[#0f172a]">
       {/* Background effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,98,162,0.15)_0%,_transparent_60%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_rgba(0,108,92,0.1)_0%,_transparent_50%)]" />
 
-      {/* Left: Branding */}
-      <div className="relative z-10 flex-1 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#0062a2] to-[#006c5c] flex items-center justify-center shadow-2xl">
-            <MapIcon size={32} className="text-white" />
-          </div>
-          <h1 className="text-4xl font-black tracking-tighter text-white">MeroSadak</h1>
-          <p className="text-sm text-slate-400">Safe Travels Across the Himalayas</p>
+      {/* Top-right corner: Progress bar + App name */}
+      <div className="relative z-10 flex items-start gap-4 p-6 self-end">
+        <div className="text-right flex flex-col items-end gap-1">
+          <h1 className="text-lg font-black tracking-tighter text-white">MeroSadak</h1>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest">Travel Safety Engine</p>
         </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="relative z-10 flex items-center justify-center w-12 pr-6">
-        <div className="flex flex-col items-center gap-3">
-          <span className="text-xl font-bold text-white tabular-nums">{progress}%</span>
-          <div className="w-1.5 h-32 bg-white/10 rounded-full overflow-hidden">
-            <div 
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-sm font-bold text-white tabular-nums">{progress}%</span>
+          <div className="w-2 h-24 bg-white/10 rounded-full overflow-hidden">
+            <div
               className="bg-gradient-to-t from-[#0062a2] to-[#4fe5ca] w-full transition-all duration-300"
               style={{ height: `${progress}%` }}
             />
@@ -71,10 +64,10 @@ export const MapEngineSelector: React.FC<MapEngineSelectorProps> = ({ onSelect }
         </div>
       </div>
 
-      {/* Engine Selection */}
+      {/* Engine Selection - centered */}
       {loaded && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center">
-          <div className="w-full max-w-md px-6">
+        <div className="relative z-20 flex-1 flex items-center justify-center px-6">
+          <div className="w-full max-w-lg">
             <p className="text-center text-slate-400 text-sm mb-8">Choose your map experience</p>
 
             <div className="space-y-4">

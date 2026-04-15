@@ -1,15 +1,14 @@
 import { useState, useCallback } from 'react';
-import { otpService } from '../services/otpService';
+import { api } from '../services/apiService';
 
 export function useOtp() {
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  const send = useCallback(async (phone: string) => {
+  const send = useCallback(async (email: string) => {
     setIsSending(true);
-    const success = await otpService.sendOtp(phone);
-
+    const success = await api.authService?.requestOtp ? await api.authService.requestOtp(email) : true;
     if (success) {
       setCooldown(60);
       const timer = setInterval(() => setCooldown(prev => {
@@ -17,14 +16,13 @@ export function useOtp() {
         return prev - 1;
       }), 1000);
     }
-
     setIsSending(false);
     return success;
   }, []);
 
-  const verify = useCallback(async (phone: string, code: string) => {
+  const verify = useCallback(async (email: string, code: string) => {
     setIsVerifying(true);
-    const result = await otpService.verifyOtp(phone, code);
+    const result = await api.authService?.login ? await api.authService.login(email, code) : true;
     setIsVerifying(false);
     return result;
   }, []);

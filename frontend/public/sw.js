@@ -1,159 +1,161 @@
-// frontend/public/sw.js - Service Worker for MeroSadak PWA
-// Fixed version with proper error handling and cache management
+// frontend/public/sw.js - MeroSadak PWA Service Worker v3.1
 
-const CACHE_NAME = 'merosadak-v2'; // Incremented version
+const CACHE_NAME = 'merosadak-v2';
 const RUNTIME_CACHE = 'merosadak-runtime-v2';
 
-// Assets to cache on install
+const APP_VERSION = 'v2';
+
+// Precache shell
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
 ];
 
-// Install event - precache shell
+// INSTALL
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then((cache) => cache.addAll(PRECACHE_URLS))
       .then(() => self.skipWaiting())
-      .catch(err => console.error('[SW] Install failed:', err))
+      .catch((err) => console.error('[SW] Install failed:', err))
   );
 });
 
-// Activate event - clean old caches
+// ACTIVATE (UPDATED: notify clients)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then((keys) =>
       Promise.all(
-        keys.filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
-          .map(key => caches.delete(key))
+        keys
+          .filter((key) => key !== CACHE_NAME && key !== RUNTIME_CACHE)
+          .map((key) => caches.delete(key))
       )
-    ).then(() => self.clients.claim())
-      .catch(err => console.error('[SW] Activate failed:', err))
+    ).then(() => {
+      self.clients.claim();
+
+      // Notify all open tabs about update
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_UPDATED',
+            version: APP_VERSION,
+          });
+        });
+      });
+    })
   );
 });
 
-// Fetch event - cache-first for static assets, network-first for dynamic
+// FETCH
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    // For external resources (fonts, APIs), let them through
-    return;
-  }
+  if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Cache-first strategy for static assets
-  if (event.request.url.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/)) {
+  const isAsset = event.request.url.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/);
+
+  // STATIC ASSETS → cache-first
+  if (isAsset) {
     event.respondWith(
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          return fetch(event.request)
-            .then(networkResponse => {
-              // Don't cache if not a valid response
-              if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                return networkResponse;
-              }
-              // Clone and cache
-              const responseToCache = networkResponse.clone();
-              caches.open(RUNTIME_CACHE)
-                .then(cache => cache.put(event.request, responseToCache))
-                .catch(err => console.warn('[SW] Cache put failed:', err));
-              return networkResponse;
-            })
-            .catch(err => {
-              console.warn('[SW] Fetch failed:', err);
-              // Return offline fallback if available
-              return caches.match('/index.html');
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+
+        return fetch(event.request)
+          .then((res) => {
+            if (!res || res.status !== 200) return res;
+
+            const clone = res.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(event.request, clone);
             });
-        })
+
+            return res;
+          })
+          .catch(() => caches.match('/index.html'));
+      })
     );
     return;
   }
 
-  // Network-first strategy for HTML
+  // HTML → network-first
   if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(event.request)
-        .then(networkResponse => {
-          const responseToCache = networkResponse.clone();
-          caches.open(RUNTIME_CACHE)
-            .then(cache => cache.put(event.request, responseToCache))
-            .catch(err => console.warn('[SW] Cache put failed:', err));
-          return networkResponse;
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(event.request, clone);
+          });
+          return res;
         })
         .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // Default: try network, fallback to cache
-  event.respondWith(
-    fetch(event.request)
-      .catch(() => caches.match(event.request))
+  // fallback
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+});
+
+// MESSAGE HANDLER
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (event.data?.type === 'CLEAR_CACHE') {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key));
+    });
+  }
+
+  if (event.data?.type === 'GET_VERSION' && event.ports[0]) {
+    event.ports[0].postMessage({ version: APP_VERSION });
+  }
+});
+
+// PUSH
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {
+    title: 'MeroSadak Update',
+    body: 'New update available',
+  };
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/logo.png',
+    badge: '/badge.png',
+    vibrate: [100, 50, 100],
+    actions: [
+      { action: 'view', title: 'View' },
+      { action: 'close', title: 'Close' }
+    ],
+    data: data.data || {}
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
   );
 });
 
-// Message handler for manual cache updates
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    caches.keys().then(keys => {
-      Promise.all(keys.map(key => caches.delete(key)));
-    });
-  }
-});
-
-// Push notification handler
-self.addEventListener('push', (event) => {
-  try {
-    const data = event.data ? event.data.json() : { title: 'MeroSadak Update', body: 'New information available.' };
-    
-    const options = {
-      body: data.body,
-      icon: data.icon || '/logo.png',
-      badge: '/badge.png', // Small icon for notification bar
-      data: data.data || {},
-      vibrate: [100, 50, 100],
-      actions: [
-        { action: 'view', title: 'View Details' },
-        { action: 'close', title: 'Close' }
-      ]
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
-  } catch (err) {
-    console.error('[SW] Push event error:', err);
-  }
-});
-
-// Notification click handler
+// NOTIFICATION CLICK
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'close') return;
 
-  // Open the app or handle specific action
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(windowClients => {
-        if (windowClients.length > 0) {
-          windowClients[0].focus();
-          return windowClients[0].postMessage({
-            type: 'NOTIFICATION_CLICK',
-            data: event.notification.data
-          });
-        }
-        return clients.openWindow('/');
-      })
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+      if (clientsArr.length) {
+        clientsArr[0].focus();
+        clientsArr[0].postMessage({
+          type: 'NOTIFICATION_CLICK',
+          data: event.notification.data,
+        });
+      } else {
+        clients.openWindow('/');
+      }
+    })
   );
 });

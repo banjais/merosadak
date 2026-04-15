@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchMonsoonIncidents } from '../services/monsoonService';
-import { TravelIncident } from '../types';
+import { api, TravelIncident } from '../services/apiService';
 import { useGeolocation } from './useGeolocation';
 
 export function useMonsoon() {
@@ -12,7 +11,7 @@ export function useMonsoon() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await fetchMonsoonIncidents(geo.lat, geo.lng);
+      const result = await api.getMonsoon();
       setData(result);
       setLastSync(new Date());
     } catch (err) {
@@ -20,11 +19,11 @@ export function useMonsoon() {
     } finally {
       setIsLoading(false);
     }
-  }, [geo.lat, geo.lng]);
+  }, []);
 
   useEffect(() => {
-    if (!geo.loading) load();
-  }, [load, geo.loading]);
+    load();
+  }, [load]);
 
   return { data, isLoading, lastSync, refresh: load };
 }

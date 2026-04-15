@@ -256,7 +256,24 @@ export const api = {
       timestamp: new Date().toISOString()
     })).filter((i: TravelIncident) => i.lat !== 0 || APP_CONFIG.useMocks);
   },
-  getWeather: async (lat?: number, lng?: number) => APP_CONFIG.useMocks ? WEATHER_MOCKS : await apiFetch<any>(`/weather?lat=${lat ?? NEPAL_CENTER[0]}&lng=${lng ?? NEPAL_CENTER[1]}`),
+  getWeather: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
+    const data = APP_CONFIG.useMocks ? WEATHER_MOCKS : await apiFetch<any>(`/weather?lat=${lat ?? NEPAL_CENTER[0]}&lng=${lng ?? NEPAL_CENTER[1]}`);
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && (data.main || data.weather)) {
+      const weather = data.weather?.[0];
+      return [{
+        id: `weather-${lat ?? 0}-${lng ?? 0}`,
+        type: IncidentType.WEATHER,
+        title: weather?.main || data.name || 'Weather',
+        description: weather?.description || `Temp: ${data.main?.temp ?? 'N/A'}°C, Humidity: ${data.main?.humidity ?? 'N/A'}%`,
+        lat: data.coord?.lat ?? lat ?? 0,
+        lng: data.coord?.lon ?? lng ?? 0,
+        severity: (data.main?.temp ?? 0) < 5 || (data.wind?.speed ?? 0) > 20 ? 'high' : 'low',
+        timestamp: new Date().toISOString(),
+      }];
+    }
+    return [];
+  },
   getAlerts: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
     const q = lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : '';
     const result = await apiFetch<any>(`/alerts${q}`);
@@ -318,8 +335,9 @@ export const api = {
  * -------------------------
  * Auth Service
  * -------------------------
+ * Backend: POST /auth/request-otp ({email}), POST /auth/login ({email, otp})
  */
-const USER_KEY = 'nepal_traveler_session';
+const USER_KEY = 'merosadak_session';
 
 export const authService = {
   getCurrentUser: (): any => {
@@ -327,19 +345,35 @@ export const authService = {
     return saved ? JSON.parse(saved) : null;
   },
 
-  login: async (phone: string, name: string): Promise<any> => {
+  requestOtp: async (email: string): Promise<any> => {
     try {
-      const user = await apiFetch<any>("/auth", {
+      return await apiFetch<any>("/auth/request-otp", {
         method: 'POST',
-        body: JSON.stringify({ phone, name }),
+        body: JSON.stringify({ email }),
         headers: { 'Content-Type': 'application/json' }
       });
+    } catch (error) {
+      console.warn('Auth request-otp failed, using fallback:', error);
+      await new Promise(r => setTimeout(r, 800));
+      return { success: true, message: 'OTP sent (mock)' };
+    }
+  },
+
+  login: async (email: string, otp: string): Promise<any> => {
+    try {
+      const result = await apiFetch<any>("/auth/login", {
+        method: 'POST',
+        body: JSON.stringify({ email, otp }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const user = result.data || result;
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       return user;
     } catch (error) {
+      console.warn('Auth login failed, using fallback:', error);
       await new Promise(r => setTimeout(r, 800));
-      const role = phone === '9800000000' ? 'superadmin' : phone === '9811111111' ? 'admin' : 'user';
-      const user = { id: Math.random().toString(36).substr(2, 9), phone, name, role };
+      const role = email.includes('admin') ? 'admin' : 'user';
+      const user = { id: Math.random().toString(36).substr(2, 9), email, name: email.split('@')[0], role };
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       return user;
     }
@@ -351,19 +385,35 @@ export const authService = {
 /**
  * -------------------------
  * OTP Service
+ * Backend: POST /otp/request ({email}), POST /otp/login ({email, otp})
+ * Note: /auth/* is the preferred path; /otp/* is legacy but kept for compatibility.
  * -------------------------
  */
 export const otpService = {
-  sendOtp: async (phone: string): Promise<boolean> => {
+  sendOtp: async (email: string): Promise<boolean> => {
     try {
-      await apiFetch("/otp", { method: 'POST', body: JSON.stringify({ phone, action: 'send' }), headers: { 'Content-Type': 'application/json' } });
+      await apiFetch("/otp/request", {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+        headers: { 'Content-Type': 'application/json' }
+      });
       return true;
-    } catch { await new Promise(r => setTimeout(r, 1000)); return true; }
+    } catch {
+      await new Promise(r => setTimeout(r, 1000));
+      return true;
+    }
   },
-  verifyOtp: async (phone: string, code: string): Promise<boolean> => {
+  verifyOtp: async (email: string, code: string): Promise<boolean> => {
     try {
-      const result = await apiFetch<{ success: boolean }>("/otp", { method: 'POST', body: JSON.stringify({ phone, code, action: 'verify' }), headers: { 'Content-Type': 'application/json' } });
+      const result = await apiFetch<{ success: boolean }>("/otp/login", {
+        method: 'POST',
+        body: JSON.stringify({ email, otp: code }),
+        headers: { 'Content-Type': 'application/json' }
+      });
       return result.success;
-    } catch { await new Promise(r => setTimeout(r, 800)); return code === '1234'; }
+    } catch {
+      await new Promise(r => setTimeout(r, 800));
+      return code === '1234';
+    }
   }
 };

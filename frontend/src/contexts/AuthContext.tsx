@@ -13,11 +13,10 @@ type AuthContextType = {
   user: User | null;
   token: string | null;
   login: (email: string, otp: string) => Promise<boolean>;
+  requestOtp: (email: string) => Promise<boolean>;
   logout: () => void;
   getAuthHeaders: () => Record<string, string>;
   // OTP integration
-  sendOtp: (phone: string) => Promise<boolean>;
-  verifyOtp: (phone: string, code: string) => Promise<boolean>;
   otpSending: boolean;
   otpVerifying: boolean;
   otpCooldown: number;
@@ -35,20 +34,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // OTP hook integration
   const { send: sendOtp, verify: verifyOtp, isSending: otpSending, isVerifying: otpVerifying, cooldown: otpCooldown } = useOtp();
 
+  // Request OTP
+  const requestOtp = async (email: string): Promise<boolean> => {
+    try {
+      await apiFetch<any>("/auth/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      return true;
+    } catch (err) {
+      console.error("[AuthContext] requestOtp error:", err);
+      return false;
+    }
+  };
+
   // Login using OTP
   const login = async (email: string, otp: string): Promise<boolean> => {
     try {
-      const data = await apiFetch<any>("/auth/verify-otp", {
+      const result = await apiFetch<any>("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
       });
-      if (data.success) {
-        setUser({ email: data.email, role: data.role });
-        setToken(data.token);
+      const data = result.data || result;
+      if (data.success || data.token) {
+        const u = { email: data.email || email, role: data.role || "user" };
+        setUser(u);
+        const t = data.token || token || "";
+        setToken(t);
 
-        localStorage.setItem("user", JSON.stringify({ email: data.email, role: data.role }));
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(u));
+        if (t) localStorage.setItem("token", t);
 
         return true;
       }
@@ -75,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, getAuthHeaders, sendOtp, verifyOtp, otpSending, otpVerifying, otpCooldown }}>
+    <AuthContext.Provider value={{ user, token, login, requestOtp, logout, getAuthHeaders, otpSending, otpVerifying, otpCooldown }}>
       {children}
     </AuthContext.Provider>
   );

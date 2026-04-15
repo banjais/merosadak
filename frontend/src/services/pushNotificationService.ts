@@ -20,7 +20,7 @@ export async function registerPushNotifications() {
 
     if (!subscription) {
       // Fetch VAPID public key from backend
-      const keyResponse = await apiFetch('/api/v1/push/vapid-public-key');
+      const keyResponse = await apiFetch('/push/vapid-public-key');
       const publicKey = (keyResponse as any)?.publicKey || VAPID_PUBLIC_KEY;
 
       subscription = await registration.pushManager.subscribe({
@@ -31,7 +31,7 @@ export async function registerPushNotifications() {
     }
 
     // Sync with backend using apiFetch (attaches auth token automatically)
-    await apiFetch('/api/v1/push/subscribe', {
+    await apiFetch('/push/subscribe', {
       method: "POST",
       body: JSON.stringify({ subscription })
     });

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchPOIs } from '../services/poiService';
-import { TravelIncident } from '../types';
+import { api, TravelIncident } from '../services/apiService';
 import { useGeolocation } from './useGeolocation';
 
 export function usePOIs() {
@@ -12,7 +11,7 @@ export function usePOIs() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await fetchPOIs(geo.lat, geo.lng);
+      const result = await api.getPois(geo.lat, geo.lng);
       setData(result);
       setLastSync(new Date());
     } catch (err) {

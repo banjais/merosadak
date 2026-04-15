@@ -1,31 +1,16 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-import circularDependency from 'vite-plugin-circular-dependency';
-
-// Polyfill WebSocket in Node dev
-if (process.env.NODE_ENV === "development" && typeof WebSocket === "undefined") {
-  import("ws")
-    .then((mod) => {
-      // @ts-ignore
-      globalThis.WebSocket = mod.default;
-      console.log("[VITE] WebSocket polyfilled in Node dev");
-    })
-    .catch((e) => console.warn("[VITE] WebSocket polyfill failed:", e));
-}
+import circularDependency from "vite-plugin-circular-dependency";
 
 export default defineConfig(({ mode }) => {
-  // Load .env file based on mode
   const env = loadEnv(mode, process.cwd(), "");
   const apiBaseUrl = env.VITE_API_BASE_URL || "http://127.0.0.1:4000";
 
-  // Parse the API base URL to construct WebSocket URL
   let wsTarget = "ws://127.0.0.1:4000";
   try {
     const url = new URL(apiBaseUrl);
     wsTarget = `${url.protocol === "https:" ? "wss:" : "ws:"}//${url.hostname}:${url.port || (url.protocol === "https:" ? "443" : "80")}`;
-  } catch {
-    // Use default if parsing fails
-  }
+  } catch { }
 
   return {
     plugins: [
@@ -35,9 +20,11 @@ export default defineConfig(({ mode }) => {
         throwOnError: true
       })
     ],
+
     resolve: {
-      dedupe: ["react", "react-dom", "leaflet", "react-leaflet"],
+      dedupe: ["react", "react-dom", "leaflet", "react-leaflet"]
     },
+
     server: {
       port: 5173,
       host: true,
@@ -46,36 +33,38 @@ export default defineConfig(({ mode }) => {
         "/api": {
           target: apiBaseUrl,
           changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/api/, "/api/v1"),
+          secure: false
+          // No rewrite needed — backend already mounts at /api/v1
+          // Frontend apiFetch normalizes URLs to /api/v1/* which match directly
         },
         "/ws": {
           target: wsTarget,
           ws: true,
           changeOrigin: true,
-          secure: false,
-        },
-      },
+          secure: false
+        }
+      }
     },
+
     build: {
       chunkSizeWarningLimit: 1600,
-      minify: "terser",
-      terserOptions: {
-        keep_fnames: true,
-        keep_classnames: true,
-        compress: false,
-        mangle: false
-      },
+
+      minify: "esbuild", // ✅ faster + safer than terser
+
       rollupOptions: {
         output: {
+          entryFileNames: "assets/[name]-[hash].js",
+          chunkFileNames: "assets/[name]-[hash].js",
+          assetFileNames: "assets/[name]-[hash].[ext]",
+
           manualChunks(id) {
             if (id.includes("node_modules")) {
               if (id.includes("react") || id.includes("leaflet")) return "vendor";
               if (id.includes("@google/genai")) return "ai";
             }
-          },
-        },
-      },
-    },
+          }
+        }
+      }
+    }
   };
 });

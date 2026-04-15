@@ -115,3 +115,61 @@ export const getTrafficAlerts = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * GET /traffic/nearby?lat=&lng=&radius=
+ * Get nearby traffic incidents (alias for /flow for frontend compatibility)
+ */
+export const getTrafficNearby = async (req: Request, res: Response) => {
+  try {
+    const { lat, lng, radius } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({
+        success: false,
+        message: "lat and lng parameters required"
+      });
+    }
+
+    const traffic = await TrafficService.getTrafficData(
+      Number(lat),
+      Number(lng),
+      Number(radius) || 10
+    );
+
+    // Return combined flow + alerts as "incidents" for frontend compatibility
+    const incidents = [
+      ...traffic.summary.map((s: any, i: number) => ({
+        id: `flow-${i}`,
+        type: 'traffic_flow',
+        road_name: s.name || `Segment ${i}`,
+        status: s.congestion || 'moderate',
+        geometry: s.geometry || { coordinates: [0, 0] }
+      })),
+      ...traffic.wazeAlerts.map((a: any) => ({
+        id: a.id || `alert-${Math.random().toString(36).substr(2, 9)}`,
+        type: a.type || 'alert',
+        road_name: a.street || a.city || 'Traffic Alert',
+        status: a.type || 'incident',
+        description: a.comment || '',
+        geometry: a.geometry || { coordinates: [a.longitude || 0, a.latitude || 0] },
+        lat: a.latitude || 0,
+        lng: a.longitude || 0
+      }))
+    ];
+
+    res.json({
+      success: true,
+      roads: incidents,
+      features: incidents,
+      incidents,
+      lastUpdated: traffic.lastUpdated
+    });
+  } catch (err: any) {
+    logError("[TrafficController] getTrafficNearby failed", { error: err.message });
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchWeatherIncidents } from '../services/weatherService';
-import { TravelIncident } from '../types';
+import { api, TravelIncident } from '../services/apiService';
 import { useGeolocation } from './useGeolocation';
 
 export function useWeather() {
@@ -12,7 +11,7 @@ export function useWeather() {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await fetchWeatherIncidents(geo.lat, geo.lng);
+      const result = await api.getWeather(geo.lat, geo.lng);
       setData(result);
       setLastSync(new Date());
     } catch (err) {
