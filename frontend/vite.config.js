@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      chunkSizeWarningLimit: 1600,
       minify: "terser",
       terserOptions: {
         keep_fnames: true,
