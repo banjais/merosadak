@@ -16,7 +16,7 @@
     "deploy:wrangler": "cd backend && npx wrangler deploy",
     "deploy:firebase": "firebase deploy --only hosting",
     "deploy:render": "echo 'Deploy to Render via GitHub integration'",
-    "diag": "echo \"Diagnostics ready\" && node -v",
+    "diag": "echo \"Diagnostics ready\" && cd backend && npx tsx src/scripts/validateSheet.ts",
     "monitor:status": "echo 'Check UptimeRobot status at https://uptimerobot.com/ZaSzISaXMt'"
   },
   "engines": {

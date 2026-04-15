@@ -19,7 +19,18 @@ export function useBoundary() {
       setLoading(true);
       setError(null);
 
-      const nepalData = await api.getNepalBoundary().catch(() => null);
+      let nepalData = await api.getNepalBoundary().catch(() => null);
+
+      // Fallback to static boundary.geojson in public folder
+      if (!nepalData) {
+        console.log("[useBoundary] API failed, falling back to static /boundary.geojson");
+        const res = await fetch("/boundary.geojson");
+        if (res.ok) {
+          nepalData = await res.json();
+        } else {
+          throw new Error("Failed to load static boundary fallback");
+        }
+      }
 
       setBoundaries({
         nepal: nepalData,
