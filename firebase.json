@@ -15,20 +15,20 @@
     ],
     "headers": [
       {
-        "source": "**/*.js",
+        "source": "/index.html",
         "headers": [
           {
-            "key": "Content-Type",
-            "value": "application/javascript"
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       },
       {
-        "source": "**/*.css",
+        "source": "**/*.@(js|css)",
         "headers": [
           {
-            "key": "Content-Type",
-            "value": "text/css"
+            "key": "Cache-Control",
+            "value": "no-cache"
           }
         ]
       }
