@@ -1,17 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus,
-  X,
-  CloudRain,
-  AlertTriangle,
-  Fuel,
-  ChefHat,
-  Stethoscope,
-  Ruler,
-  TrafficCone as TrafficIcon,
-  ShieldBan,
-  Megaphone,
-  Navigation,
+  Plus, X, CloudRain, AlertTriangle, Fuel, ChefHat,
+  Stethoscope, Ruler, TrafficCone as TrafficIcon,
+  ShieldBan, Megaphone, Navigation,
 } from 'lucide-react';
 import { TravelIncident, IncidentType } from '../types';
 
@@ -19,140 +11,110 @@ interface FloatingMenuProps {
   onServiceSelect: (service: string) => void;
   onOpenCalculator: () => void;
   onOpenReport?: () => void;
-  onTogglePilot?: () => void; // Driver mode toggle
+  onTogglePilot?: () => void;
   activeService: string | null;
   incidents?: TravelIncident[];
   isDarkMode?: boolean;
 }
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({
-  onServiceSelect,
-  onOpenCalculator,
-  onOpenReport,
-  onTogglePilot,
-  activeService,
-  incidents = [],
-  isDarkMode = false
+  onServiceSelect, onOpenCalculator, onOpenReport, onTogglePilot, activeService, incidents = [], isDarkMode = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const serviceStats = useMemo(() => {
-    const roadIncidents = (incidents || []).filter(i => {
-      const s = (i.status || i.type || '').toLowerCase();
-      return s.includes('block') || s.includes('one') || s.includes('resum');
-    });
-
-    const fuelStations = (incidents || []).filter(i => i.type === IncidentType.POI && (i.title?.toLowerCase().includes('fuel') || i.description?.toLowerCase().includes('fuel'))).length;
-    const medicalFacilities = (incidents || []).filter(i => i.type === IncidentType.POI && (i.title?.toLowerCase().includes('hospital') || i.title?.toLowerCase().includes('medical') || i.description?.toLowerCase().includes('health'))).length;
-    const trafficIncidents = (incidents || []).filter(i => i.type === IncidentType.TRAFFIC).length;
-    const weatherAlerts = (incidents || []).filter(i => i.type === IncidentType.MONSOON || i.type === IncidentType.WEATHER).length;
-
+    const roadIncidents = (incidents || []).filter(i => (i.status || i.type || '').toLowerCase().includes('block'));
     return {
-      roads: {
-        blocked: roadIncidents.filter(i => (i.status || i.type || '').toLowerCase().includes('block')).length,
-        total: roadIncidents.length,
-      },
-      fuel: fuelStations,
-      medical: medicalFacilities,
-      traffic: trafficIncidents,
-      weather: weatherAlerts,
+      roads: roadIncidents.length,
+      fuel: (incidents || []).filter(i => i.type === IncidentType.POI && i.title?.toLowerCase().includes('fuel')).length,
+      medical: (incidents || []).filter(i => i.type === IncidentType.POI && i.title?.toLowerCase().includes('hospital')).length,
+      traffic: (incidents || []).filter(i => i.type === IncidentType.TRAFFIC).length,
+      weather: (incidents || []).filter(i => i.type === IncidentType.MONSOON || i.type === IncidentType.WEATHER).length,
     };
   }, [incidents]);
 
   const services = [
-    { id: 'fuel', icon: <Fuel size={20} />, label: 'Fuel', color: 'bg-primary', count: serviceStats.fuel },
-    { id: 'food', icon: <ChefHat size={20} />, label: 'Food', color: 'bg-secondary', count: 0 },
-    { id: 'hospital', icon: <Stethoscope size={20} />, label: 'Medical', color: 'bg-error', count: serviceStats.medical },
-    { id: 'traffic', icon: <TrafficIcon size={20} />, label: 'Traffic', color: 'bg-primary', count: serviceStats.traffic },
-    { id: 'monsoon', icon: <CloudRain size={20} />, label: 'Weather', color: 'bg-tertiary', count: serviceStats.weather },
-    { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500', count: serviceStats.roads.blocked },
+    { id: 'fuel', icon: <Fuel size={20} />, label: 'Fuel', color: 'bg-blue-500', count: serviceStats.fuel },
+    { id: 'hospital', icon: <Stethoscope size={20} />, label: 'Medical', color: 'bg-red-500', count: serviceStats.medical },
+    { id: 'traffic', icon: <TrafficIcon size={20} />, label: 'Traffic', color: 'bg-orange-500', count: serviceStats.traffic },
+    { id: 'monsoon', icon: <CloudRain size={20} />, label: 'Weather', color: 'bg-cyan-500', count: serviceStats.weather },
+    { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500', count: serviceStats.roads },
   ];
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
+  const handleToggle = () => setIsOpen(!isOpen);
 
-  const handleServiceClick = (serviceId: string) => {
-    onServiceSelect(activeService === serviceId ? null : serviceId);
+  const handleAction = (callback?: () => void) => {
+    callback?.();
     setIsOpen(false);
   };
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-24 md:right-6 lg:bottom-10 lg:right-40 z-[1200] flex flex-row-reverse items-end gap-2 pointer-events-none">
+    <div className="fixed bottom-24 right-4 md:bottom-10 md:right-10 z-[1200] flex flex-col-reverse items-end gap-3 pointer-events-none">
+      {/* Main Action Pill */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleToggle}
+        className={`pointer-events-auto w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.2)] backdrop-blur-xl transition-colors duration-300 ${isOpen ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white'}`}
+      >
+        <motion.div animate={{ rotate: isOpen ? 135 : 0 }} transition={{ type: "spring", stiffness: 200, damping: 12 }}>
+          <Plus size={28} />
+        </motion.div>
+      </motion.button>
 
-      {/* Main FAB Button */}
-      <div className="pointer-events-auto flex-shrink-0">
-        <button
-          onClick={handleToggle}
-          className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-primary to-tertiary text-white shadow-[0_8px_25px_rgba(0,98,162,0.35)] flex items-center justify-center active:scale-90 transition-all duration-300 ${isOpen ? 'rotate-45' : ''}`}
-        >
-          {isOpen ? <X size={20} className="md:w-6 md:h-6" /> : <Plus size={20} className="md:w-6 md:h-6" />}
-        </button>
-      </div>
-
-      {/* Expanded Services — right to left at the bottom, scrollable on mobile */}
-      <div className={`pointer-events-auto flex flex-row-reverse items-end gap-1.5 md:gap-2 transition-all duration-300 overflow-x-auto max-w-[calc(100vw-5rem)] md:max-w-none pb-1 ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
-        {services.map((s, i) => {
-          const isActive = activeService === s.id;
-          return (
-            <button
-              key={s.id}
-              onClick={() => handleServiceClick(s.id)}
-              className={`relative flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all flex-shrink-0 ${isActive
-                ? `${s.color} text-white shadow-lg scale-105 md:scale-110`
-                : isDarkMode
-                  ? 'bg-slate-900/80 backdrop-blur-xl border border-slate-700/40 text-slate-400 hover:bg-slate-700/50 hover:text-primary'
-                  : 'bg-white/80 backdrop-blur-xl border border-white/40 text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-                }`}
-              title={s.label}
-              style={{ transitionDelay: isOpen ? `${i * 30}ms` : '0ms' }}
-            >
-              {s.icon}
-              <span className="text-[7px] md:text-[8px] font-bold uppercase font-label whitespace-nowrap">{s.label}</span>
-              {/* Service count badge */}
-              {s.count > 0 && (
-                <span className={`absolute -top-1 -right-1 md:-top-1.5 md:-right-1.5 w-4 h-4 md:w-5 md:h-5 ${s.id === 'roads' ? 'bg-error' : 'bg-primary'} text-white text-[6px] md:text-[8px] font-black rounded-full flex items-center justify-center shadow-md ${s.id === 'roads' ? 'animate-pulse' : ''}`}>
-                  {s.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-
-        <button
-          onClick={() => { onOpenReport?.(); setIsOpen(false); }}
-          className="flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all bg-gradient-to-br from-red-500 to-orange-500 text-white shadow-lg flex-shrink-0"
-          title="Report Incident"
-        >
-          <Megaphone size={16} className="md:w-5 md:h-5" />
-          <span className="text-[7px] md:text-[8px] font-bold uppercase font-label whitespace-nowrap">Report</span>
-        </button>
-
-        <div className="w-px h-6 md:h-8 bg-outline/15 mx-0.5 flex-shrink-0" />
-
-        <button
-          onClick={() => { onOpenCalculator(); setIsOpen(false); }}
-          className={`flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all backdrop-blur-xl border flex-shrink-0 ${isDarkMode
-            ? 'bg-slate-900/80 border-slate-700/40 text-slate-400 hover:bg-slate-700/50 hover:text-primary'
-            : 'bg-white/80 border-white/40 text-on-surface-variant hover:bg-primary/10 hover:text-primary'
-            }`}
-          title="Measure Distance"
-        >
-          <Ruler size={16} className="md:w-5 md:h-5" />
-          <span className="text-[7px] md:text-[8px] font-bold uppercase font-label whitespace-nowrap">Measure</span>
-        </button>
-
-        {onTogglePilot && (
-          <button
-            onClick={() => { onTogglePilot?.(); setIsOpen(false); }}
-            className="flex flex-col items-center gap-0.5 md:gap-1 px-2 py-1.5 md:px-2.5 md:py-2 rounded-xl transition-all bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-lg shadow-indigo-500/30 flex-shrink-0 animate-pulse"
-            title="Driver Mode"
+      {/* Expanded Services Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 250, damping: 20 }}
+            className={`pointer-events-auto flex flex-col items-end gap-3 p-4 rounded-3xl backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] ${isDarkMode ? 'bg-slate-900/60 border border-slate-700/50' : 'bg-white/70 border border-white/40'}`}
           >
-            <Navigation size={16} className="md:w-5 md:h-5" />
-            <span className="text-[7px] md:text-[8px] font-bold uppercase font-label whitespace-nowrap">Pilot</span>
-          </button>
+            <div className="flex justify-between w-full pb-2 mb-2 border-b border-gray-500/20">
+              <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Map Services</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              {services.map((s) => {
+                const isActive = activeService === s.id;
+                return (
+                  <motion.button
+                    key={s.id}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleAction(() => onServiceSelect(isActive ? null : s.id))}
+                    className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all ${isActive ? `${s.color} text-white shadow-lg` : isDarkMode ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700' : 'bg-white/80 text-gray-700 hover:bg-indigo-50'}`}
+                  >
+                    {s.icon}
+                    <span className="text-[10px] mt-1 font-bold">{s.label}</span>
+                    {s.count > 0 && (
+                      <span className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center rounded-full text-[9px] font-black shadow-md text-white ${s.id === 'roads' ? 'bg-red-500 animate-pulse' : 'bg-indigo-500'}`}>
+                        {s.count}
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            <div className="w-full flex gap-2 mt-2">
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onOpenReport)} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 text-white font-bold text-xs shadow-lg">
+                <Megaphone size={16} /> Report
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onOpenCalculator)} className={`p-3 rounded-xl backdrop-blur-md border ${isDarkMode ? 'bg-slate-800/80 border-slate-600 text-white' : 'bg-white/80 border-gray-200 text-gray-800'}`}>
+                <Ruler size={16} />
+              </motion.button>
+              {onTogglePilot && (
+                <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onTogglePilot)} className="p-3 rounded-xl bg-indigo-600 text-white shadow-lg animate-pulse">
+                  <Navigation size={16} />
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };

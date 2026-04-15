@@ -34,9 +34,9 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, onTogglePilot, onToggleMenu
   }, []);
 
   return (
-    <header className={`h-16 sm:h-20 absolute top-0 left-0 w-full flex items-center justify-between px-4 sm:px-6 shadow-2xl z-[1000] border-b transition-colors duration-300 ${isDarkMode
-      ? 'bg-slate-800 border-slate-700'
-      : 'bg-indigo-600 border-indigo-500/30'
+    <header className={`h-16 sm:h-20 absolute top-0 left-0 w-full flex items-center justify-between px-4 sm:px-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl z-[1000] border-b transition-all duration-500 ${isDarkMode
+      ? 'bg-slate-900/50 border-slate-700/30 text-white'
+      : 'bg-indigo-600/60 border-white/20 text-white'
       }`}>
 
       {/* Left: Branding & Menu */}
