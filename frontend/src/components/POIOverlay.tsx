@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { L } from '../lib/leaflet';
 import { EnhancedPOI, POICategory, UserPOIPreferences, TripContext } from '../types/poi';
 import { searchEnhancedPOIs, getCategoryColorClass } from '../services/enhancedPOIService';
@@ -67,12 +68,13 @@ export const POIOverlay: React.FC<POIOverlayProps> = ({
     fetchPOIs();
   }, [category, userLocation, mapCenter, mapZoom, userPreferences]);
 
-  if (!category || pois.length === 0) {
+  // Zoom Level Sensitivity: Hide all POIs if zoomed out to preserve map clarity
+  if (!category || pois.length === 0 || mapZoom < 10) {
     return null;
   }
 
   return (
-    <>
+    <MarkerClusterGroup chunkedLoading maxClusterRadius={50} showCoverageOnHover={false}>
       {pois.map((poi) => (
         <Marker
           key={poi.id}
@@ -131,7 +133,7 @@ export const POIOverlay: React.FC<POIOverlayProps> = ({
           </Popup>
         </Marker>
       ))}
-    </>
+    </MarkerClusterGroup>
   );
 };
 

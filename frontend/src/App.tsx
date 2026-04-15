@@ -27,6 +27,7 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import { FloatingMenu } from "./components/FloatingMenu";
 import SearchOverlay from "./components/SearchOverlay";
+import { WeatherWidget } from "./components/WeatherWidget";
 import { SystemMenu } from "./components/SystemMenu";
 import { BottomInfoArea } from "./components/BottomInfoArea";
 import { MapControls } from "./components/MapControls";
@@ -286,7 +287,24 @@ const MainApp: React.FC = () => {
   }, []);
 
   const handleServiceSelect = useCallback((service: string) => {
-    setServiceType(prev => prev === service ? null : service);
+    setServiceType(prev => {
+      const isDeactivating = prev === service;
+      
+      // Reset all overlays cleanly
+      setSelectedPOICategory(null);
+      setShowTraffic(false);
+      // We will render Weather separately based on serviceType === 'monsoon'
+      
+      if (!isDeactivating) {
+        if (['fuel', 'food', 'hospital'].includes(service)) {
+          setSelectedPOICategory(service as any);
+        } else if (service === 'traffic') {
+          setShowTraffic(true);
+        }
+      }
+      
+      return isDeactivating ? null : service;
+    });
     setActiveTab('alerts');
   }, []);
 
@@ -870,6 +888,12 @@ Be helpful, concise, and safety-focused. Reference actual incidents when relevan
           onTogglePilot={handleTogglePilot}
           activeService={serviceType}
           incidents={incidents}
+        />
+
+        <WeatherWidget 
+          userLocation={userLocation} 
+          isVisible={serviceType === 'monsoon'} 
+          isDarkMode={isDarkMode} 
         />
 
         {/* Smart Search Overlay with Intent Detection */}
