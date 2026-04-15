@@ -8,7 +8,7 @@
     "build:backend": "npm run install:backend && cd backend && npm run build",
     "build:frontend": "npm run install:frontend && cd frontend && npm run build",
     "build:local": "npm run build:backend && npm run build:frontend",
-    "build": "npm run diag && npm run build:local && git add . && git commit --allow-empty -m \"Auto-deploy update\" && git push origin main && npm run monitor:status",
+    "build": "npm run diag && npm run build:local && git add . && git commit --allow-empty -m \"Auto-deploy update\" && git push origin main && npm run deploy:firebase && npm run start:backend && npm run monitor:status",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
     "start": "npm run start:backend",
