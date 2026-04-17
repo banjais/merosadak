@@ -19,9 +19,7 @@ import { ROAD_STATUS } from "../constants/sheets.js";
 import * as cacheService from "./cacheService.js";
 import { getCachedMonsoonRisk } from "./monsoonService.js";
 import { getCachedRoads } from "./roadService.js";
-
-const ANALYTICS_FILE = path.join(CACHE_DIR, "analytics.json");
-let analyticsQueue: Promise<void> = Promise.resolve();
+import { getAnalyticsData } from "./analyticsService.js";
 
 /**
  * 📑 Master PDF Generation
@@ -41,8 +39,7 @@ export async function generateMasterReport(): Promise<Buffer> {
     const highCount = risks.filter(r => r.riskLevel === "HIGH").length;
     const mediumCount = risks.filter(r => r.riskLevel === "MEDIUM").length;
 
-    const analyticsRaw = await fs.readFile(ANALYTICS_FILE, "utf-8").catch(() => "{}");
-    const analyticsData = JSON.parse(analyticsRaw);
+    const analyticsData = await getAnalyticsData();
 
     const activeIncidents = roadsGeo.merged.filter(f => f.properties && f.properties.status !== ROAD_STATUS.RESUMED).length;
 
@@ -136,33 +133,6 @@ export async function generateMasterReport(): Promise<Buffer> {
     logError("[superadminService] PDF generation failed", { error: err.message });
     throw err;
   }
-}
-
-/* ---------------- Analytics & Logs ---------------- */
-export async function recordAnalytics(event: string, meta?: any) {
-  analyticsQueue = analyticsQueue.then(async () => {
-    try {
-      const raw = await fs.readFile(ANALYTICS_FILE, "utf-8").catch(() => "{}");
-      const data = JSON.parse(raw);
-
-      if (meta) {
-        logError(`[superadminService] Analytics Event: ${event}`, { meta });
-      }
-
-      data[event] = (data[event] || 0) + 1;
-      data[`last_${event}`] = new Date().toISOString();
-
-      // Atomic write: write to temp file then rename to avoid corruption
-      const tempFile = `${ANALYTICS_FILE}.tmp`;
-      await fs.writeFile(tempFile, JSON.stringify(data, null, 2));
-      await fs.rename(tempFile, ANALYTICS_FILE);
-    } catch (err: any) {
-      logError("[superadminService] recordAnalytics failed", { error: err.message });
-    }
-  }).catch(() => {
-    // Catch queue errors to ensure subsequent analytics calls can still proceed
-  });
-  return analyticsQueue;
 }
 
 export async function getHistoricalLogs(limit: number = 100): Promise<string[]> {

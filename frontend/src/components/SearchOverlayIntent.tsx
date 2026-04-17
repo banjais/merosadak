@@ -14,6 +14,7 @@ interface SearchOverlayIntentProps {
   onSelectDestination: (result: SearchResult) => void;
   onAskAI: (query: string) => void;
   onIntentChange?: (intent: IntentResult) => void;
+  onFocusChange?: (isFocused: boolean) => void;
 }
 
 export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
@@ -21,7 +22,8 @@ export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
   userLocation,
   onSelectDestination,
   onAskAI,
-  onIntentChange
+  onIntentChange,
+  onFocusChange
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GroupedSearchResults>({
@@ -67,10 +69,22 @@ export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
   const handleSelect = async (result: SearchResult) => {
     setShowResults(false);
     onSelectDestination(result);
-    
+
     // Save to recents
     const { saveRecentSearch } = require('../services/enhancedSearchService');
     saveRecentSearch(result);
+  };
+
+  const handleFocus = () => {
+    if (onFocusChange) onFocusChange(true);
+    if (query.length >= 2) setShowResults(true);
+  };
+
+  const handleBlur = () => {
+    // Timeout to allow click events on results before hiding
+    setTimeout(() => {
+      if (onFocusChange) onFocusChange(false);
+    }, 200);
   };
 
   // Voice search
@@ -82,7 +96,7 @@ export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.onstart = () => setIsListening(true);
@@ -95,40 +109,38 @@ export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
     recognition.start();
   };
 
-  const hasResults = results.places.length > 0 || results.highways.length > 0 || 
-                     results.pois.length > 0 || results.recents.length > 0;
+  const hasResults = results.places.length > 0 || results.highways.length > 0 ||
+    results.pois.length > 0 || results.recents.length > 0;
 
   return (
-    <div ref={cardRef} className="absolute top-20 left-4 right-4 md:left-8 md:right-8 z-[500]">
+    <div ref={cardRef} className="relative w-full max-w-2xl z-[500]">
       {/* Search Input */}
-      <div className={`flex items-center gap-3 p-3 rounded-2xl shadow-xl border backdrop-blur-xl transition-colors duration-300 ${
-        isDarkMode
-          ? 'bg-slate-900/90 border-slate-700/50'
-          : 'bg-white/90 border-white/50'
-      }`}>
+      <div className={`flex items-center gap-3 p-3 rounded-2xl shadow-xl border backdrop-blur-xl transition-colors duration-300 ${isDarkMode
+        ? 'bg-slate-900/90 border-slate-700/50'
+        : 'bg-white/90 border-white/50'
+        }`}>
         <Search size={20} className="text-gray-400 flex-shrink-0" />
-        
+
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => query.length >= 2 && setShowResults(true)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder="Search place, highway, weather, traffic..."
-          className={`flex-1 bg-transparent outline-none text-sm ${
-            isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
-          }`}
+          className={`flex-1 bg-transparent outline-none text-sm ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
+            }`}
         />
 
         <button
           onClick={startVoiceSearch}
-          className={`p-2 rounded-full transition-colors ${
-            isListening
-              ? 'bg-red-500 text-white animate-pulse'
-              : isDarkMode
-                ? 'hover:bg-slate-800 text-gray-400'
-                : 'hover:bg-gray-100 text-gray-500'
-          }`}
+          className={`p-2 rounded-full transition-colors ${isListening
+            ? 'bg-red-500 text-white animate-pulse'
+            : isDarkMode
+              ? 'hover:bg-slate-800 text-gray-400'
+              : 'hover:bg-gray-100 text-gray-500'
+            }`}
           title="Voice search"
         >
           <Mic size={18} />
@@ -137,9 +149,8 @@ export const SearchOverlayIntent: React.FC<SearchOverlayIntentProps> = ({
         {query && (
           <button
             onClick={() => { setQuery(''); setShowResults(false); }}
-            className={`p-2 rounded-full transition-colors ${
-              isDarkMode ? 'hover:bg-slate-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-            }`}
+            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+              }`}
           >
             <X size={18} />
           </button>

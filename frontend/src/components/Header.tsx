@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Globe, MoreVertical, Navigation, Sparkles, Zap, ClipboardList } from 'lucide-react';
+import { Bell, Globe, Settings, Navigation, Sparkles, Zap, ClipboardList, User } from 'lucide-react';
 import { useTranslation } from '../i18n';
 
 interface HeaderProps {
   isDarkMode: boolean;
+  accentColor: string;
   onTogglePilot: () => void;
   onToggleMenu: () => void;
   onToggleSystemMenu: () => void;
   onOpenNotifications: () => void;
   onToggleMyPlans?: () => void;
+  onLogoClick?: () => void;
   plansCount?: number;
   noticeCount?: number;
 }
@@ -22,7 +24,7 @@ const LANGUAGES = [
   { code: 'new', name: 'Newari', native: 'नेपाल भाषा', flag: '🇳🇵' },
 ];
 
-const Header: React.FC<HeaderProps> = ({ isDarkMode, onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, onToggleMyPlans, plansCount = 0, noticeCount = 3 }) => {
+const Header: React.FC<HeaderProps> = ({ isDarkMode, accentColor, onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, onToggleMyPlans, onLogoClick, plansCount = 0, noticeCount = 3 }) => {
   const { language, setLanguage } = useTranslation();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [geoActive, setGeoActive] = useState(false);
@@ -50,10 +52,12 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, onTogglePilot, onToggleMenu
         >
           <Navigation className="w-5 h-5 rotate-90" />
         </button>
-        <div className={`p-2 rounded-2xl shadow-lg ring-4 shrink-0 transition-colors ${isDarkMode
-          ? 'bg-slate-700 ring-white/10 text-indigo-400'
-          : 'bg-white ring-white/10 text-indigo-600'
-          }`}>
+        <div
+          onClick={onLogoClick}
+          className={`p-2 rounded-2xl shadow-lg ring-4 shrink-0 transition-all cursor-pointer hover:scale-110 active:scale-90 ${isDarkMode ? 'bg-slate-800 ring-white/5' : 'bg-white ring-black/5'
+            }`}
+          style={{ color: `var(--brand-primary, #4f46e5)` }}
+        >
           <Navigation className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
         </div>
         <div className="min-w-0">
@@ -164,7 +168,7 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, onTogglePilot, onToggleMenu
           className={`p-2 sm:p-2.5 rounded-xl text-white transition-all ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'
             }`}
         >
-          <MoreVertical size={20} className="sm:w-[22px] sm:h-[22px]" />
+          <User size={20} className="sm:w-[22px] sm:h-[22px]" />
         </button>
       </div>
 

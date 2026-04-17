@@ -42,7 +42,11 @@ function header(title: string) {
 }
 
 const NEPAL_BOUNDS = { minLng: 80, maxLng: 89, minLat: 26, maxLat: 31 };
-const validateCoords = (lng: number, lat: number) => lng >= NEPAL_BOUNDS.minLng && lng <= NEPAL_BOUNDS.maxLng && lat >= NEPAL_BOUNDS.minLat && lat <= NEPAL_BOUNDS.maxLat;
+/** 
+ * Validates against official administrative bounds 
+ * approx: 80.0°E to 88.3°E | 26.3°N to 30.5°N
+ */
+const validateCoords = (lng: number, lat: number) => lng >= 80.0 && lng <= 88.3 && lat >= 26.3 && lat <= 30.5;
 
 // ─── API Check Helper ───
 async function checkApi(label: string, url: string, opts?: { method?: string; timeout?: number; headers?: Record<string, string> }) {

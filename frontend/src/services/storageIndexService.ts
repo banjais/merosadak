@@ -15,6 +15,8 @@ export interface StorageSummary {
   offlineSearch: { indexed: boolean; lastUpdated: string | null };
   mapState: { hasState: boolean; center: { lat: number; lng: number }; zoom: number };
   incidentDrafts: { count: number };
+  /** Stores the active primary theme color from the 6-color palette */
+  accentColor: string;
   theme: { mode: string; applied: string };
   notifications: { enabled: boolean; permission: string };
 }
@@ -67,6 +69,7 @@ export async function getStorageSummary(): Promise<StorageSummary> {
     incidentDrafts: {
       count: incidentDraftService.getCount(),
     },
+    accentColor: localStorage.getItem('merosadak_accent_color') || 'blue',
     theme: {
       mode: themeService.get().mode,
       applied: themeService.getAppliedTheme(),
@@ -85,9 +88,11 @@ export async function clearAllStorage(): Promise<void> {
   routeHistoryService.clear();
   savedLocationsService.clear();
   await offlineSearchService.clear();
-  mapStateService.reset();
+  mapStateService.reset(); // Resets zoom and center
   incidentDraftService.clearAll();
   themeService.reset?.(); // themeService doesn't have reset, but we can clear the key
+  // Clear the logo-selected color
+  localStorage.removeItem('merosadak_accent_color');
   notificationStateService.reset();
 
   // Clear other existing keys
@@ -100,6 +105,22 @@ export async function clearAllStorage(): Promise<void> {
   localStorage.removeItem('nepal_traveler_session');
 
   console.log('[Storage] All user data cleared');
+}
+
+/**
+ * Partial Purge: Clears ephemeral data (incidents, map state, search cache)
+ * but preserves the user login session, profile, and saved locations.
+ */
+export async function purgeAppData(): Promise<void> {
+  // Clear map and search caches
+  await offlineSearchService.clear();
+  mapStateService.reset();
+
+  // Clear incident drafts and recent search history
+  incidentDraftService.clearAll();
+  localStorage.removeItem('merosadak_recent_searches');
+
+  console.log('[Storage] Ephemeral app data purged (Session Preserved)');
 }
 
 /**

@@ -74,6 +74,14 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   superadminBusy,
   onToggleInfoBoard,
 }) => {
+  // Functionality for 3-dotted menu actions
+  const handlePurge = () => {
+    if (onPurgeCache) {
+      onPurgeCache();
+      alert("System cache cleared and optimized.");
+    }
+  };
+
   if (!isOpen) return null;
 
   const userName = userProfile?.name || userProfile?.email || 'Guest Traveler';
@@ -220,20 +228,17 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
         {isSuperadmin && (
           <div className="mb-6">
             <h4 className={`text-[9px] font-label font-bold uppercase tracking-[0.2em] px-1 mb-2 ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-              Superadmin Tools
+              Advanced System Menu
             </h4>
             <div className="space-y-1">
-              {superadminItems.map(item => (
+              {superadminItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => item.action?.()}
+                  onClick={item.id === 'purge' ? handlePurge : () => item.action?.()}
                   disabled={superadminBusy}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left ${superadminBusy ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'hover:bg-amber-900/20' : 'hover:bg-amber-50'
-                    }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left ${superadminBusy ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'hover:bg-amber-900/20' : 'hover:bg-amber-50'}`}
                 >
-                  <div className="text-amber-500">
-                    {item.icon}
-                  </div>
+                  <div className="text-amber-500">{item.icon}</div>
                   <div className="flex-1">
                     <div className="text-[11px] font-headline font-bold text-on-surface tracking-wide">{item.label}</div>
                     <div className="text-[9px] text-on-surface-variant">{item.sub}</div>
@@ -269,7 +274,7 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
         <div className="mt-4 text-center">
           <span className={`text-[8px] font-label font-bold uppercase tracking-[0.2em] transition-colors duration-300 ${isDarkMode ? 'text-slate-600' : 'text-outline/40'}`}>Designed for Himalayas</span>
         </div>
-      </div>
+      </div >
     </>
   );
 };

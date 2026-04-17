@@ -65,6 +65,12 @@ export const useToast = () => {
     const toast: Toast = { id, type, message, duration };
     setToasts((prev) => [...prev, toast]);
 
+    // Add haptic feedback for alerts
+    if ('vibrate' in navigator) {
+      if (type === 'error') navigator.vibrate([50, 100, 50]);
+      else if (type === 'warning') navigator.vibrate(50);
+    }
+
     if (duration > 0) {
       setTimeout(() => removeToast(id), duration);
     }

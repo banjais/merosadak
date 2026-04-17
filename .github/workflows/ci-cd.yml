@@ -224,7 +224,7 @@ jobs:
 
       - name: Build backend
         id: build_step
-        run: cd backend && npm run build
+        run: cd backend && npm run clean && npm run build
         env:
           NODE_ENV: production
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -385,7 +385,7 @@ jobs:
 
       - name: Build frontend
         id: build_step
-        run: cd frontend && npm run build
+        run: cd frontend && npm run clean && npm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
