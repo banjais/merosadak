@@ -255,6 +255,14 @@ const MainApp: React.FC = () => {
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
+  const [showDeployDashboard, setShowDeployDashboard] = useState(false);
+  const [showMonitoring, setShowMonitoring] = useState(false);
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+
+  const [aiMode, setAiMode] = useState<'safe' | 'pro'>('safe');
+  const [verbosity, setVerbosity] = useState<'brief' | 'detailed'>('detailed');
+  const [moodEQ, setMoodEQ] = useState(false);
+
   const addToast = useCallback((type: string, message: string) => {
     setToasts(prev => [...prev, { id: Date.now().toString(), type, message }]);
     setTimeout(() => setToasts(prev => prev.slice(1)), 4000);
