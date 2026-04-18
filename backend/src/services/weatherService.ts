@@ -147,11 +147,7 @@ export async function getRealWeather(
         return await fetchOpenWeather(lat, lng);
       } catch (err: any) {
         console.warn(`⚠️ OpenWeatherMap failed: ${err.message} → fallback Open-Meteo`);
-        try {
-          return await fetchOpenMeteo(lat, lng);
-        } catch {
-          return fetchMockWeather(lat, lng);
-        }
+        return await fetchOpenMeteo(lat, lng);
       }
     },
     10 * 60 // ⏱️ 10-minute cache

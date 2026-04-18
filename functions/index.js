@@ -6,7 +6,7 @@ const functions = require('firebase-functions');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // Render backend URL
-const TARGET = 'https://sadaksathi.onrender.com';
+const TARGET = 'https://merosadak.onrender.com';
 
 // Create proxy middleware
 const apiProxy = createProxyMiddleware({

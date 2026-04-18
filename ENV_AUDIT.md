@@ -23,8 +23,8 @@
 ### `.env.production`
 | Variable | Value | Used In | Status |
 |----------|-------|---------|--------|
-| `VITE_API_URL` | `https://sadaksathi.onrender.com/api` | `api.ts`, `config.ts` | ✅ Active |
-| `VITE_WS_URL` | `wss://sadaksathi.onrender.com/ws/live` | `App.tsx` | ✅ Active |
+| `VITE_API_URL` | `https://merosadak.web.app/api` | `api.ts`, `config.ts` | ✅ Active |
+| `VITE_WS_URL` | `wss://merosadak.onrender.com/ws/live` | `App.tsx` | ✅ Active |
 | `VITE_GEMINI_API_KEY` | `AIzaSyDjHapYaWswK1lhK1eYmNj1V0AbwcO2j4k` | `geminiService.ts` | ✅ Active |
 | `VITE_APP_NAME` | `MeroSadak` | `config.ts` | ✅ Active |
 | `VITE_DEFAULT_LANGUAGE` | `en` | `config.ts` | ✅ Active |
@@ -152,7 +152,7 @@
 | Variable | Value | Status |
 |----------|-------|--------|
 | `FIREBASE_BACKEND` | `https://us-central1-merosadak.cloudfunctions.net` | ⚠️ Old URL |
-| `RENDER_BACKEND` | `https://sadaksathi.onrender.com` | ✅ Current |
+| `RENDER_BACKEND` | `https://merosadak.onrender.com` | ✅ Current |
 
 ### Environment Vars (can set via `wrangler secret put`)
 | Variable | Purpose | Status |
@@ -171,7 +171,7 @@
 | Frontend `.env.*` | `VITE_API_URL` | ✅ Used everywhere | ✅ |
 | Backend `config/index.ts` | No API URL env var | N/A | N/A (internal) |
 | Render | `RENDER_EXTERNAL_URL` | Auto-set | ✅ |
-| Wrangler | `RENDER_BACKEND` | `https://sadaksathi.onrender.com` | ✅ |
+| Wrangler | `RENDER_BACKEND` | `https://merosadak.onrender.com` | ✅ |
 | GitHub CI | `VITE_API_BASE_URL` | ❌ Removed | ✅ (removed) |
 | GitHub CI | `VITE_GEMINI_API_KEY` | Used in frontend build | ✅ |
 

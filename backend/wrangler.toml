@@ -3,8 +3,8 @@ main = "cloudflare/cf-worker.js"
 compatibility_date = "2026-04-10"
 
 [vars]
-FIREBASE_BACKEND = "https://sadak-sathi-3ab73.web.app"
-RENDER_BACKEND = "https://sadaksathi.onrender.com"
+FIREBASE_BACKEND = "https://merosadak.web.app"
+RENDER_BACKEND = "https://merosadak.onrender.com"
 
 # Scheduled trigger for health checks (every 30 minutes)
 [triggers]

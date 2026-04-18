@@ -23,23 +23,27 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ACTIVATE (UPDATED: notify clients)
+// ACTIVATE (UPDATED: notify clients and PURGE OLD CACHES)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME && key !== RUNTIME_CACHE)
-          .map((key) => caches.delete(key))
+          .map((key) => {
+            if (key !== CACHE_NAME && key !== RUNTIME_CACHE) {
+              console.log('[SW] Purging legacy cache:', key);
+              return caches.delete(key);
+            }
+          })
       )
     ).then(() => {
       self.clients.claim();
 
-      // Notify all open tabs about update
+      // Notify all open tabs about successful activation and new version
       self.clients.matchAll().then((clients) => {
         clients.forEach((client) => {
           client.postMessage({
-            type: 'SW_UPDATED',
+            type: 'SW_ACTIVATED',
             version: APP_VERSION,
           });
         });
@@ -48,55 +52,37 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// FETCH
+// FETCH - Network-First for everything to ensure "Always Latest"
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+  // Basic sanity check for internal requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  const isAsset = event.request.url.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/);
-
-  // STATIC ASSETS → cache-first
-  if (isAsset) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-
-        return fetch(event.request)
-          .then((res) => {
-            if (!res || res.status !== 200) return res;
-
-            const clone = res.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(event.request, clone);
-            });
-
-            return res;
-          })
-          .catch(() => caches.match('/index.html'));
-      })
-    );
-    return;
-  }
-
-  // HTML → network-first
-  if (event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        // Only cache valid responses
+        if (res && res.status === 200 && res.type === 'basic') {
           const clone = res.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
             cache.put(event.request, clone);
           });
-          return res;
-        })
-        .catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
-
-  // fallback
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+        }
+        return res;
+      })
+      .catch(() => {
+        // If network fails, try the cache
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          
+          // If it's a page navigation, return the index shell
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/index.html');
+          }
+        });
+      })
+  );
 });
 
 // MESSAGE HANDLER

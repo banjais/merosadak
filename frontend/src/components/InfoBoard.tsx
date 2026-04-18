@@ -14,7 +14,9 @@ import {
   ChevronDown,
   ChevronUp,
   AlarmClock,
-  Sparkles
+  Sparkles,
+  Bell,
+  Navigation
 } from 'lucide-react';
 import { SourceBadge } from './SourceBadge';
 import { motion } from 'framer-motion';

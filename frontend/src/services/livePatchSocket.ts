@@ -1,7 +1,8 @@
 import { LivePatchEngine } from "./livePatchEngine";
 
 export const startLivePatchSocket = () => {
-  const ws = new WebSocket(import.meta.env.VITE_WS_URL || "ws://localhost:4000");
+  const wsUrl = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host;
+  const ws = new WebSocket(wsUrl);
 
   ws.onmessage = (event) => {
     try {

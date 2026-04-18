@@ -5,7 +5,7 @@ account_id = "052a34d4627b5c02d0bff84ff1c0f906"
 workers_dev = true
 
 [vars]
-RENDER_BACKEND = "https://sadaksathi.onrender.com"
+RENDER_BACKEND = "https://merosadak.onrender.com"
 
 [triggers]
 crons = ["*/2 * * * *"]

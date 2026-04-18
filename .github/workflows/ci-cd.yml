@@ -186,7 +186,7 @@ jobs:
           echo ""
           echo "Service URLs:"
           echo "  Frontend: https://merosadak.web.app"
-          echo "  Backend:  https://sadaksathi.onrender.com"
+          echo "  Backend:  https://merosadak.onrender.com"
           echo "  Worker:   https://merosadak.banjays.workers.dev"
           echo "  Monitor:  https://uptimerobot.com/ZaSzISaXMt"
 
@@ -270,7 +270,7 @@ jobs:
           echo "🔍 Checking backend health..."
           MAX_RETRIES=15
           RETRY_INTERVAL=20
-          HEALTH_URL="https://sadaksathi.onrender.com/health/live"
+          HEALTH_URL="https://merosadak.onrender.com/health/live"
 
           for i in $(seq 1 $MAX_RETRIES); do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
@@ -412,7 +412,7 @@ jobs:
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          projectId: sadak-sathi-3ab73
+          projectId: merosadak
           channelId: live
         continue-on-error: true
 
@@ -475,9 +475,9 @@ jobs:
           }
 
           echo "--- 📦 BACKEND SERVICES ---"
-          check_service "Backend (Render Health)" "https://sadaksathi.onrender.com/health/live"
-          check_service "Backend (Render Ready)" "https://sadaksathi.onrender.com/health/ready"
-          check_service "Backend (API)" "https://sadaksathi.onrender.com/api/v1/roads"
+          check_service "Backend (Render Health)" "https://merosadak.onrender.com/health/live"
+          check_service "Backend (Render Ready)" "https://merosadak.onrender.com/health/ready"
+          check_service "Backend (API)" "https://merosadak.onrender.com/api/v1/roads"
           echo ""
 
           echo "--- 🎨 FRONTEND ---"
@@ -562,7 +562,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Service | URL | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend | https://sadaksathi.onrender.com | ${{ needs.backend.result == 'success' && '✅ Deployed' || needs.backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | https://merosadak.onrender.com | ${{ needs.backend.result == 'success' && '✅ Deployed' || needs.backend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Worker | https://merosadak.banjays.workers.dev | ${{ needs.worker.result == 'success' && '✅ Deployed' || needs.worker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend | https://merosadak.web.app | ${{ needs.frontend.result == 'success' && '✅ Deployed' || needs.frontend.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Monitoring | https://uptimerobot.com/ZaSzISaXMt | ✅ Active |" >> $GITHUB_STEP_SUMMARY
@@ -630,7 +630,7 @@ jobs:
             STATUS="✅ DEPLOY SUCCESS"
             COLOR="✅"
             WORKER_STATUS="${{ needs.preflight.outputs.worker_configured == 'true' && 'Worker (2m)' || 'N/A' }}"
-            MSG="$COLOR DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 Actor: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://sadaksathi.onrender.com%0A☁️ Worker: https://merosadak.banjays.workers.dev%0A📊 Monitor: https://uptimerobot.com/ZaSzISaXMt%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + $WORKER_STATUS%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
+            MSG="$COLOR DEPLOY SUCCESSFUL%0A%0A📦 Repo: ${{ github.repository }}%0A🌿 Branch: ${{ github.ref_name }}%0A🎯 Target: ${{ github.event.inputs.deploy_target || 'auto' }}%0A👤 Actor: ${{ github.actor }}%0A%0A🔗 Frontend: https://merosadak.web.app%0A🔧 Backend: https://merosadak.onrender.com%0A☁️ Worker: https://merosadak.banjays.workers.dev%0A📊 Monitor: https://uptimerobot.com/ZaSzISaXMt%0A%0A🔄 Keep-Alive: Render (10m) + UptimeRobot (5m) + $WORKER_STATUS%0A%0A📝 Commit: ${{ github.event.head_commit.message || 'manual deploy' }}"
           else
             STATUS="⏭️ SKIPPED"
             COLOR="⏭️"

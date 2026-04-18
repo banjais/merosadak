@@ -72,7 +72,7 @@ export async function fetchUptimeRobotStats(): Promise<MonitorStats[]> {
     cachedStats = [
       {
         name: "MeroSadak Backend",
-        url: process.env.RENDER_EXTERNAL_URL || "https://sadaksathi.onrender.com",
+        url: process.env.RENDER_EXTERNAL_URL || "https://merosadak.onrender.com",
         status: "up",
         uptime: 99.9,
         responseTime: 450,
@@ -146,7 +146,7 @@ export async function fetchUptimeRobotStats(): Promise<MonitorStats[]> {
     return [
       {
         name: "MeroSadak Backend",
-        url: process.env.RENDER_EXTERNAL_URL || "https://sadaksathi.onrender.com",
+        url: process.env.RENDER_EXTERNAL_URL || "https://merosadak.onrender.com",
         status: "up",
         uptime: 99.5,
         responseTime: 500,

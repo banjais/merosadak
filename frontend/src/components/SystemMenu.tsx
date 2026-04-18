@@ -47,6 +47,8 @@ interface SystemMenuProps {
   onPurgeCache?: () => void;
   superadminBusy?: boolean;
   onToggleInfoBoard?: () => void;
+  isInstallable?: boolean;
+  onInstallApp?: () => void;
 }
 
 export const SystemMenu: React.FC<SystemMenuProps> = ({
@@ -73,6 +75,8 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   onPurgeCache,
   superadminBusy,
   onToggleInfoBoard,
+  isInstallable,
+  onInstallApp,
 }) => {
   // Functionality for 3-dotted menu actions
   const handlePurge = () => {
@@ -97,6 +101,18 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
     { id: 'privacy', icon: <ShieldCheck size={18} />, label: 'Safety & Privacy', sub: 'End-to-end encrypted' },
     { id: 'lang', icon: <Languages size={18} />, label: 'Language Settings', sub: 'English / नेपाली / हिन्दी' },
   ];
+
+  // Add Install item if available
+  if (isInstallable) {
+    menuItems.unshift({
+      id: 'install',
+      icon: <Download size={18} />,
+      label: 'Get MeroSadak App',
+      sub: 'Install for easy offline access',
+      action: onInstallApp,
+      badge: 'PRO'
+    } as any);
+  }
 
   // Superadmin items
   const superadminItems = [

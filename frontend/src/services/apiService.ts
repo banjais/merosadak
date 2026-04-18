@@ -367,9 +367,8 @@ export const authService = {
         headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
-      console.warn('Auth request-otp failed, using fallback:', error);
-      await new Promise(r => setTimeout(r, 800));
-      return { success: true, message: 'OTP sent (mock)' };
+      console.error('Auth request-otp failed:', error);
+      throw error;
     }
   },
 
@@ -384,12 +383,8 @@ export const authService = {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       return user;
     } catch (error) {
-      console.warn('Auth login failed, using fallback:', error);
-      await new Promise(r => setTimeout(r, 800));
-      const role = email.includes('admin') ? 'admin' : 'user';
-      const user = { id: Math.random().toString(36).substr(2, 9), email, name: email.split('@')[0], role };
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-      return user;
+      console.error('Auth login failed:', error);
+      throw error;
     }
   },
 
@@ -425,9 +420,9 @@ export const otpService = {
         headers: { 'Content-Type': 'application/json' }
       });
       return result.success;
-    } catch {
-      await new Promise(r => setTimeout(r, 800));
-      return code === '1234';
+    } catch (error) {
+      console.error('OTP verification failed:', error);
+      throw error;
     }
   }
 };

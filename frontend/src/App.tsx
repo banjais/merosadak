@@ -76,6 +76,7 @@ import {
 import { InfoBoard } from "./components/InfoBoard";
 import { MapLabel } from "./components/MapLabel";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { usePWAInstall } from "./hooks/usePWAInstall";
 
 import {
   calculateHaversineDistance
@@ -165,6 +166,7 @@ const MainApp: React.FC = () => {
 
   const { alerts } = useAlert();
   const { subscribe: pushSubscribe, supported: pushSupported } = usePushNotifications();
+  const { isInstallable, install: triggerInstall } = usePWAInstall();
 
   const { profile: userProfile } = useUserProfile();
   const { leaderboard } = useLeaderboard(10);
@@ -176,8 +178,12 @@ const MainApp: React.FC = () => {
   const { calculate: calculateETA } = useETA();
   const { calculate: calculateQuickETA } = useQuickETA();
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "http://localhost:4000";
-  const { lastMessage } = useWebSocket(apiBaseUrl, true);
+  // Single source of truth for base URLs
+  const wsUrl = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.host;
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "/api/v1";
+
+  // Use explicit WebSocket URL if provided, otherwise derive from current host
+  const { lastMessage } = useWebSocket(wsUrl, true);
 
   /* ---------------- STATE ---------------- */
 
@@ -226,6 +232,11 @@ const MainApp: React.FC = () => {
   const [showTraffic, setShowTraffic] = useState(false);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
 
+  const addToast = useCallback((type: string, message: string) => {
+    setToasts(prev => [...prev, { id: Date.now().toString(), type, message }]);
+    setTimeout(() => setToasts(prev => prev.slice(1)), 4000);
+  }, []);
+
   /** 
    * Unified refresh handler: Performs partial cache purge and re-syncs data.
    * Triggered by the "scroll down" gesture on mobile.
@@ -263,10 +274,7 @@ const MainApp: React.FC = () => {
   const [verbosity, setVerbosity] = useState<'brief' | 'detailed'>('detailed');
   const [moodEQ, setMoodEQ] = useState(false);
 
-  const addToast = useCallback((type: string, message: string) => {
-    setToasts(prev => [...prev, { id: Date.now().toString(), type, message }]);
-    setTimeout(() => setToasts(prev => prev.slice(1)), 4000);
-  }, []);
+
 
   /** Performs a full system purge: Local Storage + Server Purge + Refresh */
   const handleSystemPurge = useCallback(async () => {
@@ -352,11 +360,18 @@ const MainApp: React.FC = () => {
     // Set initial board height to hidden
     setCurrentBoardHeight(getSnapHeights().hidden);
 
-    // Listen for service worker updates
+    // Listen for service worker updates and activation
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data?.type === 'SW_UPDATED') {
-          addToast('info', `App updated to v${event.data.version} - refresh to see changes`);
+          setUpdateAvailable(true);
+          addToast('info', `Optimization available - refresh to apply updates.`);
+        }
+        
+        if (event.data?.type === 'SW_ACTIVATED') {
+          console.log('[App] New version activated, ensuring cache hygiene...');
+          // Optional: performing a silent storage index refresh
+          initializeStorage();
         }
       });
     }
@@ -734,6 +749,8 @@ const MainApp: React.FC = () => {
           setVerbosity={setVerbosity}
           moodEQ={moodEQ}
           setMoodEQ={setMoodEQ}
+          isInstallable={isInstallable}
+          onInstallApp={triggerInstall}
         />
 
         <Sidebar
