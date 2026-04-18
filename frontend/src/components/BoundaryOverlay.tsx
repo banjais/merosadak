@@ -30,31 +30,38 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
 
   const boundaryData = boundaries.nepal;
 
-  const maskGeoJSON = useMemo(() => {
-    if (!boundaryData) return null;
+  const { outerBoundary, maskGeoJSON } = useMemo(() => {
+    if (!boundaryData) return { outerBoundary: null, maskGeoJSON: null };
     try {
-      let polygonToMask = boundaryData;
+      let unified = boundaryData;
 
-      // If boundaryData is a FeatureCollection, we union polygons to create a clean mask.
-      // We filter for Polygon/MultiPolygon to prevent turf.union from failing on mixed geometries.
+      // Filter for Polygon/MultiPolygon features and union them into one single shape
       if (boundaryData.type === 'FeatureCollection') {
         const polyFeatures = boundaryData.features.filter(f =>
           f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'
         );
+        
         if (polyFeatures.length > 0) {
           let unioned = polyFeatures[0];
           for (let i = 1; i < polyFeatures.length; i++) {
-            unioned = turf.union(unioned as any, polyFeatures[i] as any) as any;
+            try {
+              const result = turf.union(unioned as any, polyFeatures[i] as any);
+              if (result) unioned = result as any;
+            } catch (unionError) {
+              // Silently skip problematic geometries
+            }
           }
-          polygonToMask = unioned;
+          unified = unioned;
         }
       }
 
-      // turf.mask takes a polygon and creates an inverted world-sized polygon
-      return turf.mask(polygonToMask as any);
+      return {
+        outerBoundary: unified,
+        maskGeoJSON: turf.mask(unified as any)
+      };
     } catch (e) {
-      console.warn("Turf mask failed, using fallback", e);
-      return null;
+      console.warn("[BoundaryOverlay] Geometry processing failed", e);
+      return { outerBoundary: boundaryData, maskGeoJSON: null };
     }
   }, [boundaryData]);
 
@@ -63,7 +70,7 @@ const BoundaryOverlay: React.FC<BoundaryOverlayProps> = ({ isDarkMode }) => {
   return (
     <>
       {maskGeoJSON && <GeoJSON key={`nepal-mask-${isDarkMode}`} data={maskGeoJSON} style={maskStyle} />}
-      <GeoJSON key={`nepal-border-${isDarkMode}`} data={boundaryData} style={borderStyle} />
+      {outerBoundary && <GeoJSON key={`nepal-border-${isDarkMode}`} data={outerBoundary} style={borderStyle} />}
     </>
   );
 };

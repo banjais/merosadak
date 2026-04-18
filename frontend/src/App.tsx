@@ -16,7 +16,7 @@ import { useSuperadmin } from "./hooks/useSuperadmin";
 import { useGemini } from "./hooks/useGemini";
 import { useRoutePlanning } from "./hooks/useRoutePlanning";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
-import { useETA, useQuickETA } from "./hooks/useETA";
+import { useETA, useQuickETA, Location } from "./hooks/useETA";
 import { useServiceData } from "./hooks/useServiceData";
 
 import type { TravelIncident, ChatMessage } from "./types";
@@ -31,6 +31,7 @@ import {
 } from "./services/storageIndexService";
 
 import { HotUpdateManager } from "./services/hotUpdateManager";
+import { fetchServiceData } from "./services/gasService";
 
 import BoundaryOverlay from "./components/BoundaryOverlay";
 import Header from "./components/Header";
@@ -193,7 +194,7 @@ const MainApp: React.FC = () => {
   const [isLocked, setIsLocked] = useState(true);
   // const [isBoardExpanded, setIsBoardExpanded] = useState(false); // Replaced by boardDisplayState
 
-  const [boardDisplayState, setBoardDisplayState] = useState<BoardDisplayState>(BoardDisplayState.HIDDEN);
+  const [boardDisplayState, setBoardDisplayState] = useState<BoardDisplayState>(BoardDisplayState.SPLIT);
   const [isDraggingBoard, setIsDraggingBoard] = useState(false);
   const [startY, setStartY] = useState(0);
   const [initialBoardHeight, setInitialBoardHeight] = useState(0);
@@ -357,8 +358,8 @@ const MainApp: React.FC = () => {
     themeService.applyToDocument();
     HotUpdateManager.init();
 
-    // Set initial board height to hidden
-    setCurrentBoardHeight(getSnapHeights().hidden);
+    // Set initial board height to split view
+    setCurrentBoardHeight(getSnapHeights().split);
 
     // Listen for service worker updates and activation
     if ('serviceWorker' in navigator) {
@@ -367,7 +368,7 @@ const MainApp: React.FC = () => {
           setUpdateAvailable(true);
           addToast('info', `Optimization available - refresh to apply updates.`);
         }
-        
+
         if (event.data?.type === 'SW_ACTIVATED') {
           console.log('[App] New version activated, ensuring cache hygiene...');
           // Optional: performing a silent storage index refresh
@@ -403,6 +404,24 @@ const MainApp: React.FC = () => {
 
     return () => clearInterval(checkUpdate);
   }, [appReady]);
+
+  // Real-time Service Data Fetching
+  useEffect(() => {
+    if (serviceType && userLocation) {
+      const loadServiceData = async () => {
+        setIsProcessing(true);
+        try {
+          const results = await fetchServiceData(serviceType, userLocation.lat, userLocation.lng);
+          setServiceResults(results);
+        } catch (err) {
+          console.error("[App] Service fetch failed:", err);
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+      loadServiceData();
+    }
+  }, [serviceType, userLocation]);
 
   /* ---------------- MAP CENTER ---------------- */
 
@@ -783,7 +802,15 @@ const MainApp: React.FC = () => {
           onToggleSystemMenu={() => setSystemMenuOpen(true)}
         />
 
-        <FloatingMenu onServiceSelect={handleServiceSelect} />
+        <FloatingMenu
+          onServiceSelect={handleServiceSelect}
+          onOpenCalculator={() => { }} // Hooked for future distance tools
+          onOpenReport={() => { }} // Hooked for future reporting tools
+          onTogglePilot={handleTogglePilot}
+          activeService={serviceType}
+          incidents={incidents}
+          isDarkMode={isDarkMode}
+        />
 
         <WeatherWidget userLocation={userLocation} isVisible={monsoonVisible} />
 
