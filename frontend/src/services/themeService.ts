@@ -71,7 +71,7 @@ export const themeService = {
   toggle: (): void => {
     const state = getState();
     const newMode = state.appliedTheme === 'dark' ? 'light' : 'dark';
-    set(newMode);
+    themeService.set(newMode);
   },
 
   /** Check if dark mode is active */
