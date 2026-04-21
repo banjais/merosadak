@@ -33,7 +33,6 @@ export async function initializeStorage(): Promise<void> {
     // Sync notification state with browser
     await notificationStateService.syncWithBrowser();
 
-    console.log('[Storage] All services initialized');
   } catch (e) {
     console.error('[Storage] Initialization failed:', e);
   }
@@ -104,7 +103,6 @@ export async function clearAllStorage(): Promise<void> {
   localStorage.removeItem('merosadak_recent_searches');
   localStorage.removeItem('nepal_traveler_session');
 
-  console.log('[Storage] All user data cleared');
 }
 
 /**
@@ -120,7 +118,6 @@ export async function purgeAppData(): Promise<void> {
   incidentDraftService.clearAll();
   localStorage.removeItem('merosadak_recent_searches');
 
-  console.log('[Storage] Ephemeral app data purged (Session Preserved)');
 }
 
 /**

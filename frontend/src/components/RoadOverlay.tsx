@@ -5,6 +5,8 @@ import { L } from "../lib/leaflet";
 import { apiFetch } from "../api";
 import { TravelIncident } from "../types";
 import { SourceBadge } from "./SourceBadge";
+import { resolveLabel } from "../utils/labelUtils";
+import type { Label } from "../types";
 
 interface RoadSegment {
   id: string;
@@ -15,11 +17,12 @@ interface RoadSegment {
     coordinates: [number, number][];
   };
   status?: string;
+  weight?: number;
   properties: {
     road_refno?: string;
-    road_name?: string;
-    incidentDistrict?: string;
-    incidentPlace?: string;
+    road_name?: string | Label;
+    incidentDistrict?: string | Label;
+    incidentPlace?: string | Label;
     chainage?: string;
     incidentStarted?: string;
     estimatedRestoration?: string;
@@ -27,7 +30,7 @@ interface RoadSegment {
     blockedHours?: string;
     contactPerson?: string;
     restorationEfforts?: string;
-    remarks?: string;
+    remarks?: string | Label;
     status?: string;
     reportDate?: string;
     div_name?: string;
@@ -97,6 +100,15 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
     return "#16a34a"; // Green (clear/resumed)
   };
 
+  // Determine glowing "neon" color for high-priority pulsing segments
+  const getGlowColor = (status: string = ""): string => {
+    const s = status.toLowerCase();
+    // Neon variants of the standard status colors
+    if (s.includes("block") || s.includes("blocked")) return "#ff3131"; // Neon Red
+    if (s.includes("one") || s.includes("oneway") || s.includes("single")) return "#ffae42"; // Neon Orange
+    return "#39ff14"; // Neon Green
+  };
+
   // Process and filter roads
   const filteredRoads = useMemo(() => {
     if (!isVisible || roads.length === 0) return [];
@@ -130,10 +142,13 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             (coord) => [coord[1], coord[0]] as [number, number]
           );
 
+          const isPulsing = (road.weight || 0) >= 3;
           const statusText = road.status || road.properties?.status || "Unknown";
-          const color = getStatusColor(statusText);
+          const color = isPulsing
+            ? getGlowColor(statusText)
+            : getStatusColor(statusText);
           const roadName =
-            road.properties?.road_name ||
+            resolveLabel(road.properties?.road_name) ||
             road.properties?.road_refno ||
             road.name ||
             "Unknown Road";
@@ -142,7 +157,8 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             id: road.id || `road-${Math.random().toString(36).substr(2, 9)}`,
             latlngs,
             color,
-            weight: 5.5,
+            weight: road.weight ? road.weight * 2.5 : 5.5,
+            isPulsing,
             opacity: 0.92,
             roadName,
             statusText,
@@ -179,6 +195,7 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
             opacity: road.opacity,
             lineCap: "round",
             lineJoin: "round",
+            className: road.isPulsing ? "animate-pulse drop-shadow-[0_0_12px_rgba(255,255,255,0.7)]" : "",
           }}
         >
           <Popup>
@@ -207,10 +224,10 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
               )}
 
               {road.properties.incidentDistrict && (
-                <div>District: {road.properties.incidentDistrict}</div>
+                <div>District: {resolveLabel(road.properties.incidentDistrict)}</div>
               )}
               {road.properties.incidentPlace && (
-                <div>Place: {road.properties.incidentPlace}</div>
+                <div>Place: {resolveLabel(road.properties.incidentPlace)}</div>
               )}
               {road.properties.chainage && (
                 <div>Chainage: {road.properties.chainage}</div>
@@ -232,7 +249,7 @@ export const RoadOverlay: React.FC<RoadOverlayProps> = ({
               )}
               {road.properties.remarks && (
                 <div className="mt-3 text-[10px] italic text-slate-600 border-t pt-2">
-                  "{road.properties.remarks}"
+                  "{resolveLabel(road.properties.remarks)}"
                 </div>
               )}
             </div>

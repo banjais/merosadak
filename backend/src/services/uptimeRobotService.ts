@@ -68,18 +68,8 @@ export async function fetchUptimeRobotStats(): Promise<MonitorStats[]> {
 
   // If no API key, return mock stats for the public status page
   if (!UPTIMEROBOT_API_KEY) {
-    logInfo("[UptimeRobot] Using public status page mode (no API key)");
-    cachedStats = [
-      {
-        name: "MeroSadak Backend",
-        url: process.env.RENDER_EXTERNAL_URL || "https://merosadak.onrender.com",
-        status: "up",
-        uptime: 99.9,
-        responseTime: 450,
-      },
-    ];
-    lastFetchTime = now;
-    return cachedStats;
+    logError("[UptimeRobot] API key missing. Monitoring disabled.");
+    return [];
   }
 
   try {
@@ -142,16 +132,7 @@ export async function fetchUptimeRobotStats(): Promise<MonitorStats[]> {
       return cachedStats;
     }
 
-    // Return fallback stats
-    return [
-      {
-        name: "MeroSadak Backend",
-        url: process.env.RENDER_EXTERNAL_URL || "https://merosadak.onrender.com",
-        status: "up",
-        uptime: 99.5,
-        responseTime: 500,
-      },
-    ];
+    return [];
   }
 }
 

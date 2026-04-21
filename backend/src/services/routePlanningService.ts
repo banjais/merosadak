@@ -2,6 +2,7 @@
 import { logInfo, logError } from "../logs/logs.js";
 import { getCachedRoads } from "./roadService.js";
 import { calculateETA } from "./etaService.js";
+import { isValidNepalCoordinate, haversineDistance } from "@/services/geoUtils";
 
 // ────────────────────────────────
 // Route Planning Service
@@ -47,20 +48,6 @@ interface RouteRiskFactors {
   roadQuality: "good" | "fair" | "poor";
 }
 
-/**
- * Haversine distance
- */
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
 
 /**
  * Calculate risk score for a route based on incidents
@@ -149,6 +136,11 @@ export async function planRoute(
       prioritizeSafety = false,
       maxDeviationKm = 50,
     } = options || {};
+
+    if (!isValidNepalCoordinate(origin.lat, origin.lng) || !isValidNepalCoordinate(destination.lat, destination.lng)) {
+      logError("[RoutePlanning] Route rejected: Origin or destination outside Nepal bounds", { origin, destination });
+      return null;
+    }
 
     const directDistance = haversineDistance(
       origin.lat,
@@ -327,6 +319,10 @@ export async function getRouteSafety(
   emergencyContacts: Array<{ name: string; phone: string; type: string }>;
 } | null> {
   try {
+    if (!isValidNepalCoordinate(origin.lat, origin.lng) || !isValidNepalCoordinate(destination.lat, destination.lng)) {
+      return null;
+    }
+
     const risk = await calculateRouteRisk([origin, destination], []);
 
     let overallRisk: "low" | "medium" | "high" | "critical";

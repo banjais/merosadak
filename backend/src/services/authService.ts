@@ -1,6 +1,7 @@
 // backend/src/services/authService.ts
 import { logInfo, logError } from "../logs/logs.js";
 import * as OtpService from "./otpService.js";
+import { maskEmail } from "@/services/piiMasking";
 
 export interface AuthResponse {
   token: string;
@@ -23,7 +24,7 @@ export async function loginWithOTP(email: string, otp: string): Promise<AuthResp
     // 3️⃣ Generate JWT session token
     const token = await OtpService.generateSessionToken(email, role);
 
-    logInfo(`[authService] User logged in: ${email} (${role})`);
+    logInfo(`[authService] User logged in: ${maskEmail(email)} (${role})`);
     return { token, role, email };
   } catch (err: any) {
     logError("[authService] Login failed", { error: err.message });
@@ -37,7 +38,7 @@ export async function loginWithOTP(email: string, otp: string): Promise<AuthResp
 export async function requestOTP(email: string, chatId: string): Promise<boolean> {
   try {
     await OtpService.issueTelegramOTP(email, chatId);
-    logInfo(`[authService] OTP sent to ${email} via Telegram chat ${chatId}`);
+    logInfo(`[authService] OTP sent to ${maskEmail(email)} via Telegram chat ${chatId}`);
     return true;
   } catch (err: any) {
     logError("[authService] OTP Request failed", { error: err.message });

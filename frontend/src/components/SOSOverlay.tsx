@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Phone, MapPin, Share2, X, AlertTriangle, Radio } from 'lucide-react';
+import { ShieldAlert, Phone, MapPin, Share2, X, AlertTriangle, Radio, Navigation2 } from 'lucide-react';
+import { reminderService, RescueStatus } from '../services/reminderService';
 
 interface SOSOverlayProps {
   isOpen: boolean;
@@ -8,12 +9,44 @@ interface SOSOverlayProps {
 }
 
 export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLocation }) => {
-  const [isSending, setIsSending] = useState(false);
-  const [complete, setComplete] = useState(false);
+  const [rescueStatus, setRescueStatus] = useState<RescueStatus>(reminderService.getRescueStatus());
+  const [rescuersCount, setRescuersCount] = useState(0);
+  const [rescuerDistance, setRescuerDistance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = reminderService.subscribe(() => {
+      setRescueStatus(reminderService.getRescueStatus());
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (rescueStatus === 'dispatched') {
+      // Mock randomized nearby rescuer count
+      setRescuersCount(Math.floor(Math.random() * 5) + 1);
+      // Start distance at ~5.2 km
+      setRescuerDistance(5.2);
+    }
+  }, [rescueStatus]);
+
+  useEffect(() => {
+    let interval: any = null;
+    if (rescueStatus === 'dispatched' && rescuerDistance !== null && rescuerDistance > 0.1) {
+      interval = setInterval(() => {
+        setRescuerDistance(prev => {
+          if (prev === null || prev <= 0.1) return 0.1;
+          // Progressively decrease distance
+          return prev - (0.05 + Math.random() * 0.05);
+        });
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [rescueStatus, rescuerDistance]);
 
   function handleClose() {
-    setIsSending(false);
-    setComplete(false);
+    if (rescueStatus === 'received' || rescueStatus === 'resolved') {
+      reminderService.updateRescueStatus('idle');
+    }
     onClose();
   }
 
@@ -31,12 +64,17 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
   if (!isOpen) return null;
 
   const handleTriggerSOS = () => {
-    setIsSending(true);
-    // Simulate sending SOS to backend/emergency services
+    // Start the shared SOS sequence across all tabs
+    reminderService.broadcastSOS(userLocation?.lat, userLocation?.lng);
+
+    // Simulate response lifecycle: Received -> Dispatched
     setTimeout(() => {
-      setIsSending(false);
-      setComplete(true);
-    }, 3000);
+      reminderService.updateRescueStatus('received');
+
+      setTimeout(() => {
+        reminderService.updateRescueStatus('dispatched');
+      }, 4000);
+    }, 2500);
   };
 
   const emergencyNumbers = [
@@ -45,6 +83,8 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
     { label: 'Fire Brigade', number: '101' },
     { label: 'Traffic Police', number: '103' },
   ];
+
+  const isSending = rescueStatus === 'transmitting';
 
   return (
     <div className="fixed inset-0 z-[3500] flex items-center justify-center p-4">
@@ -70,7 +110,21 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
           <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 italic">Emergency SOS</h2>
           <p className="text-red-200/60 text-xs font-bold uppercase tracking-widest mb-8">Nepal National Response System</p>
 
-          {!complete ? (
+          {rescueStatus === 'resolved' ? (
+            <div className="animate-in zoom-in duration-500">
+              <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)] mb-6 mx-auto">
+                <ShieldCheck size={40} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-black text-white uppercase mb-2">Crisis Resolved</h3>
+              <p className="text-emerald-400/60 text-xs font-bold uppercase tracking-widest mb-8">System Standby Mode</p>
+              <button
+                onClick={handleClose}
+                className="w-full py-4 bg-emerald-600 text-white rounded-3xl font-black text-sm uppercase tracking-widest shadow-lg"
+              >
+                Return to Navigation
+              </button>
+            </div>
+          ) : rescueStatus !== 'received' && rescueStatus !== 'dispatched' ? (
             <>
               <div className="bg-slate-950/50 rounded-3xl p-6 w-full border border-white/5 mb-8">
                 <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">
@@ -111,9 +165,21 @@ export const SOSOverlay: React.FC<SOSOverlayProps> = ({ isOpen, onClose, userLoc
                 <Radio size={32} className="text-emerald-500 animate-pulse" />
               </div>
               <h3 className="text-xl font-black text-white uppercase mb-2">Signal Received</h3>
-              <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Emergency services in your district have been notified of your coordinates. Stay at your location if safe.
-              </p>
+
+              {rescueStatus === 'dispatched' ? (
+                <div className="mb-8 space-y-3">
+                  <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest animate-pulse">Rescuers Dispatched</p>
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                    <span className="text-5xl font-black text-white tabular-nums">{rescuersCount}</span>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-2 tracking-widest">Mobile Units Approaching</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                  Emergency services in your district have been notified of your coordinates. Stay at your location if safe.
+                </p>
+              )}
+
               <button
                 onClick={handleClose}
                 className="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all"

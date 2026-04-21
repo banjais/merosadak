@@ -1,38 +1,36 @@
 import Fuse from "fuse.js";
-import { logInfo, logError } from "../logs/logs.js";
-import { redisClient } from "./cacheService.js";
-import { getCachedRoads } from "./roadService.js";
-import { ROAD_STATUS } from "../constants/sheets.js";
-import { CACHE_ALERTS } from "../config/paths.js";
+import crypto from "crypto";
+import { logInfo, logError } from "@logs/logs.js";
+import { redisClient } from "@/services/cacheService.js";
+import { getCachedRoads } from "@/services/roadService.js";
+import { ROAD_STATUS } from "@/constants/sheets.js";
+import { CACHE_ALERTS } from "@/config/paths.js";
 import fs from "fs/promises";
-import { getCachedMonsoonRisk } from "./monsoonService.js";
-import { NOMINATIM_API_URL } from "../config/index.js";
-
-export interface SearchResult {
-  id: string;
-  name: string;
-  type: "road" | "traffic" | "poi" | "location" | "weather";
-  lat: number;
-  lng: number;
-  subtitle?: string;
-  source: "local" | "tomtom" | "osm" | "weather";
-  score?: number;
-  extra?: any;
-}
+import { getCachedMonsoonRisk } from "@/services/monsoonService.js";
+import { NOMINATIM_API_URL } from "@/config/index.js";
+import { resolveLabel } from "@/services/labelUtils.js";
+import { haversineDistance } from "@/services/geoUtils.js";
+import type { SearchResult } from "@/types.js";
+import { checkGeofence } from "@/services/geofenceService.js";
 
 let fuseIndex: Fuse<SearchResult> | null = null;
 
-function calculateHaversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+/**
+ * Internal helper for localizing search-specific UI strings
+ */
+function getLocalizedText(key: string, lang: string): string {
+  const dict: Record<string, Record<string, string>> = {
+    ne: {
+      "Blocked": "अवरोध",
+      "One-Lane": "एकतर्फी",
+      "Resumed": "सुचारु",
+      "Blocks": "अवरोधहरू",
+      "Clear": "खुल्ला",
+      "Monsoon Risks": "मनसुन जोखिमहरू",
+      "Near active": "नजिकै सक्रिय",
+    }
+  };
+  return dict[lang]?.[key] || key;
 }
 
 export const refreshIndexFromCaches = async () => {
@@ -59,13 +57,24 @@ export const refreshIndexFromCaches = async () => {
 
       items.push({
         id: `road-${props.id || props.road_refno}`,
-        name: props.road_name || props.road_refno,
+        name: resolveLabel(props.road_name, "en") || props.road_refno,
         type: "road",
         lat: coords[1],
         lng: coords[0],
         subtitle: `${props.status}${risk && ["HIGH", "EXTREME"].includes(risk.riskLevel) ? ` | ⛈️ Monsoon Risk` : ""}`,
         source: "local",
-        extra: { ...props, riskLevel: risk?.riskLevel },
+        extra: {
+          ...props,
+          riskLevel: risk?.riskLevel,
+          road_name: resolveLabel(props.road_name, "en"),
+          road_name_ne: resolveLabel(props.road_name, "ne"),
+          remarks: resolveLabel(props.remarks, "en"),
+          remarks_ne: resolveLabel(props.remarks, "ne"),
+          incidentDistrict: resolveLabel(props.incidentDistrict, "en"),
+          incidentDistrict_ne: resolveLabel(props.incidentDistrict, "ne"),
+          incidentPlace: resolveLabel(props.incidentPlace, "en"),
+          incidentPlace_ne: resolveLabel(props.incidentPlace, "ne")
+        },
       });
     });
 
@@ -74,8 +83,7 @@ export const refreshIndexFromCaches = async () => {
       const alerts = JSON.parse(alertsRaw);
       alerts.forEach((a: any) => {
         items.push({
-          id: `alert-${Date.now()}-${Math.random()}`,
-          name: a.type,
+          id: `alert-${crypto.randomUUID().substring(0, 8)}`,
           type: "traffic",
           lat: a.lat,
           lng: a.lng,
@@ -88,8 +96,38 @@ export const refreshIndexFromCaches = async () => {
       logInfo("No cached alerts to index.");
     }
 
+    // Fetch POIs from Redis to include in search index
+    try {
+      const poiData = await redisClient?.get<SearchResult[]>("poi:all");
+      if (poiData && Array.isArray(poiData)) {
+        poiData.forEach(p => {
+          items.push({
+            ...p,
+            id: `poi-${p.id}`,
+            source: "local-poi",
+          });
+        });
+      }
+    } catch (err: any) {
+      logInfo("No cached POIs to index.");
+    }
+
     fuseIndex = new Fuse(items, {
-      keys: ["name", "subtitle", "extra.road_refno", "extra.district", "extra.province", "extra.place"],
+      keys: [
+        "name",
+        "subtitle",
+        "extra.road_refno",
+        "extra.road_name",
+        "extra.road_name_ne",
+        "extra.remarks",
+        "extra.remarks_ne",
+        "extra.incidentDistrict",
+        "extra.incidentDistrict_ne",
+        "extra.incidentPlace",
+        "extra.incidentPlace_ne",
+        "extra.dist_name",
+        "extra.province"
+      ],
       threshold: 0.3,
       includeScore: true,
     });
@@ -100,16 +138,30 @@ export const refreshIndexFromCaches = async () => {
   }
 };
 
-export const searchEntities = async (query: string, limit: number = 10): Promise<SearchResult[]> => {
+export const searchEntities = async (query: string, limit: number = 10, lang: string = "en"): Promise<SearchResult[]> => {
   if (!query) return [];
   const results: SearchResult[] = [];
 
   if (fuseIndex) {
     const fuseResults = fuseIndex.search(query, { limit: 50 });
-    results.push(...fuseResults.map(r => ({ ...r.item, score: r.score })));
+    results.push(...fuseResults.map(r => {
+      const item = { ...r.item, score: r.score };
+
+      // Apply real-time localization for road segments
+      if (lang === "ne" && item.type === "road" && item.extra) {
+        item.name = item.extra.road_name_ne || item.name;
+        const localizedStatus = getLocalizedText(item.extra.status, "ne");
+        const localizedRisk = item.subtitle?.includes("Monsoon Risk")
+          ? ` | ⛈️ ${getLocalizedText("Monsoon Risks", "ne")}`
+          : "";
+        item.subtitle = `${localizedStatus}${localizedRisk}`;
+      }
+
+      return item;
+    }));
   }
 
-  const highwayMatches = await searchHighways(query);
+  const highwayMatches = await searchHighways(query, lang);
   results.push(...highwayMatches);
 
   if (results.length < 3) {
@@ -117,10 +169,20 @@ export const searchEntities = async (query: string, limit: number = 10): Promise
     results.push(...externalResults);
   }
 
-  return injectIncidentContext(results).then(res => res.slice(0, limit));
+  return injectIncidentContext(results, lang).then(res => {
+    // Sort results: prioritize those NOT in danger zones
+    return (res as any[]).sort((a, b) => {
+      const scoreA = a.safety_score ?? 100;
+      const scoreB = b.safety_score ?? 100;
+
+      // Secondary sort by Fuse score (relevance) if safety is equal
+      if (scoreA === scoreB) return (a.score || 0) - (b.score || 0);
+      return scoreB - scoreA; // Descending: 100 (Safe) first
+    }).slice(0, limit);
+  });
 };
 
-async function searchHighways(query: string): Promise<SearchResult[]> {
+async function searchHighways(query: string, lang: string = "en"): Promise<SearchResult[]> {
   const normQuery = query.toUpperCase().replace(/\s+/g, "");
   const data = await getCachedRoads();
   const monsoonRisks = await getCachedMonsoonRisk();
@@ -132,9 +194,20 @@ async function searchHighways(query: string): Promise<SearchResult[]> {
     const props = f.properties;
     if (!props) return;
     const ref = (props.road_refno || "").toUpperCase();
-    const name = (props.road_refno || props.road_name || "").toUpperCase();
+    const name = (props.road_refno || resolveLabel(props.road_name, "en") || "").toUpperCase();
+    const nameNe = resolveLabel(props.road_name, "ne");
 
-    if (ref.includes(normQuery) || name.includes(normQuery) || props.dist_name?.toUpperCase().includes(normQuery)) {
+    // Resolve district name from either Label object (incidents) or string (highway segments)
+    const district = resolveLabel(props.incidentDistrict, "en") || props.dist_name || "";
+    const districtNe = resolveLabel(props.incidentDistrict, "ne") || "";
+
+    if (
+      ref.includes(normQuery) ||
+      name.includes(normQuery) ||
+      nameNe.toLowerCase().includes(query.toLowerCase()) ||
+      district.toUpperCase().includes(normQuery) ||
+      districtNe.toLowerCase().includes(query.toLowerCase())
+    ) {
       const key = ref || name;
       if (!highwayMap.has(key)) {
         const geomCoords = f.geometry?.type === "LineString" ? f.geometry.coordinates[0]
@@ -146,7 +219,7 @@ async function searchHighways(query: string): Promise<SearchResult[]> {
 
         highwayMap.set(key, {
           id: `hw-${key}`,
-          name: props.road_name || props.road_refno,
+          name: resolveLabel(props.road_name, lang) || props.road_refno,
           type: "road",
           lat: geomCoords[1],
           lng: geomCoords[0],
@@ -167,20 +240,41 @@ async function searchHighways(query: string): Promise<SearchResult[]> {
     }
   });
 
-  return Array.from(highwayMap.values()).map(h => ({
-    ...h,
-    subtitle: `${h.ref ? "[" + h.ref + "] " : ""}${h.blocked > 0 ? "❌ " + h.blocked + " Blocks" : "✅ Clear"}${h.oneWay > 0 ? " | ⚠️ " + h.oneWay + " One-Lane" : ""
-      }${h.highRiskMonsoon > 0 ? " | ⛈️ " + h.highRiskMonsoon + " Monsoon Risks" : ""}`,
-    extra: { ...h },
-  }));
+  return Array.from(highwayMap.values()).map(h => {
+    const subtitle = `${h.ref ? "[" + h.ref + "] " : ""}${h.blocked > 0 ? "❌ " + h.blocked + " " + getLocalizedText("Blocks", lang) : "✅ " + getLocalizedText("Clear", lang)}${h.oneWay > 0 ? " | ⚠️ " + h.oneWay + " " + getLocalizedText("One-Lane", lang) : ""
+      }${h.highRiskMonsoon > 0 ? " | ⛈️ " + h.highRiskMonsoon + " " + getLocalizedText("Monsoon Risks", lang) : ""}`;
+
+    return {
+      ...h,
+      subtitle,
+      extra: { ...h },
+    };
+  });
 }
 
-async function injectIncidentContext(results: SearchResult[]): Promise<SearchResult[]> {
+async function injectIncidentContext(results: SearchResult[], lang: string = "en"): Promise<SearchResult[]> {
   const roads = await getCachedRoads();
   const incidents = roads.merged.filter((f: any) => f.properties && f.properties.status !== ROAD_STATUS.RESUMED);
 
   return results.map(res => {
-    if (res.type !== "location") return res;
+    // 1. Geofencing check for danger zones
+    const geofences = checkGeofence({ lat: res.lat, lng: res.lng });
+    const activeDangerZone = geofences.find(g => g.inside && g.zone.riskLevel !== 'low');
+
+    let safetyScore = 100;
+
+    if (activeDangerZone) {
+      const level = activeDangerZone.zone.riskLevel;
+      if (level === 'critical') safetyScore = 10;
+      else if (level === 'high') safetyScore = 40;
+      else if (level === 'medium') safetyScore = 70;
+
+      res.subtitle = `⚠️ [${activeDangerZone.zone.riskLevel.toUpperCase()} RISK] ${activeDangerZone.zone.name} | ${res.subtitle}`;
+      res.extra = { ...res.extra, dangerZone: activeDangerZone.zone };
+    }
+
+    // 2. Incident Proximity check (Road hazards)
+    if (res.type !== "location" && res.type !== "poi") return res;
 
     const nearby = incidents.find((inc: any) => {
       if (!inc.geometry?.coordinates) return false;
@@ -189,13 +283,28 @@ async function injectIncidentContext(results: SearchResult[]): Promise<SearchRes
       else if (inc.geometry.type === "MultiLineString") coords = inc.geometry.coordinates[0]?.[0];
       else if (inc.geometry.type === "Point") coords = inc.geometry.coordinates;
       if (!coords || coords.length < 2) return false;
-      return calculateHaversine(res.lat, res.lng, coords[1], coords[0]) < 2;
+      return haversineDistance(res.lat, res.lng, coords[1], coords[0]) < 2;
     });
 
     if (nearby) {
-      return { ...res, subtitle: `⚠️ Near active ${nearby.properties?.status}: ${nearby.properties?.road_name}`, extra: { ...res.extra, incident: nearby.properties } };
+      safetyScore = Math.min(safetyScore, 60); // Incident presence lowers score
+
+      const localizedPrefix = getLocalizedText("Near active", lang);
+      const status = getLocalizedText(nearby.properties?.status, lang);
+      const name = resolveLabel(nearby.properties?.road_name, lang);
+
+      return {
+        ...res,
+        subtitle: `🚦 ${localizedPrefix} ${status}: ${name} | ${res.subtitle}`,
+        safety_score: safetyScore,
+        extra: { ...res.extra, incident: nearby.properties }
+      };
     }
-    return res;
+
+    return {
+      ...res,
+      safety_score: safetyScore
+    };
   });
 }
 
@@ -235,7 +344,9 @@ async function fetchExternalAPIs(query: string): Promise<SearchResult[]> {
 export async function searchLocation(query: string) {
   try {
     if (!query) return [];
-    const url = `${NOMINATIM_API_URL}/search?format=json&q=${encodeURIComponent(query)}&viewbox=80,26,89,31&bounded=1&limit=5`;
+    // Use the configured URL or fallback to OSM's public instance, ensuring no trailing slash
+    const baseUrl = (NOMINATIM_API_URL || "https://nominatim.openstreetmap.org").replace(/\/$/, "");
+    const url = `${baseUrl}/search?format=json&q=${encodeURIComponent(query)}&viewbox=80.0,26.3,88.3,30.5&bounded=1&limit=5`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
     const response = await fetch(url, {

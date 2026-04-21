@@ -1,19 +1,29 @@
-import { useState, useEffect } from 'react';
-import { alertService, AppAlert } from '../services/apiService';
+import { useState, useEffect, useCallback } from 'react';
+import { api, TravelIncident } from '../services/apiService';
+import { useTranslation } from '../i18n';
 
-export function useAlert() {
-  const [alerts, setAlerts] = useState<AppAlert[]>([]);
+export const useAlert = (lat?: number, lng?: number) => {
+  const [alerts, setAlerts] = useState<TravelIncident[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { i18n } = useTranslation();
 
+  const refreshAlerts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Pass location and current language
+      const data = await api.getAlerts(lat, lng, i18n.language);
+      setAlerts(data);
+    } catch (error) {
+      console.error('[useAlert] Fetch failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [lat, lng, i18n.language]);
+
+  // Auto-refresh when params or language change
   useEffect(() => {
-    return alertService.subscribe(setAlerts);
-  }, []);
+    refreshAlerts();
+  }, [refreshAlerts]);
 
-  return { 
-    alerts, 
-    dismiss: alertService.dismiss,
-    success: (msg: string) => alertService.notify('success', msg),
-    error: (msg: string) => alertService.notify('error', msg),
-    info: (msg: string) => alertService.notify('info', msg),
-    warning: (msg: string) => alertService.notify('warning', msg)
-  };
-}
+  return { alerts, isLoading, refresh: refreshAlerts };
+};

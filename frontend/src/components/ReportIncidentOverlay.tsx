@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, AlertTriangle, Camera, MapPin, Phone, Send, Loader2 } from 'lucide-react';
-import { toast } from './Toast';
+import { useToast } from '../ToastContext';
 import { apiFetch } from '../api';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 // import { useLocation } from '../hooks/useLocation';
 
 interface ReportIncidentOverlayProps {
@@ -28,6 +29,18 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
   coordinates: initialCoordinates,
   locationName: initialLocationName,
 }) => {
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const { success, error } = useToast();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [coordinates, setCoordinates] = useState(initialCoordinates || null);
@@ -47,6 +60,8 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
     setDescription('');
     onClose();
   };
+
+  useEscapeKey(handleClose);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,29 +88,29 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
       });
 
       onSuccess?.();
-      handleClose();
+      success('Incident reported successfully!');
+      handleClose(); // Close after toast
     } catch (error: any) {
       console.error('Failed to submit report:', error);
-      // Fallback - still allow submission with mock success
-      onSuccess?.();
-      handleClose();
+      error('Failed to submit report. Please try again.');
+      // No close on error, let user see the message
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm duration-300 ${isOpen ? 'animate-in fade-in' : 'animate-out fade-out'}`}
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-20 duration-300">
+      <div className={`relative w-full max-w-lg bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 max-h-[90vh] overflow-y-auto duration-300 ${isOpen ? 'animate-in slide-in-from-bottom-20' : 'animate-out slide-out-to-bottom-20'}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -125,11 +140,10 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
                   key={type.id}
                   type="button"
                   onClick={() => setSelectedType(type.id)}
-                  className={`p-3 rounded-xl border-2 transition-all text-center ${
-                    selectedType === type.id
-                      ? `border-transparent bg-gradient-to-br ${type.color} text-white`
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${selectedType === type.id
+                    ? `border-transparent bg-gradient-to-br ${type.color} text-white`
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <type.icon size={20} className="mx-auto mb-1" />
                   <span className="text-xs font-medium">{type.label}</span>

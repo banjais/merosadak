@@ -25,6 +25,9 @@ module.exports = defineConfig({
   outExtension({ format }) {
     return { js: `.js` };
   },
+  loader: {
+    ".ts": "ts",
+  },
   external: [
     "ws",
     "ioredis",
@@ -53,7 +56,8 @@ module.exports = defineConfig({
     "util",
     "os",
     "fs",
-    "path"
+    "path",
+    "@turf/turf",
   ],
   splitting: true,
   minify: false,
@@ -65,5 +69,7 @@ module.exports = defineConfig({
       "@": path.resolve(__dirname, "src"),
       "@logs": path.resolve(__dirname, "src/logs"),
     };
+    // Resolve .js imports to .ts files
+    options.resolveExtensions = [".ts", ".tsx", ".js", ".jsx", ".json"];
   },
 });

@@ -1,4 +1,5 @@
 import { apiFetch } from '../api';
+import { haversineDistance } from './geoUtils';
 
 export interface ServiceItem {
   id: string;
@@ -24,18 +25,6 @@ const SERVICE_TYPES: Record<string, string> = {
   monsoon: 'weather',
   roads: 'road',
 };
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const EARTH_RADIUS_KM = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLng / 2) ** 2;
-  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 /**
  * Fetch POI data from the backend API.
@@ -77,7 +66,7 @@ async function fetchFromBackend(
         phone: props.phone || props.phoneNumber || '',
         hours: props.hours || props.openingHours || '',
         rating: parseFloat(props.rating || 0),
-        distance: haversineKm(lat, lng, parseFloat(poiLat) || 0, parseFloat(poiLng) || 0),
+        distance: haversineDistance(lat, lng, parseFloat(poiLat) || 0, parseFloat(poiLng) || 0),
         status: props.status || item.status || 'active',
         description: props.description || props.remarks || props.category || '',
         source: 'backend' as const,

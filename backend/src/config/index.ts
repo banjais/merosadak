@@ -49,7 +49,7 @@ const envSchema = z.object({
     : z.string().default("super-secret-key"),
   JWT_EXPIRES_IN: z.string().default("7d"),
 
-  GAS_URL: z.string().url().optional(),
+  GAS_URL: z.string().url().optional().or(z.literal("")),
   SHEET_ID: z.string().optional(),
   SHEET_TAB: z.string().default("Roads"),
 
@@ -75,11 +75,11 @@ const envSchema = z.object({
   TAB_TOLL: z.string().optional(),
 
   // Cloudflare
-  CLOUDFLARE_URL: z.string().url().optional(),
+  CLOUDFLARE_URL: z.string().url().optional().or(z.literal("")),
   CLOUDFLARE_API_TOKEN: z.string().optional(),
 
   // Waze
-  WAZE_XML: z.string().url().optional(),
+  WAZE_XML: z.string().url().optional().or(z.literal("")),
 
   // Upstash
   UPSTASH_REDIS_REST_URL: z.string().optional(),
@@ -111,8 +111,11 @@ const envSchema = z.object({
   // TomTom
   TOMTOM_API_KEY: z.string().optional(),
 
+  // OpenStreetMap
+  OSM_API_KEY: z.string().optional(),
+
   // Waze
-  WAZE_JSON: z.string().url().optional(),
+  WAZE_JSON: z.string().url().optional().or(z.literal("")),
 
   // Firebase
   FIREBASE_API_KEY: z.string().optional(),
@@ -125,12 +128,12 @@ const envSchema = z.object({
   FIREBASE_APP_ID: z.string().optional(),
   FIREBASE_MEASUREMENT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
-  FIREBASE_BACKEND: z.string().url().optional(),
+  FIREBASE_BACKEND: z.string().url().optional().or(z.literal("")),
 
   // Render
   RENDER_TOKEN: z.string().optional(),
-  RENDER_BACKEND: z.string().url().optional(),
-  RENDER_DEPLOY_HOOK: z.string().url().optional(),
+  RENDER_BACKEND: z.string().url().optional().or(z.literal("")),
+  RENDER_DEPLOY_HOOK: z.string().url().optional().or(z.literal("")),
 
   // Sentry
   SENTRY_DSN: z.string().optional(),
@@ -162,6 +165,11 @@ const envSchema = z.object({
   // WebSocket
   WS_ENABLED: boolSchema.default(true),
   WS_PORT: z.coerce.number().default(8080),
+
+  // Alerts
+  ALERT_SUMMARY_THRESHOLD: z.coerce.number().default(5),
+  ALERT_NOTIFICATION_TTL_SEC: z.coerce.number().default(86400),
+  PRIORITY_ROADS: z.string().default(""),
 
   // Web Push
   VAPID_PUBLIC_KEY: z.string().optional(),
@@ -309,6 +317,8 @@ export const GOOGLE_MAPS_API_URL = config.GOOGLE_MAPS_API_URL || "https://maps.g
 // TomTom
 export const TOMTOM_API_KEY = config.TOMTOM_API_KEY || "";
 
+export const OSM_API_KEY = config.OSM_API_KEY || "";
+
 // -----------------------------
 // Firebase
 export const FIREBASE_API_KEY = config.FIREBASE_API_KEY || "";
@@ -367,6 +377,12 @@ export const WS_ENABLED = config.WS_ENABLED ?? true;
 export const WS_PORT = config.WS_PORT ?? 8080;
 
 // -----------------------------
+// Alerts
+export const ALERT_SUMMARY_THRESHOLD = config.ALERT_SUMMARY_THRESHOLD;
+export const ALERT_NOTIFICATION_TTL_SEC = config.ALERT_NOTIFICATION_TTL_SEC;
+export const PRIORITY_ROADS = (config.PRIORITY_ROADS || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+
+// -----------------------------
 // Feature Flags
 export const FORCE_FETCH = config.FORCE_FETCH ?? false;
 export const DEFAULT_LANGUAGE = config.DEFAULT_LANGUAGE || "en";
@@ -383,7 +399,3 @@ export const USE_MOCK = config.USE_MOCK;
 // -----------------------------
 export const isProd = config.NODE_ENV === "production";
 export const isDev = config.NODE_ENV === "development";
-
-// -----------------------------
-// Export cache service functions
-export { withCache, getCacheStats, getCacheHealth, getUpstashUsage, clearCache } from "../services/cacheService.js";

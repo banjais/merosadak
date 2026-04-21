@@ -1,7 +1,9 @@
 // backend/src/controllers/searchController.ts
 import { Request, Response } from "express";
-import { searchEntities, SearchResult } from "../services/searchService.js";
-import { logError } from "../logs/logs.js";
+import { searchEntities } from "../services/searchService.js";
+import type { SearchResult } from "../types.js";
+import { asyncHandler } from "../middleware/errorHandler.js";
+import { withCache } from "../services/cacheService.js";
 
 /**
  * @route   GET /api/search
@@ -10,26 +12,23 @@ import { logError } from "../logs/logs.js";
  * @query   q: string (search term)
  * @query   limit: number (optional, default 10)
  */
-export const handleSearch = async (req: Request, res: Response) => {
-  try {
-    const { q, limit } = req.query;
+export const handleSearch = asyncHandler(async (req: Request, res: Response) => {
+  // Data is pre-validated and coerced by validation middleware (validateQuery)
+  const { q, limit, lang } = req.query as any;
 
-    if (!q || typeof q !== "string") {
-      return res.status(400).json({ success: false, error: "Query parameter 'q' is required" });
-    }
+  // Generate a unique cache key based on query, limit, and language
+  const cacheKey = `search:${lang}:${limit}:${String(q).toLowerCase().trim()}`;
 
-    const maxResults = limit ? parseInt(String(limit), 10) : 10;
+  const results: SearchResult[] = await withCache(
+    cacheKey,
+    () => searchEntities(q, limit, lang),
+    300 // Cache results for 5 minutes (300 seconds)
+  );
 
-    const results: SearchResult[] = await searchEntities(q, maxResults);
-
-    return res.status(200).json({
-      success: true,
-      query: q,
-      count: results.length,
-      data: results
-    });
-  } catch (err: any) {
-    logError("[SearchController] Search failed", { error: err.message, stack: err.stack });
-    return res.status(500).json({ success: false, error: "Internal Server Error" });
-  }
-};
+  res.status(200).json({
+    success: true,
+    query: q,
+    count: results.length,
+    data: results
+  });
+});

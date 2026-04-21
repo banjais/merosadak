@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { X, Check, ChevronRight } from 'lucide-react';
 import { POICategory, POI_CATEGORIES, UserPOIPreferences } from '../types/poi';
 import { getUserPOIPreferences, saveUserPOIPreferences, markOnboardingComplete } from '../services/userPreferencesService';
+import { useSettings } from '../SettingsContext';
 
 interface UserPreferencesScreenProps {
   isDarkMode: boolean;
@@ -12,11 +13,11 @@ interface UserPreferencesScreenProps {
   onSkip: () => void;
 }
 
-export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
-  isDarkMode,
+export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({ // isDarkMode is now from context
   onComplete,
   onSkip
 }) => {
+  const { isDarkMode } = useSettings();
   const existingPrefs = getUserPOIPreferences();
   const [step, setStep] = useState(0);
   const [preferences, setPreferences] = useState<UserPOIPreferences>({
@@ -73,20 +74,17 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className={`relative w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden ${
-        isDarkMode ? 'bg-slate-900' : 'bg-white'
-      }`}>
-        {/* Header */}
-        <div className={`p-4 border-b flex items-center justify-between ${
-          isDarkMode ? 'border-slate-700' : 'border-gray-200'
+      <div className={`relative w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden ${isDarkMode ? 'bg-slate-900' : 'bg-white'
         }`}>
+        {/* Header */}
+        <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-700' : 'border-gray-200'
+          }`}>
           <div className="flex items-center gap-2">
             {[0, 1, 2, 3].map(i => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  i <= step ? 'bg-blue-600' : isDarkMode ? 'bg-slate-700' : 'bg-gray-300'
-                }`}
+                className={`w-2 h-2 rounded-full transition-colors ${i <= step ? 'bg-blue-600' : isDarkMode ? 'bg-slate-700' : 'bg-gray-300'
+                  }`}
               />
             ))}
           </div>
@@ -115,13 +113,12 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
                   <button
                     key={ag.id}
                     onClick={() => setPreferences(prev => ({ ...prev, ageGroup: ag.id as any }))}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                      preferences.ageGroup === ag.id
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${preferences.ageGroup === ag.id
                         ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                         : isDarkMode
                           ? 'border-slate-700 hover:border-slate-600'
                           : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <span className="text-3xl">{ag.icon}</span>
                     <div className="text-left flex-1">
@@ -156,13 +153,12 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
                   <button
                     key={ts.id}
                     onClick={() => setPreferences(prev => ({ ...prev, travelStyle: ts.id as any }))}
-                    className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-                      preferences.travelStyle === ts.id
+                    className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${preferences.travelStyle === ts.id
                         ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                         : isDarkMode
                           ? 'border-slate-700 hover:border-slate-600'
                           : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <span className="text-3xl mb-2">{ts.icon}</span>
                     <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -192,13 +188,12 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
                   <button
                     key={tw.id}
                     onClick={() => setPreferences(prev => ({ ...prev, travelingWith: tw.id as any }))}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
-                      preferences.travelingWith === tw.id
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${preferences.travelingWith === tw.id
                         ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                         : isDarkMode
                           ? 'border-slate-700 hover:border-slate-600 text-gray-300'
                           : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                    }`}
+                      }`}
                   >
                     <span className="text-xl">{tw.icon}</span>
                     <span className="font-bold text-sm">{tw.label}</span>
@@ -244,20 +239,18 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
                     <button
                       key={cat.id}
                       onClick={() => toggleInterest(cat.id)}
-                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${
-                        isSelected
+                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${isSelected
                           ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
                           : isDarkMode
                             ? 'border-slate-700 hover:border-slate-600'
                             : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <span className="text-2xl mb-1">{cat.icon}</span>
-                      <span className={`text-[10px] font-bold text-center ${
-                        isSelected
+                      <span className={`text-[10px] font-bold text-center ${isSelected
                           ? 'text-blue-700 dark:text-blue-300'
                           : isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
+                        }`}>
                         {cat.name}
                       </span>
                     </button>
@@ -273,14 +266,12 @@ export const UserPreferencesScreen: React.FC<UserPreferencesScreenProps> = ({
         </div>
 
         {/* Footer */}
-        <div className={`p-4 border-t flex items-center justify-between ${
-          isDarkMode ? 'border-slate-700' : 'border-gray-200'
-        }`}>
+        <div className={`p-4 border-t flex items-center justify-between ${isDarkMode ? 'border-slate-700' : 'border-gray-200'
+          }`}>
           <button
             onClick={onSkip}
-            className={`px-4 py-2 text-sm font-bold ${
-              isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
-            }`}
+            className={`px-4 py-2 text-sm font-bold ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
+              }`}
           >
             Skip
           </button>

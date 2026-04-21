@@ -1,172 +1,53 @@
-// backend/src/services/poiService.ts
-import fs from "fs/promises";
-import axios from "axios";
-import { CACHE_DIR, CACHE_POI } from "../config/paths.js";
-import { logInfo, logError } from "../logs/logs.js";
-import { config, TOMTOM_API_URL, TOMTOM_API_KEY } from "../config/index.js";
+import { getCache } from "./cacheService.js";
+import { config } from "../config/index.js";
+import { fetchPOIsFromOverpass } from "./overpassService.js";
 import { getMarkerIcon } from "../utils/iconMap.js";
-import { withCache } from "./cacheService.js";
-import { fetchOverpassPOIs } from "./overpassService.js"; // <- new import
+import { haversineDistance } from "./etaService.js";
 
-export interface POIResult {
-  id: string;
-  name: string;
-  location: { lat: number; lng: number };
-  category: string;
-  icon: string;
-  address: string;
-  source: "tomtom" | "overpass";
-  isTouristFriendly: boolean;
-  
-  // Enhanced POI details
-  details?: {
-    openingHours?: string;           // "Mon-Fri: 9AM-5PM" or "24/7"
-    isOpenNow?: boolean;             // Real-time open status
-    phone?: string;                  // Contact number
-    website?: string;                // Official website
-    rating?: number;                 // 1-5 star rating
-    priceLevel?: number;             // 1-4 ($ to $$$$)
-    
-    // For tourist attractions
-    entryFee?: {
-      adult: number;                 // NPR for adults
-      child: number;                 // NPR for children
-      seniorCitizen: number;         // NPR for seniors
-      foreigner: number;             // NPR for foreigners (if different)
-      currency: string;              // "NPR" or "USD"
-    };
-    
-    // For restaurants/hotels
-    cuisine?: string[];              // ["Nepali", "Indian", "Chinese"]
-    amenities?: string[];            // ["WiFi", "Parking", "AC", "Vegetarian"]
-    
-    // For hospitals
-    emergency?: boolean;             // 24/7 emergency services
-    specialties?: string[];          // ["Cardiology", "Orthopedics"]
-    
-    // For fuel stations
-    fuelTypes?: string[];            // ["Petrol", "Diesel", "CNG"]
-    services?: string[];             // ["Air Pump", "Car Wash", "Shop"]
-    
-    // Accessibility
-    wheelchairAccessible?: boolean;  // Wheelchair access
-    parkingAvailable?: boolean;      // Parking available
-    
-    // Additional info
-    description?: string;            // Brief description
-    bestTimeToVisit?: string;        // "Oct-Nov" or "Morning"
-    averageVisitDuration?: string;   // "2-3 hours"
-    crowdLevel?: "low" | "medium" | "high"; // Typical crowd level
-  };
-}
+/**
+ * Gets nearby POIs using a tiered provider approach.
+ */
+export async function getNearbyPOIs(lat: number, lng: number, category: string = "hospital") {
+  const cacheKey = `pois:${category}:${lat.toFixed(3)}:${lng.toFixed(3)}`;
 
-const POI_CACHE_TTL = 30 * 60; // 30 mins
+  return getCache(cacheKey, async () => {
+    let results: any[] = [];
 
-export const searchPOIs = async (
-  query: string,
-  lat?: number,
-  lng?: number
-): Promise<POIResult[]> => {
-  const key = `poi:${query}:${lat?.toFixed(3) ?? '0'}:${lng?.toFixed(3) ?? '0'}`;
-  return withCache(
-    key,
-    async () => {
-      // 1️⃣ Try TomTom first
+    // 1. Try TomTom (Primary)
+    if (config.TOMTOM_API_KEY) {
       try {
-        const res = await axios.get(
-          `${TOMTOM_API_URL}/search/2/search/${encodeURIComponent(query)}.json`,
-          {
-            params: {
-              key: TOMTOM_API_KEY,
-              lat,
-              lon: lng,
-              radius: 25_000,
-              countrySet: "NP",
-              limit: 20,
-            },
-            timeout: 10_000,
-          }
-        );
-
-        if (res.data?.results?.length) {
-          return res.data.results.map((item: any) => ({
-            id: item.id,
-            name: item.poi?.name ?? item.address.freeformAddress,
-            location: { lat: item.position.lat, lng: item.position.lon },
-            category: item.poi?.categories?.[0] ?? "General",
-            icon: getMarkerIcon(item.poi?.categories?.[0] ?? "General"),
-            address: item.address.freeformAddress,
-            source: "tomtom",
-            isTouristFriendly: checkTouristStatus(
-              item.poi?.categories?.[0],
-              item.poi?.name
-            ),
-          }));
-        }
-      } catch {
-        logInfo("⚠️ [POI] TomTom failed, fallback to Overpass");
-      }
-
-      // 2️⃣ Fallback: Overpass OSM
-      return fetchOverpassPOIs(sanitizeQuery(query), lat ?? 0, lng ?? 0, 25_000);
-    },
-    POI_CACHE_TTL
-  );
-};
-
-export async function refreshPOICache() {
-  logInfo("[POIService] Pre-warming POI cache...");
-
-  const defaultQueries = [
-    "hospital",
-    "fuel",
-    "hotel",
-    "restaurant",
-    "police",
-    "bus",
-    "airport",
-  ];
-
-  const lat = 27.7172;
-  const lng = 85.3240;
-
-  const results: Record<string, POIResult[]> = {};
-
-  for (const q of defaultQueries) {
-    try {
-      const pois = await searchPOIs(q, lat, lng);
-      results[q] = pois;
-      logInfo(`[POIService] Cached ${pois.length} POIs for "${q}"`);
-    } catch (err: any) {
-      logError("[POIService] Refresh failed", {
-        query: q,
-        error: err.message,
-      });
+        const url = `${config.TOMTOM_API_URL}/search/2/poiSearch/${category}.json?key=${config.TOMTOM_API_KEY}&lat=${lat}&lon=${lng}&radius=10000`;
+        const res = await fetch(url);
+        const data = await res.json() as any;
+        results = (data.results || []).map((r: any) => ({
+          id: r.id,
+          name: r.poi.name,
+          lat: r.position.lat,
+          lng: r.position.lon,
+          category,
+          source: 'tomtom',
+          address: r.address.freeformAddress
+        }));
+      } catch { /* Fallback to Overpass */ }
     }
+
+    // 2. Fallback to Overpass if TomTom failed or returned nothing
+    if (results.length === 0) {
+      results = await fetchPOIsFromOverpass(lat, lng, category);
+    }
+
+    return results.map(poi => ({
+      ...poi,
+      icon: getMarkerIcon(category),
+      distance: Math.round(haversineDistance(lat, lng, poi.lat, poi.lng) * 10) / 10
+    })).sort((a, b) => a.distance - b.distance);
+
+  }, 86400); // 24-hour cache
+}
+
+export const refreshPOICache = async () => {
+  const categories = ["hospital", "pharmacy", "fuel", "restaurant", "hotel"];
+  for (const category of categories) {
+    await getNearbyPOIs(27.7172, 85.3240, category);
   }
-
-  await fs.writeFile(CACHE_POI, JSON.stringify(results, null, 2), "utf-8");
-
-  return results;
-}
-
-function sanitizeQuery(q: string) {
-  return q.replace(/["';]/g, "").trim();
-}
-
-function checkTouristStatus(category: string, name?: string) {
-  const keywords = [
-    "tourist",
-    "resort",
-    "heritage",
-    "museum",
-    "airport",
-    "hotel",
-    "temple",
-  ];
-  const c = (category || "").toLowerCase();
-  const n = (name || "").toLowerCase();
-  return keywords.some(k => c.includes(k) || n.includes(k));
-}
-
-export const handleGetPOI = searchPOIs;
+};

@@ -1,59 +1,48 @@
 // backend/src/services/highwayService.ts
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR } from "../config/paths.js";
-import { logError, logInfo } from "../logs/logs.js";
-import type { FeatureCollection } from "../types.js";
-import { getCachedRoads } from "./roadService.js";
-import { getCachedMonsoonRisk } from "./monsoonService.js";
-import { ROAD_STATUS } from "../constants/sheets.js";
+import { DATA_DIR } from "@/config/paths.js";
+import { logError, logInfo } from "@logs/logs.js";
+import type { FeatureCollection } from "@/types.js";
+import { getCache } from "@/services/cacheService.js";
+import { ROAD_STATUS } from "@/constants/sheets.js";
+import { resolveLabel } from "@/services/labelUtils.js";
+import { haversineDistance, calculateBearing, calculateLineStringLength } from "@/services/geoUtils.js";
 
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
+const MASTER_HIGHWAY_FILE = path.join(HIGHWAY_DIR, "highways_master.geojson");
+const DISTRICT_MAPPING_FILE = new URL("./district_mapping.json", import.meta.url).pathname;
 
-// District to Province mapping (from Nepal government data)
-const DISTRICT_TO_PROVINCE: Record<string, string> = {
-  // Province 1
-  "Jhapa": "Province 1", "Morang": "Province 1", "Sunsari": "Province 1", "Dhankuta": "Province 1",
-  "Terhathum": "Province 1", "Sankhuwasabha": "Province 1", "Bhojpur": "Province 1", "Khotang": "Province 1",
-  "Okhaldhunga": "Province 1", "Solukhumbu": "Province 1", "Ilam": "Province 1", "Panchthar": "Province 1",
-  "Taplejung": "Province 1", "Udayapur": "Province 1",
-  // Province 2
-  "Saptari": "Province 2", "Siraha": "Province 2", "Dhanusha": "Province 2", "Mahottari": "Province 2",
-  "Sarlahi": "Province 2", "Bara": "Province 2", "Parsa": "Province 2", "Rautahat": "Province 2",
-  // Province 3 (Bagmati)
-  "Chitwan": "Province 3", "Makwanpur": "Province 3", "Dhading": "Province 3", "Nuwakot": "Province 3",
-  "Rasuwa": "Province 3", "Kathmandu": "Province 3", "Lalitpur": "Province 3", "Bhaktapur": "Province 3",
-  "Sindhuli": "Province 3", "Ramechhap": "Province 3", "Dolakha": "Province 3", "Kavrepalanchok": "Province 3",
-  "Sindhupalchok": "Province 3",
-  // Province 4 (Gandaki)
-  "Gorkha": "Province 4", "Manang": "Province 4", "Mustang": "Province 4", "Myagdi": "Province 4",
-  "Kaski": "Province 4", "Lamjung": "Province 4", "Tanahu": "Province 4", "Nawalpur": "Province 4",
-  "Parbat": "Province 4", "Baglung": "Province 4", "Syangja": "Province 4",
-  // Province 5 (Lumbini)
-  "Pyuthan": "Province 5", "Rolpa": "Province 5", "Rukum East": "Province 5",
-  "Dang": "Province 5", "Banke": "Province 5", "Bardiya": "Province 5", "Kapilvastu": "Province 5",
-  "Rupandehi": "Province 5", "Palpa": "Province 5", "Gulmi": "Province 5", "Arghakhanchi": "Province 5",
-  "Parasi": "Province 5",
-  // Province 6 (Karnali)
-  "Dolpa": "Province 6", "Mugu": "Province 6", "Jumla": "Province 6", "Kalikot": "Province 6",
-  "Dailekh": "Province 6", "Jajarkot": "Province 6", "Surkhet": "Province 6", "Salyan": "Province 6",
-  "Humla": "Province 6", "Rukum West": "Province 6",
-  // Province 7 (Sudurpashchim)
-  "Bajura": "Province 7", "Bajhang": "Province 7", "Darchula": "Province 7", "Kanchanpur": "Province 7",
-  "Kailali": "Province 7", "Doti": "Province 7", "Achham": "Province 7", "Dadeldhura": "Province 7",
-  "Baitadi": "Province 7",
-};
+let isIndexUpdating = false;
+let districtMappingCache: Record<string, string> | null = null;
+
+/**
+ * Loads the district-to-province mapping from disk.
+ */
+async function getDistrictMapping(): Promise<Record<string, string>> {
+  if (districtMappingCache) return districtMappingCache;
+  try {
+    const data = await fs.readFile(DISTRICT_MAPPING_FILE, "utf-8");
+    districtMappingCache = JSON.parse(data);
+    return districtMappingCache!;
+  } catch (err: any) {
+    logError("[HighwayService] Failed to load district mapping", err.message);
+    return {};
+  }
+}
 
 // Also check if input matches key (case-insensitive)
-function getProvincesByDistricts(districts: string[]): string[] {
+export async function getProvincesByDistricts(districts: string[]): Promise<string[]> {
   const provinces = new Set<string>();
+  const mapping = await getDistrictMapping();
+
   for (const d of districts) {
     // Try exact match first, then case-insensitive
-    let province = DISTRICT_TO_PROVINCE[d];
+    let province = mapping[d];
     if (!province) {
       // Try case-insensitive search
-      for (const [dist, prov] of Object.entries(DISTRICT_TO_PROVINCE)) {
+      for (const [dist, prov] of Object.entries(mapping)) {
         if (dist.toLowerCase() === d.toLowerCase()) {
           province = prov;
           break;
@@ -97,10 +86,10 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
     }
 
     const districtArray = Array.from(districts).sort();
-    const provinceArray = getProvincesByDistricts(districtArray);
+    const provinceArray = await getProvincesByDistricts(districtArray);
 
     return {
-      highway: { code, name: geojson.features[0]?.properties?.road_name || code },
+      highway: { code, name: resolveLabel(geojson.features[0]?.properties?.road_name) || code },
       route: {
         districts: districtArray,
         provinces: provinceArray,
@@ -129,7 +118,7 @@ export async function getHighwayLinkedData(code: string): Promise<any> {
 /**
  * Get incidents for a specific highway - fast endpoint
  */
-export async function getHighwayIncidents(code: string): Promise<any> {
+export async function getHighwayIncidents(code: string, lang: string = "en"): Promise<any> {
   const normalizedCode = code.toUpperCase();
   try {
     // Get highway to know which districts it passes through
@@ -137,10 +126,11 @@ export async function getHighwayIncidents(code: string): Promise<any> {
     const metadata = indexData.find(h => h.code === normalizedCode);
     if (!metadata) return null;
 
-    const highwayFile = path.join(HIGHWAY_DIR, metadata.file);
-    const geojson: FeatureCollection = JSON.parse(await fs.readFile(highwayFile, "utf-8"));
+    const geojson = await getHighwayByCode(normalizedCode);
+    if (!geojson) return null;
 
     // Get road data - only filter by this highway
+    const { getCachedRoads } = await import("@/services/roadService.js");
     const roadData = await getCachedRoads();
     const highwayRoads = roadData.merged.filter((r: any) =>
       r.properties?.road_refno === normalizedCode
@@ -161,7 +151,7 @@ export async function getHighwayIncidents(code: string): Promise<any> {
     const sheetIncidents = highwayRoads.filter((r: any) => r.source === "sheet" && r.status !== ROAD_STATUS.RESUMED);
     const byDistrictFromSheet: Record<string, any> = {};
     for (const inc of sheetIncidents) {
-      const dist = inc.properties?.incidentDistrict || "Unknown";
+      const dist = resolveLabel(inc.properties?.incidentDistrict, lang) || "Unknown";
       if (!byDistrictFromSheet[dist]) byDistrictFromSheet[dist] = { blocked: 0, oneLane: 0, places: [] };
       if (inc.status === ROAD_STATUS.BLOCKED) byDistrictFromSheet[dist].blocked++;
       else if (inc.status === ROAD_STATUS.ONE_LANE) byDistrictFromSheet[dist].oneLane++;
@@ -190,50 +180,63 @@ export async function getHighwayIncidents(code: string): Promise<any> {
 /**
  * Get list of available highways with metadata
  */
-export async function getHighwayList(): Promise<Array<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[] }>> {
-  try {
-    const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
-    return indexData;
-  } catch (err: any) {
-    logError("[HighwayService] Failed to load highway index", err.message);
-    return [];
+export async function getHighwayList(): Promise<Array<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[], lengthKm?: number }>> {
+  const highways = await getCache("highways:index", async () => {
+    try {
+      const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
+      return indexData;
+    } catch (err: any) {
+      logError("[HighwayService] Failed to load highway index", err.message);
+      return [];
+    }
+  }, 86400);
+
+  // Check for missing lengths and trigger background update if needed
+  if (!isIndexUpdating && highways.length > 0 && highways.some(h => h.lengthKm === undefined || h.lengthKm === null)) {
+    logInfo("[HighwayService] Missing highway lengths detected. Triggering automatic index update...");
+    // Run in background to keep the API responsive
+    updateHighwayIndexLengths().catch(err => {
+      logError("[HighwayService] Automatic index update failed", err.message);
+    });
   }
+
+  return highways;
 }
 
 /**
- * Get specific highway geojson by code
+ * Get the Master GeoJSON containing all highways in a single file
+ * Optimized for the main map overview
  */
-export async function getHighwayByCode(code: string): Promise<FeatureCollection | null> {
+export async function getHighwayMasterGeoJSON(): Promise<FeatureCollection | null> {
+  return getCache("highways:master_geojson", async () => {
+    try {
+      const data = await fs.readFile(MASTER_HIGHWAY_FILE, "utf-8");
+      return JSON.parse(data);
+    } catch (err: any) {
+      logError("[HighwayService] Master GeoJSON not found or invalid", err.message);
+      // Fallback: We could theoretically aggregate all 79 files here, but that's expensive
+      return null;
+    }
+  }, 86400);
+}
+
+/**
+ * Reads a highway GeoJSON file directly from disk without using the L1/Redis cache.
+ * Use this for bulk processing or background tasks to avoid heap exhaustion.
+ */
+export async function getHighwayGeoJSONRaw(code: string): Promise<FeatureCollection | null> {
   const normalizedCode = code.toUpperCase();
   try {
-    // Load index to find the file
     const indexData = await getHighwayList();
     const highwayEntry = indexData.find(h => h.code === normalizedCode);
 
-    if (!highwayEntry) {
-      logInfo(`[HighwayService] Highway ${normalizedCode} not found in index`);
-      return null;
-    }
+    if (!highwayEntry) return null;
 
     const filePath = path.join(HIGHWAY_DIR, highwayEntry.file);
-
-    // Load the geojson file
     const geojsonData = JSON.parse(await fs.readFile(filePath, "utf-8")) as FeatureCollection;
-
-    // Add code to properties for consistency
-    if (geojsonData.features) {
-      geojsonData.features.forEach(feature => {
-        if (feature.properties) {
-          feature.properties.highway_code = normalizedCode;
-        }
-      });
-    }
-
-    logInfo(`[HighwayService] Loaded highway ${normalizedCode} from ${highwayEntry.file}`);
     return geojsonData;
-
   } catch (err: any) {
-    logError("[HighwayService] Failed to load highway by code", {
+    logError("[HighwayService] Raw load failed", {
       code: normalizedCode,
       error: err.message
     });
@@ -242,9 +245,53 @@ export async function getHighwayByCode(code: string): Promise<FeatureCollection 
 }
 
 /**
+ * Get specific highway geojson by code
+ */
+export async function getHighwayByCode(code: string): Promise<FeatureCollection | null> {
+  const normalizedCode = code.toUpperCase();
+
+  return getCache(`highways:geojson:${normalizedCode}`, async () => {
+    try {
+      // Load index to find the file
+      const indexData = await getHighwayList();
+      const highwayEntry = indexData.find(h => h.code === normalizedCode);
+
+      if (!highwayEntry) {
+        logInfo(`[HighwayService] Highway ${normalizedCode} not found in index`);
+        return null;
+      }
+
+      const filePath = path.join(HIGHWAY_DIR, highwayEntry.file);
+
+      // Load the geojson file
+      const geojsonData = JSON.parse(await fs.readFile(filePath, "utf-8")) as FeatureCollection;
+
+      // Add code to properties for consistency
+      if (geojsonData.features) {
+        geojsonData.features.forEach(feature => {
+          if (feature.properties) {
+            feature.properties.highway_code = normalizedCode;
+            feature.properties.road_refno = normalizedCode;
+          }
+        });
+      }
+
+      logInfo(`[HighwayService] Loaded highway ${normalizedCode} from ${highwayEntry.file}`);
+      return geojsonData;
+    } catch (err: any) {
+      logError("[HighwayService] Failed to load highway by code", {
+        code: normalizedCode,
+        error: err.message
+      });
+      return null;
+    }
+  }, 86400);
+}
+
+/**
  * Get highway metadata for a given code
  */
-export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[] } | null> {
+export async function getHighwayMetadata(code: string): Promise<{ code: string, file: string, name?: string, districts?: string[], route?: string, provinces?: string[], lengthKm?: number } | null> {
   const highways = await getHighwayList();
   return highways.find(h => h.code === code.toUpperCase()) || null;
 }
@@ -272,78 +319,41 @@ function calculateHighwayLength(geojson: FeatureCollection): number {
 }
 
 /**
- * Calculate length of a LineString in kilometers using Haversine formula
- */
-function calculateLineStringLength(coordinates: number[][]): number {
-  let length = 0;
-
-  for (let i = 1; i < coordinates.length; i++) {
-    const [lng1, lat1] = coordinates[i - 1];
-    const [lng2, lat2] = coordinates[i];
-    length += haversineDistance(lat1, lng1, lat2, lng2);
-  }
-
-  return length;
-}
-
-/**
- * Haversine distance between two points in kilometers
- */
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-/**
  * Get comprehensive highway statistics and report
  */
-export async function getHighwayReport(code: string): Promise<any> {
+export async function getHighwayReport(code: string, lang: string = "en"): Promise<any> {
   const normalizedCode = code.toUpperCase();
-  try {
+  // Separate infrastructure data (cached) from incident data (live)
+  const infraData = await getCache(`highways:infra:${normalizedCode}`, async () => {
     const metadata = await getHighwayMetadata(normalizedCode);
-    if (!metadata) {
-      return { error: 'Highway not found' };
-    }
+    if (!metadata) return null;
 
     const geojson = await getHighwayByCode(normalizedCode);
-    if (!geojson || !geojson.features) {
-      return { error: 'Highway data not available' };
-    }
+    if (!geojson || !geojson.features) return null;
 
-    // Calculate length
     const lengthKm = calculateHighwayLength(geojson);
-
-    // Count districts
-    const districts = metadata.districts || [];
-    const districtCount = districts.length;
-
-    // Analyze road conditions from features
     let pavementStats = { blacktopped: 0, gravel: 0, earthen: 0, unknown: 0, byType: {} as Record<string, number> };
     let conditionStats = { good: 0, fair: 0, poor: 0, unknown: 0 };
     let widthStats = { single_lane: 0, two_lane: 0, four_lane: 0, unknown: 0 };
     let totalSegments = 0;
 
-    // Collect unique values
     const uniqueDivisions = new Set<string>();
-    const uniqueDistricts = new Set<string>();
     const paveTypes = new Set<string>();
     const years: number[] = [];
     const segmentLengths: number[] = [];
 
-    for (const feature of geojson.features) {
+    const baseLimit = metadata.code.startsWith('NH') ? 80 : 60;
+
+    for (const feature of (geojson.features as any[])) {
       const props: any = feature.properties || {};
       totalSegments++;
 
-      // Collect unique values
+      // Analyze curvature for THIS specific segment
+      const segmentSpeed = calculateSegmentCurvatureSpeed(feature, baseLimit);
+      props.suggested_speed = segmentSpeed;
+      props.danger_zone = segmentSpeed <= 20;
+
       if (props.div_name) uniqueDivisions.add(String(props.div_name));
-      if (props.dist_name) uniqueDistricts.add(String(props.dist_name));
       if (props.pave_type) paveTypes.add(String(props.pave_type));
       if (props.dyear) {
         const yr = parseInt(String(props.dyear));
@@ -354,120 +364,149 @@ export async function getHighwayReport(code: string): Promise<any> {
         if (!isNaN(len)) segmentLengths.push(len);
       }
 
-      // Pavement type
-      const paveType = String(props.pave_type || props.surface || props.pavement || 'Unknown');
+      const paveType = String(props.pave_type || props.surface || 'Unknown');
       pavementStats.byType[paveType] = (pavementStats.byType[paveType] || 0) + 1;
 
-      if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
-        pavementStats.blacktopped++;
-      } else if (paveType.toLowerCase().includes('gravel') || paveType.toLowerCase().includes('wbm')) {
-        pavementStats.gravel++;
-      } else if (paveType.toLowerCase().includes('earth') || paveType.toLowerCase().includes('unpaved')) {
-        pavementStats.earthen++;
-      } else if (paveType !== 'Unknown') {
-        pavementStats.unknown++;
-      }
+      if (paveType.toLowerCase().match(/asphalt|bitumen|blacktop/)) pavementStats.blacktopped++;
+      else if (paveType.toLowerCase().match(/gravel|wbm/)) pavementStats.gravel++;
+      else if (paveType.toLowerCase().match(/earth|unpaved/)) pavementStats.earthen++;
 
-      // Width/Lanes
-      const lanes = props.no_lanes || props.lanes || props.for_width || '';
-      const lanesNum = typeof lanes === 'string' ? parseFloat(lanes) : lanes;
-      if (lanesNum == 1 || (typeof lanes === 'string' && lanes.includes('single'))) {
-        widthStats.single_lane++;
-      } else if (lanesNum == 2 || lanesNum == 4 || (typeof lanes === 'string' && (lanes.includes('two') || lanes.includes('four')))) {
-        widthStats.two_lane++;
-      } else if (typeof lanesNum === 'number' && lanesNum >= 4) {
-        widthStats.four_lane++;
-      } else {
-        widthStats.unknown++;
-      }
+      const lanes = props.no_lanes || props.lanes || 0;
+      if (lanes == 1) widthStats.single_lane++;
+      else if (lanes == 2) widthStats.two_lane++;
+      else if (lanes >= 4) widthStats.four_lane++;
 
-      // Road condition (based on pavement type as proxy)
-      if (paveType.toLowerCase().includes('asphalt') || paveType.toLowerCase().includes('bitumen') || paveType.toLowerCase().includes('blacktop')) {
-        conditionStats.good++;
-      } else if (paveType.toLowerCase().includes('gravel') || paveType.toLowerCase().includes('wbm')) {
-        conditionStats.fair++;
-      } else if (paveType.toLowerCase().includes('earth') || paveType.toLowerCase().includes('unpaved')) {
-        conditionStats.poor++;
-      } else {
-        conditionStats.unknown++;
-      }
+      if (paveType.toLowerCase().match(/asphalt|bitumen|blacktop/)) conditionStats.good++;
+      else if (paveType.toLowerCase().match(/gravel|wbm/)) conditionStats.fair++;
+      else conditionStats.poor++;
     }
 
-    const avgYear = years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : null;
-    const totalSegmentLength = segmentLengths.reduce((a, b) => a + b, 0);
-
-    // Get real-time incidents for this highway
-    const roadData = await getCachedRoads();
-    const incidents = roadData.merged.filter((f: any) => {
-      const props = f.properties || {};
-      const highwayName = metadata.name?.toLowerCase();
-      return props.road_refno === normalizedCode ||
-        (highwayName && props.road_name && props.road_name.toLowerCase().includes(highwayName));
-    });
-
-    const incidentStats = {
-      blocked: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.BLOCKED).length,
-      one_lane: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.ONE_LANE).length,
-      resumed: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.RESUMED).length,
-    };
-
-    // Get monsoon risk for this highway
-    const monsoonRisks = await getCachedMonsoonRisk();
-    const highwayMonsoonRisks = monsoonRisks.filter((r: any) => {
-      const highwayName = metadata.name?.toLowerCase();
-      return r.roadId === normalizedCode || (highwayName && r.roadName?.toLowerCase().includes(highwayName));
-    });
-
-    // Calculate quality score (0-100) - guard against division by zero
     const qualityScore = totalSegments > 0 ? Math.round(
       (pavementStats.blacktopped / totalSegments) * 40 +
       (conditionStats.good / totalSegments) * 40 +
       (widthStats.two_lane / totalSegments) * 20
     ) : 0;
 
+    // Get the global suggested speed (10th percentile to avoid outlier fluctuations)
+    const allSpeeds = geojson.features.map((f: any) => f.properties?.suggested_speed || baseLimit).sort((a, b) => a - b);
+    const globalSuggestedSpeed = allSpeeds[Math.floor(allSpeeds.length * 0.1)] || baseLimit;
+
     return {
-      code: normalizedCode,
-      name: metadata.name,
-      route: metadata.route,
-      startToEnd: metadata.route, // start to end location
-      provinces: metadata.provinces || getProvincesByDistricts(districts),
-      districts: districts,
-      districtCount: districtCount,
-      divisions: Array.from(uniqueDivisions),
-      lengthKm: Math.round(lengthKm * 10) / 10,
-      segmentLengthKm: Math.round(totalSegmentLength * 10) / 10,
-      totalSegments: totalSegments,
-      avgConstructionYear: avgYear,
-      pavementStats: {
-        ...pavementStats,
-        types: Object.fromEntries(Array.from(paveTypes).map(t => [t, pavementStats.byType[t] || 0])),
-      },
+      metadata,
+      lengthKm,
+      totalSegments,
+      avgYear: years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : null,
+      totalSegmentLength: segmentLengths.reduce((a, b) => a + b, 0),
+      pavementStats,
       conditionStats,
       widthStats,
-      incidentStats,
-      monsoonRisks: highwayMonsoonRisks.length,
-      qualityScore: Math.min(100, Math.max(0, qualityScore)),
-      qualityGrade: qualityScore >= 80 ? 'A' : qualityScore >= 60 ? 'B' : qualityScore >= 40 ? 'C' : qualityScore >= 20 ? 'D' : 'F',
-      lastUpdated: new Date().toISOString()
+      uniqueDivisions: Array.from(uniqueDivisions),
+      paveTypes: Array.from(paveTypes),
+      qualityScore,
+      speedLimit: globalSuggestedSpeed
+    };
+  }, 86400); // Cache infra for 24h
+
+  if (!infraData) return { error: 'Highway not found' };
+
+  // Fetch REAL-TIME incident data (Never cached in this scope)
+  try {
+    const { getCachedRoads } = await import("@/services/roadService.js");
+    const roadData = await getCachedRoads();
+    const highwayNameBase = resolveLabel(infraData.metadata.name, "en").toLowerCase();
+
+    const incidents = roadData.merged.filter((f: any) => {
+      const props = f.properties || {};
+      return props.road_refno === normalizedCode ||
+        (highwayNameBase && resolveLabel(props.road_name, "en").toLowerCase().includes(highwayNameBase));
+    });
+
+    const incidentStats = {
+      blocked: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.BLOCKED).length,
+      one_lane: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.ONE_LANE).length,
+      resumed: incidents.filter((f: any) => f.properties?.status === ROAD_STATUS.RESUMED).length,
+      hasBlockedSections: incidents.some((f: any) => f.properties?.status === ROAD_STATUS.BLOCKED)
     };
 
+    const speedLimit = infraData.speedLimit;
+
+    const { monsoonService } = await import("@/services/monsoonService.js");
+    const monsoonRisks = await monsoonService.getCachedMonsoonRisk();
+    const highwayMonsoonRisks = monsoonRisks.filter((r: any) => {
+      const highwayName = infraData.metadata.name?.toLowerCase();
+      return r.roadId === normalizedCode || (highwayName && r.roadName?.toLowerCase().includes(highwayName));
+    });
+
+    return {
+      code: normalizedCode,
+      name: resolveLabel(infraData.metadata.name, lang),
+      route: resolveLabel(infraData.metadata.route, lang),
+      provinces: infraData.metadata.provinces || await getProvincesByDistricts(infraData.metadata.districts || []),
+      districts: infraData.metadata.districts,
+      lengthKm: Math.round(infraData.lengthKm * 10) / 10,
+      totalSegments: infraData.totalSegments,
+      avgConstructionYear: infraData.avgYear,
+      pavementStats: {
+        ...infraData.pavementStats,
+        types: Object.fromEntries(infraData.paveTypes.map(t => [t, infraData.pavementStats.byType[t] || 0])),
+      },
+      conditionStats: infraData.conditionStats,
+      incidentStats,
+      speedLimit,
+      alternatives: incidentStats.hasBlockedSections ? await suggestAlternativeRoutes(infraData.metadata.districts?.[0] || '', infraData.metadata.districts?.slice(-1)[0] || '', lang) : [],
+      monsoonRisks: highwayMonsoonRisks.length,
+      qualityScore: infraData.qualityScore,
+      qualityGrade: infraData.qualityScore >= 80 ? 'A' : infraData.qualityScore >= 60 ? 'B' : infraData.qualityScore >= 40 ? 'C' : 'F',
+      lastUpdated: new Date().toISOString()
+    };
   } catch (err: any) {
-    logError("[HighwayService] Failed to generate highway report", err.message);
-    return { error: 'Failed to generate report' };
+    logError("[HighwayService] Real-time merge failed", err.message);
+    return { ...infraData, error: 'Real-time data currently unavailable' };
   }
+}
+
+/**
+ * Analyze a single segment's geometry to suggest a safe speed
+ */
+function calculateSegmentCurvatureSpeed(feature: any, baseLimit: number): number {
+  let minSuggested = baseLimit;
+
+  if (feature.geometry?.type !== 'LineString') return baseLimit;
+  const coords = feature.geometry.coordinates;
+  if (coords.length < 3) return baseLimit;
+
+  for (let i = 1; i < coords.length - 1; i++) {
+    const p1 = coords[i - 1];
+    const p2 = coords[i];
+    const p3 = coords[i + 1];
+
+    // Calculate bearing between consecutive points
+    const b1 = calculateBearing(p1[1], p1[0], p2[1], p2[0]);
+    const b2 = calculateBearing(p2[1], p2[0], p3[1], p3[0]);
+
+    let diff = Math.abs(b1 - b2);
+    if (diff > 180) diff = 360 - diff;
+
+    // Adjust speed based on deflection angle
+    if (diff > 40) minSuggested = Math.min(minSuggested, 20);
+    else if (diff > 20) minSuggested = Math.min(minSuggested, 40);
+    else if (diff > 10) minSuggested = Math.min(minSuggested, 60);
+  }
+
+  return minSuggested;
 }
 
 /**
  * Get all highways with basic statistics (for comparison)
  */
-export async function getAllHighwaysSummary(): Promise<any[]> {
+export async function getAllHighwaysSummary(lang: string = "en"): Promise<any[]> {
   try {
     const highways = await getHighwayList();
     const summaries = [];
 
     for (const highway of highways.slice(0, 20)) { // Limit to first 20 for performance
       try {
-        const report = await getHighwayReport(highway.code);
+        const report = await getHighwayReport(highway.code, lang);
         if (!report.error) {
           summaries.push(report);
         }
@@ -488,7 +527,7 @@ export async function getAllHighwaysSummary(): Promise<any[]> {
 /**
  * Suggest alternative routes based on road quality and current conditions
  */
-export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict: string): Promise<any[]> {
+export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict: string, lang: string = "en"): Promise<any[]> {
   try {
     const highways = await getHighwayList();
     const alternatives = [];
@@ -498,16 +537,17 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
       const districts = highway.districts || [];
       if (districts.includes(fromDistrict) && districts.includes(toDistrict)) {
         try {
-          const report = await getHighwayReport(highway.code);
+          const report = await getHighwayReport(highway.code, lang);
           if (!report.error) {
             alternatives.push({
               code: highway.code,
-              name: highway.name,
-              route: highway.route,
+              name: resolveLabel(highway.name, lang),
+              route: resolveLabel(highway.route, lang),
               qualityScore: report.qualityScore,
               qualityGrade: report.qualityGrade,
               lengthKm: report.lengthKm,
               incidents: report.incidentStats.blocked + report.incidentStats.one_lane,
+              estimatedDuration: report.lengthKm / 40,
               recommendation: report.qualityScore >= 70 ? 'Recommended' : report.qualityScore >= 40 ? 'Alternative' : 'Avoid if possible'
             });
           }
@@ -525,4 +565,89 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
     logError("[HighwayService] Failed to suggest alternatives", err.message);
     return [];
   }
+}
+
+/**
+ * Maintenance function to calculate and save highway lengths back to index.json.
+ * This enables efficient client-side sorting without loading full GeoJSON.
+ */
+export async function updateHighwayIndexLengths(): Promise<void> {
+  if (isIndexUpdating) return;
+  isIndexUpdating = true;
+
+  try {
+    logInfo("[HighwayService] Starting highway index length calculation...");
+    const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
+
+    const updatedIndex = [];
+    for (const entry of indexData) {
+      try {
+        const geojson = await getHighwayGeoJSONRaw(entry.code);
+        if (geojson) entry.lengthKm = calculateHighwayLength(geojson);
+      } catch (e) {
+        logError(`[HighwayService] Length calc failed for ${entry.code}`, (e as any).message);
+      }
+      updatedIndex.push(entry);
+    }
+
+    await fs.writeFile(HIGHWAY_INDEX, JSON.stringify(updatedIndex, null, 2), "utf-8");
+    logInfo("[HighwayService] Successfully updated highway index with calculated lengths");
+  } catch (err: any) {
+    logError("[HighwayService] Failed to update highway index lengths", err.message);
+  } finally {
+    isIndexUpdating = false;
+  }
+}
+
+/**
+ * Pre-warm the cache for major highways on startup.
+ * Focuses on National Highways (NH) to ensure fast initial reporting for key infrastructure.
+ */
+export async function prewarmHighwayCache(): Promise<void> {
+  logInfo("[HighwayService] Initializing cache warming for major highways...");
+  try {
+    // Optionally update index lengths if they are missing
+    const highways = await getHighwayList();
+    // Filter for National Highways which are the highest priority for regional analytics
+    const majorHighways = highways.filter(h => h.code.toUpperCase().startsWith('NH'));
+
+    logInfo(`[HighwayService] Pre-calculating reports for ${majorHighways.length} National Highways`);
+
+    // Sequential processing to avoid massive concurrent disk/API load on startup
+    for (const highway of majorHighways) {
+      try {
+        await getHighwayReport(highway.code);
+      } catch (err: any) {
+        logError(`[HighwayService] Warming failed for ${highway.code}`, err.message);
+      }
+    }
+    logInfo("[HighwayService] Cache warming sequence completed successfully");
+  } catch (err: any) {
+    logError("[HighwayService] Critical failure during cache warming", err.message);
+  }
+}
+
+/**
+ * Extracts major junctions (start/end nodes of segments) from highway GeoJSON.
+ * These points are ideal for POI sampling as they represent intersections or key nodes.
+ */
+export function getMajorJunctions(geojson: FeatureCollection): { lat: number, lng: number }[] {
+  const seen = new Set<string>();
+  const junctions: { lat: number, lng: number }[] = [];
+
+  geojson.features.forEach(feature => {
+    const geom = feature.geometry;
+    if (geom?.type === "LineString") {
+      const coords = geom.coordinates;
+      // Take the start and end of each segment
+      [coords[0], coords[coords.length - 1]].forEach(p => {
+        const key = `${p[1].toFixed(5)},${p[0].toFixed(5)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          junctions.push({ lat: p[1], lng: p[0] });
+        }
+      });
+    }
+  });
+  return junctions;
 }

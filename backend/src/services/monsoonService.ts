@@ -1,22 +1,11 @@
 import fs from "fs/promises";
-import * as roadService from "./roadService.js";
-import * as weatherService from "./weatherService.js";
-import { CACHE_DIR, CACHE_MONSOON } from "../config/paths.js";
-import { logInfo, logError } from "../logs/logs.js";
-
-export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "EXTREME";
-
-export interface RiskAssessment {
-  roadId: string;
-  roadName: string;
-  riskLevel: RiskLevel;
-  color: string;
-  reason: string;
-  rainIntensity?: number;
-  slopeAngle?: number;
-  lat: number;
-  lng: number;
-}
+import { getHighwayList, getHighwayGeoJSONRaw } from "@/services/highwayService.js";
+import * as weatherService from "@/services/weatherService.js";
+import { CACHE_DIR, CACHE_MONSOON } from "@/config/paths.js";
+import { logInfo, logError } from "@logs/logs.js";
+import { resolveLabel } from "@/services/labelUtils.js";
+import { isValidNepalCoordinate } from "@/services/geoUtils.js";
+import type { RiskLevel, RiskAssessment } from "@/types.js";
 
 function getColor(level: RiskLevel) {
   switch (level) {
@@ -41,56 +30,81 @@ function assessRisk(rainIntensity: number, slopeAngle: number) {
 export async function calculateCurrentRisk(): Promise<RiskAssessment[]> {
   const assessments: RiskAssessment[] = [];
   try {
-    const roadsCache = await roadService.getCachedRoads();
-    const roads = roadsCache.merged ?? [];
+    const highways = await getHighwayList();
+    const BATCH_SIZE = 5;
+    logInfo(`[MonsoonService] Calculating risk for ${highways.length} corridors in batches of ${BATCH_SIZE}...`);
 
-    for (const road of roads) {
-      const { slope_angle = 0, road_name, road_refno, id } = road.properties;
-      let rainIntensity = 0;
-      let lat: number | undefined, lon: number | undefined;
+    for (let i = 0; i < highways.length; i += BATCH_SIZE) {
+      const batch = highways.slice(i, i + BATCH_SIZE);
 
-      try {
-        if (!road.geometry || !road.geometry.coordinates) continue;
+      // 1. Pre-fetch Highway Data for the batch
+      const batchHighways = await Promise.all(batch.map(async (h) => ({
+        metadata: h,
+        geojson: await getHighwayGeoJSONRaw(h.code)
+      })));
 
-        const geomType = (road.geometry as any).type;
-        if (geomType === "LineString") {
-          const coords = road.geometry.coordinates[0];
-          if (Array.isArray(coords) && coords.length >= 2) {
-            [lon, lat] = coords;
-          } else {
-            continue;
-          }
-        } else if (geomType === "MultiLineString") {
-          const coords = (road.geometry as any).coordinates[0]?.[0];
-          if (Array.isArray(coords) && coords.length >= 2) {
-            [lon, lat] = coords;
-          } else {
-            continue;
-          }
-        } else {
-          continue;
-        }
-
-        if (lat !== undefined && lon !== undefined) {
-          const weather = await weatherService.getLiveRainfall(lat, lon);
-          rainIntensity = weather?.intensity || 0;
-        }
-      } catch (err: any) {
-        logError("[MonsoonService] Weather fetch failed", { road: road_name, error: err.message });
-      }
-
-      const { level, reason } = assessRisk(rainIntensity, slope_angle);
-      assessments.push({
-        roadId: id || road_refno || road_name || '',
-        roadName: road_name || '',
-        riskLevel: level as RiskLevel,
-        color: getColor(level as RiskLevel),
-        reason,
-        rainIntensity,
-        slopeAngle: slope_angle,
-        lat: lat ?? 0,
-        lng: lon ?? 0,
+      // 2. Collect all unique coordinates needing weather data in this batch
+      const pointsToFetch: { lat: number; lng: number }[] = [];
+      batchHighways.forEach(({ geojson }) => {
+        geojson?.features.forEach(feature => {
+          const geom = feature.geometry;
+          const coords = geom?.type === "Point" ? geom.coordinates :
+            geom?.type === "LineString" ? geom.coordinates[0] :
+              geom?.type === "MultiLineString" ? geom.coordinates[0]?.[0] : null;
+          if (coords && coords.length >= 2) pointsToFetch.push({ lat: coords[1], lng: coords[0] });
+        });
       });
+
+      // 3. Unified Batch Weather Fetch (COLLAPSED)
+      const weatherMap = await weatherService.getLiveRainfallBatch(pointsToFetch);
+
+      const batchResults = batchHighways.map(({ metadata: h, geojson }) => {
+        const highwayAssessments: RiskAssessment[] = [];
+        if (!geojson || !geojson.features) return highwayAssessments;
+
+        for (const feature of geojson.features) {
+          const props = feature.properties || {};
+          const { slope_angle = 0, road_name, road_refno, id } = props;
+          let rainIntensity = 0;
+          let lat: number | undefined, lon: number | undefined;
+
+          try {
+            const geom = feature.geometry;
+            if (!geom || !geom.coordinates) continue;
+
+            const coords = geom.type === "Point" ? geom.coordinates :
+              geom.type === "LineString" ? geom.coordinates[0] :
+                geom.type === "MultiLineString" ? geom.coordinates[0]?.[0] : null;
+
+            if (Array.isArray(coords) && coords.length >= 2) {
+              [lon, lat] = coords;
+            } else continue;
+
+            // Lookup result from the batch fetch map using the spatial grid key
+            const gridKey = `weather:${(lat ?? 0).toFixed(2)}:${(lon ?? 0).toFixed(2)}`;
+            const weather = weatherMap.get(gridKey);
+            rainIntensity = weather?.intensity || 0;
+          } catch (err: any) {
+            // Suppress noise
+          }
+
+          const { level, reason } = assessRisk(rainIntensity, slope_angle);
+          highwayAssessments.push({
+            roadId: id || road_refno || resolveLabel(road_name) || h.code,
+            roadName: resolveLabel(road_name) || h.name || h.code,
+            riskLevel: level as RiskLevel,
+            color: getColor(level as RiskLevel),
+            reason,
+            rainIntensity,
+            slopeAngle: slope_angle,
+            lat: lat ?? 0,
+            lng: lon ?? 0,
+          });
+        }
+        return highwayAssessments;
+      });
+
+      batchResults.forEach(res => assessments.push(...res));
     }
 
     await fs.writeFile(CACHE_MONSOON, JSON.stringify(assessments, null, 2), "utf-8");

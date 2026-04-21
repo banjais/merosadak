@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Mic, Sparkles, Navigation, X } from 'lucide-react';
 import { TravelIncident } from '../types';
+import { useSettings } from '../SettingsContext';
 import { apiFetch } from '../api';
 
 interface SearchOverlayProps {
-  isDarkMode: boolean;
   incidents: TravelIncident[];
   onSelectLocation: (incident: TravelIncident) => void;
   onAskAI: (topic: string) => void;
@@ -13,8 +13,7 @@ interface SearchOverlayProps {
   onClearContext?: () => void;
 }
 
-const SearchOverlay: React.FC<SearchOverlayProps> = ({
-  isDarkMode,
+const SearchOverlay: React.FC<SearchOverlayProps> = ({ // isDarkMode is now from context
   incidents,
   onSelectLocation,
   onAskAI,
@@ -22,6 +21,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
   mapSelectionContext,
   onClearContext
 }) => {
+  const { isDarkMode } = useSettings();
   const [query, setQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [results, setResults] = useState<TravelIncident[]>([]);

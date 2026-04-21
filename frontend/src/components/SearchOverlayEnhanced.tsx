@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Mic, X, Navigation, MapPin, Route } from 'lucide-react';
+import { useSettings } from '../SettingsContext';
 import {
   debouncedSearch,
   saveRecentSearch,
@@ -12,18 +13,17 @@ import {
 import { apiFetch } from '../api';
 
 interface SearchOverlayEnhancedProps {
-  isDarkMode: boolean;
   userLocation: { lat: number; lng: number } | null;
   onSelectDestination: (result: SearchResult) => void;
   onAskAI: (query: string) => void;
 }
 
 export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
-  isDarkMode,
   userLocation,
   onSelectDestination,
   onAskAI
 }) => {
+  const { isDarkMode } = useSettings();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GroupedSearchResults>({
     places: [],
@@ -62,7 +62,7 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
     setSelectedResult(result);
     setShowResults(false);
     saveRecentSearch(result);
-    
+
     // Save to recents
     if (result.type === 'place' || result.type === 'highway') {
       onSelectDestination(result);
@@ -78,7 +78,7 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.onstart = () => setIsListening(true);
@@ -91,19 +91,18 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
     recognition.start();
   };
 
-  const hasResults = results.places.length > 0 || results.highways.length > 0 || 
-                     results.pois.length > 0 || results.recents.length > 0;
+  const hasResults = results.places.length > 0 || results.highways.length > 0 ||
+    results.pois.length > 0 || results.recents.length > 0;
 
   return (
     <div ref={cardRef} className="absolute top-20 left-4 right-4 md:left-8 md:right-8 z-[500]">
       {/* Search Input */}
-      <div className={`flex items-center gap-3 p-3 rounded-2xl shadow-xl border backdrop-blur-xl transition-colors duration-300 ${
-        isDarkMode
+      <div className={`flex items-center gap-3 p-3 rounded-2xl shadow-xl border backdrop-blur-xl transition-colors duration-300 ${isDarkMode
           ? 'bg-slate-900/90 border-slate-700/50'
           : 'bg-white/90 border-white/50'
-      }`}>
+        }`}>
         <Search size={20} className="text-gray-400 flex-shrink-0" />
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -111,20 +110,18 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setShowResults(true)}
           placeholder="Search place, highway, POI..."
-          className={`flex-1 bg-transparent outline-none text-sm ${
-            isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
-          }`}
+          className={`flex-1 bg-transparent outline-none text-sm ${isDarkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
+            }`}
         />
 
         <button
           onClick={startVoiceSearch}
-          className={`p-2 rounded-full transition-colors ${
-            isListening
+          className={`p-2 rounded-full transition-colors ${isListening
               ? 'bg-red-500 text-white animate-pulse'
               : isDarkMode
                 ? 'hover:bg-slate-800 text-gray-400'
                 : 'hover:bg-gray-100 text-gray-500'
-          }`}
+            }`}
           title="Voice search"
         >
           <Mic size={18} />
@@ -133,9 +130,8 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
         {query && (
           <button
             onClick={() => { setQuery(''); setShowResults(false); }}
-            className={`p-2 rounded-full transition-colors ${
-              isDarkMode ? 'hover:bg-slate-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-            }`}
+            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+              }`}
           >
             <X size={18} />
           </button>
@@ -144,11 +140,10 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
 
       {/* Results Dropdown */}
       {showResults && hasResults && (
-        <div className={`mt-2 rounded-xl shadow-2xl border backdrop-blur-xl overflow-hidden max-h-96 overflow-y-auto transition-colors duration-300 ${
-          isDarkMode
+        <div className={`mt-2 rounded-xl shadow-2xl border backdrop-blur-xl overflow-hidden max-h-96 overflow-y-auto transition-colors duration-300 ${isDarkMode
             ? 'bg-slate-900/95 border-slate-700/50'
             : 'bg-white/95 border-white/50'
-        }`}>
+          }`}>
           {/* Recent Searches */}
           {results.recents.length > 0 && (
             <div className={`p-3 border-b ${isDarkMode ? 'border-slate-700' : 'border-gray-200'}`}>
@@ -159,9 +154,8 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
                 <button
                   key={`recent-${result.id}`}
                   onClick={() => handleSelect(result)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                    isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <span className="text-lg">{result.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -189,9 +183,8 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
                 <button
                   key={`place-${result.id}`}
                   onClick={() => handleSelect(result)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                    isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <span className="text-lg">{result.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -227,9 +220,8 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
                 <button
                   key={`highway-${result.id}`}
                   onClick={() => handleSelect(result)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                    isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <span className="text-lg">{result.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -258,9 +250,8 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
                 <button
                   key={`poi-${result.id}`}
                   onClick={() => handleSelect(result)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                    isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <span className="text-lg">{result.icon}</span>
                   <div className="flex-1 min-w-0">

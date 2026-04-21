@@ -1,0 +1,49 @@
+[
+    {
+        "id": "zone_mugling_narayanghat",
+        "name": "Mugling-Narayanghat Road",
+        "center": {
+            "lat": 27.755,
+            "lng": 84.425
+        },
+        "radius": 20000,
+        "alertTypes": [
+            "weather",
+            "blockage",
+            "landslide"
+        ],
+        "riskLevel": "high",
+        "active": true
+    },
+    {
+        "id": "zone_prithvi_highway",
+        "name": "Prithvi Highway",
+        "center": {
+            "lat": 27.8,
+            "lng": 84.5
+        },
+        "radius": 30000,
+        "alertTypes": [
+            "weather",
+            "blockage"
+        ],
+        "riskLevel": "medium",
+        "active": true
+    },
+    {
+        "id": "zone_kathmandu_valley",
+        "name": "Kathmandu Valley Entry Points",
+        "center": {
+            "lat": 27.7172,
+            "lng": 85.324
+        },
+        "radius": 15000,
+        "alertTypes": [
+            "weather",
+            "blockage",
+            "flood"
+        ],
+        "riskLevel": "medium",
+        "active": true
+    }
+]

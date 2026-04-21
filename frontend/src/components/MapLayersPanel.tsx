@@ -1,10 +1,12 @@
 // Wrapper: simplifies MapLayersToggle for quick integration
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapLayersToggle as Original, type MapLayerType } from './MapLayersToggle';
+import { useWeatherMonsoon } from '../WeatherMonsoonContext';
 import type { MapEngine } from './MapEngineSelector';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface MapLayersPanelProps {
+  isOpen: boolean;
   isDarkMode: boolean;
   onClose: () => void;
   onToggleMonsoon: () => void;
@@ -15,19 +17,35 @@ interface MapLayersPanelProps {
 }
 
 export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
+  isOpen,
   isDarkMode,
   onClose,
   onToggleMonsoon,
   monsoonVisible,
   onToggleTraffic,
   trafficVisible,
+  // onToggleMonsoon is no longer needed as a prop, monsoonVisible is derived from context
   onOpenDistanceCalc,
 }) => {
-  const [layer, setLayer] = React.useState<MapLayerType>('standard');
-  const [engine, setEngine] = React.useState<MapEngine>('nepal');
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const timer = setTimeout(() => setShouldRender(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const [layer, setLayer] = useState<MapLayerType>('standard');
+  const [engine, setEngine] = useState<MapEngine>('nepal');
 
   // Close on Escape key
   useEscapeKey(onClose);
+  const { monsoonIncidents } = useWeatherMonsoon();
+
+  if (!shouldRender) return null;
 
   const handleLayerChange = (l: MapLayerType) => {
     setLayer(l);
@@ -35,7 +53,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
   };
 
   return (
-    <div className={`absolute top-20 right-4 z-[2000] w-72 backdrop-blur-xl rounded-2xl border shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200 transition-colors duration-300 ${isDarkMode
+    <div className={`absolute top-20 right-4 z-[2000] w-72 backdrop-blur-xl rounded-2xl border shadow-2xl p-4 transition-colors duration-300 ${isOpen ? 'animate-in fade-in zoom-in-95' : 'animate-out fade-out zoom-out-95'} duration-200 ${isDarkMode
       ? 'bg-slate-900/90 border-slate-700/40'
       : 'bg-white/90 border-white/40'
       }`}>
@@ -94,10 +112,10 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
         <button
           onClick={onToggleTraffic}
           className={`w-full p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${trafficVisible
-              ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
-              : isDarkMode
-                ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+            : isDarkMode
+              ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
         >
           <span>🚦 Real-Time Traffic</span>
@@ -106,7 +124,7 @@ export const MapLayersPanel: React.FC<MapLayersPanelProps> = ({
 
         {/* Monsoon Toggle */}
         <button
-          onClick={onToggleMonsoon}
+          onClick={() => { /* Monsoon visibility is now controlled by context */ }}
           className={`w-full p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${monsoonVisible
             ? 'bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
             : isDarkMode

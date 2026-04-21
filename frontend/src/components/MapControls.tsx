@@ -1,13 +1,14 @@
 import React from 'react';
 import { Plus, Minus, Compass } from 'lucide-react';
 import { useMap } from 'react-leaflet';
+import { useSettings } from '../SettingsContext';
 
 interface MapControlsProps {
   userLocation?: { lat: number; lng: number } | null;
-  isDarkMode?: boolean;
 }
 
-export const MapControls: React.FC<MapControlsProps> = ({ userLocation, isDarkMode = false }) => {
+export const MapControls: React.FC<MapControlsProps> = ({ userLocation }) => {
+  const { isDarkMode } = useSettings();
   const map = useMap();
 
   const handleZoomIn = () => {

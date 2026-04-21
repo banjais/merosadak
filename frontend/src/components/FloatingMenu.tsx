@@ -5,23 +5,23 @@ import {
   Stethoscope, Ruler, TrafficCone as TrafficIcon,
   ShieldBan, Megaphone, Navigation,
 } from 'lucide-react';
+import { useSettings } from '../SettingsContext';
 import { TravelIncident, IncidentType } from '../types';
 
 interface FloatingMenuProps {
   onServiceSelect: (service: string) => void;
   onOpenCalculator: () => void;
   onOpenReport?: () => void;
-  onTogglePilot?: () => void;
+  onTogglePilot: () => void; // Made mandatory as it's a core action
   activeService: string | null;
   incidents?: TravelIncident[];
-  isDarkMode?: boolean;
 }
 
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({
-  onServiceSelect, onOpenCalculator, onOpenReport, onTogglePilot, activeService, incidents = [], isDarkMode = false
+  onServiceSelect, onOpenCalculator, onOpenReport, onTogglePilot, activeService, incidents = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { isDarkMode } = useSettings();
   const serviceStats = useMemo(() => {
     const roadIncidents = (incidents || []).filter(i => (i.status || i.type || '').toLowerCase().includes('block'));
     return {
@@ -41,7 +41,10 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
     { id: 'roads', icon: <AlertTriangle size={20} />, label: 'Roads', color: 'bg-amber-500', count: serviceStats.roads },
   ];
 
-  const handleToggle = () => setIsOpen(!isOpen);
+  const handleToggle = () => {
+    if ('vibrate' in navigator) navigator.vibrate(10);
+    setIsOpen(!isOpen);
+  };
 
   const handleAction = (callback?: () => void) => {
     callback?.();
@@ -49,7 +52,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
   };
 
   return (
-    <div className="fixed bottom-24 right-4 md:bottom-10 md:right-10 z-[1200] flex flex-col-reverse items-end gap-3 pointer-events-none">
+    <div className="fixed bottom-20 right-4 md:bottom-24 md:right-6 lg:bottom-10 lg:right-40 z-[1200] flex flex-col-reverse items-end gap-3 pointer-events-none">
       {/* Main Action Pill */}
       <motion.button
         whileHover={{ scale: 1.05 }}
@@ -65,7 +68,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
       {/* Expanded Services Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -75,7 +78,7 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
             <div className="flex justify-between w-full pb-2 mb-2 border-b border-gray-500/20">
               <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Map Services</span>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-3 md:gap-4">
               {services.map((s) => {
                 const isActive = activeService === s.id;

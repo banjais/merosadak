@@ -1,7 +1,8 @@
 // backend/src/controllers/roadController.ts
 import { Request, Response } from "express";
-import { getCachedRoads } from "../services/roadService.js";
-import { ROAD_STATUS } from "../constants/sheets.js";
+import { getCachedRoads } from "@/services/roadService.js";
+import { ROAD_STATUS } from "@/constants/sheets.js";
+import { resolveLabel } from "@/services/labelUtils.js";
 
 export const root = (_req: Request, res: Response) => {
   res.json({
@@ -27,11 +28,13 @@ export const searchRoads = async (req: Request, res: Response) => {
     const q = String(req.query.q || "").toLowerCase();
     const roads = await getCachedRoads();
     const results = roads.merged.filter(r => {
-      const p = r.properties;
+      const p = r.properties || {};
+      const dist = resolveLabel(p.incidentDistrict) || "";
+      const name = resolveLabel(p.road_name) || "";
       return (
         p.road_refno?.toLowerCase().includes(q) ||
-        p.road_name?.toLowerCase().includes(q) ||
-        p.incidentDistrict?.toLowerCase().includes(q)
+        name.toLowerCase().includes(q) ||
+        dist.toLowerCase().includes(q)
       );
     });
     res.json(results);

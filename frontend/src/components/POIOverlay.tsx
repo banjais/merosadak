@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { L } from '../lib/leaflet';
+import { useSettings } from '../SettingsContext';
 import { EnhancedPOI, POICategory, UserPOIPreferences, TripContext } from '../types/poi';
 import { searchEnhancedPOIs, getCategoryColorClass } from '../services/enhancedPOIService';
 
@@ -13,7 +14,7 @@ interface POIOverlayProps {
   userLocation: { lat: number; lng: number } | null;
   mapCenter: [number, number];
   mapZoom: number;
-  userPreferences: UserPOIPreferences;
+  userPreferences?: UserPOIPreferences; // Make optional as it will be consumed from App.tsx
   onSelectPOI?: (poi: EnhancedPOI) => void;
 }
 
@@ -22,11 +23,11 @@ export const POIOverlay: React.FC<POIOverlayProps> = ({
   userLocation,
   mapCenter,
   mapZoom,
-  userPreferences,
   onSelectPOI
 }) => {
   const [pois, setPOIs] = useState<EnhancedPOI[]>([]);
   const [loading, setLoading] = useState(false);
+  const { isDarkMode } = useSettings();
 
   useEffect(() => {
     if (!category || !userLocation) {

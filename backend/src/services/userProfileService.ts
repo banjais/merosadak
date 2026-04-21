@@ -3,62 +3,12 @@ import fs from "fs/promises";
 import path from "path";
 import { DATA_DIR } from "../config/paths.js";
 import { logInfo, logError } from "../logs/logs.js";
+import { maskEmail } from "@/services/piiMasking";
+import type { UserProfile, UserPreferences } from "../types.js";
 
 // ────────────────────────────────
 // User Profile & Preferences Service
 // ────────────────────────────────
-
-interface SavedLocation {
-  name: string;
-  lat: number;
-  lng: number;
-  createdAt: string;
-}
-
-interface UserPreferences {
-  language: string;
-  defaultLocation?: {
-    lat: number;
-    lng: number;
-    name: string;
-  };
-  notificationPreferences: {
-    push: boolean;
-    email: boolean;
-    telegram: boolean;
-    weatherAlerts: boolean;
-    roadBlockAlerts: boolean;
-    monsoonAlerts: boolean;
-  };
-  favoriteHighways: string[];
-  savedLocations: SavedLocation[];
-  theme: "light" | "dark" | "auto";
-  mapStyle: "standard" | "satellite" | "terrain" | "dark";
-  autoRefreshInterval: number; // seconds
-  showTrafficOverlay: boolean;
-  showWeatherOverlay: boolean;
-  showMonsoonOverlay: boolean;
-}
-
-interface UserProfile {
-  id: string;
-  email: string;
-  role: string;
-  name?: string;
-  phone?: string;
-  preferences: UserPreferences;
-  stats: {
-    incidentsReported: number;
-    incidentsVerified: number;
-    votesCast: number;
-    routesPlanned: number;
-    memberSince: string;
-    lastActive: string;
-  };
-  badges: string[];
-  createdAt: string;
-  updatedAt: string;
-}
 
 // In-memory store (replace with DB in production)
 const profiles: Map<string, UserProfile> = new Map();
@@ -146,7 +96,7 @@ export async function getOrCreateProfile(userId: string, email: string, role: st
     profiles.set(userId, profile);
     await saveProfiles();
 
-    logInfo("[UserProfile] Created new profile", { userId, email });
+    logInfo("[UserProfile] Created new profile", { userId, email: maskEmail(email) });
   }
 
   // Update last active
@@ -194,7 +144,7 @@ export async function updatePreferences(
  */
 export async function addSavedLocation(
   userId: string,
-  location: Omit<SavedLocation, "createdAt">
+  location: { name: string; lat: number; lng: number }
 ): Promise<UserProfile | null> {
   const profile = profiles.get(userId);
   if (!profile) return null;

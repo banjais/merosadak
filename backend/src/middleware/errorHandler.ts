@@ -1,7 +1,8 @@
 // backend/src/middleware/errorHandler.ts
 import { Request, Response, NextFunction } from "express";
-import { logError, logInfo } from "../logs/logs.js";
-import { isProd, SENTRY_DSN } from "../config/index.js";
+import { logError, logInfo } from "@logs/logs.js";
+import { isProd, SENTRY_DSN } from "@/config/index.js";
+import * as Sentry from "@sentry/node";
 
 // Custom error class for operational errors
 export class AppError extends Error {
@@ -59,7 +60,6 @@ export const errorHandler = (
   // Send to Sentry if configured
   if (SENTRY_DSN && statusCode >= 500) {
     try {
-      const Sentry = require("@sentry/node");
       Sentry.captureException(err, {
         tags: {
           path: req.path,
@@ -140,7 +140,6 @@ export const initializeGlobalErrorHandlers = (): void => {
     // Send to Sentry
     if (SENTRY_DSN) {
       try {
-        const Sentry = require("@sentry/node");
         Sentry.captureException(reason);
       } catch {
         // Sentry not available
@@ -158,7 +157,6 @@ export const initializeGlobalErrorHandlers = (): void => {
     // Send to Sentry
     if (SENTRY_DSN) {
       try {
-        const Sentry = require("@sentry/node");
         Sentry.captureException(error);
       } catch {
         // Sentry not available

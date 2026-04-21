@@ -8,6 +8,7 @@
 export type Label = {
   en: string | null;
   ne?: string | null;
+  [key: string]: string | null | undefined;
 };
 
 // ---------------- User & Auth ----------------
@@ -21,6 +22,51 @@ export type User = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export interface UserPreferences {
+  language: string;
+  defaultLocation?: {
+    lat: number;
+    lng: number;
+    name: string;
+  };
+  notificationPreferences: {
+    push: boolean;
+    email: boolean;
+    telegram: boolean;
+    weatherAlerts: boolean;
+    roadBlockAlerts: boolean;
+    monsoonAlerts: boolean;
+  };
+  favoriteHighways: string[];
+  savedLocations: Array<{ name: string; lat: number; lng: number; createdAt: string }>;
+  theme: "light" | "dark" | "auto";
+  mapStyle: "standard" | "satellite" | "terrain" | "dark";
+  autoRefreshInterval: number;
+  showTrafficOverlay: boolean;
+  showWeatherOverlay: boolean;
+  showMonsoonOverlay: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: string;
+  name?: string;
+  phone?: string;
+  preferences: UserPreferences;
+  stats: {
+    incidentsReported: number;
+    incidentsVerified: number;
+    votesCast: number;
+    routesPlanned: number;
+    memberSince: string;
+    lastActive: string;
+  };
+  badges: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 // ---------------- UI & Branding ----------------
 /** 
@@ -63,8 +109,8 @@ export type RoadStatus = {
   road_refno: string;
   status: RoadStatusCode;
   chainage?: string | null;
-  incidentDistrict: Label;
-  incidentPlace: Label;
+  incidentDistrict?: Label;
+  incidentPlace?: Label;
   province?: string | null;
   div_name?: string | null;
   incidentStarted?: string | null;
@@ -84,18 +130,69 @@ export type RoadStatus = {
   };
 };
 
+export type GeoJSONLineString = { type: "LineString"; coordinates: [number, number][] };
+export type GeoJSONMultiLineString = { type: "MultiLineString"; coordinates: [number, number][][] };
+export type GeoJSONGeometry = GeoJSONPoint | GeoJSONLineString | GeoJSONMultiLineString;
+
+export interface RoadSegment {
+  id: string;
+  name: string;
+  chainageStart?: number;
+  chainageEnd?: number;
+  geometry: GeoJSONGeometry;
+  status: RoadStatusCode;
+  source: string;
+  properties: RoadStatus & Record<string, any>;
+}
+
 // ---------------- Other Data Points ----------------
-export type TrafficInfo = {
-  id: number;
-  highwayLabel?: Label;
-  place?: string;
-  status?: string | Label;
-  coordinate?: LatLng | null;
-  lastUpdated?: string;
-  averageSpeed?: number;
-  congestionLevel?: number;
-  source?: "waze" | "tomtom" | "mock" | "cache";
-};
+
+export interface TrafficFlowSegment {
+  id: string;
+  coordinates: [number, number][];
+  currentSpeed: number;
+  freeFlowSpeed: number;
+  congestionLevel: 'low' | 'medium' | 'high' | 'extreme';
+  color: 'green' | 'yellow' | 'orange' | 'red';
+  delay: number;
+  confidence: number;
+}
+
+export interface WazeAlert {
+  id: string;
+  type: string;
+  subtype: string;
+  location: { lat: number; lng: number };
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  timestamp: string;
+}
+
+export interface TrafficResult {
+  flowSegments: TrafficFlowSegment[];
+  wazeAlerts: WazeAlert[];
+  summary: {
+    totalSegments: number;
+    congestedSegments: number;
+    averageSpeed: number;
+    averageDelay: number;
+  };
+  lastUpdated: string;
+}
+
+export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "EXTREME";
+
+export interface RiskAssessment {
+  roadId: string;
+  roadName: string;
+  riskLevel: RiskLevel;
+  color: string;
+  reason: string;
+  rainIntensity?: number;
+  slopeAngle?: number;
+  lat: number;
+  lng: number;
+}
 
 /** Groups for the Display Board Hub */
 export type POIGroup = "Fuel" | "Medical" | "Logistics" | "Police" | "Tourist" | "Food";
@@ -115,6 +212,18 @@ export type POI = {
     amenities?: string[];
   };
 };
+
+export interface AlertEntry {
+  id: string | number;
+  type: string;
+  title: string;
+  message: string;
+  severity: string;
+  lat?: number;
+  lng?: number;
+  extra?: any;
+  timestamp: string;
+}
 
 export type WeatherData = {
   id?: number;
@@ -161,14 +270,52 @@ export type ServiceDashboardMetadata = {
   hasLiveUpdates: boolean;
 };
 
+// ---------------- Route Planning ----------------
+
+export interface RouteOption {
+  id: string;
+  name: string;
+  description: string;
+  waypoints: LatLng[];
+  highways: string[];
+  estimatedDistance: number;
+  estimatedDuration: number;
+  riskScore: number;
+  conditionScore: number;
+  isRecommended: boolean;
+  status: "optimal" | "alternative" | "avoid";
+  warnings: string[];
+  highlights: string[];
+}
+
+export interface RoutePlan {
+  origin: LatLng;
+  destination: LatLng;
+  routes: RouteOption[];
+  recommendedRouteId: string;
+  calculatedAt: string;
+}
+
+export interface RouteRiskFactors {
+  blockedIncidents: number;
+  oneLaneIncidents: number;
+  monsoonRisk: boolean;
+  nightTravel: boolean;
+  mountainousTerrain: boolean;
+  roadQuality: "good" | "fair" | "poor";
+}
+
 // ---------------- Search ----------------
 export type SearchResult = {
-  id: number;
-  type: "road" | "poi" | "traffic" | "weather";
+  id: string | number;
+  type: "road" | "traffic" | "poi" | "location" | "weather";
   name: string;
-  status?: string;
-  coordinate?: LatLng | null;
-  distance?: number;
+  lat: number;
+  lng: number;
+  subtitle?: string;
+  source: "local" | "tomtom" | "osm" | "weather";
+  score?: number;
+  extra?: any;
 };
 
 // ---------------- GeoJSON ----------------

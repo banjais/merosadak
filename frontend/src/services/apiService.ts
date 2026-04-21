@@ -3,6 +3,7 @@ import { APP_CONFIG, NEPAL_CENTER } from "../config/config";
 import { apiFetch } from "../api";
 import type { TravelIncident } from "../types";
 export type { TravelIncident } from "../types";
+import { resolveLabel } from "../utils/labelUtils";
 
 /**
  * Types
@@ -78,104 +79,12 @@ export const alertService = {
 
 /**
  * -------------------------
- * Mock Data
- * -------------------------
- */
-const ROAD_MOCKS: TravelIncident[] = [
-  {
-    id: 'road-mock-1',
-    type: IncidentType.BLOCKAGE,
-    title: 'Narayangadh-Mugling Landslide',
-    description: 'Highway blocked due to fresh landslide near Jalbire. Clearance expected in 4 hours.',
-    lat: 27.755,
-    lng: 84.425,
-    severity: 'high',
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: 'road-mock-2',
-    type: IncidentType.ONE_LANE,
-    title: 'Prithvi Highway One-Lane',
-    description: 'One-way traffic operation near Kurintar due to road maintenance.',
-    lat: 27.8174,
-    lng: 84.5919,
-    severity: 'medium',
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: 'road-mock-3',
-    type: IncidentType.BLOCKAGE,
-    title: 'Siddhartha Highway Closure',
-    description: 'Road closed near Tansen due to bridge repair work. Reopening at 6 PM.',
-    lat: 27.871,
-    lng: 83.551,
-    severity: 'high',
-    timestamp: new Date().toISOString()
-  }
-];
-
-/**
- * -------------------------
  * API Methods (Frontend)
  * -------------------------
  */
 
-const TRAFFIC_MOCKS: TravelIncident[] = [
-  {
-    id: 'traffic-mock-1',
-    type: IncidentType.TRAFFIC,
-    title: 'Heavy Traffic at Kalanki',
-    description: 'Severe congestion due to peak hour rush.',
-    lat: 27.693,
-    lng: 85.281,
-    severity: 'high',
-    timestamp: new Date().toISOString()
-  }
-];
-
-const WEATHER_MOCKS = {
-  coord: { lon: 85.324, lat: 27.7172 },
-  weather: [{ id: 800, main: "Clear", description: "clear sky", icon: "01d" }],
-  main: { temp: 22, humidity: 45 },
-  visibility: 10000,
-  wind: { speed: 3.5 },
-  name: "Kathmandu"
-};
-
-const MONSOON_MOCKS: TravelIncident[] = [];
-
-const POI_MOCKS: any[] = [
-  {
-    id: 'poi-1',
-    type: IncidentType.POI,
-    title: 'Fuel Station',
-    description: 'Sajha Petrol Pump',
-    lat: 27.67,
-    lng: 85.32,
-    severity: 'success',
-    timestamp: new Date().toISOString()
-  }
-];
-
-const BOUNDARY_MOCK: GeoData = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: { name: "Nepal Boundary Mock" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [[80.05, 26.34], [88.2, 26.34], [88.2, 30.45], [80.05, 30.45], [80.05, 26.34]]
-        ]
-      }
-    }
-  ]
-};
-
 export const api = {
-  getRoads: async (): Promise<TravelIncident[]> => {
-    if (APP_CONFIG.useMocks) return ROAD_MOCKS;
+  getRoads: async (lang: string = 'en'): Promise<TravelIncident[]> => {
     const result = await apiFetch<any>('/roads/all');
     // Result is { merged: RoadSegment[], raw: [], rowIssues: [] }
     const features = result.merged || result.features || [];
@@ -184,20 +93,33 @@ export const api = {
       const status = props.status || f.status || '';
       const isBlocked = status.toLowerCase().includes('block');
       const isOneLane = status.toLowerCase().includes('one');
+
+      let lat = 0;
+      let lng = 0;
+      const geom = f.geometry;
+      if (geom?.type === 'Point') {
+        lng = geom.coordinates[0];
+        lat = geom.coordinates[1];
+      } else if (geom?.type === 'LineString' && geom.coordinates.length > 0) {
+        // Take the first point of the line as the reference coordinate
+        lng = geom.coordinates[0][0];
+        lat = geom.coordinates[0][1];
+      }
+
       return {
         id: f.id || Math.random().toString(36).substr(2, 9),
         type: isBlocked ? IncidentType.BLOCKAGE : isOneLane ? IncidentType.ONE_LANE : IncidentType.RESUMED,
-        title: props.road_name || f.name || "Road Alert",
+        title: resolveLabel(props.road_name, lang) || f.name || "Road Alert",
         source: f.source || 'community',
-        description: props.remarks || f.description || `Road status: ${status || 'Resumed'}`,
-        lat: f.geometry?.coordinates?.[1] || 0,
-        lng: f.geometry?.coordinates?.[0] || 0,
+        description: resolveLabel(props.remarks, lang) || f.description || `Road status: ${status || 'Resumed'}`,
+        lat,
+        lng,
         severity: isBlocked ? 'high' : isOneLane ? 'medium' : 'success',
         timestamp: props.reportDate || new Date().toISOString(),
         // Sheet fields
         road_refno: props.road_refno || '',
-        incidentDistrict: props.incidentDistrict || '',
-        incidentPlace: props.incidentPlace || '',
+        incidentDistrict: resolveLabel(props.incidentDistrict, lang),
+        incidentPlace: resolveLabel(props.incidentPlace, lang),
         chainage: props.chainage || '',
         incidentStarted: props.incidentStarted || '',
         estimatedRestoration: props.estimatedRestoration || '',
@@ -205,7 +127,7 @@ export const api = {
         blockedHours: props.blockedHours || '',
         contactPerson: props.contactPerson || '',
         restorationEfforts: props.restorationEfforts || '',
-        remarks: props.remarks || '',
+        remarks: resolveLabel(props.remarks, lang),
         status: status,
         reportDate: props.reportDate || '',
         div_name: props.div_name || '',
@@ -213,12 +135,10 @@ export const api = {
     }).filter((i: any) => i.lat !== 0);
   },
   getNepalBoundary: async (): Promise<GeoData> => {
-    if (APP_CONFIG.useMocks) return BOUNDARY_MOCK;
     const result = await apiFetch<any>('/boundary');
     return result.data || result;
   },
   getPois: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
-    if (APP_CONFIG.useMocks) return POI_MOCKS;
     const qLat = lat ?? NEPAL_CENTER[0];
     const qLng = lng ?? NEPAL_CENTER[1];
     const result = await apiFetch<any>(`/pois?q=hospital&lat=${qLat}&lng=${qLng}`);
@@ -239,7 +159,6 @@ export const api = {
     }).filter((i: any) => i.lat !== 0);
   },
   getTraffic: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
-    if (APP_CONFIG.useMocks) return TRAFFIC_MOCKS;
     const qLat = lat ?? NEPAL_CENTER[0];
     const qLng = lng ?? NEPAL_CENTER[1];
     const result = await apiFetch<any>(`/traffic/nearby?lat=${qLat}&lng=${qLng}&radius=10`);
@@ -256,7 +175,6 @@ export const api = {
     })).filter((i: TravelIncident) => i.lat !== 0);
   },
   getMonsoon: async (): Promise<TravelIncident[]> => {
-    if (APP_CONFIG.useMocks) return MONSOON_MOCKS;
     const result = await apiFetch<any>('/monsoon/risk');
     const items = Array.isArray(result) ? result : (result.data || []);
     return items.map((r: any) => ({
@@ -268,10 +186,10 @@ export const api = {
       lng: (r as any).lng || 0,
       severity: r.riskLevel === 'EXTREME' || r.riskLevel === 'HIGH' ? 'high' : 'medium',
       timestamp: new Date().toISOString()
-    })).filter((i: TravelIncident) => i.lat !== 0 || APP_CONFIG.useMocks);
+    })).filter((i: TravelIncident) => i.lat !== 0);
   },
   getWeather: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
-    const data = APP_CONFIG.useMocks ? WEATHER_MOCKS : await apiFetch<any>(`/weather?lat=${lat ?? NEPAL_CENTER[0]}&lng=${lng ?? NEPAL_CENTER[1]}`);
+    const data = await apiFetch<any>(`/weather?lat=${lat ?? NEPAL_CENTER[0]}&lng=${lng ?? NEPAL_CENTER[1]}`);
     if (Array.isArray(data)) return data;
     if (data && typeof data === 'object' && (data.main || data.weather)) {
       const weather = data.weather?.[0];
@@ -288,7 +206,7 @@ export const api = {
     }
     return [];
   },
-  getAlerts: async (lat?: number, lng?: number): Promise<TravelIncident[]> => {
+  getAlerts: async (lat?: number, lng?: number, lang: string = 'en'): Promise<TravelIncident[]> => {
     const q = lat !== undefined && lng !== undefined ? `?lat=${lat}&lng=${lng}` : '';
     const result = await apiFetch<any>(`/alerts${q}`);
     const alerts = result.data || result || [];
@@ -304,8 +222,8 @@ export const api = {
       timestamp: a.timestamp || new Date().toISOString(),
       source: 'sheet',
       road_refno: a.extra?.road_refno || '',
-      incidentDistrict: a.extra?.incidentDistrict || '',
-      incidentPlace: a.extra?.incidentPlace || '',
+      incidentDistrict: resolveLabel(a.extra?.incidentDistrict, lang),
+      incidentPlace: resolveLabel(a.extra?.incidentPlace, lang),
       chainage: a.extra?.chainage || '',
       incidentStarted: a.extra?.incidentStarted || '',
       estimatedRestoration: a.extra?.estimatedRestoration || '',
@@ -313,7 +231,7 @@ export const api = {
       blockedHours: a.extra?.blockedHours || '',
       contactPerson: a.extra?.contactPerson || '',
       restorationEfforts: a.extra?.restorationEfforts || '',
-      remarks: a.extra?.remarks || '',
+      remarks: resolveLabel(a.extra?.remarks, lang),
       status: a.extra?.status || '',
       reportDate: a.extra?.reportDate || '',
       div_name: a.extra?.div_name || '',
@@ -341,6 +259,33 @@ export const api = {
     } catch (err) {
       console.error(`Failed to load highway ${code}:`, err);
       return null;
+    }
+  },
+  getHighwayReport: async (code: string, lang: string = 'en'): Promise<any> => {
+    try {
+      const result = await apiFetch<any>(`/highways/${code}/report?lang=${lang}`);
+      return result.data || null;
+    } catch (err) {
+      console.error(`Failed to load highway report for ${code}:`, err);
+      return null;
+    }
+  },
+  suggestAlternativeRoutes: async (from: string, to: string, lang: string = 'en'): Promise<any[]> => {
+    try {
+      const result = await apiFetch<any>(`/highways/alternatives?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&lang=${lang}`);
+      return result.data || [];
+    } catch (err) {
+      console.error('Failed to suggest alternative routes:', err);
+      return [];
+    }
+  },
+  getHighwayIncidents: async (code: string, lang: string = 'en'): Promise<any> => {
+    try {
+      const result = await apiFetch<any>(`/highways/${code}/incidents?lang=${lang}`);
+      return result.data || result;
+    } catch (err) {
+      console.error(`Failed to load incidents for highway ${code}:`, err);
+      return { code: code.toUpperCase(), totalActive: 0, blocked: 0, oneLane: 0, fromSegments: {}, fromSheet: {}, error: true };
     }
   }
 };
@@ -407,9 +352,9 @@ export const otpService = {
         headers: { 'Content-Type': 'application/json' }
       });
       return true;
-    } catch {
-      await new Promise(r => setTimeout(r, 1000));
-      return true;
+    } catch (error) {
+      console.error('[OTP] Send request failed:', error);
+      return false;
     }
   },
   verifyOtp: async (email: string, code: string): Promise<boolean> => {

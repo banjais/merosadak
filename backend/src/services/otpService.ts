@@ -1,6 +1,7 @@
 // backend/src/services/otpService.ts
 import { logError } from "../logs/logs.js";
 import { signToken } from "../utils/jwt.js";
+import { maskEmail } from "@/services/piiMasking";
 import * as alertService from "./alertService.js";
 import type { UserRole } from "../types.js";
 
@@ -49,7 +50,7 @@ export async function issueEmailOTP(email: string): Promise<void> {
       text: `Your verification code is: ${otp}\nIt expires in 5 minutes.`,
     });
   } catch (err: any) {
-    logError(`[OtpService] Failed to send Email OTP to ${email}`, err.message);
+    logError(`[OtpService] Failed to send Email OTP to ${maskEmail(email)}`, err.message);
   }
 }
 

@@ -117,6 +117,7 @@ export const geminiQuerySchema = z.object({
 export const searchQuerySchema = z.object({
   q: z.string().min(1, "Search query is required").max(200),
   limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+  lang: z.string().max(5).optional().default("en"),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   type: z.enum(["road", "poi", "traffic", "weather", "highway"]).optional(),
@@ -245,4 +246,20 @@ export const geofenceAlertSchema = z.object({
   lng: z.number().min(-180).max(180),
   radius: z.number().min(100).max(10000),
   alertTypes: z.array(z.enum(["weather", "blockage", "landslide", "flood"])).min(1).max(10),
+});
+
+// ────────────────────────────────
+// GEOFENCE MANAGEMENT SCHEMA (Admin)
+// ────────────────────────────────
+export const geofenceZoneSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  name: z.string().min(1, "Name is required"),
+  center: z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+  }),
+  radius: z.number().positive("Radius must be a positive number"),
+  alertTypes: z.array(z.enum(["weather", "blockage", "landslide", "flood"])).min(1),
+  riskLevel: z.enum(["low", "medium", "high", "critical"]),
+  active: z.boolean().default(true),
 });

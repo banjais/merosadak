@@ -17,7 +17,7 @@ router.get("/", async (req: Request, res: Response) => {
     const latNum = lat ? parseFloat(lat as string) : 27.7172;
     const lngNum = lng ? parseFloat(lng as string) : 85.3240;
 
-    const pois = await poiService.handleGetPOI(query, latNum, lngNum);
+    const pois = await poiService.getNearbyPOIs(latNum, lngNum, query);
 
     res.json({
       success: true,

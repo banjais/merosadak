@@ -1,88 +1,49 @@
-// backend/src/services/overpassService.ts
-import axios from "axios";
-import { logError, logInfo } from "../logs/logs.js";
-import { getMarkerIcon } from "../utils/iconMap.js";
-import { OVERPASS_API_URL, OVERPASS_FALLBACK_URL } from "../config/index.js";
-import { POIResult } from "./poiService.js";
+import { config } from "../config/index.js";
+import { logError } from "../logs/logs.js";
 
-export async function fetchOverpassPOIs(
-  query: string,
-  lat: number,
-  lng: number,
-  radius: number
-): Promise<POIResult[]> {
-  const overpassQuery = `
-    [out:json][timeout:25];
-    (
-      node["name"~"${query}",i](around:${radius},${lat},${lng});
-      node["amenity"~"${query}",i](around:${radius},${lat},${lng});
-      node["tourism"~"${query}",i](around:${radius},${lat},${lng});
-      way["name"~"${query}",i](around:${radius},${lat},${lng});
-    );
-    out center tags;
-  `;
+/**
+ * Fetches POIs from OpenStreetMap via Overpass API.
+ */
+export async function fetchPOIsFromOverpass(lat: number, lng: number, category: string, radius: number = 5000) {
+  const apiUrls = [config.OVERPASS_API_URL, config.OVERPASS_FALLBACK_URL];
 
-  const tryFetch = async (baseUrl: string, label: string): Promise<POIResult[] | null> => {
-    try {
-      const res = await axios.get(`${baseUrl}/interpreter`, {
-        params: { data: overpassQuery },
-        timeout: 20_000,
-      });
-
-      return res.data.elements
-        .map((e: any) => {
-          const latVal = e.lat ?? e.center?.lat;
-          const lngVal = e.lon ?? e.center?.lon;
-          if (!latVal || !lngVal) return null;
-
-          const category =
-            e.tags?.amenity ||
-            e.tags?.tourism ||
-            e.tags?.leisure ||
-            e.tags?.shop ||
-            "Place";
-
-          return {
-            id: `op-${e.id}`,
-            name: e.tags?.name ?? query,
-            location: { lat: latVal, lng: lngVal },
-            category,
-            icon: getMarkerIcon(category),
-            address:
-              e.tags?.["addr:full"] ??
-              e.tags?.["addr:city"] ??
-              "Nepal",
-            source: "overpass",
-            isTouristFriendly: checkTouristStatus(category, e.tags?.name),
-          };
-        })
-        .filter(Boolean) as POIResult[];
-    } catch (err: any) {
-      logError(`[Overpass] ${label} failed`, err.message);
-      return null;
-    }
+  // Map common categories to OSM tags
+  const tagMap: Record<string, string> = {
+    hospital: 'amenity=hospital',
+    fuel: 'amenity=fuel',
+    police: 'amenity=police',
+    restaurant: 'amenity=restaurant',
+    hotel: 'tourism=hotel'
   };
 
-  // Try main instance first, then fallback
-  const result = await tryFetch(OVERPASS_API_URL, "Main");
-  if (result) return result;
+  const tag = tagMap[category.toLowerCase()] || `amenity=${category}`;
+  const query = `[out:json][timeout:25];nwr(${lat - 0.05},${lng - 0.05},${lat + 0.05},${lng + 0.05})[${tag}];out center;`;
 
-  logInfo("[Overpass] Trying fallback instance...");
-  const fallbackResult = await tryFetch(OVERPASS_FALLBACK_URL, "Fallback");
-  return fallbackResult || [];
-}
+  for (const url of apiUrls) {
+    try {
+      const response = await fetch(`${url}/interpreter`, {
+        method: 'POST',
+        body: `data=${encodeURIComponent(query)}`,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
 
-function checkTouristStatus(category: string, name?: string) {
-  const keywords = [
-    "tourist",
-    "resort",
-    "heritage",
-    "museum",
-    "airport",
-    "hotel",
-    "temple",
-  ];
-  const c = (category || "").toLowerCase();
-  const n = (name || "").toLowerCase();
-  return keywords.some(k => c.includes(k) || n.includes(k));
+      if (!response.ok) continue;
+
+      const data = await response.json() as any;
+      return (data.elements || []).map((el: any) => ({
+        id: el.id,
+        name: el.tags?.name || category,
+        lat: el.lat || el.center?.lat,
+        lng: el.lon || el.center?.lon,
+        category,
+        source: 'osm',
+        address: el.tags?.['addr:street'] || el.tags?.['addr:city'] || ''
+      }));
+    } catch (err: any) {
+      logError(`[OverpassService] Attempt failed for ${url}`, err.message);
+    }
+  }
+
+  logError("[OverpassService] All Overpass providers failed");
+  return [];
 }

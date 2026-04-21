@@ -1,6 +1,7 @@
 // src/components/MapLayersToggle.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Layers, Map as MapIcon, Globe, Mountain, ShieldAlert, Navigation2, CheckCircle2, ChevronDown, Route, Search } from 'lucide-react';
+import { useSettings } from '../SettingsContext';
 import type { MapEngine } from './MapEngineSelector';
 
 export type MapLayerType = 'standard' | 'satellite' | 'terrain' | '3d';
@@ -10,7 +11,6 @@ interface MapLayersToggleProps {
   onLayerChange: (layer: MapLayerType) => void;
   activeFilters: { blocked: boolean; oneway: boolean; resumed: boolean };
   onFilterToggle: (filter: 'blocked' | 'oneway' | 'resumed') => void;
-  isDarkMode: boolean;
   mapEngine: MapEngine | null;
   onMapEngineChange: (engine: MapEngine) => void;
   onResetEngine: () => void;
@@ -24,7 +24,6 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
   onLayerChange,
   activeFilters,
   onFilterToggle,
-  isDarkMode,
   mapEngine,
   onMapEngineChange,
   onResetEngine,
@@ -34,6 +33,7 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isDarkMode } = useSettings();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -61,8 +61,8 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
 
   return (
     <div ref={containerRef} className="absolute top-20 md:top-36 right-2 md:right-4 z-[1000] flex flex-col items-end gap-2 pointer-events-auto">
-      
-      <button 
+
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-3 py-2 rounded-[1.25rem] bg-white/70 backdrop-blur-xl border transition-all shadow-[0_8px_24px_rgba(27,51,85,0.1)] hover:scale-105 active:scale-95 ${isOpen ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-white/40'}`}
       >
@@ -72,7 +72,7 @@ export const MapLayersToggle: React.FC<MapLayersToggleProps> = ({
       </button>
 
       <div className={`w-auto bg-white/90 backdrop-blur-xl rounded-[1.25rem] border border-white/40 shadow-[0_12px_32px_rgba(27,51,85,0.12)] p-3 flex flex-col gap-3 transition-all duration-300 origin-top-right ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none'}`}>
-        
+
         {/* Map Engine Selector */}
         <div className="flex gap-1.5">
           <button

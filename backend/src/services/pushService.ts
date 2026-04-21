@@ -1,8 +1,8 @@
-import { logInfo, logError } from "../logs/logs.js";
+import { logInfo, logError } from "@logs/logs.js";
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR } from "../config/paths.js";
-import webpush from "../utils/push.js";
+import { DATA_DIR } from "@/config/paths.js";
+import webpush from "@/utils/push.js";
 
 // ────────────────────────────────
 // Web Push Notification Service
@@ -48,7 +48,7 @@ export async function initializeWebPush(): Promise<void> {
     // Validate VAPID keys first
     const vapidPub = process.env.VAPID_PUBLIC_KEY;
     const vapidPriv = process.env.VAPID_PRIVATE_KEY;
-    
+
     if (!vapidPub || !vapidPriv) {
       logError("[WebPush] VAPID keys not configured - push will NOT work");
     } else {
@@ -57,15 +57,15 @@ export async function initializeWebPush(): Promise<void> {
 
     const data = await fs.readFile(SUBSCRIPTIONS_FILE, "utf-8");
     const parsed = JSON.parse(data) as Record<string, UserSubscription[]>;
-    
+
     for (const [userId, subs] of Object.entries(parsed)) {
       // Filter invalid subscriptions on load
-      const validSubs = subs.filter(s => 
-        s.subscription?.endpoint && 
-        s.subscription?.keys?.p256dh && 
+      const validSubs = subs.filter(s =>
+        s.subscription?.endpoint &&
+        s.subscription?.keys?.p256dh &&
         s.subscription?.keys?.auth
       );
-      
+
       if (validSubs.length > 0) {
         subscriptions.set(userId, validSubs);
       }
@@ -75,7 +75,7 @@ export async function initializeWebPush(): Promise<void> {
       totalSubscriptions: [...subscriptions.values()].flat().length,
       totalUsers: subscriptions.size
     });
-    
+
   } catch (err: any) {
     if (err.code === 'ENOENT') {
       logInfo("[WebPush] No existing subscriptions found, creating new store");
@@ -92,7 +92,7 @@ export async function initializeWebPush(): Promise<void> {
  */
 async function saveSubscriptions(): Promise<void> {
   savePending = true;
-  
+
   // Queue save operation to avoid race conditions
   saveQueue = saveQueue.finally(async () => {
     if (!savePending) return;
@@ -106,11 +106,11 @@ async function saveSubscriptions(): Promise<void> {
 
       const jsonData = JSON.stringify(obj, null, 2);
       const tempFile = `${SUBSCRIPTIONS_FILE}.tmp`;
-      
+
       // Atomic write: write to temp file first then rename
       await fs.writeFile(tempFile, jsonData);
       await fs.rename(tempFile, SUBSCRIPTIONS_FILE);
-      
+
     } catch (err: any) {
       logError("[WebPush] Failed to save subscriptions", err.message);
     }
@@ -149,12 +149,12 @@ export async function subscribeUser(
         monsoonAlerts: true,
         accidentAlerts: true,
       },
-      createdAt: existingIndex >= 0 
-        ? userSubs[existingIndex].createdAt 
+      createdAt: existingIndex >= 0
+        ? userSubs[existingIndex].createdAt
         : new Date().toISOString(),
       lastUsed: new Date().toISOString(),
-      failureCount: existingIndex >= 0 
-        ? userSubs[existingIndex].failureCount || 0 
+      failureCount: existingIndex >= 0
+        ? userSubs[existingIndex].failureCount || 0
         : 0
     };
 
@@ -167,12 +167,12 @@ export async function subscribeUser(
     subscriptions.set(userId, userSubs);
     await saveSubscriptions();
 
-    logInfo("[WebPush] User subscribed", { 
-      userId, 
-      endpointHash: hashEndpoint(subscription.endpoint) 
+    logInfo("[WebPush] User subscribed", {
+      userId,
+      endpointHash: hashEndpoint(subscription.endpoint)
     });
     return true;
-    
+
   } catch (err: any) {
     logError("[WebPush] Failed to subscribe user", err.message);
     return false;
@@ -184,11 +184,11 @@ export async function subscribeUser(
  */
 export async function unsubscribeUser(userId: string, endpoint: string): Promise<boolean> {
   if (!userId || !endpoint) return false;
-  
+
   try {
     const userSubs = subscriptions.get(userId) || [];
     const initialLength = userSubs.length;
-    
+
     const filtered = userSubs.filter((s) => s.subscription.endpoint !== endpoint);
 
     if (filtered.length === initialLength) {
@@ -200,12 +200,12 @@ export async function unsubscribeUser(userId: string, endpoint: string): Promise
     } else {
       subscriptions.set(userId, filtered);
     }
-    
+
     await saveSubscriptions();
 
     logInfo("[WebPush] User unsubscribed", { userId, endpointHash: hashEndpoint(endpoint) });
     return true;
-    
+
   } catch (err: any) {
     logError("[WebPush] Failed to unsubscribe user", err.message);
     return false;
@@ -233,7 +233,7 @@ export async function updatePreferences(
 
     await saveSubscriptions();
     return true;
-    
+
   } catch (err: any) {
     logError("[WebPush] Failed to update preferences", err.message);
     return false;
@@ -250,7 +250,7 @@ export async function sendPushToUser(
   data?: Record<string, any>
 ): Promise<number> {
   if (!userId || !title) return 0;
-  
+
   const userSubs = subscriptions.get(userId) || [];
   if (userSubs.length === 0) return 0;
 
@@ -284,22 +284,22 @@ async function sendSingleNotification(
     });
 
     await webpush.sendNotification(userSub.subscription, payload);
-    
+
     // Reset failure count on success
     userSub.failureCount = 0;
     userSub.lastUsed = new Date().toISOString();
-    
+
     logInfo("[WebPush] Notification sent successfully", {
       userId: userSub.userId,
       title,
       endpointHash: hashEndpoint(userSub.subscription.endpoint)
     });
-    
+
     return true;
-    
+
   } catch (err: any) {
     userSub.failureCount = (userSub.failureCount || 0) + 1;
-    
+
     logError("[WebPush] Failed to send push notification", {
       userId: userSub.userId,
       error: err.message,
@@ -315,7 +315,7 @@ async function sendSingleNotification(
       });
       await unsubscribeUser(userSub.userId, userSub.subscription.endpoint);
     }
-    
+
     return false;
   }
 }
@@ -333,6 +333,23 @@ export async function notifyRoadBlockage(
     "🚧 Road Blockage Alert",
     `${roadName} is blocked at ${location}`,
     { type: "road_blockage", road: roadName, location },
+    affectedUserIds
+  );
+}
+
+/**
+ * Send push notification for road resumption
+ */
+export async function notifyRoadResumed(
+  roadName: string,
+  location: string,
+  affectedUserIds?: string[]
+): Promise<number> {
+  return broadcastNotification(
+    "roadBlockAlerts",
+    "✅ Road Resumed",
+    `${roadName} at ${location} is now open for traffic`,
+    { type: "road_resumed", road: roadName, location },
     affectedUserIds
   );
 }
@@ -398,14 +415,14 @@ async function broadcastNotification(
 
   // Batch send notifications with concurrency limit
   const batchSize = 20;
-  
+
   for (let i = 0; i < targets.length; i += batchSize) {
     const batch = targets.slice(i, i + batchSize);
     const promises: Promise<number>[] = [];
 
     for (const userId of batch) {
       const userSubs = subscriptions.get(userId) || [];
-      
+
       for (const userSub of userSubs) {
         if (userSub.preferences[preferenceKey]) {
           promises.push(sendPushToUser(userId, title, body, data));
@@ -438,7 +455,7 @@ export function getPushStats(): {
   let totalFailed = 0;
   let totalCriticalFailed = 0;
   const totalUsers = subscriptions.size;
-  
+
   const preferencesBreakdown = {
     weatherAlerts: 0,
     roadBlockAlerts: 0,
@@ -453,7 +470,7 @@ export function getPushStats(): {
       if (userSub.preferences.roadBlockAlerts) preferencesBreakdown.roadBlockAlerts++;
       if (userSub.preferences.monsoonAlerts) preferencesBreakdown.monsoonAlerts++;
       if (userSub.preferences.accidentAlerts) preferencesBreakdown.accidentAlerts++;
-      
+
       if (userSub.failureCount && userSub.failureCount > 0) {
         totalFailed++;
         if (userSub.failureCount >= 3) totalCriticalFailed++;

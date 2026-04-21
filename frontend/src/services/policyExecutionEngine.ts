@@ -21,7 +21,6 @@ export class PolicyExecutionEngine {
       console.warn("[PolicyExecutionEngine] Failed to log action to backend:", err);
     }
 
-    console.log("⚡ EXECUTED:", action);
   }
 
   async pushAlert(action: any) {

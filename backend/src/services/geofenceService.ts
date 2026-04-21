@@ -1,4 +1,7 @@
 // backend/src/services/geofenceService.ts
+import fs from "fs/promises";
+import path from "path";
+import { DATA_DIR } from "../config/paths.js";
 import { logInfo, logError } from "../logs/logs.js";
 import { getWeather } from "./weatherService.js";
 import { getCachedRoads } from "./roadService.js";
@@ -13,7 +16,7 @@ interface Location {
   lng: number;
 }
 
-interface GeofenceZone {
+export interface GeofenceZone {
   id: string;
   name: string;
   center: Location;
@@ -34,12 +37,12 @@ interface GeofenceAlert {
 }
 
 // Predefined high-risk zones (in production, load from database)
-const HIGH_RISK_ZONES: GeofenceZone[] = [
+let HIGH_RISK_ZONES: GeofenceZone[] = [
   {
     id: "zone_mugling_narayanghat",
     name: "Mugling-Narayanghat Road",
     center: { lat: 27.755, lng: 84.425 },
-    radius: 20000, // 20km
+    radius: 20000,
     alertTypes: ["weather", "blockage", "landslide"],
     riskLevel: "high",
     active: true,
@@ -63,6 +66,42 @@ const HIGH_RISK_ZONES: GeofenceZone[] = [
     active: true,
   },
 ];
+
+const GEOFENCE_FILE = path.join(DATA_DIR, "geofences.json");
+
+/**
+ * Loads geofence zones from a JSON file.
+ * Provides persistence for dynamic zones and enables easier maintenance.
+ */
+export async function loadGeofences(): Promise<void> {
+  try {
+    const data = await fs.readFile(GEOFENCE_FILE, "utf-8");
+    HIGH_RISK_ZONES = JSON.parse(data);
+    logInfo("[Geofence] Successfully loaded zones from disk", { count: HIGH_RISK_ZONES.length });
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      logInfo("[Geofence] No geofences.json found, initializing with defaults.");
+      await fs.writeFile(GEOFENCE_FILE, JSON.stringify(HIGH_RISK_ZONES, null, 2));
+    } else {
+      logError("[Geofence] Error loading geofences from disk", err.message);
+    }
+  }
+}
+
+// Initialize on load
+loadGeofences();
+
+/**
+ * Persists current geofence zones to the JSON file.
+ */
+export async function saveGeofences(): Promise<void> {
+  try {
+    await fs.writeFile(GEOFENCE_FILE, JSON.stringify(HIGH_RISK_ZONES, null, 2));
+    logInfo("[Geofence] Successfully saved zones to disk");
+  } catch (err: any) {
+    logError("[Geofence] Error saving geofences to disk", err.message);
+  }
+}
 
 /**
  * Haversine distance in meters
@@ -88,6 +127,16 @@ export function checkGeofence(location: Location): Array<{
   inside: boolean;
 }> {
   const results = HIGH_RISK_ZONES.filter((zone) => zone.active).map((zone) => {
+    // Optimization: Bounding Box Pre-filter
+    // Skip expensive Haversine if point is clearly outside the square containing the circle
+    const latDelta = zone.radius / 111320; // Approx degrees latitude
+    const lngDelta = zone.radius / (111320 * Math.cos(location.lat * (Math.PI / 180)));
+
+    if (location.lat < zone.center.lat - latDelta || location.lat > zone.center.lat + latDelta ||
+      location.lng < zone.center.lng - lngDelta || location.lng > zone.center.lng + lngDelta) {
+      return { zone, distance: Infinity, inside: false };
+    }
+
     const distance = distanceInMeters(
       location.lat,
       location.lng,
@@ -185,6 +234,13 @@ export function removeGeofenceZone(zoneId: string): boolean {
  */
 export function getActiveZones(): GeofenceZone[] {
   return HIGH_RISK_ZONES.filter((z) => z.active);
+}
+
+/**
+ * Get all geofence zones (including inactive ones)
+ */
+export function getAllGeofences(): GeofenceZone[] {
+  return HIGH_RISK_ZONES;
 }
 
 /**

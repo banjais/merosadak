@@ -40,30 +40,13 @@
 
 ### HIGH PRIORITY:
 
-#### 4. WebSocket Real-Time Updates
-**Status**: Documented, needs implementation  
-**What's needed**:
-```typescript
-// Create src/hooks/useWebSocket.ts
-// Add to App.tsx:
-const ws = useWebSocket('ws://localhost:4000/ws/live');
-// Subscribe to incident updates
-```
-**Impact**: Users won't see live incident updates without this
+#### 4. WebSocket Real-Time Updates - FIXED ✅
+**Status**: Implemented via `useWebSocket` hook.
+**Result**: App now receives live broadcasts for road updates and user reports.
 
-#### 5. Automatic Data Polling
-**Status**: Documented, needs implementation  
-**What's needed**:
-```typescript
-// In useNepalData or individual hooks:
-useEffect(() => {
-  const interval = setInterval(() => {
-    refresh();
-  }, 300000); // 5 minutes
-  return () => clearInterval(interval);
-}, []);
-```
-**Impact**: Data only loads once, users must manually refresh
+#### 5. Automatic Data Polling - FIXED ✅
+**Status**: Implemented in road service and frontend data layers.
+**Result**: Data stays fresh with a 5-minute polling fallback to the WebSocket layer.
 
 #### 6. Auth Flow Inconsistency
 **Status**: Partial fix needed  

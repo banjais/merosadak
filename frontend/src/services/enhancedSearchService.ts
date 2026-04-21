@@ -6,6 +6,7 @@ import { searchEnhancedPOIs, getRelevantCategories, getCategoryColorClass } from
 import { getUserPOIPreferences } from './userPreferencesService';
 import { TravelPlan } from '../types/travelPlan';
 import { detectSearchIntent, IntentResult } from './searchIntent';
+import { haversineDistance } from './geoUtils';
 
 export interface SearchResult {
   id: string;
@@ -17,6 +18,13 @@ export interface SearchResult {
   lng?: number;
   distance?: number; // km from user
   data?: any; // Additional context data
+  address?: {
+    state?: string;
+    province?: string;
+    city?: string;
+    municipality?: string;
+    town?: string;
+  };
 }
 
 export interface GroupedSearchResults {
@@ -35,16 +43,19 @@ export interface RouteInfo {
   incidents: number;
   blockedSections: number;
   status: 'clear' | 'partial' | 'blocked';
+  admin?: { province: string; localBody: string };
   alternatives?: RouteInfo[];
 }
 
 // Debounced search function
-let searchTimeout: NodeJS.Timeout | null = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function debouncedSearch(
   query: string,
   userLocation: { lat: number; lng: number } | null,
+  lang: string = 'en',
   maxResults: number = 7,
+  filterHighSafety: boolean = false,
   callback: (groupedResults: GroupedSearchResults, intent: IntentResult) => void
 ) {
   // Clear previous timeout
@@ -66,7 +77,7 @@ export function debouncedSearch(
       const intent = detectSearchIntent(query);
 
       // Then perform enhanced search with intent context
-      const results = await performEnhancedSearch(query, userLocation, maxResults, intent);
+      const results = await performEnhancedSearch(query, userLocation, lang, maxResults, intent, filterHighSafety);
       callback(results, intent);
     } catch (err) {
       console.error('[EnhancedSearch] Search failed:', err);
@@ -80,8 +91,10 @@ export function debouncedSearch(
 async function performEnhancedSearch(
   query: string,
   userLocation: { lat: number; lng: number } | null,
+  lang: string = 'en',
   maxResults: number = 7,
-  intent?: IntentResult
+  intent?: IntentResult,
+  filterHighSafety: boolean = false
 ): Promise<GroupedSearchResults> {
   const results: GroupedSearchResults = {
     places: [],
@@ -94,8 +107,8 @@ async function performEnhancedSearch(
 
   // Parallel searches (including traffic)
   const [placeResults, highwayResults, poiResults, trafficResults] = await Promise.allSettled([
-    searchPlaces(query, userLocation),
-    searchHighways(query, detectedIntent),
+    searchPlaces(query, userLocation, lang),
+    searchHighways(query, detectedIntent, filterHighSafety),
     searchPOIs(query, userLocation, detectedIntent),
     shouldSearchTraffic(query, detectedIntent)
       ? searchTraffic(userLocation)
@@ -130,12 +143,18 @@ async function performEnhancedSearch(
 // Search places using Nominatim + backend
 async function searchPlaces(
   query: string,
-  userLocation: { lat: number; lng: number } | null
+  userLocation: { lat: number; lng: number } | null,
+  lang: string = 'en'
 ): Promise<SearchResult[]> {
   try {
     // Try Nominatim first
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=np&limit=5`
+      `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}&countrycodes=np&limit=5`,
+      {
+        headers: {
+          'User-Agent': 'MeroSadak-App/1.1.0'
+        }
+      }
     );
 
     if (!response.ok) throw new Error('Nominatim failed');
@@ -148,16 +167,17 @@ async function searchPlaces(
       name: item.display_name.split(',')[0],
       subtitle: item.display_name.split(',').slice(1, 3).join(','),
       icon: '📍',
+      address: item.address,
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),
       distance: userLocation
-        ? calculateDistance(userLocation.lat, userLocation.lng, parseFloat(item.lat), parseFloat(item.lon))
+        ? Math.round(haversineDistance(userLocation.lat, userLocation.lng, parseFloat(item.lat), parseFloat(item.lon)) * 10) / 10
         : undefined
     }));
   } catch (err) {
     // Fallback to backend search
     try {
-      const result = await apiFetch<any>(`/v1/search?q=${encodeURIComponent(query)}&limit=5`);
+      const result = await apiFetch<any>(`/v1/search?q=${encodeURIComponent(query)}&limit=5&lang=${lang}`);
       return (result.data || []).map((item: any) => ({
         id: `search-${item.id || item.name}`,
         type: 'place' as const,
@@ -174,10 +194,15 @@ async function searchPlaces(
 }
 
 // Search highways with intent context
-async function searchHighways(query: string, intent?: IntentResult): Promise<SearchResult[]> {
+async function searchHighways(query: string, intent?: IntentResult, filterHighSafety?: boolean): Promise<SearchResult[]> {
   try {
     const result = await apiFetch<any>('/v1/highways');
-    const highways = result.data || [];
+    let highways = result.data || [];
+
+    // Apply Safety Filter if active
+    if (filterHighSafety) {
+      highways = highways.filter((h: any) => (h.qualityScore || 0) >= 60);
+    }
 
     // If highway intent, prioritize match
     if (intent?.intent === 'highway' && intent.highway) {
@@ -343,7 +368,7 @@ async function searchTraffic(userLocation: { lat: number; lng: number } | null):
           icon: '🚨',
           lat: alert.location?.lat,
           lng: alert.location?.lng,
-          distance: alert.location ? calculateDistance(userLocation.lat, userLocation.lng, alert.location.lat, alert.location.lng) : undefined
+          distance: alert.location ? Math.round(haversineDistance(userLocation.lat, userLocation.lng, alert.location.lat, alert.location.lng) * 10) / 10 : undefined
         });
       });
     }
@@ -386,19 +411,6 @@ export function saveRecentSearch(result: SearchResult) {
   } catch (err) {
     console.error('[EnhancedSearch] Failed to save recent search:', err);
   }
-}
-
-// Utility: Haversine distance
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const EARTH_RADIUS_KM = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(EARTH_RADIUS_KM * c * 10) / 10;
 }
 
 // Utility: Get POI icon

@@ -1,13 +1,49 @@
-// backend/src/routes/boundaryRouter.ts
-import { Router } from "express";
-import { getNepalBoundary } from "../controllers/boundaryController.js";
+import { Router, Request, Response } from "express";
+import fs from "fs/promises";
+import path from "path";
+import { DATA_DIR, DISTRICT_DATA, PROVINCE_DATA } from "@/config/paths.js";
+import { logError } from "@logs/logs.js";
 
 const router = Router();
 
 /**
- * GET /api/boundary
- * Returns Nepal boundary GeoJSON for map display
+ * Serves the pre-generated inverted Nepal mask for the frontend Spotlight effect.
  */
-router.get("/", getNepalBoundary);
+router.get("/mask", async (_req: Request, res: Response) => {
+    const maskPath = path.join(DATA_DIR, "nepal_mask.geojson");
+    try {
+        const data = await fs.readFile(maskPath, "utf-8");
+        return res.json({ success: true, data: JSON.parse(data) });
+    } catch (err: any) {
+        logError("[BoundaryRouter] Mask file not found. Ensure the generation script has run.", err.message);
+        return res.status(404).json({ success: false, message: "Mask data unavailable" });
+    }
+});
+
+/**
+ * Serves District boundaries for sharp lines and selection.
+ */
+router.get("/districts", async (_req: Request, res: Response) => {
+    try {
+        const data = await fs.readFile(DISTRICT_DATA, "utf-8");
+        return res.json({ success: true, data: JSON.parse(data) });
+    } catch (err: any) {
+        logError("[BoundaryRouter] District file not found", err.message);
+        return res.status(404).json({ success: false, message: "District data unavailable" });
+    }
+});
+
+/**
+ * Serves Province boundaries.
+ */
+router.get("/provinces", async (_req: Request, res: Response) => {
+    try {
+        const data = await fs.readFile(PROVINCE_DATA, "utf-8");
+        return res.json({ success: true, data: JSON.parse(data) });
+    } catch (err: any) {
+        logError("[BoundaryRouter] Province file not found", err.message);
+        return res.status(404).json({ success: false, message: "Province data unavailable" });
+    }
+});
 
 export default router;

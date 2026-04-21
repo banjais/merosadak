@@ -2,14 +2,16 @@
 import React from 'react';
 import { Marker, Popup, Circle } from 'react-leaflet';
 import { L } from '../lib/leaflet';
-import { TravelIncident } from '../types';
+import { useWeatherMonsoon } from '../WeatherMonsoonContext';
+import { useSettings } from '../SettingsContext';
 
 interface MonsoonRiskOverlayProps {
-  incidents: TravelIncident[];
   isDarkMode?: boolean;
 }
 
-export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ incidents = [], isDarkMode = false }) => {
+export const MonsoonRiskOverlay: React.FC<MonsoonRiskOverlayProps> = ({ isDarkMode = false }) => {
+  const { monsoonIncidents: incidents, loadingMonsoon, errorMonsoon } = useWeatherMonsoon();
+  const { isDarkMode: settingsDarkMode } = useSettings(); // Use settings dark mode if prop not provided
   // Filter only monsoon-related incidents with coordinates
   const monsoonIncidents = (incidents || []).filter(i =>
     (i.type?.toUpperCase().includes('MONSOON') ||

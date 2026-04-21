@@ -28,13 +28,13 @@ interface WazeAlert {
 }
 
 interface TrafficFlowOverlayProps {
-  userLocation: { lat: number; lng: number } | null;
   isVisible: boolean;
+  userLocation?: { lat: number; lng: number } | null; // Make optional as it will be consumed from App.tsx
 }
 
 export const TrafficFlowOverlay: React.FC<TrafficFlowOverlayProps> = ({
-  userLocation,
-  isVisible
+  isVisible,
+  userLocation, // Keep for now, will be removed in App.tsx
 }) => {
   const [flowSegments, setFlowSegments] = useState<TrafficFlowSegment[]>([]);
   const [wazeAlerts, setWazeAlerts] = useState<WazeAlert[]>([]);

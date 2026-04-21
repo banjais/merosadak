@@ -1,13 +1,17 @@
 import webpush from "web-push";
 
-/**
- * Configure VAPID details for web push notifications.
- * Ensure VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are set in .env
- */
-webpush.setVapidDetails(
-  "mailto:admin@merosadak.web.app",
-  process.env.VAPID_PUBLIC_KEY || "",
-  process.env.VAPID_PRIVATE_KEY || ""
-);
+const vapidPub = process.env.VAPID_PUBLIC_KEY || "";
+const vapidPriv = process.env.VAPID_PRIVATE_KEY || "";
+const adminEmail = process.env.SMTP_FROM || "admin@merosadak.com";
+
+if (vapidPub && vapidPriv) {
+  webpush.setVapidDetails(
+    `mailto:${adminEmail}`,
+    vapidPub,
+    vapidPriv
+  );
+} else {
+  // Service will log error on initialization in pushService.ts
+}
 
 export default webpush;

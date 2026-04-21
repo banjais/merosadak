@@ -6,12 +6,12 @@ import { logInfo, logError } from "../logs/logs.js";
 // Speech-to-text for hands-free reporting (driver safety)
 // ────────────────────────────────
 
-interface Location {
+export interface Location {
   lat: number;
   lng: number;
 }
 
-interface VoiceReport {
+export interface VoiceReport {
   id: string;
   userId: string;
   audioTranscript: string;
@@ -37,6 +37,11 @@ export async function processVoiceReport(
   location?: Location
 ): Promise<VoiceReport | null> {
   try {
+    if (!transcript || transcript.trim().length === 0) {
+      logError("[VoiceReport] Empty transcript provided");
+      return null;
+    }
+
     const lowerTranscript = transcript.toLowerCase();
 
     // Extract incident type from transcript

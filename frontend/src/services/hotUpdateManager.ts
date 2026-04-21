@@ -26,10 +26,10 @@ export const HotUpdateManager = {
   init: async () => {
     const saved = localStorage.getItem(VERSION_KEY);
     if (saved) currentVersion = saved;
-    
+
     // Initial check
     await HotUpdateManager.checkForUpdates();
-    
+
     // Start periodic checking
     checkInterval = setInterval(
       () => HotUpdateManager.checkForUpdates(),
@@ -52,7 +52,7 @@ export const HotUpdateManager = {
 
       if (result) {
         const latestVersion = result.version;
-        
+
         if (HotUpdateManager.isNewer(latestVersion, currentVersion)) {
           updateAvailable = {
             version: latestVersion,
@@ -60,7 +60,6 @@ export const HotUpdateManager = {
             changelog: result.changelog,
             releaseDate: new Date().toISOString()
           };
-          console.log(`[HotUpdate] New version available: ${latestVersion}`);
           return updateAvailable;
         }
       }
@@ -73,7 +72,7 @@ export const HotUpdateManager = {
   isNewer: (newVer: string, currentVer: string): boolean => {
     const newParts = newVer.split(".").map(Number);
     const currParts = currentVer.split(".").map(Number);
-    
+
     for (let i = 0; i < Math.max(newParts.length, currParts.length); i++) {
       const n = newParts[i] || 0;
       const c = currParts[i] || 0;

@@ -1,37 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CloudRain, Sun, Wind, MapPin, Droplets, ThermometerSun } from 'lucide-react';
-import { apiFetch } from '../api';
+import { CloudRain, Sun, Wind, MapPin, Droplets } from 'lucide-react';
+import { useWeatherMonsoon } from '../WeatherMonsoonContext';
 
 interface WeatherWidgetProps {
-  userLocation: { lat: number; lng: number } | null;
-  isVisible: boolean;
   isDarkMode: boolean;
 }
 
-export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ userLocation, isVisible, isDarkMode }) => {
-  const [weatherData, setWeatherData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isVisible || !userLocation) return;
-
-    setLoading(true);
-
-    apiFetch<any>(`/v1/weather?lat=${userLocation.lat}&lng=${userLocation.lng}`)
-      .then(res => {
-        if (res?.data) {
-          setWeatherData(res.data);
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [isVisible, userLocation]);
+export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ isDarkMode }) => {
+  const { weatherData, loadingWeather, errorWeather } = useWeatherMonsoon();
+  const isVisible = !!weatherData || loadingWeather || !!errorWeather; // Widget is visible if there's data, loading, or an error
 
   return (
     <AnimatePresence>
-      {isVisible && userLocation && (
+      {isVisible && (
         <motion.div
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -40,7 +22,7 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ userLocation, isVi
           className={`absolute top-24 right-4 sm:top-28 sm:right-6 z-[1200] w-64 p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-2xl border ${isDarkMode ? 'bg-slate-900/60 border-slate-700/50 text-white' : 'bg-white/70 border-white/40 text-gray-800'
             }`}
         >
-          {loading ? (
+          {loadingWeather ? (
             <div className="flex flex-col items-center justify-center h-24">
               <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
               <span className="text-[10px] mt-2 font-bold uppercase tracking-widest opacity-60">Syncing Local Radar...</span>

@@ -5,9 +5,9 @@ import React from 'react';
 import { X, Navigation, CloudRain, Car, Fuel, MapPin, Route } from 'lucide-react';
 import { IntentResult, getIntentDescription, getIntentIcon } from '../services/searchIntent';
 import { SearchResult } from '../services/enhancedSearchService';
+import { useSettings } from '../SettingsContext';
 
 interface SmartSearchResultProps {
-  isDarkMode: boolean;
   intent: IntentResult;
   results: SearchResult[];
   onSelect: (result: SearchResult) => void;
@@ -15,14 +15,14 @@ interface SmartSearchResultProps {
   userLocation: { lat: number; lng: number } | null;
 }
 
-export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
-  isDarkMode,
+export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({ // isDarkMode is now from context
   intent,
   results,
   onSelect,
   onClose,
   userLocation
 }) => {
+  const { isDarkMode } = useSettings();
   // Group results by type
   const places = results.filter(r => r.type === 'place');
   const highways = results.filter(r => r.type === 'highway');
@@ -32,11 +32,10 @@ export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
   const hasResults = places.length > 0 || highways.length > 0 || pois.length > 0;
 
   return (
-    <div className={`mt-2 rounded-xl shadow-2xl border backdrop-blur-xl overflow-hidden max-h-96 overflow-y-auto transition-colors duration-300 ${
-      isDarkMode
+    <div className={`mt-2 rounded-xl shadow-2xl border backdrop-blur-xl overflow-hidden max-h-96 overflow-y-auto transition-colors duration-300 ${isDarkMode
         ? 'bg-slate-900/95 border-slate-700/50'
         : 'bg-white/95 border-white/50'
-    }`}>
+      }`}>
       {/* Intent Header */}
       <div className={`p-3 border-b ${isDarkMode ? 'border-slate-700 bg-slate-800/50' : 'border-gray-200 bg-gray-50'}`}>
         <div className="flex items-center justify-between">
@@ -53,9 +52,8 @@ export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${
-              isDarkMode ? 'hover:bg-slate-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
-            }`}
+            className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
+              }`}
           >
             <X size={18} />
           </button>
@@ -73,9 +71,8 @@ export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
               <button
                 key={`highway-${result.id}`}
                 onClick={() => onSelect(result)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
-                  isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                  }`}
               >
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
                   <Route size={18} className="text-blue-600 dark:text-blue-400" />
@@ -108,9 +105,8 @@ export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
               <button
                 key={`place-${result.id}`}
                 onClick={() => onSelect(result)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
-                  isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                  }`}
               >
                 <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                   <MapPin size={18} className="text-green-600 dark:text-green-400" />
@@ -150,15 +146,13 @@ export const SmartSearchResult: React.FC<SmartSearchResultProps> = ({
               <button
                 key={`poi-${result.id}`}
                 onClick={() => onSelect(result)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
-                  isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-50'
+                  }`}
               >
-                <div className={`p-2 rounded-lg ${
-                  result.type === 'traffic'
+                <div className={`p-2 rounded-lg ${result.type === 'traffic'
                     ? 'bg-red-100 dark:bg-red-900/20'
                     : 'bg-amber-100 dark:bg-amber-900/20'
-                }`}>
+                  }`}>
                   {result.type === 'traffic' ? (
                     <Car size={18} className="text-red-600 dark:text-red-400" />
                   ) : (

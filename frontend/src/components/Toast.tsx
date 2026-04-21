@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -7,7 +7,6 @@ export interface Toast {
   id: string;
   type: ToastType;
   message: string;
-  duration?: number;
 }
 
 interface ToastContainerProps {
@@ -28,6 +27,15 @@ const colorMap = {
   info: 'bg-blue-500',
   warning: 'bg-amber-500',
 };
+
+const toast = {
+  info: (msg: string) => console.log('[toast info]', msg),
+  success: (msg: string) => console.log('[toast success]', msg),
+  warning: (msg: string) => console.log('[toast warning]', msg),
+  error: (msg: string) => console.log('[toast error]', msg),
+};
+
+export { toast };
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   return (
@@ -55,49 +63,3 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
     </div>
   );
 };
-
-// Hook for managing toasts
-export const useToast = () => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = (type: ToastType, message: string, duration = 4000) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const toast: Toast = { id, type, message, duration };
-    setToasts((prev) => [...prev, toast]);
-
-    // Add haptic feedback for alerts
-    if ('vibrate' in navigator) {
-      if (type === 'error') navigator.vibrate([50, 100, 50]);
-      else if (type === 'warning') navigator.vibrate(50);
-    }
-
-    if (duration > 0) {
-      setTimeout(() => removeToast(id), duration);
-    }
-    return id;
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  const success = (message: string) => addToast('success', message);
-  const error = (message: string) => addToast('error', message);
-  const info = (message: string) => addToast('info', message);
-  const warning = (message: string) => addToast('warning', message);
-
-  return {
-    toasts,
-    addToast,
-    removeToast,
-    success,
-    error,
-    info,
-    warning,
-    ToastContainer: (
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
-    ),
-  };
-};
-
-export default useToast;

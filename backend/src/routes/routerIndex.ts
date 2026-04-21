@@ -4,46 +4,47 @@ import { Router } from "express";
 // ----------------------
 // MAP DATA & INFO ROUTERS
 // ----------------------
-import roadRouter from "./roadRouter.js";
-import highwayRouter from "./highwayRouter.js";
-import boundaryRouter from "./boundaryRouter.js";
-import poiRouter from "./poiRouter.js";
-import weatherRouter from "./weatherRouter.js";
-import trafficRouter from "./trafficRouter.js";
-import monsoonRouter from "./monsoonRouter.js";
+import roadRouter from "@/routes/roadRouter.js";
+import highwayRouter from "@/routes/highwayRouter.js";
+import boundaryRouter from "@/routes/boundaryRouter.js";
+import poiRouter from "@/routes/poiRouter.js";
+import weatherRouter from "@/routes/weatherRouter.js";
+import trafficRouter from "@/routes/trafficRouter.js";
+import monsoonRouter from "@/routes/monsoonRouter.js";
 
 // ----------------------
 // SAFETY & ALERTS
 // ----------------------
-import alertRouter from "./alertRouter.js";
-import geminiRouter from "./geminiRouter.js";
-import geocodeRouter from "./geocodeRouter.js";
-import searchRouter from "./searchRouter.js";
+import alertRouter from "@/routes/alertRouter.js";
+import geminiRouter from "@/routes/geminiRouter.js";
+import geocodeRouter from "@/routes/geocodeRouter.js";
+import searchRouter from "@/routes/searchRouter.js";
 
 // ----------------------
 // AUTHENTICATION & ADMIN
 // ----------------------
-import authRouter from "./authRouter.js";
-import otpRouter from "./otpRouter.js";
-import superadminRouter from "./superadminRouter.js";
+import authRouter from "@/routes/authRouter.js";
+import otpRouter from "@/routes/otpRouter.js";
+import superadminRouter from "@/routes/superadminRouter.js";
 
 // ----------------------
 // USER REPORTING
 // ----------------------
-import incidentRouter from "./incidentRouter.js";
+import incidentRouter from "@/routes/incidentRouter.js";
 
 // ----------------------
 // NEW FEATURES (Tier 2 & 3)
 // ----------------------
-import analyticsRouter from "./analyticsRouter.js";
-import etaRouter from "./etaRouter.js";
-import routePlanningRouter from "./routePlanningRouter.js";
-import userRouter from "./userRouter.js";
-import webPushRouter from "./webPushRouter.js";
-import cacheRouter from "./cacheRouter.js";
-import uptimeRouter from "./uptimeRouter.js";
-import aiUIRouter from "./aiUIRouter.js";
-import governmentRouter from "./governmentRouter.js";
+import analyticsRouter from "@/routes/analyticsRouter.js";
+import etaRouter from "@/routes/etaRouter.js";
+import routePlanningRouter from "@/routes/routePlanningRouter.js";
+import userRouter from "@/routes/userRouter.js";
+import webPushRouter from "@/routes/webPushRouter.js";
+import cacheRouter from "@/routes/cacheRouter.js";
+import uptimeRouter from "@/routes/uptimeRouter.js";
+import aiUIRouter from "@/routes/aiUIRouter.js";
+import governmentRouter from "@/routes/governmentRouter.js";
+import verificationRouter from "@/services/verificationRouter.js";
 
 // ----------------------
 // MAIN API ROUTER
@@ -93,6 +94,8 @@ apiRouter.use("/cache", cacheRouter);
 apiRouter.use("/monitoring", uptimeRouter);
 apiRouter.use("/ai", aiUIRouter);
 apiRouter.use("/government", governmentRouter);
+/** Public Safety QR Verification - Ensure no global auth is applied above this */
+apiRouter.use("/verify", verificationRouter);
 
 // ----------------------
 // Helper: Extract routes recursively

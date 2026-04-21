@@ -27,7 +27,6 @@ export async function registerPushNotifications() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey)
       });
-      console.log('[Push] User subscribed:', subscription);
     }
 
     // Sync with backend using apiFetch (attaches auth token automatically)

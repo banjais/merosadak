@@ -51,6 +51,8 @@ jobs:
       telegram_configured: ${{ steps.check_secrets.outputs.telegram_ok }}
       jwt_configured: ${{ steps.check_secrets.outputs.jwt_ok }}
       missing_count: ${{ steps.check_secrets.outputs.missing_count }}
+      optional_missing_count: ${{ steps.check_secrets.outputs.optional_missing_count }}
+      configured_count: ${{ steps.check_secrets.outputs.configured_count }}
       total_count: ${{ steps.check_secrets.outputs.total_count }}
 
     steps:

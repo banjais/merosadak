@@ -3,9 +3,23 @@ import fs from "fs/promises";
 import { CACHE_DIR } from "../config/paths.js";
 import { logError } from "../logs/logs.js";
 import { getCachedRoads } from "./roadService.js";
+import { resolveLabel } from "@/services/labelUtils";
 
 const ANALYTICS_FILE = path.join(CACHE_DIR, "analytics.json");
 let analyticsQueue: Promise<void> = Promise.resolve();
+
+/**
+ * Initializes the analytics store.
+ */
+export async function initializeAnalytics(): Promise<void> {
+  try {
+    await fs.access(ANALYTICS_FILE);
+    logInfo("[analyticsService] Analytics store initialized.");
+  } catch {
+    await fs.writeFile(ANALYTICS_FILE, "{}", "utf-8");
+    logInfo("[analyticsService] Created new analytics store.");
+  }
+}
 
 export async function recordAnalytics(event: string, meta?: any) {
   analyticsQueue = analyticsQueue.then(async () => {
@@ -13,8 +27,17 @@ export async function recordAnalytics(event: string, meta?: any) {
       const raw = await fs.readFile(ANALYTICS_FILE, "utf-8").catch(() => "{}");
       const data = JSON.parse(raw);
 
-      if (meta) {
-        logError(`[analyticsService] Event: ${event}`, { meta });
+      // Logic for Green Badge Leaderboard: Increment user eco-scores
+      if (event === 'eco_trip_completed' && meta?.userId) {
+        if (!data.green_leaderboard) data.green_leaderboard = {};
+        const userId = meta.userId;
+        const current = data.green_leaderboard[userId] || { score: 0, name: meta.userName || 'Traveler' };
+
+        data.green_leaderboard[userId] = {
+          score: current.score + (meta.km || 0),
+          name: meta.userName || current.name,
+          lastUpdated: new Date().toISOString()
+        };
       }
 
       data[event] = (data[event] || 0) + 1;
@@ -60,6 +83,23 @@ export async function getAnalyticsSummary(period: string = "7d") {
 }
 
 /**
+ * Retrieves the top contributors for the Green Badge leaderboard.
+ */
+export async function getGreenLeaderboard(limit: number = 10) {
+  const data = await getAnalyticsData();
+  const board = data.green_leaderboard || {};
+
+  return Object.entries(board)
+    .map(([id, val]: [string, any]) => {
+      // Conversion: 1 Tree per ~2600 KM (based on 0.08L/km car efficiency and 22kg CO2/tree/year)
+      const trees = (val.score || 0) * 0.0084;
+      return { id, ...val, trees: Math.round(trees * 10) / 10 };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+/**
  * Performs a trend analysis over a specified period.
  */
 export async function getTrendAnalysis(period: string) {
@@ -81,8 +121,30 @@ export async function getMostAffectedDistricts(limit: number = 5) {
 
   merged.forEach(road => {
     if (road.status === "Blocked" || road.status === "One-Lane") {
-      const dist = road.incidentDistrict?.en || road.dist_name || "Unknown";
+      const props = road.properties || {};
+      const dist = resolveLabel(props.incidentDistrict) || resolveLabel(props.dist_name) || "Unknown";
       counts[dist] = (counts[dist] || 0) + 1;
+    }
+  });
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/**
+ * Identifies the most affected specific places based on incident data.
+ */
+export async function getMostAffectedPlaces(limit: number = 5) {
+  const { merged } = await getCachedRoads();
+  const counts: Record<string, number> = {};
+
+  merged.forEach(road => {
+    if (road.status === "Blocked" || road.status === "One-Lane") {
+      const props = road.properties || {};
+      const place = resolveLabel(props.incidentPlace) || "Unknown";
+      counts[place] = (counts[place] || 0) + 1;
     }
   });
 
@@ -98,7 +160,7 @@ export async function getMostAffectedHighways(limit: number = 5) {
 
   merged.forEach(road => {
     if (road.status === "Blocked" || road.status === "One-Lane") {
-      const ref = road.road_refno || "Other";
+      const ref = road.properties?.road_refno || road.properties?.highway_code || "Other";
       counts[ref] = (counts[ref] || 0) + 1;
     }
   });

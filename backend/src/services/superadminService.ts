@@ -10,16 +10,19 @@ import {
   CACHE_POI,
   CACHE_WEATHER,
   CACHE_MONSOON,
-  CACHE_WAZE
-} from "../config/paths.js";
-import { logError } from "../logs/logs.js";
-import { ROAD_STATUS } from "../constants/sheets.js";
+  CACHE_WAZE,
+  DATA_DIR
+} from "@/config/paths.js";
+import { logError } from "@logs/logs.js";
+import { ROAD_STATUS } from "@/constants/sheets.js";
+import { REDIS_NOTIFIED_PREFIX } from "@/services/alertService.js";
 
 // ✅ Import functions correctly
-import * as cacheService from "./cacheService.js";
-import { getCachedMonsoonRisk } from "./monsoonService.js";
-import { getCachedRoads } from "./roadService.js";
-import { getAnalyticsData } from "./analyticsService.js";
+import * as cacheService from "@/services/cacheService.js";
+import { getCachedMonsoonRisk } from "@/services/monsoonService.js";
+import { getCachedRoads } from "@/services/roadService.js";
+import { getAnalyticsData } from "@/services/analyticsService.js";
+import { getHighwayList } from "@/services/highwayService.js";
 
 /**
  * 📑 Master PDF Generation
@@ -29,8 +32,8 @@ export async function generateMasterReport(): Promise<Buffer> {
     const logs = await getHistoricalLogs(500);
     const upstashStats = await cacheService.getUpstashUsage();
 
-    // ✅ Use getCacheHealth via cacheService alias
-    const cacheHealth = cacheService.getCacheHealth();
+    // Fixed: Await the async health check
+    const cacheHealth = await cacheService.getCacheHealth();
 
     const risks = (await getCachedMonsoonRisk()) || [];
     const roadsGeo = (await getCachedRoads()) || { merged: [] };
@@ -135,6 +138,40 @@ export async function generateMasterReport(): Promise<Buffer> {
   }
 }
 
+/**
+ * Identifies and removes GeoJSON files in the highway directory that are not 
+ * present in the highway index.
+ */
+export async function cleanupOrphanHighways(): Promise<{ deleted: string[]; errors: string[] }> {
+  const highwayDir = path.join(DATA_DIR, "highway");
+  const results = { deleted: [] as string[], errors: [] as string[] };
+
+  try {
+    const highways = await getHighwayList();
+    const indexedFiles = new Set(highways.map(h => h.file));
+
+    // Protect core index files
+    indexedFiles.add("index.json");
+    indexedFiles.add("highways_master.geojson");
+
+    const files = await fs.readdir(highwayDir);
+    for (const file of files) {
+      if (!indexedFiles.has(file)) {
+        try {
+          await fs.unlink(path.join(highwayDir, file));
+          results.deleted.push(file);
+        } catch (err: any) {
+          results.errors.push(`${file}: ${err.message}`);
+        }
+      }
+    }
+    logInfo(`[superadminService] Orphan cleanup complete. Deleted ${results.deleted.length} files.`);
+  } catch (err: any) {
+    logError("[superadminService] Failed to cleanup orphan highways", err.message);
+  }
+  return results;
+}
+
 export async function getHistoricalLogs(limit: number = 100): Promise<string[]> {
   try {
     const files = await fs.readdir(LOG_DIR);
@@ -158,5 +195,49 @@ export async function getHistoricalLogs(limit: number = 100): Promise<string[]> 
   } catch (err: any) {
     logError("[superadminService] Failed to read historical logs", { error: err.message });
     return [];
+  }
+}
+
+/**
+ * Cleans up old search history/logs to manage storage growth.
+ */
+export async function cleanupSearchLogs(retentionDays: number): Promise<number> {
+  try {
+    const SEARCH_LOG_FILE = path.join(DATA_DIR, "search_history.json");
+    let logs: any[] = [];
+
+    try {
+      const raw = await fs.readFile(SEARCH_LOG_FILE, "utf-8");
+      logs = JSON.parse(raw);
+    } catch {
+      return 0; // No logs to clean
+    }
+
+    const cutoff = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
+    const initialCount = logs.length;
+
+    const filteredLogs = logs.filter(entry => new Date(entry.timestamp).getTime() > cutoff);
+    const deletedCount = initialCount - filteredLogs.length;
+
+    if (deletedCount > 0) {
+      await fs.writeFile(SEARCH_LOG_FILE, JSON.stringify(filteredLogs, null, 2));
+    }
+
+    return deletedCount;
+  } catch (err: any) {
+    logError("[superadminService] Search cleanup failed", err.message);
+    return 0;
+  }
+}
+
+/**
+ * Manually clears all notification tracking keys from the cache.
+ */
+export async function clearNotifiedBlockageCache(): Promise<void> {
+  try {
+    await cacheService.clearCacheByPattern(`${REDIS_NOTIFIED_PREFIX}*`);
+  } catch (err: any) {
+    logError("[superadminService] Failed to clear notified blockage cache", err.message);
+    throw err;
   }
 }

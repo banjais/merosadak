@@ -5,39 +5,7 @@ import axios from "axios";
 import { logInfo, logError } from "../logs/logs.js";
 import { TOMTOM_API_KEY, TOMTOM_API_URL } from "../config/index.js";
 import { getCachedRoads } from "./roadService.js";
-
-export interface TrafficFlowSegment {
-  id: string;
-  coordinates: [number, number][]; // [lat, lng] pairs for polyline
-  currentSpeed: number; // km/h
-  freeFlowSpeed: number; // km/h
-  congestionLevel: 'low' | 'medium' | 'high' | 'extreme';
-  color: 'green' | 'yellow' | 'orange' | 'red';
-  delay: number; // seconds
-  confidence: number; // 0-1
-}
-
-export interface WazeAlert {
-  id: string;
-  type: string; // ACCIDENT, JAM, HAZARD, etc.
-  subtype: string;
-  location: { lat: number; lng: number };
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  timestamp: string;
-}
-
-export interface TrafficResult {
-  flowSegments: TrafficFlowSegment[];
-  wazeAlerts: WazeAlert[];
-  summary: {
-    totalSegments: number;
-    congestedSegments: number;
-    averageSpeed: number;
-    averageDelay: number;
-  };
-  lastUpdated: string;
-}
+import type { TrafficFlowSegment, WazeAlert, TrafficResult } from "../types.js";
 
 // Cache for traffic data (5 minutes)
 let trafficCache: TrafficResult | null = null;

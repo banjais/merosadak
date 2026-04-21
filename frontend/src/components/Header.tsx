@@ -24,10 +24,11 @@ const LANGUAGES = [
   { code: 'new', name: 'Newari', native: 'नेपाल भाषा', flag: '🇳🇵' },
 ];
 
-const Header: React.FC<HeaderProps> = ({ isDarkMode, accentColor, onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, onToggleMyPlans, onLogoClick, plansCount = 0, noticeCount = 3 }) => {
+const Header: React.FC<HeaderProps> = ({ accentColor, onTogglePilot, onToggleMenu, onToggleSystemMenu, onOpenNotifications, onToggleMyPlans, onLogoClick, plansCount = 0, noticeCount = 3 }) => {
   const { language, setLanguage } = useTranslation();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [geoActive, setGeoActive] = useState(false);
+  const { isDarkMode } = useSettings();
 
   useEffect(() => {
     if ("geolocation" in navigator) {
