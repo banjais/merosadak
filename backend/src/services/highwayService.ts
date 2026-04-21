@@ -12,7 +12,7 @@ import { haversineDistance, calculateBearing, calculateLineStringLength } from "
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 const MASTER_HIGHWAY_FILE = path.join(HIGHWAY_DIR, "highways_master.geojson");
-const DISTRICT_MAPPING_FILE = new URL("./district_mapping.json", import.meta.url).pathname;
+const DISTRICT_MAPPING_FILE = path.join(DATA_DIR, "district_mapping.json");
 
 let isIndexUpdating = false;
 let districtMappingCache: Record<string, string> | null = null;
