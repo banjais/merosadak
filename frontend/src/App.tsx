@@ -453,7 +453,7 @@ const MapClickHandler: React.FC<{
 /* ---------------- MAIN APP ---------------- */
 
 const MainApp: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const { incidents, refresh } = useNepalData();
   const { isOffline } = useNetworkStatus();
@@ -1963,7 +1963,7 @@ const MainApp: React.FC = () => {
 
     setIsProcessing(true);
     try {
-      const reportRes = await apiFetch(`/v1/highways/${code}/report?lang=${i18n.language}`);
+      const reportRes = await apiFetch(`/v1/highways/${code}/report?lang=${language}`);
       const geoRes = await apiFetch(`/v1/highways/${code}/geojson`);
 
       if (reportRes.data) {
@@ -2181,7 +2181,7 @@ const MainApp: React.FC = () => {
     try {
       const from = routeInfo.admin?.localBody || "Kathmandu";
       const to = routeInfo.to.name;
-      const altRes = await apiFetch(`/v1/route/alternatives?from=${from}&to=${to}&lang=${i18n.language}`);
+      const altRes = await apiFetch(`/v1/route/alternatives?from=${from}&to=${to}&lang=${language}`);
       const alternatives = altRes.data || [];
       if (alternatives.length > 0) {
         setRouteAlternatives(alternatives);
@@ -2516,7 +2516,7 @@ const MainApp: React.FC = () => {
                       geoData={highwayGeoJSON}
                       incidents={incidents}
                       viewMode={highwayViewMode}
-                      lang={i18n.language}
+                      lang={language}
                       hideIncidents={isGhostMode}
                     />
                   )}
@@ -2626,7 +2626,7 @@ const MainApp: React.FC = () => {
               <SearchOverlayIntent
                 isDarkMode={isDarkMode}
                 isHighContrast={isHighContrast}
-                lang={i18n.language}
+                lang={language}
                 userLocation={userLocation}
                 onSelectDestination={handleUnifiedSelection}
                 onAskAI={handleAskAI}

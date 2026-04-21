@@ -5,20 +5,19 @@ import { useTranslation } from '../i18n';
 export const useAlert = (lat?: number, lng?: number) => {
   const [alerts, setAlerts] = useState<TravelIncident[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { i18n } = useTranslation();
+  const { language } = useTranslation();
 
   const refreshAlerts = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Pass location and current language
-      const data = await api.getAlerts(lat, lng, i18n.language);
+      const data = await api.getAlerts(lat, lng, language);
       setAlerts(data);
     } catch (error) {
       console.error('[useAlert] Fetch failed:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [lat, lng, i18n.language]);
+  }, [lat, lng, language]);
 
   // Auto-refresh when params or language change
   useEffect(() => {

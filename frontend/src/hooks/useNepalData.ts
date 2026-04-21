@@ -5,20 +5,19 @@ import { useTranslation } from '../i18n';
 export const useNepalData = () => {
   const [incidents, setIncidents] = useState<TravelIncident[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { i18n } = useTranslation();
+  const { language } = useTranslation();
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Pass current language from i18n context
-      const data = await api.getRoads(i18n.language);
+      const data = await api.getRoads(language);
       setIncidents(data);
     } catch (error) {
       console.error('[useNepalData] Fetch failed:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [i18n.language]);
+  }, [language]);
 
   // Auto-refresh when language changes or on mount
   useEffect(() => {
