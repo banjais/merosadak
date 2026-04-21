@@ -7,6 +7,8 @@ import { resolveLabel } from "@/services/labelUtils.js";
 import { isValidNepalCoordinate } from "@/services/geoUtils.js";
 import type { RiskLevel, RiskAssessment } from "@/types.js";
 
+export let monsoonCacheTimestamp = 0;
+
 function getColor(level: RiskLevel) {
   switch (level) {
     case "EXTREME": return "#ef4444";
@@ -108,6 +110,7 @@ export async function calculateCurrentRisk(): Promise<RiskAssessment[]> {
     }
 
     await fs.writeFile(CACHE_MONSOON, JSON.stringify(assessments, null, 2), "utf-8");
+    monsoonCacheTimestamp = Date.now();
     logInfo(`[MonsoonService] Cached ${assessments.length} risk assessments`);
     return assessments;
 

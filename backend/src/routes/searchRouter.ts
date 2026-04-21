@@ -1,6 +1,8 @@
 // backend/src/routes/searchRouter.ts
 import { Router } from "express";
-import { handleSearch } from "../controllers/searchController.js";
+import { authenticateJWT, authorizeRole } from "../middleware/auth.js";
+import { adminLimiter } from "../middleware/rateLimiter.js";
+import { handleSearch, triggerSearchRefresh } from "../controllers/searchController.js";
 
 const router = Router();
 
@@ -12,5 +14,12 @@ const router = Router();
  *   - limit: number (optional, default 10)
  */
 router.get("/", handleSearch);
+
+/**
+ * 🔄 POST /api/search/refresh
+ * Manually triggers a search index rebuild
+ * Requires superadmin role.
+ */
+router.post("/refresh", adminLimiter, authenticateJWT, authorizeRole("superadmin"), triggerSearchRefresh);
 
 export default router;

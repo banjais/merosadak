@@ -1,34 +1,41 @@
-// backend/src/controllers/searchController.ts
 import { Request, Response } from "express";
-import { searchEntities } from "../services/searchService.js";
-import type { SearchResult } from "../types.js";
-import { asyncHandler } from "../middleware/errorHandler.js";
-import { withCache } from "../services/cacheService.js";
+import { refreshIndexFromCaches, search } from "../services/searchService.js";
+import { logError, logInfo } from "../logs/logs.js";
+import { AuthRequest } from "../middleware/auth.js";
 
 /**
- * @route   GET /api/search
- * @desc    Unified search: roads, traffic, POIs, locations, weather
- * @access  Public
- * @query   q: string (search term)
- * @query   limit: number (optional, default 10)
+ * Manually triggers a rebuild of the search index.
  */
-export const handleSearch = asyncHandler(async (req: Request, res: Response) => {
-  // Data is pre-validated and coerced by validation middleware (validateQuery)
-  const { q, limit, lang } = req.query as any;
+export const triggerSearchRefresh = async (req: AuthRequest, res: Response) => {
+  try {
+    await refreshIndexFromCaches();
+    res.json({ success: true, message: "Search index refresh triggered successfully." });
+  } catch (err: any) {
+    logError("Manual search refresh failed", err.message);
+    res.status(500).json({ success: false, error: "Internal server error during index refresh." });
+  }
+};
 
-  // Generate a unique cache key based on query, limit, and language
-  const cacheKey = `search:${lang}:${limit}:${String(q).toLowerCase().trim()}`;
+/**
+ * Handles search queries for locations, highways, and POIs.
+ */
+export const handleSearch = async (req: Request, res: Response) => {
+  try {
+    const { q, lat, lng } = req.query;
 
-  const results: SearchResult[] = await withCache(
-    cacheKey,
-    () => searchEntities(q, limit, lang),
-    300 // Cache results for 5 minutes (300 seconds)
-  );
+    if (!q || typeof q !== "string") {
+      return res.status(400).json({ success: false, error: "Query parameter 'q' is required." });
+    }
 
-  res.status(200).json({
-    success: true,
-    query: q,
-    count: results.length,
-    data: results
-  });
-});
+    const location = (lat && lng)
+      ? { lat: parseFloat(lat as string), lng: parseFloat(lng as string) }
+      : undefined;
+
+    const results = await search(q, location);
+
+    res.json({ success: true, results });
+  } catch (err: any) {
+    logError("Search handler failed", err.message);
+    res.status(500).json({ success: false, error: "Internal server error during search." });
+  }
+};

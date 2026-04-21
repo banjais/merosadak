@@ -1,9 +1,9 @@
 import path from "path";
 import fs from "fs/promises";
 import { CACHE_DIR } from "../config/paths.js";
-import { logError } from "../logs/logs.js";
+import { logInfo, logError } from "../logs/logs.js";
 import { getCachedRoads } from "./roadService.js";
-import { resolveLabel } from "@/services/labelUtils";
+import { resolveLabel } from "@/services/labelUtils.js";
 
 const ANALYTICS_FILE = path.join(CACHE_DIR, "analytics.json");
 let analyticsQueue: Promise<void> = Promise.resolve();
@@ -61,9 +61,15 @@ export async function getAnalyticsSummary(period: string = "7d") {
   const roadData = await getCachedRoads();
 
   let totalEvents = 0;
+  const searchStats: Record<string, number> = {};
+
   Object.entries(data).forEach(([key, value]) => {
     if (typeof value === 'number' && !key.startsWith('last_')) {
       totalEvents += value;
+      if (key.startsWith('search_category_')) {
+        const category = key.replace('search_category_', '');
+        searchStats[category] = value;
+      }
     }
   });
 
@@ -77,6 +83,7 @@ export async function getAnalyticsSummary(period: string = "7d") {
     incidentsReported: data['report_incident'] || 0,
     activeIncidents,
     activeSessions: data['app_open'] || 0,
+    searchStats,
     lastUpdated: data['last_updated'] || new Date().toISOString(),
     period
   };
@@ -97,6 +104,28 @@ export async function getGreenLeaderboard(limit: number = 10) {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+}
+
+/**
+ * Retrieves the most frequent search queries recorded in analytics.
+ */
+export async function getFrequentQueries(limit: number = 5): Promise<string[]> {
+  const data = await getAnalyticsData();
+  const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days ago
+
+  return Object.entries(data)
+    .filter(([key]) => {
+      if (!key.startsWith('search_query_')) return false;
+      const lastSeen = data[`last_${key}`];
+      return lastSeen && new Date(lastSeen).getTime() > cutoff;
+    })
+    .map(([key, count]) => ({
+      query: key.replace('search_query_', ''),
+      count: count as number
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map(item => item.query);
 }
 
 /**

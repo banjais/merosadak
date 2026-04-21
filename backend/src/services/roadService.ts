@@ -22,7 +22,7 @@ let roadMemoryCache: {
   raw: any[];
   rowIssues?: any[];
 } | null = null;
-let roadCacheTimestamp = 0;
+export let roadCacheTimestamp = 0;
 const ROAD_CACHE_TTL = 5 * 60 * 1000; // Reduced to 5 minutes for better real-time accuracy
 
 /* ------------------------------------------------ */

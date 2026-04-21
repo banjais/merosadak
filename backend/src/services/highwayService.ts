@@ -1,18 +1,20 @@
 // backend/src/services/highwayService.ts
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR, DISTRICT_MAPPING } from "@/config/paths.js";
+import { fileURLToPath } from "url";
+import { DATA_DIR } from "@/config/paths.js";
 import { logError, logInfo } from "@logs/logs.js";
 import type { FeatureCollection } from "@/types.js";
-import { getCache } from "@/services/cacheService.js";
+import { getCache, clearCache } from "@/services/cacheService.js";
 import { ROAD_STATUS } from "@/constants/sheets.js";
 import { resolveLabel } from "@/services/labelUtils.js";
 import { haversineDistance, calculateBearing, calculateLineStringLength } from "@/services/geoUtils.js";
+import { broadcastProgress, broadcastLiveLog } from "./websocketService.js";
 
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 const MASTER_HIGHWAY_FILE = path.join(HIGHWAY_DIR, "highways_master.geojson");
-const DISTRICT_MAPPING_FILE = DISTRICT_MAPPING;
+const DISTRICT_MAPPING_FILE = fileURLToPath(new URL("./district_mapping.json", import.meta.url));
 
 let isIndexUpdating = false;
 let districtMappingCache: Record<string, string> | null = null;
@@ -192,12 +194,17 @@ export async function getHighwayList(): Promise<Array<{ code: string, file: stri
   }, 86400);
 
   // Check for missing lengths and trigger background update if needed
-  if (!isIndexUpdating && highways.length > 0 && highways.some(h => h.lengthKm === undefined || h.lengthKm === null)) {
-    logInfo("[HighwayService] Missing highway lengths detected. Triggering automatic index update...");
-    // Run in background to keep the API responsive
-    updateHighwayIndexLengths().catch(err => {
-      logError("[HighwayService] Automatic index update failed", err.message);
-    });
+  if (highways.length > 0 && highways.some(h => h.lengthKm === undefined || h.lengthKm === null)) {
+    if (!isIndexUpdating) {
+      logInfo("[HighwayService] Missing highway lengths detected. Performing synchronous index update...");
+      await updateHighwayIndexLengths();
+      // Return the fresh data from disk/cache after update
+      return getHighwayList();
+    } else {
+      // If an update is already in progress, we return current data to avoid deadlocks,
+      // but the next request will see the completed lengths.
+      return highways;
+    }
   }
 
   return highways;
@@ -487,10 +494,18 @@ function calculateSegmentCurvatureSpeed(feature: any, baseLimit: number): number
     let diff = Math.abs(b1 - b2);
     if (diff > 180) diff = 360 - diff;
 
-    // Adjust speed based on deflection angle
-    if (diff > 40) minSuggested = Math.min(minSuggested, 20);
-    else if (diff > 20) minSuggested = Math.min(minSuggested, 40);
-    else if (diff > 10) minSuggested = Math.min(minSuggested, 60);
+    // Calculate the distance over which this turn occurs (in km)
+    const turnLength = haversineDistance(p1[1], p1[0], p2[1], p2[0]) + haversineDistance(p2[1], p2[0], p3[1], p3[0]);
+
+    // Calculate Curvature Intensity (Degrees of deflection per 100 meters)
+    // This ensures that a 20-degree bend over 500m isn't treated as dangerous, 
+    // but a 20-degree bend over 50m (a tight hairpin) triggers a major slowdown.
+    const intensity = turnLength > 0 ? (diff / (turnLength * 10)) : 0;
+
+    // Adjust speed based on intensity (deflection magnitude / distance)
+    if (intensity > 50 || diff > 45) minSuggested = Math.min(minSuggested, 20); // Hairpin/Switchback
+    else if (intensity > 25 || diff > 30) minSuggested = Math.min(minSuggested, 40); // Sharp turn
+    else if (intensity > 10 || diff > 15) minSuggested = Math.min(minSuggested, 60); // Moderate curve
   }
 
   return minSuggested;
@@ -571,26 +586,45 @@ export async function suggestAlternativeRoutes(fromDistrict: string, toDistrict:
  * Maintenance function to calculate and save highway lengths back to index.json.
  * This enables efficient client-side sorting without loading full GeoJSON.
  */
-export async function updateHighwayIndexLengths(): Promise<void> {
+export async function updateHighwayIndexLengths(onProgress?: (pct: number) => void): Promise<void> {
   if (isIndexUpdating) return;
   isIndexUpdating = true;
 
   try {
     logInfo("[HighwayService] Starting highway index length calculation...");
     const indexData = JSON.parse(await fs.readFile(HIGHWAY_INDEX, "utf-8"));
+    const total = indexData.length;
 
     const updatedIndex = [];
-    for (const entry of indexData) {
+    for (let i = 0; i < total; i++) {
+      const entry = indexData[i];
       try {
         const geojson = await getHighwayGeoJSONRaw(entry.code);
-        if (geojson) entry.lengthKm = calculateHighwayLength(geojson);
+        if (geojson) {
+          entry.lengthKm = calculateHighwayLength(geojson);
+        } else {
+          entry.lengthKm = 0; // Mark as processed even if file is missing to stop the loop
+        }
       } catch (e) {
         logError(`[HighwayService] Length calc failed for ${entry.code}`, (e as any).message);
       }
       updatedIndex.push(entry);
+
+      // Calculate and trigger progress
+      const pct = Math.round(((i + 1) / total) * 100);
+      if (onProgress) onProgress(pct);
+
+      // Broadcast to WebSocket every 5 segments to avoid flooding
+      if (i % 5 === 0 || i === total - 1) {
+        broadcastProgress(`Calculating highway lengths: ${entry.code}`, pct);
+      }
     }
 
     await fs.writeFile(HIGHWAY_INDEX, JSON.stringify(updatedIndex, null, 2), "utf-8");
+
+    // Invalidate the cache so getHighwayList picks up the new data with lengths
+    await clearCache("highways:index");
+
     logInfo("[HighwayService] Successfully updated highway index with calculated lengths");
   } catch (err: any) {
     logError("[HighwayService] Failed to update highway index lengths", err.message);

@@ -224,6 +224,21 @@ jobs:
         run: cd backend && npm install --include=dev
         timeout-minutes: 5
 
+      - name: 🔍 Run System Diagnostics
+        run: cd backend && npx tsx src/scripts/diagnostics.ts
+        env:
+          NODE_ENV: production
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GAS_URL: ${{ secrets.GAS_URL }}
+          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHERMAP_API_KEY }}
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+          WAZE_JSON: ${{ secrets.WAZE_JSON }}
+          UPSTASH_REST_URL: ${{ secrets.UPSTASH_REST_URL }}
+          UPSTASH_REST_TOKEN: ${{ secrets.UPSTASH_REST_TOKEN }}
+          # Add other variables used by diagnostics.ts here
+        continue-on-error: false # Fails the build if diagnostics fail
+
       - name: Build backend
         id: build_step
         run: cd backend && npm run build

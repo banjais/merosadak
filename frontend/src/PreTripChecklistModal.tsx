@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, Car, MapPin, AlertTriangle, Fuel, BatteryCharging, FirstAid, Wrench } from 'lucide-react';
-import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useEscapeKey } from './hooks/useEscapeKey';
 
 interface ChecklistItem {
     id: string;

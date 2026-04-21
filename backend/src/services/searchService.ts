@@ -2,18 +2,22 @@ import Fuse from "fuse.js";
 import crypto from "crypto";
 import { logInfo, logError } from "@logs/logs.js";
 import { redisClient } from "@/services/cacheService.js";
-import { getCachedRoads } from "@/services/roadService.js";
+import { getCachedRoads, roadCacheTimestamp } from "@/services/roadService.js";
 import { ROAD_STATUS } from "@/constants/sheets.js";
 import { CACHE_ALERTS } from "@/config/paths.js";
 import fs from "fs/promises";
-import { getCachedMonsoonRisk } from "@/services/monsoonService.js";
+import { getCachedMonsoonRisk, monsoonCacheTimestamp } from "@/services/monsoonService.js";
+import { poiCacheTimestamp } from "@/controllers/poiService.js";
 import { NOMINATIM_API_URL } from "@/config/index.js";
 import { resolveLabel } from "@/services/labelUtils.js";
 import { haversineDistance } from "@/services/geoUtils.js";
 import type { SearchResult } from "@/types.js";
 import { checkGeofence } from "@/services/geofenceService.js";
+import { recordAnalytics, getFrequentQueries } from "@/services/analyticsService.js";
 
 let fuseIndex: Fuse<SearchResult> | null = null;
+let lastIndexBuiltTime = 0;
+let isRefreshingIndex = false;
 
 /**
  * Internal helper for localizing search-specific UI strings
@@ -34,7 +38,20 @@ function getLocalizedText(key: string, lang: string): string {
 }
 
 export const refreshIndexFromCaches = async () => {
+  if (isRefreshingIndex) {
+    logInfo("[SearchService] Index refresh already in progress. Ignoring request.");
+    return;
+  }
+
   try {
+    isRefreshingIndex = true;
+    const latestDataTime = Math.max(roadCacheTimestamp, monsoonCacheTimestamp, poiCacheTimestamp);
+
+    if (fuseIndex && lastIndexBuiltTime >= latestDataTime) {
+      logInfo("[SearchService] Search index is current with Roads, Monsoon, and POI data. Skipping rebuild.");
+      return;
+    }
+
     const roadData = await getCachedRoads();
     const monsoonRisks = (await getCachedMonsoonRisk()) || [];
     const items: SearchResult[] = [];
@@ -112,6 +129,22 @@ export const refreshIndexFromCaches = async () => {
       logInfo("No cached POIs to index.");
     }
 
+    // Fetch frequent searches and inject into index
+    try {
+      const frequent = await getFrequentQueries(8);
+      frequent.forEach(q => {
+        items.push({
+          id: `freq-${crypto.createHash('md5').update(q).digest('hex').substring(0, 6)}`,
+          name: q,
+          type: "location", // Using location type so it appears in standard results
+          subtitle: "Frequent Search",
+          source: "local",
+          lat: 0, lng: 0, // Non-spatial suggestion
+          extra: {}
+        });
+      });
+    } catch { /* Analytics might be empty */ }
+
     fuseIndex = new Fuse(items, {
       keys: [
         "name",
@@ -132,13 +165,16 @@ export const refreshIndexFromCaches = async () => {
       includeScore: true,
     });
 
+    lastIndexBuiltTime = Date.now();
     logInfo(`Search index refreshed: ${items.length} items`);
   } catch (err: any) {
     logError("Failed to refresh index", err.message);
+  } finally {
+    isRefreshingIndex = false;
   }
 };
 
-export const searchEntities = async (query: string, limit: number = 10, lang: string = "en"): Promise<SearchResult[]> => {
+export const searchEntities = async (query: string, location?: { lat: number; lng: number }, limit: number = 10, lang: string = "en"): Promise<SearchResult[]> => {
   if (!query) return [];
   const results: SearchResult[] = [];
 
@@ -169,17 +205,29 @@ export const searchEntities = async (query: string, limit: number = 10, lang: st
     results.push(...externalResults);
   }
 
-  return injectIncidentContext(results, lang).then(res => {
-    // Sort results: prioritize those NOT in danger zones
-    return (res as any[]).sort((a, b) => {
-      const scoreA = a.safety_score ?? 100;
-      const scoreB = b.safety_score ?? 100;
+  let processedResults = await injectIncidentContext(results, lang);
 
-      // Secondary sort by Fuse score (relevance) if safety is equal
-      if (scoreA === scoreB) return (a.score || 0) - (b.score || 0);
-      return scoreB - scoreA; // Descending: 100 (Safe) first
-    }).slice(0, limit);
-  });
+  // Proximity-based filtering and sorting if a location is provided
+  if (location) {
+    const SEARCH_RADIUS_KM = 500; // Limit relevance to a 500km radius (covers Nepal regions)
+    processedResults = processedResults.filter(result => {
+      if (result.lat && result.lng) {
+        const dist = haversineDistance(location.lat, location.lng, result.lat, result.lng);
+        result.distance = dist;
+        return dist <= SEARCH_RADIUS_KM;
+      }
+      return true; // Keep results without coordinates (like general highways or local data)
+    });
+
+    processedResults.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+  }
+
+  // Secondary sort by safety score (descending) and then Fuse score (ascending)
+  return processedResults.sort((a, b) => {
+    const safetyDiff = (b.safety_score ?? 100) - (a.safety_score ?? 100);
+    if (safetyDiff !== 0) return safetyDiff;
+    return (a.score || 0) - (b.score || 0);
+  }).slice(0, limit);
 };
 
 async function searchHighways(query: string, lang: string = "en"): Promise<SearchResult[]> {
@@ -365,3 +413,25 @@ export async function searchLocation(query: string) {
     return [];
   }
 }
+
+/**
+ * Unified search entry point for the controller.
+ * Wraps searchEntities to provide a simplified interface that supports
+ * location-aware results in the future.
+ */
+export const search = async (query: string, location?: { lat: number; lng: number }): Promise<SearchResult[]> => {
+  const results = await searchEntities(query, location);
+
+  // Record search analytics
+  if (query.length > 1) {
+    const topResult = results[0];
+    const category = topResult ? topResult.type : "unknown";
+
+    // Log the general search, specific category, and the exact query frequency
+    await recordAnalytics("search_performed", { query });
+    await recordAnalytics(`search_query_${query.toLowerCase().trim()}`);
+    await recordAnalytics(`search_category_${category}`);
+  }
+
+  return results;
+};

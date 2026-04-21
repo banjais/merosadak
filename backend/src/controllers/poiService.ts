@@ -7,6 +7,8 @@ import type { SearchResult } from "@/types.js";
 import { haversineDistance } from "@/services/geoUtils.js";
 import { refreshIndexFromCaches } from "@/services/searchService.js";
 
+export let poiCacheTimestamp = 0;
+
 /**
  * Refreshes the POI cache by fetching data from external providers.
  * Implements corridor sampling along highway junctions with weighted deduplication.
@@ -83,6 +85,7 @@ export const refreshPOICache = async (customCategories?: string[]): Promise<void
         // 3. Store in Redis
         if (poiData.length > 0) {
             await redisClient.set("poi:all", poiData, { ex: 64800 });
+            poiCacheTimestamp = Date.now();
             logInfo(`[POIService] POI cache updated with ${poiData.length} items across highway corridors.`);
             await refreshIndexFromCaches();
         }

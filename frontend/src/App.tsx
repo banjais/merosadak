@@ -4,7 +4,7 @@ import {
   Clock, ArrowRight, Zap, Mountain, Activity, Shield,
   Fuel, Car, Wrench, BatteryCharging, HeartPulse, AlertTriangle
 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Circle, GeoJSON, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, Rectangle, GeoJSON, useMap, useMapEvents } from "react-leaflet";
 import { L } from "./lib/leaflet";
 import LZString from "lz-string";
 import RBush from "rbush";
@@ -44,6 +44,7 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import { FloatingMenu } from "./components/FloatingMenu";
 import SearchOverlay from "./components/SearchOverlay";
+import { WeatherMonsoonProvider, useWeatherMonsoon } from "./WeatherMonsoonContext";
 import { WeatherWidget } from "./components/WeatherWidget";
 import { SystemMenu } from "./components/SystemMenu";
 import { BottomInfoArea } from "./components/BottomInfoArea";
@@ -51,6 +52,7 @@ import { MapControls } from "./components/MapControls";
 import { ReportIncidentOverlay } from "./components/ReportIncidentOverlay";
 import { SOSOverlay } from "./components/SOSOverlay";
 import { HighwayBrowser } from "./components/HighwayBrowser";
+import { PreTripChecklistModal } from "./PreTripChecklistModal";
 import { HighwayHighlightOverlay } from "./components/HighwayHighlightOverlay";
 import { SafeTripReport } from "./components/SafeTripReport";
 import { useToast } from "./ToastContext";
@@ -60,7 +62,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { MapLayersPanel } from "./components/MapLayersPanel";
 import { MonsoonRiskOverlay } from "./components/MonsoonRiskOverlay";
 import { DriverDashboard } from "./components/DriverDashboard";
-import { RouteIntelligence as DistanceCalculator } from "./components/DistanceCalculator";
+import { DistanceCalculator } from "./components/DistanceCalculator";
 import { SearchOverlayIntent } from "./components/SearchOverlayIntent";
 import { RouteDisplay } from "./components/RouteDisplay";
 import { ContextualInfoCards } from "./components/ContextualInfoCards";
@@ -165,6 +167,225 @@ const MapFocusManager: React.FC<{
   return null;
 };
 
+/**
+ * SafetyBuffer: Renders a dynamic zone around the user that reacts to 
+ * vehicle speed, proximity hazards, and real-time weather visibility.
+ */
+const SafetyBuffer: React.FC<{
+  userLocation: { lat: number; lng: number; speed?: number | null } | null;
+  pilotMode: boolean;
+  isHazardNearby: boolean;
+  isCollisionRisk: boolean;
+  isMuted: boolean;
+}> = ({ userLocation, pilotMode, isHazardNearby, isCollisionRisk, isMuted }) => {
+  const { weatherData } = useWeatherMonsoon();
+  const lastWeatherAlertRef = useRef<number>(0);
+
+  if (!pilotMode || !userLocation) return null;
+
+  const speedKmh = (userLocation.speed || 0) * 3.6;
+  // Buffer size: 150m minimum, scales up to 750m at 100km/h
+  const dynamicRadius = Math.max(150, 200 + (speedKmh * 5.5));
+
+  // Calculate visibility-based opacity factor from current weather
+  const visibilityFactor = (() => {
+    if (!weatherData) return 1.0;
+    const cond = (weatherData.condition || "").toLowerCase();
+    if (cond.includes('fog') || cond.includes('heavy rain') || cond.includes('snow')) return 2.5;
+    if (cond.includes('rain') || cond.includes('mist') || cond.includes('haze')) return 1.5;
+    return 1.0;
+  })();
+
+  // 🌦️ Severe Weather Audio Alert
+  React.useEffect(() => {
+    if (!weatherData || isMuted || !('speechSynthesis' in window)) return;
+
+    const cond = (weatherData.condition || "").toLowerCase();
+    const isSevere = cond.includes('fog') || cond.includes('heavy rain') || cond.includes('snow');
+
+    if (isSevere && Date.now() - lastWeatherAlertRef.current > 600000) { // 10 min throttle
+      const msg = `Visibility Warning: ${weatherData.condition} is severely limiting visibility. Please reduce speed and use your lights.`;
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+      lastWeatherAlertRef.current = Date.now();
+    }
+  }, [weatherData, isMuted]);
+
+  return (
+    <Circle
+      center={[userLocation.lat, userLocation.lng]}
+      radius={dynamicRadius}
+      pathOptions={{
+        color: isCollisionRisk ? '#f87171' : (isHazardNearby ? '#ef4444' : '#10b981'),
+        fillColor: isCollisionRisk ? '#f87171' : (isHazardNearby ? '#ef4444' : '#10b981'),
+        fillOpacity: Math.min(0.7, (isCollisionRisk ? 0.35 : 0.15) * visibilityFactor),
+        weight: 2,
+        dashArray: (isHazardNearby || isCollisionRisk) ? '5, 10' : undefined,
+        interactive: false
+      }}
+    />
+  );
+};
+
+/**
+ * FogOverlay: Dynamically overlays a semi-opaque layer on the map 
+ * based on weather-driven visibility conditions (Fog, Mist, Haze).
+ */
+const FogOverlay: React.FC<{ isStealthMode: boolean }> = ({ isStealthMode }) => {
+  const { weatherData } = useWeatherMonsoon();
+  const map = useMap();
+  const [bounds, setBounds] = useState(map.getBounds());
+
+  useMapEvents({
+    moveend: () => setBounds(map.getBounds()),
+    zoomend: () => setBounds(map.getBounds())
+  });
+
+  if (!weatherData || isStealthMode) return null;
+
+  const condition = (weatherData.condition || "").toLowerCase();
+  const visibility = weatherData.visibility || 10000; // in meters
+
+  let opacity = 0;
+  // Scale opacity based on condition strings or raw visibility data
+  if (condition.includes('fog')) opacity = 0.45;
+  else if (condition.includes('mist') || condition.includes('haze')) opacity = 0.2;
+
+  if (visibility < 500) opacity = Math.max(opacity, 0.6);
+  else if (visibility < 2000) opacity = Math.max(opacity, 0.3);
+
+  if (opacity === 0) return null;
+
+  return (
+    <Rectangle
+      bounds={bounds}
+      pathOptions={{
+        fillColor: '#ffffff',
+        fillOpacity: opacity,
+        stroke: false,
+        interactive: false
+      }}
+    />
+  );
+};
+
+/**
+ * RainOverlay: Renders a blue-tinted overlay with a pulsing animation 
+ * when precipitation levels or weather conditions indicate rain.
+ */
+const RainOverlay: React.FC<{ isStealthMode: boolean }> = ({ isStealthMode }) => {
+  const { weatherData } = useWeatherMonsoon();
+  const map = useMap();
+  const [bounds, setBounds] = useState(map.getBounds());
+
+  useMapEvents({
+    moveend: () => setBounds(map.getBounds()),
+    zoomend: () => setBounds(map.getBounds())
+  });
+
+  if (!weatherData || isStealthMode) return null;
+
+  const condition = (weatherData.condition || "").toLowerCase();
+  const precipitation = weatherData.precipitation || 0;
+  const isRaining = condition.includes('rain') || condition.includes('drizzle') || precipitation > 0.4;
+
+  if (!isRaining) return null;
+
+  // Opacity scales with precipitation intensity
+  const opacity = Math.min(0.3, 0.1 + (precipitation * 0.2));
+
+  return (
+    <Rectangle
+      bounds={bounds}
+      pathOptions={{
+        fillColor: '#60a5fa',
+        fillOpacity: opacity * 0.8,
+        stroke: false,
+        interactive: false,
+        className: 'rain-falling' // Custom CSS for falling streaks
+      }}
+    />
+  );
+};
+
+/**
+ * SnowOverlay: Renders a white, high-opacity overlay to simulate 
+ * winter road conditions and reduced visibility from snowfall.
+ */
+const SnowOverlay: React.FC<{ isStealthMode: boolean }> = ({ isStealthMode }) => {
+  const { weatherData } = useWeatherMonsoon();
+  const map = useMap();
+  const [bounds, setBounds] = useState(map.getBounds());
+
+  useMapEvents({
+    moveend: () => setBounds(map.getBounds()),
+    zoomend: () => setBounds(map.getBounds())
+  });
+
+  if (!weatherData || isStealthMode) return null;
+
+  const condition = (weatherData.condition || "").toLowerCase();
+  const isSnowing = condition.includes('snow') || condition.includes('blizzard') || condition.includes('sleet');
+
+  if (!isSnowing) return null;
+
+  // Snow has a higher base opacity to represent blinding conditions
+  const opacity = Math.min(0.5, 0.25 + ((weatherData.precipitation || 0) * 0.3));
+
+  return (
+    <Rectangle
+      bounds={bounds}
+      pathOptions={{
+        fillColor: '#f8fafc',
+        fillOpacity: opacity,
+        stroke: false,
+        interactive: false,
+        className: 'animate-pulse' // Snow "sparkles" or flickers slightly
+      }}
+    />
+  );
+};
+
+/**
+ * ThunderstormEffect: Occasionally flashes the screen white during 
+ * extreme precipitation or thunderstorm conditions to alert the driver.
+ */
+const ThunderstormEffect: React.FC = () => {
+  const { weatherData } = useWeatherMonsoon();
+  const [flash, setFlash] = useState(false);
+  const flashTimerRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (!weatherData) return;
+    const condition = (weatherData.condition || "").toLowerCase();
+    // Trigger if condition mentions storm/thunder or intensity is extreme (>15mm/hr)
+    const isExtreme = condition.includes('storm') || condition.includes('thunder') || (weatherData.intensity || 0) > 15;
+
+    if (!isExtreme) {
+      setFlash(false);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      return;
+    }
+
+    const scheduleFlash = () => {
+      // Random flash between 5 and 20 seconds
+      const delay = Math.random() * 15000 + 5000;
+      flashTimerRef.current = setTimeout(() => {
+        setFlash(true);
+        setTimeout(() => setFlash(false), 150); // Flash duration
+        scheduleFlash();
+      }, delay);
+    };
+
+    scheduleFlash();
+    return () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
+  }, [weatherData]);
+
+  if (!flash) return null;
+  return <div className="fixed inset-0 z-[10000] bg-white/30 pointer-events-none transition-opacity duration-75" />;
+};
+
 /** Structure for R-tree items representing a road segment */
 interface SegmentItem {
   minX: number;
@@ -244,6 +465,7 @@ const MainApp: React.FC = () => {
   const { profile: userProfile } = useUserProfile();
   const { leaderboard } = useLeaderboard(10);
   const { summary: analyticsSummary } = useAnalytics("7d");
+  const { weatherData } = useWeatherMonsoon();
 
   const { isSuperadmin, broadcast, purgeCache } = useSuperadmin();
   const { ask: geminiAsk } = useGemini();
@@ -261,7 +483,7 @@ const MainApp: React.FC = () => {
   const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "/api/v1";
 
   // Use explicit WebSocket URL if provided, otherwise derive from current host
-  const { lastMessage } = useWebSocket(wsUrl);
+  const { lastMessage, sendMessage } = useWebSocket(wsUrl);
   const [isMuted, setIsMuted] = useState(false);
 
   /* ---------------- STATE ---------------- */
@@ -285,6 +507,7 @@ const MainApp: React.FC = () => {
   const [searchRadius, setSearchRadius] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const [showTraffic, setShowTraffic] = useState(false);
   const [serviceResults, setServiceResults] = useState<any[]>([]);
   const [monsoonVisible, setMonsoonVisible] = useState(false);
   const [highwayViewMode, setHighwayViewMode] = useState<'pavement' | 'simple'>('pavement');
@@ -442,6 +665,7 @@ const MainApp: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<{ message: string; pct: number } | null>(null);
 
   const [showDeployDashboard, setShowDeployDashboard] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
@@ -468,6 +692,7 @@ const MainApp: React.FC = () => {
   const lastSafeCheckTimestamp = useRef<number>(Date.now());
   const lastCongestionAlert = useRef<number>(0);
   const lastSpokenIntersection = useRef<string | null>(null);
+  const lastSpokenHazardId = useRef<string | null>(null);
   const [nextIntersection, setNextIntersection] = useState<{ distance: number; name: string } | null>(null);
 
   const prevLandslideCountRef = useRef(0);
@@ -493,9 +718,18 @@ const MainApp: React.FC = () => {
   const [activeAISubtitle, setActiveAISubtitle] = useState<string | null>(null);
   const [activeCriticalReminder, setActiveCriticalReminder] = useState<string | null>(null);
   const [trafficHistory, setTrafficHistory] = useState<{ timestamp: number; intensity: number }[]>([]);
+  const [isHazardNearby, setIsHazardNearby] = useState(false);
+  const [isCollisionRisk, setIsCollisionRisk] = useState(false);
+  const [nearbyGhostUsers, setNearbyGhostUsers] = useState<{ lat: number; lng: number; id: string }[]>([]);
   const [trafficPredictionData, setTrafficPredictionData] = useState<{ hour: string; intensity: number; precipitation: number }[]>([]);
   const [perfectScoreDuration, setPerfectScoreDuration] = useState(0); // New state for milestone
   const [milestoneAchieved, setMilestoneAchieved] = useState(false); // New state for milestone
+
+  // Refs for stable access in persistent geolocation callback
+  const ghostModeRef = useRef(isGhostMode);
+  const stealthModeRef = useRef(isStealthMode);
+  useEffect(() => { ghostModeRef.current = isGhostMode; }, [isGhostMode]);
+  useEffect(() => { stealthModeRef.current = isStealthMode; }, [isStealthMode]);
 
 
   /** Performs a full system purge: Local Storage + Server Purge + Refresh */
@@ -507,6 +741,23 @@ const MainApp: React.FC = () => {
       setTimeout(() => window.location.reload(), 1500);
     }
   }, [isSuperadmin, purgeCache, addToast]);
+
+  /** Manually triggers a rebuild of the search index (Superadmin only) */
+  const handleRefreshSearchIndex = useCallback(async () => {
+    if (!isSuperadmin) return;
+    setIsProcessing(true);
+    try {
+      // This calls a POST endpoint on the backend to trigger refreshIndexFromCaches
+      const res = await apiFetch("/v1/search/refresh", { method: "POST" });
+      if (res) {
+        addToast("success", "Search index rebuild triggered successfully");
+      }
+    } catch (err) {
+      addToast("error", "Failed to rebuild search index");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [isSuperadmin, addToast]);
 
   /** Specific handler for clearing map tile cache and local geometry */
   const handleTilePurge = useCallback(async () => {
@@ -605,8 +856,20 @@ const MainApp: React.FC = () => {
         };
         setUserLocation(newLoc);
 
-        if (reminderService.isLeader() && !isStealthMode) {
+        if (reminderService.isLeader() && !stealthModeRef.current) {
           reminderService.broadcastTelemetry((pos.coords.speed || 0) * 3.6, pos.coords.heading || 0);
+        }
+
+        // 👻 Ghost Mode: Broadcast location to fleet via WebSocket
+        if (ghostModeRef.current && sendMessage) {
+          sendMessage({
+            type: 'ghost_update',
+            userId: user?.id || 'guest',
+            lat: newLoc.lat,
+            lng: newLoc.lng,
+            heading: newLoc.heading,
+            speed: (pos.coords.speed || 0) * 3.6
+          });
         }
       },
       (err) => console.error("[Geo] Watch failed:", err),
@@ -809,9 +1072,17 @@ const MainApp: React.FC = () => {
 
   // 📡 WebSocket Message Handler: Responds to real-time incident broadcasts
   useEffect(() => {
-    if (lastMessage?.type === 'road_update' || lastMessage?.type === 'system') {
+    if (lastMessage?.type === 'progress') {
+      setSyncProgress({ message: lastMessage.message, pct: lastMessage.percentage });
+      // Auto-hide progress bar 3 seconds after reaching 100%
+      if (lastMessage.percentage === 100) {
+        setTimeout(() => setSyncProgress(null), 3000);
+      }
+    } else if (lastMessage?.type === 'road_update' || lastMessage?.type === 'system') {
       refresh(); // Triggers useNepalData refresh
       addToast(lastMessage.type === 'system' ? "info" : "success", lastMessage.message || "Live update received");
+    } else if (lastMessage?.type === 'ghost_locations' && lastMessage.users) {
+      setNearbyGhostUsers(lastMessage.users);
     }
   }, [lastMessage, refresh, addToast]);
 
@@ -1190,12 +1461,12 @@ const MainApp: React.FC = () => {
     if (pilotMode && userLocation && highwayGeoJSON?.features) {
       const currentSpeedKmh = (userLocation.speed || 0) * 3.6;
       const speedLimit = smoothedSpeedLimit;
+      const now = Date.now();
       const isSpeeding = currentSpeedKmh > speedLimit + 5;
       const isMoving = currentSpeedKmh > 5;
 
       // 0. Terrain Safety Alert: Steep Descent & Brake Temperature Warning & Ramp Detection
       const currentElevation = userLocation.elevation || 0;
-      const nowTs2 = Date.now();
       if (lastElevationRef.current !== null && isMoving && lastPositionRef.current) {
         const elevationDiff = currentElevation - lastElevationRef.current;
 
@@ -1330,7 +1601,6 @@ const MainApp: React.FC = () => {
       ]);
 
       // 1. Traffic Congestion Audio Alert
-      const now = Date.now();
       if (!isMuted && 'speechSynthesis' in window && currentSpeedKmh > 10 && currentSpeedKmh < speedLimit * 0.5) {
         if (now - lastCongestionAlert.current > 120000) { // Limit to once every 2 minutes
           const utterance = new SpeechSynthesisUtterance("Traffic congestion detected. Drive safely.");
@@ -1354,10 +1624,23 @@ const MainApp: React.FC = () => {
       }
 
       // 2. Safety Score: Speeding Penalty (Gradual drain)
+      // ⛈️ Weather Penalty Multiplier: Penalties are more severe in snow or heavy rain
+      const weatherMultiplier = (() => {
+        if (!weatherData) return 1.0;
+        const cond = (weatherData.condition || "").toLowerCase();
+        const intensity = weatherData.intensity || 0;
+        if (cond.includes('snow') || intensity > 15) return 2.5; // Extreme Risk
+        if (cond.includes('rain') || intensity > 5) return 1.5;   // Moderate Risk
+        return 1.0;
+      })();
+
       if (isSpeeding) {
         // Penalty scales with terrain risk: Descents (< -3%) increase the penalty significantly
         const riskMultiplier = terrainGrade < -7 ? 3.0 : terrainGrade < -3 ? 1.5 : 1.0;
-        setSafetyScore(prev => Math.max(0, prev - (0.05 * riskMultiplier)));
+
+        // Apply the weather multiplier to the speed penalty
+        const totalPenalty = 0.05 * riskMultiplier * weatherMultiplier;
+        setSafetyScore(prev => Math.max(0, prev - totalPenalty));
 
         // Sample speeding violation location every 20s to avoid UI clutter
         const nowMs = Date.now();
@@ -1372,6 +1655,11 @@ const MainApp: React.FC = () => {
           }]);
           lastSpeedRecordRef.current = nowMs;
         }
+      }
+
+      // 3. Environmental Passive Drain: Constant risk during extreme weather while moving
+      if (isMoving && weatherMultiplier > 2.0 && safetyScore > 10) {
+        setSafetyScore(prev => Math.max(0, prev - 0.01));
       }
 
       // 2a. Brake Heat Penalty: Mechanical abuse reduces score (applied independently of speeding)
@@ -1409,6 +1697,44 @@ const MainApp: React.FC = () => {
           }
         } else if (!approachingDanger) {
           lastSpokenDangerZone.current = null;
+        }
+      }
+
+      // 8. Planned Route Hazards: Proximity alerts for Sharp Turns, Steep Grades, and Blocks
+      if (!isMuted && 'speechSynthesis' in window && pathAnalytics?.hazards) {
+        const nearbyHazard = pathAnalytics.hazards.find((h: any) => {
+          return haversineDistance(userLocation.lat, userLocation.lng, h.lat, h.lng) < 0.25; // 250m
+        });
+
+        if (nearbyHazard) {
+          const hazardId = `${nearbyHazard.type}-${nearbyHazard.lat}-${nearbyHazard.lng}`;
+          if (lastSpokenHazardId.current !== hazardId) {
+            let msg = "";
+            if (nearbyHazard.type === 'SHARP_TURN') msg = "Caution: Sharp turn ahead. Reduce speed.";
+            else if (nearbyHazard.type === 'STEEP_GRADE') msg = `Caution: Steep ${nearbyHazard.isDescent ? 'descent' : 'climb'} ahead.`;
+            else if (nearbyHazard.type === 'Blocked') msg = "Alert: Approaching a blocked section.";
+
+            if (msg) {
+              window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+              lastSpokenHazardId.current = hazardId;
+
+              // 📳 Tactical Haptic Pulse for hazard proximity
+              if ('vibrate' in navigator) {
+                const patterns = {
+                  low: [50],
+                  medium: [150, 80, 150],
+                  high: [300, 100, 300, 100, 300]
+                };
+                navigator.vibrate(patterns[hapticIntensity]);
+              }
+
+              if (reminderService.isLeader()) {
+                reminderService.broadcastHapticPulse();
+              }
+            }
+          }
+        } else {
+          lastSpokenHazardId.current = null;
         }
       }
 
@@ -1741,6 +2067,23 @@ const MainApp: React.FC = () => {
     addToast("success", `Theme updated to ${nextColor}`);
   }, [accentColor, addToast]);
 
+  const toggleNightVision = () => {
+    const val = !isNightVision;
+    setIsNightVision(val);
+    localStorage.setItem('merosadak_night_vision', String(val));
+    if (reminderService.isLeader()) {
+      reminderService.broadcastNightVision(val);
+    }
+  };
+
+  const toggleStealthMode = () => {
+    const val = !isStealthMode;
+    setIsStealthMode(val);
+    if (reminderService.isLeader()) {
+      reminderService.broadcastStealthMode(val);
+    }
+  };
+
   const handleAskAI = useCallback(async (text: string) => {
     setChatMessages(prev => [...prev, { role: "user", text }]);
 
@@ -2036,6 +2379,24 @@ const MainApp: React.FC = () => {
 
   return (
     <>
+      {/* Global Sync & Maintenance Progress Bar */}
+      {syncProgress && (
+        <div className="fixed top-0 left-0 w-full z-[9999] pointer-events-none animate-in slide-in-from-top duration-500">
+          <div className="h-1 bg-primary/20 w-full">
+            <div
+              className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+              style={{ width: `${syncProgress.pct}%` }}
+            />
+          </div>
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 py-1.5 border-b border-outline/10 flex items-center justify-between shadow-xl">
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+              <Activity size={12} className="text-primary animate-pulse" />
+              {syncProgress.message}
+            </span>
+            <span className="text-[10px] font-black text-primary">{syncProgress.pct}%</span>
+          </div>
+        </div>
+      )}
       {!appReady && <LoadingScreen onComplete={() => setAppReady(true)} />}
       <WeatherMonsoonProvider userLocation={userLocation}>
 
@@ -2112,6 +2473,36 @@ const MainApp: React.FC = () => {
                       })}
                     />
                   )}
+                  <SafetyBuffer
+                    userLocation={userLocation}
+                    pilotMode={pilotMode}
+                    isHazardNearby={isHazardNearby}
+                    isCollisionRisk={isCollisionRisk}
+                    isMuted={isMuted}
+                  />
+                  <FogOverlay isStealthMode={isStealthMode} />
+                  <RainOverlay isStealthMode={isStealthMode} />
+                  <SnowOverlay isStealthMode={isStealthMode} />
+                  <ThunderstormEffect />
+
+                  {/* Global Weather Animation Styles */}
+                  <style>{`
+                    @keyframes rain-move {
+                      0% { background-position: 0 0; }
+                      100% { background-position: 40px 80px; }
+                    }
+                    .rain-falling {
+                      background-image: repeating-linear-gradient(
+                        110deg,
+                        rgba(255, 255, 255, 0) 0px,
+                        rgba(255, 255, 255, 0) 10px,
+                        rgba(255, 255, 255, 0.4) 11px,
+                        rgba(255, 255, 255, 0) 12px
+                      );
+                      background-size: 40px 80px;
+                      animation: rain-move 0.6s linear infinite;
+                    }
+                  `}</style>
                   {!isGhostMode && <MapControls userLocation={userLocation} className="mb-12" />}
                   {!isGhostMode && !isStealthMode && <BoundaryOverlay isDarkMode={isDarkMode} />}
                   {!isGhostMode && showTraffic && <TrafficFlowOverlay userLocation={userLocation} isVisible />}
@@ -2518,6 +2909,8 @@ const MainApp: React.FC = () => {
               setSidebarOpen(false);
             }}
             onToggleSystemMenu={() => setSystemMenuOpen(true)}
+            isSyncing={!!syncProgress}
+            syncMessage={syncProgress?.message || ""}
           />
 
           <FloatingMenu
@@ -2553,6 +2946,7 @@ const MainApp: React.FC = () => {
                   onPurgeCache={handleSystemPurge}
                   analyticsSummary={analyticsSummary}
                   analyticsLoading={!analyticsSummary}
+                  onRefreshIndex={handleRefreshSearchIndex}
                 />
               </div>
             </div>

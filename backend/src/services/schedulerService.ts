@@ -40,7 +40,16 @@ import {
   broadcastLiveLog
 } from "./websocketService.js";
 
+let isSyncing = false;
+let lastFullSyncTimestamp: number = 0;
+
 export const syncSheetsToGeoJSON = async (): Promise<boolean> => {
+  if (isSyncing) {
+    logInfo("[Scheduler] Sync already in progress, ignoring duplicate request.");
+    return false;
+  }
+
+  isSyncing = true;
   let hasErrors = false;
 
   broadcastProgress("Starting full system sync", 0);

@@ -645,3 +645,5 @@ export const RouteIntelligence: React.FC<RouteIntelligenceProps> = ({
     </div >
   );
 };
+
+export const DistanceCalculator = RouteIntelligence;
