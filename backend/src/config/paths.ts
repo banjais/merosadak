@@ -53,6 +53,9 @@ export const LOCAL_DATA = path.isAbsolute(config.LOCAL_DATA || "")
 export const PROVINCE_DATA = path.isAbsolute(config.PROVINCE_DATA || "")
   ? config.PROVINCE_DATA
   : path.join(ROOT, config.PROVINCE_DATA || "data/provinces.geojson");
+export const DISTRICT_MAPPING = path.isAbsolute(config.DISTRICT_MAPPING || "")
+  ? config.DISTRICT_MAPPING
+  : path.join(ROOT, config.DISTRICT_MAPPING || "data/district_mapping.json");
 
 // ⚡ Cache files - use config values if available
 export const CACHE_ROAD = path.isAbsolute(config.CACHE_ROAD || "")

@@ -3,9 +3,9 @@
 
 import axios from "axios";
 import { logInfo, logError } from "../logs/logs.js";
-import { TOMTOM_API_KEY, TOMTOM_API_URL } from "../config/index.js";
 import { getCachedRoads } from "./roadService.js";
 import type { TrafficFlowSegment, WazeAlert, TrafficResult } from "../types.js";
+import { TOMTOM_API_KEY, TOMTOM_API_URL, WAZE_JSON } from "../config/index.js";
 
 // Cache for traffic data (5 minutes)
 let trafficCache: TrafficResult | null = null;
@@ -137,9 +137,12 @@ async function fetchTomTomFlowSegments(
  */
 async function fetchWazeAlerts(): Promise<WazeAlert[]> {
   try {
-    // Use Waze Partner Hub feed
-    const WAZE_URL = process.env.WAZE_JSON ||
-      'https://www.waze.com/row-partnerhub-api/partners/19031804998/waze-feeds/75887a4e-e8fc-4329-a4c8-7f84be88914e?format=1';
+    // Use Waze Partner Hub feed from config
+    const WAZE_URL = WAZE_JSON;
+    if (!WAZE_URL) {
+      logError("[TrafficService] WAZE_JSON not configured, skipping Waze alerts");
+      return [];
+    }
 
     const response = await axios.get(WAZE_URL, {
       timeout: 10000,

@@ -1,6 +1,7 @@
 // backend/src/routes/uptimeRouter.ts
 import { Router, Request, Response } from "express";
 import { getUptimeRobotStatus } from "../services/uptimeRobotService.js";
+import { UPTIMEROBOT_STATUS_PAGE } from "../config/index.js";
 
 const router = Router();
 
@@ -54,7 +55,7 @@ router.get("/public-status", (_req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
-      statusPage: "https://uptimerobot.com/ZaSzISaXMt",
+      statusPage: UPTIMEROBOT_STATUS_PAGE,
       message: "View detailed uptime statistics on our public status page",
     },
   });

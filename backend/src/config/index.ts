@@ -207,6 +207,12 @@ const envSchema = z.object({
   CACHE_ALERTS: z.string().default("data/cache/cacheAlerts.json"),
   CACHE_MONSOON: z.string().default("data/cache/cacheMonsoon.json"),
   CACHE_WAZE: z.string().default("data/cache/cacheWaze.json"),
+
+  DISTRICT_MAPPING: z.string().default("data/district_mapping.json"),
+
+  CORS_ORIGINS: z.string().default("https://merosadak.web.app,http://localhost:5173,http://localhost:3000"),
+  UPTIMEROBOT_API_URL: z.string().default("https://api.uptimerobot.com/v2/getMonitors"),
+  UPTIMEROBOT_STATUS_PAGE: z.string().default("https://uptimerobot.com/ZaSzISaXMt"),
 });
 
 // -----------------------------
@@ -280,6 +286,7 @@ export const HIGHWAY_DATA = config.HIGHWAY_DATA || "data/highway/index.json";
 export const DISTRICT_DATA = config.DISTRICT_DATA || "data/districts.geojson";
 export const LOCAL_DATA = config.LOCAL_DATA || "data/local.geojson";
 export const PROVINCE_DATA = config.PROVINCE_DATA || "data/provinces.geojson";
+export const DISTRICT_MAPPING = config.DISTRICT_MAPPING || "data/district_mapping.json";
 
 export const UPSTASH = {
   REST_URL: config.UPSTASH_REDIS_REST_URL,
@@ -399,3 +406,8 @@ export const USE_MOCK = config.USE_MOCK;
 // -----------------------------
 export const isProd = config.NODE_ENV === "production";
 export const isDev = config.NODE_ENV === "development";
+
+// CORS and external APIs
+export const CORS_ORIGINS = (config.CORS_ORIGINS || "https://merosadak.web.app,http://localhost:5173,http://localhost:3000").split(",");
+export const UPTIMEROBOT_API_URL = config.UPTIMEROBOT_API_URL || "https://api.uptimerobot.com/v2/getMonitors";
+export const UPTIMEROBOT_STATUS_PAGE = config.UPTIMEROBOT_STATUS_PAGE || "https://uptimerobot.com/ZaSzISaXMt";

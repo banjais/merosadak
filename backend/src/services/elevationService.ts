@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logError } from "../logs/logs.js";
+import { OPEN_METEO_API_BASE } from "../config/index.js";
 
 interface Point {
     lat: number;
@@ -22,7 +23,7 @@ export async function getPathElevation(points: Point[]): Promise<ElevationPoint[
         const lons = points.map(p => p.lng).join(',');
 
         const response = await axios.get(
-            `https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`,
+            `${OPEN_METEO_API_BASE}/elevation?latitude=${lats}&longitude=${lons}`,
             { timeout: 5000 }
         );
 

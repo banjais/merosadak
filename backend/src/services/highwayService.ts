@@ -1,7 +1,7 @@
 // backend/src/services/highwayService.ts
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR } from "@/config/paths.js";
+import { DATA_DIR, DISTRICT_MAPPING } from "@/config/paths.js";
 import { logError, logInfo } from "@logs/logs.js";
 import type { FeatureCollection } from "@/types.js";
 import { getCache } from "@/services/cacheService.js";
@@ -12,7 +12,7 @@ import { haversineDistance, calculateBearing, calculateLineStringLength } from "
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 const MASTER_HIGHWAY_FILE = path.join(HIGHWAY_DIR, "highways_master.geojson");
-const DISTRICT_MAPPING_FILE = path.join(DATA_DIR, "district_mapping.json");
+const DISTRICT_MAPPING_FILE = DISTRICT_MAPPING;
 
 let isIndexUpdating = false;
 let districtMappingCache: Record<string, string> | null = null;

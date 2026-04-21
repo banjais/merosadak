@@ -72,8 +72,13 @@ async function checkApi(label: string, url: string, opts?: { method?: string; ti
 // ─── Main ───
 async function runDiagnostics() {
   const mode = isProd ? "production" : "development";
-  const port = String(config.PORT || 4000);
+  const port = config.PORT || 4000;
+
   console.log(`\n${C.magenta}${C.bold}  MEROSADAK DIAGNOSTICS${C.reset}  ${C.dim}${mode} :${port}${C.reset}`);
+
+  if (!isProd && port === 4000) {
+    console.log(`  ${WARN} ${C.yellow}Development is using port 4000. Ensure Production is not running locally.${C.reset}`);
+  }
 
   const HIGHWAY_DIR = path.join(paths.DATA_DIR, "highway");
   const BOUNDARY_TYPES = ['districts', 'provinces', 'local'];

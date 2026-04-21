@@ -1,7 +1,7 @@
 // backend/src/services/poiService.ts
 import { logError, logInfo } from "@logs/logs.js";
 import { redisClient } from "@/services/cacheService.js";
-import { TOMTOM_API_KEY } from "@/config/index.js";
+import { TOMTOM_API_KEY, TOMTOM_API_URL, OVERPASS_API_URL, OVERPASS_FALLBACK_URL } from "@/config/index.js";
 import { getHighwayList, getHighwayByCode, getMajorJunctions } from "@/services/highwayService.js";
 import type { SearchResult } from "@/types.js";
 import { haversineDistance } from "@/services/geoUtils.js";
@@ -96,7 +96,8 @@ export const refreshPOICache = async (customCategories?: string[]): Promise<void
  */
 async function fetchFromTomTom(lat: number, lng: number, categories: string[]): Promise<SearchResult[]> {
     const categoryString = categories.join(",");
-    const url = `https://api.tomtom.com/search/2/categorySearch/${categoryString}.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lng}&radius=20000&limit=40`;
+    const baseUrl = (TOMTOM_API_URL || "https://api.tomtom.com").replace(/\/$/, "");
+    const url = `${baseUrl}/search/2/categorySearch/${categoryString}.json?key=${TOMTOM_API_KEY}&lat=${lat}&lon=${lng}&radius=20000&limit=40`;
 
     const response = await fetch(url);
     if (!response.ok) throw new Error(`TomTom API responded with ${response.status}`);
@@ -119,7 +120,8 @@ async function fetchFromTomTom(lat: number, lng: number, categories: string[]): 
  */
 async function fetchFromOverpass(lat: number, lng: number): Promise<SearchResult[]> {
     const query = `[out:json][timeout:25];(node"amenity"~"hospital|fuel|police";);out body;`;
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const overpassUrl = OVERPASS_API_URL || "https://overpass-api.de/api";
+    const url = `${overpassUrl.replace(/\/$/, "")}/interpreter?data=${encodeURIComponent(query)}`;
 
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Overpass API responded with ${response.status}`);

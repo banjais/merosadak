@@ -1,5 +1,6 @@
 // backend/src/services/uptimeRobotService.ts
 import { logInfo, logError } from "../logs/logs.js";
+import { UPTIMEROBOT_API_URL } from "../config/index.js";
 
 // ────────────────────────────────
 // UptimeRobot Monitoring Service
@@ -49,7 +50,6 @@ interface MonitorStats {
 
 // UptimeRobot API configuration
 const UPTIMEROBOT_API_KEY = process.env.UPTIMEROBOT_API_KEY || "";
-const UPTIMEROBOT_API_URL = "https://api.uptimerobot.com/v2/getMonitors";
 
 // Cache for monitor stats
 let cachedStats: MonitorStats[] | null = null;

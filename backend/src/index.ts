@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
-import { PORT, API_PREFIX, isProd, SENTRY_DSN, WS_ENABLED } from "./config/index.js";
+import { PORT, API_PREFIX, isProd, SENTRY_DSN, WS_ENABLED, CORS_ORIGINS } from "./config/index.js";
 import { logInfo, logError } from "./logs/logs.js";
 
 import apiRouter from "./routes/routerIndex.js";
@@ -17,11 +17,7 @@ app.set("trust proxy", 1);
 if (isProd) app.use(helmet());
 
 app.use(cors({
-  origin: [
-    "https://merosadak.web.app",
-    "http://localhost:5173",
-    "http://localhost:3000"
-  ],
+  origin: CORS_ORIGINS,
   credentials: true,
 }));
 
