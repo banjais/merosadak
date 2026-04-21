@@ -11,6 +11,7 @@ import poiRouter from "@/routes/poiRouter.js";
 import weatherRouter from "@/routes/weatherRouter.js";
 import trafficRouter from "@/routes/trafficRouter.js";
 import monsoonRouter from "@/routes/monsoonRouter.js";
+import tripRouter from "@/routes/tripRouter.js";
 
 // ----------------------
 // SAFETY & ALERTS
@@ -61,6 +62,7 @@ apiRouter.use("/pois", poiRouter);
 apiRouter.use("/weather", weatherRouter);
 apiRouter.use("/traffic", trafficRouter);
 apiRouter.use("/monsoon", monsoonRouter);
+apiRouter.use("/trip", tripRouter);
 
 // ----------------------
 // SAFETY & UTILITY ENDPOINTS

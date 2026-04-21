@@ -62,7 +62,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { MapLayersPanel } from "./components/MapLayersPanel";
 import { MonsoonRiskOverlay } from "./components/MonsoonRiskOverlay";
 import { DriverDashboard } from "./components/DriverDashboard";
-import { DistanceCalculator } from "./components/DistanceCalculator";
+import { DistanceCalculator as TripPlanner } from "./components/TripPlanner";
 import { SearchOverlayIntent } from "./components/SearchOverlayIntent";
 import { RouteDisplay } from "./components/RouteDisplay";
 import { ContextualInfoCards } from "./components/ContextualInfoCards";
@@ -532,6 +532,8 @@ const MainApp: React.FC = () => {
 
   // Distance Calculator State
   const [isMeasuring, setIsMeasuring] = useState(false);
+  const [showIncidentReport, setShowIncidentReport] = useState(false);
+  const [showReportSuccess, setShowReportSuccess] = useState(false);
   const [measurePoints, setMeasurePoints] = useState<L.LatLng[]>([]);
   const [lastSnappedPoint, setLastSnappedPoint] = useState<L.LatLng | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
@@ -2915,8 +2917,8 @@ const MainApp: React.FC = () => {
 
           <FloatingMenu
             onServiceSelect={handleServiceSelect}
-            onOpenCalculator={() => { }} // Hooked for future distance tools
-            onOpenReport={() => { }} // Hooked for future reporting tools
+            onOpenCalculator={() => { setIsMeasuring(true); setSidebarOpen(false); }}
+            onOpenReport={() => { setShowIncidentReport(true); setSidebarOpen(false); }}
             onTogglePilot={handleTogglePilot}
             activeService={serviceType}
             incidents={incidents}
@@ -2968,7 +2970,7 @@ const MainApp: React.FC = () => {
             />
           )}
 
-          <DistanceCalculator
+          <TripPlanner
             isOpen={isMeasuring}
             points={measurePoints}
             elevationData={elevationProfile}
@@ -3096,6 +3098,36 @@ const MainApp: React.FC = () => {
               onUpdateConfig={setBatterySaverConfig}
               batteryLevel={batteryLevel}
               history={batteryHistory}
+            />
+          )}
+
+          {showIncidentReport && (
+            <ReportIncidentOverlay
+              isOpen={showIncidentReport}
+              onClose={() => setShowIncidentReport(false)}
+              userLocation={userLocation}
+              selectedHighwayCode={selectedHighwayCode}
+              onSubmitSuccess={() => {
+                setShowIncidentReport(false);
+                addToast("success", "🚨 Incident reported successfully! Thank you for keeping Nepal's roads safe.");
+              }}
+            />
+          )}
+
+          {showReportSuccess && (
+            <SafeTripReport
+              isOpen={showReportSuccess}
+              onClose={() => setShowReportSuccess(false)}
+              finalScore={100}
+              scoreHistory={[]}
+              durationMins={0}
+              actualPath={[]}
+              isGreenRoute={false}
+              safeTripKm={0}
+              vehicleType={userProfile?.preferences?.vehicleType}
+              highwayCode={selectedHighwayCode}
+              events={[]}
+              isHighContrast={isHighContrast}
             />
           )}
 

@@ -1,7 +1,6 @@
 // backend/src/services/highwayService.ts
 import fs from "fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
 import { DATA_DIR } from "@/config/paths.js";
 import { logError, logInfo } from "@logs/logs.js";
 import type { FeatureCollection } from "@/types.js";
@@ -14,23 +13,23 @@ import { broadcastProgress, broadcastLiveLog } from "./websocketService.js";
 const HIGHWAY_DIR = path.join(DATA_DIR, "highway");
 const HIGHWAY_INDEX = path.join(HIGHWAY_DIR, "index.json");
 const MASTER_HIGHWAY_FILE = path.join(HIGHWAY_DIR, "highways_master.geojson");
-const DISTRICT_MAPPING_FILE = fileURLToPath(new URL("./district_mapping.json", import.meta.url));
 
 let isIndexUpdating = false;
 let districtMappingCache: Record<string, string> | null = null;
 
 /**
  * Loads the district-to-province mapping from disk.
+ * Returns empty object if file is not found (optional data).
  */
-async function getDistrictMapping(): Promise<Record<string, string>> {
-  if (districtMappingCache) return districtMappingCache;
+export async function getDistrictMapping(): Promise<Record<string, string>> {
+  if (districtMappingCache !== null) return districtMappingCache;
   try {
-    const data = await fs.readFile(DISTRICT_MAPPING_FILE, "utf-8");
+    const data = await fs.readFile(DISTRICT_MAPPING, "utf-8");
     districtMappingCache = JSON.parse(data);
     return districtMappingCache!;
-  } catch (err: any) {
-    logError("[HighwayService] Failed to load district mapping", err.message);
-    return {};
+  } catch {
+    districtMappingCache = {};
+    return districtMappingCache;
   }
 }
 

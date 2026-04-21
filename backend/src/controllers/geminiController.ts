@@ -1,7 +1,7 @@
 // backend/src/controllers/geminiController.ts
 
 import { Request, Response } from "express";
-import { geminiService } from "../services/geminiService.js";
+import { geminiService, LOCAL_KNOWLEDGE, getDataStats } from "../services/geminiService.js";
 import { logError } from "../logs/logs.js";
 
 export const GeminiController = {
@@ -17,52 +17,52 @@ export const GeminiController = {
         return res.status(400).json({ success: false, message: "Prompt is required" });
       }
 
-      // Build the full prompt with context
+      // Get real data stats for context
+      const stats = getDataStats();
+      
+      // Build context with real data
+      let contextInfo = `You are MeroSadak - Nepal Travel Companion.
+Current data: ${stats.roads} roads, ${stats.monsoon} monsoon zones, ${stats.alerts} active alerts.
+Speak naturally. No lists or bullets unless asked.`;
+
       let fullPrompt = prompt;
 
       if (systemPrompt) {
-        fullPrompt = `${systemPrompt}\n\n---\n\nUser question: ${prompt}\n\nRemember to follow the system context above and be helpful.`;
+        fullPrompt = `${contextInfo}\n\n${systemPrompt}\n\nQuestion: ${prompt}`;
+      } else {
+        fullPrompt = `${contextInfo}\n\n${prompt}`;
       }
 
-      // Adjust response based on mode
       if (mode === 'safe') {
-        fullPrompt += '\n\nPrioritize safety recommendations and conservative advice.';
+        fullPrompt += ' Prioritize safety.';
       } else if (mode === 'pro') {
-        fullPrompt += '\n\nProvide detailed, expert-level analysis with alternatives.';
+        fullPrompt += ' Provide detailed analysis.';
       }
 
-      // Adjust verbosity
       if (verbosity === 'brief') {
-        fullPrompt += '\n\nKeep your response concise (2-3 sentences max).';
-      } else {
-        fullPrompt += '\n\nProvide a detailed, thorough response.';
+        fullPrompt += ' Keep it short - 2-3 sentences.';
       }
 
-      // Mood EQ adjustment
       if (moodEQ) {
-        fullPrompt += '\n\nBe empathetic and understanding. Use a warm, supportive tone.';
-      } else {
-        fullPrompt += '\n\nBe factual and direct.';
+        fullPrompt += ' Be warm and empathetic.';
       }
 
-      const result = await geminiService.generateText(fullPrompt);
+      // Get response - uses AI if available, local fallback otherwise
+      const result = await geminiService.generateSmartResponse(fullPrompt);
 
       res.json({
         success: true,
-        response: result || "I'm sorry, I couldn't process that request. Please try again.",
-        metadata: {
-          mode,
-          verbosity,
-          moodEQ,
-          timestamp: new Date().toISOString()
-        }
+        response: result.text,
+        source: result.source,
+        dataStats: stats,
+        timestamp: new Date().toISOString()
       });
     } catch (error: any) {
       logError('[GeminiController] Query failed', { error: error.message, stack: error.stack });
       res.status(500).json({
         success: false,
-        error: error.message,
-        fallback: "I'm having trouble connecting to my AI brain. Please check your internet connection and try again."
+        response: "im here to help with your journey in nepal",
+        fallback: true
       });
     }
   },
@@ -86,6 +86,7 @@ export const GeminiController = {
   /**
    * Analyze road image with optional prompt
    * POST /api/gemini/analyze-image
+   * Uses secondary model for simpler visual analysis
    */
   analyzeRoadImage: async (req: Request, res: Response) => {
     try {
@@ -97,10 +98,11 @@ export const GeminiController = {
         { text: prompt || "Analyze this road for safety hazards and potholes." }
       ];
 
-      const result = await geminiService.generateMultimodalContent(parts, systemPrompt);
+      const result = await geminiService.generateMultimodalContent(parts, systemPrompt, "secondary");
 
       res.json({
         success: true,
+        tier: "secondary",
         analysis: result || "Visual analysis completed but no hazards were identified."
       });
     } catch (error: any) {
@@ -112,6 +114,7 @@ export const GeminiController = {
   /**
    * Detect emotion from audio
    * POST /api/gemini/detect-emotion
+   * Uses lite model for quick emotion detection
    */
   detectEmotion: async (req: Request, res: Response) => {
     try {
@@ -125,10 +128,11 @@ export const GeminiController = {
         { text: "Identify the emotion in this voice clip." }
       ];
 
-      const result = await geminiService.generateMultimodalContent(parts, systemPrompt);
+      const result = await geminiService.generateMultimodalContent(parts, systemPrompt, "lite");
 
       res.json({
         success: true,
+        tier: "lite",
         emotionData: result || "Could not detect distinct emotion from the provided audio."
       });
     } catch (error: any) {

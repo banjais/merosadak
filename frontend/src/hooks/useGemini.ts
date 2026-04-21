@@ -1,45 +1,135 @@
-import { useState, useCallback } from 'react';
-import { getTravelAdvice, summarizeIncident } from '../services/geminiService';
+import { useState, useCallback, useEffect } from 'react';
+import { 
+  sendMessage, 
+  startConversation, 
+  endConversation,
+  summarizeIncident,
+  getConversationHistory,
+  getQuickAdvice,
+  speakText,
+  stopSpeaking,
+  getTTSSettings,
+  setVoiceGender,
+  setTTSEnabled,
+  getVoicesList,
+  type Emotion
+} from '../services/geminiService';
 import { TravelIncident, ChatMessage } from '../types';
 
 export function useGemini() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: "Namaste! I am your Himalayan AI guide. How can I help your journey through Nepal today?" }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsSettings, setTtsSettings] = useState(getTTSSettings());
 
-  const ask = useCallback(async (query: string, location: { lat: number; lng: number }, incidents: TravelIncident[], persona: string = 'safety', image?: string) => {
-    setMessages(prev => [...prev, { role: 'user', text: query || "What's in this image?" }, { role: 'model', text: '' }]);
+  // Initialize voices on mount
+  useEffect(() => {
+    // Try to load voices - may need multiple attempts
+    const initVoices = () => {
+      const voices = getVoicesList();
+      if (voices.length > 0) {
+        // Voices loaded
+      }
+    };
+    
+    // Chrome needs this delay
+    setTimeout(initVoices, 100);
+    setTimeout(initVoices, 500);
+    setTimeout(initVoices, 1000);
+    
+    speechSynthesis.onvoiceschanged = initVoices;
+  }, []);
+
+  const initialize = useCallback((location?: { lat: number; lng: number }) => {
+    const welcome = startConversation(location);
+    setMessages([{ role: 'model', text: welcome.text }]);
+    
+    // Auto-speak welcome if enabled
+    if (ttsSettings.enabled) {
+      setIsSpeaking(true);
+      speakText(welcome.text).then(() => setIsSpeaking(false));
+    }
+    
+    return welcome;
+  }, []);
+
+  const ask = useCallback(async (
+    query: string, 
+    location?: { lat: number; lng: number },
+    incidents: TravelIncident[] = []
+  ) => {
+    setMessages(prev => [...prev, { role: 'user', text: query }]);
     setIsProcessing(true);
 
     try {
-      const stream = await getTravelAdvice(query, location, incidents, persona, image);
-      let fullText = '';
-
-      for await (const chunk of stream.stream) {
-        const chunkText = chunk.text();
-        fullText += chunkText;
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: 'model', text: fullText };
-          return updated;
-        });
+      const result = await sendMessage(query);
+      setMessages(prev => [...prev, { role: 'model', text: result.text }]);
+      
+      // Speak response if enabled
+      if (ttsSettings.enabled && result.shouldSpeak) {
+        setIsSpeaking(true);
+        await speakText(result.text);
+        setIsSpeaking(false);
       }
-
-      return fullText;
+      
+      return result.text;
     } catch {
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: 'model', text: "I'm having trouble connecting to travel AI. Check the map manually." };
-        return updated;
-      });
+      setMessages(prev => [...prev, { role: 'model', text: "im here to help check the map or try again" }]);
+      return "";
     } finally {
       setIsProcessing(false);
     }
+  }, [ttsSettings.enabled]);
+
+  const speak = useCallback(async (text: string) => {
+    setIsSpeaking(true);
+    await speakText(text);
+    setIsSpeaking(false);
   }, []);
 
-  const getSummary = useCallback(async (incident: TravelIncident) => await summarizeIncident(incident), []);
-  const clearChat = useCallback(() => setMessages([{ role: 'model', text: "Chat cleared. How else can I assist?" }]), []);
+  const stopSpeaking = useCallback(() => {
+    stopSpeaking();
+    setIsSpeaking(false);
+  }, []);
 
-  return { messages, isProcessing, ask, getSummary, clearChat };
+  const changeVoice = useCallback((gender: "male" | "female") => {
+    setVoiceGender(gender);
+    setTtsSettings({ ...getTTSSettings(), gender });
+  }, []);
+
+  const getVoices = useCallback(() => {
+    return getAvailableVoices();
+  }, []);
+
+  const toggleTTS = useCallback(() => {
+    setTtsSettings(prev => ({ ...prev, enabled: !prev.enabled }));
+    if (ttsSettings.enabled) {
+      stopSpeaking();
+    }
+  }, []);
+
+  const clearChat = useCallback(() => {
+    stopSpeaking();
+    const farewell = endConversation();
+    setMessages([{ role: 'model', text: farewell.text }]);
+    return farewell;
+  }, []);
+
+  const getHistory = useCallback(() => getConversationHistory(), []);
+
+  return { 
+    messages, 
+    isProcessing, 
+    isSpeaking,
+    ttsSettings,
+    initialize, 
+    ask, 
+    speak,
+    stopSpeaking,
+    changeVoice,
+    getVoices,
+    toggleTTS,
+    clearChat,
+    getHistory
+  };
 }

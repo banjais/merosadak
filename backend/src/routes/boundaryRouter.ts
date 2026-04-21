@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import fs from "fs/promises";
 import path from "path";
-import { DATA_DIR, DISTRICT_DATA, PROVINCE_DATA } from "@/config/paths.js";
+import { DATA_DIR, DISTRICT_DATA, PROVINCE_DATA, LOCAL_DATA } from "@/config/paths.js";
 import { logError } from "@logs/logs.js";
 
 const router = Router();
@@ -43,6 +43,20 @@ router.get("/provinces", async (_req: Request, res: Response) => {
     } catch (err: any) {
         logError("[BoundaryRouter] Province file not found", err.message);
         return res.status(404).json({ success: false, message: "Province data unavailable" });
+    }
+});
+
+/**
+ * Serves Local body (municipality/rural municipality) boundaries.
+ * Properties include: FIRST_GaPa (name), District, FIRST_Type (type)
+ */
+router.get("/local", async (_req: Request, res: Response) => {
+    try {
+        const data = await fs.readFile(LOCAL_DATA, "utf-8");
+        return res.json({ success: true, data: JSON.parse(data) });
+    } catch (err: any) {
+        logError("[BoundaryRouter] Local bodies file not found", err.message);
+        return res.status(404).json({ success: false, message: "Local bodies data unavailable" });
     }
 });
 

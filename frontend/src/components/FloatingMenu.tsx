@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, X, CloudRain, AlertTriangle, Fuel, ChefHat,
   Stethoscope, Ruler, TrafficCone as TrafficIcon,
-  ShieldBan, Megaphone, Navigation,
+  ShieldBan, Megaphone, Navigation, Mic, AlertCircle,
 } from 'lucide-react';
 import { useSettings } from '../SettingsContext';
 import { TravelIncident, IncidentType } from '../types';
+import { useIncidentReporter, QUICK_REPORT_BUTTONS } from '../hooks/useIncidentReporter';
 
 interface FloatingMenuProps {
   onServiceSelect: (service: string) => void;
@@ -21,7 +22,19 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
   onServiceSelect, onOpenCalculator, onOpenReport, onTogglePilot, activeService, incidents = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showQuickReport, setShowQuickReport] = useState(false);
   const { isDarkMode } = useSettings();
+  
+  const {
+    isRecording,
+    transcript,
+    result,
+    isProcessing,
+    startRecording,
+    stopRecording,
+    submitQuickReport,
+    clearResult
+  } = useIncidentReporter();
   const serviceStats = useMemo(() => {
     const roadIncidents = (incidents || []).filter(i => (i.status || i.type || '').toLowerCase().includes('block'));
     return {
@@ -103,18 +116,77 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({
             </div>
 
             <div className="w-full flex gap-2 mt-2">
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onOpenReport)} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 text-white font-bold text-xs shadow-lg">
-                <Megaphone size={16} /> Report
+              {/* Quick Report Button */}
+              <motion.button 
+                whileTap={{ scale: 0.95 }} 
+                onClick={() => { setShowQuickReport(!showQuickReport); }}
+                className="flex-1 flex items-center justify-center gap-1 p-3 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 text-white font-bold text-xs shadow-lg"
+              >
+                <AlertCircle size={14} /> Report
               </motion.button>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onOpenCalculator)} className={`p-3 rounded-xl backdrop-blur-md border ${isDarkMode ? 'bg-slate-800/80 border-slate-600 text-white' : 'bg-white/80 border-gray-200 text-gray-800'}`}>
-                <Ruler size={16} />
+              
+              {/* Voice Report */}
+              <motion.button 
+                whileTap={{ scale: 0.95 }} 
+                onClick={startRecording}
+                disabled={isRecording}
+                className={`p-2.5 rounded-xl ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-red-500/80'} text-white`}
+                title="Voice Report"
+              >
+                <Mic size={14} />
+              </motion.button>
+              
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onOpenCalculator)} className={`p-2.5 rounded-xl backdrop-blur-md border ${isDarkMode ? 'bg-slate-800/80 border-slate-600 text-white' : 'bg-white/80 border-gray-200 text-gray-800'}`}>
+                <Ruler size={14} />
               </motion.button>
               {onTogglePilot && (
-                <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onTogglePilot)} className="p-3 rounded-xl bg-indigo-600 text-white shadow-lg animate-pulse">
-                  <Navigation size={16} />
+                <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleAction(onTogglePilot)} className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-lg animate-pulse">
+                  <Navigation size={14} />
                 </motion.button>
               )}
             </div>
+            
+            {/* Quick Report Options */}
+            {showQuickReport && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-2 p-3 rounded-xl border ${isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white/90 border-gray-200'}`}
+              >
+                <p className={`text-[10px] font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  🚨 QUICK REPORT
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {QUICK_REPORT_BUTTONS.map(btn => (
+                    <button
+                      key={btn.id}
+                      onClick={() => submitQuickReport(btn.id, btn.label)}
+                      disabled={isProcessing}
+                      className={`${btn.color} text-white p-2 rounded-lg text-[10px] font-bold`}
+                    >
+                      {btn.emoji} {btn.label}
+                    </button>
+                  ))}
+                </div>
+                {transcript && (
+                  <div className={`mt-2 text-[10px] p-2 rounded ${isDarkMode ? 'bg-slate-700' : 'bg-gray-100'}`}>
+                    "{transcript}"
+                  </div>
+                )}
+                {result?.message && (
+                  <div className={`mt-2 text-[10px] p-2 rounded ${result.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {result.message}
+                    {result.division && <span className="ml-1">📞 {result.divisionContact}</span>}
+                  </div>
+                )}
+              </motion.div>
+            )}
+            
+            {isRecording && (
+              <div className="mt-2 text-center text-xs text-red-400 animate-pulse">
+                🎤 Listening... tap to stop
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

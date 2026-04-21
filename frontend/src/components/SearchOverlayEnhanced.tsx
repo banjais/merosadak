@@ -2,7 +2,7 @@
 // Enhanced search with debouncing, grouped results, and route selection
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, X, Navigation, MapPin, Route } from 'lucide-react';
+import { Search, Mic, X, Navigation, MapPin, Route, Sparkles, Bot } from 'lucide-react';
 import { useSettings } from '../SettingsContext';
 import {
   debouncedSearch,
@@ -15,13 +15,15 @@ import { apiFetch } from '../api';
 interface SearchOverlayEnhancedProps {
   userLocation: { lat: number; lng: number } | null;
   onSelectDestination: (result: SearchResult) => void;
-  onAskAI: (query: string) => void;
+  onAskAI?: (query: string) => void;
+  onAskAIDirect?: () => void;
 }
 
 export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
   userLocation,
   onSelectDestination,
-  onAskAI
+  onAskAI,
+  onAskAIDirect
 }) => {
   const { isDarkMode } = useSettings();
   const [query, setQuery] = useState('');
@@ -125,6 +127,17 @@ export const SearchOverlayEnhanced: React.FC<SearchOverlayEnhancedProps> = ({
           title="Voice search"
         >
           <Mic size={18} />
+        </button>
+
+        <button
+          onClick={onAskAIDirect || (() => {})}
+          className={`p-2 rounded-full transition-colors ${isDarkMode
+              ? 'hover:bg-slate-800 text-indigo-400'
+              : 'hover:bg-gray-100 text-indigo-500'
+            }`}
+          title="AI Assistant"
+        >
+          <Bot size={18} />
         </button>
 
         {query && (
