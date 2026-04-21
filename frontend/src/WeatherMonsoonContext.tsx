@@ -78,7 +78,17 @@ export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userL
 export const useWeatherMonsoon = () => {
     const context = useContext(WeatherMonsoonContext);
     if (!context) {
-        throw new Error('useWeatherMonsoon must be used within a WeatherMonsoonProvider');
+        console.warn('[WeatherMonsoonContext] Hook used outside provider - returning default');
+        return {
+            weatherData: null,
+            monsoonIncidents: [],
+            loadingWeather: false,
+            loadingMonsoon: false,
+            errorWeather: null,
+            errorMonsoon: null,
+            refreshWeather: () => {},
+            refreshMonsoon: () => {},
+        };
     }
     return context;
 };
