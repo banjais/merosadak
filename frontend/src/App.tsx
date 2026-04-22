@@ -936,7 +936,7 @@ const MainApp: React.FC = () => {
   const [lastSnappedPoint, setLastSnappedPoint] = useState<L.LatLng | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [fuelHistory, setFuelHistory] = useState<{ t: number; v: number }[]>([]);
-  const [highwayGeoData, setLoadedGeo] = useState<any>(null);
+  const [highwayGeoData, setHighwayGeoData] = useState<any>(null);
   const [vehicleBatteryHistory, setVehicleBatteryHistory] = useState<{ t: number; v: number }[]>([]);
   const [batteryHistory, setBatteryHistory] = useState<{ t: number; v: number }[]>([]);
   const [isBatterySaverOpen, setIsBatterySaverOpen] = useState(false);
