@@ -13,7 +13,7 @@ import {
   CACHE_WAZE,
   DATA_DIR
 } from "@/config/paths.js";
-import { logError } from "@logs/logs.js";
+import { logError, logInfo } from "@logs/logs.js";
 import { ROAD_STATUS } from "@/constants/sheets.js";
 import { REDIS_NOTIFIED_PREFIX } from "@/services/alertService.js";
 

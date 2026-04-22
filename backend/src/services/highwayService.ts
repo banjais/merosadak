@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { DATA_DIR } from "@/config/paths.js";
 import { logError, logInfo } from "@logs/logs.js";
+import { DISTRICT_MAPPING } from "@/config/paths.js";
 import type { FeatureCollection } from "@/types.js";
 import { getCache, clearCache } from "@/services/cacheService.js";
 import { ROAD_STATUS } from "@/constants/sheets.js";

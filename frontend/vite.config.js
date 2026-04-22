@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
     wsTarget = `${url.protocol === "https:" ? "wss:" : "ws:"}//${
       url.hostname
     }:${url.port || (url.protocol === "https:" ? "443" : "80")}`;
-  } catch (err) {
+  } catch {
     console.warn("⚠️ Invalid API base URL, using default WS target");
   }
 

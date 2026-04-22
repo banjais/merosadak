@@ -4,7 +4,7 @@
 const CACHE_NAME = 'merosadak-v000';
 const RUNTIME_CACHE = 'merosadak-runtime-v3';
 
-const APP_VERSION = '0.0.0' || 'v3';
+const APP_VERSION = '0.0.0';
 
 // Precache shell
 const PRECACHE_URLS = [
@@ -133,7 +133,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'close') return;
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
       if (clientsArr.length) {
         clientsArr[0].focus();
         clientsArr[0].postMessage({
@@ -141,7 +141,7 @@ self.addEventListener('notificationclick', (event) => {
           data: event.notification.data,
         });
       } else {
-        clients.openWindow('/');
+        self.clients.openWindow('/');
       }
     })
   );
