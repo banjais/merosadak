@@ -1074,7 +1074,7 @@ const MainApp: React.FC = () => {
     oilLife: 85
   });
 
-  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [geoJSON, setGeoJSON] = useState<RouteInfo | null>(null);
   const [routeAlternatives, setRouteAlternatives] = useState<any[]>([]);
   const [alternativeGeometries, setAlternativeGeometries] = useState<Record<string, any>>({});
   const [showAlternativesOnMap, setShowAlternativesOnMap] = useState(true);
