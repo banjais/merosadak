@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Phone, MapPin, Share2, X, AlertTriangle, Radio, Navigation2 } from 'lucide-react';
-import { reminderService, RescueStatus } from '../services/reminderService';
+import { reminderService, RescueStatus } from '../reminderService';
 
 interface SOSOverlayProps {
   isOpen: boolean;

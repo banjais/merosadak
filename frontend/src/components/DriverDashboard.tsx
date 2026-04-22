@@ -1,207 +1,286 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Navigation, 
-  Mic, 
-  ShieldAlert, 
-  Map as MapIcon, 
-  Compass, 
-  Wind, 
-  Activity,
-  Maximize2,
-  Minimize2,
-  Volume2,
-  LogOut,
-  Clock,
-  Bell,
-  MoreVertical
-} from 'lucide-react';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Zap, Thermometer, Navigation, Activity, ShieldAlert, Clock, Mountain, ShieldCheck, Volume2, VolumeX, MessageSquare, AlertTriangle, Users } from 'lucide-react';
+import { SafetyScoreRing } from '../SafetyScoreRing';
 
-interface DriverDashboardProps {
+export interface DriverDashboardProps {
   onClose: () => void;
-  speed?: number;
-  heading?: number;
-  elevation?: number;
-  weather?: any;
-  currentRoad?: string;
-  nextIncident?: any;
-  isLive?: boolean;
-  onOpenNotifications?: () => void;
-  onToggleSystemMenu?: () => void;
+  safetyScore: number;
+  safetyHistory: any[];
+  vehicleHealth: any; // Added
+  activeCriticalReminder?: string | null;
+  onClearCriticalReminder?: () => void;
+  currentSpeed: number;
+  speed: number;
+  isSpeeding: boolean;
+  nextIntersection: any;
+  userLocation: any;
+  isMuted: boolean;
+  onToggleMute: () => void;
+  isNightVision?: boolean;
+  isLeader?: boolean;
+  convoyWarning?: boolean;
+  isCollisionRisk?: boolean;
+  onToggleNightVision?: (val: boolean) => void;
+  isStealthMode?: boolean;
+  onToggleStealthMode?: (val: boolean) => void;
+  incidents?: any[];
+  leaderboard?: any[];
+  chatMessages?: any[];
+  onSendMessage?: (text: string) => Promise<void>;
+  safeTripKm: number;
+  tripStartTime: number | null;
+  isGhostMode: boolean;
+  brakeHeat: number;
+  terrainGrade: number;
+  mechanicalStress: number;
+  gForce?: number;
+  pathAnalytics: any; // Added
+  totalDistance?: number;
+  isHighContrast?: boolean;
+  aiSubtitle?: string | null;
+  isCompactHUD?: boolean;
+  onToggleCompactHUD?: () => void;
 }
 
-export const DriverDashboard: React.FC<DriverDashboardProps> = ({ 
-  onClose, 
-  speed = 0, 
-  heading = 0,
-  currentRoad = "Prithvi Highway",
-  weather = { temp: 22, condition: "Clear" },
-  nextIncident = { type: "Block", dist: "12km", name: "Mugling" },
-  isLive = false,
-  onOpenNotifications,
-  onToggleSystemMenu
+export const DriverDashboard: React.FC<DriverDashboardProps> = ({
+  onClose,
+  safetyScore,
+  currentSpeed,
+  speed,
+  isSpeeding,
+  nextIntersection,
+  isMuted,
+  onToggleMute,
+  isNightVision,
+  isStealthMode,
+  isLeader,
+  convoyWarning,
+  isCollisionRisk,
+  safeTripKm,
+  brakeHeat,
+  terrainGrade,
+  mechanicalStress,
+  gForce = 0,
+  aiSubtitle,
+  isCompactHUD,
+  onToggleCompactHUD,
+  activeCriticalReminder,
+  onClearCriticalReminder,
+  pathAnalytics,
+  totalDistance = 0,
+  isHighContrast
 }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isListening, setIsListening] = useState(false);
-  const [isAudioOn, setIsAudioOn] = useState(true);
-  const [isCompactHUD, setIsCompactHUD] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleVoiceTrigger = () => {
-    setIsListening(true);
-    setTimeout(() => setIsListening(false), 3000);
-    // Integrate with actual voice service here
-  };
+  const displaySpeed = Math.round(speed || currentSpeed || 0);
+  const progress = totalDistance > 0 ? Math.min(100, (safeTripKm / totalDistance) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-950 text-white flex flex-col font-sans select-none overflow-hidden mode-transition">
-      
-      {/* 📺 HUD Scanline Effect */}
-      <div className="scanline-effect" />
-
-      {/* 🔝 Top Status Bar */}
-      <div className="flex justify-between items-center p-4 sm:p-6 glass-pilot border-b border-white/10 z-20">
-        <div className="flex items-center gap-4">
-          <div className="bg-indigo-600 p-2 sm:p-3 rounded-2xl shadow-lg shadow-indigo-500/40 neon-border-indigo">
-            <Navigation className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-current" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic text-indigo-400">MeroSadak</h1>
-            <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-              <span className={`w-2 h-2 ${isLive ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'} rounded-full animate-pulse`} />
-              Telemetry: {isLive ? 'Streaming' : 'Offline'}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 sm:gap-8">
-            <div className="text-right hidden xs:block">
-                <div className="text-2xl sm:text-4xl font-black tracking-tighter tabular-nums text-white">
-                    {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-                <button 
-                  onClick={onOpenNotifications}
-                  className="p-3 sm:p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all border border-white/10 relative active:scale-95"
-                >
-                    <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
-                </button>
-                <button 
-                  onClick={onToggleSystemMenu}
-                  className="p-3 sm:p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all border border-white/10 active:scale-95"
-                >
-                    <MoreVertical className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-                <button 
-                    onClick={onClose}
-                    className="p-3 sm:p-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl transition-all border border-red-500/20 shadow-lg shadow-red-500/10 active:scale-95"
-                >
-                    <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-            </div>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden select-none">
+      {isCollisionRisk && <div className="absolute inset-0 z-[4000] border-8 border-red-500 animate-pulse pointer-events-none" />}
+      {/* Route Progress Bar */}
+      <div className="h-1.5 w-full bg-outline/10 overflow-hidden shrink-0">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          className="h-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-1000"
+        />
       </div>
 
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-6 p-4 sm:p-6 overflow-y-auto sm:overflow-hidden z-10">
-        
-        {/* Left: Telemetry */}
-        <div className="col-span-1 sm:col-span-4 grid grid-cols-1 gap-4 sm:gap-6">
-            <div className="glass-pilot rounded-[32px] sm:rounded-[40px] border border-white/10 p-6 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden group neon-border-indigo">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-50" />
-                <div className="text-8xl sm:text-[120px] font-black leading-none tracking-tighter tabular-nums z-10 text-white">
-                    {speed}
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-slate-500 uppercase z-10 tracking-[0.3em]">km/h</div>
+      {/* Critical Alert Overlay */}
+      <AnimatePresence>
+        {activeCriticalReminder && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="absolute inset-x-4 top-20 z-[3000] p-6 bg-error rounded-[2.5rem] shadow-[0_0_50px_rgba(239,68,68,0.5)] border-4 border-white/20 flex flex-col items-center text-center gap-4"
+          >
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+              <AlertTriangle size={40} className="text-white" />
             </div>
-
-            <div className="glass-pilot rounded-[32px] sm:rounded-[40px] border border-white/10 p-6 sm:p-8 grid grid-cols-2 gap-4">
-                <div className="flex flex-col items-center justify-center border-r border-white/10">
-                    <Compass className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-400 mb-2 rotate-45" />
-                    <div className="text-2xl sm:text-3xl font-black italic">NW</div>
-                </div>
-                <div className="flex flex-col items-center justify-center">
-                    <Wind className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400 mb-2" />
-                    <div className="text-2xl sm:text-3xl font-black">{weather.temp}°</div>
-                </div>
-            </div>
-        </div>
-
-        {/* Middle: Active Navigation / Road Info */}
-        <div className="col-span-1 sm:col-span-8 glass-pilot rounded-[32px] sm:rounded-[40px] border border-white/10 p-6 sm:p-10 flex flex-col justify-between relative overflow-hidden min-h-[400px]">
-            <div className="absolute top-0 right-0 p-6 sm:p-8">
-                <Activity className="w-8 h-8 sm:w-12 sm:h-12 text-indigo-500/30 animate-pulse" />
-            </div>
-
             <div>
-                <div className="text-[10px] sm:text-sm font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 text-center sm:text-left">Pilot Vector Path</div>
-                <div className="text-4xl sm:text-7xl font-black tracking-tight mb-6 sm:mb-8 line-clamp-1 text-center sm:text-left text-white">{currentRoad}</div>
-                
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden mb-8 sm:mb-12 shadow-inner">
-                     <div className="h-full w-2/3 bg-gradient-to-r from-indigo-600 via-indigo-400 to-white rounded-full relative">
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_20px_white]" />
-                     </div>
-                </div>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Tactical Alert</h2>
+              <p className="text-white font-bold mt-1">{activeCriticalReminder}</p>
             </div>
+            <button
+              onClick={onClearCriticalReminder}
+              className="w-full py-4 bg-white text-error rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform"
+            >
+              Acknowledge
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 items-end">
-                <div className="bg-red-500/5 border border-red-500/20 p-6 sm:p-8 rounded-[24px] sm:rounded-[32px] flex items-center gap-4 sm:gap-6 group hover:bg-red-500/10 transition-colors">
-                    <ShieldAlert className="w-12 h-12 sm:w-16 sm:h-16 text-red-500 shrink-0" />
-                    <div>
-                        <div className="text-[10px] sm:text-sm font-bold text-red-500 uppercase tracking-widest mb-1 italic">Hazard Encounter</div>
-                        <div className="text-xl sm:text-3xl font-black">{nextIncident.dist} to {nextIncident.name}</div>
-                    </div>
-                </div>
+      {/* Main HUD Area */}
+      <div className="flex-1 p-6 flex flex-col gap-6 scrollbar-none overflow-y-auto">
 
-                <div className="flex flex-col gap-3 sm:gap-4">
-                    <button 
-                        className={`w-full py-8 sm:py-10 rounded-[24px] sm:rounded-[32px] font-black text-2xl sm:text-3xl flex items-center justify-center gap-4 transition-all active:scale-95 shadow-2xl ${isListening ? 'bg-indigo-600 text-white ring-8 ring-indigo-500/20' : 'bg-white text-slate-950 hover:bg-indigo-50'}`}
-                        onClick={handleVoiceTrigger}
-                    >
-                        {isListening ? "LINK ACTIVE..." : "VOICE PTT"}
-                    </button>
-                    
-                    <div className="flex gap-2 sm:gap-4">
-                        <button 
-                            onClick={() => setIsAudioOn(!isAudioOn)}
-                            className={`flex-1 py-4 sm:py-6 glass-pilot hover:bg-white/10 border rounded-2xl sm:rounded-3xl font-bold flex items-center justify-center gap-2 text-sm transition-all ${isAudioOn ? 'border-indigo-500/30 text-indigo-300' : 'border-red-500/30 text-red-400'}`}
-                        >
-                            <Volume2 className="w-5 h-5" /> {isAudioOn ? 'Audio On' : 'Audio Off'}
-                        </button>
-                        <button 
-                            onClick={() => setIsCompactHUD(!isCompactHUD)}
-                            className={`flex-1 py-4 sm:py-6 glass-pilot hover:bg-white/10 border rounded-2xl sm:rounded-3xl font-bold flex items-center justify-center gap-2 text-sm transition-all ${isCompactHUD ? 'border-indigo-500/30 text-indigo-300' : 'border-white/10 text-indigo-300'}`}
-                        >
-                            {isCompactHUD ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />} {isCompactHUD ? 'Compact' : 'Expand'}
-                        </button>
-                    </div>
-                </div>
+        {/* Primary Gauges Row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Speedometer Card */}
+          <div className={`p-6 rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden border transition-colors ${isSpeeding ? 'bg-error/10 border-error/30 animate-pulse' : 'bg-surface-container-low border-outline/5'
+            }`}>
+            <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-1">Velocity</span>
+            <div className="flex items-baseline gap-1">
+              <span className={`text-6xl font-black font-headline leading-none ${isSpeeding ? 'text-error' : 'text-primary'}`}>{displaySpeed}</span>
+              <span className="text-xs font-bold text-on-surface-variant/60 uppercase">KM/H</span>
             </div>
+            {isSpeeding && <Zap size={16} className="text-error absolute top-4 right-4 animate-ping" />}
+          </div>
+
+          {/* Safety Card */}
+          <div className="p-6 rounded-[2.5rem] bg-surface-container-low border border-outline/5 flex flex-col items-center justify-center">
+            <SafetyScoreRing score={safetyScore} size={100} strokeWidth={8} />
+            <div className="mt-2 text-center">
+              <p className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none">Mission Safety</p>
+            </div>
+          </div>
+        </div>
+
+        {/* G-Force Meter Row */}
+        <div className="px-1">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest">Lateral G-Force</span>
+            <span className="text-[8px] font-black text-primary uppercase tracking-widest tabular-nums">{Math.abs(gForce).toFixed(2)} G</span>
+          </div>
+          <div className="relative h-6 bg-surface-container-low rounded-xl border border-outline/5 flex items-center px-4 overflow-hidden">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-3 bg-outline/20" />
+            <div className="flex justify-between w-full text-[6px] font-black text-on-surface-variant/20 uppercase">
+              <span>L</span>
+              <span>R</span>
+            </div>
+            <motion.div
+              animate={{ x: `${Math.max(-100, Math.min(100, gForce * 100))}%` }}
+              className={`absolute left-1/2 w-4 h-4 -ml-2 rounded-full border-2 border-white shadow-lg ${Math.abs(gForce) > 0.4 ? 'bg-error animate-pulse' : 'bg-primary'}`}
+            />
+          </div>
+        </div>
+
+        {/* Secondary Physics Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-4 rounded-3xl bg-surface-container-low border border-outline/5 flex items-center gap-4">
+            <div className={`p-2.5 rounded-2xl ${brakeHeat > 140 ? 'bg-error/20 text-error animate-pulse' : 'bg-orange-500/10 text-orange-500'}`}>
+              <Thermometer size={20} />
+            </div>
+            <div>
+              <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-0.5">Brake Heat</span>
+              <span className="text-lg font-black text-on-surface tabular-nums">{Math.round(brakeHeat)}°C</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-3xl bg-surface-container-low border border-outline/5 flex items-center gap-4">
+            <div className={`p-2.5 rounded-2xl ${Math.abs(terrainGrade) > 8 ? 'bg-amber-500/20 text-amber-600' : 'bg-indigo-500/10 text-indigo-500'}`}>
+              <Mountain size={20} />
+            </div>
+            <div>
+              <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-0.5">Terrain Grade</span>
+              <span className="text-lg font-black text-on-surface tabular-nums">{Math.abs(Math.round(terrainGrade))}%</span>
+            </div>
+          </div>
+
+          <div className="col-span-2 p-4 rounded-3xl bg-surface-container-low border border-outline/5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`p-2.5 rounded-2xl ${mechanicalStress > 40 ? 'bg-error/20 text-error animate-pulse' : 'bg-indigo-500/10 text-indigo-500'}`}>
+                <Activity size={20} />
+              </div>
+              <div>
+                <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest block mb-0.5">Structural Stress</span>
+                <span className={`text-lg font-black tabular-nums ${mechanicalStress > 40 ? 'text-error' : 'text-on-surface'}`}>{Math.round(mechanicalStress)}%</span>
+              </div>
+            </div>
+            <div className="w-32 h-1.5 bg-outline/10 rounded-full overflow-hidden">
+              <motion.div
+                animate={{ width: `${Math.min(100, mechanicalStress)}%` }}
+                className={`h-full ${mechanicalStress > 60 ? 'bg-error' : mechanicalStress > 30 ? 'bg-amber-500' : 'bg-primary'}`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Next Maneuver / Intersection */}
+        {nextIntersection && (
+          <div className="p-5 rounded-[2rem] bg-primary text-white shadow-xl shadow-primary/20 flex items-center justify-between group overflow-hidden relative">
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                <Navigation size={24} className="rotate-45" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Upcoming Junction</p>
+                <h4 className="text-lg font-black uppercase tracking-tighter leading-tight truncate max-w-[180px]">
+                  {nextIntersection.name}
+                </h4>
+              </div>
+            </div>
+            <div className="text-right relative z-10">
+              <span className="text-2xl font-black font-headline leading-none">{nextIntersection.distance.toFixed(1)}</span>
+              <p className="text-[9px] font-black uppercase opacity-60">KM</p>
+            </div>
+          </div>
+        )}
+
+        {/* AI Co-Pilot Subtitles */}
+        <AnimatePresence mode="wait">
+          {aiSubtitle && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="px-4 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-outline/10 text-center"
+            >
+              <span className="text-[10px] font-bold italic text-on-surface-variant leading-relaxed">
+                "{aiSubtitle}"
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mission Persistence Stats */}
+        <div className="flex items-center justify-between px-2 pt-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-emerald-500" />
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+              Safe Trip: {safeTripKm.toFixed(1)} KM
+            </span>
+          </div>
+          {isLeader && (
+            <div className="flex items-center gap-2">
+              <Users size={14} className={convoyWarning ? 'text-amber-500 animate-pulse' : 'text-primary'} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${convoyWarning ? 'text-amber-500' : 'text-on-surface-variant'}`}>
+                Convoy: {convoyWarning ? 'Alert' : 'Stable'}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-primary" />
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
+              Active Mission
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* 🧭 Dynamic Bottom Strip */}
-      <div className="flex flex-col sm:flex-row px-6 sm:px-12 py-6 sm:py-8 bg-indigo-600 justify-between items-center gap-4">
-            <div className="text-lg sm:text-2xl font-black tracking-wide flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left">
-                <span className="opacity-70 uppercase text-[10px] sm:text-sm font-bold tracking-widest text-white/80">Next Turn</span>
-                <span className="text-xl sm:text-4xl italic uppercase underline decoration-2 sm:decoration-4 underline-offset-4 sm:underline-offset-8">Direct - Narayangarh Junction</span>
-            </div>
-            <div className="flex gap-8 sm:gap-12">
-                <div className="text-center">
-                    <div className="text-2xl sm:text-3xl font-black italic">1h 42m</div>
-                    <div className="text-[9px] sm:text-[10px] uppercase font-bold text-white/60">Estimated</div>
-                </div>
-                <div className="text-center">
-                    <div className="text-2xl sm:text-3xl font-black italic">142 km</div>
-                    <div className="text-[9px] sm:text-[10px] uppercase font-bold text-white/60">Remaining</div>
-                </div>
-            </div>
+      {/* Pilot HUD Controls */}
+      <div className="p-6 bg-surface-container-low/50 backdrop-blur-xl border-t border-outline/5 flex items-center gap-3">
+        <button
+          onClick={onToggleMute}
+          className={`p-4 rounded-2xl border transition-all ${isMuted ? 'bg-error/10 border-error/20 text-error' : 'bg-white dark:bg-slate-800 border-outline/10 text-on-surface-variant hover:bg-surface-container-low'}`}
+        >
+          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+        </button>
+        <button
+          onClick={onToggleCompactHUD}
+          className={`p-4 rounded-2xl border transition-all ${isCompactHUD ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-white dark:bg-slate-800 border-outline/10 text-on-surface-variant hover:bg-surface-container-low'}`}
+        >
+          <Activity size={20} />
+        </button>
+        <button
+          onClick={onClose}
+          className="flex-1 py-4 bg-error text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-error/20 active:scale-95 transition-transform"
+        >
+          Abort Mission
+        </button>
       </div>
-
     </div>
   );
 };

@@ -16,6 +16,11 @@ export interface UserPreferences {
   savedLocations: Array<{ name: string; lat: number; lng: number; createdAt: string }>;
   theme: "light" | "dark" | "auto";
   mapStyle: "standard" | "satellite" | "terrain" | "dark";
+  vehicleType?: string;
+  customTankCapacity?: number;
+  checklistItems?: any[];
+  // additional optional fields for compatibility
+  [key: string]: any;
 }
 
 export interface UserProfile {

@@ -41,6 +41,7 @@ export interface TravelIncident {
   id: string;
   type: string;
   title: string;
+  name?: string; // Optional name alias for compatibility
   description: string;
   lat?: number; // Made optional for incidents without exact coordinates
   lng?: number; // Made optional for incidents without exact coordinates

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback } from 'react';
-import type { TravelIncident, ChatMessage } from '../types';
-import type { RouteInfo } from '../services/enhancedSearchService';
+import type { TravelIncident, ChatMessage } from './types';
+import type { RouteInfo } from './services/enhancedSearchService';
 
 interface DriverDashboardContextType {
     vehicleHealth: {

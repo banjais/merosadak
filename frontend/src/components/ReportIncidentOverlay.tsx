@@ -3,7 +3,7 @@ import { X, AlertTriangle, Camera, MapPin, Phone, Send, Loader2 } from 'lucide-r
 import { useToast } from '../ToastContext';
 import { apiFetch } from '../api';
 import { useEscapeKey } from '../hooks/useEscapeKey';
-// import { useLocation } from '../hooks/useLocation';
+import { useLocation } from '../hooks/useLocation';
 
 interface ReportIncidentOverlayProps {
   isOpen: boolean;
@@ -68,10 +68,10 @@ export const ReportIncidentOverlay: React.FC<ReportIncidentOverlayProps> = ({
     if (!selectedType) return;
     setIsSubmitting(true);
     try {
-      const lat = useCurrentLocation ? location?.lat : parseFloat(manualLat);
-      const lng = useCurrentLocation ? location?.lng : parseFloat(manualLng);
+      const lat = useCurrentLocation ? location?.lat : (manualLat !== '' ? parseFloat(manualLat) : NaN);
+      const lng = useCurrentLocation ? location?.lng : (manualLng !== '' ? parseFloat(manualLng) : NaN);
 
-      if (!lat || !lng) {
+      if (isNaN(lat) || isNaN(lng)) {
         alert('Please provide a location');
         return;
       }

@@ -68,7 +68,7 @@ interface SystemMenuProps {
   onBroadcastViewLock?: (mode: 'none' | 'telemetry' | 'report') => void;
   onBroadcastGhostMode?: (active: boolean) => void;
   onBroadcastRemotePOV?: (mode: 'compact' | 'standard') => void;
-  batteryLevel?: number | null;
+  batteryLevel?: number | null | undefined;
   onRemoteSOSTrigger?: () => void;
   isGhostMode?: boolean;
   viewLock?: 'none' | 'telemetry' | 'report';
@@ -76,6 +76,7 @@ interface SystemMenuProps {
   vehicleBatteryHistory?: { t: number; v: number }[];
   fuelHistory?: { t: number; v: number }[];
   fuelLevel?: number;
+  onToggleCompactHUD?: () => void;
   onUpdateTankCapacity?: (val: number | null) => void;
   // Props that are still needed from App.tsx as they are not managed by SettingsContext
   isDarkMode: boolean; // Global theme, not just a user preference
@@ -126,6 +127,17 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   highwayViewMode,
   onToggleHighwayView,
 }) => {
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   const [networkTabs, setNetworkTabs] = useState<any[]>([]);
   const { success, info } = useToast();
   const {
@@ -221,7 +233,7 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
   ];
 
   // Close on Escape key
-  useEscapeKey(onClose, isOpen);
+  useEscapeKey(onClose);
 
   return (
     <>
@@ -280,16 +292,16 @@ export const SystemMenu: React.FC<SystemMenuProps> = ({
         <div className="mb-4">
           <button
             onClick={onOpenBatterySaver}
-            className={`w-full p-3 rounded-2xl border flex items-center justify-between transition-all group ${batteryLevel !== null && batteryLevel <= 20 ? 'bg-red-500/10 border-red-500/30' :
+            className={`w-full p-3 rounded-2xl border flex items-center justify-between transition-all group ${batteryLevel !== undefined && batteryLevel !== null && batteryLevel <= 20 ? 'bg-red-500/10 border-red-500/30' :
               isDarkMode ? 'bg-slate-800/40 border-slate-700/30 hover:bg-slate-800/60' : 'bg-surface-container-low border-outline/10 hover:bg-primary/5'
               }`}
           >
             <div className="flex items-center gap-2">
-              <Battery size={14} className={batteryLevel !== null && batteryLevel <= 20 ? 'text-red-500 animate-pulse' : 'text-primary'} />
+              <Battery size={14} className={batteryLevel !== undefined && batteryLevel !== null && batteryLevel <= 20 ? 'text-red-500 animate-pulse' : 'text-primary'} />
               <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Energy Level</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-black font-headline ${batteryLevel !== null && batteryLevel <= 20 ? 'text-red-500' : 'text-primary'}`}>
+              <span className={`text-xs font-black font-headline ${batteryLevel !== undefined && batteryLevel !== null && batteryLevel <= 20 ? 'text-red-500' : 'text-primary'}`}>
                 {batteryLevel !== null ? `${batteryLevel}%` : '--'}
               </span>
             </div>

@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   X, ChevronUp, ChevronDown, MapPin, Eye, EyeOff,
   Clock, ArrowRight, Zap, Mountain, Activity, Shield,
-  Fuel, Car, Wrench, BatteryCharging, HeartPulse, AlertTriangle
+  Fuel, Car, Wrench, BatteryCharging, HeartPulse, AlertTriangle, ShieldAlert, Navigation
+  , Mic, MicOff, RadioTower, Share2
 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Circle, Rectangle, GeoJSON, useMap, useMapEvents } from "react-leaflet";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapContainer, TileLayer, Marker, Circle, Rectangle, GeoJSON, useMap, useMapEvents, Polyline } from "react-leaflet";
 import { L } from "./lib/leaflet";
 import LZString from "lz-string";
 import RBush from "rbush";
@@ -13,7 +15,7 @@ import "leaflet/dist/leaflet.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useNepalData } from "./hooks/useNepalData";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
-import { useWebSocket } from "./hooks/useWebSocket";
+import { useWebSocket, WebSocketMessage, SendMessage } from "./hooks/useWebSocket";
 import { useAlert } from "./hooks/useAlert";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useUserProfile, useLeaderboard } from "./hooks/useUserProfile";
@@ -21,6 +23,8 @@ import { useAnalytics } from "./hooks/useAnalytics";
 import { useSuperadmin } from "./hooks/useSuperadmin";
 import { useGemini } from "./hooks/useGemini";
 import { useRoutePlanning } from "./hooks/useRoutePlanning";
+import { useOfflineChat } from "./useOfflineChat";
+import { useAdminResolution, type ExtendedSearchResult } from "./useAdminResolution";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
 import { useETA, useQuickETA } from "./hooks/useETA";
 
@@ -62,7 +66,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { MapLayersPanel } from "./components/MapLayersPanel";
 import { MonsoonRiskOverlay } from "./components/MonsoonRiskOverlay";
 import { DriverDashboard } from "./components/DriverDashboard";
-import { DistanceCalculator as TripPlanner } from "./components/TripPlanner";
+import { DistanceCalculator } from "./DistanceCalculator";
 import { SearchOverlayIntent } from "./components/SearchOverlayIntent";
 import { RouteDisplay } from "./components/RouteDisplay";
 import { ContextualInfoCards } from "./components/ContextualInfoCards";
@@ -103,9 +107,360 @@ import type {
   ChecklistItem
 } from "./types/travelPlan";
 
+/**
+ * GradeHUD: A real-time inclinometer showing the pitch of the vehicle
+ */
+const GradeHUD: React.FC<{ grade: number; roll: number; roadQuality?: string; precipitation?: number; isNightVision: boolean; isStealthMode: boolean }> = ({ grade, roll, roadQuality, precipitation = 0, isNightVision, isStealthMode }) => {
+  const rotation = useMemo(() => Math.atan(grade / 100) * (180 / Math.PI), [grade]);
+  const gradeColor = Math.abs(grade) > 10 ? 'text-error' : 'text-emerald-500';
+  const hasAlertedRef = useRef(false);
+  const prevNearSkidLimitRef = useRef(false);
+
+  // 🏎️ Tire Friction / Traction Logic
+  const tractionRisk = useMemo(() => Math.abs(grade) + Math.abs(roll), [grade, roll]);
+  const tractionLimit = useMemo(() => {
+    const q = roadQuality?.toUpperCase() || 'B';
+    let base = 35;
+    if (q === 'A') base = 45; // High grip
+    else if (q === 'B') base = 35;
+    else if (q === 'C') base = 25;
+    else if (q === 'D') base = 18;
+    else base = 12; // Grade F/Earthen
+
+    const stealthFactor = isStealthMode ? 1.5 : 1.0; // Reduce sensitivity in Stealth Mode
+    return base * stealthFactor * Math.max(0.5, 1 - (precipitation / 40));
+  }, [roadQuality, isStealthMode, precipitation]);
+
+  const isLosingTraction = tractionRisk > tractionLimit;
+  const isNearSkidLimit = tractionRisk >= tractionLimit * 0.9;
+
+  // 🔊 Tactical Audio Alert: Triggers once when entering warning zone
+  useEffect(() => {
+    if (isNearSkidLimit && !hasAlertedRef.current) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+        // Alert Sound (High Pitch)
+        if (isNearSkidLimit && !hasAlertedRef.current) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(950, ctx.currentTime); // Tactical high-pitch
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+          hasAlertedRef.current = true;
+        }
+        // Recovery Sound (Low Pitch Confirmation)
+        else if (!isNearSkidLimit && prevNearSkidLimitRef.current) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, ctx.currentTime); // Low-frequency confirmation (A4)
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+          hasAlertedRef.current = false;
+        }
+      } catch (e) { console.warn("Audio feedback failed", e); }
+    }
+    prevNearSkidLimitRef.current = isNearSkidLimit;
+  }, [isNearSkidLimit]);
+
+  return (
+    <div className="relative flex items-center gap-4 bg-black/60 backdrop-blur-xl p-3 rounded-[2rem] border border-white/10 shadow-2xl">
+      <AnimatePresence>
+        {isNearSkidLimit && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: -64, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-2 bg-error text-white rounded-2xl shadow-2xl border-2 border-white/20 flex items-center gap-3 z-[50]"
+          >
+            <div className="p-1.5 bg-white/20 rounded-lg animate-pulse">
+              <ShieldAlert size={16} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none">Anti-Skid Warning</span>
+              <span className="text-[8px] font-bold opacity-80 uppercase leading-none mt-1">Traction Limit Critical</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="flex flex-col items-center gap-1">
+        <div className={`relative w-14 h-14 rounded-full border-2 border-white/20 overflow-hidden flex items-center justify-center`}>
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-500 ease-out"
+            style={{ transform: `rotate(${-rotation}deg)` }}
+          >
+            <div className="w-[150%] h-px bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-4 h-4 border-t-2 border-primary" style={{ transform: 'translateY(-10px)' }} />
+          </div>
+          <div className={`z-10 w-7 h-1 bg-current ${gradeColor} shadow-lg rounded-full transition-transform duration-500`} style={{ transform: `rotate(${-rotation}deg)` }} />
+        </div>
+        <span className={`text-[8px] font-black ${gradeColor}`}>PITCH</span>
+      </div>
+
+      {/* ⚠️ Tire Friction Indicator */}
+      <div className="flex flex-col items-center gap-1">
+        <div className={`
+          w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300
+          ${isLosingTraction
+            ? 'bg-error border-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.8)]'
+            : 'bg-white/10 border-white/20 text-white/40'}
+        `}>
+          <Activity size={16} className={isLosingTraction ? 'text-white' : 'text-white/40'} />
+        </div>
+        <span className={`text-[8px] font-black ${isLosingTraction ? 'text-error animate-pulse' : 'text-white/40'}`}>
+          FRICTION
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * FollowerTacticalHUD: Displays leader telemetry for followers during convoy missions
+ */
+const FollowerTacticalHUD: React.FC<{
+  leaderTelemetry: TelemetryData;
+  currentUserLocation: { lat: number; lng: number } | null;
+  followerSpeedKmh: number;
+  isFollowLeader: boolean;
+  onToggleFollow: () => void;
+  onLeaderVision: () => void;
+}> = ({ leaderTelemetry, currentUserLocation, followerSpeedKmh, isFollowLeader, onToggleFollow, onLeaderVision }) => {
+  const distance = useMemo(() => {
+    if (!currentUserLocation || !leaderTelemetry.lat || !leaderTelemetry.lng) return null;
+    return haversineDistance(currentUserLocation.lat, currentUserLocation.lng, leaderTelemetry.lat, leaderTelemetry.lng);
+  }, [currentUserLocation, leaderTelemetry]);
+
+  const speedDiff = Math.abs(leaderTelemetry.speed - followerSpeedKmh);
+  const isSpeedMismatch = speedDiff > 15 && followerSpeedKmh > 5;
+  const isOutOfFormation = distance !== null && distance > 5;
+  const lastAlertRef = useRef<number>(0);
+
+  // 🔊 Formation Warning Audio Cue: Triggers if separation exceeds 5km
+  useEffect(() => {
+    if (isOutOfFormation && Date.now() - lastAlertRef.current > 60000) {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+        lastAlertRef.current = Date.now();
+      } catch (e) { console.warn("Formation audio cue failed", e); }
+    }
+  }, [isOutOfFormation]);
+
+  return (
+    <div className="absolute top-24 left-4 z-[1002] bg-slate-950/80 backdrop-blur-md p-4 rounded-3xl border border-indigo-500/30 shadow-2xl flex flex-col gap-2 min-w-[140px] animate-in fade-in slide-in-from-left-4">
+      <div className="flex items-center gap-2 mb-1">
+        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]" />
+        <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Convoy Tactical HUD</span>
+      </div>
+
+      {isOutOfFormation && (
+        <div className="flex items-center gap-1.5 text-[8px] font-black text-error uppercase animate-pulse mb-1">
+          <AlertTriangle size={10} /> Formation Warning: {distance?.toFixed(1)}km Gap
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col">
+          <span className="text-[8px] font-black text-white/30 uppercase tracking-tighter mb-0.5">Leader Velocity</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-black text-white tabular-nums">{Math.round(leaderTelemetry.speed)}</span>
+            <span className="text-[8px] font-bold text-white/40 uppercase">KM/H</span>
+          </div>
+        </div>
+        <div className="flex flex-col border-l border-white/5 pl-4">
+          <span className="text-[8px] font-black text-white/30 uppercase tracking-tighter mb-0.5">Separation</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-black text-indigo-400 tabular-nums">{distance !== null ? distance.toFixed(2) : '--'}</span>
+            <span className="text-[8px] font-bold text-white/40 uppercase">KM</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Speed Match Indicator */}
+      <div className="flex items-center justify-between px-1 mt-1 border-t border-white/5 pt-2">
+        <span className="text-[8px] font-black text-white/30 uppercase tracking-tighter">Speed Match</span>
+        {isSpeedMismatch ? (
+          <motion.div
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ repeat: Infinity, duration: 0.8 }}
+            className="flex items-center gap-1 text-[8px] font-black text-error uppercase"
+          >
+            <AlertTriangle size={8} /> Mismatch
+          </motion.div>
+        ) : (
+          <span className="text-[8px] font-black text-emerald-500 uppercase">Synced</span>
+        )}
+      </div>
+
+      <button
+        onClick={onToggleFollow}
+        className={`mt-2 w-full py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border transition-all ${isFollowLeader ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40'}`}
+      >
+        <div className="flex items-center justify-center gap-2">
+          <Navigation size={10} className={isFollowLeader ? 'animate-pulse' : ''} />
+          {isFollowLeader ? 'Following Leader' : 'Follow Leader Zoom'}
+        </div>
+      </button>
+
+      <button
+        onClick={onLeaderVision}
+        className="mt-1 w-full py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
+      >
+        <Eye size={10} /> Leader Vision
+      </button>
+    </div>
+  );
+};
+
+/**
+ * LeaderVisionManager: Temporarily centers map on leader's location
+ */
+const LeaderVisionManager: React.FC<{
+  trigger: number;
+  leaderLocation: { lat: number; lng: number } | null;
+}> = ({ trigger, leaderLocation }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (trigger > 0 && leaderLocation) {
+      map.flyTo([leaderLocation.lat, leaderLocation.lng], 15, { animate: true, duration: 1.5 });
+    }
+  }, [trigger, leaderLocation, map]);
+  return null;
+};
+
+/**
+ * FollowLeaderManager: Automatically adjusts map bounds to keep leader and follower in view
+ */
+const FollowLeaderManager: React.FC<{
+  isActive: boolean;
+  currentUserLocation: { lat: number; lng: number } | null;
+  leaderLocation: { lat: number; lng: number } | null;
+}> = ({ isActive, currentUserLocation, leaderLocation }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (isActive && currentUserLocation && leaderLocation) {
+      const bounds = L.latLngBounds([currentUserLocation.lat, currentUserLocation.lng], [leaderLocation.lat, leaderLocation.lng]);
+      map.fitBounds(bounds, { padding: [100, 100], animate: true });
+    }
+  }, [isActive, currentUserLocation, leaderLocation, map]);
+  return null;
+};
+
+/**
+ * FollowMeHandler: Automatically pans the map to follow the user's location.
+ */
+const FollowMeHandler: React.FC<{ position: { lat: number; lng: number } | null, isActive: boolean }> = ({ position, isActive }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (isActive && position) {
+      map.panTo([position.lat, position.lng], { animate: true, duration: 1 });
+    }
+  }, [position, isActive, map]);
+  return null;
+};
+
+const MapZoomHandler: React.FC<{ zoom: number }> = ({ zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    // flyTo provides a smoother, more "organic" transition than setZoom
+    map.flyTo(map.getCenter(), zoom, {
+      animate: true,
+      duration: 0.6,
+      easeLinearity: 0.25
+    });
+  }, [zoom, map]);
+  return null;
+};
+
+/**
+ * SyncMarker: Renders a custom SVG marker with a height-variable altitude beam
+ * and handles the Shift + Hover fly-to logic.
+ */
+const SyncMarker: React.FC<{
+  point: L.LatLng;
+  elevation: number | null;
+  grade: number | null;
+  isShiftPressed: boolean;
+}> = ({ point, elevation, grade, isShiftPressed }) => { // Destructure grade here
+  const map = useMap();
+
+  useEffect(() => {
+    if (isShiftPressed && point) {
+      map.flyTo(point, map.getZoom(), { animate: true, duration: 0.5 });
+    }
+  }, [point, isShiftPressed, map]);
+
+  const beamHeight = useMemo(() => {
+    if (elevation === null) return 60;
+    // Scale logic: min 60px, max 200px based on altitude (relative to Nepal's peaks, 0-6000m range)
+    return Math.max(60, Math.min(200, (elevation / 6000) * 200));
+  }, [elevation]);
+
+  const isSteep = grade !== null && Math.abs(grade) > 10;
+  const beamColor = isSteep ? '#ef4444' : '#f59e0b';
+
+  const icon = useMemo(() => L.divIcon({
+    className: 'sync-altitude-marker',
+    html: `
+      <div class="relative flex flex-col items-center justify-end" style="height: ${beamHeight + 40}px; transform: translateY(-100%);">
+        <!-- Elevation Label -->
+        <div class="${isSteep ? 'bg-error' : 'bg-amber-500'} text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xl mb-1 whitespace-nowrap border border-white/40 ring-2 ${isSteep ? 'ring-error/20' : 'ring-amber-500/20'}">
+          ${Math.round(elevation || 0)}m ${grade !== null ? `(${Math.round(grade)}%)` : ''}
+        </div>
+        
+        <!-- Altitude Beam SVG -->
+        <svg width="24" height="${beamHeight}" viewBox="0 0 24 ${beamHeight}" class="drop-shadow-2xl overflow-visible">
+          <defs>
+            <linearGradient id="beamGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+              <stop offset="0%" stop-color="${beamColor}" stop-opacity="0" />
+              <stop offset="100%" stop-color="${beamColor}" stop-opacity="0.8" />
+            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          <!-- Tapered Beam -->
+          <path d="M12 0 L24 ${beamHeight} L0 ${beamHeight} Z" fill="url(#beamGradient)" filter="url(#glow)" />
+          <!-- Core Line -->
+          <line x1="12" y1="0" x2="12" y2="${beamHeight}" stroke="${beamColor}" stroke-width="1.5" stroke-dasharray="2 2" />
+        </svg>
+        
+        <!-- Ground Point Impact -->
+        <div class="w-4 h-4 bg-white rounded-full border-2 ${isSteep ? 'border-error' : 'border-amber-500'} shadow-xl ring-4 ${isSteep ? 'ring-error/30' : 'ring-amber-500/30'} -mt-2 relative z-10 animate-pulse"></div>
+      </div>
+    `,
+    iconSize: [60, beamHeight + 40],
+    iconAnchor: [30, beamHeight + 40]
+  }), [elevation, beamHeight, grade, isSteep, beamColor]);
+
+  return <Marker position={point} icon={icon} zIndexOffset={3000} />;
+};
+
 import type { SearchResult, RouteInfo } from "./services/enhancedSearchService";
 import type { UserPOIPreferences } from "./types/poi";
-import { reminderService, Reminder } from "./reminderService";
+import { reminderService, Reminder, SyncContext, TelemetryData } from "./reminderService";
 
 // Define an enum for the board's display states
 enum BoardDisplayState {
@@ -124,23 +479,23 @@ enum BoardDisplayState {
  * to show the full extent of selected roads or routes.
  */
 const MapFocusManager: React.FC<{
-  userLocation: { lat: number; lng: number; speed?: number | null; heading?: number | null } | null;
-  routeInfo: RouteInfo | null;
+  currentUserLocation: { lat: number; lng: number; speed?: number | null; heading?: number | null } | null;
+  geoJSON: RouteInfo | null;
   selectedIncident: TravelIncident | null;
   isTilted: boolean;
   isHighContrast: boolean;
-}> = ({ userLocation, routeInfo, selectedIncident, isTilted, isHighContrast }) => {
+}> = ({ currentUserLocation, geoJSON, selectedIncident, isTilted, isHighContrast }) => {
   const map = useMap();
   const isInitialLoad = useRef(true);
 
   // Initial focus on User Geolocation
   useEffect(() => {
-    if (userLocation && isInitialLoad.current) {
-      const targetLat = isTilted ? userLocation.lat + 0.008 : userLocation.lat;
-      map.setView([targetLat, userLocation.lng], 16);
+    if (currentUserLocation && isInitialLoad.current) {
+      const targetLat = isTilted ? currentUserLocation.lat + 0.008 : currentUserLocation.lat;
+      map.setView([targetLat, currentUserLocation.lng], 16);
       isInitialLoad.current = false;
     }
-  }, [userLocation, map, isTilted]);
+  }, [currentUserLocation, map, isTilted]);
 
   // Adjust View for Road Length / Route Focus
   useEffect(() => {
@@ -148,10 +503,10 @@ const MapFocusManager: React.FC<{
     // Increase padding in high contrast mode to help route visibility against glare
     const paddingValue = (isMobile ? 20 : 80) + (isHighContrast ? 20 : 0);
 
-    if (routeInfo && userLocation) {
+    if (geoJSON && currentUserLocation) {
       const bounds = L.latLngBounds(
-        [userLocation.lat, userLocation.lng],
-        [routeInfo.to.lat, routeInfo.to.lng]
+        [currentUserLocation.lat, currentUserLocation.lng],
+        [geoJSON.to.lat, geoJSON.to.lng]
       );
       const paddingOptions: any = isTilted
         ? [paddingValue * 5, paddingValue, paddingValue, paddingValue]
@@ -162,7 +517,7 @@ const MapFocusManager: React.FC<{
       const targetLat = isTilted ? selectedIncident.lat + 0.003 : selectedIncident.lat;
       map.flyTo([targetLat, selectedIncident.lng], 15, { duration: 1.5 });
     }
-  }, [routeInfo, selectedIncident, userLocation, map, isTilted]);
+  }, [geoJSON, selectedIncident, currentUserLocation, map, isTilted]);
 
   return null;
 };
@@ -172,18 +527,18 @@ const MapFocusManager: React.FC<{
  * vehicle speed, proximity hazards, and real-time weather visibility.
  */
 const SafetyBuffer: React.FC<{
-  userLocation: { lat: number; lng: number; speed?: number | null } | null;
+  currentUserLocation: { lat: number; lng: number; speed?: number | null } | null;
   pilotMode: boolean;
   isHazardNearby: boolean;
   isCollisionRisk: boolean;
   isMuted: boolean;
-}> = ({ userLocation, pilotMode, isHazardNearby, isCollisionRisk, isMuted }) => {
+}> = ({ currentUserLocation, pilotMode, isHazardNearby, isCollisionRisk, isMuted }) => {
   const { weatherData } = useWeatherMonsoon();
   const lastWeatherAlertRef = useRef<number>(0);
 
-  if (!pilotMode || !userLocation) return null;
+  if (!pilotMode || !currentUserLocation) return null;
 
-  const speedKmh = (userLocation.speed || 0) * 3.6;
+  const speedKmh = (currentUserLocation.speed || 0) * 3.6;
   // Buffer size: 150m minimum, scales up to 750m at 100km/h
   const dynamicRadius = Math.max(150, 200 + (speedKmh * 5.5));
 
@@ -212,7 +567,7 @@ const SafetyBuffer: React.FC<{
 
   return (
     <Circle
-      center={[userLocation.lat, userLocation.lng]}
+      center={[currentUserLocation.lat, currentUserLocation.lng]}
       radius={dynamicRadius}
       pathOptions={{
         color: isCollisionRisk ? '#f87171' : (isHazardNearby ? '#ef4444' : '#10b981'),
@@ -411,9 +766,9 @@ interface POIItem {
 const MapClickHandler: React.FC<{
   onMapClick: (latlng: L.LatLng, zoom: number) => void;
   isActive: boolean;
-  userLocation: any;
+  currentUserLocation: any;
   isTilted: boolean;
-}> = ({ onMapClick, isActive, userLocation, isTilted }) => {
+}> = ({ onMapClick, isActive, currentUserLocation, isTilted }) => {
   const map = useMap();
   const [mousePos, setMousePos] = useState<L.LatLng | null>(null);
 
@@ -452,12 +807,8 @@ const MapClickHandler: React.FC<{
 
 /* ---------------- MAIN APP ---------------- */
 
-interface MainAppInnerProps {
-  userLocation: { lat: number; lng: number; speed?: number | null; heading?: number | null } | null;
-  setUserLocation: React.Dispatch<React.SetStateAction<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>>;
-}
-const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocation }) => {
-  const { t, language } = useTranslation();
+const MainApp: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { incidents, refresh } = useNepalData();
   const { isOffline } = useNetworkStatus();
@@ -470,10 +821,12 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const { leaderboard } = useLeaderboard(10);
   const { summary: analyticsSummary } = useAnalytics("7d");
   const { weatherData } = useWeatherMonsoon();
+  const { resolveAdminInfo } = useAdminResolution();
 
-  const { isSuperadmin, broadcast, purgeCache } = useSuperadmin();
+  const { isSuperadmin, broadcast, purge } = useSuperadmin();
   const { ask: geminiAsk } = useGemini();
 
+  const { language } = useTranslation();
   const { addToast, success, error, info, warning } = useToast();
   useETA();
   useQuickETA();
@@ -486,9 +839,41 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "/api/v1";
 
+  const [currentUserLocation, setCurrentUserLocation] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null; elevation?: number | null } | null>(null);
+
   // Use explicit WebSocket URL if provided, otherwise derive from current host
   const { lastMessage, sendMessage } = useWebSocket(wsUrl);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Offline & P2P Integration
+  const {
+    isP2PConnected, outOfRangeMembers, peersLocation, p2pSignalStrength, peersRoutes,
+    isQuietMode, setIsQuietMode, voiceClipHistory, playVoiceClip,
+    startPTT, stopPTT, isPTTRecording, lastVoiceClip,
+    broadcastLocation, sendOfflineSOS, activeSOS, clearSOS, broadcastRoute
+  } = useOfflineChat(user?.id || 'guest', currentUserLocation); // Pass currentUserLocation to hook
+
+  // 🤝 Convoy Merge Suggestion Logic
+  const [dismissedMergeIds, setDismissedMergeIds] = useState<Set<string>>(new Set());
+  const mergeCandidate = useMemo(() => {
+    if (!currentUserLocation || !isP2PConnected) return null;
+    return Object.entries(peersLocation)
+      .map(([id, data]) => ({
+        id,
+        ...data,
+        distance: haversineDistance(currentUserLocation.lat, currentUserLocation.lng, data.lat, data.lng)
+      }))
+      .find(m => m.distance < 0.8 && m.id !== user?.id && !dismissedMergeIds.has(m.id) && peersRoutes[m.id]);
+  }, [peersLocation, currentUserLocation, user?.id, isP2PConnected, dismissedMergeIds, peersRoutes]);
+
+  const handleMergeConvoy = (peerId: string) => {
+    const peerRoute = peersRoutes[peerId];
+    if (peerRoute) {
+      setMeasurePoints(peerRoute.points.map(p => L.latLng(p.lat, p.lng)));
+      addToast("success", `Convoy Merged: Now following ${peersLocation[peerId]?.name}'s path`);
+      setDismissedMergeIds(prev => new Set(prev).add(peerId));
+    }
+  };
 
   /* ---------------- STATE ---------------- */
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -497,7 +882,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   const [appReady, setAppReady] = useState(false);
   const [isLocked, setIsLocked] = useState(true);
-  // const [isBoardExpanded, setIsBoardExpanded] = useState(false); // Replaced by boardDisplayState
 
   const [boardDisplayState, setBoardDisplayState] = useState<BoardDisplayState>(BoardDisplayState.SPLIT);
   const [isDraggingBoard, setIsDraggingBoard] = useState(false);
@@ -505,9 +889,17 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const [initialBoardHeight, setInitialBoardHeight] = useState(0);
   const [currentBoardHeight, setCurrentBoardHeight] = useState(0); // This will be the dynamically adjusted height
 
-  const [activeTab, setActiveTab] = useState<'alerts' | 'summary' | 'chat' | 'services'>('alerts');
+  const [activeTab, setActiveTab] = useState<'alerts' | 'summary' | 'chat' | 'services' | 'fleet'>('alerts');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [systemMenuOpen, setSystemMenuOpen] = useState(false);
+
+  const safetyScoreRef = useRef(100);
+  const mechanicalStressRef = useRef(0);
+
+  const anyFollowerOutOfFormation = outOfRangeMembers.length > 0; // Define this for DriverDashboard
+
+  const [isFollowMe, setIsFollowMe] = useState(true);
+  const [smoothedSpeed, setSmoothedSpeed] = useState(0);
   const [searchRadius, setSearchRadius] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
   const [serviceType, setServiceType] = useState<string | null>(null);
@@ -536,12 +928,15 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // Distance Calculator State
   const [isMeasuring, setIsMeasuring] = useState(false);
-  const [showIncidentReport, setShowIncidentReport] = useState(false);
-  const [showReportSuccess, setShowReportSuccess] = useState(false);
   const [measurePoints, setMeasurePoints] = useState<L.LatLng[]>([]);
+  const [isRouteSmoothing, setIsRouteSmoothing] = useState(true);
+  const [mechanicalStress, setMechanicalStress] = useState(0);
+  const [gForce, setGForce] = useState(1.0);
+  const lastConvoyAlertRef = useRef<number>(0);
   const [lastSnappedPoint, setLastSnappedPoint] = useState<L.LatLng | null>(null);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [fuelHistory, setFuelHistory] = useState<{ t: number; v: number }[]>([]);
+  const [highwayGeoData, setLoadedGeo] = useState<any>(null);
   const [vehicleBatteryHistory, setVehicleBatteryHistory] = useState<{ t: number; v: number }[]>([]);
   const [batteryHistory, setBatteryHistory] = useState<{ t: number; v: number }[]>([]);
   const [isBatterySaverOpen, setIsBatterySaverOpen] = useState(false);
@@ -550,7 +945,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     reduceSync: true,
     darkenMap: false
   });
-  const [pathAnalytics, setPathAnalytics] = useState<{ duration: number; delay: number; landslides: number } | null>(null);
+  const [pathAnalytics, setPathAnalytics] = useState<{ duration: number; delay: number; landslides: number; hazards?: any[]; provinceStats?: any[] } | null>(null);
   const [nearestIntersectionDist, setNearestIntersectionDist] = useState<number | null>(null);
   const [nearestHospitalDist, setNearestHospitalDist] = useState<number | null>(null);
   const [isSnapping, setIsSnapping] = useState(true);
@@ -563,9 +958,46 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const [fuelPrice, setFuelPrice] = useState<number>(175); // NPR per Liter
   const [isGreenRoute, setIsGreenRoute] = useState<boolean>(false);
 
+  const totalPlannedDistance = useMemo(() => {
+    let dist = 0;
+    for (let i = 0; i < measurePoints.length - 1; i++) {
+      dist += haversineDistance(measurePoints[i].lat, measurePoints[i].lng, measurePoints[i + 1].lat, measurePoints[i + 1].lng);
+    }
+    return dist;
+  }, [measurePoints]);
+
+  /**
+   * getSmoothedPath: Uses Quadratic Bezier interpolation to smooth waypoints
+   */
+  const getSmoothedPath = useCallback((pts: L.LatLng[]) => {
+    if (pts.length < 3) return pts;
+    const smoothed: L.LatLng[] = [];
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i];
+      const p1 = pts[i + 1];
+
+      // Generate 5 intermediate points for a smooth curve
+      for (let t = 0; t <= 1; t += 0.2) {
+        const nextLat = p0.lat + (p1.lat - p0.lat) * t;
+        const nextLng = p0.lng + (p1.lng - p0.lng) * t;
+
+        // Apply slight curvature offset based on distance
+        const offset = Math.sin(t * Math.PI) * 0.0001;
+        smoothed.push(L.latLng(nextLat + offset, nextLng + offset));
+      }
+    }
+
+    return smoothed;
+  }, []);
+
+  const displayPath = useMemo(() =>
+    isRouteSmoothing ? getSmoothedPath(measurePoints) : measurePoints
+    , [measurePoints, isRouteSmoothing, getSmoothedPath]);
+
   // 🌳 Spatial Index: Pre-indexes road segments into an R-tree for O(log N) snapping
   const segmentIndex = useMemo(() => {
-    if (!highwayGeoJSON) return null;
+    if (!geoJSON) return null;
     const tree = new RBush<SegmentItem>();
     const items: SegmentItem[] = [];
 
@@ -584,7 +1016,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       }
     };
 
-    highwayGeoJSON.features.forEach((feature: any) => {
+    geoJSON.features.forEach((feature: any) => {
       const geom = feature.geometry;
       if (geom.type === "LineString") processCoordinates(geom.coordinates);
       else if (geom.type === "MultiLineString") geom.coordinates.forEach(processCoordinates);
@@ -592,7 +1024,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
     tree.load(items);
     return tree;
-  }, [highwayGeoJSON]);
+  }, [geoJSON]);
 
   // 🌳 POI Spatial Index: Rapidly find nearby services
   const poiIndex = useMemo(() => {
@@ -609,8 +1041,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     return tree;
   }, [serviceResults]);
 
-
-
   const boardRef = useRef<HTMLDivElement>(null);
   const [activeContext, setActiveContext] = useState<'travel' | 'road' | 'service' | 'alert' | null>(null);
   const [selectedObject, setSelectedObject] = useState<any>(null);
@@ -619,6 +1049,21 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const [selectedIncident, setSelectedIncident] = useState<TravelIncident | null>(null);
   const [accentColor, setAccentColor] = useState(localStorage.getItem('merosadak_accent_color') || 'blue');
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [hoveredPathPoint, setHoveredPathPoint] = useState<L.LatLng | null>(null);
+  const [hoveredElevation, setHoveredElevation] = useState<number | null>(null);
+  const [hoveredGrade, setHoveredGrade] = useState<number | null>(null);
+  const [hoveredRoll, setHoveredRoll] = useState<number>(0);
+  const [hoveredBearing, setHoveredBearing] = useState<number>(0);
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [leaderPath, setLeaderPath] = useState<Array<[number, number, number]>>([]);
+  const [isFollowLeader, setIsFollowLeader] = useState(false);
+  const lastSpokenMergeCandidateIdRef = useRef<string | null>(null); // New ref for merge audio
+  const [leaderVisionTrigger, setLeaderVisionTrigger] = useState(0);
+
+  // Quick Zoom State
+  const [mapZoomState, setMapZoomState] = useState(13);
+  const [zoomTouchStart, setZoomTouchStart] = useState<number | null>(null);
+  const [isZooming, setIsZooming] = useState(false);
 
   // Mock Vehicle Health Data
   const [vehicleHealth, setVehicleHealth] = useState({
@@ -645,9 +1090,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   }, [routeAlternatives]);
 
   const timeDifference = useMemo(() => {
-    if (!routeInfo || !fastestAlternative) return null;
-    return fastestAlternative.estimatedDuration - routeInfo.duration;
-  }, [routeInfo, fastestAlternative]);
+    if (!geoJSON || !fastestAlternative) return null;
+    return fastestAlternative.estimatedDuration - geoJSON.duration;
+  }, [geoJSON, fastestAlternative]);
 
   const [pilotMode, setPilotMode] = useState(false);
 
@@ -711,14 +1156,14 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const [tripEvents, setTripEvents] = useState<any[]>([]);
 
   const [smoothedSpeedLimit, setSmoothedSpeedLimit] = useState(80);
-  const [highwayGeoJSON, setHighwayGeoJSON] = useState<any>(null);
+  const [routeData, setRouteData] = useState<any>(null);
   const [isLeader, setIsLeader] = useState(reminderService.isLeader());
   const [syncedTelemetry, setSyncedTelemetry] = useState<{ speed: number; heading: number } | null>(null);
   const [viewLock, setViewLock] = useState<'none' | 'telemetry' | 'report'>('none');
   const [safeTripKm, setSafeTripKm] = useState(0);
   const [tripStartTime, setTripStartTime] = useState<number | null>(null);
   const [showFinalReport, setShowFinalReport] = useState(false);
-  const [rescueStatus, setRescueStatus] = useState<'idle' | 'dispatched' | 'resolved'>(reminderService.getRescueStatus());
+  const [rescueStatus, setRescueStatus] = useState<RescueStatus>(reminderService.getRescueStatus());
   const [nearbySafetyRamps, setNearbySafetyRamps] = useState<any[]>([]);
   const [nearbyRescuers, setNearbyRescuers] = useState<any[]>([]);
   const [activeAISubtitle, setActiveAISubtitle] = useState<string | null>(null);
@@ -726,27 +1171,124 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const [trafficHistory, setTrafficHistory] = useState<{ timestamp: number; intensity: number }[]>([]);
   const [isHazardNearby, setIsHazardNearby] = useState(false);
   const [isCollisionRisk, setIsCollisionRisk] = useState(false);
-  const [nearbyGhostUsers, setNearbyGhostUsers] = useState<{ lat: number; lng: number; id: string }[]>([]);
+  const [nearbyGhostUsers, setNearbyGhostUsers] = useState<{ lat: number; lng: number; id: string; safetyScore?: number; mechanicalStress?: number }[]>([]);
   const [trafficPredictionData, setTrafficPredictionData] = useState<{ hour: string; intensity: number; precipitation: number }[]>([]);
   const [perfectScoreDuration, setPerfectScoreDuration] = useState(0); // New state for milestone
   const [milestoneAchieved, setMilestoneAchieved] = useState(false); // New state for milestone
+
+  /** Performs a full system purge: Local Storage + Server Purge + Refresh */
+  const handleSystemPurge = useCallback(async () => {
+    if (window.confirm("Perform system-wide purge? This will clear all local data and attempt to reset system caches.")) {
+      await clearAllStorage();
+      if (isSuperadmin) await purge();
+      addToast("success", "System cache cleared. Refreshing engine...");
+      setTimeout(() => window.location.reload(), 1500);
+    }
+  }, [isSuperadmin, purge, addToast]);
+
+  const handleHighwaySelect = useCallback(async (code: string) => {
+    setSelectedHighwayCode(code);
+    setHighwayReport(null);
+    setGeoJsonData(null);
+    setSelectedObject(null);
+
+    setIsProcessing(true);
+    try {
+      const reportRes = await apiFetch(`/v1/highways/${code}/report?lang=${language}`);
+      const geoRes = await apiFetch(`/v1/highways/${code}/geojson`);
+
+      if (reportRes.data) {
+        setHighwayReport(reportRes.data);
+        setSelectedObject(reportRes.data);
+        setActiveContext('road');
+        setBoardDisplayState(BoardDisplayState.SPLIT);
+      }
+      if (geoRes.data) {
+        setGeoJsonData(geoRes.data);
+      }
+
+      if (reminderService.isLeader()) {
+        reminderService.broadcastContext({ highwayCode: code, viewMode: 'report' });
+      }
+
+      setShowHighwayBrowser(false);
+      addToast("success", `Focusing on ${code}: ${reportRes.data?.name || ''}`);
+    } catch (err) {
+      addToast("error", "Failed to load highway details");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [addToast, i18n.language]);
+
+  const handleShowAlternatives = useCallback(async () => {
+    if (!geoJSON || !geoJSON.to) return;
+
+    setIsProcessing(true);
+    try {
+      const from = geoJSON.admin?.localBody || "Kathmandu";
+      const to = geoJSON.to.name;
+      const altRes = await apiFetch(`/v1/route/alternatives?from=${from}&to=${to}&lang=${language}`);
+      const alternatives = altRes.data || [];
+      if (alternatives.length > 0) {
+        setRouteAlternatives(alternatives);
+        addToast("info", `Analyzing ${alternatives.length} potential alternative routes...`);
+
+        const geoMap: Record<string, any> = {};
+        const comparisonPayload = [];
+
+        for (const alt of alternatives) {
+          const geoRes = await apiFetch(`/v1/highways/${alt.code}/geojson`);
+          if (geoRes.data) {
+            geoMap[alt.code] = geoRes.data;
+            const points = geoRes.data.features[0].geometry.coordinates.map((c: any) => ({ lat: c[1], lng: c[0] }));
+            comparisonPayload.push({ name: alt.code, points });
+          }
+        }
+
+        setAlternativeGeometries(geoMap);
+
+        const comparisonRes = await apiFetch("/v1/route/bulk-analytics", {
+          method: "POST",
+          body: JSON.stringify({
+            routes: comparisonPayload,
+            vehicleType: userProfile?.preferences?.vehicleType || 'car',
+            landslideSeverity,
+            trafficIntensity
+          })
+        });
+
+        if (comparisonRes?.data?.routes) {
+          setComparisonData(comparisonRes.data.routes);
+        }
+      }
+    } catch (err) {
+      addToast("error", "Unable to fetch alternative routes at this time.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [geoJSON, addToast, i18n.language, userProfile, landslideSeverity, trafficIntensity]);
+
+  const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
+    if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+      setUpdateAvailable(true);
+    }
+  }, []);
+
+  const handleServiceSelect = useCallback((service: string) => {
+    if (service === "highways") {
+      setShowHighwayBrowser(true);
+      setSidebarOpen(false);
+      return;
+    }
+    setShowTraffic(service === "traffic");
+    if (service) setBoardDisplayState(BoardDisplayState.SPLIT);
+  }, []);
 
   // Refs for stable access in persistent geolocation callback
   const ghostModeRef = useRef(isGhostMode);
   const stealthModeRef = useRef(isStealthMode);
   useEffect(() => { ghostModeRef.current = isGhostMode; }, [isGhostMode]);
   useEffect(() => { stealthModeRef.current = isStealthMode; }, [isStealthMode]);
-
-
-  /** Performs a full system purge: Local Storage + Server Purge + Refresh */
-  const handleSystemPurge = useCallback(async () => {
-    if (window.confirm("Perform system-wide purge? This will clear all local data and attempt to reset system caches.")) {
-      await clearAllStorage();
-      if (isSuperadmin) await purgeCache();
-      addToast("success", "System cache cleared. Refreshing engine...");
-      setTimeout(() => window.location.reload(), 1500);
-    }
-  }, [isSuperadmin, purgeCache, addToast]);
 
   /** Manually triggers a rebuild of the search index (Superadmin only) */
   const handleRefreshSearchIndex = useCallback(async () => {
@@ -783,13 +1325,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       split: screenHeight * 0.5,
       expanded: screenHeight * 0.8,
     };
-  }, []);
-
-  const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
-    if (event.data?.type === 'SW_ACTIVATED') {
-      console.log('[SW] New version activated:', event.data.version);
-    }
-    // Add other message handlers as needed
   }, []);
 
   // Update currentBoardHeight when boardDisplayState changes
@@ -841,7 +1376,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   useEffect(() => {
     initializeStorage();
     themeService.applyToDocument();
-    HotUpdateManager.init().catch((err) => console.error('[HotUpdate] Init failed:', err));
+    HotUpdateManager.init();
 
     // Set initial board height to split view
     setCurrentBoardHeight(getSnapHeights().split);
@@ -867,10 +1402,22 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           heading: pos.coords.heading, // degrees clockwise from North
           elevation: pos.coords.altitude || 1350 // Mocking Kathmandu altitude as base
         };
-        setUserLocation(newLoc);
+        setCurrentUserLocation(newLoc);
+
+        // 🛰️ Broadcast location to offline peers
+        if (isP2PConnected) {
+          broadcastLocation(newLoc.lat, newLoc.lng, userProfile?.name || 'Group Member');
+        }
+
+        // 🏎️ Speed Smoothing (Exponential Moving Average)
+        // Alpha 0.2 provides a good balance between responsiveness and jitter reduction
+        const rawSpeedKmh = (pos.coords.speed || 0) * 3.6;
+        setSmoothedSpeed(prev => {
+          return prev === 0 ? rawSpeedKmh : (prev * 0.8) + (rawSpeedKmh * 0.2);
+        });
 
         if (reminderService.isLeader() && !stealthModeRef.current) {
-          reminderService.broadcastTelemetry((pos.coords.speed || 0) * 3.6, pos.coords.heading || 0);
+          reminderService.broadcastTelemetry((pos.coords.speed || 0) * 3.6, pos.coords.heading || 0, pos.coords.latitude, pos.coords.longitude);
         }
 
         // 👻 Ghost Mode: Broadcast location to fleet via WebSocket
@@ -881,7 +1428,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             lat: newLoc.lat,
             lng: newLoc.lng,
             heading: newLoc.heading,
-            speed: (pos.coords.speed || 0) * 3.6
+            speed: (pos.coords.speed || 0) * 3.6,
+            safetyScore: safetyScoreRef.current,
+            mechanicalStress: mechanicalStressRef.current
           });
         }
       },
@@ -945,6 +1494,41 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     };
   }, [getSnapHeights, handleServiceWorkerMessage, refresh]);
 
+  // ⌨️ Keyboard Modifier Tracking: Detect Shift for Map "Fly-To" mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Shift') setIsShiftPressed(true); };
+    const handleKeyUp = (e: KeyboardEvent) => { if (e.key === 'Shift') setIsShiftPressed(false); };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // 🤝 Proximity-based Audio Welcome Message for Convoy Merge
+  useEffect(() => {
+    if (mergeCandidate && !isMuted && 'speechSynthesis' in window) {
+      // Only speak if it's a new merge candidate or if the previous one was dismissed
+      if (mergeCandidate.id !== lastSpokenMergeCandidateIdRef.current) {
+        const msg = `Convoy detected: ${mergeCandidate.name} is ${mergeCandidate.distance.toFixed(1)} kilometers away.`;
+        const utterance = new SpeechSynthesisUtterance(msg);
+        window.speechSynthesis.speak(utterance);
+        lastSpokenMergeCandidateIdRef.current = mergeCandidate.id;
+        addToast("info", `Convoy detected: ${mergeCandidate.name} nearby!`);
+      }
+    } else if (!mergeCandidate) {
+      lastSpokenMergeCandidateIdRef.current = null; // Reset when no merge candidate is active
+    }
+  }, [mergeCandidate, isMuted, addToast]);
+
+  // 🛣️ Offline Route Sync: Broadcast planned polyline to group members
+  useEffect(() => {
+    if (isP2PConnected && measurePoints.length > 1) {
+      broadcastRoute(measurePoints.map(p => ({ lat: p.lat, lng: p.lng })), isLeader ? '#6366f1' : '#f59e0b');
+    }
+  }, [measurePoints, isP2PConnected, isLeader, broadcastRoute]);
+
   // Trigger Safety Milestone Notification
   useEffect(() => {
     if (perfectScoreDuration >= 600 && !milestoneAchieved) { // 600 seconds = 10 minutes
@@ -955,7 +1539,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // Centralized Reminder Handling
   useEffect(() => {
-    const unsubscribe = reminderService.subscribe((reminder, leaderStatus, telemetry, syncContext) => {
+    const unsubscribe = reminderService.subscribe((reminder, leaderStatus, telemetry, syncContext: SyncContext) => {
       // Update local state to sync UI (badges, etc.)
       setIsLeader(leaderStatus);
 
@@ -966,9 +1550,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       // Handle Mirroring Context (Selected Highways)
       if (syncContext && !leaderStatus) {
         if (syncContext.highwayCode && syncContext.highwayCode !== selectedHighwayCode) {
-          handleHighwaySelect(syncContext.highwayCode);
+          if (syncContext.highwayCode) handleHighwaySelect(syncContext.highwayCode);
         }
-        if (syncContext.viewMode) setViewLock(syncContext.viewMode);
+        if (syncContext.viewMode) setViewLock(syncContext.viewMode); // viewLock type is already correct
         if (syncContext.ghostMode !== undefined) setIsGhostMode(syncContext.ghostMode);
 
         // Emergency Remote Shutdown Listener
@@ -996,7 +1580,15 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
         }
 
         // Remote SOS Signal: If any tab triggers SOS, open HUD for everyone
-        const currentRescueStatus = reminderService.getRescueStatus();
+        // Critical Alert Sync: Trigger SOSOverlay on followers if leader activates it
+        if (syncContext.sosActive && !leaderStatus) {
+          if (rescueStatus === 'idle') { // Only trigger if not already in an SOS state
+            setRescueStatus('dispatched'); // Or 'remote_sos' if you want a distinct state
+            setPilotMode(true);
+            setBoardDisplayState(BoardDisplayState.EXPANDED);
+          }
+        }
+        const currentRescueStatus = reminderService.getRescueStatus(); // Update local status from service
         setRescueStatus(currentRescueStatus);
 
         if (currentRescueStatus !== 'idle') {
@@ -1022,7 +1614,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       }
 
       if (telemetry && !leaderStatus) {
-        setSyncedTelemetry(telemetry);
+        setSyncedTelemetry(telemetry); // telemetry is already typed
       }
 
       if (!reminder) return; // Sync heartbeat, no action needed
@@ -1049,7 +1641,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     });
 
     return () => unsubscribe();
-  }, [isDoNotDisturb, isLeader, selectedHighwayCode, handleHighwaySelect, hapticIntensity, isCompactHUD]);
+  }, [isDoNotDisturb, isLeader, selectedHighwayCode, handleHighwaySelect, hapticIntensity, isCompactHUD, addToast]);
 
   // Broadcast Haptic Pulse to followers when a critical hazard appears (Leader Only)
   useEffect(() => {
@@ -1110,7 +1702,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
         setVehicleBatteryHistory(prevHist => [...prevHist.slice(-19), { t: Date.now(), v: nextVolt }]);
 
         // Simulate fuel consumption (gradual drain based on speed)
-        const speedKmh = (userLocation?.speed || 0) * 3.6;
+        const speedKmh = (currentUserLocation?.speed || 0) * 3.6;
         const consumption = speedKmh > 5 ? 0.02 : 0.005;
         const nextFuel = Math.max(0, parseFloat((prev.fuelLevel - consumption).toFixed(2)));
         setFuelHistory(prevHist => [...prevHist.slice(-19), { t: Date.now(), v: nextFuel }]);
@@ -1120,7 +1712,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [pilotMode, userLocation?.speed]);
+  }, [pilotMode, currentUserLocation?.speed]);
 
   // 🔋 Battery-Aware Auto-Stealth: Activates power-saving view if battery is low
   useEffect(() => {
@@ -1165,11 +1757,11 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // ☀️ Adaptive Sunshine Intensity Monitor: Suggests High Contrast based on contextual irradiance
   useEffect(() => {
-    if (!userLocation || isHighContrast || isNightVision) return;
+    if (!currentUserLocation || isHighContrast || isNightVision) return;
 
     const checkSunshineIntensity = async () => {
       try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lng}&current=shortwave_radiation`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentUserLocation.lat}&longitude=${currentUserLocation.lng}&current=shortwave_radiation`);
         const data = await res.json();
 
         const radiation = data?.current?.shortwave_radiation || 0; // Measured in W/m²
@@ -1200,7 +1792,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     checkSunshineIntensity();
     const interval = setInterval(checkSunshineIntensity, 900000); // Check every 15 minutes
     return () => clearInterval(interval);
-  }, [userLocation, isHighContrast, isNightVision, addToast]);
+  }, [currentUserLocation, isHighContrast, isNightVision, addToast]);
 
   // 🔗 Shareable Link Loader: Parse points from URL on mount
   useEffect(() => {
@@ -1225,16 +1817,16 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   /** 📋 Copy Current Location Helper */
   const handleCopyLocation = useCallback(() => {
-    if (userLocation) {
-      const lat = userLocation.lat.toFixed(6);
-      const lng = userLocation.lng.toFixed(6);
+    if (currentUserLocation) {
+      const lat = currentUserLocation.lat.toFixed(6);
+      const lng = currentUserLocation.lng.toFixed(6);
       const shareUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       navigator.clipboard.writeText(shareUrl);
       addToast("success", "Location link copied to clipboard!");
     } else {
       addToast("error", "Location not available. Ensure GPS is enabled.");
     }
-  }, [userLocation, addToast]);
+  }, [currentUserLocation, addToast]);
 
   // 🛡️ Snap to Road Logic Helper
   const findSnappedPoint = useCallback((latlng: L.LatLng, zoom: number): { point: L.LatLng, nodeDist: number | null, hospitalDist: number | null } => {
@@ -1295,7 +1887,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     }
 
     // 2. Fallback to Road Snapping (R-tree optimized)
-    if (!highwayGeoJSON || !segmentIndex) return { point: latlng, nodeDist: null, hospitalDist: minHospitalDist !== Infinity ? minHospitalDist : null };
+    if (!geoJSON || !segmentIndex) return { point: latlng, nodeDist: null, hospitalDist: minHospitalDist !== Infinity ? minHospitalDist : null };
 
     // Convert 150m threshold to approximate degree bounding box
     // 1 deg lat is ~111km. 1 deg lng varies based on latitude (approx 98km in Nepal)
@@ -1361,7 +1953,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       nodeDist: minNodeDistance !== Infinity ? minNodeDistance : null,
       hospitalDist: minHospitalDist !== Infinity ? minHospitalDist : null
     };
-  }, [highwayGeoJSON, isSnapping, segmentIndex, serviceResults, isEmergencyMode]);
+  }, [geoJSON, isSnapping, segmentIndex, serviceResults, isEmergencyMode]);
 
   // 📈 Debounced Elevation Fetching: Updates the profile as points are added
   useEffect(() => {
@@ -1471,21 +2063,21 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // Real-time Navigation Logic: Telemetry, Safety Alerts & Streak Recovery
   useEffect(() => {
-    if (pilotMode && userLocation && highwayGeoJSON?.features) {
-      const currentSpeedKmh = (userLocation.speed || 0) * 3.6;
+    if (pilotMode && currentUserLocation && geoJSON?.features) {
+      const currentSpeedKmh = (currentUserLocation.speed || 0) * 3.6;
       const speedLimit = smoothedSpeedLimit;
       const now = Date.now();
       const isSpeeding = currentSpeedKmh > speedLimit + 5;
       const isMoving = currentSpeedKmh > 5;
 
       // 0. Terrain Safety Alert: Steep Descent & Brake Temperature Warning & Ramp Detection
-      const currentElevation = userLocation.elevation || 0;
+      const currentElevation = currentUserLocation.elevation || 0;
       if (lastElevationRef.current !== null && isMoving && lastPositionRef.current) {
         const elevationDiff = currentElevation - lastElevationRef.current;
 
         const horizontalDist = haversineDistance(
           lastPositionRef.current.lat, lastPositionRef.current.lng,
-          userLocation.lat, userLocation.lng
+          currentUserLocation.lat, currentUserLocation.lng
         );
 
         if (horizontalDist > 0.002) { // Movement threshold for grade calculation
@@ -1516,8 +2108,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                 setTripEvents(prev => [...prev, {
                   type: 'recovery',
                   title: 'Safe Engine Braking Technique',
-                  lat: userLocation.lat,
-                  lng: userLocation.lng,
+                  lat: currentUserLocation.lat,
+                  lng: currentUserLocation.lng,
                   time: new Date().toLocaleTimeString(),
                   score: 2
                 }]);
@@ -1548,8 +2140,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           if (reminderService.getRescueStatus() === 'dispatched' && nearbyRescuers.length > 0) {
             setNearbyRescuers(prev => prev.map(res => ({
               ...res,
-              lat: res.lat + (userLocation.lat - res.lat) * 0.05,
-              lng: res.lng + (userLocation.lng - res.lng) * 0.05
+              lat: res.lat + (currentUserLocation.lat - res.lat) * 0.05,
+              lng: res.lng + (currentUserLocation.lng - res.lng) * 0.05
             })));
           }
 
@@ -1557,8 +2149,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           if (brakeHeatRef.current > 140) {
             // Mock logic: find turnouts within 2km of current path
             const ramps = [
-              { id: 'ramp1', name: 'Safety Ramp 04', lat: userLocation.lat + 0.004, lng: userLocation.lng + 0.004 },
-              { id: 'ramp2', name: 'Safety Turnout 12', lat: userLocation.lat - 0.003, lng: userLocation.lng + 0.008 }
+              { id: 'ramp1', name: 'Safety Ramp 04', lat: currentUserLocation.lat + 0.004, lng: currentUserLocation.lng + 0.004 },
+              { id: 'ramp2', name: 'Safety Turnout 12', lat: currentUserLocation.lat - 0.003, lng: currentUserLocation.lng + 0.008 }
             ];
             setNearbySafetyRamps(ramps);
           } else {
@@ -1586,7 +2178,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       }
       lastElevationRef.current = currentElevation;
       lastSpeedKmhRef.current = currentSpeedKmh;
-      lastPositionRef.current = { lat: userLocation.lat, lng: userLocation.lng };
+      lastPositionRef.current = { lat: currentUserLocation.lat, lng: currentUserLocation.lng };
 
       // 6. Police Chase Logic: Low safety score duration
       if (safetyScore < 20) {
@@ -1607,10 +2199,10 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
       // 7. Path Recording
       actualPathRef.current.push([
-        userLocation.lat,
-        userLocation.lng,
-        Math.round((userLocation.speed || 0) * 3.6),
-        Math.round(userLocation.elevation || 1350)
+        currentUserLocation.lat,
+        currentUserLocation.lng,
+        Math.round((currentUserLocation.speed || 0) * 3.6),
+        Math.round(currentUserLocation.elevation || 1350)
       ]);
 
       // 1. Traffic Congestion Audio Alert
@@ -1661,8 +2253,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           setTripEvents(prev => [...prev, {
             type: 'penalty',
             title: 'Speeding Violation',
-            lat: userLocation.lat,
-            lng: userLocation.lng,
+            lat: currentUserLocation.lat,
+            lng: currentUserLocation.lng,
             time: new Date().toLocaleTimeString(),
             score: -1
           }]);
@@ -1681,12 +2273,11 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       }
 
       // 3. Safe Cornering Warning: Proximity to Danger Zones
-      let approachingDanger = null;
       if (!isMuted && 'speechSynthesis' in window) {
-        const dangerSegments = highwayGeoJSON.features.filter((f: any) => f.properties?.danger_zone);
+        const dangerSegments = geoJSON.features.filter((f: any) => f.properties?.danger_zone);
         approachingDanger = dangerSegments.find((f: any) => {
           const coords = f.geometry.coordinates;
-          const dist = haversineDistance(userLocation.lat, userLocation.lng, coords[0][1], coords[0][0]);
+          const dist = haversineDistance(currentUserLocation.lat, currentUserLocation.lng, coords[0][1], coords[0][0]);
           return dist < 0.25; // Trigger 250m before curve
         });
 
@@ -1702,8 +2293,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             setTripEvents(prev => [...prev, {
               type: 'penalty',
               title: 'Unsafe Sharp Turn Entry',
-              lat: userLocation.lat,
-              lng: userLocation.lng,
+              lat: currentUserLocation.lat,
+              lng: currentUserLocation.lng,
               time: new Date().toLocaleTimeString(),
               score: -5
             }]);
@@ -1716,7 +2307,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       // 8. Planned Route Hazards: Proximity alerts for Sharp Turns, Steep Grades, and Blocks
       if (!isMuted && 'speechSynthesis' in window && pathAnalytics?.hazards) {
         const nearbyHazard = pathAnalytics.hazards.find((h: any) => {
-          return haversineDistance(userLocation.lat, userLocation.lng, h.lat, h.lng) < 0.25; // 250m
+          return haversineDistance(currentUserLocation.lat, currentUserLocation.lng, h.lat, h.lng) < 0.25; // 250m
         });
 
         if (nearbyHazard) {
@@ -1778,7 +2369,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
       // 5. Calculate next intersection (end of current highway segment)
       // In a real production scenario, we'd cross-reference road_refno junctions
-      const segments = highwayGeoJSON.features;
+      const segments = geoJSON.features;
       let closestDist = Infinity;
       let intersectionName = "Junction";
 
@@ -1787,8 +2378,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           const coords = f.geometry.coordinates;
           const endPoint = coords[coords.length - 1];
           const dist = haversineDistance(
-            userLocation.lat,
-            userLocation.lng,
+            currentUserLocation.lat,
+            currentUserLocation.lng,
             endPoint[1],
             endPoint[0]
           );
@@ -1805,21 +2396,21 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
         setNextIntersection({ distance: closestDist, name: intersectionName });
       }
     }
-  }, [userLocation, highwayGeoJSON, pilotMode, isMuted, smoothedSpeedLimit, addToast, highwayReport?.speedLimit]);
+  }, [currentUserLocation, geoJSON, pilotMode, isMuted, smoothedSpeedLimit, addToast, highwayReport?.speedLimit]);
 
   // Dynamic Route Recalculation: Auto-shift travel plan if route becomes dangerous/blocked
   useEffect(() => {
     // If route is blocked and we haven't fetched alternatives yet
-    if (routeInfo?.status === 'blocked' && !isProcessing && routeAlternatives.length === 0) {
+    if (geoJSON?.status === 'blocked' && !isProcessing && routeAlternatives.length === 0) {
       handleShowAlternatives();
     }
 
     // Automatically shift to best alternative if found
-    if (routeInfo?.status === 'blocked' && routeAlternatives.length > 0 && fastestAlternative) {
+    if (geoJSON?.status === 'blocked' && routeAlternatives.length > 0 && fastestAlternative) {
       addToast("info", `Route Blocked: Automatically shifting to fastest alternative (${fastestAlternative.code})`);
       handleHighwaySelect(fastestAlternative.code);
     }
-  }, [routeInfo?.status, routeAlternatives, fastestAlternative, handleShowAlternatives, handleHighwaySelect, addToast, isProcessing]);
+  }, [geoJSON?.status, routeAlternatives, fastestAlternative, handleShowAlternatives, handleHighwaySelect, addToast, isProcessing]);
 
   // Smoothing Algorithm for Dynamic Speed Limit
   useEffect(() => {
@@ -1872,11 +2463,11 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // Rescuer Initialization Effect
   useEffect(() => {
-    if (rescueStatus === 'dispatched' && userLocation && nearbyRescuers.length === 0) {
+    if (rescueStatus === 'dispatched' && currentUserLocation && nearbyRescuers.length === 0) {
       const initialRescuers = [
-        { id: 'res1', lat: userLocation.lat + 0.015, lng: userLocation.lng + 0.015, type: 'ambulance' },
-        { id: 'res2', lat: userLocation.lat - 0.012, lng: userLocation.lng + 0.018, type: 'police' },
-        { id: 'res3', lat: userLocation.lat + 0.020, lng: userLocation.lng - 0.005, type: 'tow' },
+        { id: 'res1', lat: currentUserLocation.lat + 0.015, lng: currentUserLocation.lng + 0.015, type: 'ambulance' },
+        { id: 'res2', lat: currentUserLocation.lat - 0.012, lng: currentUserLocation.lng + 0.018, type: 'police' },
+        { id: 'res3', lat: currentUserLocation.lat + 0.020, lng: currentUserLocation.lng - 0.005, type: 'tow' },
       ];
       setNearbyRescuers(initialRescuers);
       if (reminderService.isLeader()) {
@@ -1885,7 +2476,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     } else if (rescueStatus === 'idle') {
       setNearbyRescuers([]);
     }
-  }, [rescueStatus, userLocation, nearbyRescuers.length]);
+  }, [rescueStatus, currentUserLocation, nearbyRescuers.length]);
 
 
   useEffect(() => {
@@ -1908,11 +2499,11 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   // Real-time Service Data Fetching
   useEffect(() => {
-    if (serviceType && userLocation) {
+    if (serviceType && currentUserLocation) {
       const loadServiceData = async () => {
         setIsProcessing(true);
         try {
-          const results = await fetchServiceData(serviceType, userLocation.lat, userLocation.lng);
+          const results = await fetchServiceData(serviceType, currentUserLocation.lat, currentUserLocation.lng);
           setServiceResults(results);
         } catch (err) {
           console.error("[App] Service fetch failed:", err);
@@ -1922,11 +2513,11 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       };
       loadServiceData();
     }
-  }, [serviceType, userLocation]);
+  }, [serviceType, currentUserLocation]);
 
   // 🚦 Fetch Traffic History for InfoBoard
   useEffect(() => {
-    if (serviceType === 'traffic' && userLocation) {
+    if (serviceType === 'traffic' && currentUserLocation) {
       const fetchTrafficData = async () => {
         // Mock historical traffic data for the last 24 hours
         const history = [];
@@ -1955,71 +2546,15 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       };
       fetchTrafficData();
     }
-  }, [serviceType, userLocation]);
+  }, [serviceType, currentUserLocation]);
 
   /* ---------------- MAP CENTER ---------------- */
 
   const mapCenter = useMemo(() => {
-    return userLocation ? [userLocation.lat, userLocation.lng] : [28.3949, 84.124];
-  }, [userLocation]);
-
-  const mapZoom = userLocation ? 13 : 8;
+    return currentUserLocation ? [currentUserLocation.lat, currentUserLocation.lng] : [28.3949, 84.124];
+  }, [currentUserLocation]);
 
   /* ---------------- HANDLERS ---------------- */
-
-  const handleHighwaySelect = useCallback(async (code: string) => {
-    setSelectedHighwayCode(code);
-    // Clear previous highway data to prevent UI flickering during fetch
-    setHighwayReport(null);
-    setHighwayGeoJSON(null);
-    setSelectedObject(null);
-
-    setIsProcessing(true);
-    try {
-      const reportRes = await apiFetch(`/v1/highways/${code}/report?lang=${language}`);
-      const geoRes = await apiFetch(`/v1/highways/${code}/geojson`);
-
-      if (reportRes.data) {
-        setHighwayReport(reportRes.data);
-        setSelectedObject(reportRes.data);
-        setActiveContext('road');
-        setBoardDisplayState(BoardDisplayState.SPLIT);
-      }
-      if (geoRes.data) {
-        setHighwayGeoJSON(geoRes.data);
-      }
-
-      if (reminderService.isLeader()) {
-        reminderService.broadcastContext({ highwayCode: code, viewMode: 'report' });
-      }
-
-      setShowHighwayBrowser(false);
-      addToast("success", `Focusing on ${code}: ${reportRes.data?.name || ''}`);
-    } catch (err) {
-      addToast("error", "Failed to load highway details");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [addToast]);
-
-  const descentBriefing = useMemo(() => {
-    if (!highwayReport) return null;
-    if (highwayReport.qualityGrade === 'F' || highwayReport.conditionStats.poor > 20) {
-      return "Sustained steep descents on poor pavement detected. High risk of brake fade. Engine braking mandatory.";
-    }
-    return null;
-  }, [highwayReport]);
-
-  const handleServiceSelect = useCallback((service: string, monsoonVisible: boolean) => {
-    if (service === "highways") {
-      setShowHighwayBrowser(true);
-      setSidebarOpen(false);
-      return;
-    }
-    setShowTraffic(service === "traffic");
-    // setMonsoonVisible(service === "monsoon"); // Handled by context now
-    if (service) setBoardDisplayState(BoardDisplayState.SPLIT); // Show board in split view
-  }, []); // eslint-disable-line no-console
 
   const handleTogglePilot = useCallback(() => {
     if (!pilotMode) {
@@ -2061,7 +2596,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     }
 
     // Trigger pre-trip checklist if trip is long
-    if (!pilotMode && routeInfo && routeInfo.distance > 100) { // pilotMode is still false here, meaning it's about to be enabled
+    if (!pilotMode && geoJSON && geoJSON.distance > 100) { // pilotMode is still false here, meaning it's about to be enabled
       setShowPreTripChecklist(true);
     } else {
       addToast("info", "Pilot mode toggled");
@@ -2122,17 +2657,13 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
 
   /* ---------------- ROUTE ---------------- */
 
-  const handleUnifiedSelection = useCallback((result: SearchResult) => {
-    if (!userLocation) return;
+  const handleUnifiedSelection = useCallback(async (result: ExtendedSearchResult) => {
+    if (!currentUserLocation) return;
 
     setSidebarOpen(false);
-    // Extract Administrative context (Province, Local Body) from result address/tags
-    const adminInfo = {
-      province: result.address?.state || result.address?.province || "Unknown Province",
-      localBody: result.address?.city || result.address?.municipality || result.address?.town || "Unknown Local Body"
-    };
+    const adminInfo = await resolveAdminInfo(result);
 
-    const enhancedResult = { ...result, ...adminInfo };
+    const enhancedResult = { ...result, ...adminInfo, geometry: adminInfo.geometry || result.geometry };
     setSelectedObject(enhancedResult);
     setRouteAlternatives([]);
     setAlternativeGeometries({});
@@ -2149,8 +2680,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     } else {
       setActiveContext('travel');
       const distance = haversineDistance(
-        userLocation.lat,
-        userLocation.lng,
+        currentUserLocation.lat,
+        currentUserLocation.lng,
         result.lat || 0,
         result.lng || 0
       );
@@ -2158,8 +2689,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
       // Check for real-time blockages on the route via incidents
       const routeIncidents = incidents.filter(i => (i.status || '').toLowerCase().includes('block'));
 
-      setRouteInfo({
-        from: { lat: userLocation.lat, lng: userLocation.lng, name: "You" },
+      setGeoJsonData({
+        from: { lat: currentUserLocation.lat, lng: currentUserLocation.lng, name: "You" },
         to: { lat: result.lat || 0, lng: result.lng || 0, name: result.name },
         distance,
         duration: (distance / 40) * trafficIntensity,
@@ -2170,7 +2701,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
         admin: adminInfo
       });
     }
-  }, [userLocation, incidents]);
+  }, [currentUserLocation, incidents]);
 
   /**
    * Unified handler for incident selection that triggers 
@@ -2184,77 +2715,41 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     setSidebarOpen(false); // Close sidebar to show map and board simultaneously
   }, []);
 
-  /**
-   * Fetches alternative routes when a destination is blocked or restricted
-   */
-  const handleShowAlternatives = useCallback(async () => {
-    if (!routeInfo || !routeInfo.to) return;
+  /** 📡 Generates a high-fidelity mission briefing image/link for sharing */
+  const handleShareMission = useCallback(() => {
+    const rating = safetyScore >= 90 ? 'ELITE' : safetyScore >= 70 ? 'STABLE' : 'DEGRADED';
+    const text = `🛡️ *MeroSadak Mission Digest*\n\nStatus: ${rating} (${Math.round(safetyScore)}%)\nSafe Distance: ${safeTripKm.toFixed(1)} KM\nTerrain: ${Math.abs(Math.round(terrainGrade))}% Grade\n\nJoin my fleet on MeroSadak!`;
 
-    setIsProcessing(true);
-    try {
-      const from = routeInfo.admin?.localBody || "Kathmandu";
-      const to = routeInfo.to.name;
-      const altRes = await apiFetch(`/v1/route/alternatives?from=${from}&to=${to}&lang=${language}`);
-      const alternatives = altRes.data || [];
-      if (alternatives.length > 0) {
-        setRouteAlternatives(alternatives);
-        addToast("info", `Analyzing ${alternatives.length} potential alternative routes...`);
-
-        // Fetch GeoJSON and Analytics for each alternative
-        const geoMap: Record<string, any> = {};
-        const comparisonPayload = [];
-
-        for (const alt of alternatives) {
-          const geoRes = await apiFetch(`/v1/highways/${alt.code}/geojson`);
-          if (geoRes.data) {
-            geoMap[alt.code] = geoRes.data;
-            const points = geoRes.data.features[0].geometry.coordinates.map((c: any) => ({ lat: c[1], lng: c[0] }));
-            comparisonPayload.push({ name: alt.code, points });
-          }
-        }
-
-        setAlternativeGeometries(geoMap);
-
-        // Run bulk analytics to get fuel/time for all alternatives
-        const comparisonRes = await apiFetch("/v1/route/bulk-analytics", {
-          method: "POST",
-          body: JSON.stringify({
-            routes: comparisonPayload,
-            vehicleType: userProfile?.preferences?.vehicleType || 'car',
-            landslideSeverity,
-            trafficIntensity
-          })
-        });
-
-        if (comparisonRes?.data?.routes) {
-          setComparisonData(comparisonRes.data.routes);
-        }
-      }
-    } catch (err) {
-      addToast("error", "Unable to fetch alternative routes at this time.");
-    } finally {
-      setIsProcessing(false);
+    if (navigator.share) {
+      navigator.share({
+        title: 'MeroSadak Mission Briefing',
+        text: text,
+        url: window.location.href
+      }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(text);
+      addToast("success", "Mission stats copied to clipboard!");
     }
-  }, [routeInfo, addToast]);
+  }, [safetyScore, safeTripKm, terrainGrade, addToast]);
 
   /**
    * Plans a route from the user's current location to a specific incident or POI
    */
   const handlePlanRoute = useCallback((incident: TravelIncident) => {
-    if (!userLocation) {
+    if (!currentUserLocation) {
       addToast("error", "User location not found. Please enable GPS.");
       return;
     }
 
     const distance = haversineDistance(
-      userLocation.lat,
-      userLocation.lng,
+      currentUserLocation.lat,
+      currentUserLocation.lng,
       incident.lat || 0,
       incident.lng || 0
     );
 
-    setRouteInfo({
-      from: { lat: userLocation.lat, lng: userLocation.lng, name: "You" },
+    setGeoJsonData({
+      from: { lat: currentUserLocation.lat, lng: currentUserLocation.lng, name: "You" },
       to: { lat: incident.lat || 0, lng: incident.lng || 0, name: incident.title || incident.name || "Incident" },
       distance,
       duration: distance / 40,
@@ -2268,7 +2763,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     setActiveContext('travel');
     setSidebarOpen(false);
     addToast("success", `Route planned to ${incident.title || incident.name}`);
-  }, [userLocation, addToast]);
+  }, [currentUserLocation, addToast]);
 
   // Drag handlers for the InfoBoard
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -2280,7 +2775,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
   const handleDragMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!isDraggingBoard) return;
 
-    if (dragAnimationFrameRef.current) {
+    if (dragAnimationFrameRef.current !== undefined) { // Check for undefined
       cancelAnimationFrame(dragAnimationFrameRef.current);
     }
 
@@ -2338,17 +2833,34 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
     }
   }, [currentBoardHeight, getSnapHeights]);
 
+  // 🔍 Quick Zoom Gesture Handlers
+  const handleZoomTouchStart = (e: React.TouchEvent) => {
+    setZoomTouchStart(e.touches[0].clientY);
+    setIsZooming(true);
+  };
+
+  const handleZoomTouchMove = (e: React.TouchEvent) => {
+    if (zoomTouchStart === null) return;
+    const currentY = e.touches[0].clientY;
+    const delta = zoomTouchStart - currentY;
+
+    if (Math.abs(delta) > 50) { // Every 50px of vertical travel
+      setMapZoomState(prev => Math.max(8, Math.min(18, prev + (delta > 0 ? 1 : -1))));
+      setZoomTouchStart(currentY);
+    }
+  };
+
   // Attach global mouse/touch event listeners for dragging
   useEffect(() => {
     if (isDraggingBoard) {
-      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mousemove', handleDragMove as EventListener);
       window.addEventListener('mouseup', handleDragEnd);
-      window.addEventListener('touchmove', handleDragMove, { passive: false });
+      window.addEventListener('touchmove', handleDragMove as EventListener, { passive: false });
       window.addEventListener('touchend', handleDragEnd);
     } else {
-      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mousemove', handleDragMove as EventListener);
       window.removeEventListener('mouseup', handleDragEnd);
-      window.removeEventListener('touchmove', handleDragMove);
+      window.removeEventListener('touchmove', handleDragMove as EventListener);
       window.removeEventListener('touchend', handleDragEnd);
     }
     if (dragAnimationFrameRef.current) cancelAnimationFrame(dragAnimationFrameRef.current);
@@ -2411,7 +2923,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
         </div>
       )}
       {!appReady && <LoadingScreen onComplete={() => setAppReady(true)} />}
-
+      <WeatherMonsoonProvider currentUserLocation={currentUserLocation}>
 
         <div className={`h-screen w-screen ${isDarkMode ? "dark" : ""}`}>
           <div className={`flex flex-col h-full ${isLocked ? 'overflow-hidden' : 'overflow-y-auto scroll-smooth'}`}>
@@ -2419,10 +2931,10 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             <div
               ref={mapContainerRef}
               className={`relative transition-all duration-700 ease-in-out map-3d-container ${isSearchActive ? 'opacity-40 grayscale-[0.5]' : 'opacity-100'
-                } ${(routeInfo || pilotMode) && !isStealthMode ? 'map-3d-active' : ''}`}
+                } ${(geoJSON || pilotMode || !!hoveredPathPoint) && !isStealthMode ? 'map-3d-active' : ''}`}
               style={{
                 height: mapHeight,
-                '--map-rotation': '0deg'
+                '--map-rotation': `${-hoveredBearing}deg`
               } as React.CSSProperties}
             >
               <ErrorBoundary fallback={
@@ -2435,7 +2947,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               }>
                 <MapContainer
                   center={mapCenter as any}
-                  zoom={mapZoom}
+                  zoom={mapZoomState}
                   minZoom={8}
                   maxBounds={[[26.3, 80.0], [30.5, 88.3]]}
                   maxBoundsViscosity={1.0}
@@ -2459,10 +2971,92 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                       }
                   `}
                   />
+                  {/* 🐾 Peer Breadcrumbs: Actual trail from last 30 minutes */}
+                  {Object.entries(peersLocation).map(([peerId, data]) => (
+                    <Polyline
+                      key={`breadcrumbs-${peerId}`}
+                      positions={(data.breadcrumbs || []).map(b => [b.lat, b.lng])}
+                      color="#6366f1"
+                      weight={2}
+                      opacity={0.3}
+                      dashArray="3, 7"
+                    />
+                  ))}
+
+                  {/* Render Shared Peer Routes */}
+                  {Object.entries(peersRoutes).map(([peerId, route]) => (
+                    <Polyline
+                      key={`route-${peerId}`}
+                      positions={route.points.map(p => [p.lat, p.lng])}
+                      color={route.color}
+                      weight={3}
+                      opacity={0.6}
+                      dashArray="5, 10"
+                    />
+                  ))}
+
+                  {/* Render Peer Locations from Offline Hook */}
+                  {Object.entries(peersLocation).map(([peerId, data]) => {
+                    const lastSeenSec = Math.floor((Date.now() - data.timestamp) / 1000);
+                    const lastSeenText = lastSeenSec < 60 ? 'Just now' : `${Math.floor(lastSeenSec / 60)}m ago`;
+
+                    return (
+                      <Marker
+                        key={peerId}
+                        position={[data.lat, data.lng]}
+                        icon={L.divIcon({
+                          className: 'peer-marker',
+                          html: `
+                            <div class="flex flex-col items-center">
+                              <div class="bg-indigo-600 text-white text-[8px] px-2 py-0.5 rounded-full mb-1 shadow-lg">
+                                ${data.name} • ${lastSeenText}
+                              </div>
+                              <div class="w-3 h-3 bg-indigo-500 rounded-full border-2 border-white shadow-lg ${lastSeenSec > 120 ? 'grayscale opacity-50' : ''}"></div>
+                            </div>
+                          `
+                        })}
+                      />
+                    );
+                  })}
+
+                  {/* 🚨 Emergency SOS Marker */}
+                  {activeSOS && (
+                    <Marker
+                      position={[activeSOS.lat, activeSOS.lng]}
+                      icon={L.divIcon({
+                        className: 'sos-marker',
+                        html: `
+                          <div class="flex flex-col items-center animate-bounce">
+                            <div class="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full mb-1 shadow-2xl ring-4 ring-red-500/50">SOS: ${activeSOS.name}</div>
+                            <div class="w-6 h-6 bg-red-600 rounded-full border-4 border-white shadow-2xl"></div>
+                          </div>
+                        `
+                      })}
+                    />
+                  )}
+
+                  {/* 🚨 Emergency SOS Marker */}
+                  {activeSOS && (
+                    <Marker
+                      position={[activeSOS.lat, activeSOS.lng]}
+                      icon={L.divIcon({
+                        className: 'sos-marker',
+                        html: `
+                          <div class="flex flex-col items-center animate-bounce">
+                            <div class="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full mb-1 shadow-2xl ring-4 ring-red-500/50">SOS: ${activeSOS.name}</div>
+                            <div class="w-6 h-6 bg-red-600 rounded-full border-4 border-white shadow-2xl"></div>
+                          </div>
+                        `
+                      })}
+                    />
+                  )}
+
+                  <FollowMeHandler position={currentUserLocation} isActive={isFollowMe} />
+                  <MapZoomHandler zoom={mapZoomState} />
                   <MapClickHandler
                     isActive={isMeasuring}
-                    userLocation={userLocation}
-                    isTilted={pilotMode || !!routeInfo}
+                    currentUserLocation={currentUserLocation}
+                    isTilted={pilotMode || !!geoJSON}
                     onMapClick={(latlng, zoom) => {
                       const { point, nodeDist } = findSnappedPoint(latlng, zoom);
                       setMeasurePoints(prev => [...prev, point]);
@@ -2471,7 +3065,10 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                       setTimeout(() => setLastSnappedPoint(null), 1000);
                     }}
                   />
-                  <MapFocusManager userLocation={userLocation} routeInfo={routeInfo} selectedIncident={selectedIncident} isTilted={(pilotMode || !!routeInfo) && !isStealthMode} />
+                  <MapFocusManager currentUserLocation={currentUserLocation} geoJSON={geoJSON} selectedIncident={selectedIncident} isTilted={(pilotMode || !!geoJSON) && !isStealthMode} />
+                  {hoveredPathPoint && (
+                    <SyncMarker point={hoveredPathPoint} elevation={hoveredElevation} grade={hoveredGrade} isShiftPressed={isShiftPressed} />
+                  )}
                   {lastSnappedPoint && (
                     <Marker
                       position={lastSnappedPoint}
@@ -2487,7 +3084,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                     />
                   )}
                   <SafetyBuffer
-                    userLocation={userLocation}
+                    currentUserLocation={currentUserLocation}
                     pilotMode={pilotMode}
                     isHazardNearby={isHazardNearby}
                     isCollisionRisk={isCollisionRisk}
@@ -2516,20 +3113,20 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                       animation: rain-move 0.6s linear infinite;
                     }
                   `}</style>
-                  {!isGhostMode && <MapControls userLocation={userLocation} className="mb-12" />}
+                  {!isGhostMode && <MapControls currentUserLocation={currentUserLocation} />}
                   {!isGhostMode && !isStealthMode && <BoundaryOverlay isDarkMode={isDarkMode} />}
-                  {!isGhostMode && showTraffic && <TrafficFlowOverlay userLocation={userLocation} isVisible />}
-                  {!isGhostMode && !isStealthMode && monsoonVisible && <MonsoonRiskOverlay incidents={incidents} isDarkMode={isDarkMode} />}
-                  {routeInfo && userLocation && (
-                    <RouteDisplay route={routeInfo} userLocation={userLocation} pathAnalytics={pathAnalytics} />
+                  {!isGhostMode && showTraffic && <TrafficFlowOverlay currentUserLocation={currentUserLocation} isVisible />}
+                  {!isGhostMode && !isStealthMode && monsoonVisible && <MonsoonRiskOverlay isDarkMode={isDarkMode} />}
+                  {geoJSON && currentUserLocation && (
+                    <RouteDisplay route={geoJSON} currentUserLocation={currentUserLocation} pathAnalytics={pathAnalytics} />
                   )}
-                  {!isStealthMode && selectedHighwayCode && highwayGeoJSON && (
+                  {!isStealthMode && selectedHighwayCode && geoJSON && (
                     <HighwayHighlightOverlay
                       highwayCode={selectedHighwayCode}
-                      geoData={highwayGeoJSON}
+                      geoData={geoJSON}
                       incidents={incidents}
                       viewMode={highwayViewMode}
-                      lang={language}
+                      lang={i18n.language}
                       hideIncidents={isGhostMode}
                     />
                   )}
@@ -2568,8 +3165,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                     />
                   ))}
                   {pilotMode && safetyScore < 40 && [
-                    { id: 'p1', lat: userLocation!.lat + 0.005, lng: userLocation!.lng + 0.005 },
-                    { id: 'p2', lat: userLocation!.lat - 0.004, lng: userLocation!.lng + 0.003 }
+                    { id: 'p1', lat: currentUserLocation!.lat + 0.005, lng: currentUserLocation!.lng + 0.005 },
+                    { id: 'p2', lat: currentUserLocation!.lat - 0.004, lng: currentUserLocation!.lng + 0.003 }
                   ].map(p => (
                     <Marker
                       key={p.id}
@@ -2595,17 +3192,51 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                   )}
 
                   {isGhostMode && <div className="absolute inset-0 bg-black/40 z-[900]" />}
+                  <FollowLeaderManager
+                    isActive={isFollowLeader}
+                    currentUserLocation={currentUserLocation}
+                    leaderLocation={syncedTelemetry?.lat && syncedTelemetry?.lng ? { lat: syncedTelemetry.lat, lng: syncedTelemetry.lng } : null}
+                  />
+                  <LeaderVisionManager
+                    trigger={leaderVisionTrigger}
+                    leaderLocation={syncedTelemetry?.lat && syncedTelemetry?.lng ? { lat: syncedTelemetry.lat, lng: syncedTelemetry.lng } : null}
+                  />
+                  {!isLeader && leaderPath.length > 1 && (
+                    <>
+                      {leaderPath.slice(1).map((point, idx) => {
+                        const prev = leaderPath[idx];
+                        const speed = point[2];
+                        const color = speed > 80 ? '#ef4444' : speed < 30 ? '#f59e0b' : '#6366f1';
+                        return (
+                          <Polyline key={`ghost-${idx}`} positions={[[prev[0], prev[1]], [point[0], point[1]]]} color={color} weight={3} opacity={0.5} dashArray="5, 8" />
+                        );
+                      })}
+                    </>
+                  )}
                 </MapContainer>
               </ErrorBoundary>
 
+              {/* 🛡️ Follower Tactical Convoy HUD Overlay */}
+              {!isLeader && syncedTelemetry && syncedTelemetry.lat && (
+                <FollowerTacticalHUD
+                  leaderTelemetry={syncedTelemetry}
+                  currentUserLocation={currentUserLocation}
+                  followerSpeedKmh={(currentUserLocation?.speed || 0) * 3.6}
+                  isFollowLeader={isFollowLeader}
+                  onToggleFollow={() => setIsFollowLeader(!isFollowLeader)}
+                  onLeaderVision={() => setLeaderVisionTrigger(prev => prev + 1)}
+                />
+              )}
+
               {/* Over-Speeding Warning Overlay */}
-              {pilotMode && userLocation && ((userLocation.speed || 0) * 3.6) > (highwayReport?.speedLimit || 80) && (
+              {pilotMode && currentUserLocation && ((currentUserLocation.speed || 0) * 3.6) > (highwayReport?.speedLimit || 80) && (
                 <div className="absolute inset-0 z-[1001] bg-error/10 pointer-events-none animate-pulse ring-inset ring-[20px] ring-error/20 transition-all duration-500" />
               )}
 
               {/* Pilot Mode Speed HUD - Floating Overlay on Map */}
-              {pilotMode && userLocation && (
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1002] flex items-end gap-3 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {pilotMode && currentUserLocation && (
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1002] flex items-end gap-6 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <GradeHUD grade={terrainGrade} roll={hoveredRoll} isNightVision={isNightVision} isStealthMode={isStealthMode} />
                   {/* Streak Multiplier Badge: Active after 30 mins (1,800,000 ms) of safe driving */}
                   {safeStreakAccumulator.current >= 1800000 && (
                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-600 text-white shadow-xl animate-pulse ring-4 ring-orange-500/20 transition-all scale-110">
@@ -2616,9 +3247,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                   )}
 
                   {/* Current Speed Indicator */}
-                  <div className={`flex flex-col items-center justify-center w-20 h-20 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-4 ${((userLocation?.speed || 0) * 3.6) > smoothedSpeedLimit ? 'border-error animate-pulse' : 'border-primary'} shadow-2xl transition-all`}>
+                  <div className={`flex flex-col items-center justify-center w-20 h-20 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-4 ${((currentUserLocation?.speed || 0) * 3.6) > smoothedSpeedLimit ? 'border-error animate-pulse' : 'border-primary'} shadow-2xl transition-all`}>
                     <span className="text-2xl font-black text-on-surface font-headline leading-none">
-                      {Math.round((userLocation?.speed || 0) * 3.6)}
+                      {Math.round((currentUserLocation?.speed || 0) * 3.6)}
                     </span>
                     <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-tighter">KM/H</span>
                   </div>
@@ -2639,20 +3270,19 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               <SearchOverlayIntent
                 isDarkMode={isDarkMode}
                 isHighContrast={isHighContrast}
-                lang={language}
-                userLocation={userLocation}
+                lang={i18n.language}
+                currentUserLocation={currentUserLocation}
                 onSelectDestination={handleUnifiedSelection}
                 onAskAI={handleAskAI}
                 onFocusChange={setIsSearchActive}
                 searchRadius={searchRadius}
                 onRadiusChange={setSearchRadius}
-                filterHighSafety={filterHighSafety}
                 onToggleSafetyFilter={() => setFilterHighSafety(!filterHighSafety)}
               />
             </div>
 
             {/* Route Info Banner */}
-            {routeInfo && (
+            {geoJSON && (
               <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1100] w-[90%] max-w-md animate-in slide-in-from-top-4">
                 <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-4 rounded-3xl border border-white/20 dark:border-slate-800 shadow-2xl">
                   <div className="flex items-start justify-between mb-3">
@@ -2661,9 +3291,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                         <MapPin size={18} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-on-surface truncate max-w-[200px]">{routeInfo.to.name}</h4>
+                        <h4 className="text-sm font-black text-on-surface truncate max-w-[200px]">{geoJSON.to.name}</h4>
                         <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">
-                          {routeInfo.distance.toFixed(1)} km · {routeInfo.duration.toFixed(1)} hours
+                          {geoJSON.distance.toFixed(1)} km · {geoJSON.duration.toFixed(1)} hours
                         </p>
                       </div>
                     </div>
@@ -2678,7 +3308,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                     )}
                     <button
                       onClick={() => {
-                        setRouteInfo(null);
+                        setGeoJsonData(null);
                         setRouteAlternatives([]);
                         setAlternativeGeometries({});
                       }}
@@ -2689,7 +3319,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                   </div>
                   <div className="flex gap-2">
                     <button className="flex-1 py-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">🚀 Start</button>
-                    {routeInfo.status === 'blocked' && (
+                    {geoJSON.status === 'blocked' && (
                       <button
                         onClick={handleShowAlternatives}
                         className="flex-1 py-2 rounded-xl bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
@@ -2703,7 +3333,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             )}
 
             {/* Route Comparison Summary Overlay */}
-            {fastestAlternative && routeInfo && (
+            {fastestAlternative && geoJSON && (
               <div className="absolute bottom-28 right-4 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-[2rem] border border-outline/10 shadow-xl animate-in slide-in-from-right-4 duration-300 max-w-[200px]">
                 <div className="flex items-center gap-2 mb-2 text-primary">
                   <Clock size={14} />
@@ -2756,18 +3386,17 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                 {pilotMode ? (
                   <DriverDashboard
                     onClose={handleInfoBoardClose}
-                    vehicleHealth={vehicleHealth}
                     safetyScore={Math.round(safetyScore)}
                     safetyHistory={safetyHistory} // Pass safetyHistory to DriverDashboard
-                    currentSpeed={(userLocation?.speed || 0) * 3.6}
-                    speed={(userLocation?.speed || 0) * 3.6}
-                    isSpeeding={(userLocation?.speed || 0) * 3.6 > (highwayReport?.speedLimit || 80)}
+                    currentSpeed={(currentUserLocation?.speed || 0) * 3.6}
+                    speed={(currentUserLocation?.speed || 0) * 3.6}
+                    isSpeeding={(currentUserLocation?.speed || 0) * 3.6 > (highwayReport?.speedLimit || 80)}
                     nextIntersection={nextIntersection}
-                    userLocation={userLocation}
+                    currentUserLocation={currentUserLocation}
                     isMuted={isMuted}
                     onToggleMute={() => {
                       const newVal = !isMuted;
-                      setIsMuted(newVal);
+                      setIsMuted(newVal); // isMuted is already typed
                       localStorage.setItem('merosadak_voice_muted', String(newVal));
                     }}
                     aiSubtitle={activeAISubtitle}
@@ -2777,9 +3406,12 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                     terrainGrade={terrainGrade}
                     safeTripKm={safeTripKm}
                     tripStartTime={tripStartTime}
-                    descentBriefing={descentBriefing}
+                    descentBriefing={null} // descentBriefing is already typed
                     onToggleCompactHUD={() => setIsCompactHUD(!isCompactHUD)}
                     isHighContrast={isHighContrast}
+                    isLeader={isLeader}
+                    convoyWarning={anyFollowerOutOfFormation}
+                    isCollisionRisk={isCollisionRisk}
                     pathAnalytics={pathAnalytics}
                   />
                 ) : (
@@ -2792,10 +3424,10 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                     trafficPrediction={trafficPredictionData}
                     trafficHistory={trafficHistory} // Pass traffic history
                     isProcessing={isProcessing}
-                    onCriticalTrigger={(msg) => setActiveCriticalReminder(msg)}
-                    descentBriefing={descentBriefing}
-                    pathAnalytics={pathAnalytics}
+                    onCriticalTrigger={(msg) => setActiveCriticalReminder(msg)} // msg is already typed
+                    descentBriefing={null}
                     isHighContrast={isHighContrast}
+                    onShareMission={handleShareMission}
                   />
                 )}
               </div>
@@ -2810,6 +3442,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             onTogglePilot={handleTogglePilot}
             onLogoClick={handleThemeCycle}
             noticeCount={incidents.length}
+            onOpenNotifications={() => setActiveTab('alerts')}
           />
 
           <SystemMenu
@@ -2826,7 +3459,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             onPurgeCache={handleSystemPurge}
             onCopyLocation={handleCopyLocation}
             onUpdateTankCapacity={(val) => {
-              updatePOIPreference('customTankCapacity' as any, val);
+              updatePOIPreference('customTankCapacity', val);
               // Refreshing profile would typically happen via the useUserProfile hook automatically
               addToast("success", val ? `Tank capacity set to ${val}L` : "Reset to default tank capacity");
             }}
@@ -2854,17 +3487,17 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             onInstallApp={triggerInstall}
             highwayViewMode={highwayViewMode}
             isLeader={isLeader}
-            tabId={reminderService.getTabId()}
-            onRemoteShutdown={(id) => reminderService.broadcastRemoteShutdown(id)}
-            onBroadcastGlobal={(msg) => reminderService.broadcastGlobalMessage(msg)}
+            tabId={reminderService.getTabId()} // tabId is already typed
+            onRemoteShutdown={(id) => reminderService.broadcastRemoteShutdown(id)} // id is already typed
+            onBroadcastGlobal={(msg) => reminderService.broadcastGlobalMessage(msg)} // msg is already typed
             rescueStatus={reminderService.getRescueStatus()}
             onRelinquishLeadership={() => reminderService.relinquishLeadership()}
             onResolveSOS={() => reminderService.resolveSOS()}
             onOpenBatterySaver={() => { setIsBatterySaverOpen(true); setSystemMenuOpen(false); }}
-            onBroadcastViewLock={(mode) => reminderService.broadcastViewLock(mode)}
-            onBroadcastGhostMode={(active) => reminderService.broadcastGhostMode(active)}
-            onBroadcastRemotePOV={(mode) => reminderService.broadcastRemotePOV(mode)}
-            onToggleStealthMode={(active) => {
+            onBroadcastViewLock={(mode) => reminderService.broadcastViewLock(mode)} // mode is already typed
+            onBroadcastGhostMode={(active) => reminderService.broadcastGhostMode(active)} // active is already typed
+            onBroadcastRemotePOV={(mode) => reminderService.broadcastRemotePOV(mode)} // mode is already typed
+            onToggleStealthMode={(active: boolean) => { // active is already typed
               setIsStealthMode(active);
               reminderService.broadcastStealthMode(active);
             }}
@@ -2872,17 +3505,22 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             batteryLevel={batteryLevel} // eslint-disable-line no-console
             isHighContrast={isHighContrast}
             onToggleHighContrast={toggleHighContrast}
-            onBroadcastNightVision={(active) => {
+            onBroadcastNightVision={(active: boolean) => { // active is already typed
               setIsNightVision(active); // eslint-disable-line no-console
               reminderService.broadcastNightVision(active);
               localStorage.setItem('merosadak_night_vision', String(active));
             }}
             isNightVision={isNightVision}
-            onRemoteSOSTrigger={() => reminderService.broadcastSOS(userLocation?.lat, userLocation?.lng)}
+            onRemoteSOSTrigger={() => reminderService.broadcastSOS(currentUserLocation?.lat, currentUserLocation?.lng)}
             hapticIntensity={hapticIntensity}
             onHapticIntensityChange={(val) => {
               setHapticIntensity(val);
               localStorage.setItem('merosadak_haptic_intensity', val);
+            }}
+            onOpenFleet={() => {
+              setActiveTab('fleet');
+              setSidebarOpen(true);
+              setSystemMenuOpen(false);
             }}
             isGhostMode={isGhostMode}
             viewLock={viewLock}
@@ -2894,7 +3532,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           <Sidebar
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
-            activeTab={activeTab}
+            activeTab={activeTab} // activeTab is already typed
             setActiveTab={setActiveTab}
             incidents={incidents}
             onSelectIncident={handleSelectIncident}
@@ -2907,6 +3545,8 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             isDarkMode={isDarkMode}
             onRefresh={handlePullRefresh}
             isRefreshing={isRefreshing}
+            nearbyGhostUsers={nearbyGhostUsers}
+            currentUserLocation={currentUserLocation}
             serviceType={serviceType}
             serviceResults={serviceResults}
             onSelectService={(service) => {
@@ -2914,7 +3554,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               handleServiceSelect(service || '', monsoonVisible);
             }}
             activePersona={activePersona}
-            onPersonaChange={setActivePersona}
+            onPersonaChange={setActivePersona} // activePersona is already typed
             voiceGender={voiceGender}
             onGenderChange={setVoiceGender}
             onToggleLayers={() => {
@@ -2927,9 +3567,9 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           />
 
           <FloatingMenu
-            onServiceSelect={handleServiceSelect}
-            onOpenCalculator={() => { setIsMeasuring(true); setSidebarOpen(false); }}
-            onOpenReport={() => { setShowIncidentReport(true); setSidebarOpen(false); }}
+            onServiceSelect={(s: string) => handleServiceSelect(s)} // s is already typed
+            onOpenCalculator={() => { }} // Hooked for future distance tools
+            onOpenReport={() => { }} // Hooked for future reporting tools
             onTogglePilot={handleTogglePilot}
             activeService={serviceType}
             incidents={incidents}
@@ -2959,7 +3599,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                   onPurgeCache={handleSystemPurge}
                   analyticsSummary={analyticsSummary}
                   analyticsLoading={!analyticsSummary}
-                  onRefreshIndex={handleRefreshSearchIndex}
                 />
               </div>
             </div>
@@ -2973,7 +3612,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               monsoonVisible={monsoonVisible}
               onToggleTraffic={() => setShowTraffic(!showTraffic)}
               trafficVisible={showTraffic}
-              onClearTiles={handleTilePurge}
               onOpenDistanceCalc={() => {
                 setIsMeasuring(true);
                 setShowLayersPanel(false);
@@ -2981,7 +3619,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             />
           )}
 
-          <TripPlanner
+          <DistanceCalculator
             isOpen={isMeasuring}
             points={measurePoints}
             elevationData={elevationProfile}
@@ -2999,7 +3637,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             onToggleGreenRoute={() => setIsGreenRoute(!isGreenRoute)}
             pathAnalytics={pathAnalytics}
             comparisonData={comparisonData}
-            userElevation={userLocation?.elevation}
+            userElevation={currentUserLocation?.elevation}
             batteryLevel={batteryLevel}
             isNightVision={isNightVision}
             isHighContrast={isHighContrast}
@@ -3028,9 +3666,17 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             }}
             isSnapping={isSnapping}
             onToggleSnap={() => setIsSnapping(!isSnapping)}
+            isSmoothing={isRouteSmoothing}
+            onToggleSmoothing={() => setIsRouteSmoothing(!isRouteSmoothing)}
             isEmergencyMode={isEmergencyMode}
             onToggleEmergency={() => setIsEmergencyMode(!isEmergencyMode)}
             onAvoidLandslides={handleAvoidLandslides}
+            onHoverPointChange={(point, elev, grade, bearing) => {
+              setHoveredPathPoint(point);
+              setHoveredElevation(elev); // elev is already typed
+              setHoveredGrade(grade);
+              if (bearing !== null) setHoveredBearing(bearing);
+            }}
           />
 
           {showPreferences && (
@@ -3049,16 +3695,15 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
           {pilotMode && (
             <DriverDashboard
               onClose={handleInfoBoardClose}
-              vehicleHealth={vehicleHealth} // eslint-disable-line no-console
               safetyScore={Math.round(safetyScore)}
               safetyHistory={safetyHistory} // Pass safetyHistory to DriverDashboard
               activeCriticalReminder={activeCriticalReminder}
               onClearCriticalReminder={() => setActiveCriticalReminder(null)}
-              currentSpeed={!isLeader && syncedTelemetry ? syncedTelemetry.speed : (userLocation?.speed || 0) * 3.6}
-              speed={!isLeader && syncedTelemetry ? syncedTelemetry.speed : (userLocation?.speed || 0) * 3.6}
-              isSpeeding={(userLocation?.speed || 0) * 3.6 > (highwayReport?.speedLimit || 80)}
+              currentSpeed={!isLeader && syncedTelemetry ? syncedTelemetry.speed : (currentUserLocation?.speed || 0) * 3.6}
+              speed={!isLeader && syncedTelemetry ? syncedTelemetry.speed : (currentUserLocation?.speed || 0) * 3.6}
+              isSpeeding={(currentUserLocation?.speed || 0) * 3.6 > (highwayReport?.speedLimit || 80)}
               nextIntersection={nextIntersection}
-              userLocation={userLocation}
+              currentUserLocation={currentUserLocation}
               isMuted={isMuted} // eslint-disable-line no-console
               onToggleMute={toggleMute}
               isNightVision={isNightVision} // eslint-disable-line no-console
@@ -3074,12 +3719,17 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               isGhostMode={isGhostMode}
               brakeHeat={brakeHeat}
               terrainGrade={terrainGrade}
-              elevation={userLocation?.elevation}
+              mechanicalStress={mechanicalStress}
+              gForce={gForce}
               aiSubtitle={activeAISubtitle}
               batteryLevel={batteryLevel}
               isCompactHUD={isCompactHUD}
+              isLeader={isLeader}
+              convoyWarning={anyFollowerOutOfFormation}
+              isCollisionRisk={isCollisionRisk}
               onToggleCompactHUD={() => setIsCompactHUD(!isCompactHUD)}
               pathAnalytics={pathAnalytics}
+              totalDistance={totalPlannedDistance}
               isHighContrast={isHighContrast}
             />
           )}
@@ -3097,7 +3747,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
               vehicleType={userProfile?.preferences?.vehicleType}
               highwayCode={selectedHighwayCode}
               events={tripEvents}
-              isHighContrast={isHighContrast}
             />
           )}
 
@@ -3112,36 +3761,6 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
             />
           )}
 
-          {showIncidentReport && (
-            <ReportIncidentOverlay
-              isOpen={showIncidentReport}
-              onClose={() => setShowIncidentReport(false)}
-              userLocation={userLocation}
-              selectedHighwayCode={selectedHighwayCode}
-              onSubmitSuccess={() => {
-                setShowIncidentReport(false);
-                addToast("success", "🚨 Incident reported successfully! Thank you for keeping Nepal's roads safe.");
-              }}
-            />
-          )}
-
-          {showReportSuccess && (
-            <SafeTripReport
-              isOpen={showReportSuccess}
-              onClose={() => setShowReportSuccess(false)}
-              finalScore={100}
-              scoreHistory={[]}
-              durationMins={0}
-              actualPath={[]}
-              isGreenRoute={false}
-              safeTripKm={0}
-              vehicleType={userProfile?.preferences?.vehicleType}
-              highwayCode={selectedHighwayCode}
-              events={[]}
-              isHighContrast={isHighContrast}
-            />
-          )}
-
           {showPreTripChecklist && (
             <PreTripChecklistModal
               isOpen={showPreTripChecklist}
@@ -3150,7 +3769,7 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                 setShowPreTripChecklist(false);
                 addToast("info", "Pilot mode activated. Safe travels!");
               }}
-              tripDistance={routeInfo?.distance || 0}
+              tripDistance={geoJSON?.distance || 0}
               // Sourced from User Preferences with global fallback
               checklistItems={userProfile?.preferences?.checklistItems || [
                 { id: 'fuel', label: 'Fuel level checked', icon: Fuel, required: true },
@@ -3159,24 +3778,14 @@ const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocati
                 { id: 'battery', label: 'Battery health good', icon: BatteryCharging, required: false },
                 { id: 'firstAid', label: 'First aid kit available', icon: HeartPulse, required: true },
                 { id: 'emergency', label: 'Emergency contacts updated', icon: AlertTriangle, required: true },
-              ] as any}
+              ]}
             />
           )}
           {isOffline && <OfflineBanner />}
 
         </div>
-
+      </WeatherMonsoonProvider>
     </>
-  );
-};
-
-const MainApp: React.FC = () => {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>(null);
-
-  return (
-    <WeatherMonsoonProvider userLocation={userLocation}>
-      <MainAppInner userLocation={userLocation} setUserLocation={setUserLocation} />
-    </WeatherMonsoonProvider>
   );
 };
 

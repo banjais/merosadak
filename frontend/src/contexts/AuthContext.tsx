@@ -5,6 +5,7 @@ import { useOtp } from "../hooks/useOtp";
 type UserRole = "user" | "admin" | "superadmin";
 
 type User = {
+  id?: string;
   email: string;
   role: UserRole;
 };

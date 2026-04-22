@@ -24,17 +24,19 @@ import {
   Layers,
   Settings as SettingsIcon,
   AlarmClock,
-  CalendarCheck
+  CalendarCheck,
+  Users
 } from 'lucide-react';
 import { TravelIncident, ChatMessage } from '../types';
 import { RoadStatusDashboard } from './RoadStatusDashboard';
 import { SourceBadge } from './SourceBadge';
+import { haversineDistance } from '../services/geoUtils';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  activeTab: 'alerts' | 'chat';
-  setActiveTab: (tab: 'alerts' | 'chat') => void;
+  activeTab: 'alerts' | 'chat' | 'summary' | 'services' | 'fleet';
+  setActiveTab: (tab: 'alerts' | 'chat' | 'summary' | 'services' | 'fleet') => void;
   incidents: TravelIncident[];
   onSelectIncident: (incident: TravelIncident) => void;
   chatMessages: ChatMessage[];
@@ -46,8 +48,10 @@ interface SidebarProps {
   serviceType?: string | null;
   serviceResults?: any[];
   onSelectService: (service: string | null) => void;
-  activePersona: string;
-  onPersonaChange: (persona: string) => void;
+  nearbyGhostUsers?: any[];
+  userLocation?: any;
+  activePersona: 'safety' | 'explorer' | 'pro';
+  onPersonaChange: (persona: 'safety' | 'explorer' | 'pro') => void;
   voiceGender: 'male' | 'female';
   onGenderChange: (gender: 'male' | 'female') => void;
   onToggleLayers?: () => void;
@@ -69,6 +73,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   serviceType,
   serviceResults,
   onSelectService,
+  nearbyGhostUsers = [],
+  userLocation,
   activePersona,
   onPersonaChange,
   voiceGender,
@@ -174,6 +180,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-2">
             <MessageSquare className="w-3.5 h-3.5" />
             <span>AI CHAT</span>
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('fleet')}
+          className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-xl text-[10px] font-bold font-label transition-all ${activeTab === 'fleet'
+            ? 'bg-gradient-to-br from-primary to-primary-dim text-white shadow-lg'
+            : isDarkMode
+              ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              : 'bg-surface-container-low text-on-surface-variant'
+            }`}
+        >
+          <div className="flex items-center gap-2">
+            <Users className="w-3.5 h-3.5" />
+            <span>FLEET</span>
           </div>
         </button>
         <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${isDarkMode
@@ -392,6 +412,62 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ))}
               </>
             )}
+          </div>
+        ) : activeTab === 'fleet' ? (
+          <div className="space-y-4 animate-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between mb-4 bg-indigo-500/5 p-3 rounded-2xl border border-indigo-500/10">
+              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                <Users size={14} /> Mission Fleet Status
+              </span>
+              <span className="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                {nearbyGhostUsers.length} Units Online
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {nearbyGhostUsers.map((u) => {
+                const dist = userLocation
+                  ? haversineDistance(userLocation.lat, userLocation.lng, u.lat, u.lng)
+                  : null;
+
+                return (
+                  <div key={u.id} className="p-4 rounded-3xl bg-surface-container-low border border-outline/5 hover:border-primary/20 transition-all group shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[11px] font-black text-on-surface uppercase tracking-tight">Unit: {u.id.slice(0, 8)}</span>
+                      </div>
+                      {dist !== null && (
+                        <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase">
+                          {dist.toFixed(2)} KM
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-outline/5">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-0.5">Safety Vector</span>
+                        <span className={`text-sm font-black font-headline ${u.safetyScore && u.safetyScore > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          {Math.round(u.safetyScore || 0)}%
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest mb-0.5">Mech. Stress</span>
+                        <span className={`text-sm font-black font-headline ${u.mechanicalStress && u.mechanicalStress > 60 ? 'text-error' : 'text-primary'}`}>
+                          {Math.round(u.mechanicalStress || 0)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {nearbyGhostUsers.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 opacity-30 text-center">
+                  <Users size={40} className="mb-4" />
+                  <p className="text-xs font-bold uppercase tracking-widest">Scanning for fleet...</p>
+                  <p className="text-[10px] uppercase mt-2">Ensure Ghost Mode is enabled to discover peers</p>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col h-full">

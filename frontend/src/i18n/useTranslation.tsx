@@ -21,6 +21,7 @@ interface TranslationContextType {
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
   toggleLanguage: () => void;
+  i18n: { language: Language };
 }
 
 const TranslationContext = createContext<TranslationContextType>({
@@ -28,6 +29,7 @@ const TranslationContext = createContext<TranslationContextType>({
   setLanguage: () => {},
   t: (key: string) => key,
   toggleLanguage: () => {},
+  i18n: { language: 'en' },
 });
 
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
@@ -57,7 +59,7 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
   }, [language]);
 
   return (
-    <TranslationContext.Provider value={{ language, setLanguage, t, toggleLanguage }}>
+    <TranslationContext.Provider value={{ language, setLanguage, t, toggleLanguage, i18n: { language } }}>
       {children}
     </TranslationContext.Provider>
   );

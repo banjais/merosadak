@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, X, Globe, MapPin, Navigation, ArrowRight, ChevronRight, Hash, ArrowDownWideNarrow, Ruler, Shield, Share2, Scale, CheckCircle2, Trophy, Download, History, Play, Pause, Target, Fuel, Activity, BarChart3, Utensils, Stethoscope } from 'lucide-react';
+import { Search, X, Globe, MapPin, Navigation, ArrowRight, ChevronRight, Hash, ArrowDownWideNarrow, Ruler, Shield, Share2, Scale, CheckCircle2, Trophy, Download, History, Play, Pause, Target, Fuel, Activity, BarChart3, Utensils, Stethoscope, AlertTriangle, FileText } from 'lucide-react';
 import { apiFetch } from '../api';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface HighwayBrowserProps {
   isOpen: boolean;

@@ -16,7 +16,13 @@ interface RouteIntelligenceProps {
   vehicleType?: string | null;
   customTankCapacity?: number | null;
   comparisonData?: any[];
-  pathAnalytics?: { duration: number; delay: number; landslides: number; hazards?: any[] } | null;
+  pathAnalytics?: {
+    duration: number;
+    delay: number;
+    landslides: number;
+    hazards?: any[];
+    provinceStats?: Array<{ name: string; avgQuality: number; distanceKm: number }>;
+  } | null;
   landslideSeverity: string;
   onSeverityChange: (val: string) => void;
   trafficIntensity: number;
@@ -602,6 +608,34 @@ export const RouteIntelligence: React.FC<RouteIntelligenceProps> = ({
               <span className="ml-1">{nearestHospitalDist.toFixed(2)} KM</span>
               <span className="ml-2 opacity-60">({hospitalTravelTime})</span>
             </span>
+          </div>
+        )}
+
+        {/* Province-level Summary */}
+        {pathAnalytics?.provinceStats && pathAnalytics.provinceStats.length > 0 && (
+          <div className="px-6 pb-2 space-y-2">
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block text-left">Regional Quality Summary</span>
+            <div className="space-y-2">
+              {pathAnalytics.provinceStats.map((stat, idx) => (
+                <div key={idx} className="p-3 rounded-2xl bg-surface-container-low border border-outline/5 flex items-center justify-between group hover:bg-surface-container-low/80 transition-colors">
+                  <div className="flex flex-col text-left">
+                    <span className="text-[11px] font-bold text-on-surface">{stat.name}</span>
+                    <span className="text-[9px] text-on-surface-variant/60">{stat.distanceKm.toFixed(1)} km traverse</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-[10px] font-black ${stat.avgQuality >= 70 ? 'text-emerald-500' : stat.avgQuality >= 40 ? 'text-amber-500' : 'text-error'}`}>
+                      Grade {stat.avgQuality >= 80 ? 'A' : stat.avgQuality >= 60 ? 'B' : 'C'}
+                    </span>
+                    <div className="w-12 h-1 bg-outline/10 rounded-full mt-1 overflow-hidden">
+                      <div
+                        className={`h-full ${stat.avgQuality >= 70 ? 'bg-emerald-500' : stat.avgQuality >= 40 ? 'bg-amber-500' : 'bg-error'}`}
+                        style={{ width: `${stat.avgQuality}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

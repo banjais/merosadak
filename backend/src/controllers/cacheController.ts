@@ -101,13 +101,14 @@ export const handleRefreshCache = asyncHandler(async (req: Request, res: Respons
  * Clear cache for a specific key or all cache if no key provided
  */
 export const handleClearCache = asyncHandler(async (req: Request, res: Response) => {
-  const { key } = req.params;
+  const key = req.params.key;
+  const cacheKey = Array.isArray(key) ? key[0] : key;
 
-  await CacheService.clearCache(key);
+  await CacheService.clearCache(cacheKey);
 
   res.json({
     success: true,
     timestamp: new Date().toISOString(),
-    message: key ? `Cache for ${key} cleared` : "All cache cleared",
+    message: cacheKey ? `Cache for ${cacheKey} cleared` : "All cache cleared",
   });
 });

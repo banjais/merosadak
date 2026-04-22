@@ -1,0 +1,99 @@
+src/controllers/cacheController.ts(106,33): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/etaController.ts(22,43): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type '{ lat: number; lng: number; }'.
+src/controllers/geminiController.ts(101,42): error TS2339: Property 'generateMultimodalContent' does not exist on type 'GeminiService'.
+src/controllers/geminiController.ts(131,42): error TS2339: Property 'generateMultimodalContent' does not exist on type 'GeminiService'.
+src/controllers/poiService.ts(62,57): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/controllers/poiService.ts(64,44): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/controllers/poiService.ts(74,53): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/controllers/poiService.ts(76,51): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/controllers/poiService.ts(87,19): error TS18047: 'redisClient' is possibly 'null'.
+src/controllers/poiService.ts(144,42): error TS18047: 'redisClient' is possibly 'null'.
+src/controllers/superadminController.ts(78,52): error TS2345: Argument of type '(req: AuthRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Type 'Promise<Response<any, Record<string, any>> | undefined>' is not assignable to type 'Promise<void>'.
+    Type 'Response<any, Record<string, any>> | undefined' is not assignable to type 'void'.
+      Type 'Response<any, Record<string, any>>' is not assignable to type 'void'.
+src/controllers/superadminController.ts(147,50): error TS2345: Argument of type '(req: AuthRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Type 'Promise<Response<any, Record<string, any>> | undefined>' is not assignable to type 'Promise<void>'.
+    Type 'Response<any, Record<string, any>> | undefined' is not assignable to type 'void'.
+      Type 'Response<any, Record<string, any>>' is not assignable to type 'void'.
+src/controllers/superadminController.ts(156,38): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/trafficController.ts(142,26): error TS2339: Property 'map' does not exist on type '{ totalSegments: number; congestedSegments: number; averageSpeed: number; averageDelay: number; }'.
+src/routes/incidentRouter.ts(56,28): error TS2345: Argument of type '"incidents"' is not assignable to parameter of type '"traffic" | "weather" | "roads" | "pois" | "waze"'.
+src/routes/tripRouter.ts(26,33): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/routes/tripRouter.ts(56,42): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/services/alertService.ts(143,17): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/alertService.ts(144,17): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/alertService.ts(145,17): error TS2322: Type 'Label | undefined' is not assignable to type 'string | undefined'.
+  Type 'Label' is not assignable to type 'string'.
+src/services/alertService.ts(223,15): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/authService.ts(4,27): error TS2307: Cannot find module '@/services/piiMasking' or its corresponding type declarations.
+src/services/etaService.ts(3,53): error TS2307: Cannot find module '@/services/geoUtils' or its corresponding type declarations.
+src/services/etaService.ts(32,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ car: number; bus: number; bike: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ car: number; bus: number; bike: number; }'.
+src/services/generateInvertedNepal.ts(48,32): error TS2345: Argument of type 'Feature<Geometry, GeoJsonProperties>' is not assignable to parameter of type 'Polygon | MultiPolygon | FeatureCollection<Polygon | MultiPolygon, GeoJsonProperties> | Feature<...>'.
+  Type 'Feature<Geometry, GeoJsonProperties>' is not assignable to type 'Feature<Polygon | MultiPolygon, GeoJsonProperties>'.
+    Type 'Geometry' is not assignable to type 'Polygon | MultiPolygon'.
+      Type 'Point' is not assignable to type 'Polygon | MultiPolygon'.
+        Type 'Point' is not assignable to type 'MultiPolygon'.
+          Types of property 'type' are incompatible.
+            Type '"Point"' is not assignable to type '"MultiPolygon"'.
+src/services/highwayService.ts(94,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | Label | null | undefined'.
+src/services/highwayService.ts(197,44): error TS7006: Parameter 'h' implicitly has an 'any' type.
+src/services/monsoonService.ts(93,63): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'number'.
+src/services/monsoonService.ts(95,13): error TS2322: Type '{}' is not assignable to type 'string'.
+src/services/monsoonService.ts(95,54): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | Label | null | undefined'.
+src/services/monsoonService.ts(96,36): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | Label | null | undefined'.
+src/services/monsoonService.ts(101,13): error TS2322: Type 'unknown' is not assignable to type 'number | undefined'.
+src/services/otpService.ts(4,27): error TS2307: Cannot find module '@/services/piiMasking' or its corresponding type declarations.
+src/services/roadService.ts(194,66): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/services/roadService.ts(211,40): error TS2339: Property 'weight' does not exist on type 'RoadSegment'.
+src/services/roadService.ts(222,11): error TS2353: Object literal may only specify known properties, and 'weight' does not exist in type 'RoadSegment'.
+src/services/roadService.ts(247,24): error TS2345: Argument of type '{ type: string; message: string; timestamp: string; count: number; }' is not assignable to parameter of type '{ type: string; message: string; level: "info" | "warn" | "error" | "system"; timestamp?: string | undefined; count?: number | undefined; }'.
+  Property 'level' is missing in type '{ type: string; message: string; timestamp: string; count: number; }' but required in type '{ type: string; message: string; level: "info" | "warn" | "error" | "system"; timestamp?: string | undefined; count?: number | undefined; }'.
+src/services/routePlanningService.ts(5,59): error TS2307: Cannot find module '@/services/geoUtils' or its corresponding type declarations.
+src/services/routePlanningService.ts(167,38): error TS2339: Property 'totalDistance' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(168,38): error TS2339: Property 'totalDuration' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(173,29): error TS2339: Property 'warnings' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(195,40): error TS2339: Property 'totalDistance' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(196,40): error TS2339: Property 'totalDuration' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(201,31): error TS2339: Property 'warnings' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(224,37): error TS2339: Property 'totalDistance' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(225,37): error TS2339: Property 'totalDuration' does not exist on type '{ distance: any; duration: number; }'.
+src/services/routePlanningService.ts(230,28): error TS2339: Property 'warnings' does not exist on type '{ distance: any; duration: number; }'.
+src/services/searchService.ts(111,20): error TS2345: Argument of type '{ id: string; type: "traffic"; lat: any; lng: any; subtitle: any; source: "tomtom" | "osm"; extra: any; }' is not assignable to parameter of type 'SearchResult'.
+  Property 'name' is missing in type '{ id: string; type: "traffic"; lat: any; lng: any; subtitle: any; source: "tomtom" | "osm"; extra: any; }' but required in type 'SearchResult'.
+src/services/searchService.ts(133,13): error TS2322: Type '"local-poi"' is not assignable to type '"weather" | "local" | "tomtom" | "osm"'.
+src/services/searchService.ts(169,13): error TS2322: Type '"local-body"' is not assignable to type '"weather" | "local" | "tomtom" | "osm"'.
+src/services/searchService.ts(196,13): error TS2322: Type '"highway"' is not assignable to type '"traffic" | "road" | "poi" | "location" | "weather"'.
+src/services/searchService.ts(199,13): error TS2322: Type '"highway"' is not assignable to type '"weather" | "local" | "tomtom" | "osm"'.
+src/services/searchService.ts(307,21): error TS2345: Argument of type '"local-body"' is not assignable to parameter of type '"weather" | "local" | "tomtom" | "osm"'.
+src/services/searchService.ts(308,21): error TS2345: Argument of type '"highway"' is not assignable to parameter of type '"weather" | "local" | "tomtom" | "osm"'.
+src/services/searchService.ts(328,15): error TS2367: This comparison appears to be unintentional because the types '"weather" | "local" | "tomtom" | "osm"' and '"local-body"' have no overlap.
+src/services/searchService.ts(348,34): error TS18047: 'fuseIndex' is possibly 'null'.
+src/services/searchService.ts(348,77): error TS2353: Object literal may only specify known properties, and 'threshold' does not exist in type 'FuseSearchOptions'.
+src/services/searchService.ts(357,62): error TS2353: Object literal may only specify known properties, and 'threshold' does not exist in type 'FuseSearchOptions'.
+src/services/searchService.ts(372,28): error TS2367: This comparison appears to be unintentional because the types '"weather" | "local" | "tomtom" | "osm"' and '"local-body"' have no overlap.
+src/services/searchService.ts(396,16): error TS2339: Property 'distance' does not exist on type 'SearchResult'.
+src/services/searchService.ts(402,40): error TS2339: Property 'distance' does not exist on type 'SearchResult'.
+src/services/searchService.ts(402,67): error TS2339: Property 'distance' does not exist on type 'SearchResult'.
+src/services/searchService.ts(407,27): error TS2339: Property 'safety_score' does not exist on type 'SearchResult'.
+src/services/searchService.ts(407,53): error TS2339: Property 'safety_score' does not exist on type 'SearchResult'.
+src/services/searchService.ts(542,26): error TS18047: 'redisClient' is possibly 'null'.
+src/services/searchService.ts(546,35): error TS18047: 'redisClient' is possibly 'null'.
+src/services/tripPlannerService.ts(118,51): error TS2554: Expected 0 arguments, but got 2.
+src/services/tripPlannerService.ts(133,7): error TS2322: Type '{ lat: number; lng: number; } | null | undefined' is not assignable to type '{ lat: number; lng: number; } | undefined'.
+  Type 'null' is not assignable to type '{ lat: number; lng: number; } | undefined'.
+src/services/userProfileService.ts(6,27): error TS2307: Cannot find module '@/services/piiMasking' or its corresponding type declarations.
+src/services/wazeService.ts(86,7): error TS2554: Expected 2-3 arguments, but got 4.
+src/utils/incidentLocation.ts(2,40): error TS2307: Cannot find module '@/services/geoUtils' or its corresponding type declarations.
