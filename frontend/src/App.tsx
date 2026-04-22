@@ -452,7 +452,11 @@ const MapClickHandler: React.FC<{
 
 /* ---------------- MAIN APP ---------------- */
 
-const MainApp: React.FC = () => {
+interface MainAppInnerProps {
+  userLocation: { lat: number; lng: number; speed?: number | null; heading?: number | null } | null;
+  setUserLocation: React.Dispatch<React.SetStateAction<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>>;
+}
+const MainAppInner: React.FC<MainAppInnerProps> = ({ userLocation, setUserLocation }) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const { incidents, refresh } = useNepalData();
@@ -605,7 +609,7 @@ const MainApp: React.FC = () => {
     return tree;
   }, [serviceResults]);
 
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>(null);
+
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [activeContext, setActiveContext] = useState<'travel' | 'road' | 'service' | 'alert' | null>(null);
@@ -781,6 +785,13 @@ const MainApp: React.FC = () => {
     };
   }, []);
 
+  const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
+    if (event.data?.type === 'SW_ACTIVATED') {
+      console.log('[SW] New version activated:', event.data.version);
+    }
+    // Add other message handlers as needed
+  }, []);
+
   // Update currentBoardHeight when boardDisplayState changes
   useEffect(() => {
     const snapHeights = getSnapHeights();
@@ -830,7 +841,7 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     initializeStorage();
     themeService.applyToDocument();
-    HotUpdateManager.init();
+    HotUpdateManager.init().catch((err) => console.error('[HotUpdate] Init failed:', err));
 
     // Set initial board height to split view
     setCurrentBoardHeight(getSnapHeights().split);
@@ -2400,7 +2411,7 @@ const MainApp: React.FC = () => {
         </div>
       )}
       {!appReady && <LoadingScreen onComplete={() => setAppReady(true)} />}
-      <WeatherMonsoonProvider userLocation={userLocation}>
+
 
         <div className={`h-screen w-screen ${isDarkMode ? "dark" : ""}`}>
           <div className={`flex flex-col h-full ${isLocked ? 'overflow-hidden' : 'overflow-y-auto scroll-smooth'}`}>
@@ -3154,8 +3165,18 @@ const MainApp: React.FC = () => {
           {isOffline && <OfflineBanner />}
 
         </div>
-      </WeatherMonsoonProvider>
+
     </>
+  );
+};
+
+const MainApp: React.FC = () => {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>(null);
+
+  return (
+    <WeatherMonsoonProvider userLocation={userLocation}>
+      <MainAppInner userLocation={userLocation} setUserLocation={setUserLocation} />
+    </WeatherMonsoonProvider>
   );
 };
 
