@@ -820,7 +820,7 @@ const MainApp: React.FC = () => {
   const { profile: userProfile } = useUserProfile();
   const { leaderboard } = useLeaderboard(10);
   const { summary: analyticsSummary } = useAnalytics("7d");
-  const { weatherData } = useWeatherMonsoon();
+  const { weatherData, setLocation } = useWeatherMonsoon();
   const { resolveAdminInfo } = useAdminResolution();
 
   const { isSuperadmin, broadcast, purge } = useSuperadmin();
@@ -840,6 +840,12 @@ const MainApp: React.FC = () => {
   const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, "") || "/api/v1";
 
   const [currentUserLocation, setCurrentUserLocation] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null; elevation?: number | null } | null>(null);
+
+  useEffect(() => {
+    if (currentUserLocation && setLocation) {
+      setLocation(currentUserLocation.lat, currentUserLocation.lng);
+    }
+  }, [currentUserLocation?.lat, currentUserLocation?.lng, setLocation]);
 
   // Use explicit WebSocket URL if provided, otherwise derive from current host
   const { lastMessage, sendMessage } = useWebSocket(wsUrl);
@@ -2923,9 +2929,8 @@ const MainApp: React.FC = () => {
         </div>
       )}
       {!appReady && <LoadingScreen onComplete={() => setAppReady(true)} />}
-      <WeatherMonsoonProvider currentUserLocation={currentUserLocation}>
 
-        <div className={`h-screen w-screen ${isDarkMode ? "dark" : ""}`}>
+      <div className={`h-screen w-screen ${isDarkMode ? "dark" : ""}`}>
           <div className={`flex flex-col h-full ${isLocked ? 'overflow-hidden' : 'overflow-y-auto scroll-smooth'}`}>
             {/* Map Section (Top) */}
             <div
@@ -3784,7 +3789,6 @@ const MainApp: React.FC = () => {
           {isOffline && <OfflineBanner />}
 
         </div>
-      </WeatherMonsoonProvider>
     </>
   );
 };
@@ -3797,7 +3801,9 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ToastProvider>
-        <MainApp />
+        <WeatherMonsoonProvider>
+          <MainApp />
+        </WeatherMonsoonProvider>
       </ToastProvider>
     </AuthProvider>
   );

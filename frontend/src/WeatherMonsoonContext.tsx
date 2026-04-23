@@ -11,14 +11,15 @@ interface WeatherMonsoonContextType {
     errorMonsoon: string | null;
     refreshWeather: () => void;
     refreshMonsoon: () => void;
+    setLocation: (lat: number, lng: number) => void;
 }
 
 const WeatherMonsoonContext = createContext<WeatherMonsoonContextType | undefined>(undefined);
 
-export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userLocation: { lat: number; lng: number } | null }> = ({
-    children,
-    userLocation,
+export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode }> = ({
+    children
 }) => {
+    const [contextLocation, setContextLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [weatherData, setWeatherData] = useState<any>(null);
     const [monsoonIncidents, setMonsoonIncidents] = useState<TravelIncident[]>([]);
     const [loadingWeather, setLoadingWeather] = useState(false);
@@ -26,12 +27,19 @@ export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userL
     const [errorWeather, setErrorWeather] = useState<string | null>(null);
     const [errorMonsoon, setErrorMonsoon] = useState<string | null>(null);
 
+    const setLocation = useCallback((lat: number, lng: number) => {
+        setContextLocation(prev => {
+            if (prev?.lat === lat && prev?.lng === lng) return prev;
+            return { lat, lng };
+        });
+    }, []);
+
     const fetchWeatherData = useCallback(async () => {
-        if (!userLocation) return;
+        if (!contextLocation) return;
         setLoadingWeather(true);
         setErrorWeather(null);
         try {
-            const res = await apiFetch<any>(`/v1/weather?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            const res = await apiFetch<any>(`/v1/weather?lat=${contextLocation.lat}&lng=${contextLocation.lng}`);
             if (res?.data) {
                 setWeatherData(res.data);
             }
@@ -41,14 +49,14 @@ export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userL
         } finally {
             setLoadingWeather(false);
         }
-    }, [userLocation]);
+    }, [contextLocation]);
 
     const fetchMonsoonData = useCallback(async () => {
-        if (!userLocation) return;
+        if (!contextLocation) return;
         setLoadingMonsoon(true);
         setErrorMonsoon(null);
         try {
-            const res = await apiFetch<any>(`/v1/monsoon?lat=${userLocation.lat}&lng=${userLocation.lng}`);
+            const res = await apiFetch<any>(`/v1/monsoon?lat=${contextLocation.lat}&lng=${contextLocation.lng}`);
             if (res?.data?.incidents) {
                 setMonsoonIncidents(res.data.incidents);
             }
@@ -58,7 +66,7 @@ export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userL
         } finally {
             setLoadingMonsoon(false);
         }
-    }, [userLocation]);
+    }, [contextLocation]);
 
     useEffect(() => {
         fetchWeatherData();
@@ -70,7 +78,7 @@ export const WeatherMonsoonProvider: React.FC<{ children: React.ReactNode; userL
         return () => clearInterval(interval);
     }, [fetchWeatherData, fetchMonsoonData]);
 
-    const contextValue = { weatherData, monsoonIncidents, loadingWeather, loadingMonsoon, errorWeather, errorMonsoon, refreshWeather: fetchWeatherData, refreshMonsoon: fetchMonsoonData };
+    const contextValue = { weatherData, monsoonIncidents, loadingWeather, loadingMonsoon, errorWeather, errorMonsoon, refreshWeather: fetchWeatherData, refreshMonsoon: fetchMonsoonData, setLocation };
 
     return <WeatherMonsoonContext.Provider value={contextValue}>{children}</WeatherMonsoonContext.Provider>;
 };
@@ -88,6 +96,7 @@ export const useWeatherMonsoon = () => {
             errorMonsoon: null,
             refreshWeather: () => {},
             refreshMonsoon: () => {},
+            setLocation: () => {},
         };
     }
     return context;
