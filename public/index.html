@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance Calculator - Mero Sadak</title>
+    <style>
+        /* Compact Widget Design */
+        body { font-family: sans-serif; margin: 0; padding: 10px; background: transparent; }
+        .widget-card { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .logo { color: #d32f2f; font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: #003893; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #res { margin-top: 15px; display: none; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+        .km { font-size: 1.5rem; color: #003893; font-weight: bold; }
+        .suggestions { position: absolute; background: white; border: 1px solid #ddd; width: calc(100% - 50px); z-index: 10; max-height: 150px; overflow-y: auto; display: none; }
+        .suggestions div { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="widget-card">
+    <span class="logo">MERO SADAK DISTANCE</span>
+    <input type="text" id="sInp" placeholder="From (Palika/District)" autocomplete="off">
+    <div id="sSug" class="suggestions"></div>
+    
+    <input type="text" id="eInp" placeholder="To (Palika/District)" autocomplete="off">
+    <div id="eSug" class="suggestions"></div>
+
+    <button onclick="calc()">Get Distance</button>
+
+    <div id="res">
+        <div class="km" id="km">0 KM</div>
+        <div style="font-size: 0.8rem; color: #666;" id="time"></div>
+        <a id="waze" href="#" target="_blank" style="font-size: 0.7rem; color: #007bff; text-decoration: none;">Navigate in Waze →</a>
+    </div>
+</div>
+
+<script>
+    let locations = [];
+    // Path to your existing data in the same repo
+    const DATA_PATH = "../../backend/data/"; 
+
+    async function loadData() {
+        const [d, p] = await Promise.all([
+            fetch(DATA_PATH + 'districts.json').then(r => r.json()),
+            fetch(DATA_PATH + 'palikas.json').then(r => r.json())
+        ]);
+        locations = [...d.map(i => i.name_en), ...p.map(i => i.name_en)];
+    }
+
+    function autocomplete(inp, sug) {
+        inp.oninput = () => {
+            const v = inp.value.toLowerCase();
+            sug.innerHTML = "";
+            if (v.length < 2) { sug.style.display="none"; return; }
+            const matches = locations.filter(l => l.toLowerCase().includes(v)).slice(0, 5);
+            sug.style.display = matches.length ? "block" : "none";
+            matches.forEach(m => {
+                const div = document.createElement("div");
+                div.innerText = m;
+                div.onclick = () => { inp.value = m; sug.style.display="none"; };
+                sug.appendChild(div);
+            });
+        };
+    }
+
+    async function calc() {
+        const s = document.getElementById('sInp').value;
+        const e = document.getElementById('eInp').value;
+        const btn = document.querySelector('button');
+        btn.innerText = "Loading...";
+
+        const getCoords = (q) => fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q},Nepal&limit=1`).then(r => r.json());
+        const [c1, c2] = await Promise.all([getCoords(s), getCoords(e)]);
+        
+        const route = await fetch(`https://router.project-osrm.org/route/v1/driving/${c1[0].lon},${c1[0].lat};${c2[0].lon},${c2[0].lat}?overview=false`).then(r => r.json());
+        
+        if(route.code === "Ok") {
+            const km = (route.routes[0].distance/1000).toFixed(1);
+            document.getElementById('res').style.display = "block";
+            document.getElementById('km').innerText = km + " KM";
+            document.getElementById('time').innerText = "Est: " + (km/35).toFixed(1) + " hrs";
+            document.getElementById('waze').href = `https://waze.com/ul?ll=${c2[0].lat},${c2[0].lon}&navigate=yes`;
+        }
+        btn.innerText = "Get Distance";
+    }
+
+    loadData();
+    autocomplete(document.getElementById('sInp'), document.getElementById('sSug'));
+    autocomplete(document.getElementById('eInp'), document.getElementById('eSug'));
+</script>
+</body>
+</html>
