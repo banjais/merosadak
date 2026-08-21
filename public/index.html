@@ -252,6 +252,14 @@
   }).addTo(map);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.5 }),
+      () => {},
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }
+
   // ---------- Init: load data ----------
   // Fetched after everything critical is ready (called from init(), not
   // awaited) so this 2MB, purely-decorative file never delays the map,
@@ -545,6 +553,11 @@
     const icon = L.divIcon({ html: which === 'from' ? '🟢' : '🔴', iconSize: [22, 22], className: '' });
     if (which === 'from') { if (pinFrom) map.removeLayer(pinFrom); pinFrom = L.marker([lat, lon], { icon }).addTo(map).bindPopup(label); }
     else { if (pinTo) map.removeLayer(pinTo); pinTo = L.marker([lat, lon], { icon }).addTo(map).bindPopup(label); }
+    if (picked.from && picked.to) {
+      map.flyToBounds(L.latLngBounds(L.latLng(picked.from.lat, picked.from.lon), L.latLng(picked.to.lat, picked.to.lon)), { padding: [80, 80], duration: 1.2 });
+    } else {
+      map.flyTo([lat, lon], 14, { duration: 1.2 });
+    }
   }
 
   // ---------- Route calculation (OSRM — free, no key) ----------
@@ -572,8 +585,10 @@
     const altNote = routes.length > 1 ? ` (best of ${routes.length} routes OSRM found)` : '';
 
     if (routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.geoJSON(chosen.geometry, { style: { color: '#10306B', weight: 6 } }).addTo(map);
-    map.fitBounds(routeLayer.getBounds(), { padding: [60, 60] });
+    const routeSurface = L.geoJSON(chosen.geometry, { style: { color: '#888888', weight: 14, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+    const routeCenter = L.geoJSON(chosen.geometry, { style: { color: '#10306B', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+    routeLayer = L.layerGroup([routeSurface, routeCenter]).addTo(map);
+    map.flyToBounds(routeLayer.getBounds(), { padding: [60, 60], duration: 1.5 });
 
     // Reflect the trip in the URL so it can be shared/bookmarked.
     const params = new URLSearchParams({ from: labelFrom, to: labelTo, pref: routePref, tab: 'trip' });
@@ -729,8 +744,10 @@
         <div class="row"><span class="label">Surface</span><span class="value">${p.surface || p.surf_type || 'Pitched / Bituminous'}</span></div>
       `;
       if (hwyLayer) map.removeLayer(hwyLayer);
-      hwyLayer = L.geoJSON(res, { style: { color: '#d32f2f', weight: 6, opacity: 0.9 } }).addTo(map);
-      map.fitBounds(hwyLayer.getBounds());
+      const hwySurface = L.geoJSON(res, { style: { color: '#888888', weight: 14, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+      const hwyCenter = L.geoJSON(res, { style: { color: '#d32f2f', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+      hwyLayer = L.layerGroup([hwySurface, hwyCenter]).addTo(map);
+      map.flyToBounds(hwyLayer.getBounds(), { padding: [60, 60], duration: 1.5 });
     } catch (e) {
       console.error(e);
       document.getElementById('reportContent').innerHTML = `<p style="color:#dc2626;">Couldn't load data for ${meta.code} — ${e.message}. Try another highway.</p>`;
