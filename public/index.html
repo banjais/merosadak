@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mero Sadak — Nepal Road Network</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary:#10306B; --accent:#B91C2B; --amber:#D98B1F;
+    --bg:#F2EFE9; --surface:#ffffff; --ink:#1B2430; --muted:#5B6472; --line:#E4DFD3;
+  }
+  * { box-sizing: border-box; }
+  body { font-family:'IBM Plex Sans',Tahoma,sans-serif; margin:0; display:flex; height:100vh; background:var(--bg); overflow:hidden; color:var(--ink); }
+  h1, h2, .title-lg, .badge { font-family:'Zilla Slab', serif; }
+  .big, .value, #status, code, .mono { font-family:'IBM Plex Mono', monospace; }
+
+  /* Motion: subtle by default, fully removed for anyone who's asked for it. */
+  .fade-in { animation: fadeSlideIn .28s ease both; }
+  @keyframes fadeSlideIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in { animation: none; }
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+
+  /* Visible keyboard focus everywhere — buttons, selects, inputs, links */
+  button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 4px;
+  }
+
+  .sidebar { width:420px; background:var(--surface); z-index:1000; display:flex; flex-direction:column; border-right:1px solid var(--line); box-shadow:10px 0 24px rgba(27,36,48,.08); }
+  .header { padding:22px 20px 16px; background:var(--primary); color:#fff; }
+  .header h1 { margin:0; font-size:1.6rem; font-weight:700; letter-spacing:-0.3px; }
+  #status { font-size:.7rem; opacity:.8; margin-top:4px; letter-spacing:.02em; }
+
+  .search-box { padding:16px; border-bottom:1px solid var(--line); }
+  .field { position:relative; margin-bottom:10px; }
+  .field input[type=text] { width:100%; padding:12px 74px 12px 38px; border:1px solid #d8d2c2; border-radius:10px; font-size:.95rem; outline:none; background:#fff; }
+  .field input[type=text]:focus { border-color:var(--primary); }
+  .field .pin { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:1rem; }
+  .field .mic { position:absolute; right:38px; top:50%; transform:translateY(-50%); background:none; border:none; width:28px; padding:4px; cursor:pointer; font-size:1.05rem; color:var(--muted); transition:color .15s; }
+  .field .mic.listening { color:var(--accent); }
+  .field .pick { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; width:28px; padding:4px; cursor:pointer; font-size:1.05rem; color:var(--muted); transition:color .15s; }
+  .field .pick.active { color:var(--primary); }
+  .suggestions { position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:10px; margin-top:4px; box-shadow:0 8px 24px rgba(27,36,48,.12); z-index:1500; max-height:220px; overflow-y:auto; display:none; }
+  .suggestions div { padding:10px 12px; cursor:pointer; font-size:.88rem; border-bottom:1px solid var(--bg); transition:background .1s; }
+  .suggestions div:hover { background:var(--bg); }
+  .swap-row { display:flex; justify-content:flex-end; margin:-4px 0 8px; }
+  .swap-btn { border:1px solid var(--line); background:var(--bg); border-radius:8px; padding:4px 10px; font-size:.75rem; cursor:pointer; color:var(--muted); transition:background .15s; }
+  .swap-btn:hover { background:#e9e3d4; }
+  .go-btn { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-weight:600; cursor:pointer; transition:background .15s, transform .1s; }
+  .go-btn:hover { background:#0c2450; }
+  .go-btn:active { transform:scale(.99); }
+  .go-btn:disabled { background:#a8a094; cursor:not-allowed; }
+
+  .mode-toggle { display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--line); }
+  .mode-toggle button { flex:1; padding:8px; font-size:.72rem; font-weight:600; border:1px solid var(--line); background:var(--bg); border-radius:8px; cursor:pointer; color:var(--muted); transition:background .15s, color .15s; }
+  .mode-toggle button.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+  .tabs { display:flex; background:#E4DFD3; }
+  .tab { flex:1; padding:13px; text-align:center; cursor:pointer; font-weight:600; font-size:.72rem; color:var(--muted); border-bottom:3px solid transparent; transition:color .15s, border-color .15s; }
+  .tab.active { background:#fff; color:var(--primary); border-bottom-color:var(--amber); }
+
+  .content { padding:16px; overflow-y:auto; flex-grow:1; }
+  .module { display:none; }
+  .module.active { display:block; }
+
+  .admin-box { background:var(--bg); border:1px solid var(--line); padding:14px; border-radius:12px; margin-bottom:12px; }
+  .admin-box h4 { margin:0 0 8px; font-size:.68rem; color:var(--primary); text-transform:uppercase; letter-spacing:1px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; }
+  select { width:100%; padding:11px; margin-bottom:8px; border:1px solid #d8d2c2; border-radius:8px; font-size:.9rem; background:#fff; }
+
+  .card { background:#fff; border-radius:14px; padding:20px; margin-top:14px; border:1px solid var(--line); box-shadow:0 4px 15px rgba(27,36,48,.06); }
+  .badge { background:#f3d9db; color:var(--accent); padding:4px 12px; border-radius:6px; font-size:.75rem; font-weight:600; display:inline-block; letter-spacing:.02em; }
+  .title-lg { font-size:1.35rem; font-weight:700; color:var(--ink); margin:10px 0 16px; line-height:1.25; }
+  .row { margin-bottom:10px; padding-bottom:9px; border-bottom:1px solid var(--bg); display:flex; flex-direction:column; }
+  .row:last-child { border:none; }
+  .label { font-size:.62rem; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:2px; letter-spacing:.04em; }
+  .value { font-size:.92rem; color:var(--ink); font-weight:500; }
+  .big { font-size:1.9rem; color:var(--primary); font-weight:600; }
+  .weather-strip { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#e9eef7; border-radius:10px; margin-top:10px; font-size:.82rem; color:var(--primary); }
+
+  /* Signature element: a kilometer-marker "milestone strip" — echoes the
+     physical white distance-stones along Nepali highways. Ticks every
+     10%, marker slides in to the trip's final distance. */
+  .milestone-strip { position:relative; height:34px; margin:12px 0 4px; }
+  .milestone-strip .track { position:absolute; top:15px; left:0; right:0; height:3px; background:var(--line); border-radius:2px; }
+  .milestone-strip .tick { position:absolute; top:11px; width:1px; height:11px; background:var(--line); }
+  .milestone-strip .fill { position:absolute; top:15px; left:0; height:3px; background:var(--amber); border-radius:2px; width:0%; transition:width .9s cubic-bezier(.22,1,.36,1); }
+  .milestone-strip .marker { position:absolute; top:0; left:0%; transform:translateX(-50%); width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; font-size:.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; transition:left .9s cubic-bezier(.22,1,.36,1); box-shadow:0 2px 6px rgba(16,48,107,.35); }
+
+  #map { flex-grow:1; z-index:1; }
+  .map-hint { position:absolute; top:14px; left:50%; transform:translateX(-50%); background:rgba(27,36,48,.88); color:#fff; padding:8px 16px; border-radius:20px; font-size:.8rem; z-index:900; display:none; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="header">
+    <h1>MERO SADAK</h1>
+    <div id="status">📡 Loading map data…</div>
+  </div>
+
+  <div class="mode-toggle">
+    <button id="modeSearch" class="active" onclick="setPlannerMode('search')">Search by place</button>
+    <button id="modeArea" onclick="setPlannerMode('area')">Browse by area</button>
+  </div>
+  <div class="mode-toggle" style="border-bottom:1px solid var(--line);">
+    <button id="alertsToggle" onclick="toggleAlerts()">🚧 Show Road Incidents</button>
+  </div>
+  <div class="mode-toggle" style="border-bottom:1px solid var(--line);">
+    <select id="poiType" style="flex:1;margin:0;padding:8px;">
+      <option value="fuel">⛽ Fuel</option>
+      <option value="hospital">🏥 Hospital</option>
+      <option value="hotel">🏨 Hotel</option>
+      <option value="atm">🏧 ATM</option>
+      <option value="restaurant">🍽️ Restaurant</option>
+      <option value="police">🚓 Police</option>
+    </select>
+    <button onclick="findNearby()" style="flex:1;">📍 Find Nearby</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('trip')">TRIP PLANNER</div>
+    <div class="tab" onclick="switchTab('matrix')">DISTANCE MATRIX</div>
+    <div class="tab" onclick="switchTab('highway')">HIGHWAY INFO</div>
+  </div>
+
+  <div class="content">
+    <!-- Trip planner: search mode -->
+    <div id="trip-module" class="module active">
+
+      <div id="searchMode">
+        <div class="search-box" style="padding:0; border:none;">
+          <div class="field">
+            <span class="pin">🟢</span>
+            <input type="text" id="fromInput" placeholder="From — type a place, or use mic / map" autocomplete="off">
+            <button class="mic" id="fromMic" title="Voice search" onclick="startVoice('fromInput')">🎤</button>
+            <button class="pick" id="fromPick" title="Pick on map" onclick="armPicker('from')">📍</button>
+            <div class="suggestions" id="fromSuggest"></div>
+          </div>
+          <div class="swap-row"><button class="swap-btn" onclick="swapFields()">⇅ swap</button></div>
+          <div class="field">
+            <span class="pin">🔴</span>
+            <input type="text" id="toInput" placeholder="To — type a place, or use mic / map" autocomplete="off">
+            <button class="mic" id="toMic" title="Voice search" onclick="startVoice('toInput')">🎤</button>
+            <button class="pick" id="toPick" title="Pick on map" onclick="armPicker('to')">📍</button>
+            <div class="suggestions" id="toSuggest"></div>
+          </div>
+          <div class="mode-toggle" style="padding:0 0 10px;border:none;">
+            <button id="prefFastest" class="active" onclick="setRoutePref('fastest')">⏱️ Fastest</button>
+            <button id="prefShortest" onclick="setRoutePref('shortest')">📏 Shortest</button>
+          </div>
+          <button class="go-btn" id="goBtn" onclick="calculateTrip()">Get Route & Distance</button>
+        </div>
+        <div class="map-hint" id="mapHint">Click on the map to set this point</div>
+      </div>
+
+      <!-- Trip planner: structured browse mode -->
+      <div id="areaMode" style="display:none;">
+        <div class="admin-box">
+          <h4>Starting Point <button class="mic" style="position:static;transform:none;display:inline;" title="Voice select" onclick="voiceSelectArea('f')">🎤</button></h4>
+          <select id="fProv" onchange="syncDistrict('fProv','fDist')"><option value="">Province</option></select>
+          <select id="fDist" onchange="syncPalika('fDist','fPali')"><option value="">District</option></select>
+          <select id="fPali"><option value="">Select Local Unit (Palika)</option></select>
+        </div>
+        <div class="admin-box">
+          <h4>Destination <button class="mic" style="position:static;transform:none;display:inline;" title="Voice select" onclick="voiceSelectArea('t')">🎤</button></h4>
+          <select id="tProv" onchange="syncDistrict('tProv','tDist')"><option value="">Province</option></select>
+          <select id="tDist" onchange="syncPalika('tDist','tPali')"><option value="">District</option></select>
+          <select id="tPali"><option value="">Select Local Unit (Palika)</option></select>
+        </div>
+        <button class="go-btn" onclick="calculateTripFromArea()">Get Route & Distance</button>
+      </div>
+
+      <div id="tripResult" class="card" style="display:none;"></div>
+      <div id="assistantPanel" class="card" style="display:none;">
+        <span class="badge" style="background:#e0e7ff;color:#3730a3;">TRIP ASSISTANT</span>
+        <p id="assistantAnswer" style="font-size:.88rem;color:#334155;margin:10px 0;"></p>
+      </div>
+    </div>
+
+    <!-- Distance Matrix: pick 2-6 places, get a real multi-point matrix -->
+    <div id="matrix-module" class="module">
+      <div class="field">
+        <span class="pin">➕</span>
+        <input type="text" id="matrixInput" placeholder="Add a place (min 2, max 6)" autocomplete="off">
+        <div class="suggestions" id="matrixSuggest"></div>
+      </div>
+      <div id="matrixChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;"></div>
+      <button class="go-btn" onclick="buildMatrix()">Build Distance Matrix</button>
+      <div id="matrixResult" class="card" style="display:none;overflow-x:auto;"></div>
+    </div>
+
+    <!-- Highway info -->
+    <div id="highway-module" class="module">
+      <input type="text" id="hwyFilter" placeholder="Filter by name, code, or route (e.g. NH01, Mahendra)" style="width:100%;padding:11px;margin-bottom:8px;border:1px solid #cbd5e0;border-radius:8px;font-size:.9rem;" oninput="filterHighways()">
+      <select id="hwySelect" onchange="loadHighwayData()" size="6" style="height:auto;">
+        <option value="">-- Choose National Highway --</option>
+      </select>
+      <div id="hwyResult" class="card" style="display:none;">
+        <div id="reportContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Paste your exact Worker URL here — find it at the top of the Worker's
+  // page in the Cloudflare dashboard (looks like
+  // https://merosadak.<your-subdomain>.workers.dev).
+  // Nepal's 7 provinces and their constituent districts (2017 federal
+  // restructuring) — this is fixed national geography, not something that
+  // needs to come from palika.geojson (which has no province field at all).
+  const PROVINCE_MAP = {
+    'Koshi': ['Bhojpur','Dhankuta','Ilam','Jhapa','Khotang','Morang','Okhaldhunga','Panchthar','Sankhuwasabha','Solukhumbu','Sunsari','Taplejung','Terhathum','Udayapur'],
+    'Madhesh': ['Bara','Dhanusha','Mahottari','Parsa','Rautahat','Saptari','Sarlahi','Siraha'],
+    'Bagmati': ['Bhaktapur','Chitawan','Dhading','Dolakha','Kathmandu','Kabhrepalanchok','Lalitpur','Makawanpur','Nuwakot','Ramechhap','Rasuwa','Sindhuli','Sindhupalchok'],
+    'Gandaki': ['Baglung','Gorkha','Kaski','Lamjung','Manang','Mustang','Myagdi','Nawalparasi_E','Parbat','Syangja','Tanahu'],
+    'Lumbini': ['Arghakhanchi','Banke','Bardiya','Dang','Nawalparasi_W','Gulmi','Kapilbastu','Palpa','Pyuthan','Rolpa','Rukum_E','Rupandehi'],
+    'Karnali': ['Dailekh','Dolpa','Humla','Jajarkot','Jumla','Kalikot','Mugu','Rukum_W','Salyan','Surkhet'],
+    'Sudurpashchim': ['Achham','Baitadi','Bajhang','Bajura','Dadeldhura','Darchula','Kailali','Kanchanpur','Doti'],
+  };
+  function provinceOf(district) {
+    for (const [prov, list] of Object.entries(PROVINCE_MAP)) {
+      if (list.some(d => d.toLowerCase() === district.toLowerCase())) return prov;
+    }
+    return 'Other';
+  }
+
+  const WORKER_URL = 'https://merosadak.banjais.workers.dev';
+
+  let map, routeLayer, hwyLayer, pinFrom, pinTo, boundaryLayer, alertsLayer, poisLayer;
+  let routePref = 'fastest';       // 'fastest' | 'shortest' — picked from OSRM's real alternative routes
+  let matrixPlaces = [];            // places added to the Distance Matrix tab
+  let hIndex = [];
+  let districtHierarchy = {};              // district -> Set(palika names)
+  let localIndex = [];                      // district/palika/highway names, for search suggestions
+  let allHighways = [];                     // full highway index, for the filter box
+  let picked = { from: null, to: null };    // {lat, lon, label}
+  let pickerArmed = null;                   // 'from' | 'to' | null
+  let plannerMode = 'search';
+
+  map = L.map('map', { zoomControl: false, minZoom: 6 }).setView([28.3949, 84.1240], 7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+  }).addTo(map);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // ---------- Init: load data ----------
+  // Fetched after everything critical is ready (called from init(), not
+  // awaited) so this 2MB, purely-decorative file never delays the map,
+  // search, or routing. Drawn with L.geoJSON, which handles GeoJSON's
+  // [lng,lat] coordinate order correctly on its own.
+  // NOTE: nepal_boundary.geojson currently ships only a handful of sample
+  // district polygons, not a full dissolved national outline, so this
+  // will look sparse until that source file is regenerated properly.
+  async function loadBoundaryOutline() {
+    try {
+      const bRes = await fetch(`data/nepal_boundary.geojson?v=${Date.now()}`).then(r => r.json());
+      boundaryLayer = L.geoJSON(bRes, {
+        style: { color: '#003893', weight: 1.5, fillOpacity: 0, interactive: false }
+      }).addTo(map);
+    } catch (e) { console.error('Boundary outline failed to load (non-critical):', e); }
+  }
+
+  async function init() {
+    try {
+      const v = Date.now();
+      const [pRes, hRes] = await Promise.all([
+        fetch(`data/palika-names.json?v=${v}`).then(r => r.json()),
+        fetch(`data/highway/index.json?v=${v}`).then(r => r.json())
+      ]);
+
+      hIndex = hRes;
+
+      // Country outline is decorative only (a sparse 7-district sample,
+      // see the note below) — fetched after everything the user actually
+      // needs is ready, so its 2MB never competes with map tiles, search,
+      // or routing on a slow connection. Fire-and-forget, non-blocking.
+      loadBoundaryOutline();
+
+      // Admin hierarchy for "Browse by area" mode — reads the lightweight
+      // data/palika-names.json (District + Palika name pairs only), not
+      // the 4.6MB palika.geojson — the geometry in that file was never
+      // actually used anywhere in this app, only these two text fields.
+      // District names are normalized to a single casing per name — the
+      // source data has a few duplicated as both "Bardiya" and "BARDIYA",
+      // which would otherwise show as two separate dropdown entries.
+      const districtCanonical = {};
+      pRes.forEach(p => {
+        const raw = p.District || 'Other';
+        const key = raw.toLowerCase();
+        if (!districtCanonical[key]) districtCanonical[key] = raw; // first-seen casing wins
+        const dist = districtCanonical[key];
+        const name = p.Palika || null;
+        if (!districtHierarchy[dist]) districtHierarchy[dist] = new Set();
+        if (name) districtHierarchy[dist].add(name);
+      });
+      const dists = Object.keys(districtHierarchy).sort();
+      const provinces = Object.keys(PROVINCE_MAP).sort();
+      ['fProv', 'tProv'].forEach(id => provinces.forEach(pv => document.getElementById(id).add(new Option(pv, pv))));
+
+      // Local search index (module 1) — merged with live Photon results so
+      // typing a district, palika, or highway name/code works even though
+      // those aren't places Photon/OSM necessarily knows well.
+      dists.forEach(d => localIndex.push({ label: d, kind: 'District', district: d }));
+      dists.forEach(d => Array.from(districtHierarchy[d]).forEach(p => localIndex.push({ label: p, kind: `Palika, ${d}`, district: d, palika: p })));
+
+      hRes.forEach(h => document.getElementById('hwySelect').add(new Option(`${h.code}: ${h.name}`, h.code)));
+      hRes.forEach(h => localIndex.push({ label: `${h.name} (${h.code})`, kind: 'Highway', highway: h.code }));
+      allHighways = hRes;
+
+      document.getElementById('status').innerText = '✅ Map data loaded';
+      restoreFromUrl();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('status').innerText = '⚠️ Failed to load map data';
+    }
+  }
+
+  // Reads a shareable link like ?from=Butwal&to=Dhangadhi&pref=shortest&tab=trip
+  // and restores that trip. Uses real place names (geocoded via Nominatim),
+  // not made-up short codes, so a shared link always resolves to something
+  // real rather than a guess.
+  async function restoreFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'matrix') switchTab('matrix');
+    else if (tab === 'highway') switchTab('highway');
+
+    const pref = params.get('pref');
+    if (pref === 'shortest' || pref === 'fastest') setRoutePref(pref);
+
+    const from = params.get('from'), to = params.get('to');
+    if (!from || !to) return;
+    try {
+      const geocode = (q) => fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=1`).then(r => r.json());
+      const [f, t] = await Promise.all([geocode(from), geocode(to)]);
+      if (f[0] && t[0]) {
+        document.getElementById('fromInput').value = from;
+        document.getElementById('toInput').value = to;
+        const p1 = { lat: +f[0].lat, lon: +f[0].lon, label: from };
+        const p2 = { lat: +t[0].lat, lon: +t[0].lon, label: to };
+        picked.from = p1; picked.to = p2;
+        dropPin('from', p1.lat, p1.lon, from);
+        dropPin('to', p2.lat, p2.lon, to);
+        routeBetween(p1, p2, from, to);
+      }
+    } catch (e) { console.error('Could not restore trip from URL', e); }
+  }
+
+  function syncDistrict(provId, distId) {
+    const prov = document.getElementById(provId).value;
+    const dEl = document.getElementById(distId);
+    dEl.innerHTML = '<option value="">District</option>';
+    const wanted = (PROVINCE_MAP[prov] || []).map(d => d.toLowerCase());
+    Object.keys(districtHierarchy).filter(d => wanted.includes(d.toLowerCase())).sort()
+      .forEach(d => dEl.add(new Option(d, d)));
+  }
+
+  function syncPalika(dId, paliId) {
+    const dist = document.getElementById(dId).value;
+    const pEl = document.getElementById(paliId);
+    pEl.innerHTML = '<option value="">Select Local Unit (Palika)</option>';
+    if (districtHierarchy[dist]) {
+      Array.from(districtHierarchy[dist]).sort().forEach(p => pEl.add(new Option(p, p)));
+    }
+  }
+
+  // Voice-select for the structured Province/District/Palika mode — matches
+  // the spoken word against known district/palika names and picks the
+  // closest match, auto-filling province and district too.
+  function voiceSelectArea(prefix) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Voice search is not supported in this browser.'); return; }
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.onresult = (e) => {
+      const said = e.results[0][0].transcript.toLowerCase().trim();
+      let match = localIndex.find(x => (x.district || x.palika || '').toLowerCase() === said)
+        || localIndex.find(x => (x.palika || x.district || '').toLowerCase().includes(said));
+      if (!match) { alert(`Didn't recognize "${said}" as a district or palika.`); return; }
+      const dist = match.district;
+      const prov = provinceOf(dist);
+      document.getElementById(prefix + 'Prov').value = prov;
+      syncDistrict(prefix + 'Prov', prefix + 'Dist');
+      document.getElementById(prefix + 'Dist').value = dist;
+      syncPalika(prefix + 'Dist', prefix + 'Pali');
+      if (match.palika) document.getElementById(prefix + 'Pali').value = match.palika;
+    };
+    rec.start();
+  }
+
+  // ---------- Mode toggles ----------
+  function setPlannerMode(mode) {
+    plannerMode = mode;
+    document.getElementById('modeSearch').classList.toggle('active', mode === 'search');
+    document.getElementById('modeArea').classList.toggle('active', mode === 'area');
+    document.getElementById('searchMode').style.display = mode === 'search' ? 'block' : 'none';
+    document.getElementById('areaMode').style.display = mode === 'area' ? 'block' : 'none';
+    const shown = document.getElementById(mode === 'search' ? 'searchMode' : 'areaMode');
+    shown.classList.remove('fade-in'); void shown.offsetWidth; shown.classList.add('fade-in');
+  }
+
+  function switchTab(t) {
+    document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.module').forEach(e => e.classList.remove('active'));
+    document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');
+    const mod = document.getElementById(t + '-module');
+    mod.classList.add('active');
+    mod.classList.remove('fade-in'); void mod.offsetWidth; mod.classList.add('fade-in');
+  }
+
+  function swapFields() {
+    const f = document.getElementById('fromInput'), t = document.getElementById('toInput');
+    [f.value, t.value] = [t.value, f.value];
+    [picked.from, picked.to] = [picked.to, picked.from];
+  }
+
+  // ---------- Search-as-you-type (Photon — free, no key) ----------
+  function debounce(fn, ms) {
+    let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); };
+  }
+
+  async function searchPlaces(query, boxEl) {
+    if (!query || query.length < 2) { boxEl.style.display = 'none'; return; }
+    boxEl.innerHTML = '';
+
+    // Local matches first (instant, no network) — district, palika, and
+    // highway names/codes from the data already loaded.
+    const q = query.toLowerCase();
+    const localMatches = localIndex.filter(x => x.label.toLowerCase().includes(q)).slice(0, 5);
+    localMatches.forEach(m => {
+      const div = document.createElement('div');
+      div.textContent = `${m.label} — ${m.kind}`;
+      div.onclick = () => selectLocalSuggestion(boxEl, m);
+      boxEl.appendChild(div);
+    });
+
+    if (query.length < 3) {
+      boxEl.style.display = localMatches.length ? 'block' : 'none';
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=6`).then(r => r.json());
+      (res.features || []).forEach(f => {
+        const name = f.properties.name || '';
+        const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
+        const div = document.createElement('div');
+        div.textContent = area ? `${name} — ${area}` : name;
+        div.onclick = () => selectSuggestion(boxEl, name, f.geometry.coordinates[1], f.geometry.coordinates[0]);
+        boxEl.appendChild(div);
+      });
+      boxEl.style.display = boxEl.children.length ? 'block' : 'none';
+    } catch (e) { console.error(e); }
+  }
+
+  // A local match (district/palika/highway) has no coordinates yet — geocode
+  // it via Nominatim before dropping the pin, same as area-mode does.
+  async function selectLocalSuggestion(boxEl, match) {
+    const isFrom = boxEl.id === 'fromSuggest';
+    const inputId = isFrom ? 'fromInput' : 'toInput';
+    document.getElementById(inputId).value = match.label;
+    boxEl.style.display = 'none';
+    if (match.highway) {
+      // Jump straight to the highway on the Highway Info tab instead of routing.
+      switchTab('highway');
+      document.getElementById('hwySelect').value = match.highway;
+      loadHighwayData();
+      return;
+    }
+    const q = match.palika ? `${match.palika}, ${match.district}, Nepal` : `${match.district}, Nepal`;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(r => r.json());
+      if (r[0]) {
+        const lat = +r[0].lat, lon = +r[0].lon;
+        picked[isFrom ? 'from' : 'to'] = { lat, lon, label: match.label };
+        dropPin(isFrom ? 'from' : 'to', lat, lon, match.label);
+      }
+    } catch (e) { console.error(e); }
+  }
+
+  function selectSuggestion(boxEl, label, lat, lon) {
+    const isFrom = boxEl.id === 'fromSuggest';
+    document.getElementById(isFrom ? 'fromInput' : 'toInput').value = label;
+    picked[isFrom ? 'from' : 'to'] = { lat, lon, label };
+    boxEl.style.display = 'none';
+    dropPin(isFrom ? 'from' : 'to', lat, lon, label);
+  }
+
+  document.getElementById('fromInput').addEventListener('input', debounce(e => searchPlaces(e.target.value, document.getElementById('fromSuggest')), 350));
+  document.getElementById('toInput').addEventListener('input', debounce(e => searchPlaces(e.target.value, document.getElementById('toSuggest')), 350));
+
+  // ---------- Voice search (Web Speech API — free, built into the browser) ----------
+  function startVoice(inputId) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Voice search is not supported in this browser.'); return; }
+    const micBtn = document.getElementById(inputId === 'fromInput' ? 'fromMic' : 'toMic');
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.onstart = () => micBtn.classList.add('listening');
+    rec.onend = () => micBtn.classList.remove('listening');
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      document.getElementById(inputId).value = text;
+      searchPlaces(text, document.getElementById(inputId === 'fromInput' ? 'fromSuggest' : 'toSuggest'));
+    };
+    rec.start();
+  }
+
+  // ---------- Click-to-pick on map ----------
+  function armPicker(which) {
+    pickerArmed = which;
+    document.getElementById('fromPick').classList.toggle('active', which === 'from');
+    document.getElementById('toPick').classList.toggle('active', which === 'to');
+    document.getElementById('mapHint').style.display = 'block';
+  }
+
+  map.on('click', async (e) => {
+    if (!pickerArmed) return;
+    const { lat, lng } = e.latlng;
+    let label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    try {
+      const rev = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`).then(r => r.json());
+      if (rev.display_name) label = rev.display_name.split(',').slice(0, 3).join(',');
+    } catch (err) { /* fall back to coordinates */ }
+
+    document.getElementById(pickerArmed === 'from' ? 'fromInput' : 'toInput').value = label;
+    picked[pickerArmed] = { lat, lon: lng, label };
+    dropPin(pickerArmed, lat, lng, label);
+
+    document.getElementById(pickerArmed === 'from' ? 'fromPick' : 'toPick').classList.remove('active');
+    pickerArmed = null;
+    document.getElementById('mapHint').style.display = 'none';
+  });
+
+  function dropPin(which, lat, lon, label) {
+    const icon = L.divIcon({ html: which === 'from' ? '🟢' : '🔴', iconSize: [22, 22], className: '' });
+    if (which === 'from') { if (pinFrom) map.removeLayer(pinFrom); pinFrom = L.marker([lat, lon], { icon }).addTo(map).bindPopup(label); }
+    else { if (pinTo) map.removeLayer(pinTo); pinTo = L.marker([lat, lon], { icon }).addTo(map).bindPopup(label); }
+  }
+
+  // ---------- Route calculation (OSRM — free, no key) ----------
+  function setRoutePref(pref) {
+    routePref = pref;
+    document.getElementById('prefFastest').classList.toggle('active', pref === 'fastest');
+    document.getElementById('prefShortest').classList.toggle('active', pref === 'shortest');
+  }
+
+  async function routeBetween(p1, p2, labelFrom, labelTo) {
+    // alternatives=true asks OSRM for more than one real computed route;
+    // "Fastest" and "Shortest" pick between those actual options rather
+    // than inventing a second number — if OSRM only finds one route,
+    // both preferences just use it.
+    const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${p1.lon},${p1.lat};${p2.lon},${p2.lat}?overview=full&geometries=geojson&alternatives=true`).then(r => r.json());
+    if (r.code !== 'Ok' || !r.routes.length) { alert('Could not find a route between those points.'); return; }
+
+    const routes = r.routes;
+    const chosen = routePref === 'shortest'
+      ? routes.reduce((a, b) => (a.distance <= b.distance ? a : b))
+      : routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
+
+    const km = (chosen.distance / 1000).toFixed(1);
+    const hrs = (chosen.duration / 3600).toFixed(1);
+    const altNote = routes.length > 1 ? ` (best of ${routes.length} routes OSRM found)` : '';
+
+    if (routeLayer) map.removeLayer(routeLayer);
+    routeLayer = L.geoJSON(chosen.geometry, { style: { color: '#10306B', weight: 6 } }).addTo(map);
+    map.fitBounds(routeLayer.getBounds(), { padding: [60, 60] });
+
+    // Reflect the trip in the URL so it can be shared/bookmarked.
+    const params = new URLSearchParams({ from: labelFrom, to: labelTo, pref: routePref, tab: 'trip' });
+    history.replaceState(null, '', `?${params.toString()}`);
+
+    const res = document.getElementById('tripResult');
+    res.style.display = 'block';
+    res.classList.remove('fade-in'); void res.offsetWidth; res.classList.add('fade-in');
+    res.innerHTML = `
+      <span class="badge">TRIP SUMMARY${routePref === 'shortest' ? ' · SHORTEST' : ' · FASTEST'}</span>
+      <div class="row"><span class="label">Route</span><span class="value">${labelFrom} → ${labelTo}${altNote}</span></div>
+      <div class="milestone-strip" id="milestoneStrip">
+        <div class="track"></div>
+        ${Array.from({ length: 11 }, (_, i) => `<div class="tick" style="left:${i * 10}%"></div>`).join('')}
+        <div class="fill" id="msFill"></div>
+        <div class="marker" id="msMarker">0</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin:2px 0 10px;">
+        <span>${labelFrom.split(',')[0]}</span><span>${labelTo.split(',')[0]}</span>
+      </div>
+      <div class="row"><span class="label">Distance</span><span class="big">${km} km</span></div>
+      <div class="row"><span class="label">Est. Drive Time</span><span class="value">${hrs} hrs</span></div>
+      <div id="trafficStrip"></div>
+      <div id="weatherStrip"></div>
+      <button class="swap-btn" style="width:100%;margin-top:10px;" onclick="askAssistant('${labelFrom.replace(/'/g, "")}','${labelTo.replace(/'/g, "")}','${km}')">🤖 Ask AI about this route</button>
+    `;
+    loadWeather(p2.lat, p2.lon, labelTo);
+
+    // Animate the milestone marker out to the trip's distance (the CSS
+    // transition is skipped entirely under prefers-reduced-motion).
+    requestAnimationFrame(() => {
+      const fill = document.getElementById('msFill'), marker = document.getElementById('msMarker');
+      if (fill && marker) { fill.style.width = '100%'; marker.style.left = '100%'; marker.textContent = km; }
+    });
+
+    // Midpoint of the route, for a representative traffic reading.
+    const mid = r.routes[0].geometry.coordinates[Math.floor(r.routes[0].geometry.coordinates.length / 2)];
+    checkTraffic(mid[1], mid[0]);
+  }
+
+  // ---------- Live traffic (TomTom primary, Waze-derived fallback — via Worker) ----------
+  async function checkTraffic(lat, lon) {
+    const strip = document.getElementById('trafficStrip');
+    if (WORKER_URL.includes('YOUR-SUBDOMAIN')) return; // not configured yet
+    try {
+      const data = await fetch(`${WORKER_URL}/api/traffic?lat=${lat}&lon=${lon}`).then(r => r.json());
+      if (!strip) return;
+      if (data.source === 'tomtom' && data.currentSpeed && data.freeFlowSpeed) {
+        const ratio = data.currentSpeed / data.freeFlowSpeed;
+        const level = ratio > 0.75 ? 'Light' : ratio > 0.4 ? 'Moderate' : 'Heavy';
+        const color = ratio > 0.75 ? '#16a34a' : ratio > 0.4 ? '#d97706' : '#dc2626';
+        strip.innerHTML = `<div class="row"><span class="label">Live Traffic (near midpoint)</span><span class="value" style="color:${color}">${level} — ${data.currentSpeed} km/h (usually ${data.freeFlowSpeed} km/h)</span></div>`;
+      } else if (data.source === 'waze-fallback') {
+        const lvl = data.level || 0;
+        const level = lvl <= 1 ? 'Light' : lvl <= 3 ? 'Moderate' : 'Heavy';
+        const color = lvl <= 1 ? '#16a34a' : lvl <= 3 ? '#d97706' : '#dc2626';
+        strip.innerHTML = `<div class="row"><span class="label">Traffic (Waze, ${data.distanceKm} km from route)</span><span class="value" style="color:${color}">${level}</span></div>`;
+      }
+      // data.source === 'none' → no data available, leave the strip empty
+    } catch (e) { console.error('traffic check failed', e); }
+  }
+
+  // ---------- Trip assistant (Gemini, proxied through the Worker) ----------
+  async function askAssistant(from, to, km) {
+    const panel = document.getElementById('assistantPanel');
+    const answerEl = document.getElementById('assistantAnswer');
+    if (WORKER_URL.includes('YOUR-SUBDOMAIN')) {
+      alert('Set WORKER_URL at the top of the script to your real Worker URL first.');
+      return;
+    }
+    panel.style.display = 'block';
+    answerEl.textContent = 'Thinking…';
+    try {
+      const prompt = `Give a short, practical note (3-4 sentences) for someone driving from ${from} to ${to} in Nepal, a ${km} km trip. Mention typical road conditions or things to be aware of. Keep it brief.`;
+      const data = await fetch(`${WORKER_URL}/api/assistant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      }).then(r => r.json());
+      const text = data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text;
+      answerEl.textContent = text || 'No response from the assistant.';
+    } catch (e) {
+      answerEl.textContent = 'Could not reach the trip assistant.';
+      console.error(e);
+    }
+  }
+
+  async function calculateTrip() {
+    if (!picked.from || !picked.to) { alert('Please choose both a From and a To location (search, mic, or map pin).'); return; }
+    routeBetween(picked.from, picked.to, picked.from.label, picked.to.label);
+  }
+
+  async function calculateTripFromArea() {
+    const s = document.getElementById('fPali').value, t = document.getElementById('tPali').value;
+    if (!s || !t) { alert('Please select both origin and destination Palikas.'); return; }
+    try {
+      const getLoc = (q) => fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=1`).then(r => r.json());
+      const [p1, p2] = await Promise.all([getLoc(s), getLoc(t)]);
+      if (p1[0] && p2[0]) {
+        routeBetween({ lat: +p1[0].lat, lon: +p1[0].lon }, { lat: +p2[0].lat, lon: +p2[0].lon }, s, t);
+      } else { alert('Could not locate one of the selected areas.'); }
+    } catch (e) { console.error(e); }
+  }
+
+  // ---------- Weather (Open-Meteo primary, OpenWeatherMap fallback — via Worker) ----------
+  async function loadWeather(lat, lon, label) {
+    try {
+      const url = WORKER_URL.includes('YOUR-SUBDOMAIN')
+        ? `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m`
+        : `${WORKER_URL}/api/weather?lat=${lat}&lon=${lon}`;
+      const w = await fetch(url).then(r => r.json());
+      const temp = w.current ? w.current.temperature_2m : w.temperature;
+      const wind = w.current ? w.current.wind_speed_10m : w.windSpeed;
+      const strip = document.getElementById('weatherStrip');
+      if (strip && typeof temp === 'number') {
+        strip.outerHTML = `<div class="weather-strip" id="weatherStrip">
+          🌤️ <span><strong>${Math.round(temp)}°C</strong> at ${label} · wind ${Math.round(wind || 0)} km/h</span>
+        </div>`;
+      }
+    } catch (e) { console.error(e); }
+  }
+
+  // ---------- Highway info ----------
+  function filterHighways() {
+    const q = document.getElementById('hwyFilter').value.toLowerCase();
+    const sel = document.getElementById('hwySelect');
+    sel.innerHTML = '<option value="">-- Choose National Highway --</option>';
+    allHighways
+      .filter(h => !q || h.name.toLowerCase().includes(q) || h.code.toLowerCase().includes(q) || (h.route || '').toLowerCase().includes(q))
+      .forEach(h => sel.add(new Option(`${h.code}: ${h.name}`, h.code)));
+  }
+
+  async function loadHighwayData() {
+    const code = document.getElementById('hwySelect').value;
+    const meta = hIndex.find(h => h.code === code);
+    if (!meta) return;
+    document.getElementById('hwyResult').style.display = 'block';
+    document.getElementById('reportContent').innerHTML = '<p style="color:#94a3b8;">Loading…</p>';
+    try {
+      const res = await fetch(`data/highway/${meta.file}`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      });
+      if (!res.features || !res.features.length) throw new Error('No geometry in file');
+      const p = res.features[0].properties;
+      document.getElementById('reportContent').innerHTML = `
+        <span class="badge">Highway Code: ${p.road_refno || meta.code}</span>
+        <h2 class="title-lg">${p.road_name || meta.name}</h2>
+        <div class="row"><span class="label">Route</span><span class="value">${meta.route || 'N/A'}</span></div>
+        <div class="row"><span class="label">Total Length</span><span class="value">${p.link_len || '---'} km</span></div>
+        <div class="row"><span class="label">Concerned Office</span><span class="value">Road Division, ${p.div_name || 'N/A'}</span></div>
+        <div class="row"><span class="label">Updated</span><span class="value">${p.add_date || 'N/A'}</span></div>
+        <div class="row"><span class="label">Surface</span><span class="value">${p.surface || p.surf_type || 'Pitched / Bituminous'}</span></div>
+      `;
+      if (hwyLayer) map.removeLayer(hwyLayer);
+      hwyLayer = L.geoJSON(res, { style: { color: '#d32f2f', weight: 6, opacity: 0.9 } }).addTo(map);
+      map.fitBounds(hwyLayer.getBounds());
+    } catch (e) {
+      console.error(e);
+      document.getElementById('reportContent').innerHTML = `<p style="color:#dc2626;">Couldn't load data for ${meta.code} — ${e.message}. Try another highway.</p>`;
+    }
+  }
+
+  // ---------- Road incidents (TomTom Incidents + Waze alerts merged — via Worker) ----------
+  // Attribution note: Waze Partner Hub agreements typically require
+  // "Powered by Waze" attribution when this data is shown publicly —
+  // included below. Check your dashboard for any other display terms.
+  async function toggleAlerts() {
+    const btn = document.getElementById('alertsToggle');
+    if (alertsLayer) {
+      map.removeLayer(alertsLayer);
+      alertsLayer = null;
+      btn.classList.remove('active');
+      btn.textContent = '🚧 Show Road Incidents';
+      return;
+    }
+    if (WORKER_URL.includes('YOUR-SUBDOMAIN')) return;
+    btn.textContent = '🚧 Loading incidents…';
+    try {
+      const center = map.getCenter();
+      const data = await fetch(`${WORKER_URL}/api/incidents?lat=${center.lat}&lon=${center.lng}&radius_km=15`).then(r => r.json());
+      const results = data.results || [];
+      const markers = results.map(a => L.marker([a.lat, a.lon], {
+        icon: L.divIcon({ html: '⚠️', iconSize: [20, 20], className: '' })
+      }).bindPopup(`<strong>${a.type || 'Incident'}</strong>${a.description ? '<br>' + a.description : ''}<br><small>${a.source === 'waze' ? 'Powered by Waze' : 'Source: TomTom'}</small>`));
+      alertsLayer = L.layerGroup(markers).addTo(map);
+      btn.classList.add('active');
+      btn.textContent = `🚧 Hide Road Incidents (${markers.length})`;
+    } catch (e) {
+      console.error('incidents load failed', e);
+      btn.textContent = '🚧 Show Road Incidents';
+      alert('Could not load road incidents right now.');
+    }
+  }
+
+  // ---------- Nearby POIs (Overpass primary, Nominatim fallback — via Worker) ----------
+  const POI_ICONS = { fuel: '⛽', hospital: '🏥', hotel: '🏨', atm: '🏧', restaurant: '🍽️', police: '🚓' };
+
+  async function findNearby() {
+    if (WORKER_URL.includes('YOUR-SUBDOMAIN')) { alert('Worker URL not configured yet.'); return; }
+    const type = document.getElementById('poiType').value;
+    const center = map.getCenter();
+    if (poisLayer) { map.removeLayer(poisLayer); poisLayer = null; }
+    try {
+      const data = await fetch(`${WORKER_URL}/api/pois?lat=${center.lat}&lon=${center.lng}&type=${type}&radius=6000`).then(r => r.json());
+      const results = data.results || [];
+      if (!results.length) { alert(`No ${type} found nearby — try panning the map first.`); return; }
+      const icon = POI_ICONS[type] || '📍';
+      const markers = results.map(p => L.marker([p.lat, p.lon], {
+        icon: L.divIcon({ html: icon, iconSize: [22, 22], className: '' })
+      }).bindPopup(`<strong>${p.name}</strong>`));
+      poisLayer = L.layerGroup(markers).addTo(map);
+    } catch (e) {
+      console.error('POI search failed', e);
+      alert('Could not load nearby places right now.');
+    }
+  }
+
+  // ---------- Distance Matrix (OSRM Table API — free, no key, real data) ----------
+  async function searchMatrixPlaces(query) {
+    const boxEl = document.getElementById('matrixSuggest');
+    if (!query || query.length < 3) { boxEl.style.display = 'none'; return; }
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=6`).then(r => r.json());
+      boxEl.innerHTML = '';
+      (res.features || []).forEach(f => {
+        const name = f.properties.name || '';
+        const div = document.createElement('div');
+        div.textContent = name;
+        div.onclick = () => addMatrixPlace(name, f.geometry.coordinates[1], f.geometry.coordinates[0]);
+        boxEl.appendChild(div);
+      });
+      boxEl.style.display = boxEl.children.length ? 'block' : 'none';
+    } catch (e) { console.error(e); }
+  }
+  document.getElementById('matrixInput').addEventListener('input', debounce(e => searchMatrixPlaces(e.target.value), 350));
+
+  function addMatrixPlace(label, lat, lon) {
+    if (matrixPlaces.length >= 6) { alert('Up to 6 places at a time.'); return; }
+    if (matrixPlaces.some(p => p.label === label)) return;
+    matrixPlaces.push({ label, lat, lon });
+    document.getElementById('matrixInput').value = '';
+    document.getElementById('matrixSuggest').style.display = 'none';
+    renderMatrixChips();
+  }
+
+  function removeMatrixPlace(i) {
+    matrixPlaces.splice(i, 1);
+    renderMatrixChips();
+  }
+
+  function renderMatrixChips() {
+    document.getElementById('matrixChips').innerHTML = matrixPlaces.map((p, i) =>
+      `<span class="badge" style="cursor:pointer;" onclick="removeMatrixPlace(${i})">${p.label} ✕</span>`
+    ).join('');
+  }
+
+  async function buildMatrix() {
+    if (matrixPlaces.length < 2) { alert('Add at least 2 places first.'); return; }
+    const coords = matrixPlaces.map(p => `${p.lon},${p.lat}`).join(';');
+    const box = document.getElementById('matrixResult');
+    box.style.display = 'block';
+    box.innerHTML = '<p style="color:var(--muted);">Calculating…</p>';
+    try {
+      const data = await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?annotations=distance,duration`).then(r => r.json());
+      if (data.code !== 'Ok') throw new Error(data.message || 'Table request failed');
+      const n = matrixPlaces.length;
+      let html = '<table style="width:100%;border-collapse:collapse;font-size:.8rem;"><tr><th style="text-align:left;padding:6px;"></th>';
+      for (let j = 0; j < n; j++) html += `<th style="padding:6px;text-align:center;font-family:\'IBM Plex Mono\',monospace;">${matrixPlaces[j].label.split(',')[0]}</th>`;
+      html += '</tr>';
+      for (let i = 0; i < n; i++) {
+        html += `<tr><td style="padding:6px;font-weight:600;">${matrixPlaces[i].label.split(',')[0]}</td>`;
+        for (let j = 0; j < n; j++) {
+          if (i === j) { html += '<td style="padding:6px;text-align:center;color:var(--muted);">—</td>'; continue; }
+          const km = data.distances?.[i]?.[j] != null ? (data.distances[i][j] / 1000).toFixed(0) : '?';
+          const hr = data.durations?.[i]?.[j] != null ? (data.durations[i][j] / 3600).toFixed(1) : '?';
+          html += `<td style="padding:6px;text-align:center;border-left:1px solid var(--line);font-family:'IBM Plex Mono',monospace;">${km} km<br><span style="color:var(--muted);font-size:.7rem;">${hr}h</span></td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+      box.innerHTML = html;
+    } catch (e) {
+      console.error(e);
+      box.innerHTML = `<p style="color:var(--accent);">Couldn't build the matrix — ${e.message}. Try again with fewer or different places.</p>`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

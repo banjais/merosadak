@@ -1,0 +1,15 @@
+{
+  "name": "Nepal Road Distance",
+  "short_name": "NepalDist",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d32f2f",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/235/235861.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

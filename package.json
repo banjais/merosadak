@@ -1,0 +1,7 @@
+{
+  "name": "merosadak",
+  "version": "1.0.0",
+  "scripts": {
+    "ship": "git add . && git commit -m \"update\" && git push origin main && firebase deploy --only hosting"
+  }
+}

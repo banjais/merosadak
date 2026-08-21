@@ -1,0 +1,16 @@
+name = "merosadak"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://merosadak.web.app"
+GEMINI_MODEL_PRIMARY = "gemini-2.5-flash"
+GEMINI_MODEL_SECONDARY = "gemini-2.0-flash-lite"
+
+# Secrets (set via `wrangler secret put <NAME>`, never written here):
+#   TOMTOM_API_KEY
+#   OPENWEATHERMAP_API_KEY
+#   GEMINI_API_KEY
+#   WAZE_FEED_URL
+#   UPSTASH_REDIS_REST_URL
+#   UPSTASH_REDIS_REST_TOKEN

@@ -1,0 +1,18 @@
+{
+  "hosting": {
+    "site": "merosadak",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "**/!(*.geojson|*.json|*.js|*.css|*.png|*.jpg|*.svg|*.ico|*.txt)",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

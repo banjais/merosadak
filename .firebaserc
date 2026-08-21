@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "default": "merosadak",
+    "merosadak": "sadak-sathi-3ab73"
+  },
+  "targets": {
+    "sadak-sathi-3ab73": {
+      "hosting": {
+        "mainsite": [
+          "merosadak"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
