@@ -202,5 +202,86 @@
     "altitude": "680 m",
     "condition": "Dry / Rockfall screen active",
     "status": "Open with cautious speed (<30 km/h)"
+  },
+  {
+    "id": "airport-1",
+    "name": "Tribhuvan International Airport (TIA)",
+    "type": "airport",
+    "highway": "NH17",
+    "location": "Kathmandu",
+    "lat": 27.6968,
+    "lng": 85.3591
+  },
+  {
+    "id": "airport-2",
+    "name": "Pokhara International Airport",
+    "type": "airport",
+    "highway": "NH47",
+    "location": "Pokhara, Kaski",
+    "lat": 28.2006,
+    "lng": 83.9821
+  },
+  {
+    "id": "airport-3",
+    "name": "Gautam Buddha Airport",
+    "type": "airport",
+    "highway": "NH01",
+    "location": "Bhairahawa, Rupandehi",
+    "lat": 27.5057,
+    "lng": 83.4163
+  },
+  {
+    "id": "airport-4",
+    "name": "Biratnagar Airport",
+    "type": "airport",
+    "highway": "NH08",
+    "location": "Biratnagar, Morang",
+    "lat": 26.4815,
+    "lng": 87.2637
+  },
+  {
+    "id": "airport-5",
+    "name": "Nepalgunj Airport",
+    "type": "airport",
+    "highway": "NH58",
+    "location": "Nepalgunj, Banke",
+    "lat": 28.1036,
+    "lng": 81.667
+  },
+  {
+    "id": "bus-1",
+    "name": "Kathmandu Bus Park (Koteshwor)",
+    "type": "bus_station",
+    "highway": "NH17 / NH37",
+    "location": "Koteshwor, Kathmandu",
+    "lat": 27.6786,
+    "lng": 85.3477
+  },
+  {
+    "id": "bus-2",
+    "name": "Pokhara Bus Park",
+    "type": "bus_station",
+    "highway": "NH47",
+    "location": "Pokhara, Kaski",
+    "lat": 28.2096,
+    "lng": 83.9856
+  },
+  {
+    "id": "bus-3",
+    "name": "Butwal Bus Station",
+    "type": "bus_station",
+    "highway": "NH01 / NH47",
+    "location": "Butwal, Rupandehi",
+    "lat": 27.7006,
+    "lng": 83.4484
+  },
+  {
+    "id": "bus-4",
+    "name": "Birgunj Bus Station",
+    "type": "bus_station",
+    "highway": "NH01",
+    "location": "Birgunj, Parsa",
+    "lat": 27.0,
+    "lng": 84.8667
   }
 ]

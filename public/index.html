@@ -67,126 +67,39 @@
 
   <!-- ==========================================
        3. Prominent "Where to?" Floating Panel
-       ========================================== -->
-  <div class="floating-search-panel" id="searchPanel">
-    <div class="panel-header-row">
-      <div class="panel-title">
-        <span>📍 Where to? (कहाँ जाने?)</span>
-        <span class="ai-tag">AI Route 2.0</span>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="icon-btn" onclick="toggleSearchCollapse()" title="Minimize / Expand" id="collapseBtn">➖</button>
-      </div>
-    </div>
-
-    <div id="searchFieldsContainer">
-      <div class="search-field-wrapper">
-        <!-- Origin Field -->
-        <div class="input-box">
-          <span class="pin-indicator">🟢</span>
-          <input type="text" id="fromInput" placeholder="Origin (e.g. Kathmandu, Pokhara, NH01)" autocomplete="off">
-          <div class="input-actions">
-            <button class="icon-btn" id="fromMic" onclick="startVoice('fromInput')" title="Voice Search">🎤</button>
-            <button class="icon-btn" id="fromPick" onclick="armPicker('from')" title="Pick on Map">📍</button>
-          </div>
-          <div class="autocomplete-dropdown" id="fromSuggest"></div>
-        </div>
-
-        <!-- Floating Swap Button -->
-        <button class="swap-btn-floating" onclick="swapOriginDest()" title="Swap Points">⇅</button>
-
-        <!-- Destination Field -->
-        <div class="input-box">
-          <span class="pin-indicator">🔴</span>
-          <input type="text" id="toInput" placeholder="Destination (e.g. Butwal, Biratnagar, Ilam)" autocomplete="off">
-          <div class="input-actions">
-            <button class="icon-btn" id="toMic" onclick="startVoice('toInput')" title="Voice Search">🎤</button>
-            <button class="icon-btn" id="toPick" onclick="armPicker('to')" title="Pick on Map">📍</button>
-          </div>
-          <div class="autocomplete-dropdown" id="toSuggest"></div>
-        </div>
-      </div>
-
-      <!-- Mode & Vehicle Preference -->
-      <div class="mode-pref-bar">
-        <div class="pref-pills">
-          <button class="pref-pill active" id="prefFastest" onclick="setRoutePref('fastest')">⚡ Fastest</button>
-          <button class="pref-pill" id="prefShortest" onclick="setRoutePref('shortest')">📏 Shortest</button>
-          <button class="pref-pill" id="prefScenic" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
-        </div>
-        <div class="vehicle-select-box">
-          <select id="vehicleType" onchange="onVehicleChange()">
-            <option value="car">🚗 Car / Sedan</option>
-            <option value="suv_4wd">🚙 4WD / Jeep</option>
-            <option value="motorbike">🏍️ Motorcycle</option>
-            <option value="bus_truck">🚌 Bus / Truck</option>
-            <option value="ev">⚡ EV (Electric)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Primary Action Button -->
-      <button class="btn-action-primary" id="btnCalculate" onclick="calculateRoute()">
-        <span>🚀</span> <span>Get Highway Route & ETA</span>
-      </button>
-
-      <!-- AI Route Advisor Button -->
-      <div class="ai-advisor-row">
-        <button class="ai-advisor-btn" onclick="askAiRouteAdvisor()">
-          <span>✨</span> <span>AI Mountain & Road Conditions Advisor</span>
+        ========================================== -->
+  <!-- ==========================================
+        3. Left Sidebar — Unified Search & Actions
+        ========================================== -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-mode-tabs">
+        <button class="mode-tab active" data-mode="route" onclick="setMode('route')">
+          <span class="mode-tab-icon">📍</span> Route/ETA
+        </button>
+        <button class="mode-tab" data-mode="weather" onclick="setMode('weather')">
+          <span class="mode-tab-icon">⛅</span> Weather
+        </button>
+        <button class="mode-tab" data-mode="traffic" onclick="setMode('traffic')">
+          <span class="mode-tab-icon">🚦</span> Traffic
+        </button>
+        <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">
+          <span class="mode-tab-icon">⛽</span> POIS/EV
+        </button>
+        <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">
+          <span class="mode-tab-icon">🆘</span> SOS
         </button>
       </div>
-
-      <!-- Live Trip Result Summary Card -->
-      <div class="trip-summary-card" id="tripSummaryCard">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span class="hwy-badge" id="tripBadge">FASTEST HIGHWAY ROUTE</span>
-          <span style="font-size:0.72rem; color:var(--text-secondary);" id="tripRouteNames">NH17 → NH01</span>
-        </div>
-
-        <!-- Metric Grid -->
-        <div class="metric-grid">
-          <div class="metric-box">
-            <span class="metric-label">Distance</span>
-            <span class="metric-val highlight" id="tripDistance">-- km</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Drive Time</span>
-            <span class="metric-val" id="tripDuration">-- hrs</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Est. Fuel / Cost</span>
-            <span class="metric-val" id="tripFuel">NPR --</span>
-          </div>
-          <div class="metric-box">
-            <span class="metric-label">Elevation Gain</span>
-            <span class="metric-val" id="tripElevation">~ 1,280 m</span>
-          </div>
-        </div>
-
-        <!-- Milestone Progress Strip -->
-        <div class="milestone-bar">
-          <div class="milestone-track">
-            <div class="milestone-fill" id="msFill"></div>
-            <div class="milestone-marker" id="msMarker">🏁</div>
-          </div>
-        </div>
-
-        <!-- Live Destination Weather -->
-        <div class="trip-pill-info" id="tripWeatherPill">
-          <span>🌤️</span> <span id="tripWeatherText">Loading live mountain weather…</span>
-        </div>
-
-        <!-- Live Route Traffic Flow -->
-        <div class="trip-pill-info" id="tripTrafficPill" style="margin-top:6px;">
-          <span>🚦</span> <span id="tripTrafficText">Traffic Flow: Normal / Mountain Free-flow</span>
-        </div>
-
-        <!-- AI Advisor Output Box -->
-        <div id="aiAdvisorOutput" style="display:none; margin-top:10px; padding:10px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3); border-radius:8px; font-size:0.8rem; color:#e2e8f0; line-height:1.4;"></div>
+      <div class="sidebar-search-wrap">
+        <span class="search-mode-icon" id="searchModeIcon">📍</span>
+        <input type="text" id="sidebarSearch" placeholder="Where to? (destination)" autocomplete="off">
+        <button class="icon-btn search-clear-btn" onclick="clearSidebarSearch()" title="Clear">✕</button>
+        <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
       </div>
+      <div class="sidebar-mode-hint" id="sidebarModeHint">Search destinations, cities, airports, bus stations, and major places in Nepal</div>
+      <div class="sidebar-results" id="sidebarResults"></div>
     </div>
-  </div>
+  </aside>
 
   <!-- ==========================================
        4. Floating Map Toggles Toolbar (Right Side)
@@ -216,45 +129,29 @@
   </div>
 
   <!-- ==========================================
-       5. Bottom + FAB Menu & Expandable Dedicated Footer Dock
-       ========================================== -->
-  <div class="fab-container" id="fabContainer">
-    <!-- Expandable Dedicated Footer Dock -->
-    <div class="footer-dock">
-      <button class="dock-item" onclick="openModal('highwayModal')">
-        <span class="dock-icon">🛣️</span>
-        <span>Highways</span>
+        5. Bottom App Bar + Expandable Actions
+        ========================================== -->
+  <div class="bottom-app-bar" id="bottomAppBar">
+    <div class="bottom-bar-actions" id="bottomBarActions">
+      <button class="bar-action-btn" onclick="triggerGeolocation()">
+        <span class="bar-action-icon">📍</span>
+        <span class="bar-action-label">Locate Me</span>
       </button>
-      <button class="dock-item" onclick="openModal('matrixModal')">
-        <span class="dock-icon">📊</span>
-        <span>Distance Matrix</span>
+      <button class="bar-action-btn" onclick="askAiRouteAdvisor()">
+        <span class="bar-action-icon">✨</span>
+        <span class="bar-action-label">AI Assistant</span>
       </button>
-      <button class="dock-item" onclick="openModal('reportModal')">
-        <span class="dock-icon">🚧</span>
-        <span>Report Hazard</span>
+      <button class="bar-action-btn" onclick="saveCurrentRoute()">
+        <span class="bar-action-icon">📌</span>
+        <span class="bar-action-label">Save Route</span>
       </button>
-      <div class="dock-divider"></div>
-      <button class="dock-item" onclick="openModal('dialectModal')">
-        <span class="dock-icon">🗣️</span>
-        <span>Transit Dialects</span>
-      </button>
-      <button class="dock-item" onclick="openModal('passesModal')">
-        <span class="dock-icon">🏔️</span>
-        <span>Mountain Passes</span>
-      </button>
-      <button class="dock-item" onclick="openModal('sosModal')">
-        <span class="dock-icon">🆘</span>
-        <span>Emergency SOS</span>
-      </button>
-      <button class="dock-item" onclick="syncOfflineBundle()">
-        <span class="dock-icon">💾</span>
-        <span id="offlineLabel">Offline Cache</span>
+      <button class="bar-action-btn" onclick="toggleFullscreen()">
+        <span class="bar-action-icon">⛶</span>
+        <span class="bar-action-label">Fullscreen</span>
       </button>
     </div>
-
-    <!-- The '+' FAB Button -->
-    <button class="main-fab-btn" id="mainFab" onclick="toggleFabMenu()" title="Open Mero Sadak Tools">
-      <span>+</span>
+    <button class="bottom-bar-fab" id="bottomBarFab" onclick="toggleBottomBar()" title="More Actions">
+      <span class="fab-plus">+</span>
     </button>
   </div>
 
@@ -446,6 +343,7 @@
 
     let allHighwaysIndex = [];
     let searchIndex = [];
+    let userOrigin = null;
 
     // ==========================================
     // 1. Map Initialization & Tile Layers
@@ -477,7 +375,9 @@
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.5 }),
+          (pos) => {
+            userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
+          },
           () => {},
           { timeout: 8000, maximumAge: 60000 }
         );
@@ -600,127 +500,24 @@
     // ==========================================
     // 3. Search & Autocomplete
     // ==========================================
-    function setupAutocomplete(inputId, suggestId) {
-      const input = document.getElementById(inputId);
-      const suggest = document.getElementById(suggestId);
 
-      input.addEventListener('input', debounce(async (e) => {
-        const query = e.target.value.trim().toLowerCase();
-        if (query.length < 2) {
-          suggest.style.display = 'none';
-          return;
-        }
 
-        suggest.innerHTML = '';
 
-        // Local search match
-        const localMatches = searchIndex.filter(item => item.label.toLowerCase().includes(query)).slice(0, 5);
-        localMatches.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'autocomplete-item';
-          div.innerHTML = `<span>${item.label}</span> <span class="tag">${item.type}</span>`;
-          div.onclick = () => selectSearchResult(inputId, suggestId, item);
-          suggest.appendChild(div);
-        });
 
-        // Photon geocoding for broader places
-        if (query.length >= 3) {
-          try {
-            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json());
-            (res.features || []).forEach(f => {
-              const name = f.properties.name || '';
-              const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
-              const label = area ? `${name}, ${area}` : name;
-              const div = document.createElement('div');
-              div.className = 'autocomplete-item';
-              div.innerHTML = `<span>${label}</span> <span class="tag">Map Place</span>`;
-              div.onclick = () => selectSearchResult(inputId, suggestId, { label, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] });
-              suggest.appendChild(div);
-            });
-          } catch (err) {}
-        }
 
-        suggest.style.display = suggest.children.length ? 'block' : 'none';
-      }, 250));
-
-      document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !suggest.contains(e.target)) {
-          suggest.style.display = 'none';
-        }
-      });
-    }
-
-    async function selectSearchResult(inputId, suggestId, item) {
-      const isFrom = inputId === 'fromInput';
-      const which = isFrom ? 'from' : 'to';
-      document.getElementById(inputId).value = item.label;
-      document.getElementById(suggestId).style.display = 'none';
-
-      if (item.lat && item.lng) {
-        pickedPoints[which] = { lat: item.lat, lng: item.lng, label: item.label };
-        dropPin(which, item.lat, item.lng, item.label);
-      } else if (item.code) {
-        loadAndFocusHighway(item.code);
-      } else {
-        // Geocode district/palika name via Nominatim
-        try {
-          const q = item.palika ? `${item.palika}, ${item.district}, Nepal` : `${item.district}, Nepal`;
-          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`).then(res => res.json());
-          if (r[0]) {
-            const lat = +r[0].lat, lng = +r[0].lon;
-            pickedPoints[which] = { lat, lng, label: item.label };
-            dropPin(which, lat, lng, item.label);
-          }
-        } catch (e) {}
-      }
-    }
-
-    function swapOriginDest() {
-      const fromInput = document.getElementById('fromInput');
-      const toInput = document.getElementById('toInput');
-      [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
-      [pickedPoints.from, pickedPoints.to] = [pickedPoints.to, pickedPoints.from];
-      if (pickedPoints.from) dropPin('from', pickedPoints.from.lat, pickedPoints.from.lng, pickedPoints.from.label);
-      if (pickedPoints.to) dropPin('to', pickedPoints.to.lat, pickedPoints.to.lng, pickedPoints.to.label);
-    }
 
     // ==========================================
     // 4. Voice Search (Web Speech API)
     // ==========================================
-    function startVoice(inputId) {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) {
-        alert('Voice search is not supported in this browser. Try Chrome or Edge.');
-        return;
-      }
-      const micBtn = document.getElementById(inputId === 'fromInput' ? 'fromMic' : 'toMic');
-      const rec = new SR();
-      rec.lang = 'en-US';
-      rec.onstart = () => micBtn.classList.add('listening');
-      rec.onend = () => micBtn.classList.remove('listening');
-      rec.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        document.getElementById(inputId).value = text;
-        const suggestId = inputId === 'fromInput' ? 'fromSuggest' : 'toSuggest';
-        document.getElementById(inputId).dispatchEvent(new Event('input'));
-      };
-      rec.start();
-    }
+
 
     // ==========================================
     // 5. Map Pin Picker
     // ==========================================
-    function armPicker(which) {
-      pickerArmed = which;
-      document.getElementById('fromPick').classList.toggle('active', which === 'from');
-      document.getElementById('toPick').classList.toggle('active', which === 'to');
-      document.getElementById('mapHint').style.display = 'block';
-    }
+
 
     async function handleMapClick(e) {
-      if (!pickerArmed) return;
       const { lat, lng } = e.latlng;
-      const which = pickerArmed;
       let label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
       try {
@@ -728,133 +525,33 @@
         if (rev.display_name) label = rev.display_name.split(',').slice(0, 3).join(',');
       } catch (err) {}
 
-      document.getElementById(which === 'from' ? 'fromInput' : 'toInput').value = label;
-      pickedPoints[which] = { lat, lng, label };
-      dropPin(which, lat, lng, label);
-
-      document.getElementById(which === 'from' ? 'fromPick' : 'toPick').classList.remove('active');
-      pickerArmed = null;
-      document.getElementById('mapHint').style.display = 'none';
+      map.flyTo([lat, lng], 13, { duration: 1.2 });
+      L.popup().setLatLng([lat, lng]).setContent(`<strong>${label}</strong>`).openOn(map);
     }
 
-    function dropPin(which, lat, lng, label) {
-      const isFrom = which === 'from';
-      const icon = L.divIcon({
-        html: `<div style="background:${isFrom ? '#10b981' : '#ef4444'}; width:20px; height:20px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800;">${isFrom ? 'A' : 'B'}</div>`,
-        iconSize: [20, 20],
-        className: ''
-      });
-
-      if (isFrom) {
-        if (pinFromMarker) map.removeLayer(pinFromMarker);
-        pinFromMarker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<strong>Origin:</strong> ${label}`);
-      } else {
-        if (pinToMarker) map.removeLayer(pinToMarker);
-        pinToMarker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<strong>Destination:</strong> ${label}`);
-      }
-
-      if (pickedPoints.from && pickedPoints.to) {
-        map.flyToBounds(L.latLngBounds([pickedPoints.from.lat, pickedPoints.from.lng], [pickedPoints.to.lat, pickedPoints.to.lng]), { padding: [60, 60], duration: 1.2 });
-      } else {
-        map.flyTo([lat, lng], 13, { duration: 1.2 });
-      }
-    }
-
-    // ==========================================
+        // ==========================================
     // 6. Routing & OSRM Engine
     // ==========================================
     function setRoutePref(pref) {
       activeRoutePreference = pref;
-      document.querySelectorAll('.pref-pill').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById(pref === 'fastest' ? 'prefFastest' : pref === 'shortest' ? 'prefShortest' : 'prefScenic');
-      if (activeBtn) activeBtn.classList.add('active');
     }
 
-    function onVehicleChange() {
-      activeVehicle = document.getElementById('vehicleType').value;
-    }
 
-    async function calculateRoute() {
-      if (!pickedPoints.from || !pickedPoints.to) {
-        alert('Please specify both an Origin and Destination location.');
-        return;
-      }
 
-      const p1 = pickedPoints.from;
-      const p2 = pickedPoints.to;
-      const btn = document.getElementById('btnCalculate');
-      btn.innerHTML = '<span>⏳</span> <span>Calculating Optimal Route…</span>';
 
-      try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${p1.lng},${p1.lat};${p2.lng},${p2.lat}?overview=full&geometries=geojson&alternatives=true`;
-        const res = await fetch(url).then(r => r.json());
-
-        if (res.code !== 'Ok' || !res.routes.length) {
-          alert('Could not calculate a route between those locations.');
-          btn.innerHTML = '<span>🚀</span> <span>Get Highway Route & ETA</span>';
-          return;
-        }
-
-        const routes = res.routes;
-        const chosen = activeRoutePreference === 'shortest'
-          ? routes.reduce((a, b) => (a.distance <= b.distance ? a : b))
-          : routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
-
-        const km = (chosen.distance / 1000).toFixed(1);
-        const hrs = (chosen.duration / 3600).toFixed(1);
-
-        // Render Route Layer
-        if (routeLayerGroup) map.removeLayer(routeLayerGroup);
-        const casing = L.geoJSON(chosen.geometry, { style: { color: '#0b192c', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
-        const core = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
-        routeLayerGroup = L.layerGroup([casing, core]).addTo(map);
-
-        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
-
-        // Update Trip Summary Card
-        document.getElementById('tripDistance').textContent = `${km} km`;
-        document.getElementById('tripDuration').textContent = `${hrs} hrs`;
-        
-        // Fuel cost estimate (approx 12 km/L @ NPR 175/L)
-        const fuelLiters = (chosen.distance / 1000 / 12).toFixed(1);
-        const fuelCost = Math.round(fuelLiters * 175);
-        document.getElementById('tripFuel').textContent = `NPR ${fuelCost.toLocaleString()}`;
-
-        document.getElementById('tripBadge').textContent = `${activeRoutePreference.toUpperCase()} · ${activeVehicle.toUpperCase()}`;
-        document.getElementById('tripSummaryCard').style.display = 'block';
-
-        // Load Destination Weather & Traffic
-        fetchDestinationWeather(p2.lat, p2.lng, p2.label);
-
-        btn.innerHTML = '<span>🚀</span> <span>Get Highway Route & ETA</span>';
-      } catch (err) {
-        console.error('Route calculation error:', err);
-        alert('Route calculation service temporarily busy.');
-        btn.innerHTML = '<span>🚀</span> <span>Get Highway Route & ETA</span>';
-      }
-    }
-
-    async function fetchDestinationWeather(lat, lng, label) {
-      try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code,wind_speed_10m`).then(r => r.json());
-        if (res.current) {
-          const temp = Math.round(res.current.temperature_2m);
-          const wind = Math.round(res.current.wind_speed_10m || 0);
-          document.getElementById('tripWeatherText').textContent = `${temp}°C at ${label.split(',')[0]} · Wind ${wind} km/h · Fair mountain road conditions`;
-        }
-      } catch (e) {}
-    }
 
     // ==========================================
     // 7. AI Trip & Mountain Road Advisor
     // ==========================================
     async function askAiRouteAdvisor() {
-      const from = pickedPoints.from ? pickedPoints.from.label : 'Kathmandu';
-      const to = pickedPoints.to ? pickedPoints.to.label : 'Pokhara';
-      const km = document.getElementById('tripDistance').textContent || '200 km';
+      const from = userOrigin ? userOrigin.label : 'Kathmandu';
+      const to = selectedDestination ? selectedDestination.label : 'Pokhara';
+      const km = document.getElementById('sidebarResults')?.querySelector('.metric-val.highlight')?.textContent || '200 km';
       const outBox = document.getElementById('aiAdvisorOutput');
-      outBox.style.display = 'block';
-      outBox.innerHTML = '✨ <em>Querying Gemini Mountain Transit Intelligence…</em>';
+      if (outBox) {
+        outBox.style.display = 'block';
+        outBox.innerHTML = '✨ <em>Querying Gemini Mountain Transit Intelligence…</em>';
+      }
 
       try {
         const prompt = `Give a concise 3-4 sentence driving safety advisory for traveling from ${from} to ${to} in Nepal (${km}). Mention typical road conditions (e.g. Mugling/Nagdhunga/Daunne), vehicle safety, and monsoon/landslide precautions.`;
@@ -865,11 +562,16 @@
         }).then(r => r.json());
 
         const text = res.candidates?.[0]?.content?.parts?.[0]?.text;
-        outBox.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>${text || 'Drive carefully, monitor road condition reports, and observe mountain overtaking discipline.'}`;
+        if (outBox) {
+          outBox.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>${text || 'Drive carefully, monitor road condition reports, and observe mountain overtaking discipline.'}`;
+        }
       } catch (e) {
-        outBox.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>For driving from ${from} to ${to}: Check Nagdhunga and Mugling landslide clearance before departure. Maintain lower gear descending steep hairpin bends and keep emergency number 103 handy.`;
+        if (outBox) {
+          outBox.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>For driving from ${from} to ${to}: Check Nagdhunga and Mugling landslide clearance before departure. Maintain lower gear descending steep hairpin bends and keep emergency number 103 handy.`;
+        }
       }
     }
+
 
     // ==========================================
     // 8. Map Toggles & Layers
@@ -910,31 +612,7 @@
     }
 
     // ==========================================
-    // 9. Floating FAB & Footer Menu
-    // ==========================================
-    // 9. Floating FAB & Footer Menu
-    // ==========================================
-    function toggleFabMenu() {
-      const fab = document.getElementById('mainFab');
-      const container = document.getElementById('fabContainer');
-      container.classList.toggle('is-open');
-      fab.classList.toggle('expanded');
-    }
-
-    function toggleSearchCollapse() {
-      const container = document.getElementById('searchFieldsContainer');
-      const btn = document.getElementById('collapseBtn');
-      if (container.style.display === 'none') {
-        container.style.display = 'block';
-        btn.textContent = '➖';
-      } else {
-        container.style.display = 'none';
-        btn.textContent = '➕';
-      }
-    }
-
-    // ==========================================
-    // 10. Modals & Extended Features
+    // 9. Modals & Extended Features
     // ==========================================
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
@@ -1164,25 +842,22 @@
 
     function syncOfflineBundle() {
       localStorage.setItem('merosadak_offline_synced', 'true');
-      document.getElementById('offlineLabel').textContent = 'Cached (Ready)';
       alert('✅ Nepal National Highway GIS & offline route packs saved locally.');
     }
 
     function restoreFromUrl() {
       const p = new URLSearchParams(location.search);
-      const from = p.get('from'), to = p.get('to');
-      if (!from || !to) return;
-      document.getElementById('fromInput').value = from;
-      document.getElementById('toInput').value = to;
+      const to = p.get('to');
+      if (!to) return;
       const geocode = (q) => fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=1`).then(r => r.json());
-      Promise.all([geocode(from), geocode(to)]).then(([f, t]) => {
-        if (f[0] && t[0]) {
-          const p1 = { lat: +f[0].lat, lng: +f[0].lon, label: from };
-          const p2 = { lat: +t[0].lat, lng: +t[0].lon, label: to };
-          pickedPoints.from = p1; pickedPoints.to = p2;
-          dropPin('from', p1.lat, p1.lng, from);
-          dropPin('to', p2.lat, p2.lng, to);
-          calculateRoute();
+      geocode(to).then(([t]) => {
+        if (t[0]) {
+          const dest = { label: to, lat: +t[0].lat, lng: +t[0].lon };
+          selectedDestination = dest;
+          document.getElementById('sidebarSearch').value = to;
+          setMode('route');
+          renderSidebarRouteResult(dest);
+          calculateSidebarRoute();
         }
       }).catch(() => {});
     }
@@ -1195,11 +870,309 @@
       };
     }
 
+
+    // ==========================================
+    // 3. Sidebar Search & Mode Engine
+    // ==========================================
+    const MODE_CONFIG = {
+      route: { icon: '📍', placeholder: 'Where to? (destination)', hint: 'Search destinations, cities, airports, bus stations, and major places in Nepal' },
+      weather: { icon: '⛅', placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
+      traffic: { icon: '🚦', placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
+      pois: { icon: '⛽', placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
+      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
+    };
+
+    const DEFAULT_SUGGESTIONS = [
+      { label: 'Kathmandu', type: 'City Hub', lat: 27.7172, lng: 85.324 },
+      { label: 'Pokhara', type: 'City Hub', lat: 28.2096, lng: 83.9856 },
+      { label: 'Biratnagar', type: 'City Hub', lat: 26.4525, lng: 87.2718 },
+      { label: 'Tribhuvan International Airport (TIA)', type: 'airport', lat: 27.6968, lng: 85.3591 },
+      { label: 'Kathmandu Bus Park (Koteshwor)', type: 'bus_station', lat: 27.6786, lng: 85.3477 },
+      { label: 'Chitwan / Bharatpur', type: 'City Hub', lat: 27.6833, lng: 84.4333 }
+    ];
+
+    let currentMode = 'route';
+    let selectedDestination = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
+      const config = MODE_CONFIG[mode];
+      document.getElementById('searchModeIcon').textContent = config.icon;
+      document.getElementById('sidebarSearch').placeholder = config.placeholder;
+      document.getElementById('sidebarModeHint').textContent = config.hint;
+      document.getElementById('sidebarResults').innerHTML = '';
+      document.getElementById('sidebarSearch').value = '';
+      selectedDestination = null;
+
+      if (mode === 'route') {
+        showDefaultRouteSuggestions();
+      } else if (mode === 'traffic') {
+        toggleLayer('traffic');
+      } else if (mode === 'pois') {
+        toggleLayer('pois');
+      }
+    }
+
+    function showDefaultRouteSuggestions() {
+      const container = document.getElementById('sidebarSuggest');
+      container.innerHTML = DEFAULT_SUGGESTIONS.map(s =>
+        '<div class="autocomplete-item" onclick="selectSidebarItem({label:\'' + s.label.replace(/'/g, "\\'") + '\',type:\'' + s.type + '\',lat:' + s.lat + ',lng:' + s.lng + '})"><span>' + s.label + '</span> <span class="tag">' + s.type + '</span></div>'
+      ).join('');
+      container.style.display = 'block';
+    }
+
+    function clearSidebarSearch() {
+      document.getElementById('sidebarSearch').value = '';
+      document.getElementById('sidebarSuggest').style.display = 'none';
+      document.getElementById('sidebarResults').innerHTML = '';
+      selectedDestination = null;
+      if (currentMode === 'route') showDefaultRouteSuggestions();
+    }
+
+    function getSearchSuggestions(query) {
+      const q = query.toLowerCase();
+      return searchIndex.filter(item => item.label.toLowerCase().includes(q)).slice(0, 8);
+    }
+
+    function selectSidebarItem(item) {
+      document.getElementById('sidebarSuggest').style.display = 'none';
+      document.getElementById('sidebarSearch').value = item.label;
+      selectedDestination = item;
+
+      if (currentMode === 'route') {
+        renderSidebarRouteResult(item);
+      } else if (currentMode === 'weather') {
+        renderSidebarWeatherResult(item);
+      } else if (currentMode === 'traffic') {
+        renderSidebarTrafficResult(item);
+      } else if (currentMode === 'pois') {
+        renderSidebarPoisResult(item);
+      } else if (currentMode === 'sos') {
+        renderSidebarSosResult(item);
+      }
+    }
+
+    function renderSidebarRouteResult(dest) {
+      const results = document.getElementById('sidebarResults');
+      const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu (default)' };
+
+      results.innerHTML =
+        '<div class="result-card" onclick="calculateSidebarRoute()">' +
+          '<div class="result-card-title">🛣️ ' + dest.label + '</div>' +
+          '<div class="result-card-sub">' +
+            '<span class="result-badge">ROUTE</span>' +
+            '<span>From: ' + origin.label + '</span>' +
+          '</div>' +
+          '<div style="margin-top:8px; display:flex; gap:6px;">' +
+            '<button class="pref-pill active" onclick="setRoutePref(\'fastest\'); renderSidebarRouteResult(selectedDestination)">⚡ Fastest</button>' +
+            '<button class="pref-pill" onclick="setRoutePref(\'shortest\'); renderSidebarRouteResult(selectedDestination)">📏 Shortest</button>' +
+            '<button class="pref-pill" onclick="setRoutePref(\'scenic\'); renderSidebarRouteResult(selectedDestination)">🏔️ Scenic</button>' +
+          '</div>' +
+          '<div style="margin-top:8px;">' +
+            '<select id="sidebarVehicle" onchange="activeVehicle=this.value; calculateSidebarRoute()" style="width:100%; padding:6px 10px; background:rgba(0,0,0,0.35); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.75rem; font-weight:600;">' +
+              '<option value="car">🚗 Car / Sedan</option>' +
+              '<option value="suv_4wd">🚙 4WD / Jeep</option>' +
+              '<option value="motorbike">🏍️ Motorcycle</option>' +
+              '<option value="bus_truck">🚌 Bus / Truck</option>' +
+              '<option value="ev">⚡ EV (Electric)</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>';
+    }
+
+    async function calculateSidebarRoute() {
+      if (!selectedDestination) return;
+      const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+      const dest = selectedDestination;
+      const results = document.getElementById('sidebarResults');
+
+      try {
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true';
+        const res = await fetch(url).then(r => r.json());
+        if (res.code !== 'Ok' || !res.routes.length) {
+          results.innerHTML += '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">No route found</div></div>';
+          return;
+        }
+
+        const routes = res.routes;
+        const chosen = activeRoutePreference === 'shortest'
+          ? routes.reduce((a, b) => (a.distance <= b.distance ? a : b))
+          : routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
+
+        const km = (chosen.distance / 1000).toFixed(1);
+        const hrs = (chosen.duration / 3600).toFixed(1);
+        const fuelLiters = (chosen.distance / 1000 / 12).toFixed(1);
+        const fuelCost = Math.round(fuelLiters * 175);
+
+        if (routeLayerGroup) map.removeLayer(routeLayerGroup);
+        const casing = L.geoJSON(chosen.geometry, { style: { color: '#0b192c', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+        const core = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
+        routeLayerGroup = L.layerGroup([casing, core]).addTo(map);
+
+        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
+
+        const routeNames = chosen.geometry.coordinates ? 'Calculated Route' : dest.label;
+        results.innerHTML =
+          '<div class="result-card" style="border-color:rgba(245,158,11,0.4);">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+              '<span class="result-badge">' + activeRoutePreference.toUpperCase() + ' · ' + activeVehicle.toUpperCase() + '</span>' +
+              '<span style="font-size:0.72rem; color:var(--text-secondary);">' + routeNames + '</span>' +
+            '</div>' +
+            '<div class="metric-grid" style="margin-bottom:0;">' +
+              '<div class="metric-box"><span class="metric-label">Distance</span><span class="metric-val highlight">' + km + ' km</span></div>' +
+              '<div class="metric-box"><span class="metric-label">Drive Time</span><span class="metric-val">' + hrs + ' hrs</span></div>' +
+              '<div class="metric-box"><span class="metric-label">Est. Fuel</span><span class="metric-val">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
+              '<div class="metric-box"><span class="metric-label">Origin</span><span class="metric-val" style="font-size:0.75rem;">' + origin.label + '</span></div>' +
+            '</div>' +
+          '</div>';
+      } catch (err) {
+        results.innerHTML += '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div></div>';
+      }
+    }
+
+    async function renderSidebarWeatherResult(place) {
+      const results = document.getElementById('sidebarResults');
+      results.innerHTML = '<div class="weather-card"><div style="color:var(--text-secondary);">⏳ Loading weather for ' + place.label + '...</div></div>';
+
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m').then(r => r.json());
+        if (res.current) {
+          const temp = Math.round(res.current.temperature_2m);
+          const wind = Math.round(res.current.wind_speed_10m || 0);
+          const codes = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Depositing rime fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',61:'Slight rain',63:'Moderate rain',65:'Heavy rain',71:'Slight snow',73:'Moderate snow',75:'Heavy snow',80:'Slight rain showers',81:'Moderate rain showers',82:'Violent rain showers',95:'Thunderstorm'};
+          const desc = codes[res.current.weather_code] || 'Fair';
+          const icon = res.current.weather_code <= 3 ? '☀️' : res.current.weather_code <= 48 ? '🌫️' : res.current.weather_code <= 65 ? '🌧️' : res.current.weather_code <= 82 ? '🌦️' : '⛈️';
+          results.innerHTML =
+            '<div class="weather-card">' +
+              '<div class="weather-main">' +
+                '<span style="font-size:2.5rem;">' + icon + '</span>' +
+                '<div>' +
+                  '<div class="weather-temp">' + temp + '°C</div>' +
+                  '<div class="weather-meta">' + desc + ' · Wind ' + wind + ' km/h</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="result-card-sub" style="margin-top:4px;">' +
+                '<span>📍 ' + place.label + '</span>' +
+              '</div>' +
+            '</div>';
+        } else {
+          results.innerHTML = '<div class="weather-card"><div class="result-card-title">Weather unavailable</div></div>';
+        }
+      } catch (e) {
+        results.innerHTML = '<div class="weather-card"><div class="result-card-title" style="color:#ff4d6d;">Weather fetch failed</div></div>';
+      }
+    }
+
+    function renderSidebarTrafficResult(place) {
+      const results = document.getElementById('sidebarResults');
+      map.flyTo([place.lat, place.lng], 12, { duration: 1.2 });
+      toggleLayer('traffic');
+      results.innerHTML =
+        '<div class="result-card" style="border-color:rgba(245,158,11,0.4);">' +
+          '<div class="result-card-title">🚦 Traffic: ' + place.label + '</div>' +
+          '<div class="result-card-sub"><span>Live traffic layer activated</span></div>' +
+          '<div style="margin-top:10px; padding:10px; background:rgba(245,158,11,0.1); border-radius:8px; font-size:0.78rem; color:#fbbf24;">Traffic data refreshes every 5 minutes via Worker API. Use the right-side toggles to adjust layers.</div>' +
+        '</div>';
+    }
+
+    function renderSidebarPoisResult(place) {
+      const results = document.getElementById('sidebarResults');
+      const pois = (window.NEPAL_DATA?.places || []).filter(p => p.type === 'fuel' || p.type === 'ev' || p.type === 'hospital' || p.type === 'police' || p.type === 'rest_area');
+      const nearby = pois.slice(0, 8);
+
+      if (!nearby.length) {
+        results.innerHTML = '<div class="result-card"><div class="result-card-title">No POIs found nearby</div></div>';
+        return;
+      }
+
+      results.innerHTML = nearby.map(p =>
+        '<div class="poi-list-item" onclick="focusMapLocation(' + p.lat + ', ' + p.lng + ', \'' + p.name.replace(/'/g, "\\'") + '\')">' +
+          '<span class="poi-icon">' + (p.type === 'fuel' ? '⛽' : p.type === 'ev' ? '⚡' : p.type === 'hospital' ? '🏥' : p.type === 'police' ? '👮' : '🛣️') + '</span>' +
+          '<div class="poi-info">' +
+            '<div class="poi-name">' + p.name + '</div>' +
+            '<div class="poi-loc">' + p.location + ' · ' + p.highway + '</div>' +
+          '</div>' +
+        '</div>'
+      ).join('');
+
+      toggleLayer('pois');
+      map.flyTo([place.lat, place.lng], 13, { duration: 1.2 });
+    }
+
+    function renderSidebarSosResult(place) {
+      const results = document.getElementById('sidebarResults');
+      const contacts = (window.NEPAL_DATA?.emergencyContacts || []).slice(0, 6);
+
+      if (!contacts.length) {
+        results.innerHTML = '<div class="result-card"><div class="result-card-title">Emergency contacts unavailable</div></div>';
+        return;
+      }
+
+      results.innerHTML =
+        '<div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px;">📍 ' + place.label + '</div>' +
+        contacts.map(c =>
+          '<div class="sos-tile-sidebar">' +
+            '<div>' +
+              '<div style="font-size:0.75rem; color:var(--text-secondary);">' + c.icon + ' ' + c.type + '</div>' +
+              '<div class="sos-num">' + c.number + '</div>' +
+            '</div>' +
+            '<a href="tel:' + c.number + '" class="btn-dial-small">📞 Call</a>' +
+          '</div>'
+        ).join('');
+    }
+
     // Start App
     window.addEventListener('DOMContentLoaded', () => {
+      loadTheme();
+      loadUserSession();
       initMap();
-      setupAutocomplete('fromInput', 'fromSuggest');
-      setupAutocomplete('toInput', 'toSuggest');
+      setMode('route');
+
+      const sidebarSearch = document.getElementById('sidebarSearch');
+      const sidebarSuggest = document.getElementById('sidebarSuggest');
+      sidebarSearch.addEventListener('input', debounce(async (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (query.length < 2) {
+          if (currentMode === 'route') showDefaultRouteSuggestions();
+          else sidebarSuggest.style.display = 'none';
+          return;
+        }
+
+        sidebarSuggest.innerHTML = '';
+        const matches = getSearchSuggestions(query);
+        matches.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = '<span>' + item.label + '</span> <span class="tag">' + item.type + '</span>';
+          div.onclick = () => selectSidebarItem(item);
+          sidebarSuggest.appendChild(div);
+        });
+
+        if (matches.length === 0 && query.length >= 3) {
+          try {
+            const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json());
+            (res.features || []).forEach(f => {
+              const name = f.properties.name || '';
+              const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
+              const label = area ? name + ', ' + area : name;
+              const div = document.createElement('div');
+              div.className = 'autocomplete-item';
+              div.innerHTML = '<span>' + label + '</span> <span class="tag">Map Place</span>';
+              div.onclick = () => selectSidebarItem({ label, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] });
+              sidebarSuggest.appendChild(div);
+            });
+          } catch (err) {}
+        }
+
+        sidebarSuggest.style.display = sidebarSuggest.children.length ? 'block' : 'none';
+      }, 250));
+
+      document.addEventListener('click', (e) => {
+        if (!sidebarSearch.contains(e.target) && !sidebarSuggest.contains(e.target)) {
+          sidebarSuggest.style.display = 'none';
+        }
+      });
     });
   </script>
 </body>

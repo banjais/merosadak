@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mero Sadak — Distance Calculator</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; color: #1e293b; }
+    .embed-container { width: 100%; max-width: 480px; margin: 0 auto; padding: 16px; }
+    .embed-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 20px; }
+    .embed-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #0f172a; }
+    .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .input-group input { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none; }
+    .input-group input:focus { border-color: #3b82f6; }
+    .btn-calc { width: 100%; padding: 10px; background: #0f172a; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-calc:hover { background: #1e293b; }
+    #map { height: 320px; border-radius: 8px; margin-top: 12px; }
+    .result { margin-top: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; font-size: 0.85rem; }
+    .result strong { color: #0f172a; }
+    .footer { text-align: center; margin-top: 12px; font-size: 0.75rem; color: #64748b; }
+    .footer a { color: #3b82f6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="embed-container">
+    <div class="embed-card">
+      <div class="embed-title">📍 Nepal Distance Calculator</div>
+      <div class="input-group">
+        <input type="text" id="fromInput" placeholder="From (e.g. Kathmandu, NH01)" />
+        <input type="text" id="toInput" placeholder="To (e.g. Pokhara, NH47)" />
+      </div>
+      <button class="btn-calc" onclick="calc()">Calculate Distance & Route</button>
+      <div id="map"></div>
+      <div class="result" id="result" style="display:none;"></div>
+      <div class="footer">Powered by <a href="https://merosadak.web.app" target="_blank">Mero Sadak</a></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const WORKER_URL = 'https://merosadak.banjais.workers.dev';
+    let map, routeLayer;
+    const mapEl = document.getElementById('map');
+
+    function initMap() {
+      map = L.map('map').setView([28.3949, 84.1240], 7);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }).addTo(map);
+    }
+
+    async function calc() {
+      const from = document.getElementById('fromInput').value.trim();
+      const to = document.getElementById('toInput').value.trim();
+      if (!from || !to) { alert('Enter both origin and destination'); return; }
+
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = '<strong>Calculating…</strong>';
+
+      try {
+        const f = await geocode(from);
+        const t = await geocode(to);
+        if (!f || !t) { resultEl.innerHTML = '<strong>Could not find one or both places.</strong>'; return; }
+
+        const url = `https://router.project-osrm.org/route/v1/driving/${f.lon},${f.lat};${t.lon},${t.lat}?overview=full&geometries=geojson`;
+        const data = await fetch(url).then(r => r.json());
+        if (data.code !== 'Ok' || !data.routes.length) { resultEl.innerHTML = '<strong>No route found.</strong>'; return; }
+
+        const route = data.routes[0];
+        const km = (route.distance / 1000).toFixed(1);
+        const hrs = (route.duration / 3600).toFixed(1);
+
+        if (routeLayer) map.removeLayer(routeLayer);
+        const casing = L.geoJSON(route.geometry, { style: { color: '#0f172a', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+        const core = L.geoJSON(route.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
+        routeLayer = L.layerGroup([casing, core]).addTo(map);
+        map.flyToBounds(routeLayer.getBounds(), { padding: [40, 40], duration: 1.2 });
+
+        resultEl.innerHTML = `<strong>Distance:</strong> ${km} km<br><strong>Drive Time:</strong> ${hrs} hrs<br><strong>Route:</strong> ${from} → ${to}`;
+      } catch (e) {
+        resultEl.innerHTML = '<strong>Error calculating route.</strong>';
+      }
+    }
+
+    async function geocode(q) {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=1`);
+        const data = await r.json();
+        if (data[0]) return { lat: +data[0].lat, lon: +data[0].lon };
+      } catch (e) {}
+      return null;
+    }
+
+    window.addEventListener('DOMContentLoaded', initMap);
+  </script>
+</body>
+</html>
