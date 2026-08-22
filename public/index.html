@@ -450,7 +450,7 @@
     // ==========================================
     // 1. Map Initialization & Tile Layers
     // ==========================================
-    function initMap() {
+    async function initMap() {
       map = L.map('map', {
         center: [28.3949, 84.1240],
         zoom: 7,
@@ -461,7 +461,6 @@
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // Tile Options
       tileLayers.voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap &copy; CARTO | DOR Nepal GIS'
       });
@@ -476,7 +475,6 @@
 
       tileLayers.voyager.addTo(map);
 
-      // Geolocation-first: try to center on user's actual location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.5 }),
@@ -485,20 +483,14 @@
         );
       }
 
-      // Initialize Layer Groups
       layerGroups.weather = L.layerGroup();
       layerGroups.traffic = L.layerGroup();
-      layerGroups.incidents = L.layerGroup().addTo(map);
+      layerGroups.incidents = L.layerGroup();
       layerGroups.pois = L.layerGroup();
 
-      // Map Click Event for Pin Picking
       map.on('click', handleMapClick);
 
-      // Render preset features
-      renderIncidentsOnMap();
-      renderPassesAndWeatherOnMap();
-      renderTrafficCorridorsOnMap();
-      renderPoisOnMap();
+      loadStaticMapFeatures();
     }
 
     function cycleMapStyle() {
@@ -521,19 +513,46 @@
     // ==========================================
     // 2. Data Loading & Highway GeoJSON Layer
     // ==========================================
+    async function loadStaticMapFeatures() {
+      await loadStaticData();
+      renderHighwayDirectory();
+      loadMajorHighwaysOverview(allHighwaysIndex);
+      loadNepalBoundary();
+
+      if (layerVisibility.incidents) {
+        await fetchLiveIncidents();
+      }
+      if (layerVisibility.weather) {
+        await fetchLiveWeather();
+      }
+      if (layerVisibility.traffic) {
+        await fetchLiveTraffic();
+      }
+      if (layerVisibility.pois) {
+        await fetchLivePois();
+      }
+
+      document.getElementById('gisStatusText').innerText = '✅ GIS Live — Worker Connected';
+      restoreFromUrl();
+    }
+
     async function loadData() {
       try {
         const v = Date.now();
-        const [palikaRes, hwyRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes] = await Promise.all([
+          fetch(`data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         allHighwaysIndex = hwyRes;
 
-        // Build Unified Search Index
         if (window.NEPAL_DATA && NEPAL_DATA.cities) {
           NEPAL_DATA.cities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
+        }
+        if (window.NEPAL_DATA && NEPAL_DATA.places) {
+          NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng }));
         }
 
         palikaRes.forEach(p => {
@@ -546,17 +565,8 @@
           searchIndex.push({ label: `${h.code}: ${h.name}`, type: 'Highway', code: h.code, file: h.file });
         });
 
-        // Load National Boundary (non-blocking)
-        loadNepalBoundary();
-
-        // Render Highway directory modal content
         renderHighwayDirectory();
-
-        // Load sample highway lines for high-visibility overview
         loadMajorHighwaysOverview(hwyRes);
-
-        document.getElementById('gisStatusText').innerText = '✅ 80 Highways & GIS Live';
-        restoreFromUrl();
       } catch (err) {
         console.error('Data initialization error:', err);
       }
@@ -874,6 +884,12 @@
         highwayGeoJsonLayers.forEach(l => layerVisibility.highways ? l.addTo(map) : map.removeLayer(l));
       } else if (layerGroups[name]) {
         layerVisibility[name] ? layerGroups[name].addTo(map) : map.removeLayer(layerGroups[name]);
+        if (layerVisibility[name]) {
+          if (name === 'incidents') fetchLiveIncidents();
+          if (name === 'weather') fetchLiveWeather();
+          if (name === 'traffic') fetchLiveTraffic();
+          if (name === 'pois') fetchLivePois();
+        }
       }
     }
 
@@ -893,71 +909,8 @@
       );
     }
 
-    function renderIncidentsOnMap() {
-      if (!window.NEPAL_DATA) return;
-      NEPAL_DATA.incidents.forEach(inc => {
-        const icon = L.divIcon({
-          html: `<div style="background:#ef4444; width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px rgba(239,68,68,0.7); display:flex; align-items:center; justify-content:center; font-size:11px;">⚠️</div>`,
-          iconSize: [22, 22],
-          className: ''
-        });
-        L.marker([inc.lat, inc.lng], { icon }).addTo(layerGroups.incidents).bindPopup(`
-          <strong>${inc.title}</strong><br>
-          <span style="color:#f59e0b; font-weight:700;">Status: ${inc.status}</span><br>
-          <small>${inc.description}</small>
-        `);
-      });
-    }
-
-    function renderPassesAndWeatherOnMap() {
-      if (!window.NEPAL_DATA) return;
-      NEPAL_DATA.mountainPasses.forEach(p => {
-        const icon = L.divIcon({
-          html: `<div style="background:#3b82f6; width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px rgba(59,130,246,0.7); display:flex; align-items:center; justify-content:center; font-size:11px;">🏔️</div>`,
-          iconSize: [22, 22],
-          className: ''
-        });
-        L.marker([p.lat, p.lng], { icon }).addTo(layerGroups.weather).bindPopup(`
-          <strong>${p.name} (${p.altitude})</strong><br>
-          <span>Weather: ${p.temp} · ${p.condition}</span><br>
-          <small>Status: ${p.status}</small>
-        `);
-      });
-    }
-
-    function renderTrafficCorridorsOnMap() {
-      if (!window.NEPAL_DATA) return;
-      NEPAL_DATA.trafficCorridors.forEach(trf => {
-        const icon = L.divIcon({
-          html: `<div style="background:${trf.statusColor}; width:20px; height:20px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:10px;">🚦</div>`,
-          iconSize: [20, 20],
-          className: ''
-        });
-        L.marker([trf.lat, trf.lng], { icon }).addTo(layerGroups.traffic).bindPopup(`
-          <strong>${trf.name}</strong><br>
-          <span>Avg Speed: ${trf.currentAvgSpeedKmh} km/h (Normal: ${trf.normalSpeedKmh} km/h)</span><br>
-          <small>${trf.cause}</small>
-        `);
-      });
-    }
-
-    function renderPoisOnMap() {
-      if (!window.NEPAL_DATA) return;
-      NEPAL_DATA.pois.forEach(poi => {
-        const iconSymbol = poi.type === 'ev' ? '⚡' : poi.type === 'fuel' ? '⛽' : '🏥';
-        const icon = L.divIcon({
-          html: `<div style="background:#10b981; width:22px; height:22px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:11px;">${iconSymbol}</div>`,
-          iconSize: [22, 22],
-          className: ''
-        });
-        L.marker([poi.lat, poi.lng], { icon }).addTo(layerGroups.pois).bindPopup(`
-          <strong>${poi.name}</strong><br>
-          <small>${poi.location}</small><br>
-          <span style="font-size:0.75rem; color:#10b981;">Open: ${poi.open}</span>
-        `);
-      });
-    }
-
+    // ==========================================
+    // 9. Floating FAB & Footer Menu
     // ==========================================
     // 9. Floating FAB & Footer Menu
     // ==========================================
@@ -1116,14 +1069,15 @@
     function renderPassesModal() {
       if (!window.NEPAL_DATA) return;
       const container = document.getElementById('passesListContainer');
-      container.innerHTML = NEPAL_DATA.mountainPasses.map(p => `
+      const passes = (NEPAL_DATA.places || []).filter(p => p.type === 'pass');
+      container.innerHTML = passes.map(p => `
         <div style="background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:700; color:#fff; font-size:0.95rem;">${p.name} <span class="hwy-badge" style="font-size:0.65rem; background:#3b82f6; color:#fff;">${p.altitude}</span></div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px;">${p.highway} · ${p.district}</div>
-            <div style="font-size:0.75rem; color:#10b981; margin-top:2px;">Weather: ${p.temp} · ${p.condition}</div>
+            <div style="font-weight:700; color:#fff; font-size:0.95rem;">${p.name} <span class="hwy-badge" style="font-size:0.65rem; background:#3b82f6; color:#fff;">${p.altitude || ''}</span></div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px;">${p.highway} · ${p.location}</div>
+            <div style="font-size:0.75rem; color:#10b981; margin-top:2px;">${p.condition || ''} · ${p.status || ''}</div>
           </div>
-          <button class="btn-header" onclick="focusMapLocation(${p.lat}, ${p.lng}, '${p.name}')">📍 Show</button>
+          <button class="btn-header" onclick="focusMapLocation(${p.lat}, ${p.lng}, '${p.name.replace(/'/g, "")}')">📍 Show</button>
         </div>
       `).join('');
     }
@@ -1244,7 +1198,6 @@
     // Start App
     window.addEventListener('DOMContentLoaded', () => {
       initMap();
-      loadData();
       setupAutocomplete('fromInput', 'fromSuggest');
       setupAutocomplete('toInput', 'toSuggest');
     });
