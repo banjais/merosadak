@@ -121,7 +121,7 @@ async function main() {
   }
 
   console.log('\nSync complete. The Worker now serves these files at:');
-  console.log(`  https://merosadak.banjais.workers.dev/api/data/<filename>`);
+  console.log(`  https://merosadak.banjays.workers.dev/api/data/<filename>`);
 }
 
 main();
