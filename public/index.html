@@ -73,28 +73,60 @@
     </div>
     <div class="drawer-nav">
       <div class="drawer-nav-item" onclick="openModal('highwayModal'); closeDrawer();">
-        <span class="drawer-icon">🛣️</span> Highway Directory
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19L20 5"></path><path d="M4 5l16 14"></path>
+          </svg>
+        </span> Highway Directory
       </div>
       <div class="drawer-nav-item" onclick="showMatrixPage(); closeDrawer();">
-        <span class="drawer-icon">📊</span> Distance Matrix
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </span> Distance Matrix
       </div>
       <div class="drawer-nav-item" onclick="openModal('reportModal'); closeDrawer();">
-        <span class="drawer-icon">🚧</span> Report Hazard
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </span> Report Hazard
       </div>
       <div class="drawer-nav-item" onclick="openModal('dialectModal'); closeDrawer();">
-        <span class="drawer-icon">🗣️</span> Transit Dialects
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </span> Transit Dialects
       </div>
       <div class="drawer-nav-item" onclick="openModal('passesModal'); closeDrawer();">
-        <span class="drawer-icon">🏔️</span> Mountain Passes
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3l4 8 5-5 5 15H3L8 3z"></path>
+          </svg>
+        </span> Mountain Passes
       </div>
       <div class="drawer-nav-item" onclick="openModal('sosModal'); closeDrawer();">
-        <span class="drawer-icon">🆘</span> Emergency SOS
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+        </span> Emergency SOS
       </div>
       <div class="drawer-nav-item" onclick="cycleMapStyle(); closeDrawer();">
-        <span class="drawer-icon">🗺️</span> Map Style
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </span> Map Style
       </div>
       <div class="drawer-nav-item" onclick="syncOfflineBundle(); closeDrawer();">
-        <span class="drawer-icon">📦</span> Offline Cache
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </span> Offline Cache
       </div>
     </div>
     <div class="drawer-footer">
@@ -153,25 +185,44 @@
   <aside class="app-sidebar" id="appSidebar">
     <div class="sidebar-scroll">
       <div class="sidebar-mode-tabs">
-        <button class="mode-tab active" data-mode="route" onclick="setMode('route')">
-          <span class="mode-tab-icon">📍</span> Route/ETA
-        </button>
-        <button class="mode-tab" data-mode="weather" onclick="setMode('weather')">
-          <span class="mode-tab-icon">⛅</span> Weather
-        </button>
-        <button class="mode-tab" data-mode="traffic" onclick="setMode('traffic')">
-          <span class="mode-tab-icon">🚦</span> Traffic
-        </button>
-        <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">
-          <span class="mode-tab-icon">⛽</span> POIS/EV
-        </button>
-        <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">
-          <span class="mode-tab-icon">🆘</span> SOS
-        </button>
+        <button class="mode-tab active" data-mode="route" onclick="setMode('route')">Route</button>
+        <button class="mode-tab" data-mode="weather" onclick="setMode('weather')">Weather</button>
+        <button class="mode-tab" data-mode="traffic" onclick="setMode('traffic')">Traffic</button>
+        <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">POIs</button>
+        <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">SOS</button>
       </div>
       <div class="sidebar-search-wrap">
-        <span class="search-mode-icon" id="searchModeIcon">📍</span>
-        <input type="text" id="sidebarSearch" placeholder="Where to? (destination)" autocomplete="off">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
+        <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </button>
+        <button class="icon-btn search-action-btn ai-btn" onclick="askAiRouteAdvisor()" title="AI Assistant">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+          </svg>
+        </button>
+        <button class="icon-btn search-action-btn map-btn" onclick="toggleSidebar()" title="Show Map">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </button>
         <button class="icon-btn search-clear-btn" onclick="clearSidebarSearch()" title="Clear">✕</button>
         <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
       </div>
@@ -185,9 +236,9 @@
         ========================================== -->
   <div class="map-toggle-fab" id="mapToggleFab" onclick="toggleMapToolbar()">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="4" y1="6" x2="20" y2="6"></line>
-      <line x1="4" y1="12" x2="20" y2="12"></line>
-      <line x1="4" y1="18" x2="20" y2="18"></line>
+      <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+      <polyline points="2 17 12 22 22 17"></polyline>
+      <polyline points="2 12 12 17 22 12"></polyline>
     </svg>
   </div>
   <div class="map-floating-toggles" id="mapFloatingToggles">
@@ -250,19 +301,35 @@
   <div class="bottom-app-bar" id="bottomAppBar">
     <div class="bottom-bar-actions" id="bottomBarActions">
       <button class="bar-action-btn" onclick="triggerGeolocation()">
-        <span class="bar-action-icon">📍</span>
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
+          </svg>
+        </span>
         <span class="bar-action-label">Locate Me</span>
       </button>
       <button class="bar-action-btn" onclick="askAiRouteAdvisor()">
-        <span class="bar-action-icon">✨</span>
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line>
+          </svg>
+        </span>
         <span class="bar-action-label">AI Assistant</span>
       </button>
       <button class="bar-action-btn" onclick="saveCurrentRoute()">
-        <span class="bar-action-icon">📌</span>
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </span>
         <span class="bar-action-label">Save Route</span>
       </button>
       <button class="bar-action-btn" onclick="toggleFullscreen()">
-        <span class="bar-action-icon">⛶</span>
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </span>
         <span class="bar-action-label">Fullscreen</span>
       </button>
     </div>
@@ -799,6 +866,40 @@
       menu.classList.toggle('is-open');
     }
 
+    function toggleSidebar() {
+      document.getElementById('appSidebar').classList.toggle('collapsed');
+    }
+
+    document.getElementById('appSidebar').addEventListener('click', function(e) {
+      if (this.classList.contains('collapsed') && e.target === this) {
+        this.classList.remove('collapsed');
+      }
+    });
+
+    function startVoiceSearch() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Voice search is not supported in this browser.');
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      const micBtn = document.querySelector('.mic-btn');
+      if (micBtn) micBtn.classList.add('listening');
+      recognition.start();
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById('sidebarSearch');
+        input.value = transcript;
+        input.dispatchEvent(new Event('input'));
+        if (micBtn) micBtn.classList.remove('listening');
+      };
+      recognition.onerror = () => { if (micBtn) micBtn.classList.remove('listening'); };
+      recognition.onend = () => { if (micBtn) micBtn.classList.remove('listening'); };
+    }
+
     // ==========================================
     // 9. Modals & Extended Features
     // ==========================================
@@ -1267,11 +1368,11 @@
     // 3. Sidebar Search & Mode Engine
     // ==========================================
     const MODE_CONFIG = {
-      route: { icon: '📍', placeholder: 'Where to? (destination)', hint: 'Search destinations, cities, airports, bus stations, and major places in Nepal' },
-      weather: { icon: '⛅', placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
-      traffic: { icon: '🚦', placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
-      pois: { icon: '⛽', placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
-      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
+      route: { placeholder: 'Where to?', hint: 'Search destinations, cities, airports, bus stations, and major places in Nepal' },
+      weather: { placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
+      traffic: { placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
+      pois: { placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
+      sos: { placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
     };
 
     const DEFAULT_SUGGESTIONS = [
@@ -1290,7 +1391,6 @@
       currentMode = mode;
       document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
       const config = MODE_CONFIG[mode];
-      document.getElementById('searchModeIcon').textContent = config.icon;
       document.getElementById('sidebarSearch').placeholder = config.placeholder;
       document.getElementById('sidebarModeHint').textContent = config.hint;
       document.getElementById('sidebarResults').innerHTML = '';
