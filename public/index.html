@@ -167,13 +167,13 @@
     <div class="modal-card" style="width:900px;">
       <div class="modal-header">
         <div class="modal-title">
-          <span>📊</span> <span>Nepal Cities Static Distance Matrix (Road km)</span>
+          <span>📊</span> <span>Nepal Cities Distance Matrix (~km)</span>
         </div>
         <button class="modal-close-btn" onclick="closeModal('staticMatrixModal')">✕</button>
       </div>
       <div class="modal-body">
         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px;">
-          Approximate road distances between major Nepal cities. Click any cell to plan a route.
+          Approximate straight-line distances between all Nepal cities with known coordinates. Click any cell to plan a route.
         </p>
         <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
           <table class="matrix-table" id="staticMatrixTable"></table>
@@ -398,6 +398,57 @@
 
       html += '</tbody>';
       table.innerHTML = html;
+    }
+
+    function toggleSidebarMatrix() {
+      const wrap = document.getElementById('sidebarMatrixWrap');
+      if (!wrap) return;
+      const visible = wrap.style.display !== 'none';
+      wrap.style.display = visible ? 'none' : 'block';
+      if (!visible) renderSidebarMatrix();
+    }
+
+    function renderSidebarMatrix() {
+      const wrap = document.getElementById('sidebarMatrixWrap');
+      if (!wrap || !distanceMatrixData) return;
+      const cities = distanceMatrixData.cities;
+      const matrix = distanceMatrixData.matrix;
+
+      let html = '<table style="width:100%; border-collapse:collapse; font-size:0.65rem; color:var(--text-primary); table-layout:fixed; min-width:calc(80px + ' + cities.length + ' * 48px);">';
+      html += '<thead><tr><th style="padding:4px 6px; background:rgba(255,255,255,0.06); position:sticky; left:0; z-index:2; text-align:left; font-weight:700; color:var(--accent-gold); min-width:80px;">From ↓</th>';
+      cities.forEach(c => { html += '<th style="padding:4px 6px; background:rgba(255,255,255,0.06); font-weight:600; color:var(--text-secondary); white-space:nowrap;">' + c.name + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      cities.forEach((city, i) => {
+        html += '<tr><td style="padding:4px 6px; background:rgba(15,23,42,0.95); position:sticky; left:0; z-index:1; font-weight:600; color:var(--accent-gold); white-space:nowrap;">' + city.name + '</td>';
+        matrix[i].forEach((km, j) => {
+          const cls = i === j ? 'color:var(--text-muted);' : 'cursor:pointer; transition:all 0.15s;';
+          const label = i === j ? '—' : km + ' km';
+          html += '<td style="padding:3px 5px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.04); border-right:1px solid rgba(255,255,255,0.03); ' + cls + '" onclick="planRouteFromMatrixSidebar(\'' + city.id + '\', \'' + cities[j].id + '\')">' + label + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function planRouteFromMatrixSidebar(fromId, toId) {
+      if (!distanceMatrixData) return;
+      const cities = distanceMatrixData.cities;
+      const fromCity = cities.find(c => c.id === fromId);
+      const toCity = cities.find(c => c.id === toId);
+      if (!fromCity || !toCity) return;
+      if (fromId === toId) return;
+
+      const origin = userOrigin || { lat: fromCity.lat, lng: fromCity.lng, label: fromCity.name };
+      const dest = { label: toCity.name, lat: toCity.lat, lng: toCity.lng };
+      selectedDestination = dest;
+
+      setMode('route');
+      document.getElementById('sidebarSearch').value = toCity.name;
+      renderSidebarRouteResult(dest);
+      calculateSidebarRoute();
     }
 
     async function planRouteFromMatrix(fromId, toId) {
@@ -1062,6 +1113,10 @@
               '<option value="bus_truck">🚌 Bus / Truck</option>' +
               '<option value="ev">⚡ EV (Electric)</option>' +
             '</select>' +
+          '</div>' +
+          '<div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--surface-border);">' +
+            '<button class="btn-header" onclick="toggleSidebarMatrix()" style="width:100%; justify-content:center;">📊 Nepal Cities Distance Matrix</button>' +
+            '<div id="sidebarMatrixWrap" style="display:none; margin-top:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.25);"></div>' +
           '</div>' +
         '</div>';
     }

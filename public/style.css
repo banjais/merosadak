@@ -1621,12 +1621,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Distance Matrix Table */
 .matrix-table {
   width: 100%;
+  min-width: calc(110px + 62 * 55px);
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.78rem;
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--surface-border);
+  table-layout: fixed;
 }
 
 .matrix-table th,
@@ -1686,6 +1688,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .matrix-table td.matrix-cell:hover {
   background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+#sidebarMatrixWrap table {
+  font-family: 'JetBrains Mono', monospace;
+}
+#sidebarMatrixWrap td:hover {
+  background: rgba(245, 158, 11, 0.15);
   color: var(--accent-gold);
   font-weight: 700;
 }
