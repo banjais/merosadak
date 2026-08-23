@@ -1377,6 +1377,155 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   color: var(--accent-gold);
 }
 
+/* Professional Report Card System */
+.report-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.report-card:hover {
+  background: rgba(30, 62, 98, 0.4);
+  border-color: var(--accent-gold);
+  transform: translateY(-1px);
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.report-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.report-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.report-type-badge.route { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.report-type-badge.weather { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+.report-type-badge.traffic { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.report-type-badge.poi { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.report-type-badge.sos { background: rgba(217, 4, 41, 0.2); color: #ff4d6d; }
+.report-type-badge.condition { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+.report-type-badge.matrix { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.report-type-badge.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+.report-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.report-ref {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.report-timestamp {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.report-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.report-status.active { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.report-status.pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.report-status.warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.report-status.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.report-status.info { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+
+.report-body {
+  padding: 14px;
+}
+
+.report-section {
+  margin-bottom: 10px;
+}
+
+.report-section:last-child {
+  margin-bottom: 0;
+}
+
+.report-section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.report-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--surface-border);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.report-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.report-footer-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* Milestone Progress Strip */
 .milestone-bar {
   position: relative;

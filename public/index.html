@@ -191,6 +191,7 @@
         <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">POIs</button>
         <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">SOS</button>
       </div>
+      <div class="weather-chips" id="weatherChips" style="display:none; padding: 0 12px 8px; gap:6px; flex-wrap:wrap;"></div>
       <div class="sidebar-search-wrap">
         <span class="search-icon">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -609,7 +610,7 @@
     async function loadData() {
       try {
         const v = Date.now();
-        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes, districtTerrainRes] = await Promise.all([
           fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
@@ -622,7 +623,8 @@
           fetch(`https://merosadak.banjays.workers.dev/api/data/traffic-corridors.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/incidents.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/pois.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjays.workers.dev/api/data/travel-time.json?v=${v}`).then(r => r.json()).catch(() => null)
+          fetch(`https://merosadak.banjays.workers.dev/api/data/travel-time.json?v=${v}`).then(r => r.json()).catch(() => null),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/district-terrain.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         allHighwaysIndex = hwyRes;
@@ -633,9 +635,20 @@
         window.__INCIDENTS__ = incidentsRes;
         window.__POIS__ = poisRes;
         window.__TRAVEL_TIME__ = travelTimeRes;
+        window.__DISTRICT_TERRAIN__ = districtTerrainRes;
 
         if (window.NEPAL_DATA && NEPAL_DATA.cities) {
-          NEPAL_DATA.cities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
+          const allCities = Object.values(NEPAL_DATA.cities).flat();
+          allCities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
+          const districtMap = {};
+          allCities.forEach(c => {
+            if (c.district) {
+              const d = c.district.toLowerCase();
+              if (!districtMap[d]) districtMap[d] = [];
+              districtMap[d].push({ name: c.name, lat: c.lat, lng: c.lng, province: c.province });
+            }
+          });
+          window.__DISTRICT_CITIES__ = districtMap;
         }
         if (window.NEPAL_DATA && NEPAL_DATA.places) {
           NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' }));
@@ -656,7 +669,19 @@
         });
 
         (districtRes || []).forEach(d => {
-          searchIndex.push({ label: `${d.district} District → ${d.hqCity} (${d.type})`, type: 'District HQ', district: d.district, hq: d.hqCity, hqType: d.type, lat: d.lat, lng: d.lng });
+          const hqName = d.hqCity || d.district;
+          const districtKey = d.district.toLowerCase();
+          searchIndex.push({
+            label: hqName,
+            subLabel: d.district + ' District',
+            type: 'District HQ',
+            district: d.district,
+            hq: hqName,
+            hqType: d.type,
+            lat: d.lat || 0,
+            lng: d.lng || 0,
+            searchTerms: [districtKey, (d.hqCity || '').toLowerCase()]
+          });
         });
 
         (blackspotsRes || []).forEach(bs => {
@@ -664,7 +689,33 @@
         });
 
         (weatherRes || []).forEach(wx => {
-          searchIndex.push({ label: wx.name, type: 'Weather Node', code: wx.highwayCode, lat: wx.lat, lng: wx.lng });
+          const hw = (wx.highwayCode || '').toLowerCase();
+          const cond = (wx.condition || '').toLowerCase();
+          const summary = (wx.summary || '').toLowerCase();
+          const conditionKeywords = {
+            'dense_fog': 'fog mist visibility low_visibility haze',
+            'mountain_shower': 'rain shower drizzle wet rain_monsoon',
+            'rain_monsoon': 'rain monsoon wet heavy_rain downpour',
+            'sunny': 'sunny clear hot sun bright',
+            'cloudy': 'cloudy overcast cloud grey',
+            'thunderstorm': 'thunder storm lightning thunderstorm electric'
+          };
+          const condKw = conditionKeywords[cond] || cond.replace(/_/g, ' ');
+          const summaryKw = summary.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+          const terms = [
+            wx.name && wx.name.toLowerCase(),
+            wx.nepaliName && wx.nepaliName.toLowerCase(),
+            hw,
+            hw.replace(/\s*\/\s*/g, '/').replace(/\s+/g, ''),
+            hw.replace(/h/g, 'nh').replace(/\/\s*/g, '/'),
+            cond,
+            cond.replace(/_/g, ' '),
+            condKw,
+            ...summaryKw,
+            wx.location && wx.location.toLowerCase(),
+            'weather', 'pass', 'fog', 'rain', 'landslide', 'snow', 'thunder', 'clear', 'cloud', 'wind', 'visibility'
+          ].filter(Boolean);
+          searchIndex.push({ label: wx.name, type: 'Weather Node', code: wx.highwayCode, lat: wx.lat, lng: wx.lng, searchTerms: terms, condition: wx.condition, summary: wx.summary, elevationM: wx.elevationM, highwayCode: wx.highwayCode });
         });
 
         renderHighwayDirectory();
@@ -1364,11 +1415,74 @@
 
 
     // ==========================================
+    // Cache System
+    // ==========================================
+
+    const weatherCache = new Map();
+    const weatherCacheMax = 50;
+    const weatherCoalescer = new Map();
+
+    function getWeatherCacheKey(lat, lng) {
+      return `${parseFloat(lat).toFixed(3)},${parseFloat(lng).toFixed(3)}`;
+    }
+
+    async function getCachedWeather(lat, lng) {
+      const key = getWeatherCacheKey(lat, lng);
+      if (weatherCache.has(key)) {
+        const entry = weatherCache.get(key);
+        weatherCache.delete(key);
+        weatherCache.set(key, entry);
+        return entry.data;
+      }
+      if (weatherCoalescer.has(key)) {
+        return weatherCoalescer.get(key);
+      }
+      const promise = fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu')
+        .then(r => r.json())
+        .then(data => {
+          weatherCoalescer.delete(key);
+          if (weatherCache.size >= weatherCacheMax) {
+            const firstKey = weatherCache.keys().next().value;
+            weatherCache.delete(firstKey);
+          }
+          weatherCache.set(key, { data, ts: Date.now() });
+          return data;
+        })
+        .catch(err => {
+          weatherCoalescer.delete(key);
+          throw err;
+        });
+      weatherCoalescer.set(key, promise);
+      return promise;
+    }
+
+    const SEARCH_CACHE_TTL = 5 * 60 * 1000;
+
+    function getCachedSearch(query) {
+      try {
+        const raw = sessionStorage.getItem('ms_search_' + query.toLowerCase());
+        if (!raw) return null;
+        const entry = JSON.parse(raw);
+        if (Date.now() - entry.ts > SEARCH_CACHE_TTL) {
+          sessionStorage.removeItem('ms_search_' + query.toLowerCase());
+          return null;
+        }
+        return entry.data;
+      } catch { return null; }
+    }
+
+    function setCachedSearch(query, data) {
+      try {
+        sessionStorage.setItem('ms_search_' + query.toLowerCase(), JSON.stringify({ ts: Date.now(), data }));
+      } catch {}
+    }
+
+    // ==========================================
     // 3. Sidebar Search & Mode Engine
     // ==========================================
     const MODE_CONFIG = {
       route: { placeholder: 'Where to?', hint: 'Search destinations, cities, airports, bus stations, and major places in Nepal' },
-      weather: { placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
+      weather: { placeholder: 'Mountain pass, highway (NH01), or city...', hint: 'Search any place, highway code, or mountain pass in Nepal for live weather conditions' },
       traffic: { placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
       pois: { placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
       sos: { placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
@@ -1393,23 +1507,240 @@
       } else if (mode === 'pois') {
         toggleLayer('pois');
       }
+
+      const weatherChips = document.getElementById('weatherChips');
+      if (mode === 'weather') {
+        weatherChips.style.display = 'flex';
+        weatherChips.innerHTML = (window.__WEATHER_NODES__ || []).map(wx =>
+          '<button class="chip-btn" onclick="document.getElementById(\'sidebarSearch\').value=\'' + wx.name + '\'; document.getElementById(\'sidebarSearch\').dispatchEvent(new Event(\'input\'))">' + wx.name + '</button>'
+        ).join('');
+      } else {
+        weatherChips.style.display = 'none';
+        weatherChips.innerHTML = '';
+      }
+    }
+
+    function detectCoordinates(query) {
+      const trimmed = query.trim();
+      const m = trimmed.match(/^(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)$/);
+      if (!m) return null;
+      const lat = parseFloat(m[1]);
+      const lng = parseFloat(m[2]);
+      if (isNaN(lat) || isNaN(lng)) return null;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+      return { lat, lng, label: `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, type: 'Coordinate' };
+    }
+
+    function detectWeatherCondition(query) {
+      const q = query.toLowerCase().trim();
+      const map = {
+        'fog': ['fog', 'mist', 'haze', 'visibility', 'dense_fog'],
+        'rain': ['rain', 'shower', 'drizzle', 'wet', 'rain_monsoon', 'mountain_shower', 'raining', 'rainy'],
+        'snow': ['snow', 'ice', 'sleet', 'freezing'],
+        'thunder': ['thunder', 'storm', 'lightning', 'thunderstorm'],
+        'clear': ['clear', 'sunny', 'sun', 'bright', 'hot'],
+        'cloud': ['cloud', 'overcast', 'grey', 'cloudy'],
+        'wind': ['wind', 'breeze', 'gust'],
+        'landslide': ['landslide', 'landslide', 'slip', 'fall', 'rockfall'],
+        'cold': ['cold', 'freezing', 'chill', 'snow'],
+        'hot': ['hot', 'heat', 'warm', 'sunny']
+      };
+      for (const [condition, keywords] of Object.entries(map)) {
+        if (keywords.some(kw => q.includes(kw))) {
+          return condition;
+        }
+      }
+      return null;
+    }
+
+    function detectIntent(query) {
+      const q = query.toLowerCase().trim();
+      const words = q.split(/[\s:]+/);
+      
+      const weatherKeywords = ['weather', 'forecast', 'temperature', 'rain', 'fog', 'thunder', 'snow', 'clear', 'cloud', 'wind', 'cold', 'hot', 'sunny', 'cloudy', 'mist', 'haze', 'visibility', 'drizzle', 'shower', 'storm', 'lightning', 'ice', 'sleet', 'freezing', 'chill', 'heat', 'warm', 'breeze', 'gust', 'landslide'];
+      const trafficKeywords = ['traffic', 'jam', 'congestion', 'road condition', 'accident', 'blockade', 'closure', 'delay', 'standstill', 'heavy traffic', 'smooth', 'flow', 'vehicle', 'cars', 'trucks', 'bus', 'jeep', 'motorcycle', 'roadwork', 'construction', 'excavation', 'checkpost', 'queue', 'slow'];
+      const poiKeywords = ['pois', 'points of interest', 'places', 'hospital', 'hospitals', 'fuel', 'petrol', 'gas station', 'ev charger', 'charging station', 'restaurant', 'hotel', 'lodge', 'police', 'bank', 'atm', 'school', 'college', 'temple', 'monastery', 'park', 'museum', 'cinema', 'mall', 'market', 'shop', 'pharmacy', 'clinic', 'emergency', 'rescue', 'toilet', 'eating', 'food', 'near me', 'nearby'];
+      const sosKeywords = ['sos', 'emergency', 'helpline', 'help', 'rescue', 'ambulance', 'fire', 'disaster', 'urgent', 'call'];
+      
+      const routeKeywords = ['how to reach', 'directions to', 'navigate to', 'route to', 'way to', 'distance to', 'travel to'];
+      
+      let weatherScore = 0, trafficScore = 0, poiScore = 0, sosScore = 0, routeScore = 0;
+      
+      if (weatherKeywords.some(kw => q.includes(kw))) weatherScore += 10;
+      if (trafficKeywords.some(kw => q.includes(kw))) trafficScore += 10;
+      if (poiKeywords.some(kw => q.includes(kw))) poiScore += 10;
+      if (sosKeywords.some(kw => q.includes(kw))) sosScore += 10;
+      if (routeKeywords.some(kw => q.includes(kw))) routeScore += 5;
+      
+      if (q.includes('weather of') || q.includes('weather in') || q.includes('weather for') || q.includes("weather's") || q.includes('weather:')) weatherScore += 15;
+      if (q.includes('traffic on') || q.includes('traffic in') || q.includes('traffic:')) trafficScore += 15;
+      if (q.includes('near me') || q.includes('nearby')) poiScore += 8;
+      if (q.includes('hospital')) poiScore += 12;
+      if (q.includes('fuel')) poiScore += 10;
+      
+      const scores = { weather: weatherScore, traffic: trafficScore, pois: poiScore, sos: sosScore, route: routeScore };
+      const bestMode = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+      
+      if (bestMode[1] === 0) return { mode: 'route', confidence: 0, cleanQuery: query };
+      return { mode: bestMode[0], confidence: bestMode[1], cleanQuery: query };
+    }
+
+    function cleanQuery(query, mode) {
+      const q = query.toLowerCase().trim();
+      const stopWords = ['weather', 'traffic', 'pois', 'sos', 'emergency', 'forecast', 'temperature', 'condition', 'road', 'near', 'nearby', 'me', 'of', 'in', 'for', 'at', 'on', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'may', 'might', 'must', 'can', 'could', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'here', 'there', 'where', 'when', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'because', 'but', 'and', 'or', 'if', 'while', 'although', 'though', 'until', 'while', 'since', 'whether', 'while', 'hospital', 'hospitals', 'fuel', 'petrol', 'restaurant', 'hotel', 'police', 'bank', 'atm', 'school', 'college', 'temple', 'park', 'museum', 'mall', 'market', 'shop', 'pharmacy', 'clinic', 'rescue', 'ambulance', 'fire', 'disaster', 'urgent', 'call', 'help', 'helpline', 'contact', 'number', 'info', 'information', 'details', 'find', 'search', 'show', 'get', 'tell', 'need', 'want', 'looking', 'please'];
+      
+      let cleaned = q;
+      stopWords.forEach(word => {
+        const regex = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+        cleaned = cleaned.replace(regex, '');
+      });
+      
+      cleaned = cleaned.replace(/[:']s/g, ' ').replace(/\s+/g, ' ').trim();
+      return cleaned || query;
     }
 
     function getSearchSuggestions(query) {
       const q = query.toLowerCase();
-      return searchIndex.filter(item => {
-        const label = item.label.toLowerCase();
+      const matches = searchIndex.filter(item => {
+        const label = (item.label || '').toLowerCase();
+        const subLabel = (item.subLabel || '').toLowerCase();
         const code = (item.code || '').toLowerCase();
-        const district = (item.district || '').toLowerCase();
-        const hq = (item.hq || '').toLowerCase();
-        return label.includes(q) || code.includes(q) || district.includes(q) || hq.includes(q);
-      }).slice(0, 8);
+        const terms = (item.searchTerms || []).map(t => t.toLowerCase());
+        return label.includes(q) || subLabel.includes(q) || code.includes(q) || terms.some(t => t.includes(q));
+      });
+
+      const districtMatches = matches.filter(m => m.type === 'District HQ');
+      const districtNames = districtMatches.map(m => (m.district || '').toLowerCase());
+      const directDistrictMatch = Object.keys(window.__DISTRICT_CITIES__ || {}).find(d => d.includes(q) || q.includes(d));
+      const allDistrictNames = [...new Set([...districtNames, directDistrictMatch].filter(Boolean))];
+
+      if (currentMode === 'weather') {
+        const weatherMatches = matches.filter(m => m.type === 'Weather Node');
+        const otherMatches = matches.filter(m => m.type !== 'Weather Node');
+        
+        const condition = detectWeatherCondition(query);
+        if (condition && weatherMatches.length === 0 && allDistrictNames.length === 0) {
+          const condFiltered = searchIndex.filter(item => {
+            if (item.type !== 'Weather Node') return false;
+            const terms = (item.searchTerms || []).map(t => t.toLowerCase());
+            const condMatch = item.condition && item.condition.toLowerCase().includes(condition);
+            const termMatch = terms.some(t => t.includes(condition));
+            return condMatch || termMatch;
+          });
+          const unique = [];
+          const seen = new Set();
+          condFiltered.forEach(item => {
+            if (!seen.has(item.label)) {
+              seen.add(item.label);
+              unique.push(item);
+            }
+          });
+          return unique.slice(0, 8);
+        }
+        
+        if (allDistrictNames.length > 0) {
+          const districtCities = [];
+          const seen = new Set();
+          const terrainMap = {};
+          (window.__DISTRICT_TERRAIN__ || []).forEach(t => { terrainMap[t.district.toLowerCase()] = t.terrain; });
+          
+          allDistrictNames.forEach(dn => {
+            const terrain = terrainMap[dn] || 'hills';
+            const isMixed = terrain.includes('mixed');
+            const cities = window.__DISTRICT_CITIES__[dn] || [];
+            const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
+            const sourceList = citiesWithCoords.length > 0 ? citiesWithCoords : cities.slice(0, 5);
+            
+            if (!isMixed && sourceList.length > 0) {
+              const hq = sourceList[0];
+              if (!seen.has(hq.name)) {
+                seen.add(hq.name);
+                districtCities.push({ label: hq.name, type: 'City Hub', lat: hq.lat, lng: hq.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District' });
+              }
+            } else {
+              sourceList.forEach(c => {
+                if (!seen.has(c.name)) {
+                  seen.add(c.name);
+                  districtCities.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District · ' + terrain.replace(/_/g, ' ') });
+                }
+              });
+            }
+          });
+          return districtCities.slice(0, 8);
+        }
+        
+        const combined = [...weatherMatches, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
+        return combined.slice(0, 8);
+      }
+
+      const districtHqMatches = matches.filter(m => m.type === 'District HQ');
+      const otherMatches = matches.filter(m => m.type !== 'District HQ');
+      const relatedPlaces = [];
+
+      if (allDistrictNames.length > 0) {
+        allDistrictNames.forEach(dn => {
+          const cities = window.__DISTRICT_CITIES__[dn] || [];
+          cities.forEach(c => {
+            if (!relatedPlaces.some(r => r.label === c.name)) {
+              relatedPlaces.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn });
+            }
+          });
+        });
+      }
+
+      districtHqMatches.forEach(dh => {
+        if (!relatedPlaces.some(r => r.label === dh.label)) {
+          relatedPlaces.push(dh);
+        }
+        (airportsRes || []).forEach(a => {
+          if ((a.district || '').toLowerCase() === (dh.district || '').toLowerCase()) {
+            if (!relatedPlaces.some(r => r.label === `${a.code} — ${a.name}`)) {
+              relatedPlaces.push({ label: `${a.code} — ${a.name}`, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+            }
+          }
+        });
+        (placesRes || []).forEach(p => {
+          if ((p.location || '').toLowerCase().includes((dh.district || '').toLowerCase())) {
+            if (!relatedPlaces.some(r => r.label === p.name)) {
+              relatedPlaces.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
+            }
+          }
+        });
+      });
+
+      const combined = [...relatedPlaces, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
+      return combined.slice(0, 8);
     }
 
     function selectSidebarItem(item) {
       document.getElementById('sidebarSuggest').style.display = 'none';
-      document.getElementById('sidebarSearch').value = item.label;
-      selectedDestination = item;
+      let dest = item;
+
+      if (item.type === 'Coordinate') {
+        document.getElementById('sidebarSearch').value = item.label;
+        map.flyTo([item.lat, item.lng], 14, { duration: 1.2 });
+        L.popup().setLatLng([item.lat, item.lng]).setContent('<strong>' + item.label + '</strong>').openOn(map);
+        return;
+      }
+
+      if (item.type === 'District HQ') {
+        const hqName = item.hq || item.label;
+        let lat = item.lat || 0;
+        let lng = item.lng || 0;
+
+        if ((!lat || lat === 0) && window.NEPAL_DATA && NEPAL_DATA.cities) {
+          const allCities = Object.values(NEPAL_DATA.cities).flat();
+          const cityMatch = allCities.find(c => c.name && c.name.toLowerCase() === hqName.toLowerCase());
+          if (cityMatch) {
+            lat = cityMatch.lat || 0;
+            lng = cityMatch.lng || 0;
+          }
+        }
+        dest = Object.assign({}, item, { label: hqName, lat, lng });
+      }
+
+      document.getElementById('sidebarSearch').value = dest.label;
+      selectedDestination = dest;
 
       if (currentMode === 'route') {
         renderSidebarRouteResult(item);
@@ -1502,18 +1833,39 @@
       }
     }
 
-    async function renderSidebarWeatherResult(place) {
+    function renderSidebarWeatherResult(place) {
       const results = document.getElementById('sidebarResults');
       results.innerHTML = '<div class="weather-card"><div style="color:var(--text-secondary);">⏳ Loading weather for ' + place.label + '...</div></div>';
 
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m').then(r => r.json());
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu').then(r => r.json());
         if (res.current) {
           const temp = Math.round(res.current.temperature_2m);
           const wind = Math.round(res.current.wind_speed_10m || 0);
+          const tmax = res.daily && res.daily.temperature_2m_max ? Math.round(res.daily.temperature_2m_max[0]) : null;
+          const tmin = res.daily && res.daily.temperature_2m_min ? Math.round(res.daily.temperature_2m_min[0]) : null;
           const codes = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Depositing rime fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',61:'Slight rain',63:'Moderate rain',65:'Heavy rain',71:'Slight snow',73:'Moderate snow',75:'Heavy snow',80:'Slight rain showers',81:'Moderate rain showers',82:'Violent rain showers',95:'Thunderstorm'};
           const desc = codes[res.current.weather_code] || 'Fair';
           const icon = res.current.weather_code <= 3 ? '☀️' : res.current.weather_code <= 48 ? '🌫️' : res.current.weather_code <= 65 ? '🌧️' : res.current.weather_code <= 82 ? '🌦️' : '⛈️';
+          const elev = place.elevationM ? '<span>⛰️ ' + place.elevationM + ' m</span>' : (place.lat ? '<span style="font-size:0.7rem; color:var(--text-muted);">' + place.lat.toFixed(2) + ', ' + place.lng.toFixed(2) + '</span>' : '');
+          const minMax = (tmax !== null && tmin !== null) ? '<div style="margin-top:4px; font-size:0.78rem; color:var(--text-secondary);">H: ' + tmax + '°C · L: ' + tmin + '°C</div>' : '';
+          const humidity = Math.round(res.current.relative_humidity_2m || 0);
+          const precip = Math.round((res.current.precipitation || 0) * 10) / 10;
+          const feelsLike = Math.round(res.current.apparent_temperature || temp);
+          const pressure = res.current.surface_pressure ? Math.round(res.current.surface_pressure) : null;
+          const isFog = res.current.weather_code === 45 || res.current.weather_code === 48;
+          const isRain = precip > 0 || [51,53,55,61,63,65,80,81,82,95].includes(res.current.weather_code);
+          const weatherBadges = [];
+          if (isRain) weatherBadges.push('<span style="font-size:0.7rem; background:rgba(59,130,246,0.2); color:#60a5fa; padding:2px 6px; border-radius:4px;">🌧️ Rain</span>');
+          if (isFog) weatherBadges.push('<span style="font-size:0.7rem; background:rgba(148,163,184,0.2); color:#94a3b8; padding:2px 6px; border-radius:4px;">🌫️ Fog</span>');
+          if (res.current.weather_code === 95) weatherBadges.push('<span style="font-size:0.7rem; background:rgba(245,158,11,0.2); color:#fbbf24; padding:2px 6px; border-radius:4px;">⛈️ Thunder</span>');
+          const badgeRow = weatherBadges.length ? '<div style="margin-top:6px; display:flex; gap:4px; flex-wrap:wrap;">' + weatherBadges.join('') + '</div>' : '';
+          const extraMeta = '<div style="margin-top:6px; font-size:0.75rem; color:var(--text-secondary); display:flex; gap:10px; flex-wrap:wrap;">' +
+            '<span>💧 ' + humidity + '%</span>' +
+            '<span>🤔 ' + feelsLike + '°C</span>' +
+            (pressure ? '<span>🔵 ' + pressure + ' hPa</span>' : '') +
+            '<span>🌧️ ' + precip + ' mm</span>' +
+          '</div>';
           results.innerHTML =
             '<div class="weather-card">' +
               '<div class="weather-main">' +
@@ -1521,10 +1873,14 @@
                 '<div>' +
                   '<div class="weather-temp">' + temp + '°C</div>' +
                   '<div class="weather-meta">' + desc + ' · Wind ' + wind + ' km/h</div>' +
+                  minMax +
                 '</div>' +
               '</div>' +
-              '<div class="result-card-sub" style="margin-top:4px;">' +
+              extraMeta +
+              badgeRow +
+              '<div class="result-card-sub" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">' +
                 '<span>📍 ' + place.label + '</span>' +
+                elev +
               '</div>' +
             '</div>';
         } else {
@@ -1532,6 +1888,36 @@
         }
       } catch (e) {
         results.innerHTML = '<div class="weather-card"><div class="result-card-title" style="color:#ff4d6d;">Weather fetch failed</div></div>';
+      }
+    }
+
+    function renderWeatherConditionResult(condition, nodes) {
+      const results = document.getElementById('sidebarResults');
+      const condLabel = condition.charAt(0).toUpperCase() + condition.slice(1);
+      results.innerHTML =
+        '<div class="weather-card">' +
+          '<div class="result-card-title" style="margin-bottom:10px;">🌤️ Nepal Locations with ' + condLabel + ' Conditions</div>' +
+          '<div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px;">Based on mountain weather stations and route forecasts</div>' +
+          nodes.map(node =>
+            '<div class="result-card" style="margin-bottom:6px; cursor:pointer; border-color:rgba(245,158,11,0.3);" onclick="selectSidebarItem({label:\'' + node.label.replace(/'/g, "\\'") + '\', type:\'Weather Node\', lat:' + node.lat + ', lng:' + node.lng + ', condition:\'' + (node.condition||'').replace(/'/g, "\\'") + '\', summary:\'' + (node.summary||'').replace(/'/g, "\\'") + '\', elevationM:' + (node.elevationM||0) + ', highwayCode:\'' + (node.highwayCode||'').replace(/'/g, "\\'") + '\'})">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<div>' +
+                  '<div style="font-weight:700; color:#fff; font-size:0.85rem;">' + node.label + '</div>' +
+                  '<div style="font-size:0.7rem; color:var(--text-secondary);">' + (node.highwayCode||'') + ' · ' + (node.summary||'') + '</div>' +
+                '</div>' +
+                '<span style="font-size:1.2rem;">' + (node.condition === 'dense_fog' ? '🌫️' : node.condition === 'rain_monsoon' ? '🌧️' : node.condition === 'thunderstorm' ? '⛈️' : node.condition === 'sunny' ? '☀️' : node.condition === 'cloudy' ? '☁️' : '🌤️') + '</span>' +
+              '</div>' +
+            '</div>'
+          ).join('') +
+        '</div>';
+      
+      if (nodes.length > 0) {
+        const lats = nodes.map(n => n.lat).filter(v => v);
+        const lngs = nodes.map(n => n.lng).filter(v => v);
+        if (lats.length && lngs.length) {
+          const bounds = [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]];
+          map.flyToBounds(bounds, { padding: [80, 80], duration: 1.2 });
+        }
       }
     }
 
@@ -1603,25 +1989,83 @@
       const sidebarSearch = document.getElementById('sidebarSearch');
       const sidebarSuggest = document.getElementById('sidebarSuggest');
       sidebarSearch.addEventListener('input', debounce(async (e) => {
-        const query = e.target.value.trim().toLowerCase();
+        const query = e.target.value.trim();
         if (query.length < 2) {
           sidebarSuggest.style.display = 'none';
           return;
         }
 
         sidebarSuggest.innerHTML = '';
-        const matches = getSearchSuggestions(query);
+        
+        const intent = detectIntent(query);
+        const cleanQ = cleanQuery(query, intent.mode);
+        
+        if (intent.mode !== currentMode && intent.confidence >= 10) {
+          const modeConfig = {
+            weather: { icon: '🌤️', label: 'Weather', bg: 'rgba(14, 165, 233, 0.15)', border: 'rgba(14, 165, 233, 0.4)', tagBg: 'rgba(14,165,233,0.3)', tagColor: '#38bdf8' },
+            traffic: { icon: '🚦', label: 'Traffic', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)', tagBg: 'rgba(245,158,11,0.3)', tagColor: '#fbbf24' },
+            pois: { icon: '📍', label: 'POIs', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', tagBg: 'rgba(16,185,129,0.3)', tagColor: '#34d399' },
+            sos: { icon: '🚨', label: 'Emergency', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', tagBg: 'rgba(239,68,68,0.3)', tagColor: '#f87171' },
+            route: { icon: '🗺️', label: 'Route', bg: 'rgba(99, 102, 241, 0.15)', border: 'rgba(99, 102, 241, 0.4)', tagBg: 'rgba(99,102,241,0.3)', tagColor: '#a5b4fc' }
+          };
+          const mc = modeConfig[intent.mode] || modeConfig.route;
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.style.background = mc.bg;
+          div.style.border = '1px solid ' + mc.border;
+          div.innerHTML = '<span>' + mc.icon + ' Looks like you want ' + mc.label + ' info for <strong>' + query + '</strong></span> <span class="tag" style="background:' + mc.tagBg + '; color:' + mc.tagColor + ';">Switch to ' + mc.label + '</span>';
+          div.onclick = () => { setMode(intent.mode); document.getElementById('sidebarSearch').value = cleanQ; document.getElementById('sidebarSearch').dispatchEvent(new Event('input')); };
+          sidebarSuggest.appendChild(div);
+        }
+        
+        const matches = getSearchSuggestions(cleanQ);
+        const coordItem = detectCoordinates(query);
+        
+        if (currentMode === 'weather') {
+          const condition = detectWeatherCondition(cleanQ);
+          if (condition) {
+            const condNodes = searchIndex.filter(item => {
+              if (item.type !== 'Weather Node') return false;
+              const terms = (item.searchTerms || []).map(t => t.toLowerCase());
+              const condMatch = item.condition && item.condition.toLowerCase().includes(condition);
+              const termMatch = terms.some(t => t.includes(condition));
+              return condMatch || termMatch;
+            });
+            const unique = [];
+            const seen = new Set();
+            condNodes.forEach(item => {
+              if (!seen.has(item.label)) {
+                seen.add(item.label);
+                unique.push(item);
+              }
+            });
+            if (unique.length > 0) {
+              renderWeatherConditionResult(condition, unique.slice(0, 6));
+              sidebarSuggest.style.display = 'none';
+              return;
+            }
+          }
+        }
+        
+        if (coordItem) {
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          div.innerHTML = '<span>' + coordItem.label + '</span> <span class="tag">Coordinate</span>';
+          div.onclick = () => selectSidebarItem(coordItem);
+          sidebarSuggest.appendChild(div);
+        }
         matches.forEach(item => {
           const div = document.createElement('div');
           div.className = 'autocomplete-item';
-          div.innerHTML = '<span>' + item.label + '</span> <span class="tag">' + item.type + '</span>';
+          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + item.type + '</span>';
           div.onclick = () => selectSidebarItem(item);
           sidebarSuggest.appendChild(div);
         });
 
         if (matches.length === 0 && query.length >= 3) {
           try {
-            const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json());
+            const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(cleanQ) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json());
             (res.features || []).forEach(f => {
               const name = f.properties.name || '';
               const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
