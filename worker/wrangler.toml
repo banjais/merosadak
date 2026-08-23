@@ -2,6 +2,11 @@ name = "merosadak"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
+[[kv_namespaces]]
+binding = "DATA"
+id = "replace-with-kv-namespace-id"
+preview_id = "replace-with-preview-kv-namespace-id"
+
 [vars]
 ALLOWED_ORIGIN = "https://merosadak.web.app"
 GEMINI_MODEL_PRIMARY = "gemini-2.5-flash"

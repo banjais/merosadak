@@ -1,0 +1,42 @@
+name: Sync Data to Cloudflare KV
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'public/data/**'
+      - 'worker/wrangler.toml'
+      - 'worker/sync-data.js'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install wrangler
+        run: npm install -g wrangler
+      - name: Sync data files to KV
+        run: |
+          cd worker
+          npx wrangler kv key put --binding DATA "airports.json" "$(cat ../public/data/airports.json)"
+          npx wrangler kv key put --binding DATA "district-hqs.json" "$(cat ../public/data/district-hqs.json)"
+          npx wrangler kv key put --binding DATA "cities.json" "$(cat ../public/data/cities.json)"
+          npx wrangler kv key put --binding DATA "places.json" "$(cat ../public/data/places.json)"
+          npx wrangler kv key put --binding DATA "palika-names.json" "$(cat ../public/data/palika-names.json)"
+          npx wrangler kv key put --binding DATA "highway/index.json" "$(cat ../public/data/highway/index.json)"
+          npx wrangler kv key put --binding DATA "nepal_boundary.geojson" "$(cat ../public/data/nepal_boundary.geojson)"
+          npx wrangler kv key put --binding DATA "distance-matrix.json" "$(cat ../public/data/distance-matrix.json)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy Worker
+        run: |
+          cd worker
+          npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

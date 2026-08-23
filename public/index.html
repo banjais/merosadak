@@ -506,12 +506,12 @@
       try {
         const v = Date.now();
         const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes] = await Promise.all([
-          fetch(`data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
+          fetch(`https://merosadak.banjais.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjais.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjais.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjais.workers.dev/api/data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjais.workers.dev/api/data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjais.workers.dev/api/data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         allHighwaysIndex = hwyRes;

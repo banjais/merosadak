@@ -14,14 +14,15 @@
 
 export interface Env {
   TOMTOM_API_KEY: string;
-  OPENWEATHERMAP_API_KEY: string; // fallback only — primary weather is keyless Open-Meteo
+  OPENWEATHERMAP_API_KEY: string;
   GEMINI_API_KEY: string;
-  GEMINI_MODEL_PRIMARY: string;   // e.g. gemini-2.5-flash
-  GEMINI_MODEL_SECONDARY: string; // fallback if primary is rate-limited/down, e.g. gemini-2.0-flash-lite
+  GEMINI_MODEL_PRIMARY: string;
+  GEMINI_MODEL_SECONDARY: string;
   WAZE_FEED_URL: string;
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
-  ALLOWED_ORIGIN: string; // e.g. https://merosadak.web.app
+  ALLOWED_ORIGIN: string;
+  DATA: KVNamespace;
 }
 
 function cors(env: Env) {
@@ -417,6 +418,31 @@ export default {
     }
     if (url.pathname === "/api/assistant" && request.method === "POST") {
       return handleAssistant(request, env);
+    }
+
+    if (url.pathname.startsWith("/api/data/") && request.method === "GET") {
+      const key = url.pathname.replace("/api/data/", "");
+      if (!key) {
+        return new Response(JSON.stringify({ error: "data key is required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...cors(env) },
+        });
+      }
+      const value = await env.DATA.get(key);
+      if (!value) {
+        return new Response(JSON.stringify({ error: "data not found", key }), {
+          status: 404,
+          headers: { "Content-Type": "application/json", ...cors(env) },
+        });
+      }
+      return new Response(value, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=60, s-maxage=300",
+          ...cors(env),
+        },
+      });
     }
 
     return new Response(JSON.stringify({ error: "not found" }), {
