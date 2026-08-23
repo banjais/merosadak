@@ -74,7 +74,7 @@
       <div class="drawer-nav-item" onclick="openModal('highwayModal'); closeDrawer();">
         <span class="drawer-icon">🛣️</span> Highway Directory
       </div>
-      <div class="drawer-nav-item" onclick="openModal('staticMatrixModal'); closeDrawer();">
+      <div class="drawer-nav-item" onclick="openModal('matrixModal'); closeDrawer();">
         <span class="drawer-icon">📊</span> Distance Matrix
       </div>
       <div class="drawer-nav-item" onclick="openModal('reportModal'); closeDrawer();">
@@ -130,9 +130,6 @@
         <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">
           <span class="mode-tab-icon">🆘</span> SOS
         </button>
-        <button class="mode-tab" data-mode="matrix" onclick="setMode('matrix')">
-          <span class="mode-tab-icon">📊</span> Matrix
-        </button>
       </div>
       <div class="sidebar-search-wrap">
         <span class="search-mode-icon" id="searchModeIcon">📍</span>
@@ -166,9 +163,6 @@
     </button>
     <button class="map-toggle-btn" id="togglePois" onclick="toggleLayer('pois')" title="Fuel Stations, EV Chargers, Hospitals">
       <span class="icon">⛽</span> <span class="label">POIs & EV</span>
-    </button>
-    <button class="map-toggle-btn" onclick="setMode('matrix')" title="Nepal Cities Distance Matrix">
-      <span class="icon">📊</span> <span class="label">Matrix</span>
     </button>
     <button class="map-toggle-btn btn-sos" onclick="openModal('sosModal')" title="Emergency SOS Directory">
       <span class="icon">🆘</span> <span class="label">SOS</span>
@@ -205,26 +199,6 @@
   <!-- ==========================================
        6. Modals Suite
        ========================================== -->
-
-  <!-- Distance Matrix Modal -->
-  <div class="modal-overlay" id="staticMatrixModal">
-    <div class="modal-card" style="width:900px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📊</span> <span>Nepal Cities Distance Matrix (~km)</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('staticMatrixModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px;">
-          Approximate straight-line distances between all Nepal cities with known coordinates. Click any cell to plan a route.
-        </p>
-        <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
-          <table class="matrix-table" id="staticMatrixTable"></table>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- SOS Emergency Modal -->
   <div class="modal-overlay" id="sosModal">
@@ -425,125 +399,6 @@
         console.error('Distance matrix load error:', e);
         distanceMatrixData = null;
       }
-    }
-
-    function renderStaticMatrix() {
-      const table = document.getElementById('staticMatrixTable');
-      if (!table) {
-        console.error('staticMatrixTable not found');
-        return;
-      }
-
-      if (!distanceMatrixData) {
-        console.warn('distanceMatrixData is null, retrying load...');
-        table.innerHTML = '<tr><td style="padding:20px; text-align:center; color:var(--text-secondary);">Loading distance matrix… <span id="matrixRetry" style="cursor:pointer; color:var(--accent-gold);">Retry</span></td></tr>';
-        document.getElementById('matrixRetry')?.addEventListener('click', () => {
-          loadDistanceMatrix().then(() => renderStaticMatrix());
-        });
-        loadDistanceMatrix().then(() => renderStaticMatrix());
-        return;
-      }
-
-      const cities = distanceMatrixData.cities;
-      const matrix = distanceMatrixData.matrix;
-
-      let html = '<thead><tr><th>From ↓ / To →</th>';
-      cities.forEach(c => { html += '<th>' + c.name + '</th>'; });
-      html += '</tr></thead><tbody>';
-
-      cities.forEach((city, i) => {
-        html += '<tr><td>' + city.name + '</td>';
-        matrix[i].forEach((km, j) => {
-          const cls = km === 0 ? 'matrix-zero' : 'matrix-cell';
-          const label = km === 0 ? '—' : km + ' km';
-          html += '<td class="' + cls + '" onclick="planRouteFromMatrix(\'' + city.id + '\', \'' + cities[j].id + '\')">' + label + '</td>';
-        });
-        html += '</tr>';
-      });
-
-      html += '</tbody>';
-      table.innerHTML = html;
-    }
-
-    function toggleSidebarMatrix() {
-      const wrap = document.getElementById('sidebarMatrixWrap');
-      if (!wrap) return;
-      const visible = wrap.style.display !== 'none';
-      wrap.style.display = visible ? 'none' : 'block';
-      if (!visible) renderSidebarMatrix();
-    }
-
-    function renderSidebarMatrix() {
-      const wrap = document.getElementById('sidebarMatrixWrap');
-      if (!wrap) return;
-
-      if (!distanceMatrixData) {
-        wrap.innerHTML = '<div style="padding:12px; text-align:center; color:var(--text-secondary);">Loading matrix… <span id="sidebarMatrixRetry" style="cursor:pointer; color:var(--accent-gold);">Retry</span></div>';
-        document.getElementById('sidebarMatrixRetry')?.addEventListener('click', () => {
-          loadDistanceMatrix().then(() => renderSidebarMatrix());
-        });
-        loadDistanceMatrix().then(() => renderSidebarMatrix());
-        return;
-      }
-
-      const cities = distanceMatrixData.cities;
-      const matrix = distanceMatrixData.matrix;
-
-      let html = '<table style="width:100%; border-collapse:collapse; font-size:0.65rem; color:var(--text-primary); table-layout:fixed; min-width:calc(80px + ' + cities.length + ' * 48px);">';
-      html += '<thead><tr><th style="padding:4px 6px; background:rgba(255,255,255,0.06); position:sticky; left:0; z-index:2; text-align:left; font-weight:700; color:var(--accent-gold); min-width:80px;">From ↓</th>';
-      cities.forEach(c => { html += '<th style="padding:4px 6px; background:rgba(255,255,255,0.06); font-weight:600; color:var(--text-secondary); white-space:nowrap;">' + c.name + '</th>'; });
-      html += '</tr></thead><tbody>';
-
-      cities.forEach((city, i) => {
-        html += '<tr><td style="padding:4px 6px; background:rgba(15,23,42,0.95); position:sticky; left:0; z-index:1; font-weight:600; color:var(--accent-gold); white-space:nowrap;">' + city.name + '</td>';
-        matrix[i].forEach((km, j) => {
-          const cls = i === j ? 'color:var(--text-muted);' : 'cursor:pointer; transition:all 0.15s;';
-          const label = i === j ? '—' : km + ' km';
-          html += '<td style="padding:3px 5px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.04); border-right:1px solid rgba(255,255,255,0.03); ' + cls + '" onclick="planRouteFromMatrixSidebar(\'' + city.id + '\', \'' + cities[j].id + '\')">' + label + '</td>';
-        });
-        html += '</tr>';
-      });
-
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    }
-
-    function planRouteFromMatrixSidebar(fromId, toId) {
-      if (!distanceMatrixData) return;
-      const cities = distanceMatrixData.cities;
-      const fromCity = cities.find(c => c.id === fromId);
-      const toCity = cities.find(c => c.id === toId);
-      if (!fromCity || !toCity) return;
-      if (fromId === toId) return;
-
-      const origin = userOrigin || { lat: fromCity.lat, lng: fromCity.lng, label: fromCity.name };
-      const dest = { label: toCity.name, lat: toCity.lat, lng: toCity.lng };
-      selectedDestination = dest;
-
-      setMode('route');
-      document.getElementById('sidebarSearch').value = toCity.name;
-      renderSidebarRouteResult(dest);
-      calculateSidebarRoute();
-    }
-
-    async function planRouteFromMatrix(fromId, toId) {
-      if (!distanceMatrixData) return;
-      const cities = distanceMatrixData.cities;
-      const fromCity = cities.find(c => c.id === fromId);
-      const toCity = cities.find(c => c.id === toId);
-      if (!fromCity || !toCity) return;
-      if (fromId === toId) return;
-
-      closeModal('staticMatrixModal');
-
-      const origin = userOrigin || { lat: fromCity.lat, lng: fromCity.lng, label: fromCity.name };
-      const dest = { label: toCity.name, lat: toCity.lat, lng: toCity.lng };
-      selectedDestination = dest;
-
-      setMode('route');
-      document.getElementById('sidebarSearch').value = toCity.name;
-      renderSidebarRouteResult(dest);
-      calculateSidebarRoute();
     }
 
     let allHighwaysIndex = [];
@@ -826,7 +681,6 @@
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
       if (id === 'matrixModal') renderMatrixChips();
-      if (id === 'staticMatrixModal') renderStaticMatrix();
     }
 
     function closeModal(id) {
@@ -841,10 +695,6 @@
     function closeDrawer() {
       document.getElementById('drawerOverlay').classList.remove('is-open');
       document.getElementById('appDrawer').classList.remove('is-open');
-    }
-
-    function openStaticMatrix() {
-      openModal('staticMatrixModal');
     }
 
     // Close modal on click outside
@@ -1144,8 +994,7 @@
       weather: { icon: '⛅', placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
       traffic: { icon: '🚦', placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
       pois: { icon: '⛽', placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
-      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' },
-      matrix: { icon: '📊', placeholder: 'Search a city to highlight in matrix...', hint: 'Full Nepal city-to-city distance matrix (straight-line km). Click any cell to plan a route.' }
+      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
     };
 
     const DEFAULT_SUGGESTIONS = [
@@ -1177,8 +1026,6 @@
         toggleLayer('traffic');
       } else if (mode === 'pois') {
         toggleLayer('pois');
-      } else if (mode === 'matrix') {
-        renderSidebarMatrix();
       }
     }
 
@@ -1245,11 +1092,7 @@
               '<option value="bus_truck">🚌 Bus / Truck</option>' +
               '<option value="ev">⚡ EV (Electric)</option>' +
             '</select>' +
-          '</div>' +
-          '<div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--surface-border);">' +
-            '<button class="btn-header" onclick="toggleSidebarMatrix()" style="width:100%; justify-content:center;">📊 Nepal Cities Distance Matrix</button>' +
-            '<div id="sidebarMatrixWrap" style="display:none; margin-top:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.25);"></div>' +
-          '</div>' +
+           '</div>' +
         '</div>';
     }
 
