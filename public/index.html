@@ -74,7 +74,7 @@
       <div class="drawer-nav-item" onclick="openModal('highwayModal'); closeDrawer();">
         <span class="drawer-icon">🛣️</span> Highway Directory
       </div>
-      <div class="drawer-nav-item" onclick="openModal('matrixModal'); closeDrawer();">
+      <div class="drawer-nav-item" onclick="showMatrixPage(); closeDrawer();">
         <span class="drawer-icon">📊</span> Distance Matrix
       </div>
       <div class="drawer-nav-item" onclick="openModal('reportModal'); closeDrawer();">
@@ -106,11 +106,48 @@
         ========================================== -->
   <div id="map"></div>
 
+  <!-- Distance Matrix Full Page -->
+  <div class="matrix-page-overlay" id="matrixPage">
+    <div class="matrix-page-header">
+      <button class="matrix-back-btn" onclick="hideMatrixPage()">← Back to Map</button>
+      <div class="matrix-page-title">📊 Nepal Distance Matrix</div>
+      <div style="width:120px;"></div>
+    </div>
+    <div class="matrix-page-body">
+      <div class="matrix-page-main">
+        <div class="matrix-search-section">
+          <div class="matrix-search-row">
+            <div style="flex:1; position:relative;">
+              <input type="text" id="matrixCityInput" placeholder="Add a city or local place..." autocomplete="off" class="matrix-input">
+              <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
+            </div>
+            <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
+          </div>
+          <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
+          <button class="btn-action-primary" onclick="computeDistanceMatrix()">Calculate Distance</button>
+          <div id="matrixResults" style="margin-top:16px;"></div>
+          <div id="matrixAiSection" style="margin-top:16px; display:none;">
+            <div class="ai-advisor-row">
+              <button class="ai-advisor-btn" onclick="askMatrixAiAdvisor()">✨ AI Route Insight</button>
+            </div>
+            <div id="matrixAiOutput" style="margin-top:8px; display:none; padding:12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-md); font-size:0.85rem; color:#c4b5fd;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="matrix-page-side">
+        <div class="matrix-static-header">
+          <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Full Nepal City-to-City Matrix (62 cities)</div>
+          <button class="btn-header" onclick="exportMatrixPdf()" style="font-size:0.78rem;">📄 Export PDF</button>
+        </div>
+        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2);">
+          <div id="staticMatrixTable" style="padding:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==========================================
-       3. Prominent "Where to?" Floating Panel
-        ========================================== -->
-  <!-- ==========================================
-        3. Left Sidebar — Unified Search & Actions
+        Modals Suite
         ========================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div class="sidebar-scroll">
@@ -236,33 +273,6 @@
     </div>
   </div>
 
-  <!-- Distance Matrix Modal -->
-  <div class="modal-overlay" id="matrixModal">
-    <div class="modal-card" style="width:680px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📊</span> <span>Nepal Multi-City Distance Matrix</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('matrixModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:12px;">
-          Select or add Nepal cities (2 to 6 hubs) to calculate an instant OSRM road distance and driving matrix.
-        </p>
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <div style="flex:1; position:relative;">
-            <input type="text" id="matrixCityInput" placeholder="Add a city (e.g. Pokhara, Butwal, Biratnagar)..." autocomplete="off" style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
-            <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
-          </div>
-          <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
-        </div>
-        <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
-        <button class="btn-action-primary" onclick="computeDistanceMatrix()">Calculate Distance Matrix</button>
-        <div id="matrixTableResult" style="margin-top:16px; overflow-x:auto;"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- Citizen Road Report Modal -->
   <div class="modal-overlay" id="reportModal">
     <div class="modal-card">
@@ -378,12 +388,7 @@
     let activeRoutePreference = 'fastest';
     let activeVehicle = 'car';
 
-    let matrixCities = [
-      { name: 'Kathmandu', lat: 27.7172, lng: 85.3240 },
-      { name: 'Pokhara', lat: 28.2096, lng: 83.9856 },
-      { name: 'Butwal', lat: 27.7006, lng: 83.4484 },
-      { name: 'Biratnagar', lat: 26.4525, lng: 87.2718 }
-    ];
+    let matrixCities = [];
 
     let distanceMatrixData = null;
 
@@ -680,11 +685,20 @@
       if (id === 'sosModal') renderSosModal();
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
-      if (id === 'matrixModal') renderMatrixChips();
     }
 
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
+    }
+
+    function showMatrixPage() {
+      document.getElementById('matrixPage').style.display = 'block';
+      renderMatrixChips();
+      renderStaticMatrix();
+    }
+
+    function hideMatrixPage() {
+      document.getElementById('matrixPage').style.display = 'none';
     }
 
     function openDrawer() {
@@ -881,12 +895,34 @@
     async function searchMatrixPlaces(query) {
       const boxEl = document.getElementById('matrixSuggest');
       if (!query || query.length < 3) { boxEl.style.display = 'none'; return; }
+      boxEl.innerHTML = '<div style="padding:8px 12px; color:var(--text-secondary);">Searching...</div>';
+      boxEl.style.display = 'block';
+
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=6`).then(r => r.json());
+        const [photonRes, localMatches] = await Promise.all([
+          fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json()).catch(() => ({ features: [] })),
+          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat).slice(0, 5))
+        ]);
+
         boxEl.innerHTML = '';
-        (res.features || []).forEach(f => {
+        const added = new Set();
+
+        localMatches.forEach(item => {
+          if (added.has(item.label)) return;
+          added.add(item.label);
+          const div = document.createElement('div');
+          div.textContent = item.label + ' (' + item.type + ')';
+          div.style.padding = '8px 12px';
+          div.style.cursor = 'pointer';
+          div.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
+          div.onclick = () => addMatrixPlace(item.label, item.lat, item.lng);
+          boxEl.appendChild(div);
+        });
+
+        (photonRes.features || []).forEach(f => {
           const name = f.properties.name || '';
-          if (!name) return;
+          if (!name || added.has(name)) return;
+          added.add(name);
           const div = document.createElement('div');
           div.textContent = name;
           div.style.padding = '8px 12px';
@@ -895,6 +931,7 @@
           div.onclick = () => addMatrixPlace(name, f.geometry.coordinates[1], f.geometry.coordinates[0]);
           boxEl.appendChild(div);
         });
+
         boxEl.style.display = boxEl.children.length ? 'block' : 'none';
       } catch (e) { console.error(e); }
     }
@@ -911,37 +948,155 @@
     document.getElementById('matrixCityInput').addEventListener('input', debounce(e => searchMatrixPlaces(e.target.value), 350));
 
     async function computeDistanceMatrix() {
-      if (matrixCities.length < 2) { alert('Please add at least 2 cities.'); return; }
+      if (matrixCities.length < 2) { alert('Please add at least 2 places.'); return; }
       const coords = matrixCities.map(c => `${c.lng},${c.lat}`).join(';');
-      const out = document.getElementById('matrixTableResult');
-      out.innerHTML = '<p style="color:var(--text-secondary);">Calculating matrix via OSRM…</p>';
+      const out = document.getElementById('matrixResults');
+      out.innerHTML = '<p style="color:var(--text-secondary);">Calculating distances via OSRM…</p>';
 
       try {
         const data = await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?annotations=distance,duration`).then(r => r.json());
         if (data.code !== 'Ok') throw new Error();
 
-        let html = '<table style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#fff;"><tr><th></th>';
-        matrixCities.forEach(c => html += `<th style="padding:6px; text-align:center; font-family:\'JetBrains Mono\'; font-size:0.75rem;">${c.name}</th>`);
-        html += '</tr>';
-
+        let html = '<div class="matrix-result-list">';
         for (let i = 0; i < matrixCities.length; i++) {
-          html += `<tr><td style="padding:6px; font-weight:700; font-size:0.75rem;">${matrixCities[i].name}</td>`;
-          for (let j = 0; j < matrixCities.length; j++) {
-            if (i === j) {
-              html += '<td style="padding:6px; text-align:center; color:var(--text-muted);">—</td>';
-            } else {
-              const km = (data.distances[i][j] / 1000).toFixed(0);
-              const hr = (data.durations[i][j] / 3600).toFixed(1);
-              html += `<td style="padding:6px; text-align:center; border:1px solid var(--surface-border); font-family:\'JetBrains Mono\';">${km} km<br><span style="font-size:0.65rem; color:var(--accent-gold);">${hr}h</span></td>`;
-            }
+          for (let j = i + 1; j < matrixCities.length; j++) {
+            const km = (data.distances[i][j] / 1000).toFixed(1);
+            const hr = (data.durations[i][j] / 3600).toFixed(1);
+            const from = matrixCities[i].name;
+            const to = matrixCities[j].name;
+            html += `<div class="matrix-result-line">
+              <div class="matrix-result-route"><span class="matrix-city-from">${from}</span> <span class="matrix-arrow">→</span> <span class="matrix-city-to">${to}</span></div>
+              <div class="matrix-result-metrics">
+                <span class="matrix-metric">${km} km</span>
+                <span class="matrix-metric-divider">|</span>
+                <span class="matrix-metric">${hr} hrs</span>
+              </div>
+            </div>`;
           }
-          html += '</tr>';
         }
-        html += '</table>';
+        html += '</div>';
         out.innerHTML = html;
+        document.getElementById('matrixAiSection').style.display = 'block';
       } catch (err) {
-        out.innerHTML = '<p style="color:#ef4444;">Could not compute matrix right now.</p>';
+        out.innerHTML = '<p style="color:#ef4444;">Could not calculate distances right now.</p>';
       }
+    }
+
+    function renderStaticMatrix() {
+      const container = document.getElementById('staticMatrixTable');
+      if (!container) return;
+      if (!distanceMatrixData || !distanceMatrixData.cities) {
+        container.innerHTML = '<p style="color:var(--text-secondary); padding:12px;">Loading matrix data...</p>';
+        return;
+      }
+
+      const cities = distanceMatrixData.cities;
+      const matrix = distanceMatrixData.matrix;
+
+      let html = '<table class="matrix-table"><thead><tr><th>City \\ City</th>';
+      cities.forEach(c => {
+        html += '<th>' + c.name + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      for (let i = 0; i < cities.length; i++) {
+        html += '<tr><td>' + cities[i].name + '</td>';
+        for (let j = 0; j < cities.length; j++) {
+          if (i === j) {
+            html += '<td class="matrix-zero">—</td>';
+          } else {
+            const km = matrix[i] && matrix[i][j] != null ? matrix[i][j].toFixed(0) : '—';
+            html += '<td class="matrix-cell" onclick="focusMatrixCity(' + cities[i].lat + ',' + cities[i].lng + ',\'' + cities[i].name.replace(/'/g, "\\'") + '\')">' + km + '</td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+
+      container.innerHTML = html;
+    }
+
+    function focusMatrixCity(lat, lng, name) {
+      hideMatrixPage();
+      map.flyTo([lat, lng], 12, { duration: 1.2 });
+      L.popup().setLatLng([lat, lng]).setContent('<strong>' + name + '</strong>').openOn(map);
+    }
+
+    async function askMatrixAiAdvisor() {
+      const out = document.getElementById('matrixAiOutput');
+      if (!out) return;
+      out.style.display = 'block';
+      out.innerHTML = '✨ <em>Querying AI Route Insight…</em>';
+
+      const from = matrixCities.length >= 1 ? matrixCities[0].name : 'Kathmandu';
+      const to = matrixCities.length >= 2 ? matrixCities[1].name : 'Pokhara';
+      const routeInfo = matrixCities.slice(0, 2).map(c => c.name).join(' → ');
+
+      try {
+        const prompt = `Give a concise 3-4 sentence driving safety advisory for traveling between ${routeInfo} in Nepal. Mention typical road conditions, vehicle safety, and monsoon/landslide precautions.`;
+        const res = await fetch(`${WORKER_URL}/api/assistant`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        }).then(r => r.json());
+
+        const text = res.candidates?.[0]?.content?.parts?.[0]?.text;
+        out.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>${text || 'Drive carefully, monitor road condition reports, and observe mountain overtaking discipline.'}`;
+      } catch (e) {
+        out.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>For traveling from ${from} to ${to}: Check Nagdhunga and Mugling landslide clearance before departure. Maintain lower gear descending steep hairpin bends and keep emergency number 103 handy.`;
+      }
+    }
+
+    function exportMatrixPdf() {
+      if (!distanceMatrixData || !distanceMatrixData.cities) {
+        alert('Matrix data not loaded yet. Please try again.');
+        return;
+      }
+
+      const cities = distanceMatrixData.cities;
+      const matrix = distanceMatrixData.matrix;
+
+      let tableHtml = '<table class="matrix-table"><thead><tr><th>City \\ City</th>';
+      cities.forEach(c => {
+        tableHtml += '<th>' + c.name + '</th>';
+      });
+      tableHtml += '</tr></thead><tbody>';
+
+      for (let i = 0; i < cities.length; i++) {
+        tableHtml += '<tr><td>' + cities[i].name + '</td>';
+        for (let j = 0; j < cities.length; j++) {
+          if (i === j) {
+            tableHtml += '<td class="matrix-zero">—</td>';
+          } else {
+            const km = matrix[i] && matrix[i][j] != null ? matrix[i][j].toFixed(0) : '—';
+            tableHtml += '<td>' + km + '</td>';
+          }
+        }
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</tbody></table>';
+
+      const win = window.open('', '_blank', 'width=1200,height=800');
+      win.document.write(
+        '<html><head><title>Nepal Distance Matrix - Mero Sadak</title>' +
+        '<style>' +
+        'body{font-family:Inter,sans-serif;padding:20px;background:#fff;color:#000;margin:0}' +
+        'h1{font-size:1.2rem;margin-bottom:4px}' +
+        'p{color:#666;margin-bottom:16px;font-size:0.85rem}' +
+        'table{width:100%;border-collapse:collapse;font-size:0.7rem}' +
+        'th,td{padding:6px 8px;text-align:center;border:1px solid #ddd;white-space:nowrap}' +
+        'th{background:#f5f5f5;font-weight:700}' +
+        'td:first-child{text-align:left;font-weight:600;position:sticky;left:0;background:#fff}' +
+        'th:first-child{position:sticky;left:0;background:#f5f5f5;z-index:1}' +
+        'tr:nth-child(even){background:#fafafa}' +
+        '</style></head><body>' +
+        '<h1>Nepal Multi-City Distance Matrix</h1>' +
+        '<p>Generated by Mero Sadak · ' + new Date().toLocaleDateString() + '</p>' +
+        tableHtml +
+        '<script>window.onload=function(){window.print()}<\/script>' +
+        '</body></html>'
+      );
+      win.document.close();
     }
 
     // Citizen Road Report

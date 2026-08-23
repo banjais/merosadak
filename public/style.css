@@ -1891,3 +1891,231 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.18);
   }
 }
+
+/* ==========================================================================
+   8. Distance Matrix Full Page
+   ========================================================================== */
+.matrix-page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: var(--bg-dark);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.matrix-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(11, 25, 44, 0.95);
+  border-bottom: 1px solid var(--surface-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  flex-shrink: 0;
+}
+
+.matrix-back-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--surface-border);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.matrix-back-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.matrix-page-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.matrix-page-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.matrix-page-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.matrix-page-side {
+  width: 420px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--surface-border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.matrix-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.matrix-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.matrix-input {
+  flex: 1;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.matrix-input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.matrix-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.matrix-result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matrix-result-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.matrix-result-line:hover {
+  background: rgba(30, 62, 98, 0.35);
+  border-color: var(--accent-gold);
+  transform: translateX(4px);
+}
+
+.matrix-result-route {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.matrix-city-from {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.matrix-arrow {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.matrix-city-to {
+  color: var(--accent-emerald);
+  font-weight: 700;
+}
+
+.matrix-result-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.matrix-metric {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.matrix-metric-divider {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.matrix-static-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--surface-border);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .matrix-page-body {
+    flex-direction: column;
+  }
+  .matrix-page-side {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--surface-border);
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .matrix-page-header {
+    padding: 10px 14px;
+  }
+  .matrix-page-title {
+    font-size: 0.95rem;
+  }
+  .matrix-page-main {
+    padding: 14px;
+    gap: 12px;
+  }
+  .matrix-result-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .matrix-result-route {
+    font-size: 0.85rem;
+  }
+  .matrix-result-metrics {
+    align-self: flex-end;
+    font-size: 0.78rem;
+  }
+  .matrix-static-header {
+    padding: 10px 14px;
+  }
+}
