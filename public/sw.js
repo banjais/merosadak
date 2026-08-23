@@ -1,4 +1,4 @@
-const CACHE = "nepal-dist-v1";
+const CACHE = "nepal-dist-v2";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["index.html", "manifest.json", "data/palika-names.json", "data/nepal_boundary.geojson"])));
 });
