@@ -22,8 +22,32 @@
 <body>
 
   <!-- ==========================================
-       1. Clean Top Header
-       ========================================== -->
+        Splash / Loading Screen
+        ========================================== -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <svg viewBox="0 0 24 24" width="64" height="64">
+          <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
+        </svg>
+      </div>
+      <div class="splash-title">MERO SADAK</div>
+      <div class="splash-subtitle">मेरो सडक</div>
+      <div class="splash-desc">Nepal National Road Network & GIS</div>
+      <div class="splash-progress-wrap">
+        <div class="splash-progress-bar">
+          <div id="splashProgress" class="splash-progress-fill"></div>
+        </div>
+        <div id="splashPercent" class="splash-percent">0%</div>
+      </div>
+      <div class="splash-footer">Initializing Map, Routes & Live Data…</div>
+    </div>
+    <div class="splash-glow"></div>
+  </div>
+
+  <!-- ==========================================
+        Clean Top Header
+        ========================================== -->
   <header class="app-header">
     <div class="header-row">
       <button class="header-icon-btn menu-btn" onclick="openDrawer()" title="Menu">
@@ -1437,6 +1461,10 @@
       }
     }
 
+    function toggleBottomBar() {
+      document.getElementById('bottomAppBar').classList.toggle('is-open');
+    }
+
     function saveCurrentRoute() {
       if (!selectedDestination) {
         alert('No active route to save. Search a destination first.');
@@ -2023,13 +2051,32 @@
         ).join('');
     }
 
-    // Start App
-    window.addEventListener('DOMContentLoaded', () => {
-      loadTheme();
-      loadUserSession();
-      initMap();
-      setMode('route');
+    // Start App with Splash Sequence
+    window.addEventListener('DOMContentLoaded', async () => {
+      const splash = document.getElementById('splashScreen');
+      const progressFill = document.getElementById('splashProgress');
+      const percentText = document.getElementById('splashPercent');
 
+      const setProgress = (pct) => {
+        const p = Math.min(100, Math.max(0, pct));
+        progressFill.style.width = p + '%';
+        percentText.textContent = Math.round(p) + '%';
+      };
+
+      // Phase 1: quick ramp to 30%
+      setProgress(10);
+      await loadTheme();
+      setProgress(25);
+      await loadUserSession();
+      setProgress(40);
+
+      // Phase 2: heavier init
+      await initMap();
+      setProgress(70);
+      setMode('route');
+      setProgress(85);
+
+      // Phase 3: attach listeners / warm-up
       const sidebarSearch = document.getElementById('sidebarSearch');
       const sidebarSuggest = document.getElementById('sidebarSuggest');
       sidebarSearch.addEventListener('input', debounce(async (e) => {
@@ -2136,6 +2183,16 @@
       if (matrixCityInput) {
         matrixCityInput.addEventListener('input', debounce(e => searchMatrixPlaces(e.target.value), 350));
       }
+
+      setProgress(95);
+      await new Promise(r => setTimeout(r, 200));
+      setProgress(100);
+
+      // Hide splash after a short pause
+      setTimeout(() => {
+        splash.classList.add('hidden');
+        setTimeout(() => splash.remove(), 700);
+      }, 350);
     });
   </script>
 </body>
