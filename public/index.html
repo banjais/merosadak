@@ -276,7 +276,10 @@
           Select or add Nepal cities (2 to 6 hubs) to calculate an instant OSRM road distance and driving matrix.
         </p>
         <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <input type="text" id="matrixCityInput" placeholder="Add a city (e.g. Pokhara, Butwal, Biratnagar)..." style="flex:1; padding:9px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
+          <div style="flex:1; position:relative;">
+            <input type="text" id="matrixCityInput" placeholder="Add a city (e.g. Pokhara, Butwal, Biratnagar)..." autocomplete="off" style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
+            <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
+          </div>
           <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
         </div>
         <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
@@ -855,6 +858,14 @@
       if (e.key === 'Escape') closeDrawer();
     });
 
+    document.addEventListener('click', (e) => {
+      const suggest = document.getElementById('matrixSuggest');
+      const input = document.getElementById('matrixCityInput');
+      if (suggest && input && !suggest.contains(e.target) && e.target !== input) {
+        suggest.style.display = 'none';
+      }
+    });
+
     function renderSosModal() {
       if (!window.NEPAL_DATA) return;
       const grid = document.getElementById('sosGridContent');
@@ -1016,6 +1027,38 @@
       matrixCities.splice(index, 1);
       renderMatrixChips();
     }
+
+    async function searchMatrixPlaces(query) {
+      const boxEl = document.getElementById('matrixSuggest');
+      if (!query || query.length < 3) { boxEl.style.display = 'none'; return; }
+      try {
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=6`).then(r => r.json());
+        boxEl.innerHTML = '';
+        (res.features || []).forEach(f => {
+          const name = f.properties.name || '';
+          if (!name) return;
+          const div = document.createElement('div');
+          div.textContent = name;
+          div.style.padding = '8px 12px';
+          div.style.cursor = 'pointer';
+          div.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
+          div.onclick = () => addMatrixPlace(name, f.geometry.coordinates[1], f.geometry.coordinates[0]);
+          boxEl.appendChild(div);
+        });
+        boxEl.style.display = boxEl.children.length ? 'block' : 'none';
+      } catch (e) { console.error(e); }
+    }
+
+    function addMatrixPlace(label, lat, lon) {
+      if (matrixCities.length >= 6) { alert('Up to 6 places at a time.'); return; }
+      if (matrixCities.some(p => p.name.toLowerCase() === label.toLowerCase())) return;
+      matrixCities.push({ name: label, lat, lng: lon });
+      document.getElementById('matrixCityInput').value = '';
+      document.getElementById('matrixSuggest').style.display = 'none';
+      renderMatrixChips();
+    }
+
+    document.getElementById('matrixCityInput').addEventListener('input', debounce(e => searchMatrixPlaces(e.target.value), 350));
 
     async function computeDistanceMatrix() {
       if (matrixCities.length < 2) { alert('Please add at least 2 cities.'); return; }
