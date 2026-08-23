@@ -48,7 +48,7 @@
       <button class="btn-header" onclick="openModal('dialectModal')" title="Regional Driving Dialects">
         <span>🗣️</span> <span style="display:inline-block;">Dialects</span>
       </button>
-      <button class="btn-header" onclick="openStaticMatrix()" title="Nepal Cities Distance Matrix">
+      <button class="btn-header" onclick="setMode('matrix')" title="Nepal Cities Distance Matrix">
         <span>📊</span> <span>Matrix</span>
       </button>
       <button class="btn-header" onclick="cycleMapStyle()" id="mapStyleBtn" title="Switch Map Layer">
@@ -89,6 +89,9 @@
         <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">
           <span class="mode-tab-icon">🆘</span> SOS
         </button>
+        <button class="mode-tab" data-mode="matrix" onclick="setMode('matrix')">
+          <span class="mode-tab-icon">📊</span> Matrix
+        </button>
       </div>
       <div class="sidebar-search-wrap">
         <span class="search-mode-icon" id="searchModeIcon">📍</span>
@@ -123,7 +126,7 @@
     <button class="map-toggle-btn" id="togglePois" onclick="toggleLayer('pois')" title="Fuel Stations, EV Chargers, Hospitals">
       <span class="icon">⛽</span> <span class="label">POIs & EV</span>
     </button>
-    <button class="map-toggle-btn" onclick="openStaticMatrix()" title="Static Distance Matrix">
+    <button class="map-toggle-btn" onclick="setMode('matrix')" title="Nepal Cities Distance Matrix">
       <span class="icon">📊</span> <span class="label">Matrix</span>
     </button>
     <button class="map-toggle-btn btn-sos" onclick="openModal('sosModal')" title="Emergency SOS Directory">
@@ -1043,7 +1046,8 @@
       weather: { icon: '⛅', placeholder: 'Check weather for...', hint: 'Search any place in Nepal to get current weather conditions' },
       traffic: { icon: '🚦', placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
       pois: { icon: '⛽', placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
-      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
+      sos: { icon: '🆘', placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' },
+      matrix: { icon: '📊', placeholder: 'Search a city to highlight in matrix...', hint: 'Full Nepal city-to-city distance matrix (straight-line km). Click any cell to plan a route.' }
     };
 
     const DEFAULT_SUGGESTIONS = [
@@ -1075,6 +1079,8 @@
         toggleLayer('traffic');
       } else if (mode === 'pois') {
         toggleLayer('pois');
+      } else if (mode === 'matrix') {
+        renderSidebarMatrix();
       }
     }
 
