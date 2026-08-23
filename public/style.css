@@ -1403,57 +1403,127 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 /* ==========================================================================
-   5. Floating Map Toggles Toolbar (Right Side)
+   5. Floating Map Toggles Toolbar (Right Side) — Collapsible
    ========================================================================== */
-.map-floating-toggles {
+.map-toggle-fab {
   position: fixed;
   top: 108px;
   right: 20px;
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  z-index: 910;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
   background: var(--surface-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 8px;
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.map-toggle-fab:hover {
+  background: rgba(30, 62, 98, 0.9);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--accent-gold);
+  box-shadow: var(--shadow-glow);
+}
+
+.map-toggle-fab.is-open {
+  transform: rotate(90deg);
+  background: var(--primary-light);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.map-floating-toggles {
+  position: fixed;
+  top: 108px;
+  right: 76px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 6px;
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+  transition: all var(--transition-smooth);
+}
+
+.map-floating-toggles.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
 .map-toggle-btn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid transparent;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
-  white-space: nowrap;
-  min-height: 40px;
   -webkit-tap-highlight-color: transparent;
 }
 
 .map-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: rgba(30, 62, 98, 0.8);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--accent-gold);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
 }
 
 .map-toggle-btn.active {
   background: var(--primary-light);
   border-color: rgba(245, 158, 11, 0.5);
-  color: #ffffff;
+  color: var(--accent-gold);
   box-shadow: 0 0 12px rgba(30, 62, 98, 0.6);
 }
 
-.map-toggle-btn .icon {
-  font-size: 1rem;
+.toggle-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.toggle-label {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-toggle-btn:hover .toggle-label {
+  opacity: 1;
 }
 
 .map-toggle-btn.btn-sos {
@@ -1465,6 +1535,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .map-toggle-btn.btn-sos:hover {
   background: var(--accent);
   color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(217, 4, 41, 0.4);
 }
 
 /* ==========================================================================
@@ -1928,17 +2000,23 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
   .map-floating-toggles {
     top: auto;
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    bottom: 80px;
     right: 12px;
-    padding: 4px;
     flex-direction: row;
+    gap: 4px;
+    padding: 4px;
     border-radius: var(--radius-full);
   }
-  .map-toggle-btn {
-    padding: 8px 10px;
-    min-height: 36px;
+  .map-toggle-fab {
+    top: auto;
+    bottom: 20px;
+    right: 12px;
   }
-  .map-toggle-btn span.label {
+  .map-toggle-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .map-toggle-btn .toggle-label {
     display: none;
   }
   .modal-card {
