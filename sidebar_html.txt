@@ -1,0 +1,21 @@
+  <!-- ==========================================
+        3. Left Sidebar — Unified Search & Actions
+        ========================================== -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-mode-tabs">
+        <button class="mode-tab active" data-mode="route" onclick="setMode('route')">Route/ETA</button>
+        <button class="mode-tab" data-mode="weather" onclick="setMode('weather')">Weather</button>
+        <button class="mode-tab" data-mode="traffic" onclick="setMode('traffic')">Traffic</button>
+        <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">POIS/EV</button>
+        <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">SOS</button>
+      </div>
+      <div class="sidebar-search-wrap">
+        <span class="search-mode-icon" id="searchModeIcon">📍</span>
+        <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
+        <button class="icon-btn search-clear-btn" onclick="clearSidebarSearch()" title="Clear">✕</button>
+        <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
+      </div>
+      <div class="sidebar-results" id="sidebarResults"></div>
+    </div>
+  </aside>

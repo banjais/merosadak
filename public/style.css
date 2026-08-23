@@ -447,7 +447,7 @@ h1, h2, h3, h4, .font-heading {
   left: 0;
   bottom: 0;
   width: 380px;
-  z-index: 900;
+  z-index: 901;
   background: rgba(11, 25, 44, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

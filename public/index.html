@@ -45,24 +45,65 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-header" onclick="openModal('dialectModal')" title="Regional Driving Dialects">
-        <span>🗣️</span> <span style="display:inline-block;">Dialects</span>
-      </button>
-      <button class="btn-header" onclick="setMode('matrix')" title="Nepal Cities Distance Matrix">
-        <span>📊</span> <span>Matrix</span>
-      </button>
-      <button class="btn-header" onclick="cycleMapStyle()" id="mapStyleBtn" title="Switch Map Layer">
-        <span>🗺️</span> <span id="mapStyleLabel">Voyager</span>
-      </button>
-      <button class="btn-header sos-btn" onclick="openModal('sosModal')" title="Emergency Roadside Assistance">
-        <span>🆘</span> <span>SOS 103</span>
+      <button class="header-icon-btn" onclick="openDrawer()" title="Menu">
+        <span>☰</span>
       </button>
     </div>
   </header>
 
   <!-- ==========================================
-       2. Full Viewport Leaflet Map
-       ========================================== -->
+        Left Drawer Menu
+        ========================================== -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="app-drawer" id="appDrawer">
+    <div class="drawer-header">
+      <div class="drawer-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28">
+            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">MERO SADAK <span class="np-badge">मेरो सडक</span></div>
+          <div class="brand-sub">Nepal National Road Network</div>
+        </div>
+      </div>
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-nav">
+      <div class="drawer-nav-item" onclick="openModal('highwayModal'); closeDrawer();">
+        <span class="drawer-icon">🛣️</span> Highway Directory
+      </div>
+      <div class="drawer-nav-item" onclick="openModal('staticMatrixModal'); closeDrawer();">
+        <span class="drawer-icon">📊</span> Distance Matrix
+      </div>
+      <div class="drawer-nav-item" onclick="openModal('reportModal'); closeDrawer();">
+        <span class="drawer-icon">🚧</span> Report Hazard
+      </div>
+      <div class="drawer-nav-item" onclick="openModal('dialectModal'); closeDrawer();">
+        <span class="drawer-icon">🗣️</span> Transit Dialects
+      </div>
+      <div class="drawer-nav-item" onclick="openModal('passesModal'); closeDrawer();">
+        <span class="drawer-icon">🏔️</span> Mountain Passes
+      </div>
+      <div class="drawer-nav-item" onclick="openModal('sosModal'); closeDrawer();">
+        <span class="drawer-icon">🆘</span> Emergency SOS
+      </div>
+      <div class="drawer-nav-item" onclick="cycleMapStyle(); closeDrawer();">
+        <span class="drawer-icon">🗺️</span> Map Style
+      </div>
+      <div class="drawer-nav-item" onclick="syncOfflineBundle(); closeDrawer();">
+        <span class="drawer-icon">📦</span> Offline Cache
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="drawer-login-btn" onclick="alert('Sign In coming soon'); closeDrawer();">Sign In</button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+        Full Viewport Leaflet Map
+        ========================================== -->
   <div id="map"></div>
 
   <!-- ==========================================
@@ -789,6 +830,16 @@
       document.getElementById(id).style.display = 'none';
     }
 
+    function openDrawer() {
+      document.getElementById('drawerOverlay').classList.add('is-open');
+      document.getElementById('appDrawer').classList.add('is-open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawerOverlay').classList.remove('is-open');
+      document.getElementById('appDrawer').classList.remove('is-open');
+    }
+
     function openStaticMatrix() {
       openModal('staticMatrixModal');
     }
@@ -798,6 +849,10 @@
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.style.display = 'none';
       });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDrawer();
     });
 
     function renderSosModal() {
