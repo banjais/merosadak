@@ -1,13 +1,12 @@
 name = "merosadak"
 main = "src/index.ts"
 compatibility_date = "2026-08-20"
-workers_dev = false
+workers_dev = true
 preview_urls = false
 
 [[kv_namespaces]]
 binding = "DATA"
 id = "e196f41c0a924657a99decf54d016f87"
-preview_id = "e196f41c0a924657a99decf54d016f87"
 
 [vars]
 ALLOWED_ORIGIN = "https://merosadak.web.app"
