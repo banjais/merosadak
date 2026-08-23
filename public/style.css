@@ -133,7 +133,7 @@ h1, h2, h3, h4, .font-heading {
   top: 0;
   left: 0;
   right: 0;
-  height: 82px;
+  height: 80px;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -169,9 +169,8 @@ h1, h2, h3, h4, .font-heading {
 
 .header-brand {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
   cursor: pointer;
   text-decoration: none;
   flex: 0 0 auto;
@@ -193,33 +192,34 @@ h1, h2, h3, h4, .font-heading {
   width: 32px;
   height: 32px;
   filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+  flex-shrink: 0;
 }
 
 .header-brand .brand-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 1px;
-  text-align: center;
-  line-height: 1.1;
+  text-align: left;
+  line-height: 1;
 }
 
 .header-brand .brand-title {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
 }
 
 .header-brand .np-badge {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 7px;
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 4, 41, 0.2));
   border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: var(--radius-full);
@@ -232,9 +232,10 @@ h1, h2, h3, h4, .font-heading {
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-secondary);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .header-right {
@@ -289,6 +290,7 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
   position: relative;
   font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .menu-btn {
@@ -559,7 +561,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 .app-sidebar {
   position: fixed;
-  top: 82px;
+  top: 80px;
   left: 0;
   bottom: 0;
   width: 380px;
@@ -894,7 +896,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 #map {
   position: fixed;
-  top: 82px;
+  top: 80px;
   left: 380px;
   right: 0;
   bottom: 0;
@@ -1861,16 +1863,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .app-header {
-    height: 60px;
+    height: 68px;
     padding: 0 12px;
     padding-top: env(safe-area-inset-top);
   }
   .app-header::before {
     height: 2px;
   }
-  .header-brand {
-    flex-direction: row;
+  .header-left {
     gap: 6px;
+  }
+  .header-brand {
+    gap: 5px;
   }
   .header-brand .brand-icon {
     width: 24px;
@@ -1880,21 +1884,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     width: 20px;
     height: 20px;
   }
-  .header-brand .brand-text {
-    align-items: flex-start;
-    gap: 0;
-  }
   .header-brand .brand-title {
-    font-size: 0.95rem;
-    gap: 4px;
+    font-size: 0.9rem;
+    gap: 3px;
   }
   .header-brand .np-badge {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     padding: 1px 5px;
   }
   .header-brand .brand-sub {
     font-size: 0.6rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
   }
   .header-center-pill {
     display: none;
@@ -1910,8 +1910,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     font-size: 1rem;
   }
   .floating-search-panel {
-    top: 68px;
-    top: calc(60px + env(safe-area-inset-top));
+    top: 86px;
+    top: calc(68px + env(safe-area-inset-top));
     left: 12px;
     right: 12px;
     width: auto;
@@ -1955,7 +1955,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   /* Sidebar mobile: top panel */
   .app-sidebar {
-    top: 60px;
+    top: 68px;
     left: 0;
     right: 0;
     bottom: auto;
@@ -2022,7 +2022,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
 
   #map {
-    top: 60px;
+    top: 68px;
     left: 0 !important;
   }
 
