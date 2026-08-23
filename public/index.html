@@ -505,11 +505,13 @@
     async function loadData() {
       try {
         const v = Date.now();
-        const [citiesRes, placesRes, palikaRes, hwyRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes] = await Promise.all([
           fetch(`data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => [])
+          fetch(`data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         allHighwaysIndex = hwyRes;
@@ -518,7 +520,7 @@
           NEPAL_DATA.cities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
         }
         if (window.NEPAL_DATA && NEPAL_DATA.places) {
-          NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng }));
+          NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' }));
         }
 
         palikaRes.forEach(p => {
@@ -529,6 +531,14 @@
 
         hwyRes.forEach(h => {
           searchIndex.push({ label: `${h.code}: ${h.name}`, type: 'Highway', code: h.code, file: h.file });
+        });
+
+        (airportsRes || []).forEach(a => {
+          searchIndex.push({ label: `${a.code} — ${a.name}`, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+        });
+
+        (districtRes || []).forEach(d => {
+          searchIndex.push({ label: `${d.district} District → ${d.hqCity} (${d.type})`, type: 'District HQ', district: d.district, hq: d.hqCity, hqType: d.type, lat: d.lat, lng: d.lng });
         });
 
         renderHighwayDirectory();
@@ -1202,7 +1212,13 @@
 
     function getSearchSuggestions(query) {
       const q = query.toLowerCase();
-      return searchIndex.filter(item => item.label.toLowerCase().includes(q)).slice(0, 8);
+      return searchIndex.filter(item => {
+        const label = item.label.toLowerCase();
+        const code = (item.code || '').toLowerCase();
+        const district = (item.district || '').toLowerCase();
+        const hq = (item.hq || '').toLowerCase();
+        return label.includes(q) || code.includes(q) || district.includes(q) || hq.includes(q);
+      }).slice(0, 8);
     }
 
     function selectSidebarItem(item) {

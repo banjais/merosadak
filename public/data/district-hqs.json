@@ -1,0 +1,548 @@
+[
+  {
+    "district": "Achham",
+    "hqCity": "Bannigadhi Jayagadh",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Arghakhanchi",
+    "hqCity": "Bhumekasthan",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Baglung",
+    "hqCity": "Badigad",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Baitadi",
+    "hqCity": "Dasharathchanda",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Bajhang",
+    "hqCity": "Bithadchir",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Bajura",
+    "hqCity": "Badimalika",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Banke",
+    "hqCity": "Baijanath",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Bara",
+    "hqCity": "Adarshkotwal",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Bardiya",
+    "hqCity": "BardiyaNationalPark",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "BARDIYA",
+    "hqCity": "Badhaiyatal",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Bhaktapur",
+    "hqCity": "Bhaktapur",
+    "type": "Metropolitan City",
+    "lat": 27.671,
+    "lng": 85.4298
+  },
+  {
+    "district": "Bhojpur",
+    "hqCity": "Aamchowk",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Chitawan",
+    "hqCity": "Bharatpur",
+    "type": "Metropolitan City",
+    "lat": 27.6833,
+    "lng": 84.4333
+  },
+  {
+    "district": "Dadeldhura",
+    "hqCity": "Ajaymeru",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dailekh",
+    "hqCity": "Aathabis",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dang",
+    "hqCity": "Babai",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Darchula",
+    "hqCity": "Apihimal",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dhading",
+    "hqCity": "Benighat Rorang",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dhankuta",
+    "hqCity": "Chaubise",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dhanusha",
+    "hqCity": "Aaurahi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dolakha",
+    "hqCity": "Baiteshwor",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Dolpa",
+    "hqCity": "Chharka Tangsong",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Doti",
+    "hqCity": "Adharsha",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Gorkha",
+    "hqCity": "Aarughat",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Gulmi",
+    "hqCity": "Chandrakot",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Humla",
+    "hqCity": "Adanchuli",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Ilam",
+    "hqCity": "Chulachuli",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Jajarkot",
+    "hqCity": "Barekot",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Jhapa",
+    "hqCity": "Arjundhara",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Jumla",
+    "hqCity": "Chandannath",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kabhrepalanchok",
+    "hqCity": "Banepa",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kailali",
+    "hqCity": "Bardagoriya",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kalikot",
+    "hqCity": "Khandachakra",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kanchanpur",
+    "hqCity": "Bedkot",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kapilbastu",
+    "hqCity": "Banganga",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kaski",
+    "hqCity": "Annapurna",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Kathmandu",
+    "hqCity": "Kathmandu",
+    "type": "Metropolitan City",
+    "lat": 27.7172,
+    "lng": 85.324
+  },
+  {
+    "district": "Khotang",
+    "hqCity": "Ainselukhark",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Lalitpur",
+    "hqCity": "Lalitpur",
+    "type": "Metropolitan City",
+    "lat": 27.6588,
+    "lng": 85.3247
+  },
+  {
+    "district": "Lamjung",
+    "hqCity": "Dordi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Mahottari",
+    "hqCity": "Aurahi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Makawanpur",
+    "hqCity": "Bagmati",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Manang",
+    "hqCity": "Manang Ngisyang",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Morang",
+    "hqCity": "Biratnagar",
+    "type": "Metropolitan City",
+    "lat": 26.4525,
+    "lng": 87.2718
+  },
+  {
+    "district": "Mugu",
+    "hqCity": "Chhayanath Rara",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Mustang",
+    "hqCity": "Dalome",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Myagdi",
+    "hqCity": "Annapurna",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Nawalparasi_E",
+    "hqCity": "Baudikali",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Nawalparasi_W",
+    "hqCity": "Bardaghat",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Nuwakot",
+    "hqCity": "Belkotgadhi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Okhaldhunga",
+    "hqCity": "Champadevi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Palpa",
+    "hqCity": "Bagnaskali",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Panchthar",
+    "hqCity": "Falelung",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Parbat",
+    "hqCity": "Bihadi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Parsa",
+    "hqCity": "Birgunj",
+    "type": "Metropolitan City",
+    "lat": 27,
+    "lng": 84.8667
+  },
+  {
+    "district": "Pyuthan",
+    "hqCity": "Ayirabati",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Ramechhap",
+    "hqCity": "Doramba Shailung",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rasuwa",
+    "hqCity": "Aamachhodingmo",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rautahat",
+    "hqCity": "Baudhimai",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rolpa",
+    "hqCity": "Gangadev",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rukum_E",
+    "hqCity": "Bhume",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rukum_W",
+    "hqCity": "Aathbiskot",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Rupandehi",
+    "hqCity": "Gaidahawa",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Salyan",
+    "hqCity": "Bagchaur",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Sankhuwasabha",
+    "hqCity": "Bhotkhola",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Saptari",
+    "hqCity": "Agnisair Krishna Savaran",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Sarlahi",
+    "hqCity": "Bagmati",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Sindhuli",
+    "hqCity": "Dudhouli",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Sindhupalchok",
+    "hqCity": "Balefi",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Siraha",
+    "hqCity": "Arnama",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Solukhumbu",
+    "hqCity": "Khumbupasanglahmu",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Sunsari",
+    "hqCity": "Barahchhetra",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Surkhet",
+    "hqCity": "Barahtal",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Syangja",
+    "hqCity": "Aandhikhola",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Tanahu",
+    "hqCity": "Anbukhaireni",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Taplejung",
+    "hqCity": "Aathrai Tribeni",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Terhathum",
+    "hqCity": "Aathrai",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  },
+  {
+    "district": "Udayapur",
+    "hqCity": "Belaka",
+    "type": "Rural Municipality",
+    "lat": 0,
+    "lng": 0
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "code": "TIA",
+    "name": "Tribhuvan International Airport",
+    "shortName": "TIA",
+    "location": "Kathmandu",
+    "district": "Kathmandu",
+    "province": "Bagmati",
+    "lat": 27.6968,
+    "lng": 85.3591,
+    "type": "international",
+    "notes": "Primary international gateway"
+  },
+  {
+    "code": "KTM",
+    "name": "Tribhuvan International Airport",
+    "shortName": "TIA",
+    "location": "Kathmandu",
+    "district": "Kathmandu",
+    "province": "Bagmati",
+    "lat": 27.6968,
+    "lng": 85.3591,
+    "type": "international",
+    "notes": "Alias for TIA"
+  },
+  {
+    "code": "PKR",
+    "name": "Pokhara International Airport",
+    "shortName": "PKR",
+    "location": "Pokhara, Kaski",
+    "district": "Kaski",
+    "province": "Gandaki",
+    "lat": 28.2006,
+    "lng": 83.9821,
+    "type": "international",
+    "notes": "Regional and international flights"
+  },
+  {
+    "code": "BWA",
+    "name": "Gautam Buddha Airport",
+    "shortName": "BWA",
+    "location": "Bhairahawa, Rupandehi",
+    "district": "Rupandehi",
+    "province": "Lumbini",
+    "lat": 27.5057,
+    "lng": 83.4163,
+    "type": "international",
+    "notes": "Lumbini international airport"
+  },
+  {
+    "code": "BIR",
+    "name": "Biratnagar Airport",
+    "shortName": "BIR",
+    "location": "Biratnagar, Morang",
+    "district": "Morang",
+    "province": "Koshi",
+    "lat": 26.4815,
+    "lng": 87.2637,
+    "type": "domestic",
+    "notes": "Eastern Nepal airport"
+  },
+  {
+    "code": "NGJ",
+    "name": "Nepalgunj Airport",
+    "shortName": "NGJ",
+    "location": "Nepalgunj, Banke",
+    "district": "Banke",
+    "province": "Lumbini",
+    "lat": 28.1036,
+    "lng": 81.667,
+    "type": "domestic",
+    "notes": "Mid-western Nepal airport"
+  },
+  {
+    "code": "JUM",
+    "name": "Jumla Airport",
+    "shortName": "JUM",
+    "location": "Jumla, Jumla",
+    "district": "Jumla",
+    "province": "Karnali",
+    "lat": 29.2742,
+    "lng": 82.1933,
+    "type": "domestic",
+    "notes": "Karnali region airport"
+  },
+  {
+    "code": "DHI",
+    "name": "Dhangadhi Airport",
+    "shortName": "DHI",
+    "location": "Dhangadhi, Kailali",
+    "district": "Kailali",
+    "province": "Sudurpashchim",
+    "lat": 28.6833,
+    "lng": 80.5833,
+    "type": "domestic",
+    "notes": "Far-western Nepal airport"
+  },
+  {
+    "code": "BHK",
+    "name": "Bharatpur Airport",
+    "shortName": "BHK",
+    "location": "Bharatpur, Chitwan",
+    "district": "Chitwan",
+    "province": "Bagmati",
+    "lat": 27.6833,
+    "lng": 84.4333,
+    "type": "domestic",
+    "notes": "Chitwan domestic airport"
+  },
+  {
+    "code": "LUA",
+    "name": "Lukla Airport",
+    "shortName": "LUA",
+    "location": "Lukla, Solukhumbu",
+    "district": "Solukhumbu",
+    "province": "Koshi",
+    "lat": 27.685,
+    "lng": 86.7264,
+    "type": "domestic",
+    "notes": "Gateway to Everest"
+  }
+]
