@@ -1941,7 +1941,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   padding: 0 16px;
   padding-bottom: env(safe-area-inset-bottom);
   pointer-events: none;
@@ -2040,6 +2040,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   position: relative;
   z-index: 2;
   margin-top: -14px;
+  margin-left: auto;
+  margin-right: 16px;
 }
 
 .bottom-bar-fab:hover {
@@ -2092,6 +2094,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     height: 48px;
     font-size: 1.3rem;
     margin-top: -12px;
+    margin-left: auto;
+    margin-right: 16px;
   }
   .leaflet-control-zoom {
     margin-bottom: 70px !important;
