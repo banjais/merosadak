@@ -368,19 +368,37 @@
 
     async function loadDistanceMatrix() {
       try {
-        const res = await fetch('data/distance-matrix.json?v=' + Date.now()).then(r => r.json());
-        distanceMatrixData = res;
+        const res = await fetch('data/distance-matrix.json?v=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        console.log('Distance matrix raw bytes:', text.length);
+        distanceMatrixData = JSON.parse(text);
+        console.log('Distance matrix loaded:', distanceMatrixData.cities.length, 'cities');
       } catch (e) {
         console.error('Distance matrix load error:', e);
+        distanceMatrixData = null;
       }
     }
 
     function renderStaticMatrix() {
-      if (!distanceMatrixData) return;
+      const table = document.getElementById('staticMatrixTable');
+      if (!table) {
+        console.error('staticMatrixTable not found');
+        return;
+      }
+
+      if (!distanceMatrixData) {
+        console.warn('distanceMatrixData is null, retrying load...');
+        table.innerHTML = '<tr><td style="padding:20px; text-align:center; color:var(--text-secondary);">Loading distance matrix… <span id="matrixRetry" style="cursor:pointer; color:var(--accent-gold);">Retry</span></td></tr>';
+        document.getElementById('matrixRetry')?.addEventListener('click', () => {
+          loadDistanceMatrix().then(() => renderStaticMatrix());
+        });
+        loadDistanceMatrix().then(() => renderStaticMatrix());
+        return;
+      }
+
       const cities = distanceMatrixData.cities;
       const matrix = distanceMatrixData.matrix;
-      const table = document.getElementById('staticMatrixTable');
-      if (!table) return;
 
       let html = '<thead><tr><th>From ↓ / To →</th>';
       cities.forEach(c => { html += '<th>' + c.name + '</th>'; });
