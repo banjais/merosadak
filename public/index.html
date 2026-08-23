@@ -354,7 +354,7 @@
   <script src="nepalData.js"></script>
   <script>
     // Configuration & Worker Gateway
-    const WORKER_URL = 'https://merosadak.banjais.workers.dev';
+    const WORKER_URL = 'https://merosadak.banjays.workers.dev';
 
     // State Variables
     let map;
@@ -507,11 +507,11 @@
         const v = Date.now();
         const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes] = await Promise.all([
           fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjais.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjais.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjais.workers.dev/api/data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjais.workers.dev/api/data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjais.workers.dev/api/data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
+          fetch(`https://merosadak.banjays.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         allHighwaysIndex = hwyRes;
