@@ -531,6 +531,19 @@ h1, h2, h3, h4, .font-heading {
   gap: 12px;
 }
 
+.drawer-brand .brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-brand .brand-sub {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
 .drawer-close-btn {
   width: 34px;
   height: 34px;
@@ -1365,6 +1378,22 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   color: var(--text-secondary);
 }
 
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1500;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+}
+
 /* Vehicle & Route Preference Bar */
 .mode-pref-bar {
   display: flex;
@@ -2020,6 +2049,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .bottom-bar-fab:active {
   transform: scale(0.94);
+}
+
+.fab-plus {
+  font-weight: 300;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .bottom-app-bar.is-open .bottom-bar-fab {

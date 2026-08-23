@@ -585,7 +585,8 @@
 
       map.on('click', handleMapClick);
 
-      loadStaticMapFeatures();
+      await loadStaticMapFeatures();
+      setTimeout(() => map.invalidateSize(), 100);
     }
 
     function cycleMapStyle() {
@@ -598,8 +599,6 @@
       if (tileLayers[currentMapStyle]) map.removeLayer(tileLayers[currentMapStyle]);
       currentMapStyle = style;
       tileLayers[currentMapStyle].addTo(map);
-      const mapStyleLabelEl = document.getElementById('mapStyleLabel');
-      if (mapStyleLabelEl) mapStyleLabelEl.textContent = style.charAt(0).toUpperCase() + style.slice(1);
     }
 
     function resetMapView() {
@@ -1441,10 +1440,15 @@
     }
 
     function loadTheme() {
-      const saved = localStorage.getItem('merosadak_theme');
-      if (saved === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-      } else {
+      try {
+        const saved = localStorage.getItem('merosadak_theme');
+        if (saved === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {
+        // localStorage unavailable (private browsing)
         document.documentElement.setAttribute('data-theme', 'dark');
       }
     }
@@ -1462,7 +1466,8 @@
     }
 
     function toggleBottomBar() {
-      document.getElementById('bottomAppBar').classList.toggle('is-open');
+      const bar = document.getElementById('bottomAppBar');
+      if (bar) bar.classList.toggle('is-open');
     }
 
     function saveCurrentRoute() {
@@ -2059,8 +2064,8 @@
 
       const setProgress = (pct) => {
         const p = Math.min(100, Math.max(0, pct));
-        progressFill.style.width = p + '%';
-        percentText.textContent = Math.round(p) + '%';
+        if (progressFill) progressFill.style.width = p + '%';
+        if (percentText) percentText.textContent = Math.round(p) + '%';
       };
 
       // Phase 1: quick ramp to 30%
