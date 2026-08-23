@@ -751,31 +751,6 @@ h1, h2, h3, h4, .font-heading {
   font-size: 0.84rem;
 }
 
-.search-clear-btn {
-  position: relative;
-  right: auto;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  font-size: 0.75rem;
-  z-index: 2;
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.search-clear-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
-
 .sidebar-results {
   flex: 1;
   overflow-y: auto;
@@ -2153,14 +2128,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   .search-icon {
     margin-left: 6px;
-  }
-
-  .search-clear-btn {
-    right: 4px;
-    width: 26px;
-    height: 26px;
-    font-size: 0.7rem;
-    margin-right: 4px;
   }
 
   .sidebar-mode-hint {

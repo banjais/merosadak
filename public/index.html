@@ -223,7 +223,6 @@
             <line x1="3" y1="21" x2="10" y2="14"></line>
           </svg>
         </button>
-        <button class="icon-btn search-clear-btn" onclick="clearSidebarSearch()" title="Clear">✕</button>
         <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
       </div>
       <div class="sidebar-mode-hint" id="sidebarModeHint">Search destinations, cities, airports, bus stations, and major places in Nepal</div>
@@ -1375,15 +1374,6 @@
       sos: { placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
     };
 
-    const DEFAULT_SUGGESTIONS = [
-      { label: 'Kathmandu', type: 'City Hub', lat: 27.7172, lng: 85.324 },
-      { label: 'Pokhara', type: 'City Hub', lat: 28.2096, lng: 83.9856 },
-      { label: 'Biratnagar', type: 'City Hub', lat: 26.4525, lng: 87.2718 },
-      { label: 'Tribhuvan International Airport (TIA)', type: 'airport', lat: 27.6968, lng: 85.3591 },
-      { label: 'Kathmandu Bus Park (Koteshwor)', type: 'bus_station', lat: 27.6786, lng: 85.3477 },
-      { label: 'Chitwan / Bharatpur', type: 'City Hub', lat: 27.6833, lng: 84.4333 }
-    ];
-
     let currentMode = 'route';
     let selectedDestination = null;
 
@@ -1395,31 +1385,14 @@
       document.getElementById('sidebarModeHint').textContent = config.hint;
       document.getElementById('sidebarResults').innerHTML = '';
       document.getElementById('sidebarSearch').value = '';
+      document.getElementById('sidebarSuggest').style.display = 'none';
       selectedDestination = null;
 
-      if (mode === 'route') {
-        showDefaultRouteSuggestions();
-      } else if (mode === 'traffic') {
+      if (mode === 'traffic') {
         toggleLayer('traffic');
       } else if (mode === 'pois') {
         toggleLayer('pois');
       }
-    }
-
-    function showDefaultRouteSuggestions() {
-      const container = document.getElementById('sidebarSuggest');
-      container.innerHTML = DEFAULT_SUGGESTIONS.map(s =>
-        '<div class="autocomplete-item" onclick="selectSidebarItem({label:\'' + s.label.replace(/'/g, "\\'") + '\',type:\'' + s.type + '\',lat:' + s.lat + ',lng:' + s.lng + '})"><span>' + s.label + '</span> <span class="tag">' + s.type + '</span></div>'
-      ).join('');
-      container.style.display = 'block';
-    }
-
-    function clearSidebarSearch() {
-      document.getElementById('sidebarSearch').value = '';
-      document.getElementById('sidebarSuggest').style.display = 'none';
-      document.getElementById('sidebarResults').innerHTML = '';
-      selectedDestination = null;
-      if (currentMode === 'route') showDefaultRouteSuggestions();
     }
 
     function getSearchSuggestions(query) {
@@ -1632,8 +1605,7 @@
       sidebarSearch.addEventListener('input', debounce(async (e) => {
         const query = e.target.value.trim().toLowerCase();
         if (query.length < 2) {
-          if (currentMode === 'route') showDefaultRouteSuggestions();
-          else sidebarSuggest.style.display = 'none';
+          sidebarSuggest.style.display = 'none';
           return;
         }
 
