@@ -911,7 +911,7 @@
       try {
         const [photonRes, localMatches] = await Promise.all([
           fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json()).catch(() => ({ features: [] })),
-          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat).slice(0, 5))
+          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat && s.type !== 'Highway').slice(0, 5))
         ]);
 
         boxEl.innerHTML = '';
