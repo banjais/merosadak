@@ -3,10 +3,6 @@ name: Sync Data to Cloudflare KV
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'public/data/**'
-      - 'worker/wrangler.toml'
-      - 'worker/sync-data.js'
   workflow_dispatch:
 
 jobs:
