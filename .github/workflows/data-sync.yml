@@ -26,6 +26,15 @@ jobs:
           npx wrangler kv key put --binding DATA "highway/index.json" "$(cat ../public/data/highway/index.json)"
           npx wrangler kv key put --binding DATA "nepal_boundary.geojson" "$(cat ../public/data/nepal_boundary.geojson)"
           npx wrangler kv key put --binding DATA "distance-matrix.json" "$(cat ../public/data/distance-matrix.json)"
+          npx wrangler kv key put --binding DATA "highway-info.json" "$(cat ../public/data/highway-info.json)"
+          npx wrangler kv key put --binding DATA "blackspots.json" "$(cat ../public/data/blackspots.json)"
+          npx wrangler kv key put --binding DATA "mountain-weather.json" "$(cat ../public/data/mountain-weather.json)"
+          npx wrangler kv key put --binding DATA "traffic-corridors.json" "$(cat ../public/data/traffic-corridors.json)"
+          npx wrangler kv key put --binding DATA "travel-time.json" "$(cat ../public/data/travel-time.json)"
+          npx wrangler kv key put --binding DATA "incidents.json" "$(cat ../public/data/incidents.json)"
+          npx wrangler kv key put --binding DATA "pois.json" "$(cat ../public/data/pois.json)"
+          npx wrangler kv key put --binding DATA "user-reports.json" "$(cat ../public/data/user-reports.json)"
+          npx wrangler kv key put --binding DATA "cities-and-junctions.json" "$(cat ../public/data/cities-and-junctions.json)"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

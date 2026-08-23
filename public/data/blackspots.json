@@ -1,0 +1,98 @@
+[
+  {
+    "id": "bs-nagdhunga-descent",
+    "name": "Nagdhunga - Khani Khola Descent",
+    "highwayCode": "H02/H04",
+    "chainageOrLocation": "Ch. 12+500 (Dhading / Kathmandu border)",
+    "riskLevel": "high",
+    "primaryCause": "Steep continuous downhill gradient (-480m descent), heavy multi-axle freight brake overheating/fade, acute hairpin curves",
+    "annualAccidentStats": "~72 collisions & rollovers per year",
+    "safeDrivingAdvice": "Engage low gear (2nd gear engine braking). Avoid continuous riding of foot brakes. Maintain 30m following distance.",
+    "lat": 27.7020,
+    "lng": 85.2010
+  },
+  {
+    "id": "bs-jogimara-curves",
+    "name": "Jogimara & Benighat Trishuli S-Bends",
+    "highwayCode": "H04",
+    "chainageOrLocation": "Ch. 64+200 (Dhading)",
+    "riskLevel": "high",
+    "primaryCause": "Narrow Trishuli river canyon cliffside curves, reduced skid resistance on wet asphalt, speeding microbuses overtaking on blind corners",
+    "annualAccidentStats": "~54 incidents annually (high fatality index)",
+    "safeDrivingAdvice": "Sound horn before blind turns. Keep headlights on in canyon shadows. Obey 35 km/h advisory speed limit.",
+    "lat": 27.8423,
+    "lng": 84.7155
+  },
+  {
+    "id": "bs-charkilo-jalbire",
+    "name": "Charkilo & Jalbire Gorge Chutes",
+    "highwayCode": "H05",
+    "chainageOrLocation": "Narayanghat-Mugling Ch. 18+400 to 22+100",
+    "riskLevel": "critical",
+    "primaryCause": "Active overhead unstable rock slopes, sudden rockfalls, blind river bend at Jalbire bridge, heavy overnight commercial vehicle flow",
+    "annualAccidentStats": "~95 incidents / rockfall stoppages annually",
+    "safeDrivingAdvice": "Avoid stopping under overhangs. Observe DOR rockfall netting zones. Do not overtake heavy vehicles on gorge bridges.",
+    "lat": 27.8102,
+    "lng": 84.5020
+  },
+  {
+    "id": "bs-siddhababa-cliff",
+    "name": "Siddhababa Rockfall Zone (Butwal-Palpa)",
+    "highwayCode": "H10",
+    "chainageOrLocation": "Siddhartha Highway Ch. 4+000 (Dobhan)",
+    "riskLevel": "critical",
+    "primaryCause": "Vertical fragile shale cliffs prone to continuous rock-slide debris, acute switchback gorge without guardrails in older sections",
+    "annualAccidentStats": "~84 incidents annually",
+    "safeDrivingAdvice": "Strictly observe rock-shed protection tunnel bypass. Avoid transit during active rainfall or high winds.",
+    "lat": 27.7650,
+    "lng": 83.5120
+  },
+  {
+    "id": "bs-daunne-hill-pass",
+    "name": "Daunne Hill Hairpin Pass",
+    "highwayCode": "H01",
+    "chainageOrLocation": "Mahendra Highway Ch. 210 (Bardaghat-Dumkibas)",
+    "riskLevel": "high",
+    "primaryCause": "Steep hill ascent with 18 consecutive blind switchbacks, frequent breakdown of heavy trailers causing sudden lane obstructions",
+    "annualAccidentStats": "~68 incidents and vehicle jack-knifes annually",
+    "safeDrivingAdvice": "Never overtake on inner curve radii. Yield to uphill climbing trucks. Keep safe clearance on shoulder edges.",
+    "lat": 27.5700,
+    "lng": 83.8500
+  },
+  {
+    "id": "bs-byas-tanahun-widening",
+    "name": "Byas - Ghansikuwa Widening Detours",
+    "highwayCode": "H04",
+    "chainageOrLocation": "Prithvi Highway Ch. 112+000 (Damauli section)",
+    "riskLevel": "moderate",
+    "primaryCause": "Active 4-lane Asian Development Bank roadbed expansion, loose crushed stone gravel, sudden elevation steps between old & new asphalt",
+    "annualAccidentStats": "~48 minor/moderate collisions & two-wheeler skids",
+    "safeDrivingAdvice": "Reduce speed on unpaved bypasses. Watch for flag-bearers and temporary single-lane alternating signals.",
+    "lat": 27.9450,
+    "lng": 84.3400
+  },
+  {
+    "id": "bs-sindhuli-hairpins",
+    "name": "Sindhuli Gadhi Switchbacks (BP Highway)",
+    "highwayCode": "H13",
+    "chainageOrLocation": "BP Highway Ch. 78+000 (Khurkot-Sindhuli)",
+    "riskLevel": "high",
+    "primaryCause": "Extremely tight radius turns designed for light vehicles, blind mountain crests, severe consequences of lane drifting on cliff edge",
+    "annualAccidentStats": "~42 rollover/off-road incidents annually",
+    "safeDrivingAdvice": "Strict 25 km/h limit on hairpin loops. Heavy multi-axle freight vehicles prohibited. Keep strictly to the left lane.",
+    "lat": 27.2486,
+    "lng": 85.9186
+  },
+  {
+    "id": "bs-koteshwor-express-merge",
+    "name": "Koteshwor - Jadibuti Urban Fast Corridor",
+    "highwayCode": "H03",
+    "chainageOrLocation": "Araniko Highway Ch. 3+200 (Kathmandu entry)",
+    "riskLevel": "moderate",
+    "primaryCause": "High speed differentials between 6-lane express traffic and local service lane cross traffic, frequent pedestrian crossing conflicts",
+    "annualAccidentStats": "~38 urban traffic collisions per year",
+    "safeDrivingAdvice": "Observe 50 km/h urban limit. Check blind spots carefully before merging into express lanes.",
+    "lat": 27.6770,
+    "lng": 85.3520
+  }
+]

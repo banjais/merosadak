@@ -1,0 +1,389 @@
+[
+  {
+    "id": "ktm",
+    "name": "Kathmandu",
+    "nepaliName": "काठमाडौं",
+    "district": "Kathmandu",
+    "province": "Bagmati",
+    "lat": 27.7172,
+    "lng": 85.324,
+    "elevationM": 1400,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H02",
+      "H03",
+      "H04",
+      "H13"
+    ]
+  },
+  {
+    "id": "pkr",
+    "name": "Pokhara",
+    "nepaliName": "पोखरा",
+    "district": "Kaski",
+    "province": "Gandaki",
+    "lat": 28.2096,
+    "lng": 83.9856,
+    "elevationM": 822,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H04",
+      "H10",
+      "H15"
+    ]
+  },
+  {
+    "id": "cht",
+    "name": "Narayanghat / Bharatpur",
+    "nepaliName": "नारायणगढ / भरतपुर",
+    "district": "Chitwan",
+    "province": "Bagmati",
+    "lat": 27.6833,
+    "lng": 84.4333,
+    "elevationM": 208,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H05"
+    ]
+  },
+  {
+    "id": "mgl",
+    "name": "Mugling",
+    "nepaliName": "मुग्लिन",
+    "district": "Chitwan",
+    "province": "Bagmati",
+    "lat": 27.8617,
+    "lng": 84.5542,
+    "elevationM": 275,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H04",
+      "H05"
+    ]
+  },
+  {
+    "id": "btl",
+    "name": "Butwal",
+    "nepaliName": "बुटवल",
+    "district": "Rupandehi",
+    "province": "Lumbini",
+    "lat": 27.7006,
+    "lng": 83.4484,
+    "elevationM": 220,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H10"
+    ]
+  },
+  {
+    "id": "bhr",
+    "name": "Bhairahawa / Sunauli",
+    "nepaliName": "भैरहवा / सुनौली",
+    "district": "Rupandehi",
+    "province": "Lumbini",
+    "lat": 27.5045,
+    "lng": 83.4503,
+    "elevationM": 105,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H10"
+    ]
+  },
+  {
+    "id": "htd",
+    "name": "Hetauda",
+    "nepaliName": "हेटौंडा",
+    "district": "Makwanpur",
+    "province": "Bagmati",
+    "lat": 27.4285,
+    "lng": 85.0331,
+    "elevationM": 460,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H02",
+      "H17"
+    ]
+  },
+  {
+    "id": "brg",
+    "name": "Birgunj",
+    "nepaliName": "वीरगन्ज",
+    "district": "Parsa",
+    "province": "Madhesh",
+    "lat": 27.0128,
+    "lng": 84.8774,
+    "elevationM": 90,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H02",
+      "H16"
+    ]
+  },
+  {
+    "id": "jnk",
+    "name": "Janakpurdham",
+    "nepaliName": "जनकपुरधाम",
+    "district": "Dhanusha",
+    "province": "Madhesh",
+    "lat": 26.7271,
+    "lng": 85.9408,
+    "elevationM": 74,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H16"
+    ]
+  },
+  {
+    "id": "brd",
+    "name": "Bardibas",
+    "nepaliName": "बर्दिबास",
+    "district": "Mahottari",
+    "province": "Madhesh",
+    "lat": 26.974,
+    "lng": 85.9024,
+    "elevationM": 150,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H13"
+    ]
+  },
+  {
+    "id": "brt",
+    "name": "Biratnagar",
+    "nepaliName": "विराटनगर",
+    "district": "Morang",
+    "province": "Koshi",
+    "lat": 26.4525,
+    "lng": 87.2718,
+    "elevationM": 72,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H16"
+    ]
+  },
+  {
+    "id": "dhr",
+    "name": "Dharan",
+    "nepaliName": "धरान",
+    "district": "Sunsari",
+    "province": "Koshi",
+    "lat": 26.8124,
+    "lng": 87.2834,
+    "elevationM": 349,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H08",
+      "H17"
+    ]
+  },
+  {
+    "id": "kkr",
+    "name": "Kakarbhitta",
+    "nepaliName": "काँकडभिट्टा",
+    "district": "Jhapa",
+    "province": "Koshi",
+    "lat": 26.6508,
+    "lng": 88.1565,
+    "elevationM": 145,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H09"
+    ]
+  },
+  {
+    "id": "npg",
+    "name": "Nepalgunj",
+    "nepaliName": "नेपालगन्ज",
+    "district": "Banke",
+    "province": "Lumbini",
+    "lat": 28.05,
+    "lng": 81.6167,
+    "elevationM": 150,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H12"
+    ]
+  },
+  {
+    "id": "srk",
+    "name": "Surkhet (Birendranagar)",
+    "nepaliName": "सुर्खेत (वीरेन्द्रनगर)",
+    "district": "Surkhet",
+    "province": "Karnali",
+    "lat": 28.5997,
+    "lng": 81.6334,
+    "elevationM": 660,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H06",
+      "H12",
+      "H17"
+    ]
+  },
+  {
+    "id": "dhg",
+    "name": "Dhangadhi",
+    "nepaliName": "धनगढी",
+    "district": "Kailali",
+    "province": "Sudurpashchim",
+    "lat": 28.6946,
+    "lng": 80.5977,
+    "elevationM": 109,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01",
+      "H14"
+    ]
+  },
+  {
+    "id": "mhn",
+    "name": "Mahendranagar / Gaddachauki",
+    "nepaliName": "महेन्द्रनगर",
+    "district": "Kanchanpur",
+    "province": "Sudurpashchim",
+    "lat": 28.9667,
+    "lng": 80.1833,
+    "elevationM": 198,
+    "isMajorHub": true,
+    "connectedHighways": [
+      "H01"
+    ]
+  },
+  {
+    "id": "dhk",
+    "name": "Dhulikhel",
+    "nepaliName": "धुलिखेल",
+    "district": "Kavrepalanchok",
+    "province": "Bagmati",
+    "lat": 27.6221,
+    "lng": 85.5428,
+    "elevationM": 1550,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H03",
+      "H13"
+    ]
+  },
+  {
+    "id": "sdh",
+    "name": "Sindhuli Gadhi",
+    "nepaliName": "सिन्धुलीगढी",
+    "district": "Sindhuli",
+    "province": "Bagmati",
+    "lat": 27.2486,
+    "lng": 85.9186,
+    "elevationM": 1100,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H13"
+    ]
+  },
+  {
+    "id": "dml",
+    "name": "Damauli",
+    "nepaliName": "दमौली",
+    "district": "Tanahun",
+    "province": "Gandaki",
+    "lat": 27.9733,
+    "lng": 84.2833,
+    "elevationM": 450,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H04"
+    ]
+  },
+  {
+    "id": "plp",
+    "name": "Tansen (Palpa)",
+    "nepaliName": "तानसेन (पाल्पा)",
+    "district": "Palpa",
+    "province": "Lumbini",
+    "lat": 27.8683,
+    "lng": 83.5489,
+    "elevationM": 1350,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H10"
+    ]
+  },
+  {
+    "id": "ilm",
+    "name": "Ilam",
+    "nepaliName": "इलाम",
+    "district": "Ilam",
+    "province": "Koshi",
+    "lat": 26.9117,
+    "lng": 87.9275,
+    "elevationM": 1208,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H09"
+    ]
+  },
+  {
+    "id": "bgl",
+    "name": "Baglung",
+    "nepaliName": "बागलुङ",
+    "district": "Baglung",
+    "province": "Gandaki",
+    "lat": 28.2725,
+    "lng": 83.6006,
+    "elevationM": 1020,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H15"
+    ]
+  },
+  {
+    "id": "jml",
+    "name": "Jumla",
+    "nepaliName": "जुम्ला",
+    "district": "Jumla",
+    "province": "Karnali",
+    "lat": 29.2747,
+    "lng": 82.1838,
+    "elevationM": 2514,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H06"
+    ]
+  },
+  {
+    "id": "nbz",
+    "name": "Naubise / Khanikhola",
+    "nepaliName": "नौबिसे",
+    "district": "Dhading",
+    "province": "Bagmati",
+    "lat": 27.7214,
+    "lng": 85.1764,
+    "elevationM": 920,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H02",
+      "H04"
+    ]
+  },
+  {
+    "id": "kdr",
+    "name": "Tatopani / Kodari (China Border)",
+    "nepaliName": "तातोपानी / कोदारी",
+    "district": "Sindhupalchok",
+    "province": "Bagmati",
+    "lat": 27.9497,
+    "lng": 85.9452,
+    "elevationM": 1640,
+    "isMajorHub": false,
+    "connectedHighways": [
+      "H03"
+    ]
+  }
+]

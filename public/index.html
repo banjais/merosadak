@@ -505,16 +505,30 @@
     async function loadData() {
       try {
         const v = Date.now();
-        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes] = await Promise.all([
           fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/airports.json?v=${v}`).then(r => r.json()).catch(() => []),
-          fetch(`https://merosadak.banjays.workers.dev/api/data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => [])
+          fetch(`https://merosadak.banjays.workers.dev/api/data/district-hqs.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/highway-info.json?v=${v}`).then(r => r.json()).catch(() => null),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/blackspots.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/mountain-weather.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/traffic-corridors.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/incidents.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/pois.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/travel-time.json?v=${v}`).then(r => r.json()).catch(() => null)
         ]);
 
         allHighwaysIndex = hwyRes;
+        window.__HIGHWAY_INFO__ = hwyInfoRes;
+        window.__BLACKSPOTS__ = blackspotsRes;
+        window.__WEATHER_NODES__ = weatherRes;
+        window.__TRAFFIC_CORRIDORS__ = trafficRes;
+        window.__INCIDENTS__ = incidentsRes;
+        window.__POIS__ = poisRes;
+        window.__TRAVEL_TIME__ = travelTimeRes;
 
         if (window.NEPAL_DATA && NEPAL_DATA.cities) {
           NEPAL_DATA.cities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
@@ -539,6 +553,14 @@
 
         (districtRes || []).forEach(d => {
           searchIndex.push({ label: `${d.district} District → ${d.hqCity} (${d.type})`, type: 'District HQ', district: d.district, hq: d.hqCity, hqType: d.type, lat: d.lat, lng: d.lng });
+        });
+
+        (blackspotsRes || []).forEach(bs => {
+          searchIndex.push({ label: bs.name, type: 'Blackspot', code: bs.highwayCode, lat: bs.lat, lng: bs.lng });
+        });
+
+        (weatherRes || []).forEach(wx => {
+          searchIndex.push({ label: wx.name, type: 'Weather Node', code: wx.highwayCode, lat: wx.lat, lng: wx.lng });
         });
 
         renderHighwayDirectory();
@@ -652,6 +674,51 @@
     // ==========================================
     // 8. Map Toggles & Layers
     // ==========================================
+
+    async function fetchLiveIncidents() {
+      if (!layerGroups.incidents) return;
+      layerGroups.incidents.clearLayers();
+      const data = window.__INCIDENTS__ || [];
+      data.forEach(inc => {
+        const color = inc.severity === 'severe' ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
+        const marker = L.circleMarker([inc.lat, inc.lng], { radius: 8, fillColor: color, fillOpacity: 0.85, color: '#fff', weight: 2 }).bindPopup(`<strong>${inc.title}</strong><br><small>${inc.highwayName} · ${inc.locationName}</small><br>${inc.description}<br><small>Status: ${inc.status} · ${inc.reportedAt}</small>`);
+        layerGroups.incidents.addLayer(marker);
+      });
+    }
+
+    async function fetchLiveWeather() {
+      if (!layerGroups.weather) return;
+      layerGroups.weather.clearLayers();
+      const data = window.__WEATHER_NODES__ || [];
+      data.forEach(wx => {
+        const icon = wx.condition === 'sunny' ? '☀️' : wx.condition === 'rain_monsoon' ? '🌧️' : wx.condition === 'dense_fog' ? '🌫️' : wx.condition === 'thunderstorm' ? '⛈️' : wx.condition === 'mountain_shower' ? '🌦️' : '☁️';
+        const marker = L.marker([wx.lat, wx.lng]).bindPopup(`<strong>${icon} ${wx.name}</strong><br><small>${wx.highwayCode} · ${wx.elevationM}m</small><br>${wx.tempC}°C · ${wx.condition.replace(/_/g, ' ')}<br>Visibility: ${wx.visibilityKm}km · Wind: ${wx.windSpeedKmh}km/h<br><small>Landslide risk: ${wx.landslideRisk}</small>`);
+        layerGroups.weather.addLayer(marker);
+      });
+    }
+
+    async function fetchLiveTraffic() {
+      if (!layerGroups.traffic) return;
+      layerGroups.traffic.clearLayers();
+      const data = window.__TRAFFIC_CORRIDORS__ || [];
+      data.forEach(tr => {
+        const color = tr.level === 'standstill' ? '#ef4444' : tr.level === 'heavy' ? '#f59e0b' : tr.level === 'moderate' ? '#3b82f6' : '#10b981';
+        const line = L.polyline([tr.startCoord, tr.endCoord], { color, weight: 6, opacity: 0.8, dashArray: '8, 6' }).bindPopup(`<strong>🚦 ${tr.name}</strong><br><small>${tr.highwayCode} · ${tr.section}</small><br>Level: ${tr.level}<br>Avg speed: ${tr.avgSpeedKmh} km/h<br>Delay: ${tr.delayMinutes} mins<br><small>${tr.cause}</small>`);
+        layerGroups.traffic.addLayer(line);
+      });
+    }
+
+    async function fetchLivePois() {
+      if (!layerGroups.pois) return;
+      layerGroups.pois.clearLayers();
+      const data = window.__POIS__ || [];
+      data.forEach(poi => {
+        const icon = poi.category === 'ev_charger' ? '⚡' : poi.category === 'fuel_station' ? '⛽' : poi.category === 'food_rest' ? '🍽️' : poi.category === 'scenic_pass' ? '🏔️' : poi.category === 'emergency_dor' ? '🆘' : '🛣️';
+        const marker = L.marker([poi.lat, poi.lng]).bindPopup(`<strong>${icon} ${poi.name}</strong><br><small>${poi.highwayCode} · ${poi.locationName}</small><br>${poi.description}<br><small>Rating: ${poi.rating}/5</small>`);
+        layerGroups.pois.addLayer(marker);
+      });
+    }
+
     function toggleLayer(name) {
       const btn = document.getElementById('toggle' + name.charAt(0).toUpperCase() + name.slice(1));
       layerVisibility[name] = !layerVisibility[name];

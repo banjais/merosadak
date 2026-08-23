@@ -89,6 +89,15 @@ async function main() {
     'highway/index.json',
     'nepal_boundary.geojson',
     'distance-matrix.json',
+    'highway-info.json',
+    'blackspots.json',
+    'mountain-weather.json',
+    'traffic-corridors.json',
+    'travel-time.json',
+    'incidents.json',
+    'pois.json',
+    'user-reports.json',
+    'cities-and-junctions.json',
   ];
 
   console.log(`Syncing ${files.length} data files to KV...\n`);
