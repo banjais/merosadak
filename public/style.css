@@ -1618,6 +1618,78 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* Distance Matrix Table */
+.matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.78rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+}
+
+.matrix-table th {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+}
+
+.matrix-table th:first-child,
+.matrix-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: rgba(15, 23, 42, 0.95);
+  z-index: 2;
+  text-align: left;
+  font-weight: 600;
+  color: var(--accent-gold);
+  font-family: 'Inter', sans-serif;
+}
+
+.matrix-table th:first-child {
+  z-index: 3;
+}
+
+.matrix-table td:first-child {
+  min-width: 110px;
+}
+
+.matrix-table tr:hover td {
+  background: rgba(30, 62, 98, 0.25);
+}
+
+.matrix-table td.matrix-zero {
+  color: var(--text-muted);
+}
+
+.matrix-table td.matrix-cell {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.matrix-table td.matrix-cell:hover {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
 /* Emergency Contact Tiles */
 .sos-grid {
   display: grid;

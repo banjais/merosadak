@@ -123,6 +123,9 @@
     <button class="map-toggle-btn" id="togglePois" onclick="toggleLayer('pois')" title="Fuel Stations, EV Chargers, Hospitals">
       <span class="icon">⛽</span> <span class="label">POIs & EV</span>
     </button>
+    <button class="map-toggle-btn" onclick="openStaticMatrix()" title="Static Distance Matrix">
+      <span class="icon">📊</span> <span class="label">Matrix</span>
+    </button>
     <button class="map-toggle-btn btn-sos" onclick="openModal('sosModal')" title="Emergency SOS Directory">
       <span class="icon">🆘</span> <span class="label">SOS</span>
     </button>
@@ -158,6 +161,26 @@
   <!-- ==========================================
        6. Modals Suite
        ========================================== -->
+
+  <!-- Distance Matrix Modal -->
+  <div class="modal-overlay" id="staticMatrixModal">
+    <div class="modal-card" style="width:900px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📊</span> <span>Nepal Cities Static Distance Matrix (Road km)</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('staticMatrixModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px;">
+          Approximate road distances between major Nepal cities. Click any cell to plan a route.
+        </p>
+        <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+          <table class="matrix-table" id="staticMatrixTable"></table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SOS Emergency Modal -->
   <div class="modal-overlay" id="sosModal">
@@ -341,6 +364,62 @@
       { name: 'Biratnagar', lat: 26.4525, lng: 87.2718 }
     ];
 
+    let distanceMatrixData = null;
+
+    async function loadDistanceMatrix() {
+      try {
+        const res = await fetch('data/distance-matrix.json?v=' + Date.now()).then(r => r.json());
+        distanceMatrixData = res;
+      } catch (e) {
+        console.error('Distance matrix load error:', e);
+      }
+    }
+
+    function renderStaticMatrix() {
+      if (!distanceMatrixData) return;
+      const cities = distanceMatrixData.cities;
+      const matrix = distanceMatrixData.matrix;
+      const table = document.getElementById('staticMatrixTable');
+      if (!table) return;
+
+      let html = '<thead><tr><th>From ↓ / To →</th>';
+      cities.forEach(c => { html += '<th>' + c.name + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      cities.forEach((city, i) => {
+        html += '<tr><td>' + city.name + '</td>';
+        matrix[i].forEach((km, j) => {
+          const cls = km === 0 ? 'matrix-zero' : 'matrix-cell';
+          const label = km === 0 ? '—' : km + ' km';
+          html += '<td class="' + cls + '" onclick="planRouteFromMatrix(\'' + city.id + '\', \'' + cities[j].id + '\')">' + label + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    async function planRouteFromMatrix(fromId, toId) {
+      if (!distanceMatrixData) return;
+      const cities = distanceMatrixData.cities;
+      const fromCity = cities.find(c => c.id === fromId);
+      const toCity = cities.find(c => c.id === toId);
+      if (!fromCity || !toCity) return;
+      if (fromId === toId) return;
+
+      closeModal('staticMatrixModal');
+
+      const origin = userOrigin || { lat: fromCity.lat, lng: fromCity.lng, label: fromCity.name };
+      const dest = { label: toCity.name, lat: toCity.lat, lng: toCity.lng };
+      selectedDestination = dest;
+
+      setMode('route');
+      document.getElementById('sidebarSearch').value = toCity.name;
+      renderSidebarRouteResult(dest);
+      calculateSidebarRoute();
+    }
+
     let allHighwaysIndex = [];
     let searchIndex = [];
     let userOrigin = null;
@@ -434,6 +513,7 @@
 
       document.getElementById('gisStatusText').innerText = '✅ GIS Live — Worker Connected';
       restoreFromUrl();
+      await loadDistanceMatrix();
     }
 
     async function loadData() {
@@ -620,10 +700,15 @@
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
       if (id === 'matrixModal') renderMatrixChips();
+      if (id === 'staticMatrixModal') renderStaticMatrix();
     }
 
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
+    }
+
+    function openStaticMatrix() {
+      openModal('staticMatrixModal');
     }
 
     // Close modal on click outside
