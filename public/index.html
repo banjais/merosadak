@@ -25,24 +25,26 @@
        1. Clean Top Header
        ========================================== -->
   <header class="app-header">
-    <div class="header-left">
+    <div class="header-row">
       <button class="header-icon-btn menu-btn" onclick="openDrawer()" title="Menu">
         <span>☰</span>
       </button>
       <div class="header-brand" onclick="resetMapView()">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
-          </svg>
-        </div>
-        <div class="brand-text">
+        <div class="brand-top">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26">
+              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
+            </svg>
+          </div>
           <div class="brand-title">MERO SADAK <span class="np-badge">मेरो सडक</span></div>
-          <div class="brand-sub">Nepal National Road Network & GIS</div>
         </div>
       </div>
+      <div class="header-spacer"></div>
     </div>
-
-    <div class="header-right">
+    <div class="header-sub-row">
+      <div class="header-sub">Nepal National Road Network & GIS</div>
+    </div>
+    <div class="header-pill-row">
       <div class="header-center-pill">
         <div class="pulse-dot"></div>
         <span id="gisStatusText">DOR GIS & Live Sensors Active</span>

@@ -133,12 +133,12 @@ h1, h2, h3, h4, .font-heading {
   top: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: 96px;
   z-index: 1000;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 8px 20px;
   padding-top: env(safe-area-inset-top);
   background: rgba(11, 25, 44, 0.92);
   backdrop-filter: blur(20px);
@@ -159,21 +159,35 @@ h1, h2, h3, h4, .font-heading {
   z-index: 1;
 }
 
-.header-left {
+.header-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
+}
+
+.header-sub-row {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 1px 0;
+}
+
+.header-pill-row {
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.header-spacer {
   flex: 1;
-  justify-content: flex-start;
 }
 
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  text-decoration: none;
   flex: 0 0 auto;
+  cursor: pointer;
   transition: transform var(--transition-fast);
 }
 
@@ -185,28 +199,25 @@ h1, h2, h3, h4, .font-heading {
   transform: scale(0.98);
 }
 
+.brand-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .header-brand .brand-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
   flex-shrink: 0;
-}
-
-.header-brand .brand-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  text-align: left;
-  line-height: 1;
 }
 
 .header-brand .brand-title {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.04em;
@@ -214,6 +225,7 @@ h1, h2, h3, h4, .font-heading {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  line-height: 1.1;
 }
 
 .header-brand .np-badge {
@@ -228,22 +240,14 @@ h1, h2, h3, h4, .font-heading {
   font-family: 'Inter', sans-serif;
 }
 
-.header-brand .brand-sub {
-  font-size: 0.68rem;
+.header-sub {
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: center;
   white-space: nowrap;
-  line-height: 1.2;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  justify-content: flex-end;
 }
 
 .header-center-pill {
@@ -561,7 +565,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 .app-sidebar {
   position: fixed;
-  top: 80px;
+  top: 96px;
   left: 0;
   bottom: 0;
   width: 380px;
@@ -896,7 +900,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 #map {
   position: fixed;
-  top: 80px;
+  top: 96px;
   left: 380px;
   right: 0;
   bottom: 0;
@@ -974,7 +978,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    ========================================================================== */
 .floating-search-panel {
   position: fixed;
-  top: 98px;
+  top: 108px;
   left: 20px;
   width: 440px;
   max-width: calc(100vw - 40px);
@@ -1403,7 +1407,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    ========================================================================== */
 .map-floating-toggles {
   position: fixed;
-  top: 98px;
+  top: 108px;
   right: 20px;
   z-index: 900;
   display: flex;
@@ -1863,36 +1867,37 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .app-header {
-    height: 68px;
-    padding: 0 12px;
+    height: auto;
+    min-height: 72px;
+    padding: 6px 12px;
     padding-top: env(safe-area-inset-top);
   }
   .app-header::before {
     height: 2px;
   }
-  .header-left {
+  .header-row {
     gap: 6px;
   }
   .header-brand {
     gap: 5px;
   }
   .header-brand .brand-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
   .header-brand .brand-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
   .header-brand .brand-title {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     gap: 3px;
   }
   .header-brand .np-badge {
     font-size: 0.55rem;
     padding: 1px 5px;
   }
-  .header-brand .brand-sub {
+  .header-sub {
     font-size: 0.6rem;
     letter-spacing: 0.03em;
   }
@@ -1900,18 +1905,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     display: none;
   }
   .menu-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
   }
   .header-icon-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
   }
   .floating-search-panel {
-    top: 86px;
-    top: calc(68px + env(safe-area-inset-top));
+    top: 84px;
+    top: calc(72px + env(safe-area-inset-top));
     left: 12px;
     right: 12px;
     width: auto;
@@ -1955,7 +1960,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   /* Sidebar mobile: top panel */
   .app-sidebar {
-    top: 68px;
+    top: 72px;
     left: 0;
     right: 0;
     bottom: auto;
@@ -2022,7 +2027,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
 
   #map {
-    top: 68px;
+    top: 72px;
     left: 0 !important;
   }
 
