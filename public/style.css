@@ -133,43 +133,146 @@ h1, h2, h3, h4, .font-heading {
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 82px;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 20px;
   padding-top: env(safe-area-inset-top);
-  background: rgba(11, 25, 44, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 25, 44, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--surface-border);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-fast);
 }
 
-.header-left-actions {
+.app-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent), var(--accent-purple), var(--accent-sky));
+  z-index: 1;
+}
+
+.header-left {
   display: flex;
   align-items: center;
   gap: 10px;
   flex: 1;
+  justify-content: flex-start;
 }
 
 .header-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   cursor: pointer;
   text-decoration: none;
   flex: 0 0 auto;
+  transition: transform var(--transition-fast);
 }
 
-.header-actions {
+.header-brand:hover {
+  transform: translateY(-1px);
+}
+
+.header-brand:active {
+  transform: scale(0.98);
+}
+
+.header-brand .brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+.header-brand .brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.header-brand .brand-title {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.04em;
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+}
+
+.header-brand .np-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 4, 41, 0.2));
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-full);
+  color: var(--accent-gold);
+  letter-spacing: 0.02em;
+  font-family: 'Inter', sans-serif;
+}
+
+.header-brand .brand-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
   justify-content: flex-end;
+}
+
+.header-center-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
 }
 
 .header-icon-btn {
@@ -186,6 +289,19 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
   position: relative;
   font-size: 1.1rem;
+}
+
+.menu-btn {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-gold);
+}
+
+.menu-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
 }
 
 .header-icon-btn:hover {
@@ -443,7 +559,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 .app-sidebar {
   position: fixed;
-  top: 64px;
+  top: 82px;
   left: 0;
   bottom: 0;
   width: 380px;
@@ -778,7 +894,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 #map {
   position: fixed;
-  top: 64px;
+  top: 82px;
   left: 380px;
   right: 0;
   bottom: 0;
@@ -856,7 +972,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    ========================================================================== */
 .floating-search-panel {
   position: fixed;
-  top: 80px;
+  top: 98px;
   left: 20px;
   width: 440px;
   max-width: calc(100vw - 40px);
@@ -1285,7 +1401,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
    ========================================================================== */
 .map-floating-toggles {
   position: fixed;
-  top: 80px;
+  top: 98px;
   right: 20px;
   z-index: 900;
   display: flex;
@@ -1745,15 +1861,57 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .app-header {
-    height: 56px;
+    height: 60px;
     padding: 0 12px;
     padding-top: env(safe-area-inset-top);
   }
-  .brand-sub { display: none; }
-  .header-center-pill { display: none; }
+  .app-header::before {
+    height: 2px;
+  }
+  .header-brand {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .header-brand .brand-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .header-brand .brand-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  .header-brand .brand-text {
+    align-items: flex-start;
+    gap: 0;
+  }
+  .header-brand .brand-title {
+    font-size: 0.95rem;
+    gap: 4px;
+  }
+  .header-brand .np-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
+  }
+  .header-brand .brand-sub {
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+  }
+  .header-center-pill {
+    display: none;
+  }
+  .menu-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+  }
+  .header-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+  }
   .floating-search-panel {
-    top: 64px;
-    top: calc(56px + env(safe-area-inset-top));
+    top: 68px;
+    top: calc(60px + env(safe-area-inset-top));
     left: 12px;
     right: 12px;
     width: auto;
@@ -1797,7 +1955,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   /* Sidebar mobile: top panel */
   .app-sidebar {
-    top: 56px;
+    top: 60px;
     left: 0;
     right: 0;
     bottom: auto;
@@ -1864,7 +2022,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   }
 
   #map {
-    top: 56px;
+    top: 60px;
     left: 0 !important;
   }
 
