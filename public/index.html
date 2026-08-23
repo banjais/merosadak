@@ -48,7 +48,7 @@
       <button class="btn-header" onclick="openModal('dialectModal')" title="Regional Driving Dialects">
         <span>🗣️</span> <span style="display:inline-block;">Dialects</span>
       </button>
-      <button class="btn-header" onclick="openModal('matrixModal')" title="Multi-Point Distance Matrix">
+      <button class="btn-header" onclick="openStaticMatrix()" title="Nepal Cities Distance Matrix">
         <span>📊</span> <span>Matrix</span>
       </button>
       <button class="btn-header" onclick="cycleMapStyle()" id="mapStyleBtn" title="Switch Map Layer">
@@ -428,7 +428,17 @@
 
     function renderSidebarMatrix() {
       const wrap = document.getElementById('sidebarMatrixWrap');
-      if (!wrap || !distanceMatrixData) return;
+      if (!wrap) return;
+
+      if (!distanceMatrixData) {
+        wrap.innerHTML = '<div style="padding:12px; text-align:center; color:var(--text-secondary);">Loading matrix… <span id="sidebarMatrixRetry" style="cursor:pointer; color:var(--accent-gold);">Retry</span></div>';
+        document.getElementById('sidebarMatrixRetry')?.addEventListener('click', () => {
+          loadDistanceMatrix().then(() => renderSidebarMatrix());
+        });
+        loadDistanceMatrix().then(() => renderSidebarMatrix());
+        return;
+      }
+
       const cities = distanceMatrixData.cities;
       const matrix = distanceMatrixData.matrix;
 
