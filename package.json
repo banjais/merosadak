@@ -2,7 +2,7 @@
   "name": "merosadak",
   "version": "1.0.0",
   "scripts": {
-    "ship": "git add . && git commit -m \"update\" || true && git push origin main && firebase deploy --only hosting",
+    "ship": "npm run sync:data && npm run worker:deploy && git add . && git commit -m \"update\" || true && git push origin main && firebase deploy --only hosting",
     "sync:data": "node worker/sync-data.js",
     "sync:kv:setup": "node worker/setup-kv.js",
     "worker:deploy": "cd worker && npx wrangler deploy",
