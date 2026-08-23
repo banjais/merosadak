@@ -506,7 +506,7 @@
       try {
         const v = Date.now();
         const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes] = await Promise.all([
-          fetch(`https://merosadak.banjais.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjais.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjais.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjais.workers.dev/api/data/highway/index.json?v=${v}`).then(r => r.json()).catch(() => []),

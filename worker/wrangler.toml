@@ -4,8 +4,8 @@ compatibility_date = "2025-01-01"
 
 [[kv_namespaces]]
 binding = "DATA"
-id = "replace-with-kv-namespace-id"
-preview_id = "replace-with-preview-kv-namespace-id"
+id = "e196f41c0a924657a99decf54d016f87"
+preview_id = "e196f41c0a924657a99decf54d016f87"
 
 [vars]
 ALLOWED_ORIGIN = "https://merosadak.web.app"
