@@ -2,10 +2,13 @@
   "name": "merosadak",
   "version": "1.0.0",
   "scripts": {
-    "ship": "npm run sync:data && npm run worker:deploy && git add . && git commit -m \"update\" || true && git push origin main && firebase deploy --only hosting",
+    "ship": "node scripts/ship.js",
     "sync:data": "node worker/sync-data.js",
     "sync:kv:setup": "node worker/setup-kv.js",
     "worker:deploy": "cd worker && npx wrangler deploy",
     "worker:tail": "cd worker && npx wrangler tail"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
   }
 }

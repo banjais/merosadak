@@ -819,6 +819,173 @@ h1, h2, h3, h4, .font-heading {
   box-shadow: var(--shadow-sm);
 }
 
+/* ==========================================================================
+   Route Planner (Sequential UX)
+   ========================================================================== */
+.route-planner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.route-planner-header {
+  margin-bottom: 2px;
+}
+
+.route-planner-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.route-planner-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.route-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.route-field label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.route-field-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  transition: all var(--transition-fast);
+}
+
+.route-field-input-wrap:focus-within {
+  border-color: var(--accent-gold);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+.route-field-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  outline: none;
+  min-width: 0;
+}
+
+.route-field-input-wrap input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.route-options-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.route-options-row select {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.pref-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.calculate-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent));
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: all var(--transition-fast);
+  box-shadow: 0 8px 24px rgba(217, 4, 41, 0.35);
+}
+
+.calculate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(217, 4, 41, 0.5);
+}
+
+.calculate-btn:active {
+  transform: scale(0.98);
+}
+
+/* Context Chips & Panels */
+.context-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.context-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.context-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.context-chip.active {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-gold);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.context-panel {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  animation: slideUpFade 0.25s ease;
+}
+
 .mode-tab-icon {
   display: none;
 }

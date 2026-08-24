@@ -208,51 +208,90 @@
         ========================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div class="sidebar-scroll">
-      <div class="sidebar-mode-tabs">
-        <button class="mode-tab active" data-mode="route" onclick="setMode('route')">Route</button>
-        <button class="mode-tab" data-mode="weather" onclick="setMode('weather')">Weather</button>
-        <button class="mode-tab" data-mode="traffic" onclick="setMode('traffic')">Traffic</button>
-        <button class="mode-tab" data-mode="pois" onclick="setMode('pois')">POIs</button>
-        <button class="mode-tab" data-mode="sos" onclick="setMode('sos')">SOS</button>
+      <div class="route-planner">
+        <div class="route-planner-header">
+          <div class="route-planner-title">Plan Your Route</div>
+          <div class="route-planner-sub">Default: from your location</div>
+        </div>
+
+        <div class="route-field">
+          <label>From</label>
+          <div class="route-field-input-wrap">
+            <input type="text" id="originSearch" placeholder="My Location" value="My Location" autocomplete="off">
+            <button class="icon-btn" onclick="locateMeAndSetOrigin()" title="Use my current location">📍</button>
+          </div>
+        </div>
+
+        <div class="route-field">
+          <label>To</label>
+          <div class="route-field-input-wrap">
+            <span class="search-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
+            <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+            </button>
+            <button class="icon-btn search-action-btn ai-btn" onclick="askAiRouteAdvisor()" title="AI Assistant">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
+        </div>
+
+        <div class="route-options-row">
+          <select id="sidebarVehicle" onchange="activeVehicle=this.value">
+            <option value="car">🚗 Car / Sedan</option>
+            <option value="suv_4wd">🚙 4WD / Jeep</option>
+            <option value="motorbike">🏍️ Motorcycle</option>
+          </select>
+          <div class="pref-pills">
+            <button class="pref-pill active" onclick="setRoutePref('fastest')">⚡ Fastest</button>
+            <button class="pref-pill" onclick="setRoutePref('shortest')">📏 Shortest</button>
+            <button class="pref-pill" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
+          </div>
+        </div>
+
+        <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
+
+        <div class="sidebar-results" id="sidebarResults"></div>
+
+        <div id="contextPanel" style="display:none;">
+          <div class="context-chips">
+            <button class="context-chip" onclick="toggleContextPanel('weather')">🌤️ Weather</button>
+            <button class="context-chip" onclick="toggleContextPanel('traffic')">🚦 Traffic</button>
+            <button class="context-chip" onclick="toggleContextPanel('pois')">⛽ POIs</button>
+            <button class="context-chip" onclick="toggleContextPanel('sos')">🆘 SOS</button>
+            <button class="context-chip" onclick="toggleContextPanel('incidents')">⚠️ Alerts</button>
+            <button class="context-chip" onclick="toggleContextPanel('matrix')">📊 Matrix</button>
+            <button class="context-chip" onclick="toggleContextPanel('offline')">📥 Offline</button>
+            <button class="context-chip" onclick="toggleContextPanel('report')">🚧 Report</button>
+          </div>
+          <div id="contextWeather" class="context-panel" style="display:none;"></div>
+          <div id="contextTraffic" class="context-panel" style="display:none;"></div>
+          <div id="contextPois" class="context-panel" style="display:none;"></div>
+          <div id="contextSos" class="context-panel" style="display:none;"></div>
+          <div id="contextIncidents" class="context-panel" style="display:none;"></div>
+          <div id="contextMatrix" class="context-panel" style="display:none;"></div>
+          <div id="contextOffline" class="context-panel" style="display:none;"></div>
+          <div id="contextReport" class="context-panel" style="display:none;"></div>
+        </div>
       </div>
-      <div class="weather-chips" id="weatherChips" style="display:none; padding: 0 12px 8px; gap:6px; flex-wrap:wrap;"></div>
-      <div class="sidebar-search-wrap">
-        <span class="search-icon">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </span>
-        <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
-        <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="8" y1="23" x2="16" y2="23"></line>
-          </svg>
-        </button>
-        <button class="icon-btn search-action-btn ai-btn" onclick="askAiRouteAdvisor()" title="AI Assistant">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path>
-            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-            <line x1="15" y1="9" x2="15.01" y2="9"></line>
-          </svg>
-        </button>
-        <button class="icon-btn search-action-btn map-btn" onclick="toggleSidebar()" title="Show Map">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <polyline points="9 21 3 21 3 15"></polyline>
-            <line x1="21" y1="3" x2="14" y2="10"></line>
-            <line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        </button>
-        <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
-      </div>
-      <div class="sidebar-mode-hint" id="sidebarModeHint">Search destinations, cities, airports, bus stations, and major places in Nepal</div>
+
       <div id="aiAdvisorOutput" style="display:none; margin-top:8px; padding:10px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-sm); font-size:0.8rem; color:#c4b5fd;"></div>
-      <div class="sidebar-results" id="sidebarResults"></div>
     </div>
   </aside>
 
@@ -1562,46 +1601,71 @@
     }
 
     // ==========================================
-    // 3. Sidebar Search & Mode Engine
+    // 3. Sidebar Search & Route Engine
     // ==========================================
-    const MODE_CONFIG = {
-      route: { placeholder: 'Where to?', hint: 'Search destinations, cities, airports, bus stations, and major places in Nepal' },
-      weather: { placeholder: 'Mountain pass, highway (NH01), or city...', hint: 'Search any place, highway code, or mountain pass in Nepal for live weather conditions' },
-      traffic: { placeholder: 'Check traffic on...', hint: 'Search a highway or city to see real-time traffic conditions' },
-      pois: { placeholder: 'Find POIs near...', hint: 'Search for fuel stations, EV chargers, hospitals, and rest areas' },
-      sos: { placeholder: 'Emergency contacts for...', hint: 'Search a location to find nearby emergency helplines and services' }
-    };
 
-    let currentMode = 'route';
     let selectedDestination = null;
 
+    function setRoutePref(pref) {
+      activeRoutePreference = pref;
+      document.querySelectorAll('.pref-pill').forEach(pill => {
+        const isActive = (pref === 'fastest' && pill.textContent.includes('Fastest')) ||
+                         (pref === 'shortest' && pill.textContent.includes('Shortest')) ||
+                         (pref === 'scenic' && pill.textContent.includes('Scenic'));
+        pill.classList.toggle('active', isActive);
+      });
+      if (selectedDestination) calculateSidebarRoute();
+    }
+
+    function locateMeAndSetOrigin() {
+      const input = document.getElementById('originSearch');
+      if (!navigator.geolocation) {
+        input.value = 'Kathmandu';
+        userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+        return;
+      }
+      input.value = 'Locating…';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
+          input.value = 'My Location';
+        },
+        () => {
+          userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+          input.value = 'Kathmandu';
+        },
+        { timeout: 8000, maximumAge: 60000 }
+      );
+    }
+
+    function syncOriginFromInput() {
+      const input = document.getElementById('originSearch');
+      const val = (input.value || '').trim();
+      if (!val || val === 'My Location' || val === 'Kathmandu') {
+        if (userOrigin && userOrigin.label === val) return;
+        if (val === 'Kathmandu') {
+          userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+        }
+        return;
+      }
+      geocode(val).then(([t]) => {
+        if (t[0]) {
+          userOrigin = { label: t[0].display_name.split(',')[0], lat: +t[0].lat, lng: +t[0].lon };
+        }
+      }).catch(() => {});
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const originInput = document.getElementById('originSearch');
+      if (originInput) {
+        originInput.addEventListener('change', syncOriginFromInput);
+        originInput.addEventListener('blur', syncOriginFromInput);
+      }
+    });
+
     function setMode(mode) {
+      // retained for backward compatibility; sidebar no longer uses mode tabs
       currentMode = mode;
-      document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
-      const config = MODE_CONFIG[mode];
-      document.getElementById('sidebarSearch').placeholder = config.placeholder;
-      document.getElementById('sidebarModeHint').textContent = config.hint;
-      document.getElementById('sidebarResults').innerHTML = '';
-      document.getElementById('sidebarSearch').value = '';
-      document.getElementById('sidebarSuggest').style.display = 'none';
-      selectedDestination = null;
-
-      if (mode === 'traffic') {
-        toggleLayer('traffic');
-      } else if (mode === 'pois') {
-        toggleLayer('pois');
-      }
-
-      const weatherChips = document.getElementById('weatherChips');
-      if (mode === 'weather') {
-        weatherChips.style.display = 'flex';
-        weatherChips.innerHTML = (window.__WEATHER_NODES__ || []).map(wx =>
-          '<button class="chip-btn" onclick="document.getElementById(\'sidebarSearch\').value=\'' + wx.name + '\'; document.getElementById(\'sidebarSearch\').dispatchEvent(new Event(\'input\'))">' + wx.name + '</button>'
-        ).join('');
-      } else {
-        weatherChips.style.display = 'none';
-        weatherChips.innerHTML = '';
-      }
     }
 
     function detectCoordinates(query) {
@@ -1825,18 +1889,8 @@
 
       document.getElementById('sidebarSearch').value = dest.label;
       selectedDestination = dest;
-
-      if (currentMode === 'route') {
-        renderSidebarRouteResult(item);
-      } else if (currentMode === 'weather') {
-        renderSidebarWeatherResult(item);
-      } else if (currentMode === 'traffic') {
-        renderSidebarTrafficResult(item);
-      } else if (currentMode === 'pois') {
-        renderSidebarPoisResult(item);
-      } else if (currentMode === 'sos') {
-        renderSidebarSosResult(item);
-      }
+      renderSidebarRouteResult(dest);
+      calculateSidebarRoute();
     }
 
     function renderSidebarRouteResult(dest) {
@@ -1850,20 +1904,7 @@
             '<span class="result-badge">ROUTE</span>' +
             '<span>From: ' + origin.label + '</span>' +
           '</div>' +
-          '<div style="margin-top:8px; display:flex; gap:6px;">' +
-            '<button class="pref-pill ' + (activeRoutePreference === 'fastest' ? 'active' : '') + '" onclick="setRoutePref(\'fastest\')">⚡ Fastest</button>' +
-            '<button class="pref-pill ' + (activeRoutePreference === 'shortest' ? 'active' : '') + '" onclick="setRoutePref(\'shortest\')">📏 Shortest</button>' +
-            '<button class="pref-pill ' + (activeRoutePreference === 'scenic' ? 'active' : '') + '" onclick="setRoutePref(\'scenic\')">🏔️ Scenic</button>' +
-          '</div>' +
-          '<div style="margin-top:8px;">' +
-            '<select id="sidebarVehicle" onchange="activeVehicle=this.value; calculateSidebarRoute()" style="width:100%; padding:6px 10px; background:rgba(0,0,0,0.35); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.75rem; font-weight:600;">' +
-              '<option value="car">🚗 Car / Sedan</option>' +
-              '<option value="suv_4wd">🚙 4WD / Jeep</option>' +
-              '<option value="motorbike">🏍️ Motorcycle</option>' +
-              '<option value="bus_truck">🚌 Bus / Truck</option>' +
-              '<option value="ev">⚡ EV (Electric)</option>' +
-            '</select>' +
-           '</div>' +
+          '<div style="margin-top:8px; font-size:0.78rem; color:var(--text-secondary);">Click to calculate route with selected preferences below →</div>' +
         '</div>';
     }
 
@@ -1920,10 +1961,181 @@
               '<div class="metric-box"><span class="metric-label">Origin</span><span class="metric-val" style="font-size:0.75rem;">' + origin.label + '</span></div>' +
             '</div>' +
           '</div>';
+
+        // Reveal context panels after route is calculated
+        const ctx = document.getElementById('contextPanel');
+        if (ctx) ctx.style.display = 'block';
       } catch (err) {
         console.error('Route calculation error:', err);
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Unknown error') + '</div></div>';
       }
+    }
+
+    function toggleContextPanel(panelId) {
+      const panel = document.getElementById('context' + panelId);
+      if (!panel) return;
+
+      // Hide all other context panels
+      document.querySelectorAll('.context-panel').forEach(p => {
+        if (p !== panel) p.style.display = 'none';
+      });
+
+      const isVisible = panel.style.display !== 'none';
+      panel.style.display = isVisible ? 'none' : 'block';
+
+      if (!isVisible && selectedDestination) {
+        if (panelId === 'weather') renderContextWeather(selectedDestination, panel);
+        else if (panelId === 'traffic') renderContextTraffic(selectedDestination, panel);
+        else if (panelId === 'pois') renderContextPois(selectedDestination, panel);
+        else if (panelId === 'sos') renderContextSos(selectedDestination, panel);
+        else if (panelId === 'incidents') renderContextIncidents(selectedDestination, panel);
+        else if (panelId === 'matrix') renderContextMatrix(selectedDestination, panel);
+        else if (panelId === 'offline') renderContextOffline(selectedDestination, panel);
+        else if (panelId === 'report') renderContextReport(selectedDestination, panel);
+      }
+
+      // Update chip active states
+      document.querySelectorAll('.context-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.panel === panelId && !isVisible);
+      });
+    }
+
+    async function renderContextWeather(place, container) {
+      container.innerHTML = '<div style="color:var(--text-secondary);">⏳ Loading weather…</div>';
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu').then(r => r.json());
+        if (res.current) {
+          const temp = Math.round(res.current.temperature_2m);
+          const wind = Math.round(res.current.wind_speed_10m || 0);
+          const tmax = res.daily && res.daily.temperature_2m_max ? Math.round(res.daily.temperature_2m_max[0]) : null;
+          const tmin = res.daily && res.daily.temperature_2m_min ? Math.round(res.daily.temperature_2m_min[0]) : null;
+          const codes = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Depositing rime fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',61:'Slight rain',63:'Moderate rain',65:'Heavy rain',71:'Slight snow',73:'Moderate snow',75:'Heavy snow',80:'Slight rain showers',81:'Moderate rain showers',82:'Violent rain showers',95:'Thunderstorm'};
+          const desc = codes[res.current.weather_code] || 'Fair';
+          const icon = res.current.weather_code <= 3 ? '☀️' : res.current.weather_code <= 48 ? '🌫️' : res.current.weather_code <= 65 ? '🌧️' : res.current.weather_code <= 82 ? '🌦️' : '⛈️';
+          const minMax = (tmax !== null && tmin !== null) ? '<div style="margin-top:4px; font-size:0.78rem; color:var(--text-secondary);">H: ' + tmax + '°C · L: ' + tmin + '°C</div>' : '';
+          const humidity = Math.round(res.current.relative_humidity_2m || 0);
+          const precip = Math.round((res.current.precipitation || 0) * 10) / 10;
+          const feelsLike = Math.round(res.current.apparent_temperature || temp);
+          const pressure = res.current.surface_pressure ? Math.round(res.current.surface_pressure) : null;
+          const isFog = res.current.weather_code === 45 || res.current.weather_code === 48;
+          const isRain = precip > 0 || [51,53,55,61,63,65,80,81,82,95].includes(res.current.weather_code);
+          const weatherBadges = [];
+          if (isRain) weatherBadges.push('<span style="font-size:0.7rem; background:rgba(59,130,246,0.2); color:#60a5fa; padding:2px 6px; border-radius:4px;">🌧️ Rain</span>');
+          if (isFog) weatherBadges.push('<span style="font-size:0.7rem; background:rgba(148,163,184,0.2); color:#94a3b8; padding:2px 6px; border-radius:4px;">🌫️ Fog</span>');
+          container.innerHTML =
+            '<div class="weather-card">' +
+              '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">' +
+                '<span style="font-size:1.6rem;">' + icon + '</span>' +
+                '<div>' +
+                  '<div class="result-card-title">' + desc + ' · ' + temp + '°C</div>' +
+                  '<div style="font-size:0.75rem; color:var(--text-secondary);">Feels like ' + feelsLike + '°C · Wind ' + wind + ' km/h</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="metric-grid" style="margin-top:6px;">' +
+                '<div class="metric-box"><span class="metric-label">Humidity</span><span class="metric-val">' + humidity + '%</span></div>' +
+                '<div class="metric-box"><span class="metric-label">Precip</span><span class="metric-val">' + precip + ' mm</span></div>' +
+                '<div class="metric-box"><span class="metric-label">Pressure</span><span class="metric-val">' + (pressure ? pressure + ' hPa' : '—') + '</span></div>' +
+              '</div>' +
+              minMax +
+              '<div style="margin-top:6px; display:flex; gap:4px; flex-wrap:wrap;">' + weatherBadges.join('') + '</div>' +
+            '</div>';
+        } else {
+          container.innerHTML = '<div class="result-card"><div class="result-card-title" style="color:#ff4d6d;">Weather unavailable</div></div>';
+        }
+      } catch (e) {
+        container.innerHTML = '<div class="result-card"><div class="result-card-title" style="color:#ff4d6d;">Weather fetch failed</div></div>';
+      }
+    }
+
+    async function renderContextTraffic(place, container) {
+      container.innerHTML = '<div style="color:var(--text-secondary); padding:8px;">⏳ Loading traffic…</div>';
+      try {
+        const res = await fetch('data/traffic-corridors.json?v=' + Date.now()).then(r => r.json());
+        const corridors = (res.corridors || []).slice(0, 4);
+        if (!corridors.length) {
+          container.innerHTML = '<div class="result-card"><div class="result-card-title">No traffic data</div><div style="font-size:0.75rem; color:var(--text-secondary);">Traffic data refreshes via Worker API.</div></div>';
+          return;
+        }
+        container.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title">🚦 Traffic Along Route</div><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">' + corridors.map(c =>
+          '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:rgba(245,158,11,0.08); border-radius:8px;">' +
+            '<span style="font-size:0.78rem; font-weight:600;">' + c.name + '</span>' +
+            '<span style="font-size:0.72rem; color:#fbbf24;">' + (c.status || 'Moderate') + '</span>' +
+          '</div>'
+        ).join('') + '</div></div>';
+      } catch {
+        container.innerHTML = '<div class="result-card"><div class="result-card-title">Traffic data unavailable</div></div>';
+      }
+    }
+
+    async function renderContextPois(place, container) {
+      container.innerHTML = '<div style="color:var(--text-secondary); padding:8px;">⏳ Loading POIs…</div>';
+      try {
+        const pois = (window.NEPAL_DATA?.places || []).filter(p => p.type === 'fuel' || p.type === 'ev' || p.type === 'hospital' || p.type === 'police' || p.type === 'rest_area');
+        const nearby = pois.slice(0, 6);
+        if (!nearby.length) {
+          container.innerHTML = '<div class="result-card"><div class="result-card-title">No POIs found nearby</div></div>';
+          return;
+        }
+        container.innerHTML = '<div class="result-card" style="border-color:rgba(14,165,233,0.4);"><div class="result-card-title">⛽ Nearby Facilities</div><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">' + nearby.map(p =>
+          '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:rgba(14,165,233,0.08); border-radius:8px;">' +
+            '<span style="font-size:0.78rem; font-weight:600;">' + p.name + '</span>' +
+            '<span style="font-size:0.72rem; color:#38bdf8;">' + (p.type || 'POI') + '</span>' +
+          '</div>'
+        ).join('') + '</div></div>';
+        toggleLayer('pois');
+        map.flyTo([place.lat, place.lng], 13, { duration: 1.2 });
+      } catch {
+        container.innerHTML = '<div class="result-card"><div class="result-card-title">POIs unavailable</div></div>';
+      }
+    }
+
+    async function renderContextSos(place, container) {
+      const contacts = (window.NEPAL_DATA?.emergencyContacts || []).slice(0, 6);
+      if (!contacts.length) {
+        container.innerHTML = '<div class="result-card"><div class="result-card-title">Emergency contacts unavailable</div></div>';
+        return;
+      }
+      container.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.4);"><div class="result-card-title">🆘 Emergency Helplines</div><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">' + contacts.map(c =>
+        '<div class="sos-tile-sidebar">' +
+          '<div>' +
+            '<div style="font-size:0.75rem; color:var(--text-secondary);">' + c.icon + ' ' + c.type + '</div>' +
+            '<div class="sos-num">' + c.number + '</div>' +
+          '</div>' +
+          '<a href="tel:' + c.number + '" class="btn-dial-small">📞 Call</a>' +
+        '</div>'
+      ).join('') + '</div></div>';
+    }
+
+    async function renderContextIncidents(place, container) {
+      container.innerHTML = '<div style="color:var(--text-secondary); padding:8px;">⏳ Loading alerts…</div>';
+      try {
+        const res = await fetch('data/incidents.json?v=' + Date.now()).then(r => r.json());
+        const incidents = (res.incidents || []).slice(0, 5);
+        if (!incidents.length) {
+          container.innerHTML = '<div class="result-card"><div class="result-card-title">No active alerts</div></div>';
+          return;
+        }
+        container.innerHTML = '<div class="result-card" style="border-color:rgba(239,68,68,0.4);"><div class="result-card-title">⚠️ Road Alerts & Hazards</div><div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">' + incidents.map(inc =>
+          '<div style="padding:8px; background:rgba(239,68,68,0.08); border-radius:8px;">' +
+            '<div style="font-size:0.78rem; font-weight:600;">' + (inc.title || inc.incidentType || 'Alert') + '</div>' +
+            '<div style="font-size:0.72rem; color:var(--text-secondary);">' + (inc.location || inc.locationName || '') + '</div>' +
+          '</div>'
+        ).join('') + '</div></div>';
+      } catch {
+        container.innerHTML = '<div class="result-card"><div class="result-card-title">Alerts unavailable</div></div>';
+      }
+    }
+
+    function renderContextMatrix(place, container) {
+      container.innerHTML = '<div class="result-card"><div class="result-card-title">📊 Nepal Distance Matrix</div><div style="margin-top:8px; font-size:0.78rem; color:var(--text-secondary);">62 cities matrix with travel times and distances.</div><button class="btn-dial-small" style="margin-top:8px;" onclick="showMatrixPage()">Open Matrix</button></div>';
+    }
+
+    function renderContextOffline(place, container) {
+      container.innerHTML = '<div class="result-card"><div class="result-card-title">📥 Offline Cache</div><div style="margin-top:8px; font-size:0.78rem; color:var(--text-secondary);">Sync map tiles and route data for offline mountain travel.</div><button class="btn-dial-small" style="margin-top:8px;" onclick="syncOfflineBundle()">Sync Now</button></div>';
+    }
+
+    function renderContextReport(place, container) {
+      container.innerHTML = '<div class="result-card"><div class="result-card-title">🚧 Report Hazard</div><div style="margin-top:8px; font-size:0.78rem; color:var(--text-secondary);">Report landslides, accidents, or roadblocks.</div><button class="btn-dial-small" style="margin-top:8px;" onclick="openModal(\'reportModal\')">Open Report</button></div>';
     }
 
     async function renderSidebarWeatherResult(place) {
