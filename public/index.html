@@ -2185,7 +2185,7 @@
         const routeGlow = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 14, opacity: 0.25, lineCap: 'round', lineJoin: 'round' } });
         const casing = L.geoJSON(chosen.geometry, { style: { color: '#0b192c', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
         const core = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
-        routeLayerGroup = L.layerGroup([routeGlow, casing, core]).addTo(map);
+        routeLayerGroup = L.featureGroup([routeGlow, casing, core]).addTo(map);
 
         // Add A/B start/end markers
         const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
