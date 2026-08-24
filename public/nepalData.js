@@ -29,6 +29,14 @@ async function loadStaticData() {
         revenueTo: 'Road Board Nepal'
       }
     };
+    window.NEPAL_DATA.emergencyHotlines = [
+      { name: 'Nepal Police Emergency', number: '100', tel: 'tel:100', badge: '🚔 100', role: 'General Law & Emergency First Responders' },
+      { name: 'Nepal Traffic Police', number: '103', tel: 'tel:103', badge: '🚦 103', role: 'Highway Road Rescue & Traffic Obstructions' },
+      { name: 'Tourist Police Nepal', number: '1144', tel: 'tel:1144', badge: '🏔️ 1144', role: 'Foreign Travelers & Trekking Route Assistance' },
+      { name: 'Ambulance (Red Cross)', number: '102', tel: 'tel:102', badge: '🚑 102', role: 'Immediate Medical & Trauma Evacuation' },
+      { name: 'Armed Police Force (APF)', number: '1114', tel: 'tel:1114', badge: '🛡️ 1114', role: 'Disaster Relief & Landslide Search-and-Rescue' },
+      { name: 'Road Department (DoR)', number: '+977-1-4262693', tel: 'tel:+97714262693', badge: '🏗️ DoR', role: 'Heavy Machinery, Road Blockage & Bulldozer Dispatch' }
+    ];
     window.NEPAL_DATA.emergencyContacts = [
       { title: 'Nepal Police Emergency Control', number: '100', icon: '🚨', type: 'Primary Emergency' },
       { title: 'Nepal Highway Traffic Police Control', number: '103', icon: '🚓', type: 'Highway Traffic & Patrol' },
@@ -38,6 +46,16 @@ async function loadStaticData() {
       { title: 'Armed Police Force (APF) Disaster Rescue', number: '1114', icon: '🦺', type: 'Landslide & Flood Rescue' },
       { title: 'Nepal Disaster Management (NDRRMA)', number: '1155', icon: '⚠️', type: 'Monsoon & Landslide Alert' }
     ];
+    window.NEPAL_DATA.distressTypes = {
+      accident: { label: 'Road Accident / Vehicle Collision', nepaliLabel: 'सडक दुर्घटना / गाडी ठोक्किएको', iconEmoji: '🚨', priority: 'Critical' },
+      landslide_obstruction: { label: 'Landslide / Rockfall / Mudflow Trapped', nepaliLabel: 'पहिरो / ढुङ्गा खसेर थुनिएको', iconEmoji: '⛰️', priority: 'Critical' },
+      medical: { label: 'Acute Medical Emergency / Altitude Sickness', nepaliLabel: 'आकस्मिक स्वास्थ्य समस्या / लेक लागेको', iconEmoji: '🚑', priority: 'Critical' },
+      offroad_distress: { label: 'Vehicle Slipped Off-Road / Cliff Edge Danger', nepaliLabel: 'सडकबाट चिप्लिएको / भीरको जोखिम', iconEmoji: '🆘', priority: 'Critical' },
+      vehicle_breakdown: { label: 'Mechanical Failure / Engine / Axle / Brake Breakdown', nepaliLabel: 'गाडी बिग्रिएको / इन्जिन वा ब्रेक फेल', iconEmoji: '🚙', priority: 'Urgent' },
+      ev_battery_or_fuel: { label: 'EV Battery Depleted / Out of Fuel on Remote Pass', nepaliLabel: 'इभी चार्ज सकिएको / इन्धन रित्तिएको', iconEmoji: '⚡', priority: 'Urgent' },
+      mountain_weather: { label: 'Severe Blizzard / Flash Flood / Torrential Whiteout', nepaliLabel: 'हिमपात / बाढी / भारी वर्षामा अलपत्र', iconEmoji: '🌨️', priority: 'Urgent' },
+      general_rescue: { label: 'General Rescue / Stranded Traveler Assistance', nepaliLabel: 'अन्य उद्धार तथा सहयोग', iconEmoji: '🚩', priority: 'High' }
+    };
     window.NEPAL_DATA.dialects = [
       {
         id: 'doteli', name: 'Doteli / Far-West (डोटेली)', region: 'Sudurpashchim (Kailali, Dadeldhura, Doti, Baitadi)',

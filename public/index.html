@@ -421,40 +421,200 @@
 
   <!-- SOS Emergency Modal -->
   <div class="modal-overlay" id="sosModal">
-    <div class="modal-card sos-modal-card">
+    <div class="modal-card sos-modal-card" style="width:960px; max-width:96vw; max-height:94vh; display:flex; flex-direction:column;">
       <div class="modal-header sos-header">
         <div class="modal-title">
-          <span class="sos-beacon" id="sosBeacon"></span>
-          <span>Nepal Highway Emergency SOS Hub</span>
+          <div style="position:relative; display:inline-flex; align-items:center; justify-content:center;">
+            <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #dc2626, #991b1b); display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(220,38,38,0.4);">
+              <span style="font-size:1.2rem;">🚨</span>
+            </div>
+            <span style="position:absolute; top:-3px; right:-3px; width:10px; height:10px; background:#f87171; border:2px solid #0f172a; border-radius:50%; animation:sosPulse 1s infinite;"></span>
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; background:rgba(220,38,38,0.2); border:1px solid rgba(248,113,113,0.4); color:#fca5a5;">Search & Rescue Dispatch</span>
+              <span style="font-size:11px; color:#fca5a5; font-weight:500;">Mero Sadak Nepal SOS</span>
+            </div>
+            <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.01em; margin-top:2px;">Emergency Highway Rescue Assistant</div>
+          </div>
         </div>
-        <button class="modal-close-btn" onclick="closeModal('sosModal'); stopSosBeacon();">✕</button>
-      </div>
-      <div class="modal-body sos-body">
-        <div class="sos-beacon-row">
-          <button class="sos-audio-btn" id="sosAudioBtn" onclick="toggleSosAudio()">
-            <span class="sos-audio-icon">🔊</span>
-            <span id="sosAudioLabel">Play Siren</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="modal-close-btn" id="sosAudioBtn" onclick="toggleSosAudio()" title="Acoustic SOS Morse Code Siren" style="padding:8px 12px; border-radius:10px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; background:rgba(15,23,42,0.8); border:1px solid #334155; color:#cbd5e1; cursor:pointer; transition:all 0.2s;">
+            <span id="sosAudioIcon">🔊</span>
+            <span id="sosAudioLabel" class="hidden smInline">Play Siren</span>
           </button>
-          <div class="sos-quick-actions">
-            <a href="tel:100" class="sos-quick-btn sos-quick-primary">🚨 Police 100</a>
-            <a href="tel:103" class="sos-quick-btn">🚓 Traffic 103</a>
-            <a href="tel:102" class="sos-quick-btn">🚑 Ambulance 102</a>
+          <button class="modal-close-btn" id="sosStrobeBtn" onclick="toggleSosStrobe()" title="Fullscreen Flashing Visual Beacon" style="padding:8px 12px; border-radius:10px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; background:rgba(15,23,42,0.8); border:1px solid #334155; color:#cbd5e1; cursor:pointer; transition:all 0.2s;">
+            <span>🔥</span>
+            <span class="hidden smInline">Visual Beacon</span>
+          </button>
+          <button class="modal-close-btn" onclick="closeModal('sosModal'); stopSosBeacon(); stopSosStrobe();">✕</button>
+        </div>
+      </div>
+      <div class="modal-body sos-body" style="overflow-y:auto; flex:1;">
+        <!-- Fullscreen Strobe Beacon Overlay -->
+        <div id="sosStrobeOverlay" style="display:none; position:fixed; inset:0; z-index:9999; cursor:pointer; transition:background-color 0.15s;" onclick="toggleSosStrobe()">
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;">
+            <div id="sosStrobeContent" style="background:rgba(0,0,0,0.5); padding:32px; border-radius:24px; backdrop-filter:blur(8px); max-width:420px;">
+              <div style="font-size:3rem; margin-bottom:16px; animation:sosPulse 0.8s infinite;">🚨</div>
+              <h2 style="font-size:1.5rem; font-weight:900; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px; color:#fff;">RESCUE BEACON</h2>
+              <p style="font-size:0.85rem; font-weight:600; opacity:0.9; margin-bottom:16px; color:#fecaca;">Flashing maximum contrast signal for helicopters, rescue teams, and highway traffic.</p>
+              <button onclick="event.stopPropagation(); toggleSosStrobe();" style="padding:10px 20px; border-radius:999px; background:#fff; color:#dc2626; font-weight:700; font-size:0.85rem; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3);">Exit Beacon Mode</button>
+            </div>
           </div>
         </div>
 
-        <div class="sos-protocol-card">
-          <div class="sos-protocol-title">🚧 Emergency Protocol</div>
-          <ol class="sos-protocol-list">
-            <li><strong>Stop safely</strong> — Move vehicle to the shoulder, turn on hazard lights.</li>
-            <li><strong>Assess injuries</strong> — Check yourself and passengers; administer first aid if trained.</li>
-            <li><strong>Call emergency</strong> — Dial <strong>100</strong> (Police), <strong>103</strong> (Traffic), or <strong>102</strong> (Ambulance).</li>
-            <li><strong>Share location</strong> — Provide the nearest highway code (e.g., NH01, NH17) and landmark.</li>
-            <li><strong>Stay visible</strong> — Use reflective triangles or hazard beacons; avoid standing in traffic.</li>
-            <li><strong>Alert authorities</strong> — For landslides or floods, also call <strong>1114</strong> (APF Rescue) or <strong>1155</strong> (NDRRMA).</li>
-          </ol>
+        <!-- GPS Status & Nearest Landmark -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div style="background:rgba(15,23,42,0.7); border:1px solid #1e293b; border-radius:16px; padding:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div id="sosGpsDot" style="width:10px; height:10px; border-radius:50%; background:#10b981; animation:sosPulse 2s infinite;"></div>
+                <span id="sosGpsStatus" style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Acquiring GPS...</span>
+              </div>
+              <button onclick="acquireSosLocation()" id="sosRefreshGpsBtn" style="display:flex; align-items:center; gap:4px; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#1e293b; border:1px solid #334155; color:#cbd5e1; cursor:pointer;">
+                <span id="sosRefreshIcon">🔄</span>
+                <span>Refresh GPS</span>
+              </button>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-size:11px; color:#64748b; font-family:monospace;">LAT / LNG:</span>
+              <span id="sosCoords" style="font-size:1.1rem; font-weight:800; color:#10b981; font-family:monospace; margin-left:8px; letter-spacing:-0.02em;">--</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#64748b;">
+              <span id="sosAccuracy">Accuracy: ±--m</span>
+              <span id="sosAltitude">Alt: --m ASL</span>
+            </div>
+            <div id="sosGeoError" style="display:none; margin-top:8px; padding:8px; border-radius:8px; font-size:11px; color:#fbbf24; background:rgba(120,53,15,0.2); border:1px solid rgba(251,191,36,0.3);"></div>
+            <div id="sosManualLocation" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid #1e293b;">
+              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Select Nearest Known Nepal Hub / Junction:</label>
+              <select id="sosManualCity" onchange="handleSosManualCity()" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
+                <option value="">-- Select Location --</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="background:rgba(15,23,42,0.7); border:1px solid #1e293b; border-radius:16px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span style="font-size:0.9rem;">🏔️</span>
+              <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Highway Landmark & Proximity</span>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span id="sosLandmarkDist" style="font-size:1rem; font-weight:700; color:#fff;">--</span>
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-bottom:4px;">
+              District: <strong id="sosLandmarkDistrict" style="color:#e2e8f0;">--</strong> • Province: <strong id="sosLandmarkProvince" style="color:#e2e8f0;">--</strong>
+            </div>
+            <div id="sosLandmarkHighway" style="font-size:11px; color:#fbbf24; font-weight:600;"></div>
+            <div style="margin-top:12px; padding-top:12px; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between;">
+              <span id="sosActiveRoute" style="font-size:11px; color:#64748b;">Independent Highway Travel</span>
+              <button onclick="focusSosOnMap()" style="font-size:11px; font-weight:600; color:#f87171; background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <span>Pin on Map</span>
+                <span>📍</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="sos-grid" id="sosGridContent"></div>
+        <!-- Emergency Distress Nature Selection -->
+        <div style="margin-bottom:20px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:10px;">
+            <span style="font-size:0.9rem;">🛡️</span>
+            <span>Select Emergency Nature / Distress Category:</span>
+          </label>
+          <div id="sosDistressGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;"></div>
+        </div>
+
+        <!-- Vehicle, Passengers, and Rescuer Details Form -->
+        <div style="background:rgba(15,23,42,0.5); border:1px solid #1e293b; border-radius:16px; padding:16px; margin-bottom:20px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Vehicle Type:</label>
+              <select id="sosVehicleType" onchange="sosState.vehicleType=this.value; updateSosMessage();" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
+                <option value="car">Car / Sedan / Hatchback</option>
+                <option value="suv_4wd">SUV / 4WD Mountain Jeep</option>
+                <option value="motorbike">Motorcycle / Scooter</option>
+                <option value="bus_truck">Bus / Heavy Commercial Truck</option>
+                <option value="electric_vehicle">Electric Vehicle (EV)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Vehicle Plate / Reg No (Optional):</label>
+              <input type="text" id="sosVehiclePlate" placeholder="e.g. BA 02 PA 4821" oninput="sosState.vehiclePlate=this.value; updateSosMessage();" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none; font-family:monospace;">
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Persons Onboard:</label>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <button type="button" onclick="adjustSosPassengers(-1)" style="width:32px; height:32px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-weight:700; cursor:pointer; font-size:14px;">−</button>
+                <span id="sosPassengerCount" style="flex:1; text-align:center; font-weight:700; font-size:14px; background:#0f172a; border:1px solid #334155; padding:6px; border-radius:8px;">2 People</span>
+                <button type="button" onclick="adjustSosPassengers(1)" style="width:32px; height:32px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-weight:700; cursor:pointer; font-size:14px;">+</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Distress Situation & Immediate Needs (Optional Note):</label>
+            <input type="text" id="sosCustomNotes" placeholder="e.g., Stranded after rockfall 2km past Kurintar, child onboard, 4WD axle damaged, need crane and medical check" oninput="sosState.customNotes=this.value; updateSosMessage();" style="width:100%; padding:10px 14px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
+          </div>
+        </div>
+
+        <!-- Generated Search & Rescue Dispatch Message -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.9rem;">📋</span>
+              <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Generated Search & Rescue (SAR) Dispatch Message</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button onclick="setSosMessageFormat('full')" id="sosFormatFull" style="padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#dc2626; color:#fff; border:none; cursor:pointer;">Full SAR</button>
+              <button onclick="setSosMessageFormat('compact')" id="sosFormatCompact" style="padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#1e293b; color:#94a3b8; border:1px solid #334155; cursor:pointer;">Compact SMS</button>
+            </div>
+          </div>
+          <div style="position:relative;">
+            <pre id="sosMessageOutput" style="background:#020617; border:1px solid #1e293b; border-radius:12px; padding:14px; font-size:11px; color:#e2e8f0; font-family:monospace; white-space:pre-wrap; line-height:1.6; max-height:180px; overflow-y:auto; margin:0;"></pre>
+            <button onclick="copySosMessage()" id="sosCopyBtn" style="position:absolute; top:8px; right:8px; padding:6px 12px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <span id="sosCopyIcon">📋</span>
+              <span id="sosCopyLabel">Copy SAR Text</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Share Options -->
+        <div style="margin-bottom:20px;">
+          <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:10px;">Send Emergency SOS Via External Channels:</label>
+          <input type="tel" id="sosCustomPhone" placeholder="Optional: Enter specific recipient phone (e.g. +977 98XXXXXXXX)" style="width:100%; padding:10px 14px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none; margin-bottom:10px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <button onclick="sendSosWhatsApp()" style="padding:12px; border-radius:12px; background:#059669; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,0.3);">
+              <span>💬</span>
+              <span>WhatsApp</span>
+            </button>
+            <button onclick="sendSosSms()" style="padding:12px; border-radius:12px; background:#2563eb; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3);">
+              <span>📤</span>
+              <span>SMS</span>
+            </button>
+            <button onclick="sendSosTelegram()" style="padding:12px; border-radius:12px; background:#0ea5e9; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(14,165,233,0.3);">
+              <span>✈️</span>
+              <span>Telegram</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Nepal Emergency Hotlines Speed-Dial Grid -->
+        <div style="padding-top:16px; border-top:1px solid #1e293b;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <span style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">
+              <span style="font-size:0.85rem;">📞</span>
+              <span>Nepal Official Emergency Speed-Dial Hotlines</span>
+            </span>
+            <span style="font-size:10px; color:#64748b;">Toll-free 24/7 National Emergency</span>
+          </div>
+          <div id="sosHotlinesGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;"></div>
+        </div>
+      </div>
+      <div style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#64748b;">
+        <span style="display:flex; align-items:center; gap:6px;">
+          <span>ℹ️</span>
+          <span>Mero Sadak SAR Assistant • Offline Coordinates Cached</span>
+        </span>
+        <button onclick="closeModal('sosModal'); stopSosBeacon(); stopSosStrobe();" style="padding:6px 14px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">Close Emergency Panel</button>
       </div>
     </div>
   </div>
@@ -1170,32 +1330,487 @@
       }
     });
 
+    let sosState = {
+      lat: 27.8617,
+      lng: 84.5542,
+      accuracy: null,
+      altitude: null,
+      isLocating: false,
+      geoError: null,
+      useManualLocation: false,
+      distressType: 'accident',
+      customNotes: '',
+      vehicleType: 'car',
+      vehiclePlate: '',
+      passengerCount: 2,
+      messageFormat: 'full',
+      isAudioPlaying: false,
+      isStrobeActive: false,
+      copiedText: false
+    };
+
     function renderSosModal() {
-      if (!window.NEPAL_DATA || !Array.isArray(window.NEPAL_DATA.emergencyContacts)) return;
-      const grid = document.getElementById('sosGridContent');
-      grid.innerHTML = window.NEPAL_DATA.emergencyContacts.map(c => `
-        <div class="sos-tile">
-          <div>
-            <div style="font-size:0.8rem; color:var(--text-secondary);">${c.type}</div>
-            <div style="font-weight:700; margin-top:2px;">${c.icon} ${c.title}</div>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="sos-num">${c.number}</span>
-            <a href="tel:${c.number}" class="btn-dial">📞 Call</a>
-          </div>
-        </div>
-      `).join('');
-      startSosBeacon();
+      renderSosDistressGrid();
+      renderSosHotlinesGrid();
+      updateSosMessage();
+      acquireSosLocation();
     }
 
+    function renderSosDistressGrid() {
+      const grid = document.getElementById('sosDistressGrid');
+      if (!grid || !window.NEPAL_DATA || !window.NEPAL_DATA.distressTypes) return;
+      const types = window.NEPAL_DATA.distressTypes;
+      grid.innerHTML = Object.keys(types).map(key => {
+        const t = types[key];
+        const selected = sosState.distressType === key;
+        const priorityClass = t.priority === 'Critical' ? 'priority-critical' : t.priority === 'Urgent' ? 'priority-urgent' : 'priority-high';
+        return `<button type="button" onclick="setSosDistressType('${key}')" class="sos-distress-btn ${selected ? 'selected' : ''}">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span class="distress-emoji">${t.iconEmoji}</span>
+            <span class="distress-priority ${priorityClass}">${t.priority}</span>
+          </div>
+          <div class="distress-label">${t.label}</div>
+          <div class="distress-nepali">${t.nepaliLabel}</div>
+        </button>`;
+      }).join('');
+    }
+
+    function renderSosHotlinesGrid() {
+      const grid = document.getElementById('sosHotlinesGrid');
+      if (!grid || !window.NEPAL_DATA || !Array.isArray(window.NEPAL_DATA.emergencyHotlines)) return;
+      grid.innerHTML = window.NEPAL_DATA.emergencyHotlines.map(h => `
+        <a href="${h.tel}" class="sos-hotline-btn">
+          <span class="sos-hotline-badge">${h.badge}</span>
+          <span class="sos-hotline-name">${h.name}</span>
+          <span class="sos-hotline-number">Dial ${h.number}</span>
+        </a>
+      `).join('');
+    }
+
+    function setSosDistressType(type) {
+      sosState.distressType = type;
+      renderSosDistressGrid();
+      updateSosMessage();
+    }
+
+    function adjustSosPassengers(delta) {
+      sosState.passengerCount = Math.max(1, Math.min(50, sosState.passengerCount + delta));
+      const el = document.getElementById('sosPassengerCount');
+      if (el) el.textContent = sosState.passengerCount + (sosState.passengerCount === 1 ? ' Person' : ' People');
+      updateSosMessage();
+    }
+
+    function setSosMessageFormat(fmt) {
+      sosState.messageFormat = fmt;
+      const fullBtn = document.getElementById('sosFormatFull');
+      const compactBtn = document.getElementById('sosFormatCompact');
+      if (fullBtn && compactBtn) {
+        if (fmt === 'full') {
+          fullBtn.style.background = '#dc2626'; fullBtn.style.color = '#fff'; fullBtn.style.border = 'none';
+          compactBtn.style.background = '#1e293b'; compactBtn.style.color = '#94a3b8'; compactBtn.style.border = '1px solid #334155';
+        } else {
+          compactBtn.style.background = '#dc2626'; compactBtn.style.color = '#fff'; compactBtn.style.border = 'none';
+          fullBtn.style.background = '#1e293b'; fullBtn.style.color = '#94a3b8'; fullBtn.style.border = '1px solid #334155';
+        }
+      }
+      updateSosMessage();
+    }
+
+    function acquireSosLocation() {
+      const statusEl = document.getElementById('sosGpsStatus');
+      const coordsEl = document.getElementById('sosCoords');
+      const accuracyEl = document.getElementById('sosAccuracy');
+      const altitudeEl = document.getElementById('sosAltitude');
+      const errorEl = document.getElementById('sosGeoError');
+      const manualEl = document.getElementById('sosManualLocation');
+      const dotEl = document.getElementById('sosGpsDot');
+
+      if (statusEl) { statusEl.textContent = 'Acquiring High-Precision GPS...'; }
+      if (dotEl) { dotEl.style.background = '#fbbf24'; dotEl.style.animation = 'sosPulse 0.8s infinite'; }
+
+      if (!navigator.geolocation) {
+        finishSosLocation(null, 'Geolocation is not supported by your browser.');
+        return;
+      }
+
+      sosState.isLocating = true;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          sosState.lat = pos.coords.latitude;
+          sosState.lng = pos.coords.longitude;
+          sosState.accuracy = pos.coords.accuracy;
+          sosState.altitude = pos.coords.altitude;
+          sosState.useManualLocation = false;
+          sosState.isLocating = false;
+          finishSosLocation(null, null);
+          updateSosLandmark();
+          updateSosMessage();
+        },
+        (err) => {
+          sosState.isLocating = false;
+          let msg = 'Unable to retrieve your location.';
+          if (err.code === err.PERMISSION_DENIED) {
+            msg = 'Location permission was denied. You can select your approximate Nepal location below.';
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            msg = 'GPS satellite fix unavailable. You can choose your nearest checkpoint.';
+          } else if (err.code === err.TIMEOUT) {
+            msg = 'GPS request timed out. Please retry or pick a known highway checkpoint.';
+          }
+          sosState.useManualLocation = true;
+          finishSosLocation(msg, null);
+          populateSosManualCities();
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    }
+
+    function finishSosLocation(errorMsg, geoError) {
+      const statusEl = document.getElementById('sosGpsStatus');
+      const coordsEl = document.getElementById('sosCoords');
+      const accuracyEl = document.getElementById('sosAccuracy');
+      const altitudeEl = document.getElementById('sosAltitude');
+      const errorEl = document.getElementById('sosGeoError');
+      const manualEl = document.getElementById('sosManualLocation');
+      const dotEl = document.getElementById('sosGpsDot');
+
+      if (errorEl) {
+        if (geoError) {
+          errorEl.textContent = geoError;
+          errorEl.style.display = 'block';
+        } else {
+          errorEl.style.display = 'none';
+        }
+      }
+
+      if (sosState.useManualLocation) {
+        if (statusEl) { statusEl.textContent = 'Manual / Offline Landmark'; }
+        if (dotEl) { dotEl.style.background = '#fbbf24'; dotEl.style.animation = 'none'; }
+        if (manualEl) { manualEl.style.display = 'block'; }
+      } else if (!geoError) {
+        if (statusEl) { statusEl.textContent = 'GPS Fix Locked'; }
+        if (dotEl) { dotEl.style.background = '#10b981'; dotEl.style.animation = 'sosPulse 2s infinite'; }
+        if (manualEl) { manualEl.style.display = 'none'; }
+      }
+
+      if (coordsEl) coordsEl.textContent = sosState.lat.toFixed(5) + ', ' + sosState.lng.toFixed(5);
+      if (accuracyEl) accuracyEl.textContent = 'Accuracy: ±' + (sosState.accuracy ? Math.round(sosState.accuracy) : 15) + 'm';
+      if (altitudeEl) altitudeEl.textContent = 'Alt: ' + (sosState.altitude ? Math.round(sosState.altitude) + 'm ASL' : '--');
+    }
+
+    function populateSosManualCities() {
+      const select = document.getElementById('sosManualCity');
+      if (!select || !window.NEPAL_DATA || !window.NEPAL_DATA.cities) return;
+      const allCities = Object.values(window.NEPAL_DATA.cities).flat();
+      select.innerHTML = '<option value="">-- Select Location --</option>' +
+        allCities.map(c => `<option value="${c.name}">${c.name} (${c.district}, ${c.province})</option>`).join('');
+    }
+
+    function handleSosManualCity() {
+      const select = document.getElementById('sosManualCity');
+      if (!select || !select.value || !window.NEPAL_DATA || !window.NEPAL_DATA.cities) return;
+      const allCities = Object.values(window.NEPAL_DATA.cities).flat();
+      const city = allCities.find(c => c.name === select.value);
+      if (city) {
+        sosState.lat = city.lat;
+        sosState.lng = city.lng;
+        sosState.accuracy = 50;
+        sosState.altitude = city.elevationM || null;
+        sosState.useManualLocation = true;
+        finishSosLocation(null, null);
+        updateSosLandmark();
+        updateSosMessage();
+      }
+    }
+
+    function getAllSosCities() {
+      if (!window.NEPAL_DATA || !window.NEPAL_DATA.cities) return [];
+      return Object.values(window.NEPAL_DATA.cities).flat();
+    }
+
+    function findNearestLandmark(lat, lng) {
+      const cities = getAllSosCities();
+      let nearest = cities[0] || { name: 'Unknown', district: '--', province: '--', elevationM: 0 };
+      let minDist = Infinity;
+      for (const c of cities) {
+        const d = haversineKm(lat, lng, c.lat, c.lng);
+        if (d < minDist) { minDist = d; nearest = c; }
+      }
+      const direction = getCompassDirection(nearest.lat, nearest.lng, lat, lng);
+      return { city: nearest, distanceKm: Math.round(minDist * 10) / 10, direction };
+    }
+
+    function getCompassDirection(fromLat, fromLng, toLat, toLng) {
+      const dLat = toLat - fromLat;
+      const dLng = toLng - fromLng;
+      const angle = (Math.atan2(dLng, dLat) * 180) / Math.PI;
+      const normalized = (angle + 360) % 360;
+      if (normalized >= 337.5 || normalized < 22.5) return 'North';
+      if (normalized >= 22.5 && normalized < 67.5) return 'North-East';
+      if (normalized >= 67.5 && normalized < 112.5) return 'East';
+      if (normalized >= 112.5 && normalized < 157.5) return 'South-East';
+      if (normalized >= 157.5 && normalized < 202.5) return 'South';
+      if (normalized >= 202.5 && normalized < 247.5) return 'South-West';
+      if (normalized >= 247.5 && normalized < 292.5) return 'West';
+      return 'North-West';
+    }
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function formatCoordinates(lat, lng) {
+      const latStr = Math.abs(lat).toFixed(5) + (lat >= 0 ? '°N' : '°S');
+      const lngStr = Math.abs(lng).toFixed(5) + (lng >= 0 ? '°E' : '°W');
+      return latStr + ', ' + lngStr;
+    }
+
+    function updateSosLandmark() {
+      const landmark = findNearestLandmark(sosState.lat, sosState.lng);
+      const distEl = document.getElementById('sosLandmarkDist');
+      const districtEl = document.getElementById('sosLandmarkDistrict');
+      const provinceEl = document.getElementById('sosLandmarkProvince');
+      const highwayEl = document.getElementById('sosLandmarkHighway');
+      const routeEl = document.getElementById('sosActiveRoute');
+      if (distEl) distEl.textContent = '~' + landmark.distanceKm + ' km ' + landmark.direction + ' of ' + landmark.city.name;
+      if (districtEl) districtEl.textContent = landmark.city.district || '--';
+      if (provinceEl) provinceEl.textContent = landmark.city.province || '--';
+      if (routeEl) routeEl.textContent = activeRoute ? 'Active Route: ' + activeRoute.origin.name + ' ➔ ' + activeRoute.destination.name : 'Independent Highway Travel';
+    }
+
+    function generateFullSosMessage() {
+      const now = new Date();
+      const timeFormatted = now.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+      const distress = window.NEPAL_DATA && window.NEPAL_DATA.distressTypes ? window.NEPAL_DATA.distressTypes[sosState.distressType] : { label: 'Unknown', nepaliLabel: '', iconEmoji: '🚨', priority: 'High' };
+      const landmark = findNearestLandmark(sosState.lat, sosState.lng);
+      const coordsFormatted = formatCoordinates(sosState.lat, sosState.lng);
+      const mapLink = 'https://maps.google.com/?q=' + sosState.lat.toFixed(5) + ',' + sosState.lng.toFixed(5);
+      const vehicleLabels = { car: 'Car / Hatchback / Sedan', suv_4wd: 'SUV / 4WD Jeep', motorbike: 'Motorcycle / Scooter', bus_truck: 'Bus / Heavy Truck', electric_vehicle: 'Electric Vehicle (EV)' };
+      const vehicleLabel = vehicleLabels[sosState.vehicleType] || sosState.vehicleType;
+
+      let routeInfo = 'Independent / Local Highway Movement';
+      if (activeRoute) routeInfo = activeRoute.origin.name + ' ➔ ' + activeRoute.destination.name + ' (' + (activeRoute.routeName || 'Recommended Corridor') + ')';
+
+      const lines = [
+        '🚨 *EMERGENCY SOS RESCUE DISPATCH - NEPAL HIGHWAY* 🚨',
+        '⚠️ PRIORITY: ' + distress.priority.toUpperCase() + ' | TIME: ' + timeFormatted + ' NPT',
+        '',
+        '📍 *PRECISE GPS LOCATION / COORDINATES*:',
+        '• Lat/Lng: ' + sosState.lat.toFixed(5) + ', ' + sosState.lng.toFixed(5) + ' (' + coordsFormatted + ')',
+        '• Accuracy: ±' + (sosState.accuracy ? Math.round(sosState.accuracy) : 15) + ' meters' + (sosState.altitude ? ' | Alt: ' + Math.round(sosState.altitude) + 'm ASL' : ''),
+        '• 🗺️ Live Map Pin: ' + mapLink,
+        '',
+        '🏔️ *NEAREST HIGHWAY LANDMARK*:',
+        '• Location: ~' + landmark.distanceKm + ' km ' + landmark.direction + ' of ' + landmark.city.name + ' (' + landmark.city.district + ' District, ' + landmark.city.province + ' Province)',
+        '',
+        '🚙 *VEHICLE & PASSENGER INFORMATION*:',
+        '• Vehicle: ' + vehicleLabel,
+        sosState.vehiclePlate ? '• Plate/Reg No: ' + sosState.vehiclePlate.toUpperCase() : '',
+        '• Persons Onboard: ' + sosState.passengerCount + ' passenger' + (sosState.passengerCount > 1 ? 's' : ''),
+        '',
+        '🛣️ *ACTIVE ROUTE CORRIDOR*:',
+        '• Route: ' + routeInfo,
+        '',
+        '⚠️ *DISTRESS NATURE & DETAILS*:',
+        '• Category: ' + distress.iconEmoji + ' ' + distress.label,
+        '• Nepali: ' + distress.nepaliLabel,
+        sosState.customNotes ? '• Additional Note: ' + sosState.customNotes : '• Additional Note: Immediate roadside assistance requested.',
+        '',
+        '📞 *NEPAL HIGHWAY RESCUE HOTLINES*:',
+        '• Police: 100 | Traffic: 103 | Tourist Police: 1144 | Ambulance: 102 | APF Rescue: 1114',
+        '[Generated via Mero Sadak Nepal Highway SOS]'
+      ];
+      return lines.filter(l => l !== '').join('\n');
+    }
+
+    function generateCompactSos() {
+      const distress = window.NEPAL_DATA && window.NEPAL_DATA.distressTypes ? window.NEPAL_DATA.distressTypes[sosState.distressType] : { label: 'Unknown', iconEmoji: '🚨' };
+      const landmark = findNearestLandmark(sosState.lat, sosState.lng);
+      const mapLink = 'https://maps.google.com/?q=' + sosState.lat.toFixed(5) + ',' + sosState.lng.toFixed(5);
+      const vehicleLabels = { car: 'Car', suv_4wd: 'SUV', motorbike: 'Bike', bus_truck: 'Truck', electric_vehicle: 'EV' };
+      return 'SOS NEPAL RESCUE: ' + distress.iconEmoji + ' ' + distress.label + '. Loc: ' + sosState.lat.toFixed(5) + ',' + sosState.lng.toFixed(5) + ' (~' + landmark.distanceKm + 'km ' + landmark.direction + ' of ' + landmark.city.name + '). People: ' + sosState.passengerCount + '. Vehicle: ' + (vehicleLabels[sosState.vehicleType] || sosState.vehicleType) + '. ' + (sosState.customNotes ? 'Note: ' + sosState.customNotes + '. ' : '') + 'Map: ' + mapLink + ' Police:100/103';
+    }
+
+    function updateSosMessage() {
+      const output = document.getElementById('sosMessageOutput');
+      if (!output) return;
+      const text = sosState.messageFormat === 'full' ? generateFullSosMessage() : generateCompactSos();
+      output.textContent = text;
+    }
+
+    function copySosMessage() {
+      const text = sosState.messageFormat === 'full' ? generateFullSosMessage() : generateCompactSos();
+      navigator.clipboard.writeText(text).then(() => {
+        sosState.copiedText = true;
+        const icon = document.getElementById('sosCopyIcon');
+        const label = document.getElementById('sosCopyLabel');
+        if (icon) icon.textContent = '✅';
+        if (label) label.textContent = 'Copied!';
+        setTimeout(() => {
+          sosState.copiedText = false;
+          if (icon) icon.textContent = '📋';
+          if (label) label.textContent = 'Copy SAR Text';
+        }, 2500);
+      }).catch(() => {
+        alert('Failed to copy. Please select and copy manually.');
+      });
+    }
+
+    function sendSosWhatsApp() {
+      const text = sosState.messageFormat === 'full' ? generateFullSosMessage() : generateCompactSos();
+      const phone = document.getElementById('sosCustomPhone') ? document.getElementById('sosCustomPhone').value.replace(/\D/g, '') : '';
+      let url = 'https://wa.me/?text=' + encodeURIComponent(text);
+      if (phone) url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function sendSosSms() {
+      const text = sosState.messageFormat === 'full' ? generateFullSosMessage() : generateCompactSos();
+      const phone = document.getElementById('sosCustomPhone') ? document.getElementById('sosCustomPhone').value.replace(/\D/g, '') : '';
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const sep = isIOS ? '&' : '?';
+      const target = phone ? phone : '';
+      window.location.href = 'sms:' + target + sep + 'body=' + encodeURIComponent(text);
+    }
+
+    function sendSosTelegram() {
+      const text = sosState.messageFormat === 'full' ? generateFullSosMessage() : generateCompactSos();
+      const mapLink = 'https://maps.google.com/?q=' + sosState.lat.toFixed(5) + ',' + sosState.lng.toFixed(5);
+      const url = 'https://t.me/share/url?url=' + encodeURIComponent(mapLink) + '&text=' + encodeURIComponent(text);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function focusSosOnMap() {
+      if (map) {
+        map.flyTo([sosState.lat, sosState.lng], 13, { duration: 1.2 });
+        L.popup().setLatLng([sosState.lat, sosState.lng]).setContent('<strong>SOS Emergency Pinpoint</strong><br>' + sosState.lat.toFixed(5) + ', ' + sosState.lng.toFixed(5)).openOn(map);
+      }
+      closeModal('sosModal');
+      stopSosBeacon();
+      stopSosStrobe();
+    }
+
+    // Audio Siren (Morse Code SOS: ... --- ...)
+    let sosAudioCtx = null;
+    let sosAudioPlaying = false;
+    let sosLoopTimer = null;
+
+    function toggleSosAudio() {
+      const iconEl = document.getElementById('sosAudioIcon');
+      const labelEl = document.getElementById('sosAudioLabel');
+      const btn = document.getElementById('sosAudioBtn');
+
+      if (sosAudioPlaying) {
+        stopSosAudio();
+        if (iconEl) iconEl.textContent = '🔊';
+        if (labelEl) labelEl.textContent = 'Play Siren';
+        if (btn) btn.style.background = 'rgba(15,23,42,0.8)';
+        sosState.isAudioPlaying = false;
+        return;
+      }
+
+      try {
+        sosAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        sosAudioPlaying = true;
+        sosState.isAudioPlaying = true;
+        if (iconEl) iconEl.textContent = '🔇';
+        if (labelEl) labelEl.textContent = 'Stop Siren';
+        if (btn) btn.style.background = 'rgba(220,38,38,0.35)';
+
+        const pattern = [100,100,100,100,100,300, 300,100,300,100,300,300, 100,100,100,100,100,700];
+        let step = 0;
+        function playNext() {
+          if (!sosAudioPlaying || !sosAudioCtx || sosAudioCtx.state === 'closed') return;
+          const isSound = step % 2 === 0;
+          const duration = pattern[step];
+          if (isSound && sosAudioCtx.state === 'running') {
+            const osc = sosAudioCtx.createOscillator();
+            const gain = sosAudioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(880, sosAudioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, sosAudioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, sosAudioCtx.currentTime + duration / 1000);
+            osc.connect(gain);
+            gain.connect(sosAudioCtx.destination);
+            osc.start();
+            osc.stop(sosAudioCtx.currentTime + duration / 1000);
+          }
+          step = (step + 1) % pattern.length;
+          sosLoopTimer = setTimeout(playNext, duration);
+        }
+        if (sosAudioCtx.state === 'suspended') {
+          sosAudioCtx.resume().then(playNext);
+        } else {
+          playNext();
+        }
+      } catch (e) {
+        console.warn('SOS audio failed:', e);
+        stopSosAudio();
+        if (iconEl) iconEl.textContent = '🔊';
+        if (labelEl) labelEl.textContent = 'Play Siren';
+        if (btn) btn.style.background = 'rgba(15,23,42,0.8)';
+        sosState.isAudioPlaying = false;
+      }
+    }
+
+    function stopSosAudio() {
+      if (sosLoopTimer) { clearTimeout(sosLoopTimer); sosLoopTimer = null; }
+      sosAudioPlaying = false;
+      sosState.isAudioPlaying = false;
+      if (sosAudioCtx) {
+        try { sosAudioCtx.close(); } catch (e) {}
+        sosAudioCtx = null;
+      }
+    }
+
+    // Visual Strobe Beacon
+    let sosStrobeInterval = null;
+
+    function toggleSosStrobe() {
+      const overlay = document.getElementById('sosStrobeOverlay');
+      const content = document.getElementById('sosStrobeContent');
+      if (!overlay || !content) return;
+
+      if (sosState.isStrobeActive) {
+        stopSosStrobe();
+        return;
+      }
+
+      sosState.isStrobeActive = true;
+      overlay.style.display = 'block';
+      overlay.classList.add('strobe-active');
+      let red = true;
+      sosStrobeInterval = setInterval(() => {
+        red = !red;
+        if (red) {
+          overlay.style.backgroundColor = '#dc2626';
+          content.style.color = '#fff';
+        } else {
+          overlay.style.backgroundColor = '#ffffff';
+          content.style.color = '#dc2626';
+        }
+      }, 250);
+    }
+
+    function stopSosStrobe() {
+      if (sosStrobeInterval) { clearInterval(sosStrobeInterval); sosStrobeInterval = null; }
+      sosState.isStrobeActive = false;
+      const overlay = document.getElementById('sosStrobeOverlay');
+      const content = document.getElementById('sosStrobeContent');
+      if (overlay) { overlay.style.display = 'none'; overlay.classList.remove('strobe-active'); overlay.style.backgroundColor = ''; }
+      if (content) { content.style.color = ''; }
+    }
+
+    // Legacy beacon (small header beacon) - keep for compatibility
     let sosBeaconInterval = null;
     function startSosBeacon() {
       stopSosBeacon();
-      const beacon = document.getElementById('sosBeacon');
-      if (!beacon) return;
-      beacon.classList.add('active');
       sosBeaconInterval = setInterval(() => {
-        beacon.classList.toggle('active');
+        const beacon = document.getElementById('sosBeacon');
+        if (beacon) beacon.classList.toggle('active');
       }, 800);
     }
 
@@ -1204,98 +1819,6 @@
       sosBeaconInterval = null;
       const beacon = document.getElementById('sosBeacon');
       if (beacon) beacon.classList.remove('active');
-    }
-
-    let sosAudioCtx = null;
-    let sosAudioPlaying = false;
-    let sosOscillators = [];
-    let sosLoopTimer = null;
-
-    function playSirenBurst() {
-      if (!sosAudioCtx || sosAudioCtx.state === 'closed') return;
-      const now = sosAudioCtx.currentTime;
-
-      const osc1 = sosAudioCtx.createOscillator();
-      const osc2 = sosAudioCtx.createOscillator();
-      const gain = sosAudioCtx.createGain();
-
-      osc1.type = 'sawtooth';
-      osc2.type = 'square';
-      osc1.frequency.setValueAtTime(600, now);
-      osc2.frequency.setValueAtTime(600, now);
-
-      osc1.frequency.linearRampToValueAtTime(900, now + 1);
-      osc1.frequency.linearRampToValueAtTime(600, now + 2);
-      osc1.frequency.linearRampToValueAtTime(900, now + 3);
-      osc1.frequency.linearRampToValueAtTime(600, now + 4);
-
-      osc2.frequency.setValueAtTime(602, now);
-      osc2.frequency.linearRampToValueAtTime(902, now + 1);
-      osc2.frequency.linearRampToValueAtTime(602, now + 2);
-      osc2.frequency.linearRampToValueAtTime(902, now + 3);
-      osc2.frequency.linearRampToValueAtTime(602, now + 4);
-
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.5);
-      gain.gain.linearRampToValueAtTime(0.08, now + 4);
-      gain.gain.linearRampToValueAtTime(0, now + 4.5);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(sosAudioCtx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 4.5);
-      osc2.stop(now + 4.5);
-      sosOscillators.push(osc1, osc2);
-    }
-
-    function toggleSosAudio() {
-      const btn = document.getElementById('sosAudioBtn');
-      const label = document.getElementById('sosAudioLabel');
-      if (!btn || !label) return;
-
-      if (sosAudioPlaying) {
-        stopSosAudio();
-        label.textContent = 'Play Siren';
-        btn.classList.remove('active');
-        return;
-      }
-
-      try {
-        sosAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        sosAudioPlaying = true;
-        label.textContent = 'Stop Siren';
-        btn.classList.add('active');
-
-        playSirenBurst();
-        sosLoopTimer = setInterval(() => {
-          if (sosAudioPlaying && sosAudioCtx && sosAudioCtx.state !== 'closed') {
-            playSirenBurst();
-          }
-        }, 4200);
-      } catch (e) {
-        console.warn('SOS audio failed:', e);
-        alert('Audio siren is not supported in this browser.');
-        stopSosAudio();
-        label.textContent = 'Play Siren';
-        btn.classList.remove('active');
-      }
-    }
-
-    function stopSosAudio() {
-      if (sosLoopTimer) clearInterval(sosLoopTimer);
-      sosLoopTimer = null;
-      sosOscillators.forEach(osc => {
-        try { osc.stop(); } catch (e) {}
-      });
-      sosOscillators = [];
-      sosAudioPlaying = false;
-      if (sosAudioCtx) {
-        sosAudioCtx.close().catch(() => {});
-        sosAudioCtx = null;
-      }
     }
 
     function renderDrawerTollInfo() {
