@@ -2630,7 +2630,55 @@
             lng = cityMatch.lng || 0;
           }
         }
+        if ((!lat || lat === 0) && window.__DISTRICT_CITIES__) {
+          const districtCities = window.__DISTRICT_CITIES__[item.district?.toLowerCase()];
+          if (districtCities && districtCities.length) {
+            lat = districtCities[0].lat || 0;
+            lng = districtCities[0].lng || 0;
+          }
+        }
         dest = Object.assign({}, item, { label: hqName, lat, lng });
+      }
+
+      if (item.type === 'Local Unit') {
+        let lat = 0, lng = 0;
+        if (window.__DISTRICT_CITIES__ && item.district) {
+          const districtCities = window.__DISTRICT_CITIES__[item.district.toLowerCase()];
+          if (districtCities && districtCities.length) {
+            lat = districtCities[0].lat;
+            lng = districtCities[0].lng;
+          }
+        }
+        if (!lat || !lng) {
+          const results = document.getElementById('sidebarResults');
+          if (results) {
+            results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">📍 Local Unit Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' does not have map coordinates. Please select a nearby city or junction to plan a route.</div></div>';
+          }
+          document.getElementById('sidebarSearch').value = item.label;
+          selectedDestination = null;
+          return;
+        }
+        dest = Object.assign({}, item, { lat, lng });
+      }
+
+      if (item.type === 'Highway') {
+        const results = document.getElementById('sidebarResults');
+        if (results) {
+          results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">🛣️ Highway Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' is a corridor, not a point. Select a specific city, junction, or coordinate along this highway to calculate a route.</div></div>';
+        }
+        document.getElementById('sidebarSearch').value = item.label;
+        selectedDestination = null;
+        return;
+      }
+
+      if (!dest.lat || !dest.lng) {
+        const results = document.getElementById('sidebarResults');
+        if (results) {
+          results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.4);"><div class="result-card-title" style="color:#ff4d6d;">No coordinates</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">This location does not have map coordinates. Please select a city, junction, or coordinate instead.</div></div>';
+        }
+        document.getElementById('sidebarSearch').value = item.label;
+        selectedDestination = null;
+        return;
       }
 
       document.getElementById('sidebarSearch').value = dest.label;
