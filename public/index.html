@@ -348,6 +348,14 @@
       </svg>
       <span class="toggle-label">Incidents</span>
     </button>
+    <button class="map-toggle-btn" id="toggleBlackspots" onclick="toggleLayer('blackspots')" title="Accident Blackspots">
+      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <span class="toggle-label">Blackspots</span>
+    </button>
     <button class="map-toggle-btn" id="togglePois" onclick="toggleLayer('pois')" title="POIs & EV">
       <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2a7 7 0 0 1 7 7c0 3.5-3 7-7 10-4-3-7-6.5-7-10a7 7 0 0 1 7-7z"></path>
@@ -570,14 +578,16 @@
       weather: false,
       traffic: false,
       incidents: true,
-      pois: false
+      pois: false,
+      blackspots: false
     };
 
     let layerGroups = {
       weather: null,
       traffic: null,
       incidents: null,
-      pois: null
+      pois: null,
+      blackspots: null
     };
 
     let pickedPoints = { from: null, to: null };
@@ -650,6 +660,7 @@
       layerGroups.traffic = L.layerGroup();
       layerGroups.incidents = L.layerGroup();
       layerGroups.pois = L.layerGroup();
+      layerGroups.blackspots = L.layerGroup();
 
       map.on('click', handleMapClick);
 
@@ -837,8 +848,14 @@
       for (const h of highways) {
         if (keyCodes.includes(h.code)) {
           fetch(`data/highway/${h.file}`).then(r => r.json()).then(geo => {
-            const hSurface = L.geoJSON(geo, { style: { color: '#888888', weight: 10, opacity: 0.8, lineCap: 'round', lineJoin: 'round' } });
-            const hCenter = L.geoJSON(geo, { style: { color: '#f59e0b', weight: 4, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } }).bindPopup(`<strong>${h.code}: ${h.name}</strong><br><small>${h.route}</small>`);
+            const hSurface = L.geoJSON(geo, { style: { color: '#0f172a', weight: 12, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
+            const hCenter = L.geoJSON(geo, {
+              style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' },
+              onEachFeature: {
+                mouseover: (e) => { e.target.setStyle({ weight: 8, opacity: 1 }); e.target.bringToFront(); },
+                mouseout: (e) => { e.target.setStyle({ weight: 5, opacity: 0.95 }); }
+              }
+            }).bindPopup(`<strong>${h.code}: ${h.name}</strong><br><small>${h.route}</small>`);
             const hLayer = L.layerGroup([hSurface, hCenter]).addTo(map);
             highwayGeoJsonLayers.push(hLayer);
           }).catch(() => {});
@@ -927,9 +944,18 @@
       layerGroups.incidents.clearLayers();
       const data = window.__INCIDENTS__ || [];
       data.forEach(inc => {
-        const color = inc.severity === 'severe' ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
-        const marker = L.circleMarker([inc.lat, inc.lng], { radius: 8, fillColor: color, fillOpacity: 0.85, color: '#fff', weight: 2 }).bindPopup(`<strong>${inc.title}</strong><br><small>${inc.highwayName} · ${inc.locationName}</small><br>${inc.description}<br><small>Status: ${inc.status} · ${inc.reportedAt}</small>`);
-        layerGroups.incidents.addLayer(marker);
+        const isCritical = inc.severity === 'severe' || inc.severity === 'critical';
+        const color = inc.severity === 'severe' || inc.severity === 'critical' ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
+        const markerHtml = `
+          <div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            ${isCritical ? '<div style="position:absolute; width:40px; height:40px; background:rgba(239,68,68,0.4); border-radius:50%; animation:markerPing 1.5s infinite;"></div>' : ''}
+            <div style="position:relative; width:32px; height:32px; background:${color}; border:2px solid #fff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:bold; box-shadow:0 0 10px ${color}80; ${isCritical ? 'animation:markerPulse 1.2s infinite;' : ''}">
+              ${isCritical ? '🚨' : '⚠️'}
+            </div>
+          </div>
+        `;
+        const icon = L.divIcon({ className: 'custom-incident-marker', html: markerHtml, iconSize: [40, 40], iconAnchor: [20, 20] });
+        L.marker([inc.lat, inc.lng], { icon }).bindPopup(`<strong>${inc.title}</strong><br><small>${inc.highwayName} · ${inc.locationName}</small><br>${inc.description}<br><small>Status: ${inc.status} · ${inc.reportedAt}</small>`).addTo(layerGroups.incidents);
       });
     }
 
@@ -938,9 +964,38 @@
       layerGroups.weather.clearLayers();
       const data = window.__WEATHER_NODES__ || [];
       data.forEach(wx => {
-        const icon = wx.condition === 'sunny' ? '☀️' : wx.condition === 'rain_monsoon' ? '🌧️' : wx.condition === 'dense_fog' ? '🌫️' : wx.condition === 'thunderstorm' ? '⛈️' : wx.condition === 'mountain_shower' ? '🌦️' : '☁️';
-        const marker = L.marker([wx.lat, wx.lng]).bindPopup(`<strong>${icon} ${wx.name}</strong><br><small>${wx.highwayCode} · ${wx.elevationM}m</small><br>${wx.tempC}°C · ${wx.condition.replace(/_/g, ' ')}<br>Visibility: ${wx.visibilityKm}km · Wind: ${wx.windSpeedKmh}km/h<br><small>Landslide risk: ${wx.landslideRisk}</small>`);
-        layerGroups.weather.addLayer(marker);
+        const isHighRisk = wx.landslideRisk === 'high' || wx.landslideRisk === 'severe' || wx.visibilityKm < 3 || wx.rainProbabilityPercent > 70 || wx.condition === 'thunderstorm' || wx.condition === 'rain_monsoon' || wx.condition === 'dense_fog';
+        const isRain = wx.condition === 'rain_monsoon' || wx.condition === 'thunderstorm' || wx.condition === 'mountain_shower';
+        const isFog = wx.condition === 'dense_fog';
+        const weatherIcon = wx.condition === 'sunny' ? '☀️' : wx.condition === 'rain_monsoon' ? '🌧️' : wx.condition === 'dense_fog' ? '🌫️' : wx.condition === 'thunderstorm' ? '⛈️' : wx.condition === 'mountain_shower' ? '🌦️' : '☁️';
+
+        let bgColor, borderColor, textColor;
+        if (isHighRisk) {
+          if (wx.landslideRisk === 'severe' || wx.condition === 'thunderstorm') {
+            bgColor = 'rgba(127,29,29,0.95)'; borderColor = '#fca5a5'; textColor = '#fecaca';
+          } else {
+            bgColor = 'rgba(30,58,138,0.95)'; borderColor = '#93c5fd'; textColor = '#bfdbfe';
+          }
+        } else if (isRain) {
+          bgColor = 'rgba(30,58,138,0.9)'; borderColor = '#60a5fa'; textColor = '#93c5fd';
+        } else if (isFog) {
+          bgColor = 'rgba(30,41,59,0.9)'; borderColor = '#94a3b8'; textColor = '#e2e8f0';
+        } else {
+          bgColor = 'rgba(120,53,15,0.9)'; borderColor = '#fcd34d'; textColor = '#fde68a';
+        }
+
+        const markerHtml = `
+          <div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            ${isHighRisk ? `<div style="position:absolute; width:56px; height:56px; background:${bgColor}; border-radius:50%; opacity:0.4; animation:markerPulse 2s infinite;"></div>` : ''}
+            <div style="position:relative; padding:6px 12px; border-radius:20px; background:${bgColor}; border:2px solid ${borderColor}; color:${textColor}; font-size:11px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:flex; align-items:center; gap:6px;">
+              <span>${isHighRisk ? '⚡' : ''}${isRain ? '🌧️' : isFog ? '🌫️' : '☀️'}</span>
+              <span>${wx.tempC}°C</span>
+              ${isHighRisk ? `<span style="font-size:9px; padding:2px 6px; border-radius:4px; background:${borderColor}33; color:${textColor}; font-weight:800; text-transform:uppercase;">${wx.landslideRisk || 'Risk'}</span>` : ''}
+            </div>
+          </div>
+        `;
+        const icon = L.divIcon({ className: 'custom-weather-marker', html: markerHtml, iconSize: [isHighRisk ? 90 : 70, 30], iconAnchor: [isHighRisk ? 45 : 35, 15] });
+        L.marker([wx.lat, wx.lng], { icon }).bindPopup(`<strong>${weatherIcon} ${wx.name}</strong><br><small>${wx.highwayCode} · ${wx.elevationM}m</small><br>${wx.tempC}°C · ${wx.condition.replace(/_/g, ' ')}<br>Visibility: ${wx.visibilityKm}km · Wind: ${wx.windSpeedKmh}km/h<br><small>Landslide risk: ${wx.landslideRisk}</small>`).addTo(layerGroups.weather);
       });
     }
 
@@ -966,6 +1021,25 @@
       });
     }
 
+    async function fetchLiveBlackspots() {
+      if (!layerGroups.blackspots) return;
+      layerGroups.blackspots.clearLayers();
+      const data = window.__BLACKSPOTS__ || [];
+      data.forEach(bs => {
+        const isExtreme = bs.riskLevel === 'critical';
+        const markerColor = isExtreme ? '#ef4444' : bs.riskLevel === 'high' ? '#f97316' : '#f59e0b';
+        const markerHtml = `
+          <div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <div style="width:24px; height:24px; background:${markerColor}; border:2px solid #fff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; box-shadow:0 0 10px ${markerColor}90; ${isExtreme ? 'animation:markerPulse 1.8s infinite;' : ''}">
+              ⚠️
+            </div>
+          </div>
+        `;
+        const icon = L.divIcon({ className: 'blackspot-marker', html: markerHtml, iconSize: [24, 24], iconAnchor: [12, 12] });
+        L.marker([bs.lat, bs.lng], { icon }).bindPopup(`<strong>⚠️ ${bs.name}</strong><br><small>${bs.highwayCode} · ${bs.district}</small><br>Risk Level: ${bs.riskLevel}<br><small>${bs.annualAccidentStats} incidents/yr</small>`).addTo(layerGroups.blackspots);
+      });
+    }
+
     function toggleLayer(name) {
       const btn = document.getElementById('toggle' + name.charAt(0).toUpperCase() + name.slice(1));
       layerVisibility[name] = !layerVisibility[name];
@@ -981,6 +1055,7 @@
           if (name === 'weather') fetchLiveWeather();
           if (name === 'traffic') fetchLiveTraffic();
           if (name === 'pois') fetchLivePois();
+          if (name === 'blackspots') fetchLiveBlackspots();
         }
       }
     }
@@ -2107,9 +2182,29 @@
         }
 
         if (routeLayerGroup) map.removeLayer(routeLayerGroup);
+        const routeGlow = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 14, opacity: 0.25, lineCap: 'round', lineJoin: 'round' } });
         const casing = L.geoJSON(chosen.geometry, { style: { color: '#0b192c', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
         const core = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
-        routeLayerGroup = L.layerGroup([casing, core]).addTo(map);
+        routeLayerGroup = L.layerGroup([routeGlow, casing, core]).addTo(map);
+
+        // Add A/B start/end markers
+        const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
+        if (coords && coords.length > 0) {
+          const startCoord = coords[0];
+          const endCoord = coords[coords.length - 1];
+          const startIcon = L.divIcon({
+            className: 'route-start-marker',
+            html: '<div style="background:#10b981; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #10b981; display:flex; align-items:center; justify-content:center; color:#020617; font-size:11px; font-weight:900;">A</div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
+          });
+          const endIcon = L.divIcon({
+            className: 'route-end-marker',
+            html: '<div style="background:#f43f5e; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #f43f5e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:900;">B</div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
+          });
+          L.marker([startCoord[1], startCoord[0]], { icon: startIcon }).addTo(routeLayerGroup);
+          L.marker([endCoord[1], endCoord[0]], { icon: endIcon }).addTo(routeLayerGroup);
+        }
 
         map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
 
