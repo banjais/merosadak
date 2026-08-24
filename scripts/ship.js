@@ -1,13 +1,9 @@
 const { execSync } = require('child_process');
 
-function run(name, cmd, opts = {}) {
+function run(name, cmd) {
   console.log(`\n[ship] ${name}...`);
   try {
-    const env = { ...process.env };
-    if (opts.stripCloudflareToken) {
-      delete env.CLOUDFLARE_API_TOKEN;
-    }
-    execSync(cmd, { stdio: 'inherit', cwd: process.cwd(), env });
+    execSync(cmd, { stdio: 'inherit', cwd: process.cwd() });
   } catch (e) {
     console.error(`\n[ship] FAILED: ${name}`);
     process.exit(1);
@@ -16,7 +12,7 @@ function run(name, cmd, opts = {}) {
 
 try {
   run('sync data', 'npm run sync:data');
-  run('deploy worker', 'npm run worker:deploy', { stripCloudflareToken: true });
+  run('deploy worker', 'npm run worker:deploy');
   run('git add', 'git add .');
 
   try {

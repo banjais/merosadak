@@ -5,10 +5,13 @@
     "ship": "node scripts/ship.js",
     "sync:data": "node worker/sync-data.js",
     "sync:kv:setup": "node worker/setup-kv.js",
-    "worker:deploy": "cd worker && npx wrangler deploy",
-    "worker:tail": "cd worker && npx wrangler tail"
+    "worker:deploy": "cd worker && npx wrangler deploy --config wrangler.toml",
+    "worker:tail": "cd worker && npx wrangler tail --config wrangler.toml",
+    "deploy": "cd worker && npx wrangler deploy --config wrangler.toml",
+    "preview": "cd worker && npx wrangler dev --config wrangler.toml"
   },
   "devDependencies": {
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "wrangler": "^4.125.0"
   }
 }

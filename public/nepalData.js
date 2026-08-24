@@ -14,6 +14,21 @@ async function loadStaticData() {
     window.NEPAL_DATA = window.NEPAL_DATA || {};
     window.NEPAL_DATA.cities = citiesRes;
     window.NEPAL_DATA.places = placesRes;
+    window.NEPAL_DATA.tollFees = {
+      nagdhungaTunnel: {
+        name: 'Nagdhunga Tunnel (Naubise–Kathmandu)',
+        notice: 'Nepal Gazette, Chaitra 26, 2082 BS (April 2026)',
+        authority: 'Ministry of Physical Infrastructure and Transport',
+        categories: [
+          { label: 'Light vehicles', vehicles: 'Cars, vans, pickups, tractors, microbuses', entry: 65, exit: 60 },
+          { label: 'Mini buses / tippers', vehicles: 'Mini buses, mini trucks, tippers', entry: 115, exit: 80 },
+          { label: 'Buses / single axle', vehicles: 'Buses, single rear-axle trucks', entry: 260, exit: 200 },
+          { label: 'Multi-axle / heavy', vehicles: 'Multi-axle trucks, heavy equipment', entry: 600, exit: 250 }
+        ],
+        paymentMethods: ['Cash', 'QR Code (Fonepay)', 'RFID Sticker', 'N-Tag (RFID)'],
+        revenueTo: 'Road Board Nepal'
+      }
+    };
     window.NEPAL_DATA.emergencyContacts = [
       { title: 'Nepal Police Emergency Control', number: '100', icon: '🚨', type: 'Primary Emergency' },
       { title: 'Nepal Highway Traffic Police Control', number: '103', icon: '🚓', type: 'Highway Traffic & Patrol' },

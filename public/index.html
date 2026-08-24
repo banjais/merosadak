@@ -153,6 +153,11 @@
         </span> Offline Cache
       </div>
     </div>
+    <div class="drawer-toll-section" id="drawerTollSection">
+      <div class="drawer-toll-title">🚧 Nagdhunga Tunnel Tolls</div>
+      <div class="drawer-toll-note">Effective from Nepal Gazette, Chaitra 26, 2082 BS</div>
+      <div class="drawer-toll-grid" id="drawerTollGrid"></div>
+    </div>
     <div class="drawer-footer">
       <button class="drawer-login-btn" onclick="alert('Sign In coming soon'); closeDrawer();">Sign In</button>
     </div>
@@ -271,14 +276,14 @@
 
         <div id="contextPanel" style="display:none;">
           <div class="context-chips">
-            <button class="context-chip" onclick="toggleContextPanel('weather')">🌤️ Weather</button>
-            <button class="context-chip" onclick="toggleContextPanel('traffic')">🚦 Traffic</button>
-            <button class="context-chip" onclick="toggleContextPanel('pois')">⛽ POIs</button>
-            <button class="context-chip" onclick="toggleContextPanel('sos')">🆘 SOS</button>
-            <button class="context-chip" onclick="toggleContextPanel('incidents')">⚠️ Alerts</button>
-            <button class="context-chip" onclick="toggleContextPanel('matrix')">📊 Matrix</button>
-            <button class="context-chip" onclick="toggleContextPanel('offline')">📥 Offline</button>
-            <button class="context-chip" onclick="toggleContextPanel('report')">🚧 Report</button>
+            <button class="context-chip" data-panel="weather" onclick="toggleContextPanel('weather')">🌤️ Weather</button>
+            <button class="context-chip" data-panel="traffic" onclick="toggleContextPanel('traffic')">🚦 Traffic</button>
+            <button class="context-chip" data-panel="pois" onclick="toggleContextPanel('pois')">⛽ POIs</button>
+            <button class="context-chip" data-panel="sos" onclick="toggleContextPanel('sos')">🆘 SOS</button>
+            <button class="context-chip" data-panel="incidents" onclick="toggleContextPanel('incidents')">⚠️ Alerts</button>
+            <button class="context-chip" data-panel="matrix" onclick="toggleContextPanel('matrix')">📊 Matrix</button>
+            <button class="context-chip" data-panel="offline" onclick="toggleContextPanel('offline')">📥 Offline</button>
+            <button class="context-chip" data-panel="report" onclick="toggleContextPanel('report')">🚧 Report</button>
           </div>
           <div id="contextWeather" class="context-panel" style="display:none;"></div>
           <div id="contextTraffic" class="context-panel" style="display:none;"></div>
@@ -408,17 +413,39 @@
 
   <!-- SOS Emergency Modal -->
   <div class="modal-overlay" id="sosModal">
-    <div class="modal-card">
-      <div class="modal-header">
+    <div class="modal-card sos-modal-card">
+      <div class="modal-header sos-header">
         <div class="modal-title">
-          <span style="color:#ef4444;">🆘</span> <span>Nepal Highway Emergency SOS Hub</span>
+          <span class="sos-beacon" id="sosBeacon"></span>
+          <span>Nepal Highway Emergency SOS Hub</span>
         </div>
-        <button class="modal-close-btn" onclick="closeModal('sosModal')">✕</button>
+        <button class="modal-close-btn" onclick="closeModal('sosModal'); stopSosBeacon();">✕</button>
       </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">
-          Direct emergency helplines for Nepal Highway Patrol, Traffic Police, Ambulance, and Landslide Rescue.
-        </p>
+      <div class="modal-body sos-body">
+        <div class="sos-beacon-row">
+          <button class="sos-audio-btn" id="sosAudioBtn" onclick="toggleSosAudio()">
+            <span class="sos-audio-icon">🔊</span>
+            <span id="sosAudioLabel">Play Siren</span>
+          </button>
+          <div class="sos-quick-actions">
+            <a href="tel:100" class="sos-quick-btn sos-quick-primary">🚨 Police 100</a>
+            <a href="tel:103" class="sos-quick-btn">🚓 Traffic 103</a>
+            <a href="tel:102" class="sos-quick-btn">🚑 Ambulance 102</a>
+          </div>
+        </div>
+
+        <div class="sos-protocol-card">
+          <div class="sos-protocol-title">🚧 Emergency Protocol</div>
+          <ol class="sos-protocol-list">
+            <li><strong>Stop safely</strong> — Move vehicle to the shoulder, turn on hazard lights.</li>
+            <li><strong>Assess injuries</strong> — Check yourself and passengers; administer first aid if trained.</li>
+            <li><strong>Call emergency</strong> — Dial <strong>100</strong> (Police), <strong>103</strong> (Traffic), or <strong>102</strong> (Ambulance).</li>
+            <li><strong>Share location</strong> — Provide the nearest highway code (e.g., NH01, NH17) and landmark.</li>
+            <li><strong>Stay visible</strong> — Use reflective triangles or hazard beacons; avoid standing in traffic.</li>
+            <li><strong>Alert authorities</strong> — For landslides or floods, also call <strong>1114</strong> (APF Rescue) or <strong>1155</strong> (NDRRMA).</li>
+          </ol>
+        </div>
+
         <div class="sos-grid" id="sosGridContent"></div>
       </div>
     </div>
@@ -529,6 +556,7 @@
     let map;
     let tileLayers = {};
     let currentMapStyle = 'voyager';
+    let currentMode = 'route';
     
     // Map Layers
     let highwayGeoJsonLayers = [];
@@ -556,6 +584,7 @@
     let pickerArmed = null;
     let activeRoutePreference = 'fastest';
     let activeVehicle = 'car';
+    let selectedDestination = null;
 
     let matrixCities = [];
 
@@ -650,8 +679,6 @@
     async function loadStaticMapFeatures() {
       await loadStaticData();
       await loadData();
-      renderHighwayDirectory();
-      loadMajorHighwaysOverview(allHighwaysIndex);
       loadNepalBoundary();
 
       if (layerVisibility.incidents) {
@@ -692,7 +719,9 @@
           fetch(`https://merosadak.banjays.workers.dev/api/data/district-terrain.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
-        allHighwaysIndex = hwyRes;
+        const safePalika = Array.isArray(palikaRes) ? palikaRes : [];
+        const safeHighways = Array.isArray(hwyRes) ? hwyRes : [];
+        allHighwaysIndex = safeHighways;
         window.__HIGHWAY_INFO__ = hwyInfoRes;
         window.__BLACKSPOTS__ = blackspotsRes;
         window.__WEATHER_NODES__ = weatherRes;
@@ -704,8 +733,8 @@
         window.__AIRPORTS__ = airportsRes;
         window.__PLACES_API__ = placesRes;
 
-        if (window.NEPAL_DATA && NEPAL_DATA.cities) {
-          const allCities = Object.values(NEPAL_DATA.cities).flat();
+        if (window.NEPAL_DATA && window.NEPAL_DATA.cities) {
+          const allCities = Object.values(window.NEPAL_DATA.cities).flat();
           allCities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
           const districtMap = {};
           allCities.forEach(c => {
@@ -717,17 +746,17 @@
           });
           window.__DISTRICT_CITIES__ = districtMap;
         }
-        if (window.NEPAL_DATA && NEPAL_DATA.places) {
-          NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' }));
+        if (window.NEPAL_DATA && Array.isArray(window.NEPAL_DATA.places)) {
+          window.NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' }));
         }
 
-        palikaRes.forEach(p => {
+        (palikaRes || []).forEach(p => {
           if (p.Palika && p.District) {
             searchIndex.push({ label: `${p.Palika} (${p.District})`, type: 'Local Unit', district: p.District, palika: p.Palika });
           }
         });
 
-        hwyRes.forEach(h => {
+        safeHighways.forEach(h => {
           searchIndex.push({ label: `${h.code}: ${h.name}`, type: 'Highway', code: h.code, file: h.file });
         });
 
@@ -786,7 +815,7 @@
         });
 
         renderHighwayDirectory();
-        loadMajorHighwaysOverview(hwyRes);
+        loadMajorHighwaysOverview(safeHighways);
       } catch (err) {
         console.error('Data initialization error:', err);
       }
@@ -852,21 +881,10 @@
         // ==========================================
     // 6. Routing & OSRM Engine
     // ==========================================
-    function setRoutePref(pref) {
-      activeRoutePreference = pref;
-      document.querySelectorAll('.pref-pill').forEach(pill => {
-        const isActive = (pref === 'fastest' && pill.textContent.includes('Fastest')) ||
-                         (pref === 'shortest' && pill.textContent.includes('Shortest')) ||
-                         (pref === 'scenic' && pill.textContent.includes('Scenic'));
-        pill.classList.toggle('active', isActive);
-      });
-      calculateSidebarRoute();
-    }
 
 
-
-
-
+    // ==========================================
+    // 7. AI Trip & Mountain Road Advisor
     // ==========================================
     // 7. AI Trip & Mountain Road Advisor
     // ==========================================
@@ -1078,9 +1096,9 @@
     });
 
     function renderSosModal() {
-      if (!window.NEPAL_DATA) return;
+      if (!window.NEPAL_DATA || !Array.isArray(window.NEPAL_DATA.emergencyContacts)) return;
       const grid = document.getElementById('sosGridContent');
-      grid.innerHTML = NEPAL_DATA.emergencyContacts.map(c => `
+      grid.innerHTML = window.NEPAL_DATA.emergencyContacts.map(c => `
         <div class="sos-tile">
           <div>
             <div style="font-size:0.8rem; color:var(--text-secondary);">${c.type}</div>
@@ -1092,11 +1110,136 @@
           </div>
         </div>
       `).join('');
+      startSosBeacon();
+    }
+
+    let sosBeaconInterval = null;
+    function startSosBeacon() {
+      stopSosBeacon();
+      const beacon = document.getElementById('sosBeacon');
+      if (!beacon) return;
+      beacon.classList.add('active');
+      sosBeaconInterval = setInterval(() => {
+        beacon.classList.toggle('active');
+      }, 800);
+    }
+
+    function stopSosBeacon() {
+      if (sosBeaconInterval) clearInterval(sosBeaconInterval);
+      sosBeaconInterval = null;
+      const beacon = document.getElementById('sosBeacon');
+      if (beacon) beacon.classList.remove('active');
+    }
+
+    let sosAudioCtx = null;
+    let sosAudioPlaying = false;
+    let sosOscillators = [];
+    let sosLoopTimer = null;
+
+    function playSirenBurst() {
+      if (!sosAudioCtx || sosAudioCtx.state === 'closed') return;
+      const now = sosAudioCtx.currentTime;
+
+      const osc1 = sosAudioCtx.createOscillator();
+      const osc2 = sosAudioCtx.createOscillator();
+      const gain = sosAudioCtx.createGain();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'square';
+      osc1.frequency.setValueAtTime(600, now);
+      osc2.frequency.setValueAtTime(600, now);
+
+      osc1.frequency.linearRampToValueAtTime(900, now + 1);
+      osc1.frequency.linearRampToValueAtTime(600, now + 2);
+      osc1.frequency.linearRampToValueAtTime(900, now + 3);
+      osc1.frequency.linearRampToValueAtTime(600, now + 4);
+
+      osc2.frequency.setValueAtTime(602, now);
+      osc2.frequency.linearRampToValueAtTime(902, now + 1);
+      osc2.frequency.linearRampToValueAtTime(602, now + 2);
+      osc2.frequency.linearRampToValueAtTime(902, now + 3);
+      osc2.frequency.linearRampToValueAtTime(602, now + 4);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.5);
+      gain.gain.linearRampToValueAtTime(0.08, now + 4);
+      gain.gain.linearRampToValueAtTime(0, now + 4.5);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(sosAudioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 4.5);
+      osc2.stop(now + 4.5);
+      sosOscillators.push(osc1, osc2);
+    }
+
+    function toggleSosAudio() {
+      const btn = document.getElementById('sosAudioBtn');
+      const label = document.getElementById('sosAudioLabel');
+      if (!btn || !label) return;
+
+      if (sosAudioPlaying) {
+        stopSosAudio();
+        label.textContent = 'Play Siren';
+        btn.classList.remove('active');
+        return;
+      }
+
+      try {
+        sosAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        sosAudioPlaying = true;
+        label.textContent = 'Stop Siren';
+        btn.classList.add('active');
+
+        playSirenBurst();
+        sosLoopTimer = setInterval(() => {
+          if (sosAudioPlaying && sosAudioCtx && sosAudioCtx.state !== 'closed') {
+            playSirenBurst();
+          }
+        }, 4200);
+      } catch (e) {
+        console.warn('SOS audio failed:', e);
+        alert('Audio siren is not supported in this browser.');
+        stopSosAudio();
+        label.textContent = 'Play Siren';
+        btn.classList.remove('active');
+      }
+    }
+
+    function stopSosAudio() {
+      if (sosLoopTimer) clearInterval(sosLoopTimer);
+      sosLoopTimer = null;
+      sosOscillators.forEach(osc => {
+        try { osc.stop(); } catch (e) {}
+      });
+      sosOscillators = [];
+      sosAudioPlaying = false;
+      if (sosAudioCtx) {
+        sosAudioCtx.close().catch(() => {});
+        sosAudioCtx = null;
+      }
+    }
+
+    function renderDrawerTollInfo() {
+      if (!window.NEPAL_DATA || !window.NEPAL_DATA.tollFees) return;
+      const toll = window.NEPAL_DATA.tollFees.nagdhungaTunnel;
+      const grid = document.getElementById('drawerTollGrid');
+      if (!grid) return;
+      grid.innerHTML = toll.categories.map(cat => `
+        <div class="drawer-toll-row">
+          <div class="drawer-toll-label">${cat.label}</div>
+          <div class="drawer-toll-detail">${cat.vehicles}</div>
+          <div class="drawer-toll-price">NPR ${cat.entry} / ${cat.exit}</div>
+        </div>
+      `).join('');
     }
 
     function renderHighwayDirectory() {
       const grid = document.getElementById('hwyGridContent');
-      if (!grid || !allHighwaysIndex.length) return;
+      if (!grid || !Array.isArray(allHighwaysIndex) || !allHighwaysIndex.length) return;
       grid.innerHTML = allHighwaysIndex.map(h => `
         <div class="hwy-card" onclick="loadAndFocusHighway('${h.code}')">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1110,8 +1253,10 @@
 
     function filterHighwayDirectory() {
       const q = document.getElementById('hwySearchInput').value.toLowerCase();
+      if (!Array.isArray(allHighwaysIndex)) return;
       const filtered = allHighwaysIndex.filter(h => h.code.toLowerCase().includes(q) || h.name.toLowerCase().includes(q) || h.route.toLowerCase().includes(q));
       const grid = document.getElementById('hwyGridContent');
+      if (!grid) return;
       grid.innerHTML = filtered.map(h => `
         <div class="hwy-card" onclick="loadAndFocusHighway('${h.code}')">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1125,6 +1270,7 @@
 
     async function loadAndFocusHighway(code) {
       closeModal('highwayModal');
+      if (!Array.isArray(allHighwaysIndex)) return;
       const meta = allHighwaysIndex.find(h => h.code === code);
       if (!meta) return;
 
@@ -1148,9 +1294,9 @@
     // Dialects Modal
     let activeDialectId = 'doteli';
     function renderDialectModal() {
-      if (!window.NEPAL_DATA) return;
+      if (!window.NEPAL_DATA || !Array.isArray(window.NEPAL_DATA.dialects)) return;
       const pills = document.getElementById('dialectPills');
-      pills.innerHTML = NEPAL_DATA.dialects.map(d => `
+      pills.innerHTML = window.NEPAL_DATA.dialects.map(d => `
         <button class="pref-pill ${d.id === activeDialectId ? 'active' : ''}" onclick="selectDialect('${d.id}')">${d.name.split('/')[0]}</button>
       `).join('');
       renderDialectPhrases();
@@ -1162,17 +1308,20 @@
     }
 
     function renderDialectPhrases() {
-      const d = NEPAL_DATA.dialects.find(x => x.id === activeDialectId) || NEPAL_DATA.dialects[0];
+      if (!window.NEPAL_DATA || !Array.isArray(window.NEPAL_DATA.dialects)) return;
+      const d = window.NEPAL_DATA.dialects.find(x => x.id === activeDialectId) || window.NEPAL_DATA.dialects[0];
+      if (!d) return;
       const container = document.getElementById('dialectPhrasesContainer');
+      const phrases = Array.isArray(d.phrases) ? d.phrases : [];
       container.innerHTML = `
-        <div style="font-size:0.8rem; color:var(--accent-gold); margin-bottom:6px;">📍 ${d.region}</div>
-        ${d.phrases.map(p => `
+        <div style="font-size:0.8rem; color:var(--accent-gold); margin-bottom:6px;">📍 ${d.region || ''}</div>
+        ${phrases.map(p => `
           <div style="background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <div style="font-weight:700; color:#fff; font-size:0.9rem;">${p.local}</div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">"${p.eng}" (${p.pron})</div>
+              <div style="font-weight:700; color:#fff; font-size:0.9rem;">${p.local || ''}</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">"${p.eng || ''}" (${p.pron || ''})</div>
             </div>
-            <button class="icon-btn" onclick="speakPhrase('${p.local.replace(/'/g, "")}')" title="Pronounce">🔊</button>
+            <button class="icon-btn" onclick="speakPhrase('${(p.local || '').replace(/'/g, "")}')" title="Pronounce">🔊</button>
           </div>
         `).join('')}
       `;
@@ -1191,7 +1340,7 @@
     function renderPassesModal() {
       if (!window.NEPAL_DATA) return;
       const container = document.getElementById('passesListContainer');
-      const passes = (NEPAL_DATA.places || []).filter(p => p.type === 'pass');
+      const passes = (window.NEPAL_DATA.places || []).filter(p => p.type === 'pass');
       container.innerHTML = passes.map(p => `
         <div style="background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -1335,7 +1484,7 @@
         return;
       }
 
-      const cities = distanceMatrixData.cities;
+      const cities = Array.isArray(distanceMatrixData.cities) ? distanceMatrixData.cities : [];
       const matrix = distanceMatrixData.matrix;
 
       let html = '<table class="matrix-table"><thead><tr><th>City \\ City</th>';
@@ -1398,7 +1547,7 @@
         return;
       }
 
-      const cities = distanceMatrixData.cities;
+      const cities = Array.isArray(distanceMatrixData.cities) ? distanceMatrixData.cities : [];
       const matrix = distanceMatrixData.matrix;
 
       let tableHtml = '<table class="matrix-table"><thead><tr><th>City \\ City</th>';
@@ -1604,8 +1753,6 @@
     // 3. Sidebar Search & Route Engine
     // ==========================================
 
-    let selectedDestination = null;
-
     function setRoutePref(pref) {
       activeRoutePreference = pref;
       document.querySelectorAll('.pref-pill').forEach(pill => {
@@ -1795,9 +1942,9 @@
           allDistrictNames.forEach(dn => {
             const terrain = terrainMap[dn] || 'hills';
             const isMixed = terrain.includes('mixed');
-            const cities = window.__DISTRICT_CITIES__[dn] || [];
+            const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
             const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
-            const sourceList = citiesWithCoords.length > 0 ? citiesWithCoords : cities.slice(0, 5);
+            const sourceList = citiesWithCoords.length > 0 ? citiesWithCoords : (Array.isArray(cities) ? cities.slice(0, 5) : []);
             
             if (!isMixed && sourceList.length > 0) {
               const hq = sourceList[0];
@@ -1827,7 +1974,8 @@
 
       if (allDistrictNames.length > 0) {
         allDistrictNames.forEach(dn => {
-          const cities = window.__DISTRICT_CITIES__[dn] || [];
+          const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
+          if (!Array.isArray(cities)) return;
           cities.forEach(c => {
             if (!relatedPlaces.some(r => r.label === c.name)) {
               relatedPlaces.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn });
@@ -1876,8 +2024,8 @@
         let lat = item.lat || 0;
         let lng = item.lng || 0;
 
-        if ((!lat || lat === 0) && window.NEPAL_DATA && NEPAL_DATA.cities) {
-          const allCities = Object.values(NEPAL_DATA.cities).flat();
+        if ((!lat || lat === 0) && window.NEPAL_DATA && window.NEPAL_DATA.cities) {
+          const allCities = Object.values(window.NEPAL_DATA.cities).flat();
           const cityMatch = allCities.find(c => c.name && c.name.toLowerCase() === hqName.toLowerCase());
           if (cityMatch) {
             lat = cityMatch.lat || 0;
@@ -1940,6 +2088,24 @@
         const fuelLiters = (chosen.distance / 1000 / 12).toFixed(1);
         const fuelCost = Math.round(fuelLiters * 175);
 
+        // Detect Nagdhunga Tunnel toll
+        let tollCost = 0;
+        let tollLabel = '';
+        if (window.NEPAL_DATA && window.NEPAL_DATA.tollFees && chosen.geometry && chosen.geometry.coordinates) {
+          const coords = chosen.geometry.coordinates;
+          const tunnelBox = { minLat: 27.69, maxLat: 27.73, minLng: 85.18, maxLng: 85.30 };
+          const passesThroughTunnel = coords.some(([lng, lat]) =>
+            lat >= tunnelBox.minLat && lat <= tunnelBox.maxLat &&
+            lng >= tunnelBox.minLng && lng <= tunnelBox.maxLng
+          );
+          if (passesThroughTunnel) {
+            const toll = window.NEPAL_DATA.tollFees.nagdhungaTunnel;
+            const cat = toll.categories[0]; // light vehicles rate for car/suv/motorbike
+            tollCost = cat.entry;
+            tollLabel = 'Nagdhunga Tunnel Toll';
+          }
+        }
+
         if (routeLayerGroup) map.removeLayer(routeLayerGroup);
         const casing = L.geoJSON(chosen.geometry, { style: { color: '#0b192c', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
         const core = L.geoJSON(chosen.geometry, { style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' } });
@@ -1948,6 +2114,9 @@
         map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
 
         const routeNames = chosen.geometry && chosen.geometry.coordinates ? 'Calculated Route' : dest.label;
+        const tollHtml = tollCost > 0
+          ? '<div class="metric-box" style="border-color:rgba(217,4,41,0.4);"><span class="metric-label">' + tollLabel + '</span><span class="metric-val" style="color:#ff4d6d;">NPR ' + tollCost.toLocaleString() + '</span></div>'
+          : '';
         results.innerHTML =
           '<div class="result-card" style="border-color:rgba(245,158,11,0.4);">' +
             '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
@@ -1958,6 +2127,7 @@
               '<div class="metric-box"><span class="metric-label">Distance</span><span class="metric-val highlight">' + km + ' km</span></div>' +
               '<div class="metric-box"><span class="metric-label">Drive Time</span><span class="metric-val">' + hrs + ' hrs</span></div>' +
               '<div class="metric-box"><span class="metric-label">Est. Fuel</span><span class="metric-val">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
+              tollHtml +
               '<div class="metric-box"><span class="metric-label">Origin</span><span class="metric-val" style="font-size:0.75rem;">' + origin.label + '</span></div>' +
             '</div>' +
           '</div>';
@@ -2307,6 +2477,7 @@
       await initMap();
       setProgress(70);
       setMode('route');
+      renderDrawerTollInfo();
       setProgress(85);
 
       // Phase 3: attach listeners / warm-up
