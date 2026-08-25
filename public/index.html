@@ -293,27 +293,6 @@
 
         <div class="sidebar-results" id="sidebarResults"></div>
         <input type="hidden" id="originSearch" value="My Location">
-
-        <div id="contextPanel" style="display:none;">
-          <div class="context-chips">
-            <button class="context-chip" data-panel="weather" onclick="toggleContextPanel('weather')">🌤️ Weather</button>
-            <button class="context-chip" data-panel="traffic" onclick="toggleContextPanel('traffic')">🚦 Traffic</button>
-            <button class="context-chip" data-panel="pois" onclick="toggleContextPanel('pois')">⛽ POIs</button>
-            <button class="context-chip" data-panel="sos" onclick="toggleContextPanel('sos')">🆘 SOS</button>
-            <button class="context-chip" data-panel="incidents" onclick="toggleContextPanel('incidents')">⚠️ Alerts</button>
-            <button class="context-chip" data-panel="matrix" onclick="toggleContextPanel('matrix')">📊 Matrix</button>
-            <button class="context-chip" data-panel="offline" onclick="toggleContextPanel('offline')">📥 Offline</button>
-            <button class="context-chip" data-panel="report" onclick="toggleContextPanel('report')">🚧 Report</button>
-          </div>
-          <div id="contextWeather" class="context-panel" style="display:none;"></div>
-          <div id="contextTraffic" class="context-panel" style="display:none;"></div>
-          <div id="contextPois" class="context-panel" style="display:none;"></div>
-          <div id="contextSos" class="context-panel" style="display:none;"></div>
-          <div id="contextIncidents" class="context-panel" style="display:none;"></div>
-          <div id="contextMatrix" class="context-panel" style="display:none;"></div>
-          <div id="contextOffline" class="context-panel" style="display:none;"></div>
-          <div id="contextReport" class="context-panel" style="display:none;"></div>
-        </div>
       </div>
 
       <div id="aiAdvisorOutput" style="display:none; margin-top:8px; padding:10px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-sm); font-size:0.8rem; color:#c4b5fd;"></div>
@@ -1158,7 +1137,8 @@
     async function askAiRouteAdvisor() {
       const from = userOrigin ? userOrigin.label : 'Kathmandu';
       const to = selectedDestination ? selectedDestination.label : 'Pokhara';
-      const km = document.getElementById('sidebarResults')?.querySelector('.metric-val.highlight')?.textContent || '200 km';
+      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-basic-item');
+      const km = kmEl ? kmEl.textContent.replace(/[^0-9.]/g, '').trim() + ' km' : '200 km';
       const outBox = document.getElementById('aiAdvisorOutput');
       if (outBox) {
         outBox.style.display = 'block';
@@ -2936,6 +2916,37 @@
       return relatedPlaces.slice(0, 8);
     }
 
+    function showPlaceInfoCard(item) {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+
+      const typeIcon = item.type === 'City Hub' ? '🏙️' :
+                       item.type === 'District HQ' ? '🏛️' :
+                       item.type === 'Local Unit' ? '📍' :
+                       item.type === 'Highway' ? '🛣️' :
+                       item.type === 'Airport' ? '✈️' :
+                       item.type === 'Bus Station' ? '🚌' :
+                       item.type === 'Weather Node' ? '🌤️' :
+                       item.type === 'POI' ? '📌' : '📍';
+
+      const meta = [];
+      if (item.district) meta.push(item.district + ' District');
+      if (item.type && item.type !== 'Coordinate') meta.push(item.type);
+      if (item.code) meta.push(item.code);
+
+      results.innerHTML =
+        '<div class="result-card place-info-card">' +
+          '<div class="place-header">' +
+            '<span class="place-icon">' + typeIcon + '</span>' +
+            '<div class="place-details">' +
+              '<div class="place-name">' + item.label + '</div>' +
+              '<div class="place-meta">' + (meta.join(' · ') || 'Selected location') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<button class="plan-trip-btn" onclick="calculateSidebarRoute()">🗺️ Plan Trip</button>' +
+        '</div>';
+    }
+
     async function selectSidebarItem(item) {
       document.getElementById('sidebarSuggest').style.display = 'none';
       let dest = item;
@@ -3058,6 +3069,7 @@
       selectedDestination = dest;
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
       L.popup().setLatLng([dest.lat, dest.lng]).setContent('<strong>' + dest.label + '</strong>').openOn(map);
+      showPlaceInfoCard(dest);
     }
 
     async function calculateSidebarRoute() {
@@ -3143,58 +3155,40 @@
         const tollHtml = tollCost > 0
           ? '<div class="metric-box" style="border-color:rgba(217,4,41,0.4);"><span class="metric-label">' + tollLabel + '</span><span class="metric-val" style="color:#ff4d6d;">NPR ' + tollCost.toLocaleString() + '</span></div>'
           : '';
+
+        const routeResultId = 'routeResult_' + Date.now();
         results.innerHTML =
-          '<div class="result-card" style="border-color:rgba(245,158,11,0.4);">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
-              '<span class="result-badge">' + activeRoutePreference.toUpperCase() + ' · ' + activeVehicle.toUpperCase() + '</span>' +
-              '<span style="font-size:0.72rem; color:var(--text-secondary);">' + routeNames + '</span>' +
+          '<div class="result-card route-result-card">' +
+            '<div class="route-destination-name">' + cleanDest + '</div>' +
+            '<div class="route-path">' + cleanOrigin + ' → ' + cleanDest + '</div>' +
+            '<div class="route-basics">' +
+              '<span class="route-basic-item">📏 ' + km + ' km</span>' +
+              '<span class="route-basic-item">⏱ ' + hrs + ' hrs</span>' +
             '</div>' +
-            '<div class="metric-grid" style="margin-bottom:0;">' +
-              '<div class="metric-box"><span class="metric-label">Distance</span><span class="metric-val highlight">' + km + ' km</span></div>' +
-              '<div class="metric-box"><span class="metric-label">Drive Time</span><span class="metric-val">' + hrs + ' hrs</span></div>' +
-              '<div class="metric-box"><span class="metric-label">Est. Fuel</span><span class="metric-val">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
-              tollHtml +
-              '<div class="metric-box"><span class="metric-label">From</span><span class="metric-val" style="font-size:0.75rem;">' + cleanOrigin + '</span></div>' +
-              '<div class="metric-box"><span class="metric-label">To</span><span class="metric-val" style="font-size:0.75rem;">' + cleanDest + '</span></div>' +
+            '<button class="trip-plan-toggle" onclick="toggleTripDetails(\'' + routeResultId + '\')">💳 Show Trip Plan</button>' +
+            '<div class="trip-details" id="' + routeResultId + '" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--surface-border);">' +
+              '<div class="metric-grid">' +
+                '<div class="metric-box"><span class="metric-label">Est. Fuel</span><span class="metric-val">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
+                tollHtml +
+              '</div>' +
+              '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Estimates based on average fuel economy and toll rates.</div>' +
             '</div>' +
           '</div>';
-
-        // Reveal context panels after route is calculated
-        const ctx = document.getElementById('contextPanel');
-        if (ctx) ctx.style.display = 'block';
       } catch (err) {
         console.error('Route calculation error:', err);
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Unknown error') + '</div></div>';
       }
     }
 
-    function toggleContextPanel(panelId) {
-      const panel = document.getElementById('context' + panelId);
-      if (!panel) return;
-
-      // Hide all other context panels
-      document.querySelectorAll('.context-panel').forEach(p => {
-        if (p !== panel) p.style.display = 'none';
-      });
-
-      const isVisible = panel.style.display !== 'none';
-      panel.style.display = isVisible ? 'none' : 'block';
-
-      if (!isVisible && selectedDestination) {
-        if (panelId === 'weather') renderContextWeather(selectedDestination, panel);
-        else if (panelId === 'traffic') renderContextTraffic(selectedDestination, panel);
-        else if (panelId === 'pois') renderContextPois(selectedDestination, panel);
-        else if (panelId === 'sos') renderContextSos(selectedDestination, panel);
-        else if (panelId === 'incidents') renderContextIncidents(selectedDestination, panel);
-        else if (panelId === 'matrix') renderContextMatrix(selectedDestination, panel);
-        else if (panelId === 'offline') renderContextOffline(selectedDestination, panel);
-        else if (panelId === 'report') renderContextReport(selectedDestination, panel);
+    function toggleTripDetails(resultId) {
+      const el = document.getElementById(resultId);
+      if (!el) return;
+      const isHidden = el.style.display === 'none';
+      el.style.display = isHidden ? 'block' : 'none';
+      const btn = el.previousElementSibling;
+      if (btn && btn.classList.contains('trip-plan-toggle')) {
+        btn.textContent = isHidden ? '💳 Hide Trip Plan' : '💳 Show Trip Plan';
       }
-
-      // Update chip active states
-      document.querySelectorAll('.context-chip').forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.panel === panelId && !isVisible);
-      });
     }
 
     async function renderContextWeather(place, container) {
