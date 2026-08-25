@@ -212,17 +212,9 @@
           <div class="route-planner-title">Plan Your Route</div>
         </div>
 
-        <div class="route-field">
-          <label>From</label>
-          <div class="route-field-input-wrap">
-            <input type="text" id="originSearch" placeholder="My Location" value="My Location" autocomplete="off">
-            <button class="icon-btn" onclick="locateMeAndSetOrigin()" title="Use my current location">📍</button>
-          </div>
-        </div>
-
-        <div class="route-field">
-          <label>To</label>
-          <div class="route-field-input-wrap">
+        <!-- Single clean search bar -->
+        <div class="route-search-wrap">
+          <div class="route-search-bar">
             <span class="search-icon">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -247,25 +239,30 @@
               </svg>
             </button>
           </div>
-          <div class="autocomplete-dropdown" id="sidebarSuggest"></div>
+          <div class="route-origin-chip" onclick="locateMeAndSetOrigin()" title="Click to change origin">
+            <span class="origin-dot"></span>
+            <span id="originLabel">From: My Location</span>
+            <span class="origin-edit">📍</span>
+          </div>
         </div>
 
-        <div class="route-options-row">
-          <select id="sidebarVehicle" onchange="activeVehicle=this.value">
-            <option value="car">🚗 Car / Sedan</option>
-            <option value="suv_4wd">🚙 4WD / Jeep</option>
-            <option value="motorbike">🏍️ Motorcycle</option>
-          </select>
+        <div class="route-controls-row">
           <div class="pref-pills">
             <button class="pref-pill active" onclick="setRoutePref('fastest')">⚡ Fastest</button>
             <button class="pref-pill" onclick="setRoutePref('shortest')">📏 Shortest</button>
             <button class="pref-pill" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
           </div>
+          <select id="sidebarVehicle" onchange="activeVehicle=this.value">
+            <option value="car">🚗 Car</option>
+            <option value="suv_4wd">🚙 4WD</option>
+            <option value="motorbike">🏍️ Bike</option>
+          </select>
         </div>
 
         <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
 
         <div class="sidebar-results" id="sidebarResults"></div>
+        <input type="hidden" id="originSearch" value="My Location">
 
         <div id="contextPanel" style="display:none;">
           <div class="context-chips">
@@ -2356,20 +2353,25 @@
 
     function locateMeAndSetOrigin() {
       const input = document.getElementById('originSearch');
+      const label = document.getElementById('originLabel');
       if (!navigator.geolocation) {
         input.value = 'Kathmandu';
         userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+        if (label) label.textContent = 'From: Kathmandu';
         return;
       }
       input.value = 'Locating…';
+      if (label) label.textContent = 'From: Locating…';
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
           input.value = 'My Location';
+          if (label) label.textContent = 'From: My Location';
         },
         () => {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
           input.value = 'Kathmandu';
+          if (label) label.textContent = 'From: Kathmandu';
         },
         { timeout: 8000, maximumAge: 60000 }
       );
@@ -2377,17 +2379,20 @@
 
     function syncOriginFromInput() {
       const input = document.getElementById('originSearch');
+      const label = document.getElementById('originLabel');
       const val = (input.value || '').trim();
       if (!val || val === 'My Location' || val === 'Kathmandu') {
         if (userOrigin && userOrigin.label === val) return;
         if (val === 'Kathmandu') {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+          if (label) label.textContent = 'From: Kathmandu';
         }
         return;
       }
       geocode(val).then(([t]) => {
         if (t[0]) {
           userOrigin = { label: t[0].display_name.split(',')[0], lat: +t[0].lat, lng: +t[0].lon };
+          if (label) label.textContent = 'From: ' + userOrigin.label;
         }
       }).catch(() => {});
     }
