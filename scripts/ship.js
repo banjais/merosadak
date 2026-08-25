@@ -22,7 +22,7 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'firebase deploy --only hosting');
+  run('firebase deploy', 'set NODE_OPTIONS=--no-deprecation && firebase deploy --only hosting');
   console.log('\n[ship] ✅ all steps completed');
 } catch {
   console.error('\n[ship] ❌ ship aborted');
