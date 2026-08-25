@@ -238,8 +238,9 @@
           </div>
           <div id="originInfoText" class="route-origin-info">Tap origin to see details</div>
 
-          <div class="route-search-bar">
+          <div class="route-search-bar" style="position:relative;">
             <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
+            <div id="sidebarSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
           </div>
           <div class="route-actions-row">
             <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
@@ -790,6 +791,36 @@
         if (data[0]) return { lat: +data[0].lat, lon: +data[0].lon, display_name: data[0].display_name };
       } catch (e) {}
       return null;
+    }
+
+    async function reverseGeocode(lat, lng) {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ne,en`, { headers: { 'User-Agent': 'MeroSadak-App/1.0' } });
+        const data = await r.json();
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function formatOriginDetails(data) {
+      if (!data || !data.address) return null;
+      const a = data.address;
+      const parts = [a.road, a.suburb, a.city || a.town || a.village || a.municipality, a.district, a.state].filter(Boolean);
+      return parts.join(', ') || data.display_name || null;
+    }
+
+    async function updateOriginInfo(lat, lng) {
+      const info = document.getElementById('originInfoText');
+      if (!info) return;
+      info.textContent = 'Updating location…';
+      try {
+        const data = await reverseGeocode(lat, lng);
+        const text = formatOriginDetails(data);
+        info.textContent = text || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      } catch (e) {
+        info.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      }
     }
 
     // ==========================================
