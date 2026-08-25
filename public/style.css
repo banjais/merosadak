@@ -1748,6 +1748,16 @@ h1, h2, h3, h4, .font-heading {
   color: var(--accent-gold);
 }
 
+.route-option-card {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.route-option-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .weather-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--surface-border);
