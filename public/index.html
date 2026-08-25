@@ -755,6 +755,7 @@
     let activeRoutePreference = 'fastest';
     let activeVehicle = 'car';
     let selectedDestination = null;
+    let usingDetectedLocation = false;
 
     let matrixCities = [];
 
@@ -851,6 +852,8 @@
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
+            usingDetectedLocation = true;
+            updateOriginCurrentItem();
           },
           () => {},
           { timeout: 8000, maximumAge: 60000 }
@@ -2478,8 +2481,10 @@
       const input = document.getElementById('originSearchInput');
       const label = document.getElementById('originLabel');
       const menu = document.getElementById('originMenu');
+      const currentItem = document.getElementById('originCurrentItem');
       if (label) label.textContent = 'From Other Location';
       if (menu) menu.style.display = 'none';
+      if (currentItem) currentItem.style.display = 'none';
       if (wrap) {
         wrap.style.display = 'block';
         if (input) {
@@ -2506,9 +2511,12 @@
         }
       }
       userOrigin = { lat: lat || 27.7172, lng: lng || 85.324, label: item.label };
+      usingDetectedLocation = false;
       updateOriginInfo(userOrigin.lat, userOrigin.lng);
       const menu = document.getElementById('originMenu');
       if (menu) menu.style.display = 'none';
+      const currentItem = document.getElementById('originCurrentItem');
+      if (currentItem) currentItem.style.display = 'none';
       const suggest = document.getElementById('originSuggest');
       if (suggest) suggest.style.display = 'none';
       const wrap = document.getElementById('originSearchWrap');
@@ -2565,11 +2573,14 @@
       const label = document.getElementById('originLabel');
       const name = item.display_name.split(',')[0];
       userOrigin = { lat: +item.lat, lng: +item.lon, label: name };
+      usingDetectedLocation = false;
       if (input) input.value = name;
       if (label) label.textContent = 'From: ' + name;
       updateOriginInfo(+item.lat, +item.lon);
       const menu = document.getElementById('originMenu');
       if (menu) menu.style.display = 'none';
+      const currentItem = document.getElementById('originCurrentItem');
+      if (currentItem) currentItem.style.display = 'none';
       const suggest = document.getElementById('originSuggest');
       if (suggest) suggest.style.display = 'none';
       const wrap = document.getElementById('originSearchWrap');
@@ -2580,12 +2591,15 @@
       const input = document.getElementById('originSearch');
       const label = document.getElementById('originLabel');
       const menu = document.getElementById('originMenu');
+      const currentItem = document.getElementById('originCurrentItem');
       if (menu) menu.style.display = 'none';
+      if (currentItem) currentItem.style.display = 'flex';
       const wrap = document.getElementById('originSearchWrap');
       if (wrap) wrap.style.display = 'none';
       if (!navigator.geolocation) {
         input.value = 'Kathmandu';
         userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+        usingDetectedLocation = false;
         if (label) label.textContent = 'From: Kathmandu';
         updateOriginInfo(27.7172, 85.324);
         return;
@@ -2595,12 +2609,14 @@
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
+          usingDetectedLocation = true;
           input.value = 'My Location';
           if (label) label.textContent = 'From: My Location';
           updateOriginInfo(pos.coords.latitude, pos.coords.longitude);
         },
         () => {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+          usingDetectedLocation = false;
           input.value = 'Kathmandu';
           if (label) label.textContent = 'From: Kathmandu';
           updateOriginInfo(27.7172, 85.324);
@@ -2612,11 +2628,14 @@
     function syncOriginFromInput() {
       const input = document.getElementById('originSearch');
       const label = document.getElementById('originLabel');
+      const currentItem = document.getElementById('originCurrentItem');
       const val = (input.value || '').trim();
       if (!val || val === 'My Location' || val === 'Kathmandu') {
         if (userOrigin && userOrigin.label === val) return;
         if (val === 'Kathmandu') {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
+          usingDetectedLocation = false;
+          if (currentItem) currentItem.style.display = 'none';
           if (label) label.textContent = 'From: Kathmandu';
           updateOriginInfo(27.7172, 85.324);
         }
@@ -2625,6 +2644,8 @@
       geocode(val).then(([t]) => {
         if (t[0]) {
           userOrigin = { label: t[0].display_name.split(',')[0], lat: +t[0].lat, lng: +t[0].lon };
+          usingDetectedLocation = false;
+          if (currentItem) currentItem.style.display = 'none';
           if (label) label.textContent = 'From: ' + userOrigin.label;
           updateOriginInfo(userOrigin.lat, userOrigin.lng);
         }
