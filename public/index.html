@@ -980,7 +980,7 @@
 
         if (window.NEPAL_DATA && window.NEPAL_DATA.cities) {
           const allCities = Object.values(window.NEPAL_DATA.cities).flat();
-          allCities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng }));
+          allCities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: c.district, province: c.province }));
           const districtMap = {};
           allCities.forEach(c => {
             if (c.district) {
@@ -2757,8 +2757,11 @@
     }
 
     function getSearchSuggestions(query) {
-      const q = query.toLowerCase();
+      const q = query.toLowerCase().trim();
+      const isHighwayQuery = /^(nh\d+|\d+[a-z]?$|highway|road|route|corridor)/i.test(q) || q.includes('highway') || q.includes('nh');
+      
       const matches = searchIndex.filter(item => {
+        if (item.type === 'Highway' && !isHighwayQuery) return false;
         const label = (item.label || '').toLowerCase();
         const subLabel = (item.subLabel || '').toLowerCase();
         const code = (item.code || '').toLowerCase();
@@ -2787,8 +2790,9 @@
           const unique = [];
           const seen = new Set();
           condFiltered.forEach(item => {
-            if (!seen.has(item.label)) {
-              seen.add(item.label);
+            const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+            if (!seen.has(base)) {
+              seen.add(base);
               unique.push(item);
             }
           });
@@ -2810,14 +2814,16 @@
             
             if (!isMixed && sourceList.length > 0) {
               const hq = sourceList[0];
-              if (!seen.has(hq.name)) {
-                seen.add(hq.name);
+              const base = hq.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+              if (!seen.has(base)) {
+                seen.add(base);
                 districtCities.push({ label: hq.name, type: 'City Hub', lat: hq.lat, lng: hq.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District' });
               }
             } else {
               sourceList.forEach(c => {
-                if (!seen.has(c.name)) {
-                  seen.add(c.name);
+                const base = c.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                if (!seen.has(base)) {
+                  seen.add(base);
                   districtCities.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District · ' + terrain.replace(/_/g, ' ') });
                 }
               });
@@ -2827,47 +2833,107 @@
         }
         
         const combined = [...weatherMatches, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
-        return combined.slice(0, 8);
+        const unique = [];
+        const seen = new Set();
+        combined.forEach(item => {
+          const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+          if (!seen.has(base)) {
+            seen.add(base);
+            unique.push(item);
+          }
+        });
+        return unique.slice(0, 8);
       }
 
       const districtHqMatches = matches.filter(m => m.type === 'District HQ');
       const otherMatches = matches.filter(m => m.type !== 'District HQ');
       const relatedPlaces = [];
+      const seenLabels = new Set();
+      
+      function addUnique(item) {
+        const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+        if (!seenLabels.has(base)) {
+          seenLabels.add(base);
+          relatedPlaces.push(item);
+          return true;
+        }
+        return false;
+      }
 
       if (allDistrictNames.length > 0) {
         allDistrictNames.forEach(dn => {
           const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
           if (!Array.isArray(cities)) return;
-          cities.forEach(c => {
-            if (!relatedPlaces.some(r => r.label === c.name)) {
-              relatedPlaces.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn });
+          const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
+          const hq = citiesWithCoords.length > 0 ? citiesWithCoords[0] : (cities[0] ? { ...cities[0], lat: cities[0].lat || 0, lng: cities[0].lng || 0 } : null);
+          if (hq) {
+            addUnique({ label: hq.name + ' (' + dn.charAt(0).toUpperCase() + dn.slice(1) + ' HQ)', type: 'District HQ', district: dn, hq: hq.name, hqType: hq.type || 'HQ', lat: hq.lat, lng: hq.lng });
+          }
+          
+          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
+            if ((a.district || '').toLowerCase() === dn) {
+              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+            }
+          });
+          
+          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+          busStations.forEach(b => {
+            if ((b.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+            }
+          });
+          
+          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
+            if (p.type === 'bus_station') return;
+            if ((p.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
             }
           });
         });
       }
 
       districtHqMatches.forEach(dh => {
-        if (!relatedPlaces.some(r => r.label === dh.label)) {
-          relatedPlaces.push(dh);
-        }
+        addUnique(dh);
+        const dn = (dh.district || '').toLowerCase();
         (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
-          if ((a.district || '').toLowerCase() === (dh.district || '').toLowerCase()) {
-            if (!relatedPlaces.some(r => r.label === `${a.code} — ${a.name}`)) {
-              relatedPlaces.push({ label: `${a.code} — ${a.name}`, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
-            }
+          if ((a.district || '').toLowerCase() === dn) {
+            addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
           }
         });
-        (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
-          if ((p.location || '').toLowerCase().includes((dh.district || '').toLowerCase())) {
-            if (!relatedPlaces.some(r => r.label === p.name)) {
-              relatedPlaces.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
-            }
+        const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+        busStations.forEach(b => {
+          if ((b.location || '').toLowerCase().includes(dn)) {
+            addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
           }
         });
       });
 
-      const combined = [...relatedPlaces, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
-      return combined.slice(0, 8);
+      otherMatches.forEach(item => {
+        if (item.type === 'Highway') return;
+        addUnique(item);
+        if (item.type === 'City Hub' && item.district) {
+          const dn = item.district.toLowerCase();
+          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
+            if ((a.district || '').toLowerCase() === dn) {
+              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+            }
+          });
+          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+          busStations.forEach(b => {
+            if ((b.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+            }
+          });
+          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
+            if (p.type === 'bus_station') return;
+            if ((p.location || '').toLowerCase().includes(dn) && p.type !== 'City Hub') {
+              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
+            }
+          });
+        }
+      });
+
+      return relatedPlaces.slice(0, 8);
     }
 
     async function selectSidebarItem(item) {
