@@ -211,41 +211,7 @@
   <aside class="app-sidebar" id="appSidebar">
     <div class="sidebar-scroll">
       <div class="route-planner">
-        <div class="route-planner-header">
-          <div class="route-planner-title">Plan Your Route</div>
-        </div>
-
-        <!-- Origin first, then search -->
         <div class="route-search-wrap">
-           <div class="route-origin-wrap">
-             <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
-               <span class="origin-dot"></span>
-               <span id="originLabel">From: My Location</span>
-               <span class="origin-edit">▼</span>
-             </div>
-             <div id="originMenu" class="origin-menu" style="display:none;">
-               <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
-                 <span class="origin-menu-icon">📍</span>
-                 <span class="origin-menu-text">Detecting location…</span>
-               </div>
-               <div class="origin-menu-divider"></div>
-               <div class="origin-menu-item" onclick="showOriginSearch()">
-                 <span class="origin-menu-icon">🔍</span>
-                 <span class="origin-menu-text">From Other Location</span>
-               </div>
-             </div>
-           </div>
-            <div id="originSearchWrap" class="route-search-bar" style="display:none; position:relative;">
-              <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
-              <span class="search-icon-right">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-              </span>
-              <div id="originSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
-            </div>
-
           <div class="route-search-bar" style="position:relative;">
             <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
             <span class="search-icon-right">
@@ -256,6 +222,36 @@
             </span>
             <div id="sidebarSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
           </div>
+
+          <div class="route-origin-wrap">
+            <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
+              <span class="origin-dot"></span>
+              <span id="originLabel">From: My Location</span>
+              <span class="origin-edit">▼</span>
+            </div>
+            <div id="originMenu" class="origin-menu" style="display:none;">
+              <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
+                <span class="origin-menu-icon">📍</span>
+                <span class="origin-menu-text">Detecting location…</span>
+              </div>
+              <div class="origin-menu-divider"></div>
+              <div class="origin-menu-item" onclick="showOriginSearch()">
+                <span class="origin-menu-icon">🔍</span>
+                <span class="origin-menu-text">From Other Location</span>
+              </div>
+            </div>
+          </div>
+          <div id="originSearchWrap" class="route-search-bar" style="display:none; position:relative;">
+            <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
+            <span class="search-icon-right">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <div id="originSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
+          </div>
+
           <div class="route-actions-row">
             <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
