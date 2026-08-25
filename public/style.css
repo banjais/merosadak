@@ -1941,9 +1941,14 @@ h1, h2, h3, h4, .font-heading {
 }
 
 /* Focus Styles for Accessibility */
-button:focus-visible, input:focus-visible, select:focus-visible {
+button:focus-visible, select:focus-visible {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
+}
+
+.route-search-bar input:focus-visible,
+.origin-search-wrap input:focus-visible {
+  outline: none;
 }
 
 .input-box {
