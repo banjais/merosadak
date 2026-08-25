@@ -823,7 +823,6 @@ h1, h2, h3, h4, .font-heading {
 .route-search-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
@@ -835,14 +834,6 @@ h1, h2, h3, h4, .font-heading {
   border-color: var(--accent-gold);
   background: rgba(0, 0, 0, 0.32);
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-}
-
-.route-search-bar .search-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  flex-shrink: 0;
 }
 
 .route-search-bar input {
@@ -859,6 +850,13 @@ h1, h2, h3, h4, .font-heading {
 .route-search-bar input::placeholder {
   color: var(--text-muted);
   font-weight: 500;
+}
+
+.route-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .route-origin-chip {
