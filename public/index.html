@@ -217,30 +217,29 @@
 
         <!-- Origin first, then search -->
         <div class="route-search-wrap">
-          <div class="route-origin-wrap">
-            <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
-              <span class="origin-dot"></span>
-              <span id="originLabel">From: My Location</span>
-              <span class="origin-edit">▼</span>
-            </div>
-            <span id="originPlain" class="route-origin-plain" style="display:none;" onclick="toggleOriginMenu()">From: My Location</span>
-            <div id="originMenu" class="origin-menu" style="display:none;">
-              <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
-                <span class="origin-menu-icon">📍</span>
-                <span class="origin-menu-text">Detecting location…</span>
-              </div>
-              <div class="origin-menu-divider"></div>
-              <div class="origin-menu-item" onclick="showOriginSearch()">
-                <span class="origin-menu-icon">🔍</span>
-                <span class="origin-menu-text">From Other Location</span>
-              </div>
-              <div id="originSearchWrap" class="origin-search-wrap" style="display:none;">
-                <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
-                <div id="originSearchResults" class="origin-search-results" style="display:none;"></div>
-              </div>
-            </div>
-          </div>
-          <div id="originInfoText" class="route-origin-info">Tap origin to see details</div>
+           <div class="route-origin-wrap">
+             <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
+               <span class="origin-dot"></span>
+               <span id="originLabel">From: My Location</span>
+               <span class="origin-edit">▼</span>
+             </div>
+             <div id="originMenu" class="origin-menu" style="display:none;">
+               <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
+                 <span class="origin-menu-icon">📍</span>
+                 <span class="origin-menu-text">Detecting location…</span>
+               </div>
+               <div class="origin-menu-divider"></div>
+               <div class="origin-menu-item" onclick="showOriginSearch()">
+                 <span class="origin-menu-icon">🔍</span>
+                 <span class="origin-menu-text">From Other Location</span>
+               </div>
+             </div>
+           </div>
+           <div id="originSearchWrap" class="origin-search-wrap" style="display:none;">
+             <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
+             <div id="originSearchResults" class="origin-search-results" style="display:none;"></div>
+           </div>
+           <div id="originInfoText" class="route-origin-info">Tap origin to see details</div>
 
           <div class="route-search-bar" style="position:relative;">
             <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
@@ -2463,13 +2462,10 @@
     function showOriginSearch() {
       const wrap = document.getElementById('originSearchWrap');
       const input = document.getElementById('originSearchInput');
-      const chip = document.querySelector('.route-origin-chip');
-      const plain = document.getElementById('originPlain');
-      if (chip) chip.style.display = 'none';
-      if (plain) {
-        plain.style.display = 'inline-flex';
-        plain.textContent = 'From Other Location';
-      }
+      const label = document.getElementById('originLabel');
+      const menu = document.getElementById('originMenu');
+      if (label) label.textContent = 'From Other Location';
+      if (menu) menu.style.display = 'none';
       if (wrap) {
         wrap.style.display = 'block';
         if (input) {
@@ -2479,8 +2475,6 @@
       }
       const results = document.getElementById('originSearchResults');
       if (results) results.style.display = 'none';
-      const menu = document.getElementById('originMenu');
-      if (menu) menu.style.display = 'none';
     }
 
     async function searchOriginPlaces(query) {
@@ -2531,10 +2525,6 @@
       if (results) results.style.display = 'none';
       const wrap = document.getElementById('originSearchWrap');
       if (wrap) wrap.style.display = 'none';
-      const chip = document.querySelector('.route-origin-chip');
-      const plain = document.getElementById('originPlain');
-      if (chip) chip.style.display = 'inline-flex';
-      if (plain) plain.style.display = 'none';
     }
 
     function locateMeAndSetOrigin() {
@@ -2543,10 +2533,8 @@
       const info = document.getElementById('originInfoText');
       const menu = document.getElementById('originMenu');
       if (menu) menu.style.display = 'none';
-      const chip = document.querySelector('.route-origin-chip');
-      const plain = document.getElementById('originPlain');
-      if (chip) chip.style.display = 'inline-flex';
-      if (plain) plain.style.display = 'none';
+      const wrap = document.getElementById('originSearchWrap');
+      if (wrap) wrap.style.display = 'none';
       if (!navigator.geolocation) {
         input.value = 'Kathmandu';
         userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
@@ -2609,8 +2597,12 @@
       document.addEventListener('click', (e) => {
         const wrap = document.querySelector('.route-origin-wrap');
         const menu = document.getElementById('originMenu');
+        const originSearchWrap = document.getElementById('originSearchWrap');
         if (wrap && menu && !wrap.contains(e.target)) {
           menu.style.display = 'none';
+        }
+        if (originSearchWrap && !originSearchWrap.contains(e.target) && !wrap.contains(e.target)) {
+          originSearchWrap.style.display = 'none';
         }
       });
     });
