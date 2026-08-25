@@ -836,11 +836,7 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
 }
 
-.route-search-bar:focus-within {
-  border-color: var(--accent-gold);
-  background: rgba(0, 0, 0, 0.32);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-}
+
 
 .search-icon-right {
   position: absolute;
@@ -1018,10 +1014,7 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
 }
 
-.origin-search-wrap input:focus {
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.12);
-}
+
 
 .origin-search-wrap input::placeholder {
   color: var(--text-muted);
