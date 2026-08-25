@@ -1094,7 +1094,7 @@
     async function fetchLiveIncidents() {
       if (!layerGroups.incidents) return;
       layerGroups.incidents.clearLayers();
-      const data = window.__INCIDENTS__ || [];
+      const data = Array.isArray(window.__INCIDENTS__) ? window.__INCIDENTS__ : [];
       data.forEach(inc => {
         const isCritical = inc.severity === 'severe' || inc.severity === 'critical';
         const color = inc.severity === 'severe' || inc.severity === 'critical' ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
@@ -1114,7 +1114,7 @@
     async function fetchLiveWeather() {
       if (!layerGroups.weather) return;
       layerGroups.weather.clearLayers();
-      const data = window.__WEATHER_NODES__ || [];
+      const data = Array.isArray(window.__WEATHER_NODES__) ? window.__WEATHER_NODES__ : [];
       data.forEach(wx => {
         const isHighRisk = wx.landslideRisk === 'high' || wx.landslideRisk === 'severe' || wx.visibilityKm < 3 || wx.rainProbabilityPercent > 70 || wx.condition === 'thunderstorm' || wx.condition === 'rain_monsoon' || wx.condition === 'dense_fog';
         const isRain = wx.condition === 'rain_monsoon' || wx.condition === 'thunderstorm' || wx.condition === 'mountain_shower';
@@ -1154,7 +1154,7 @@
     async function fetchLiveTraffic() {
       if (!layerGroups.traffic) return;
       layerGroups.traffic.clearLayers();
-      const data = window.__TRAFFIC_CORRIDORS__ || [];
+      const data = Array.isArray(window.__TRAFFIC_CORRIDORS__) ? window.__TRAFFIC_CORRIDORS__ : [];
       data.forEach(tr => {
         const color = tr.level === 'standstill' ? '#ef4444' : tr.level === 'heavy' ? '#f59e0b' : tr.level === 'moderate' ? '#3b82f6' : '#10b981';
         const line = L.polyline([tr.startCoord, tr.endCoord], { color, weight: 6, opacity: 0.8, dashArray: '8, 6' }).bindPopup(`<strong>🚦 ${tr.name}</strong><br><small>${tr.highwayCode} · ${tr.section}</small><br>Level: ${tr.level}<br>Avg speed: ${tr.avgSpeedKmh} km/h<br>Delay: ${tr.delayMinutes} mins<br><small>${tr.cause}</small>`);
@@ -1165,7 +1165,7 @@
     async function fetchLivePois() {
       if (!layerGroups.pois) return;
       layerGroups.pois.clearLayers();
-      const data = window.__POIS__ || [];
+      const data = Array.isArray(window.__POIS__) ? window.__POIS__ : [];
       data.forEach(poi => {
         const icon = poi.category === 'ev_charger' ? '⚡' : poi.category === 'fuel_station' ? '⛽' : poi.category === 'food_rest' ? '🍽️' : poi.category === 'scenic_pass' ? '🏔️' : poi.category === 'emergency_dor' ? '🆘' : '🛣️';
         const marker = L.marker([poi.lat, poi.lng]).bindPopup(`<strong>${icon} ${poi.name}</strong><br><small>${poi.highwayCode} · ${poi.locationName}</small><br>${poi.description}<br><small>Rating: ${poi.rating}/5</small>`);
@@ -1176,7 +1176,7 @@
     async function fetchLiveBlackspots() {
       if (!layerGroups.blackspots) return;
       layerGroups.blackspots.clearLayers();
-      const data = window.__BLACKSPOTS__ || [];
+      const data = Array.isArray(window.__BLACKSPOTS__) ? window.__BLACKSPOTS__ : [];
       data.forEach(bs => {
         const isExtreme = bs.riskLevel === 'critical';
         const markerColor = isExtreme ? '#ef4444' : bs.riskLevel === 'high' ? '#f97316' : '#f59e0b';
@@ -2527,7 +2527,7 @@
           const districtCities = [];
           const seen = new Set();
           const terrainMap = {};
-          (window.__DISTRICT_TERRAIN__ || []).forEach(t => { terrainMap[t.district.toLowerCase()] = t.terrain; });
+          (Array.isArray(window.__DISTRICT_TERRAIN__) ? window.__DISTRICT_TERRAIN__ : []).forEach(t => { terrainMap[t.district.toLowerCase()] = t.terrain; });
           
           allDistrictNames.forEach(dn => {
             const terrain = terrainMap[dn] || 'hills';
@@ -2578,14 +2578,14 @@
         if (!relatedPlaces.some(r => r.label === dh.label)) {
           relatedPlaces.push(dh);
         }
-        (window.__AIRPORTS__ || []).forEach(a => {
+        (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
           if ((a.district || '').toLowerCase() === (dh.district || '').toLowerCase()) {
             if (!relatedPlaces.some(r => r.label === `${a.code} — ${a.name}`)) {
               relatedPlaces.push({ label: `${a.code} — ${a.name}`, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
             }
           }
         });
-        (window.__PLACES_API__ || []).forEach(p => {
+        (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
           if ((p.location || '').toLowerCase().includes((dh.district || '').toLowerCase())) {
             if (!relatedPlaces.some(r => r.label === p.name)) {
               relatedPlaces.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
