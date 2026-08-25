@@ -39,7 +39,7 @@ function cfApi(token, accountId, namespaceId, method, pathSuffix, body) {
       });
     });
     req.on('error', reject);
-    if (body) req.write(JSON.stringify(body));
+    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
 }
@@ -99,6 +99,8 @@ async function main() {
     'pois.json',
     'user-reports.json',
     'cities-and-junctions.json',
+    'palika-coords.json',
+    'highway-coords.json',
   ];
 
   console.log(`Syncing ${files.length} data files to KV...\n`);
