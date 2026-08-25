@@ -257,12 +257,10 @@ h1, h2, h3, h4, .font-heading {
   top: 0;
   left: 0;
   right: 0;
-  height: 96px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 8px 20px;
+  padding: 10px 20px 8px;
   padding-top: env(safe-area-inset-top);
   background: rgba(11, 25, 44, 0.92);
   backdrop-filter: blur(20px);
@@ -297,7 +295,6 @@ h1, h2, h3, h4, .font-heading {
   justify-content: flex-start;
   flex: 0 0 auto;
   padding: 0 0 0 48px;
-  margin-top: 2px;
 }
 
 .header-pill-row {
@@ -773,7 +770,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 .app-sidebar {
   position: fixed;
-  top: 96px;
+  top: 72px;
   left: 0;
   bottom: 0;
   width: 380px;
@@ -861,6 +858,10 @@ h1, h2, h3, h4, .font-heading {
   margin-top: 2px;
 }
 
+.route-origin-wrap {
+  position: relative;
+}
+
 .route-origin-chip {
   display: inline-flex;
   align-items: center;
@@ -908,8 +909,44 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .origin-edit {
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   line-height: 1;
+  margin-left: 2px;
+}
+
+.origin-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: var(--surface-dark);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.origin-menu-item {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.origin-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.origin-menu-item:active {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .route-controls-row {
@@ -1656,7 +1693,7 @@ h1, h2, h3, h4, .font-heading {
    ========================================================================== */
 #map {
   position: fixed;
-  top: 96px;
+  top: 72px;
   left: 380px;
   right: 0;
   bottom: 0;
