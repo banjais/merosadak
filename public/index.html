@@ -221,10 +221,22 @@
               <span class="origin-edit">▼</span>
             </div>
             <div id="originMenu" class="origin-menu" style="display:none;">
-              <div class="origin-menu-item" onclick="locateMeAndSetOrigin()">📍 Change Location</div>
+              <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
+                <span class="origin-menu-icon">📍</span>
+                <span class="origin-menu-text">Detecting location…</span>
+              </div>
+              <div class="origin-menu-divider"></div>
+              <div class="origin-menu-item" onclick="showOriginSearch()">
+                <span class="origin-menu-icon">🔍</span>
+                <span class="origin-menu-text">Other Location</span>
+              </div>
+              <div id="originSearchWrap" class="origin-search-wrap" style="display:none;">
+                <input type="text" id="originSearchInput" placeholder="Search place in Nepal…" autocomplete="off">
+                <div id="originSearchResults" class="origin-search-results" style="display:none;"></div>
+              </div>
             </div>
           </div>
-          <div id="originInfoText" class="route-origin-info">Tap to set origin</div>
+          <div id="originInfoText" class="route-origin-info">Tap origin to see details</div>
 
           <div class="route-search-bar">
             <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
@@ -2365,87 +2377,86 @@
     function toggleOriginMenu() {
       const menu = document.getElementById('originMenu');
       if (!menu) return;
-      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-    }
-
-    async function reverseGeocode(lat, lng) {
-      try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&namedetails=1&accept-language=ne,en`;
-        const res = await fetch(url, {
-          headers: { 'User-Agent': 'MeroSadak-App/1.0' }
-        });
-        if (!res.ok) return null;
-        return await res.json();
-      } catch (e) {
-        console.error('Reverse geocode failed:', e);
-        return null;
+      const willOpen = menu.style.display === 'none';
+      menu.style.display = willOpen ? 'block' : 'none';
+      if (willOpen) {
+        updateOriginCurrentItem();
       }
     }
 
-    const nepalLocalTypeMap = {
-      'Kathmandu': 'महानगरपालिका',
-      'Lalitpur': 'महानगरपालिका',
-      'Pokhara': 'महानगरपालिका',
-      'Bharatpur': 'महानगरपालिका',
-      'Hetauda': 'उपमहानगरपालिका',
-      'Dharan': 'उपमहानगरपालिका',
-      'Butwal': 'उपमहानगरपालिका',
-      'Nepalgunj': 'उपमहानगरपालिका',
-      'Birendranagar': 'उपमहानगरपालिका',
-      'Tulsipur': 'उपमहानगरपालिका',
-      'Triyuga': 'उपमहानगरपालिका',
-      'Lahan': 'उपमहानगरपालिका'
-    };
-
-    function formatOriginDetails(data) {
-      if (!data || !data.address) return null;
-      const addr = data.address;
-      const named = data.namedetails || {};
-      
-      const city = addr.city || addr.town || addr.village || addr.hamlet || '';
-      const district = addr.county || addr.district || '';
-      const state = addr.state || '';
-      const country = addr.country || '';
-      const neName = named['name:ne'] || '';
-      
-      const localType = nepalLocalTypeMap[city] || '';
-      
-      let parts = [];
-      if (neName && neName !== city) {
-        parts.push(`${city} (${neName})`);
-      } else if (city) {
-        parts.push(city);
-      }
-      
-      if (localType) {
-        parts.push(localType);
-      }
-      
-      const addrParts = [district, state, country].filter(Boolean);
-      if (addrParts.length) {
-        parts.push(addrParts.join(', '));
-      }
-      
-      return parts.join(' · ');
-    }
-
-    async function updateOriginInfo(lat, lng) {
-      const infoEl = document.getElementById('originInfoText');
-      if (!infoEl) return;
-      
-      infoEl.textContent = 'Loading location details…';
-      
-      try {
-        const data = await reverseGeocode(lat, lng);
+    async function updateOriginCurrentItem() {
+      const textEl = document.querySelector('.origin-current .origin-menu-text');
+      if (!textEl) return;
+      if (userOrigin && userOrigin.lat && userOrigin.lng) {
+        const data = await reverseGeocode(userOrigin.lat, userOrigin.lng);
         const formatted = formatOriginDetails(data);
-        if (formatted) {
-          infoEl.textContent = formatted;
-        } else {
-          infoEl.textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
-        }
-      } catch (e) {
-        infoEl.textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
+        textEl.textContent = formatted || 'My Location';
+      } else {
+        textEl.textContent = 'Detecting location…';
       }
+    }
+
+    function showOriginSearch() {
+      const wrap = document.getElementById('originSearchWrap');
+      const input = document.getElementById('originSearchInput');
+      if (wrap) {
+        wrap.style.display = 'block';
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+      const results = document.getElementById('originSearchResults');
+      if (results) results.style.display = 'none';
+    }
+
+    async function searchOriginPlaces(query) {
+      const results = document.getElementById('originSearchResults');
+      if (!results) return;
+      if (!query || query.length < 2) {
+        results.style.display = 'none';
+        return;
+      }
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Nepal')}&limit=6&addressdetails=1&namedetails=1&accept-language=ne,en`;
+        const res = await fetch(url, { headers: { 'User-Agent': 'MeroSadak-App/1.0' } });
+        const data = await res.json();
+        results.innerHTML = '';
+        if (!data.length) {
+          results.style.display = 'none';
+          return;
+        }
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'origin-search-result-item';
+          const parts = [item.display_name.split(',')[0]];
+          if (item.address && item.address.city) parts.push(item.address.city);
+          div.textContent = parts.join(' · ');
+          div.onclick = () => selectOriginResult(item);
+          results.appendChild(div);
+        });
+        results.style.display = 'block';
+      } catch (e) {
+        console.error('Origin search failed:', e);
+      }
+    }
+
+    function selectOriginResult(item) {
+      const input = document.getElementById('originSearch');
+      const label = document.getElementById('originLabel');
+      const info = document.getElementById('originInfoText');
+      const name = item.display_name.split(',')[0];
+      userOrigin = { lat: +item.lat, lng: +item.lon, label: name };
+      if (input) input.value = name;
+      if (label) label.textContent = 'From: ' + name;
+      if (info) info.textContent = 'Loading…';
+      updateOriginInfo(+item.lat, +item.lon);
+      const menu = document.getElementById('originMenu');
+      if (menu) menu.style.display = 'none';
+      const results = document.getElementById('originSearchResults');
+      if (results) results.style.display = 'none';
+      const wrap = document.getElementById('originSearchWrap');
+      if (wrap) wrap.style.display = 'none';
     }
 
     function locateMeAndSetOrigin() {
@@ -2508,6 +2519,10 @@
       if (originInput) {
         originInput.addEventListener('change', syncOriginFromInput);
         originInput.addEventListener('blur', syncOriginFromInput);
+      }
+      const originSearchInput = document.getElementById('originSearchInput');
+      if (originSearchInput) {
+        originSearchInput.addEventListener('input', (e) => searchOriginPlaces(e.target.value));
       }
       document.addEventListener('click', (e) => {
         const wrap = document.querySelector('.route-origin-wrap');
