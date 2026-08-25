@@ -1,0 +1,476 @@
+[
+  {
+    "code": "NH01",
+    "name": "Mahendra Highway",
+    "lat": 26.656872,
+    "lng": 88
+  },
+  {
+    "code": "NH02",
+    "name": "Kechana Chandragadhi Charali Ilam Highway",
+    "lat": 27.266013,
+    "lng": 87.721721
+  },
+  {
+    "code": "NH03",
+    "name": "Pushpalal Mid Hill Highway",
+    "lat": 28.69034,
+    "lng": 82.055089
+  },
+  {
+    "code": "NH04",
+    "name": "Birtamod Chandragadi Bhadrapur Highway",
+    "lat": 26.585412,
+    "lng": 88
+  },
+  {
+    "code": "NH05",
+    "name": "Postal Highway",
+    "lat": 26.702407,
+    "lng": 85.997687
+  },
+  {
+    "code": "NH06",
+    "name": "Chatara Mulghat Majhitar Highway",
+    "lat": 26.924244,
+    "lng": 87.324827
+  },
+  {
+    "code": "NH07",
+    "name": "Pakali Nayakoshipul Rupnagar Highway",
+    "lat": 26.644604,
+    "lng": 86.904698
+  },
+  {
+    "code": "NH08",
+    "name": "Rani Biratnagar Itahari Dharan Dhankuta Highway",
+    "lat": 27.672727,
+    "lng": 87.362169
+  },
+  {
+    "code": "NH09",
+    "name": "Bahundangi Shantinagar Dharan Highway",
+    "lat": 28.94683,
+    "lng": 80.940746
+  },
+  {
+    "code": "NH10",
+    "name": "Deurali Mudhe Chainpur Bohoratar Highway",
+    "lat": 27.286308,
+    "lng": 87.307763
+  },
+  {
+    "code": "NH11",
+    "name": "Phikkal Shreeantu Chabbise Highway",
+    "lat": 26.88961,
+    "lng": 88
+  },
+  {
+    "code": "NH12",
+    "name": "Ghurmi Chatara Udayapur Highway",
+    "lat": 26.874389,
+    "lng": 87.113084
+  },
+  {
+    "code": "NH13",
+    "name": "Bardibas Sindhuli Khurkot Dhulikhel Highway",
+    "lat": 27.599978,
+    "lng": 85.554604
+  },
+  {
+    "code": "NH14",
+    "name": "Gaighat Mahulikhola Rupani Rajbiraj Highway",
+    "lat": 26.603525,
+    "lng": 86.722046
+  },
+  {
+    "code": "NH15",
+    "name": "Gwarko Lubhu Lakuribhanjyang Highway",
+    "lat": 27.615874,
+    "lng": 85.410873
+  },
+  {
+    "code": "NH16",
+    "name": "Thadi Bhagawanpur Lahan Kadmaha Highway",
+    "lat": 27.00682,
+    "lng": 86.755229
+  },
+  {
+    "code": "NH17",
+    "name": "Prithvi Highway",
+    "lat": 28.016399,
+    "lng": 84.117578
+  },
+  {
+    "code": "NH18",
+    "name": "Balaju Trishuli Dhur Highway",
+    "lat": 28.076207,
+    "lng": 85.243524
+  },
+  {
+    "code": "NH19",
+    "name": "Ridi Balkot Hanshpur Pyuthan Highway",
+    "lat": 27.967594,
+    "lng": 83.225301
+  },
+  {
+    "code": "NH20",
+    "name": "Madar Chauharwa Mirchaiya Katari Highway",
+    "lat": 26.956431,
+    "lng": 86.316135
+  },
+  {
+    "code": "NH21",
+    "name": "Sitapaila Dharke Highway",
+    "lat": 27.740288,
+    "lng": 85.213497
+  },
+  {
+    "code": "NH22",
+    "name": "Dhalkebar Janakpur Jatahi Ghorghar Highway",
+    "lat": 26.924845,
+    "lng": 85.956167
+  },
+  {
+    "code": "NH23",
+    "name": "Diktel Solu Junbesi Khahare Jiribazar Highway",
+    "lat": 27.290005,
+    "lng": 86.771749
+  },
+  {
+    "code": "NH24",
+    "name": "Lalgadh Ranibas Bishma Highway",
+    "lat": 27.012929,
+    "lng": 85.925353
+  },
+  {
+    "code": "NH25",
+    "name": "Dumre Besisahar Chame Highway",
+    "lat": 28.52496,
+    "lng": 84.308968
+  },
+  {
+    "code": "NH26",
+    "name": "Jamunibas Bateshwar Shantipur Highway",
+    "lat": 26.824486,
+    "lng": 85.920812
+  },
+  {
+    "code": "NH28",
+    "name": "Bhittamod Jaleswor Bardibas Highway",
+    "lat": 27.585864,
+    "lng": 86.090529
+  },
+  {
+    "code": "NH29",
+    "name": "Kanchanban Janaki Medical College Highway",
+    "lat": 26.846494,
+    "lng": 86.105256
+  },
+  {
+    "code": "NH30",
+    "name": "Janakpur Dhanushadham Highway",
+    "lat": 26.879483,
+    "lng": 86.040236
+  },
+  {
+    "code": "NH31",
+    "name": "Dolalghat Chautara Highway",
+    "lat": 27.701925,
+    "lng": 85.71478
+  },
+  {
+    "code": "NH32",
+    "name": "Nawalpur Malangawa Sonbarsha Highway",
+    "lat": 27.0379,
+    "lng": 85.579576
+  },
+  {
+    "code": "NH33",
+    "name": "Nijgadh Kathmandu Highway",
+    "lat": 27.466228,
+    "lng": 85.25039
+  },
+  {
+    "code": "NH34",
+    "name": "Kathmandu Dhulikhel Dolalghat Highway",
+    "lat": 27.651654,
+    "lng": 85.67407
+  },
+  {
+    "code": "NH35",
+    "name": "Piluhawa Manmat Kalaiya Martihawa Highway",
+    "lat": 27.072517,
+    "lng": 85.018325
+  },
+  {
+    "code": "NH36",
+    "name": "Chandranigahpur Gaur Highway",
+    "lat": 27.044724,
+    "lng": 85.335377
+  },
+  {
+    "code": "NH37",
+    "name": "Hetauda Bagmati Tikabhairav Highway",
+    "lat": 27.568224,
+    "lng": 85.309469
+  },
+  {
+    "code": "NH38",
+    "name": "Kathmandu Outer Ring Road",
+    "lat": 27.690153,
+    "lng": 85.249806
+  },
+  {
+    "code": "NH39",
+    "name": "Kathmandu Ring Road",
+    "lat": 27.721834,
+    "lng": 85.291455
+  },
+  {
+    "code": "NH40",
+    "name": "Samakhushi Tokha Gurje Bidur Highway",
+    "lat": 27.790365,
+    "lng": 85.330009
+  },
+  {
+    "code": "NH41",
+    "name": "Sirsiya Pathlaiya Hetauda Bhaise Highway",
+    "lat": 27.699802,
+    "lng": 85.094675
+  },
+  {
+    "code": "NH42",
+    "name": "Thori Bhandara Malekhu Galchi Trishuli Highway",
+    "lat": 27.713396,
+    "lng": 84.784869
+  },
+  {
+    "code": "NH43",
+    "name": "Malekhu Dhading Salyantar Highway",
+    "lat": 27.973177,
+    "lng": 84.841949
+  },
+  {
+    "code": "NH44",
+    "name": "Thori Bharatpur Mugling Highway",
+    "lat": 27.831464,
+    "lng": 84.543069
+  },
+  {
+    "code": "NH45",
+    "name": "Khairenitar Bhimad Kawasoti Highway",
+    "lat": 27.826278,
+    "lng": 84.098944
+  },
+  {
+    "code": "NH46",
+    "name": "Bhumahi Parasi Highway",
+    "lat": 27.556986,
+    "lng": 83.686788
+  },
+  {
+    "code": "NH47",
+    "name": "Belahiya Bhairahawa Butwal Bartung Highway",
+    "lat": 27.87108,
+    "lng": 83.584252
+  },
+  {
+    "code": "NH48",
+    "name": "Tansen Ridi Korla Highway",
+    "lat": 28.209248,
+    "lng": 83.654643
+  },
+  {
+    "code": "NH49",
+    "name": "Bartung Tansen Ridi Wamitaksar Khalanga Highway",
+    "lat": 28.067303,
+    "lng": 83.35133
+  },
+  {
+    "code": "NH50",
+    "name": "Jitpur Taulihawa Khunuwa Highway",
+    "lat": 27.63706,
+    "lng": 83.154318
+  },
+  {
+    "code": "NH51",
+    "name": "Taulihawa Gorusinge Sandhikharka Highway",
+    "lat": 27.932788,
+    "lng": 83.165097
+  },
+  {
+    "code": "NH52",
+    "name": "Kakarhawa Rudrapur Highway",
+    "lat": 27.961906,
+    "lng": 83.139277
+  },
+  {
+    "code": "NH53",
+    "name": "Bhalubang Liwang Madichaur Highway",
+    "lat": 28.191506,
+    "lng": 82.685509
+  },
+  {
+    "code": "NH54",
+    "name": "Koilabas Lamahi Arjunkholagau Highway",
+    "lat": 28.452933,
+    "lng": 82.517509
+  },
+  {
+    "code": "NH55",
+    "name": "Rapti Highway",
+    "lat": 28.237549,
+    "lng": 82.352676
+  },
+  {
+    "code": "NH56",
+    "name": "Tharmare Chaurjahari Jajarkot Highway",
+    "lat": 29.363078,
+    "lng": 82.15868
+  },
+  {
+    "code": "NH57",
+    "name": "Chinchu Kuda Jajarkot Dunai Highway",
+    "lat": 28.425002,
+    "lng": 81.900889
+  },
+  {
+    "code": "NH58",
+    "name": "Jamunaha Nepalgunj Kohalpur Surkhet Highway",
+    "lat": 29.173761,
+    "lng": 81.61131
+  },
+  {
+    "code": "NH59",
+    "name": "Murtiya Gulariya Bhurigaun Highway",
+    "lat": 29.034671,
+    "lng": 81.750521
+  },
+  {
+    "code": "NH60",
+    "name": "Surkhet Dailekh Mahabulekh Galje Highway",
+    "lat": 29.89137,
+    "lng": 82.554216
+  },
+  {
+    "code": "NH61",
+    "name": "Surkhet Tallo Dundeshwor Satkham Highway",
+    "lat": 29.025264,
+    "lng": 81.55303
+  },
+  {
+    "code": "NH62",
+    "name": "Khakraula Tikapur Lamki Lodeghat Highway",
+    "lat": 29.443574,
+    "lng": 81.316432
+  },
+  {
+    "code": "NH63",
+    "name": "Saphebagar Martadi Kolti Highway",
+    "lat": 29.461354,
+    "lng": 81.515226
+  },
+  {
+    "code": "NH64",
+    "name": "Khodpe Chainpur Bajhang Highway",
+    "lat": 29.498261,
+    "lng": 80.676935
+  },
+  {
+    "code": "NH65",
+    "name": "Khuttiya Dipayal Chainpur Uraibhanjyang Highway",
+    "lat": 29.461364,
+    "lng": 81.078446
+  },
+  {
+    "code": "NH66",
+    "name": "Dhangadhi Sahajpur Budar Syaule Highway",
+    "lat": 29.908096,
+    "lng": 80.599067
+  },
+  {
+    "code": "NH67",
+    "name": "Chandani Bhimdatta Bramhadev Highway",
+    "lat": 29.226526,
+    "lng": 80.294608
+  },
+  {
+    "code": "NH68",
+    "name": "Bhimad Rampur Mityal Arungkhola Highway",
+    "lat": 27.768247,
+    "lng": 83.948599
+  },
+  {
+    "code": "NH69",
+    "name": "Jagatbhanjyang Mandalithan Kewar Highway",
+    "lat": 27.944184,
+    "lng": 83.802609
+  },
+  {
+    "code": "NH70",
+    "name": "Setidovan Wejang Panchmul Highway",
+    "lat": 28.136901,
+    "lng": 83.829797
+  },
+  {
+    "code": "NH71",
+    "name": "Bhaluwang Nuwakot Khandaha Highway",
+    "lat": 27.84895,
+    "lng": 82.860375
+  },
+  {
+    "code": "NH72",
+    "name": "Dumkibas Baguban Triveni Highway",
+    "lat": 27.55813,
+    "lng": 83.914904
+  },
+  {
+    "code": "NH73",
+    "name": "Surunga Sharnamati Tangandubba Highway",
+    "lat": 26.539608,
+    "lng": 87.888643
+  },
+  {
+    "code": "NH74",
+    "name": "Ilam Maipokhari Sandakpur Highway",
+    "lat": 27.034278,
+    "lng": 87.957618
+  },
+  {
+    "code": "NH75",
+    "name": "Swarna Sagarmatha Ring Road",
+    "lat": 27.26634,
+    "lng": 86.738368
+  },
+  {
+    "code": "NH76",
+    "name": "Damak Chisapani Rabi Highway",
+    "lat": 26.835022,
+    "lng": 87.691619
+  },
+  {
+    "code": "NH77",
+    "name": "Bharatpur Mahanagariya Brihat Chakrapath",
+    "lat": 27.653168,
+    "lng": 84.281264
+  },
+  {
+    "code": "NH78",
+    "name": "Damak Municipality Chakrapath",
+    "lat": 26.60549,
+    "lng": 87.652185
+  },
+  {
+    "code": "NH79",
+    "name": "Godar Chisapani Mainawa Highway",
+    "lat": 26.89996,
+    "lng": 86.212514
+  },
+  {
+    "code": "NH80",
+    "name": "Mara Bastipurchowk Highway",
+    "lat": 26.899213,
+    "lng": 86.235779
+  }
+]

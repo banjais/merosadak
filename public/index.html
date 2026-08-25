@@ -934,7 +934,7 @@
     async function loadData() {
       try {
         const v = Date.now();
-        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes, districtTerrainRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes, districtTerrainRes, palikaCoordsRes, hwyCoordsRes] = await Promise.all([
           fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
@@ -948,7 +948,9 @@
           fetch(`https://merosadak.banjays.workers.dev/api/data/incidents.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/pois.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/travel-time.json?v=${v}`).then(r => r.json()).catch(() => null),
-          fetch(`https://merosadak.banjays.workers.dev/api/data/district-terrain.json?v=${v}`).then(r => r.json()).catch(() => [])
+          fetch(`https://merosadak.banjays.workers.dev/api/data/district-terrain.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/palika-coords.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/highway-coords.json?v=${v}`).then(r => r.json()).catch(() => [])
         ]);
 
         const safePalika = Array.isArray(palikaRes) ? palikaRes : [];
@@ -964,6 +966,17 @@
         window.__DISTRICT_TERRAIN__ = districtTerrainRes;
         window.__AIRPORTS__ = airportsRes;
         window.__PLACES_API__ = placesRes;
+
+        window.__PALIKA_COORDS_MAP__ = {};
+        (Array.isArray(palikaCoordsRes) ? palikaCoordsRes : []).forEach(p => {
+          if (p.District && p.Palika) {
+            window.__PALIKA_COORDS_MAP__[(p.District || '').toLowerCase() + '|' + (p.Palika || '').toLowerCase()] = p;
+          }
+        });
+        window.__HIGHWAY_COORDS_MAP__ = {};
+        (Array.isArray(hwyCoordsRes) ? hwyCoordsRes : []).forEach(h => {
+          if (h.code) window.__HIGHWAY_COORDS_MAP__[h.code] = h;
+        });
 
         if (window.NEPAL_DATA && window.NEPAL_DATA.cities) {
           const allCities = Object.values(window.NEPAL_DATA.cities).flat();
@@ -984,12 +997,28 @@
 
         (palikaRes || []).forEach(p => {
           if (p.Palika && p.District) {
-            searchIndex.push({ label: `${p.Palika} (${p.District})`, type: 'Local Unit', district: p.District, palika: p.Palika });
+            const coord = window.__PALIKA_COORDS_MAP__[(p.District || '').toLowerCase() + '|' + (p.Palika || '').toLowerCase()];
+            searchIndex.push({
+              label: `${p.Palika} (${p.District})`,
+              type: 'Local Unit',
+              district: p.District,
+              palika: p.Palika,
+              lat: coord ? coord.lat : 0,
+              lng: coord ? coord.lng : 0
+            });
           }
         });
 
         safeHighways.forEach(h => {
-          searchIndex.push({ label: `${h.code}: ${h.name}`, type: 'Highway', code: h.code, file: h.file });
+          const coord = window.__HIGHWAY_COORDS_MAP__[h.code];
+          searchIndex.push({
+            label: `${h.code}: ${h.name}`,
+            type: 'Highway',
+            code: h.code,
+            file: h.file,
+            lat: coord ? coord.lat : 0,
+            lng: coord ? coord.lng : 0
+          });
         });
 
         (airportsRes || []).forEach(a => {
@@ -2479,13 +2508,22 @@
       if (suggest) suggest.style.display = 'none';
     }
 
-    function selectOriginItem(item) {
+    async function selectOriginItem(item) {
       const input = document.getElementById('originSearch');
       const label = document.getElementById('originLabel');
       if (input) input.value = item.label;
       if (label) label.textContent = 'From: ' + item.label;
-      userOrigin = { lat: item.lat, lng: item.lng, label: item.label };
-      updateOriginInfo(item.lat, item.lng);
+      let lat = item.lat;
+      let lng = item.lng;
+      if ((!lat || !lng || lat === 0 || lng === 0)) {
+        const geo = await geocode(item.label + ', Nepal');
+        if (geo) {
+          lat = geo.lat;
+          lng = geo.lon;
+        }
+      }
+      userOrigin = { lat: lat || 27.7172, lng: lng || 85.324, label: item.label };
+      updateOriginInfo(userOrigin.lat, userOrigin.lng);
       const menu = document.getElementById('originMenu');
       if (menu) menu.style.display = 'none';
       const suggest = document.getElementById('originSuggest');
@@ -2832,7 +2870,7 @@
       return combined.slice(0, 8);
     }
 
-    function selectSidebarItem(item) {
+    async function selectSidebarItem(item) {
       document.getElementById('sidebarSuggest').style.display = 'none';
       let dest = item;
 
@@ -2867,12 +2905,29 @@
       }
 
       if (item.type === 'Local Unit') {
-        let lat = 0, lng = 0;
-        if (window.__DISTRICT_CITIES__ && item.district) {
-          const districtCities = window.__DISTRICT_CITIES__[item.district.toLowerCase()];
-          if (districtCities && districtCities.length) {
-            lat = districtCities[0].lat;
-            lng = districtCities[0].lng;
+        let lat = item.lat || 0;
+        let lng = item.lng || 0;
+        if ((!lat || lat === 0) && window.__PALIKA_COORDS_MAP__) {
+          const key = (item.district || '').toLowerCase() + '|' + (item.palika || '').toLowerCase();
+          const coord = window.__PALIKA_COORDS_MAP__[key];
+          if (coord) {
+            lat = coord.lat;
+            lng = coord.lng;
+          }
+        }
+        if ((!lat || lat === 0) && window.NEPAL_DATA && window.NEPAL_DATA.cities) {
+          const allCities = Object.values(window.NEPAL_DATA.cities).flat();
+          const cityMatch = allCities.find(c => c.name && c.name.toLowerCase() === (item.palika || '').toLowerCase());
+          if (cityMatch) {
+            lat = cityMatch.lat || 0;
+            lng = cityMatch.lng || 0;
+          }
+        }
+        if (!lat || !lng) {
+          const geo = await geocode((item.palika || item.label) + ', ' + (item.district || 'Nepal'));
+          if (geo) {
+            lat = geo.lat;
+            lng = geo.lon;
           }
         }
         if (!lat || !lng) {
@@ -2888,13 +2943,39 @@
       }
 
       if (item.type === 'Highway') {
-        const results = document.getElementById('sidebarResults');
-        if (results) {
-          results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">🛣️ Highway Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' is a corridor, not a point. Select a specific city, junction, or coordinate along this highway to calculate a route.</div></div>';
+        let lat = item.lat || 0;
+        let lng = item.lng || 0;
+        if ((!lat || lat === 0) && window.__HIGHWAY_COORDS_MAP__) {
+          const coord = window.__HIGHWAY_COORDS_MAP__[item.code];
+          if (coord) {
+            lat = coord.lat;
+            lng = coord.lng;
+          }
         }
-        document.getElementById('sidebarSearch').value = item.label;
-        selectedDestination = null;
-        return;
+        if (!lat || !lng) {
+          const geo = await geocode(item.label + ', Nepal');
+          if (geo) {
+            lat = geo.lat;
+            lng = geo.lon;
+          }
+        }
+        if (!lat || !lng) {
+          const results = document.getElementById('sidebarResults');
+          if (results) {
+            results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">🛣️ Highway Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' is a corridor, not a point. Select a specific city, junction, or coordinate along this highway to calculate a route.</div></div>';
+          }
+          document.getElementById('sidebarSearch').value = item.label;
+          selectedDestination = null;
+          return;
+        }
+        dest = Object.assign({}, item, { lat, lng });
+      }
+
+      if (!dest.lat || !dest.lng) {
+        const geo = await geocode(dest.label + ', Nepal');
+        if (geo) {
+          dest = Object.assign({}, dest, { lat: geo.lat, lng: geo.lon });
+        }
       }
 
       if (!dest.lat || !dest.lng) {
@@ -2909,6 +2990,8 @@
 
       document.getElementById('sidebarSearch').value = dest.label;
       selectedDestination = dest;
+      map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
+      L.popup().setLatLng([dest.lat, dest.lng]).setContent('<strong>' + dest.label + '</strong>').openOn(map);
     }
 
     async function calculateSidebarRoute() {
