@@ -66,8 +66,8 @@
       <div class="header-spacer"></div>
     </div>
     <div class="header-sub-row">
-  <div class="header-sub">NEPAL NATIONAL HIGHWAY NETWORK &amp; GIS</div>
-</div>
+      <div class="header-sub">NEPAL NATIONAL HIGHWAY NETWORK &amp; GIS</div>
+    </div>
   </header>
 
   <!-- ==========================================
@@ -212,8 +212,15 @@
           <div class="route-planner-title">Plan Your Route</div>
         </div>
 
-        <!-- Single clean search bar -->
+        <!-- Origin first, then search -->
         <div class="route-search-wrap">
+          <div class="route-origin-chip" onclick="locateMeAndSetOrigin()" title="Click to change origin">
+            <span class="origin-dot"></span>
+            <span id="originLabel">From: My Location</span>
+            <span class="origin-edit">📍</span>
+          </div>
+          <div id="originInfoText" class="route-origin-info">Tap to set origin</div>
+
           <div class="route-search-bar">
             <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
           </div>
@@ -234,11 +241,6 @@
                 <line x1="15" y1="9" x2="15.01" y2="9"></line>
               </svg>
             </button>
-          </div>
-          <div class="route-origin-chip" onclick="locateMeAndSetOrigin()" title="Click to change origin">
-            <span class="origin-dot"></span>
-            <span id="originLabel">From: My Location</span>
-            <span class="origin-edit">📍</span>
           </div>
         </div>
 
@@ -2350,24 +2352,29 @@
     function locateMeAndSetOrigin() {
       const input = document.getElementById('originSearch');
       const label = document.getElementById('originLabel');
+      const info = document.getElementById('originInfoText');
       if (!navigator.geolocation) {
         input.value = 'Kathmandu';
         userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
         if (label) label.textContent = 'From: Kathmandu';
+        if (info) info.textContent = '27.7172° N, 85.3240° E';
         return;
       }
       input.value = 'Locating…';
       if (label) label.textContent = 'From: Locating…';
+      if (info) info.textContent = 'Acquiring GPS signal…';
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
           input.value = 'My Location';
           if (label) label.textContent = 'From: My Location';
+          if (info) info.textContent = pos.coords.latitude.toFixed(4) + '° N, ' + pos.coords.longitude.toFixed(4) + '° E';
         },
         () => {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
           input.value = 'Kathmandu';
           if (label) label.textContent = 'From: Kathmandu';
+          if (info) info.textContent = '27.7172° N, 85.3240° E';
         },
         { timeout: 8000, maximumAge: 60000 }
       );
@@ -2376,12 +2383,14 @@
     function syncOriginFromInput() {
       const input = document.getElementById('originSearch');
       const label = document.getElementById('originLabel');
+      const info = document.getElementById('originInfoText');
       const val = (input.value || '').trim();
       if (!val || val === 'My Location' || val === 'Kathmandu') {
         if (userOrigin && userOrigin.label === val) return;
         if (val === 'Kathmandu') {
           userOrigin = { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
           if (label) label.textContent = 'From: Kathmandu';
+          if (info) info.textContent = '27.7172° N, 85.3240° E';
         }
         return;
       }
@@ -2389,6 +2398,7 @@
         if (t[0]) {
           userOrigin = { label: t[0].display_name.split(',')[0], lat: +t[0].lat, lng: +t[0].lon };
           if (label) label.textContent = 'From: ' + userOrigin.label;
+          if (info) info.textContent = userOrigin.lat.toFixed(4) + '° N, ' + userOrigin.lng.toFixed(4) + '° E';
         }
       }).catch(() => {});
     }
