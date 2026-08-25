@@ -2439,12 +2439,6 @@
     }
 
     function toggleOriginMenu() {
-      const chip = document.querySelector('.route-origin-chip');
-      const plain = document.getElementById('originPlain');
-      if (plain && plain.style.display !== 'none') {
-        plain.style.display = 'none';
-        if (chip) chip.style.display = 'inline-flex';
-      }
       const menu = document.getElementById('originMenu');
       if (!menu) return;
       const willOpen = menu.style.display === 'none';
@@ -2471,11 +2465,10 @@
       const input = document.getElementById('originSearchInput');
       const chip = document.querySelector('.route-origin-chip');
       const plain = document.getElementById('originPlain');
-      const label = document.getElementById('originLabel');
       if (chip) chip.style.display = 'none';
       if (plain) {
         plain.style.display = 'inline-flex';
-        plain.textContent = label ? label.textContent : 'From: My Location';
+        plain.textContent = 'From Other Location';
       }
       if (wrap) {
         wrap.style.display = 'block';
@@ -2616,16 +2609,8 @@
       document.addEventListener('click', (e) => {
         const wrap = document.querySelector('.route-origin-wrap');
         const menu = document.getElementById('originMenu');
-        const chip = document.querySelector('.route-origin-chip');
-        const plain = document.getElementById('originPlain');
-        const searchWrap = document.getElementById('originSearchWrap');
         if (wrap && menu && !wrap.contains(e.target)) {
           menu.style.display = 'none';
-        }
-        if (plain && plain.style.display !== 'none' && !wrap.contains(e.target)) {
-          plain.style.display = 'none';
-          if (chip) chip.style.display = 'inline-flex';
-          if (searchWrap) searchWrap.style.display = 'none';
         }
       });
     });
