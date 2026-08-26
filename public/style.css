@@ -1970,6 +1970,21 @@ h1, h2, h3, h4, .font-heading {
   border: none !important;
 }
 
+.route-legend {
+  background: rgba(11, 25, 44, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  min-width: 140px;
+}
+
+.route-label-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
 /* Map Marker Animations */
 @keyframes markerPing {
   0% { transform: scale(0.8); opacity: 0.8; }

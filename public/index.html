@@ -740,6 +740,7 @@
     let highwayGeoJsonLayers = [];
     let boundaryLayer = null;
     let routeLayerGroup = null;
+    let routeLegend = null;
     let pinFromMarker = null;
     let pinToMarker = null;
 
@@ -1965,6 +1966,7 @@
       try {
         const geo = await fetch(`data/highway/${meta.file}`).then(r => r.json());
         if (routeLayerGroup) map.removeLayer(routeLayerGroup);
+        if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
         highwayGeoJsonLayers = [];
 
         const hSurface = L.geoJSON(geo, { style: { color: '#888888', weight: 14, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
@@ -3169,11 +3171,12 @@
 
         if (routeLayerGroup) map.removeLayer(routeLayerGroup);
         routeLayerGroup = L.featureGroup().addTo(map);
+        if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
 
         const typeConfig = {
-          fastest: { active: '#f59e0b', dim: 'rgba(245,158,11,0.35)' },
-          shortest: { active: '#10b981', dim: 'rgba(16,185,129,0.35)' },
-          scenic: { active: '#8b5cf6', dim: 'rgba(139,92,246,0.35)' }
+          fastest: { active: '#f59e0b', dim: 'rgba(245,158,11,0.55)' },
+          shortest: { active: '#10b981', dim: 'rgba(16,185,129,0.55)' },
+          scenic: { active: '#8b5cf6', dim: 'rgba(139,92,246,0.55)' }
         };
 
         function getRouteType(route) {
@@ -3183,25 +3186,47 @@
           return 'other';
         }
 
+        const uniqueRoutes = [];
+        const seenRouteKeys = new Set();
+        routes.forEach((route) => {
+          const key = route.distance + '_' + route.duration;
+          if (!seenRouteKeys.has(key)) {
+            seenRouteKeys.add(key);
+            uniqueRoutes.push(route);
+          }
+        });
+
         routes.forEach((route) => {
           const type = getRouteType(route);
           const isChosen = route === chosen;
-          const config = typeConfig[type] || { active: '#64748b', dim: 'rgba(100,116,139,0.3)' };
+          const config = typeConfig[type] || { active: '#64748b', dim: 'rgba(100,116,139,0.4)' };
           const lineColor = isChosen ? config.active : config.dim;
-          const weight = isChosen ? 5 : 3;
-          const opacity = isChosen ? 0.9 : 0.5;
+          const weight = isChosen ? 6 : 3;
+          const opacity = isChosen ? 1 : 0.7;
+          const dashArray = isChosen ? null : '8, 8';
 
           if (isChosen) {
-            const glow = L.geoJSON(route.geometry, {
+            const glowOuter = L.geoJSON(route.geometry, {
               style: {
                 color: lineColor,
-                weight: 8,
-                opacity: 0.08,
+                weight: 18,
+                opacity: 0.12,
                 lineCap: 'round',
                 lineJoin: 'round'
               }
             });
-            routeLayerGroup.addLayer(glow);
+            routeLayerGroup.addLayer(glowOuter);
+
+            const glowInner = L.geoJSON(route.geometry, {
+              style: {
+                color: lineColor,
+                weight: 10,
+                opacity: 0.25,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }
+            });
+            routeLayerGroup.addLayer(glowInner);
           }
 
           const line = L.geoJSON(route.geometry, {
@@ -3209,11 +3234,24 @@
               color: lineColor,
               weight: weight,
               opacity: opacity,
+              dashArray: dashArray,
               lineCap: 'round',
               lineJoin: 'round'
             }
           });
           routeLayerGroup.addLayer(line);
+
+          if (!isChosen && uniqueRoutes.length > 1) {
+            const midIndex = Math.floor(route.geometry.coordinates.length / 2);
+            const midCoord = route.geometry.coordinates[midIndex];
+            const labelIcon = L.divIcon({
+              className: 'route-label-marker',
+              html: '<div style="background:' + config.dim + '; border:1px solid ' + config.active + '; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; backdrop-filter:blur(4px);">' + type.toUpperCase() + '</div>',
+              iconSize: [60, 18],
+              iconAnchor: [30, 9]
+            });
+            L.marker([midCoord[1], midCoord[0]], { icon: labelIcon, interactive: false }).addTo(routeLayerGroup);
+          }
         });
 
         const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
@@ -3235,6 +3273,26 @@
         }
 
         map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
+
+        const legend = L.control({ position: 'bottomleft' });
+        legend.onAdd = function() {
+          const div = L.DomUtil.create('div', 'route-legend');
+          div.innerHTML = '<div style="font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Route Options</div>';
+          const items = [
+            { label: '⚡ Fastest', color: '#f59e0b', active: activeRoutePreference === 'fastest' },
+            { label: '📏 Shortest', color: '#10b981', active: activeRoutePreference === 'shortest' },
+            { label: '🏔️ Scenic', color: '#8b5cf6', active: activeRoutePreference === 'scenic' }
+          ];
+          items.forEach(item => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:4px; padding:3px 6px; border-radius:4px; background:' + (item.active ? 'rgba(255,255,255,0.1)' : 'transparent') + ';';
+            row.innerHTML = '<span style="width:12px; height:3px; background:' + item.color + '; border-radius:2px; display:inline-block; box-shadow:0 0 4px ' + item.color + ';"></span><span style="font-size:0.68rem; color:' + (item.active ? '#fff' : 'rgba(255,255,255,0.7)') + '; font-weight:' + (item.active ? '800' : '500') + ';">' + item.label + '</span>';
+            div.appendChild(row);
+          });
+          return div;
+        };
+        legend.addTo(map);
+        routeLegend = legend;
 
         const cleanOrigin = origin.label === 'My Location' ? 'Kathmandu' : origin.label;
         const cleanDest = dest.label === 'My Location' ? 'Kathmandu' : dest.label;
