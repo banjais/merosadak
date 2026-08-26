@@ -1854,7 +1854,7 @@
           sosLoopTimer = setTimeout(playNext, duration);
         }
         if (sosAudioCtx.state === 'suspended') {
-          sosAudioCtx.resume().then(playNext);
+          sosAudioCtx.resume().then(playNext).catch(() => playNext());
         } else {
           playNext();
         }
@@ -3744,6 +3744,10 @@
           '</div>'
         ).join('');
     }
+
+    window.addEventListener('unhandledrejection', (e) => {
+      console.warn('Unhandled promise rejection:', e.reason);
+    });
 
     // Start App with Splash Sequence
     window.addEventListener('DOMContentLoaded', async () => {
