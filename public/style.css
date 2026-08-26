@@ -1714,60 +1714,116 @@ h1, h2, h3, h4, .font-heading {
 .route-result-card {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.route-summary-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.route-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.route-destination-name {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #ffffff;
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
-.route-path {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  font-weight: 600;
+.route-pref-badge {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--accent-gold);
 }
 
-.route-basics {
+.route-endpoints {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.route-basic-item {
-  font-size: 0.8rem;
+.route-point {
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.trip-plan-toggle {
-  align-self: flex-start;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--surface-border);
+.route-arrow {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.route-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.route-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.72rem;
+}
+
+.route-stat-icon {
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.route-stat-val {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.route-stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.route-toll-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(217, 4, 41, 0.08);
+  border: 1px solid rgba(217, 4, 41, 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.route-toll-label {
+  font-size: 0.75rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  color: var(--text-secondary);
 }
 
-.trip-plan-toggle:hover {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: var(--accent-gold);
-}
-
-.route-option-card {
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.route-option-card:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.06);
+.route-toll-val {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ff4d6d;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .weather-card {

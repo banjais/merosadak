@@ -291,7 +291,7 @@
               <option value="bus_truck">Bus/Truck</option>
               <option value="electric_vehicle">EV</option>
             </select>
-            <select id="sidebarPriority" onchange="routePriority=this.value">
+            <select id="sidebarPriority" onchange="activeRoutePreference=this.value">
               <option value="fastest">Fastest</option>
               <option value="safest">Safest</option>
               <option value="scenic">Scenic</option>
@@ -1158,7 +1158,7 @@
     async function askAiRouteAdvisor() {
       const from = userOrigin ? userOrigin.label : 'Kathmandu';
       const to = selectedDestination ? selectedDestination.label : 'Pokhara';
-      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-basic-item');
+      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-stat-val');
       const km = kmEl ? kmEl.textContent.replace(/[^0-9.]/g, '').trim() + ' km' : '200 km';
       const outBox = document.getElementById('aiAdvisorOutput');
       if (outBox) {
@@ -2460,19 +2460,6 @@
     // 3. Sidebar Search & Route Engine
     // ==========================================
 
-    function setRoutePref(pref) {
-      activeRoutePreference = pref;
-      document.querySelectorAll('.pref-pill').forEach(pill => {
-        const isActive = (pref === 'fastest' && pill.textContent.includes('Fastest')) ||
-                         (pref === 'shortest' && pill.textContent.includes('Shortest')) ||
-                         (pref === 'scenic' && pill.textContent.includes('Scenic'));
-        pill.classList.toggle('active', isActive);
-      });
-      if (selectedDestination) {
-        calculateSidebarRoute();
-      }
-    }
-
     function toggleOriginMenu() {
       const menu = document.getElementById('originMenu');
       if (!menu) return;
@@ -3116,6 +3103,44 @@
       showPlaceInfoCard(dest);
     }
 
+    function computeRouteElevation(coords) {
+      if (!window.__HIGHWAY_INFO__ || !Array.isArray(window.__HIGHWAY_INFO__) || !coords || !coords.length) return null;
+      const sampleCount = 40;
+      const step = Math.max(1, Math.floor(coords.length / sampleCount));
+      const samples = [];
+      for (let i = 0; i < coords.length; i += step) samples.push(coords[i]);
+      let minElev = Infinity, maxElev = -Infinity, totalAscent = 0, prevElev = null;
+      for (const [lng, lat] of samples) {
+        let bestDist = Infinity, bestSeg = null;
+        for (const hwy of window.__HIGHWAY_INFO__) {
+          for (const seg of hwy.segments || []) {
+            if (!seg.coordinates || seg.coordinates.length < 2) continue;
+            const midIdx = Math.floor(seg.coordinates.length / 2);
+            const mid = seg.coordinates[midIdx];
+            const d = Math.sqrt((mid[0] - lng) ** 2 + (mid[1] - lat) ** 2);
+            if (d < bestDist) { bestDist = d; bestSeg = seg; }
+          }
+        }
+        if (bestDist < 0.08 && bestSeg) {
+          const start = bestSeg.elevationStartM || 0;
+          const end = bestSeg.elevationEndM || 0;
+          let closestT = 0;
+          let closestDist = Infinity;
+          for (let j = 0; j < bestSeg.coordinates.length; j++) {
+            const d2 = Math.sqrt((bestSeg.coordinates[j][0] - lng) ** 2 + (bestSeg.coordinates[j][1] - lat) ** 2);
+            if (d2 < closestDist) { closestDist = d2; closestT = j / (bestSeg.coordinates.length - 1); }
+          }
+          const elev = start + (end - start) * closestT;
+          if (elev < minElev) minElev = elev;
+          if (elev > maxElev) maxElev = elev;
+          if (prevElev !== null && elev > prevElev) totalAscent += (elev - prevElev);
+          prevElev = elev;
+        }
+      }
+      if (minElev === Infinity) return null;
+      return { min: Math.round(minElev), max: Math.round(maxElev), gain: Math.round(totalAscent) };
+    }
+
     async function calculateSidebarRoute() {
       if (!selectedDestination) return;
       const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
@@ -3297,51 +3322,46 @@
         const cleanOrigin = origin.label === 'My Location' ? 'Kathmandu' : origin.label;
         const cleanDest = dest.label === 'My Location' ? 'Kathmandu' : dest.label;
 
-        const routeOptions = [
-          { type: 'fastest', route: fastest, label: '⚡ Fastest', icon: '⚡' },
-          { type: 'shortest', route: shortest, label: '📏 Shortest', icon: '📏' },
-          { type: 'scenic', route: scenic, label: '🏔️ Scenic', icon: '🏔️' }
-        ];
+        const vehicleLabels = { car: 'Car/Sedan', suv_4wd: 'SUV/4WD', motorbike: 'Motorcycle', bus_truck: 'Bus/Truck', electric_vehicle: 'EV' };
+        const vehicleIcons = { car: '🚗', suv_4wd: '🚙', motorbike: '🏍️', bus_truck: '🚌', electric_vehicle: '⚡' };
+        const prefLabels = { fastest: 'Fastest', safest: 'Safest', scenic: 'Scenic', ev: 'EV Priority' };
+        const prefIcons = { fastest: '⚡', safest: '🛡️', scenic: '🏔️', ev: '🔋' };
 
-        const routeResultId = 'routeResult_' + Date.now();
-        let html = '<div class="result-card route-result-card">' +
-          '<div class="route-destination-name">' + cleanDest + '</div>' +
-          '<div class="route-path">' + cleanOrigin + ' → ' + cleanDest + '</div>' +
-          '<div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:8px;">Select a route preference</div>';
+        const vLabel = vehicleLabels[activeVehicle] || activeVehicle;
+        const vIcon = vehicleIcons[activeVehicle] || '🚗';
+        const pLabel = prefLabels[activeRoutePreference] || activeRoutePreference;
+        const pIcon = prefIcons[activeRoutePreference] || '⚡';
 
-        routeOptions.forEach(opt => {
-          const rkm = (opt.route.distance / 1000).toFixed(1);
-          const rhrs = (opt.route.duration / 3600).toFixed(1);
-          const isActive = activeRoutePreference === opt.type;
-          const activeBorder = isActive ? 'border-color:var(--accent-gold);' : '';
-          const activeBg = isActive ? 'background:rgba(245,158,11,0.08);' : '';
-          const activeBadge = isActive ? '<span style="font-size:0.6rem; background:var(--accent-gold); color:#0b192c; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:auto;">ACTIVE</span>' : '';
+        const elevData = computeRouteElevation(chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : []);
+        const elevText = elevData ? (elevData.gain > 0 ? elevData.min + 'm → ' + elevData.max + 'm (+' + elevData.gain + 'm)' : elevData.min + 'm → ' + elevData.max + 'm') : 'N/A';
 
-          html += '<div class="result-card route-option-card" onclick="setRoutePref(\'' + opt.type + '\')" style="' + activeBorder + activeBg + '">' +
-            '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">' +
-              '<span style="font-size:1.1rem;">' + opt.icon + '</span>' +
-              '<span style="font-weight:800; color:#fff;">' + opt.label + '</span>' +
-              activeBadge +
-            '</div>' +
-            '<div class="route-basics">' +
-              '<span class="route-basic-item">📏 ' + rkm + ' km</span>' +
-              '<span class="route-basic-item">⏱ ' + rhrs + ' hrs</span>' +
-            '</div>' +
-          '</div>';
-        });
+        const fuelEff = (chosen.distance / 1000 / fuelLiters).toFixed(1);
 
-        const tollHtml = tollCost > 0
-          ? '<div class="metric-box" style="border-color:rgba(217,4,41,0.4);"><span class="metric-label">' + tollLabel + '</span><span class="metric-val" style="color:#ff4d6d;">NPR ' + tollCost.toLocaleString() + '</span></div>'
+        const tollRow = tollCost > 0
+          ? '<div class="route-toll-row"><span class="route-toll-label">🚧 ' + tollLabel + '</span><span class="route-toll-val">NPR ' + tollCost.toLocaleString() + '</span></div>'
           : '';
 
-        html += '<button class="trip-plan-toggle" onclick="toggleTripDetails(\'' + routeResultId + '\')">💳 Show Trip Plan</button>' +
-          '<div class="trip-details" id="' + routeResultId + '" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--surface-border);">' +
-            '<div class="metric-grid">' +
-              '<div class="metric-box"><span class="metric-label">Est. Fuel</span><span class="metric-val">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
-              tollHtml +
+        let html = '<div class="result-card route-result-card">' +
+          '<div class="route-summary-header">' +
+            '<div class="route-meta-badges">' +
+              '<span class="route-badge">' + vIcon + ' ' + vLabel + '</span>' +
+              '<span class="route-badge route-pref-badge">' + pIcon + ' ' + pLabel + '</span>' +
             '</div>' +
-            '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Estimates based on average fuel economy and toll rates.</div>' +
+            '<div class="route-endpoints">' +
+              '<span class="route-point origin">🟢 ' + cleanOrigin + '</span>' +
+              '<span class="route-arrow">→</span>' +
+              '<span class="route-point dest">🔴 ' + cleanDest + '</span>' +
+            '</div>' +
           '</div>' +
+          '<div class="route-stats-grid">' +
+            '<div class="route-stat"><span class="route-stat-icon">📏</span><span class="route-stat-val">' + km + ' km</span><span class="route-stat-label">Distance</span></div>' +
+            '<div class="route-stat"><span class="route-stat-icon">⏱</span><span class="route-stat-val">' + hrs + ' hrs</span><span class="route-stat-label">Duration</span></div>' +
+            '<div class="route-stat"><span class="route-stat-icon">⛰️</span><span class="route-stat-val">' + elevText + '</span><span class="route-stat-label">Elevation & Climb</span></div>' +
+            '<div class="route-stat"><span class="route-stat-icon">⛽</span><span class="route-stat-val">NPR ' + fuelCost.toLocaleString() + '</span><span class="route-stat-label">Est. Fuel Cost</span></div>' +
+            '<div class="route-stat"><span class="route-stat-icon">📊</span><span class="route-stat-val">' + fuelEff + ' km/L</span><span class="route-stat-label">Efficiency</span></div>' +
+          '</div>' +
+          tollRow +
+          '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:8px;">Estimates based on average fuel economy and route data.</div>' +
         '</div>';
 
         results.innerHTML = html;
@@ -3349,17 +3369,6 @@
       } catch (err) {
         console.error('Route calculation error:', err);
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Unknown error') + '</div></div>';
-      }
-    }
-
-    function toggleTripDetails(resultId) {
-      const el = document.getElementById(resultId);
-      if (!el) return;
-      const isHidden = el.style.display === 'none';
-      el.style.display = isHidden ? 'block' : 'none';
-      const btn = el.previousElementSibling;
-      if (btn && btn.classList.contains('trip-plan-toggle')) {
-        btn.textContent = isHidden ? '💳 Hide Trip Plan' : '💳 Show Trip Plan';
       }
     }
 
