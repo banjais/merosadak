@@ -3252,6 +3252,10 @@
           return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
         }
 
+        if (routeLayerGroup) { map.removeLayer(routeLayerGroup); routeLayerGroup = null; }
+        if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
+        routeLayerGroup = L.layerGroup().addTo(map);
+
         routes.forEach((route) => {
           const type = getRouteType(route);
           const isChosen = route === chosen;
