@@ -988,7 +988,10 @@
           window.__DISTRICT_CITIES__ = districtMap;
         }
         if (window.NEPAL_DATA && Array.isArray(window.NEPAL_DATA.places)) {
-          window.NEPAL_DATA.places.forEach(p => searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' }));
+          window.NEPAL_DATA.places.forEach(p => {
+            if (p.type === 'airport') return;
+            searchIndex.push({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
+          });
         }
 
         (palikaRes || []).forEach(p => {
@@ -2902,6 +2905,7 @@
           
           (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
             if (p.type === 'bus_station') return;
+            if (p.type === 'airport') return;
             if ((p.location || '').toLowerCase().includes(dn)) {
               addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
             }
@@ -2943,6 +2947,7 @@
           });
           (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
             if (p.type === 'bus_station') return;
+            if (p.type === 'airport') return;
             if ((p.location || '').toLowerCase().includes(dn) && p.type !== 'City Hub') {
               addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
             }
