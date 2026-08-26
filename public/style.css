@@ -1711,19 +1711,19 @@ h1, h2, h3, h4, .font-heading {
   transform: scale(0.98);
 }
 
-.route-result-card {
+.route-report {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.route-summary-header {
+.route-report-header {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.route-meta-badges {
+.route-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1767,40 +1767,48 @@ h1, h2, h3, h4, .font-heading {
   font-size: 0.85rem;
 }
 
-.route-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.route-stat {
+.route-report-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-sm);
+  gap: 6px;
 }
 
-.route-stat-icon {
+.route-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.route-line:last-child {
+  border-bottom: none;
+}
+
+.route-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.route-value {
   font-size: 0.85rem;
-  margin-bottom: 2px;
-}
-
-.route-stat-val {
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 700;
   color: #ffffff;
   font-family: 'JetBrains Mono', monospace;
+  text-align: right;
 }
 
-.route-stat-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+.route-report-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .route-toll-row {

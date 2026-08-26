@@ -1161,7 +1161,7 @@
     async function askAiRouteAdvisor() {
       const from = userOrigin ? userOrigin.label : 'Kathmandu';
       const to = selectedDestination ? selectedDestination.label : 'Pokhara';
-      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-stat-val');
+      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-value');
       const km = kmEl ? kmEl.textContent.replace(/[^0-9.]/g, '').trim() + ' km' : '200 km';
       const outBox = document.getElementById('aiAdvisorOutput');
       if (outBox) {
@@ -3345,9 +3345,9 @@
           ? '<div class="route-toll-row"><span class="route-toll-label">🚧 ' + tollLabel + '</span><span class="route-toll-val">NPR ' + tollCost.toLocaleString() + '</span></div>'
           : '';
 
-        let html = '<div class="result-card route-result-card">' +
-          '<div class="route-summary-header">' +
-            '<div class="route-meta-badges">' +
+        let html = '<div class="route-report">' +
+          '<div class="route-report-header">' +
+            '<div class="route-badges">' +
               '<span class="route-badge">' + vIcon + ' ' + vLabel + '</span>' +
               '<span class="route-badge route-pref-badge">' + pIcon + ' ' + pLabel + '</span>' +
             '</div>' +
@@ -3357,15 +3357,17 @@
               '<span class="route-point dest">🔴 ' + cleanDest + '</span>' +
             '</div>' +
           '</div>' +
-          '<div class="route-stats-grid">' +
-            '<div class="route-stat"><span class="route-stat-icon">📏</span><span class="route-stat-val">' + km + ' km</span><span class="route-stat-label">Distance</span></div>' +
-            '<div class="route-stat"><span class="route-stat-icon">⏱</span><span class="route-stat-val">' + hrs + ' hrs</span><span class="route-stat-label">Duration</span></div>' +
-            '<div class="route-stat"><span class="route-stat-icon">⛰️</span><span class="route-stat-val">' + elevText + '</span><span class="route-stat-label">Elevation & Climb</span></div>' +
-            '<div class="route-stat"><span class="route-stat-icon">⛽</span><span class="route-stat-val">NPR ' + fuelCost.toLocaleString() + '</span><span class="route-stat-label">Est. Fuel Cost</span></div>' +
-            '<div class="route-stat"><span class="route-stat-icon">📊</span><span class="route-stat-val">' + fuelEff + ' km/L</span><span class="route-stat-label">Efficiency</span></div>' +
+          '<div class="route-report-body">' +
+            '<div class="route-line"><span class="route-label">Distance</span><span class="route-value">' + km + ' km</span></div>' +
+            '<div class="route-line"><span class="route-label">Duration</span><span class="route-value">' + hrs + ' hrs</span></div>' +
+            '<div class="route-line"><span class="route-label">Elevation</span><span class="route-value">' + elevText + '</span></div>' +
+            '<div class="route-line"><span class="route-label">Est. Fuel Cost</span><span class="route-value">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
+            '<div class="route-line"><span class="route-label">Efficiency</span><span class="route-value">' + fuelEff + ' km/L</span></div>' +
           '</div>' +
-          tollRow +
-          '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:8px;">Estimates based on average fuel economy and route data.</div>' +
+          '<div class="route-report-footer">' +
+            tollRow +
+            '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:8px;">Estimates based on average fuel economy and route data.</div>' +
+          '</div>' +
         '</div>';
 
         results.innerHTML = html;
