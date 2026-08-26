@@ -283,15 +283,21 @@
              <div id="originSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
            </div>
 
-        <div class="route-controls-row">
-           <select id="sidebarVehicle" onchange="activeVehicle=this.value">
-             <option value="car">Car/Sedan</option>
-             <option value="suv_4wd">SUV/4WD</option>
-             <option value="motorbike">Motorcycle</option>
-             <option value="bus_truck">Bus/Truck</option>
-             <option value="electric_vehicle">EV</option>
-           </select>
-         </div>
+         <div class="route-controls-row">
+            <select id="sidebarVehicle" onchange="activeVehicle=this.value">
+              <option value="car">Car/Sedan</option>
+              <option value="suv_4wd">SUV/4WD</option>
+              <option value="motorbike">Motorcycle</option>
+              <option value="bus_truck">Bus/Truck</option>
+              <option value="electric_vehicle">EV</option>
+            </select>
+            <select id="sidebarPriority" onchange="routePriority=this.value">
+              <option value="fastest">Fastest</option>
+              <option value="safest">Safest</option>
+              <option value="scenic">Scenic</option>
+              <option value="ev">EV Priority</option>
+            </select>
+          </div>
 
         <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
 
