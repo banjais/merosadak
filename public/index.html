@@ -743,6 +743,23 @@
     let routeLegend = null;
     let pinFromMarker = null;
     let pinToMarker = null;
+    let autoPopup = null;
+
+    function openAutoPopup(lat, lng, html, duration = 3000) {
+      if (autoPopup) {
+        try { map.closePopup(autoPopup); } catch (e) {}
+      }
+      autoPopup = L.popup({ closeButton: false, autoClose: false, closeOnClick: false, className: 'auto-close-popup' })
+        .setLatLng([lat, lng])
+        .setContent(html)
+        .openOn(map);
+      setTimeout(() => {
+        if (autoPopup) {
+          try { map.closePopup(autoPopup); } catch (e) {}
+          autoPopup = null;
+        }
+      }, duration);
+    }
 
     let layerVisibility = {
       highways: true,
@@ -1145,7 +1162,7 @@
       } catch (err) {}
 
       map.flyTo([lat, lng], 13, { duration: 1.2 });
-      L.popup().setLatLng([lat, lng]).setContent(`<strong>${label}</strong>`).openOn(map);
+      openAutoPopup(lat, lng, `<strong>${label}</strong>`);
     }
 
         // ==========================================
@@ -1324,6 +1341,7 @@
           const lat = pos.coords.latitude, lng = pos.coords.longitude;
           map.flyTo([lat, lng], 14, { duration: 1.5 });
           L.circleMarker([lat, lng], { radius: 9, fillColor: '#0ea5e9', fillOpacity: 0.9, color: '#ffffff', weight: 2 }).addTo(map).bindPopup('<strong>📍 You are here</strong>').openPopup();
+          setTimeout(() => { try { map.closePopup(); } catch (e) {} }, 3000);
         },
         () => alert('Could not retrieve your GPS location.'),
         { timeout: 8000 }
@@ -1780,7 +1798,7 @@
     function focusSosOnMap() {
       if (map) {
         map.flyTo([sosState.lat, sosState.lng], 13, { duration: 1.2 });
-        L.popup().setLatLng([sosState.lat, sosState.lng]).setContent('<strong>SOS Emergency Pinpoint</strong><br>' + sosState.lat.toFixed(5) + ', ' + sosState.lng.toFixed(5)).openOn(map);
+        openAutoPopup(sosState.lat, sosState.lng, '<strong>SOS Emergency Pinpoint</strong><br>' + sosState.lat.toFixed(5) + ', ' + sosState.lng.toFixed(5));
       }
       closeModal('sosModal');
       stopSosBeacon();
@@ -1979,6 +1997,7 @@
 
         map.flyToBounds(hGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
         hCenter.bindPopup(`<strong>${meta.code}: ${meta.name}</strong><br><small>${meta.route}</small>`).openPopup();
+        setTimeout(() => { try { map.closePopup(); } catch (e) {} }, 3000);
       } catch (e) {
         console.error('Highway load error:', e);
       }
@@ -2049,7 +2068,7 @@
     function focusMapLocation(lat, lng, label) {
       closeModal('passesModal');
       map.flyTo([lat, lng], 12, { duration: 1.5 });
-      L.popup().setLatLng([lat, lng]).setContent(`<strong>${label}</strong>`).openOn(map);
+      openAutoPopup(lat, lng, `<strong>${label}</strong>`);
     }
 
     // Distance Matrix Builder
@@ -2206,7 +2225,7 @@
     function focusMatrixCity(lat, lng, name) {
       hideMatrixPage();
       map.flyTo([lat, lng], 12, { duration: 1.2 });
-      L.popup().setLatLng([lat, lng]).setContent('<strong>' + name + '</strong>').openOn(map);
+      openAutoPopup(lat, lng, '<strong>' + name + '</strong>');
     }
 
     async function askMatrixAiAdvisor() {
@@ -2988,7 +3007,7 @@
       if (item.type === 'Coordinate') {
         document.getElementById('sidebarSearch').value = item.label;
         map.flyTo([item.lat, item.lng], 14, { duration: 1.2 });
-        L.popup().setLatLng([item.lat, item.lng]).setContent('<strong>' + item.label + '</strong>').openOn(map);
+        openAutoPopup(item.lat, item.lng, '<strong>' + item.label + '</strong>');
         return;
       }
 
@@ -3102,7 +3121,7 @@
       document.getElementById('sidebarSearch').value = dest.label;
       selectedDestination = dest;
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
-      L.popup().setLatLng([dest.lat, dest.lng]).setContent('<strong>' + dest.label + '</strong>').openOn(map);
+      openAutoPopup(dest.lat, dest.lng, '<strong>' + dest.label + '</strong>');
       showPlaceInfoCard(dest);
     }
 
