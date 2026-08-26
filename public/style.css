@@ -2746,8 +2746,8 @@ button:focus-visible, select:focus-visible {
 
 .map-floating-toggles {
   position: fixed;
-  top: 108px;
-  right: 76px;
+  top: 160px;
+  right: 20px;
   z-index: 900;
   display: flex;
   flex-direction: column;
@@ -2761,14 +2761,14 @@ button:focus-visible, select:focus-visible {
   box-shadow: var(--shadow-lg);
   opacity: 0;
   pointer-events: none;
-  transform: translateX(8px);
+  transform: translateY(8px);
   transition: all var(--transition-smooth);
 }
 
 .map-floating-toggles.is-open {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 .map-toggle-btn {
@@ -2958,11 +2958,10 @@ button:focus-visible, select:focus-visible {
   cursor: pointer;
   box-shadow: 0 8px 25px rgba(217, 4, 41, 0.45), 0 0 20px rgba(245, 158, 11, 0.3);
   transition: all var(--transition-bounce);
-  position: relative;
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
   z-index: 2;
-  margin-top: -14px;
-  margin-left: auto;
-  margin-right: 16px;
 }
 
 .bottom-bar-fab:hover {
@@ -3014,9 +3013,8 @@ button:focus-visible, select:focus-visible {
     width: 48px;
     height: 48px;
     font-size: 1.3rem;
-    margin-top: -12px;
-    margin-left: auto;
-    margin-right: 16px;
+    right: 16px;
+    bottom: 16px;
   }
   .leaflet-control-zoom {
     margin-bottom: 70px !important;
@@ -3544,12 +3542,12 @@ button:focus-visible, select:focus-visible {
   }
   .map-floating-toggles {
     top: auto;
-    bottom: 80px;
+    bottom: 70px;
     right: 12px;
-    flex-direction: row;
+    flex-direction: column;
     gap: 4px;
     padding: 4px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-md);
   }
   .map-toggle-fab {
     top: auto;
