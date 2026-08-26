@@ -855,6 +855,17 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="nepalData.js"></script>
   <script>
+    // Suppress unhandled promise rejections from external extensions/content scripts
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event.reason;
+      const isExtensionError = (reason && reason.message && /contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(reason.message)) || (typeof reason === 'object' && reason !== null && /contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(JSON.stringify(reason)));
+      if (isExtensionError) {
+        event.preventDefault();
+        return;
+      }
+      console.warn('Unhandled rejection:', reason);
+    });
+
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';
 
@@ -1058,7 +1069,7 @@
     async function loadStaticMapFeatures() {
       await loadStaticData();
       await loadData();
-      loadNepalBoundary();
+      await loadNepalBoundary();
 
       if (layerVisibility.incidents) {
         await fetchLiveIncidents();
@@ -4286,6 +4297,7 @@ Plan your safe mountain highway journey at mero-sadak.app`;
 
     // Start App with Splash Sequence
     window.addEventListener('DOMContentLoaded', async () => {
+      try {
       const splash = document.getElementById('splashScreen');
       const progressFill = document.getElementById('splashProgress');
       const percentText = document.getElementById('splashPercent');
@@ -4315,6 +4327,7 @@ Plan your safe mountain highway journey at mero-sadak.app`;
       const sidebarSearch = document.getElementById('sidebarSearch');
       const sidebarSuggest = document.getElementById('sidebarSuggest');
       sidebarSearch.addEventListener('input', debounce(async (e) => {
+        try {
         const query = e.target.value.trim();
         if (query.length < 2) {
           sidebarSuggest.style.display = 'none';
@@ -4406,6 +4419,9 @@ Plan your safe mountain highway journey at mero-sadak.app`;
         }
 
         sidebarSuggest.style.display = sidebarSuggest.children.length ? 'block' : 'none';
+        } catch (err) {
+          console.error('Sidebar search error:', err);
+        }
       }, 250));
 
       document.addEventListener('click', (e) => {
@@ -4428,6 +4444,9 @@ Plan your safe mountain highway journey at mero-sadak.app`;
         splash.classList.add('hidden');
         setTimeout(() => splash.remove(), 700);
       }, 350);
+      } catch (e) {
+        console.error('App init error:', e);
+      }
     });
   </script>
 </body>
