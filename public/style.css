@@ -156,7 +156,7 @@ h1, h2, h3, h4, .font-heading {
 }
 .splash-title {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 2.6rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.06em;
@@ -170,7 +170,7 @@ h1, h2, h3, h4, .font-heading {
   background-clip: text;
 }
 .splash-subtitle {
-  font-size: 1.15rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--accent-gold);
   letter-spacing: 0.04em;
@@ -243,8 +243,8 @@ h1, h2, h3, h4, .font-heading {
 }
 
 @media (max-width: 768px) {
-  .splash-title { font-size: 2rem; }
-  .splash-subtitle { font-size: 1rem; }
+  .splash-title { font-size: 1.3rem; }
+  .splash-subtitle { font-size: 0.8rem; }
   .splash-desc { font-size: 0.72rem; }
   .splash-logo svg { width: 52px; height: 52px; }
 }
@@ -342,7 +342,7 @@ h1, h2, h3, h4, .font-heading {
 
 .header-brand .brand-title {
   font-family: 'Outfit', 'Inter', sans-serif;
-  font-size: 1.4rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.04em;
