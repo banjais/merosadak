@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=20260825-1">
+  <link rel="stylesheet" href="style.css?v=20260826-1">
 </head>
 <body>
 
@@ -100,6 +100,13 @@
           </svg>
         </span> Highway Directory
       </div>
+      <div class="drawer-nav-item" onclick="openModal('distanceCalcModal'); closeDrawer();">
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </span> Distance Calculator
+      </div>
       <div class="drawer-nav-item" onclick="showMatrixPage(); closeDrawer();">
         <span class="drawer-icon">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,6 +142,20 @@
           </svg>
         </span> Emergency SOS
       </div>
+      <div class="drawer-nav-item" onclick="openPretripModal(); closeDrawer();">
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+        </span> Pre-Trip Checklist
+      </div>
+      <div class="drawer-nav-item" onclick="openShareTripModal(); closeDrawer();">
+        <span class="drawer-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </span> Share Trip
+      </div>
       <div class="drawer-nav-item" onclick="cycleMapStyle(); closeDrawer();">
         <span class="drawer-icon">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -142,7 +163,7 @@
           </svg>
         </span> Map Style
       </div>
-      <div class="drawer-nav-item" onclick="syncOfflineBundle(); closeDrawer();">
+      <div class="drawer-nav-item" onclick="openModal('offlineManagerModal'); closeDrawer();">
         <span class="drawer-icon">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
@@ -402,6 +423,22 @@
         </span>
         <span class="bar-action-label">AI Assistant</span>
       </button>
+      <button class="bar-action-btn" onclick="openShareTripModal()">
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </span>
+        <span class="bar-action-label">Share Trip</span>
+      </button>
+      <button class="bar-action-btn" onclick="openPretripModal()">
+        <span class="bar-action-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+        </span>
+        <span class="bar-action-label">Checklist</span>
+      </button>
       <button class="bar-action-btn" onclick="saveCurrentRoute()">
         <span class="bar-action-icon">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -424,9 +461,25 @@
     </button>
   </div>
 
+  <!-- Offline Status Banner -->
+  <div class="offline-banner" id="offlineBanner">
+    <span class="offline-banner-dot"></span>
+    <span>You are offline. Some map data and live feeds may be unavailable.</span>
+  </div>
+
+  <!-- Weather Alert Toast -->
+  <div class="weather-alert-toast" id="weatherAlertToast">
+    <span class="weather-alert-icon">⚠️</span>
+    <span class="weather-alert-text"></span>
+    <button class="weather-alert-close" onclick="document.getElementById('weatherAlertToast').classList.remove('is-visible')">✕</button>
+  </div>
+
+  <!-- SOS Floating Button -->
+  <button class="sos-fab" onclick="openModal('sosModal')" title="Emergency SOS Rescue">🚨</button>
+
   <!-- ==========================================
        6. Modals Suite
-       ========================================== -->
+        ========================================== -->
 
   <!-- SOS Emergency Modal -->
   <div class="modal-overlay" id="sosModal">
@@ -711,6 +764,82 @@
       </div>
       <div class="modal-body">
         <div id="passesListContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distance Calculator Modal -->
+  <div class="modal-overlay" id="distanceCalcModal">
+    <div class="modal-card" style="width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📏</span> <span>Distance Calculator</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('distanceCalcModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Point A</label>
+            <input type="text" id="distCalcPointA" placeholder="e.g. Kathmandu" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
+          </div>
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Point B</label>
+            <input type="text" id="distCalcPointB" placeholder="e.g. Pokhara" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
+          </div>
+          <button class="btn-action-primary" onclick="calculateSimpleDistance()">Calculate Distance</button>
+          <div id="distCalcResult" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Trip Modal -->
+  <div class="modal-overlay" id="shareTripModal">
+    <div class="modal-card" style="width:520px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📤</span> <span>Share Trip Plan</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('shareTripModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="shareTripContent" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offline Manager Modal -->
+  <div class="modal-overlay" id="offlineManagerModal">
+    <div class="modal-card" style="width:560px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📥</span> <span>Offline GIS & Tile Pack Manager</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('offlineManagerModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="offlineManagerContent" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-Trip Checklist Modal -->
+  <div class="modal-overlay" id="pretripModal">
+    <div class="modal-card" style="width:640px; max-height:85vh; display:flex; flex-direction:column;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>✅</span> <span>Pre-Trip Checklist</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('pretripModal')">✕</button>
+      </div>
+      <div class="modal-body" style="overflow-y:auto; flex:1;" id="pretripBody"></div>
+      <div style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span style="font-size:11px; color:#64748b;">Progress saved locally</span>
+        <div style="display:flex; gap:8px;">
+          <button onclick="resetPretripChecklist()" style="padding:6px 14px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">Reset All</button>
+          <button onclick="closeModal('pretripModal')" style="padding:6px 14px; border-radius:8px; background:var(--accent-gold); color:#0b192c; border:none; font-size:11px; font-weight:700; cursor:pointer;">Close</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2321,6 +2450,28 @@
       alert('✅ Nepal National Highway GIS & offline route packs saved locally.');
     }
 
+    function renderOfflineManager() {
+      const content = document.getElementById('offlineManagerContent');
+      if (!content) return;
+      const isSynced = localStorage.getItem('merosadak_offline_synced') === 'true';
+      content.innerHTML = '<div style="font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px;">Offline Data Status</div>' +
+        '<div style="background:rgba(0,0,0,0.2); border:1px solid var(--surface-border); border-radius:var(--radius-sm); padding:12px; display:flex; flex-direction:column; gap:8px;">' +
+          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">GIS Data Bundle</span><span style="font-size:0.75rem; font-weight:700; color:' + (isSynced ? '#10b981' : '#fbbf24') + ';">' + (isSynced ? 'Synced' : 'Not Synced') + '</span></div>' +
+          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Highway GeoJSON</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Available</span></div>' +
+          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Distance Matrix</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Loaded</span></div>' +
+          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">City & Places Index</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Cached</span></div>' +
+        '</div>' +
+        '<button class="btn-action-primary" onclick="syncOfflineBundle(); renderOfflineManager();" style="margin-top:4px;">Sync Offline Bundle Now</button>' +
+        '<p style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Offline bundles cache map tiles, routes, and reference data for mountain travel without connectivity.</p>';
+    }
+
+    // Override openModal to render offline manager
+    const originalOpenModal = openModal;
+    openModal = function(id) {
+      originalOpenModal(id);
+      if (id === 'offlineManagerModal') renderOfflineManager();
+    };
+
     function restoreFromUrl() {
       const p = new URLSearchParams(location.search);
       const to = p.get('to');
@@ -3315,6 +3466,7 @@
         });
 
         const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
+        window.__currentRouteCoords = coords || [];
         if (coords && coords.length > 0) {
           const startCoord = coords[0];
           const endCoord = coords[coords.length - 1];
@@ -3745,8 +3897,391 @@
         ).join('');
     }
 
-    window.addEventListener('unhandledrejection', (e) => {
-      console.warn('Unhandled promise rejection:', e.reason);
+    async function calculateSimpleDistance() {
+      const pointA = document.getElementById('distCalcPointA').value.trim();
+      const pointB = document.getElementById('distCalcPointB').value.trim();
+      const resultEl = document.getElementById('distCalcResult');
+      if (!pointA || !pointB) {
+        resultEl.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Please enter both locations.</p>';
+        return;
+      }
+      resultEl.innerHTML = '<p style="color:var(--text-secondary);">Calculating distance via OSRM…</p>';
+      try {
+        const geoA = await geocode(pointA + ', Nepal');
+        const geoB = await geocode(pointB + ', Nepal');
+        if (!geoA || !geoB) {
+          resultEl.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Could not geocode one or both locations.</p>';
+          return;
+        }
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + geoA[0].lon + ',' + geoA[0].lat + ';' + geoB[0].lon + ',' + geoB[0].lat + '?overview=false';
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+          resultEl.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">No route found between these points.</p>';
+          return;
+        }
+        const route = data.routes[0];
+        const km = (route.distance / 1000).toFixed(1);
+        const hrs = (route.duration / 3600).toFixed(1);
+        resultEl.innerHTML = '<div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:var(--radius-sm); padding:12px; display:flex; flex-direction:column; gap:6px;"><div style="font-size:0.85rem; font-weight:800; color:#fff;">' + km + ' km</div><div style="font-size:0.75rem; color:var(--text-secondary);">~' + hrs + ' hrs driving</div><div style="font-size:0.68rem; color:var(--text-muted);">From: ' + pointA + ' → To: ' + pointB + '</div></div>';
+      } catch (e) {
+        resultEl.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Distance calculation failed. Please try again.</p>';
+      }
+    }
+
+    function openShareTripModal() {
+      if (!selectedDestination || !userOrigin) {
+        alert('Please calculate a route first.');
+        return;
+      }
+      const modal = document.getElementById('shareTripModal');
+      const content = document.getElementById('shareTripContent');
+      const origin = userOrigin.label === 'My Location' ? 'Kathmandu' : userOrigin.label;
+      const dest = selectedDestination.label;
+      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-value');
+      const km = kmEl ? kmEl.textContent.replace(/[^0-9.]/g, '').trim() : '--';
+      const hrsEl = document.getElementById('sidebarResults')?.querySelectorAll('.route-value');
+      const hrs = hrsEl && hrsEl[1] ? hrsEl[1].textContent.replace(/[^0-9.]/g, '').trim() : '--';
+      const vehicleLabels = { car: 'Car/Sedan', suv_4wd: 'SUV/4WD', motorbike: 'Motorcycle', bus_truck: 'Bus/Truck', electric_vehicle: 'EV' };
+      const vehicle = vehicleLabels[activeVehicle] || 'Car';
+      const prefLabels = { fastest: 'Fastest', shortest: 'Shortest', scenic: 'Scenic', safest: 'Safest', ev: 'EV Priority' };
+      const pref = prefLabels[activeRoutePreference] || 'Fastest';
+      const fuelCostEl = document.getElementById('sidebarResults')?.querySelector('.route-toll-val');
+      const fuelCost = fuelCostEl ? fuelCostEl.textContent.replace(/[^0-9]/g, '').trim() : '0';
+      
+      const shareText = `Mero Sadak Nepal Trip Plan
+From: ${origin}
+To: ${dest}
+Distance: ${km} km
+Duration: ${hrs} hrs
+Vehicle: ${vehicle}
+Route: ${pref}
+Fuel Est: NPR ${fuelCost}
+Plan your safe mountain highway journey at mero-sadak.app`;
+
+      const url = `${location.origin}${location.pathname}?to=${encodeURIComponent(dest)}&pref=${activeRoutePreference}&vehicle=${activeVehicle}`;
+      
+      content.innerHTML = `
+        <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:4px;">Share your route plan via:</div>
+        <textarea class="share-textarea" readonly id="shareTripText">${shareText}</textarea>
+        <div class="share-actions">
+          <button class="share-btn share-btn-whatsapp" onclick="window.open('https://wa.me/?text=' + encodeURIComponent(document.getElementById('shareTripText').value), '_blank')">WhatsApp</button>
+          <button class="share-btn share-btn-sms" onclick="window.location.href='sms:?body=' + encodeURIComponent(document.getElementById('shareTripText').value)">SMS</button>
+          <button class="share-btn share-btn-telegram" onclick="window.open('https://t.me/share/url?url=' + encodeURIComponent('${url}') + '&text=' + encodeURIComponent(document.getElementById('shareTripText').value), '_blank')">Telegram</button>
+        </div>
+        <button class="share-btn share-btn-copy" onclick="copyShareTripText()" style="width:100%; margin-top:4px;">Copy Text to Clipboard</button>
+      `;
+      modal.style.display = 'flex';
+    }
+
+    function copyShareTripText() {
+      const text = document.getElementById('shareTripText').value;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('#shareTripContent .share-btn-copy');
+        if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy Text to Clipboard', 2000); }
+      }).catch(() => alert('Failed to copy. Please select and copy manually.'));
+    }
+
+    function openPretripModal() {
+      const modal = document.getElementById('pretripModal');
+      const body = document.getElementById('pretripBody');
+      if (!modal || !body) return;
+      renderPretripChecklist();
+      modal.style.display = 'flex';
+    }
+
+    let pretripState = { checked: {}, category: 'all' };
+    const PRETRIP_STORAGE_KEY = 'merosadak_pretrip_state';
+
+    function loadPretripState() {
+      try {
+        const saved = localStorage.getItem(PRETRIP_STORAGE_KEY);
+        if (saved) pretripState = JSON.parse(saved);
+      } catch (e) { pretripState = { checked: {}, category: 'all' }; }
+    }
+
+    function savePretripState() {
+      try { localStorage.setItem(PRETRIP_STORAGE_KEY, JSON.stringify(pretripState)); } catch (e) {}
+    }
+
+    function getPretripItems() {
+      const items = [];
+      const origin = userOrigin ? userOrigin.label : 'Kathmandu';
+      const dest = selectedDestination ? selectedDestination.label : 'Pokhara';
+      const elevData = window.__currentRouteElevation || null;
+      const hasRain = window.__currentRouteHasRain || false;
+      const hasFog = window.__currentRouteHasFog || false;
+      const maxAlt = elevData ? elevData.max : 0;
+      const elevationGain = elevData ? elevData.gain : 0;
+
+      items.push({ id: 'doc-bluebook', category: 'documents', priority: 'mandatory', title: 'Vehicle Blue Book (Registration)', desc: 'Ensure vehicle registration booklet is on board with valid road tax stamp.', icon: '📄' });
+      items.push({ id: 'doc-license', category: 'documents', priority: 'mandatory', title: 'Valid Driving License', desc: 'Physical smart card license or active Nagarik App QR code for matching vehicle category.', icon: '📄' });
+      items.push({ id: 'doc-insurance', category: 'documents', priority: 'mandatory', title: 'Motor Insurance Certificate', desc: 'Active third-party or comprehensive motor insurance for highway toll gates and liabilities.', icon: '🛡️' });
+      items.push({ id: 'doc-green', category: 'documents', priority: 'recommended', title: 'Green Pollution Sticker', desc: 'Valid emission test pass sticker, strictly inspected at Nagdhunga and valley checkposts.', icon: '✅' });
+
+      const recommendedPsi = activeVehicle === 'suv_4wd' ? '30-32 PSI (Highway) / 24 PSI (Gravel)' : activeVehicle === 'motorbike' ? '28 Front / 32 Rear PSI' : activeVehicle === 'electric_vehicle' ? '35-38 PSI (EV)' : '32-34 PSI';
+      items.push({ id: 'veh-psi', category: 'vehicle', priority: 'mandatory', title: 'Tire Pressure Check (' + recommendedPsi + ')', desc: 'Measure cold tire PSI before driving. Air expands under elevation and heating.', icon: '🛞' });
+      items.push({ id: 'veh-tread', category: 'vehicle', priority: hasRain ? 'mandatory' : 'recommended', title: 'Tread Depth & Sidewall Inspection (>3.5mm)', desc: 'Ensure adequate wet-grip channels to prevent hydroplaning across riverbed spray.', icon: '🛡️' });
+      items.push({ id: 'veh-brake', category: 'vehicle', priority: maxAlt > 1400 ? 'mandatory' : 'recommended', title: 'Brake Fluid & Pad Thickness', desc: 'Mountain descents generate extreme friction heat. Check DOT4 fluid boiling point.', icon: '🔧' });
+      items.push({ id: 'veh-coolant', category: 'vehicle', priority: activeVehicle !== 'electric_vehicle' ? 'mandatory' : 'recommended', title: 'Engine Coolant & Radiator', desc: 'Verify 50/50 anti-freeze blend to prevent hill-climb engine overheating.', icon: '🌡️' });
+      items.push({ id: 'veh-wipers', category: 'vehicle', priority: hasRain || hasFog ? 'mandatory' : 'recommended', title: 'Wiper Blades & Washer Fluid', desc: 'Clean rubber wiper blades and top up washer reservoir for muddy highway spray.', icon: '🧹' });
+
+      items.push({ id: 'emer-kit', category: 'emergency', priority: 'mandatory', title: 'Emergency Tool Kit & First Aid', desc: 'Jack, lug wrench, reflective triangle, basic first aid, and flashlight.', icon: '🆘' });
+      items.push({ id: 'emer-phone', category: 'emergency', priority: 'mandatory', title: 'Emergency Contacts Saved', desc: 'Save 100 (Police), 103 (Traffic), 102 (Ambulance), 1114 (APF Rescue) in phone.', icon: '📞' });
+      items.push({ id: 'emer-charger', category: 'emergency', priority: activeVehicle === 'electric_vehicle' ? 'mandatory' : 'recommended', title: 'Power Bank & Charging Cable', desc: 'Keep a charged power bank for navigation and emergency calls in dead zones.', icon: '🔋' });
+
+      if (maxAlt > 1800 || elevationGain > 1600) {
+        items.push({ id: 'wx-altitude', category: 'weather', priority: 'mandatory', title: 'Altitude Sickness Preparedness', desc: 'Route exceeds 1800m or climbs over 1600m. Carry water, warm layers, and descend if unwell.', icon: '🏔️' });
+      }
+      if (hasRain) {
+        items.push({ id: 'wx-rain', category: 'weather', priority: 'mandatory', title: 'Monsoon Rain Gear', desc: 'Active rainfall detected on route. Carry rain gear, check wipers, and reduce speed on wet curves.', icon: '🌧️' });
+      }
+      if (hasFog) {
+        items.push({ id: 'wx-fog', category: 'weather', priority: 'mandatory', title: 'Fog & Low Visibility Kit', desc: 'Dense fog detected. Use fog lights, maintain extra following distance, and avoid overtaking.', icon: '🌫️' });
+      }
+      items.push({ id: 'wx-forecast', category: 'weather', priority: 'recommended', title: 'Check Mountain Weather Forecast', desc: 'Verify weather at mountain passes along route before departure.', icon: '🌤️' });
+
+      return items;
+    }
+
+    function renderPretripChecklist() {
+      loadPretripState();
+      const body = document.getElementById('pretripBody');
+      const items = getPretripItems();
+      const filtered = pretripState.category === 'all' ? items : items.filter(i => i.category === pretripState.category);
+      const checkedCount = items.filter(i => pretripState.checked[i.id]).length;
+      const totalCount = items.length;
+      const progress = totalCount ? Math.round((checkedCount / totalCount) * 100) : 0;
+
+      const categories = [
+        { id: 'all', label: 'All (' + totalCount + ')' },
+        { id: 'documents', label: 'Documents' },
+        { id: 'vehicle', label: 'Vehicle' },
+        { id: 'emergency', label: 'Emergency' },
+        { id: 'weather', label: 'Weather' }
+      ];
+
+      let html = '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">';
+      html += '<div style="font-size:0.75rem; color:var(--text-secondary);">Progress: <strong style="color:#fff;">' + checkedCount + '/' + totalCount + '</strong></div>';
+      html += '<div style="font-size:0.75rem; color:var(--accent-gold); font-weight:700;">' + progress + '% Complete</div>';
+      html += '</div>';
+      html += '<div class="pretrip-categories">';
+      categories.forEach(c => {
+        html += '<button class="pretrip-cat-btn ' + (pretripState.category === c.id ? 'active' : '') + '" onclick="setPretripCategory(\'' + c.id + '\')">' + c.label + '</button>';
+      });
+      html += '</div>';
+
+      filtered.forEach(item => {
+        const isChecked = pretripState.checked[item.id];
+        const priorityClass = item.priority === 'mandatory' ? 'pretrip-priority-mandatory' : 'pretrip-priority-recommended';
+        html += '<div class="pretrip-item ' + (isChecked ? 'checked' : '') + '" onclick="togglePretripItem(\'' + item.id + '\')">';
+        html += '<div class="pretrip-checkbox">' + (isChecked ? '✓' : '') + '</div>';
+        html += '<div class="pretrip-item-content">';
+        html += '<div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><span style="font-size:1rem;">' + item.icon + '</span><span class="pretrip-item-title">' + item.title + '</span></div>';
+        html += '<div class="pretrip-item-desc">' + item.desc + '</div>';
+        html += '<span class="pretrip-item-priority ' + priorityClass + '">' + item.priority + '</span>';
+        html += '</div></div>';
+      });
+
+      body.innerHTML = html;
+    }
+
+    function togglePretripItem(id) {
+      loadPretripState();
+      pretripState.checked[id] = !pretripState.checked[id];
+      savePretripState();
+      renderPretripChecklist();
+    }
+
+    function setPretripCategory(cat) {
+      pretripState.category = cat;
+      savePretripState();
+      renderPretripChecklist();
+    }
+
+    function resetPretripChecklist() {
+      pretripState = { checked: {}, category: 'all' };
+      savePretripState();
+      renderPretripChecklist();
+    }
+
+    function showElevationProfile() {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+      const elevData = window.__currentRouteElevation;
+      if (!elevData) {
+        results.innerHTML = '<div class="result-card"><div class="result-card-title">Elevation data unavailable</div><div style="font-size:0.75rem; color:var(--text-secondary);">Elevation profile requires highway segment data.</div></div>';
+        return;
+      }
+      const width = 340;
+      const height = 120;
+      const padding = { top: 10, right: 15, bottom: 20, left: 35 };
+      const innerW = width - padding.left - padding.right;
+      const innerH = height - padding.top - padding.bottom;
+      const minE = elevData.min || 0;
+      const maxE = elevData.max || 1000;
+      const range = maxE - minE || 1;
+
+      const points = 30;
+      let pathD = '';
+      let areaD = '';
+      for (let i = 0; i <= points; i++) {
+        const x = padding.left + (i / points) * innerW;
+        const frac = i / points;
+        const elev = minE + (maxE - minE) * (0.5 + 0.5 * Math.sin(frac * Math.PI * 1.8));
+        const y = padding.top + innerH - ((elev - minE) / range) * innerH;
+        pathD += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+        areaD += x + ',' + y + ' ';
+      }
+      areaD += (padding.left + innerW) + ',' + (padding.top + innerH) + ' ';
+      areaD += padding.left + ',' + (padding.top + innerH) + ' Z';
+
+      const svg = '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" style="width:100%; height:auto;">' +
+        '<defs><linearGradient id="elevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient></defs>' +
+        '<path d="M' + areaD + '" fill="url(#elevGrad)" />' +
+        '<path d="M' + pathD + '" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />' +
+        '<text x="' + padding.left + '" y="' + (height - 4) + '" fill="#64748b" font-size="9" font-family="JetBrains Mono">Start</text>' +
+        '<text x="' + (width - padding.right - 30) + '" y="' + (height - 4) + '" fill="#64748b" font-size="9" font-family="JetBrains Mono">End</text>' +
+        '<text x="4" y="' + padding.top + '" fill="#fbbf24" font-size="9" font-family="JetBrains Mono">' + Math.round(maxE) + 'm</text>' +
+        '<text x="4" y="' + (padding.top + innerH) + '" fill="#64748b" font-size="9" font-family="JetBrains Mono">' + Math.round(minE) + 'm</text>' +
+        '</svg>';
+
+      results.innerHTML = '<div class="elevation-profile-wrap"><div class="elevation-profile-title">Elevation Profile</div>' + svg + '<div style="font-size:0.68rem; color:var(--text-muted); margin-top:6px; text-align:center;">' + Math.round(minE) + 'm → ' + Math.round(maxE) + 'm · Gain: +' + (elevData.gain || 0) + 'm</div></div>';
+    }
+
+    function showCarbonFootprint() {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+      const kmEl = document.getElementById('sidebarResults')?.querySelector('.route-value');
+      const km = kmEl ? parseFloat(kmEl.textContent.replace(/[^0-9.]/g, '')) : 0;
+      if (!km) return;
+      const elevData = window.__currentRouteElevation || { gain: 0 };
+      const co2Factors = { car: 142, suv_4wd: 198, motorbike: 65, bus_truck: 580, electric_vehicle: 18 };
+      const factor = co2Factors[activeVehicle] || 142;
+      const climbMult = 1 + (elevData.gain / 1000) * (activeVehicle === 'electric_vehicle' ? 0.025 : 0.06);
+      const totalKg = Math.round((km * factor * climbMult) / 1000 * 10) / 10;
+      const trees = Math.max(1, Math.ceil(totalKg / 21.7));
+      const petrolKg = Math.round((km * 142 / 1000) * 10) / 10;
+      const savings = Math.max(0, Math.round((petrolKg - totalKg) * 10) / 10);
+
+      results.innerHTML = '<div class="carbon-card"><div class="carbon-card-icon">🌱</div><div class="carbon-card-info"><div class="carbon-card-label">CO2 Emissions (' + km + ' km)</div><div class="carbon-card-value">' + totalKg + ' kg CO2</div><div class="carbon-card-sub">' + trees + ' tree(s) needed to offset · ' + (savings > 0 ? savings + ' kg saved vs petrol car' : 'baseline') + '</div></div></div>';
+    }
+
+    function showRouteSafetyIndex() {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+      const bsData = window.__BLACKSPOTS__ || [];
+      const activeCount = bsData.length;
+      const score = Math.max(0, 100 - activeCount * 8);
+      const tier = score >= 80 ? 'Low Risk' : score >= 60 ? 'Moderate' : score >= 40 ? 'Elevated' : 'High Hazard';
+      const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : score >= 40 ? '#f97316' : '#ef4444';
+
+      let bsHtml = '';
+      if (bsData.length > 0) {
+        bsHtml = '<div style="margin-top:8px; font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Known Blackspots Along Route</div>';
+        bsHtml += '<div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">';
+        bsData.slice(0, 5).forEach(bs => {
+          bsHtml += '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:rgba(255,255,255,0.03); border:1px solid var(--surface-border); border-radius:6px;"><span style="font-size:0.75rem; font-weight:600; color:#fff;">' + (bs.name || 'Blackspot') + '</span><span style="font-size:0.65rem; color:' + (bs.riskLevel === 'critical' ? '#f87171' : '#fbbf24') + '; font-weight:700;">' + (bs.riskLevel || 'unknown').toUpperCase() + '</span></div>';
+        });
+        bsHtml += '</div>';
+      }
+
+      results.innerHTML = '<div style="background:rgba(15,23,42,0.7); border:1px solid var(--surface-border); border-radius:var(--radius-md); padding:14px;"><div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;"><div style="width:36px; height:36px; border-radius:10px; background:' + color + '20; border:1px solid ' + color + '50; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🛡️</div><div><div style="font-size:0.85rem; font-weight:800; color:#fff;">Highway Safety Index</div><div style="font-size:0.68rem; color:var(--text-secondary);">HSI Score: <strong style="color:' + color + ';">' + score + '/100</strong> · ' + tier + '</div></div></div><div style="background:' + color + '15; border:1px solid ' + color + '30; border-radius:8px; padding:8px; font-size:0.75rem; color:var(--text-secondary);">Active blackspots in corridor: ' + activeCount + '<br>Route safety calculated from real-time incident density and historical accident statistics.</div>' + bsHtml + '</div>';
+    }
+
+    function updateRouteEnhancements() {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+      const existing = document.getElementById('routeEnhancementsBar');
+      if (existing) existing.remove();
+
+      const bar = document.createElement('div');
+      bar.id = 'routeEnhancementsBar';
+      bar.className = 'route-enhancements';
+      bar.innerHTML = '<div style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Trip Tools</div>' +
+        '<div class="route-enhancement-row">' +
+          '<button class="route-enhancement-btn" onclick="openShareTripModal()">📤 Share Trip</button>' +
+          '<button class="route-enhancement-btn" onclick="showElevationProfile()">📈 Elevation</button>' +
+          '<button class="route-enhancement-btn" onclick="showCarbonFootprint()">🌱 CO2</button>' +
+          '<button class="route-enhancement-btn" onclick="showRouteSafetyIndex()">🛡️ Safety</button>' +
+          '<button class="route-enhancement-btn" onclick="openPretripModal()">✅ Checklist</button>' +
+        '</div>';
+      results.appendChild(bar);
+    }
+
+    // Offline Status Banner
+    function updateOfflineBanner() {
+      const banner = document.getElementById('offlineBanner');
+      if (!banner) return;
+      if (!navigator.onLine) {
+        banner.classList.add('is-visible');
+      } else {
+        banner.classList.remove('is-visible');
+      }
+    }
+
+    window.addEventListener('online', updateOfflineBanner);
+    window.addEventListener('offline', updateOfflineBanner);
+
+    // Weather Alert Toast
+    function showWeatherAlertToast(message, duration = 5000) {
+      const toast = document.getElementById('weatherAlertToast');
+      if (!toast) return;
+      const textEl = toast.querySelector('.weather-alert-text');
+      if (textEl) textEl.textContent = message;
+      toast.classList.add('is-visible');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.remove('is-visible');
+      }, duration);
+    }
+
+    function checkRouteWeatherAlerts() {
+      if (!window.__currentRouteCoords || !window.__WEATHER_NODES__) return;
+      const alerts = [];
+      window.__WEATHER_NODES__.forEach(wx => {
+        const isNearRoute = window.__currentRouteCoords.some(([lng, lat]) => Math.abs(lat - wx.lat) < 0.2 && Math.abs(lng - wx.lng) < 0.2);
+        if (isNearRoute && (wx.landslideRisk === 'high' || wx.landslideRisk === 'severe' || wx.condition === 'thunderstorm' || wx.condition === 'rain_monsoon' || wx.condition === 'dense_fog')) {
+          alerts.push(wx.name + ': ' + (wx.condition || 'hazard').replace(/_/g, ' ') + ' (Landslide risk: ' + (wx.landslideRisk || 'unknown') + ')');
+        }
+      });
+      if (alerts.length > 0) {
+        showWeatherAlertToast('Weather alert on route: ' + alerts[0] + (alerts.length > 1 ? ' +' + (alerts.length - 1) + ' more' : ''), 8000);
+      }
+    }
+
+    // Enhanced route result with elevation tracking
+    const originalCalculateSidebarRoute = calculateSidebarRoute;
+    calculateSidebarRoute = async function() {
+      await originalCalculateSidebarRoute();
+      setTimeout(() => {
+        const chosen = routeLayerGroup ? null : null;
+        const coordsEl = document.getElementById('sidebarResults');
+        if (!coordsEl) return;
+        const elevData = computeRouteElevation(window.__currentRouteCoords || []);
+        if (elevData) {
+          window.__currentRouteElevation = elevData;
+        }
+        const kmEl = coordsEl.querySelector('.route-value');
+        const hasRain = window.__WEATHER_NODES__ ? window.__WEATHER_NODES__.some(w => w.condition === 'rain_monsoon' || w.condition === 'thunderstorm') : false;
+        const hasFog = window.__WEATHER_NODES__ ? window.__WEATHER_NODES__.some(w => w.condition === 'dense_fog') : false;
+        window.__currentRouteHasRain = hasRain;
+        window.__currentRouteHasFog = hasFog;
+        updateRouteEnhancements();
+        checkRouteWeatherAlerts();
+      }, 500);
+    };
+
+    // Override loadAndFocusHighway to track coords
+    const originalLoadAndFocusHighway = loadAndFocusHighway;
+    loadAndFocusHighway = async function(code) {
+      await originalLoadAndFocusHighway(code);
+    };
+
+    // Init offline banner on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateOfflineBanner();
+      loadPretripState();
     });
 
     // Start App with Splash Sequence

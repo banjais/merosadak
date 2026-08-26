@@ -3922,3 +3922,380 @@ button:focus-visible, select:focus-visible {
     padding: 10px 14px;
   }
 }
+
+/* ==========================================================================
+   New Feature Styles
+   ========================================================================== */
+
+/* Offline Status Banner */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  color: #0b192c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 16px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.4);
+}
+.offline-banner.is-visible {
+  display: flex;
+}
+.offline-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0b192c;
+  animation: pulse 1.5s infinite;
+}
+
+/* Weather Alert Toast */
+.weather-alert-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 1500;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-lg);
+  max-width: 90vw;
+  backdrop-filter: blur(12px);
+}
+.weather-alert-toast.is-visible {
+  display: flex;
+  animation: slideDownFade 0.3s ease forwards;
+}
+.weather-alert-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.weather-alert-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+.weather-alert-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  line-height: 1;
+}
+
+/* Elevation Profile */
+.elevation-profile-wrap {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 8px;
+}
+.elevation-profile-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.elevation-profile-svg {
+  width: 100%;
+  height: 120px;
+}
+
+/* Carbon Footprint Card */
+.carbon-card {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.carbon-card-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.carbon-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.carbon-card-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.carbon-card-value {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}
+.carbon-card-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Share Trip Modal */
+.share-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  resize: vertical;
+  outline: none;
+}
+.share-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.share-btn {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+.share-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+.share-btn-whatsapp { background: #059669; }
+.share-btn-sms { background: #2563eb; }
+.share-btn-telegram { background: #0ea5e9; }
+.share-btn-copy { background: #1e3e62; border: 1px solid var(--surface-border); }
+
+/* Pre-Trip Checklist */
+.pretrip-categories {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pretrip-cat-btn {
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.pretrip-cat-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.pretrip-cat-btn.active {
+  background: var(--accent-gold);
+  color: #0b192c;
+  border-color: var(--accent-gold);
+}
+.pretrip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.pretrip-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.pretrip-item.checked {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.pretrip-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  color: transparent;
+}
+.pretrip-item.checked .pretrip-checkbox {
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
+  color: #fff;
+}
+.pretrip-item-content {
+  flex: 1;
+  min-width: 0;
+}
+.pretrip-item-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+}
+.pretrip-item-desc {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.pretrip-item-priority {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.pretrip-priority-mandatory {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.pretrip-priority-recommended {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Route Result Enhancements */
+.route-enhancements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.route-enhancement-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.route-enhancement-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.route-enhancement-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* SOS Floating Button */
+.sos-fab {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.5);
+  transition: all var(--transition-fast);
+  font-size: 1.4rem;
+}
+.sos-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(220, 38, 38, 0.7);
+}
+.sos-fab:active {
+  transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .share-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .carbon-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .sos-fab {
+    bottom: 80px;
+    right: 12px;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+  .bottom-bar-actions {
+    gap: 2px;
+  }
+  .bar-action-label {
+    display: none;
+  }
+  .bar-action-btn {
+    padding: 8px 10px;
+  }
+}
