@@ -1834,6 +1834,53 @@ h1, h2, h3, h4, .font-heading {
   font-family: 'JetBrains Mono', monospace;
 }
 
+.route-itinerary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.itinerary-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.itinerary-step:last-child {
+  border-bottom: none;
+}
+
+.itinerary-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itinerary-metrics {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+.alt-route-card:hover {
+  background: rgba(30, 62, 98, 0.35) !important;
+  border-color: var(--accent-gold) !important;
+}
+
+.alt-route-card:active {
+  transform: scale(0.98);
+}
+
 .weather-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--surface-border);
