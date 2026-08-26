@@ -865,10 +865,12 @@
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            userOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
-            lastDetectedOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            userOrigin = { lat, lng, label: 'My Location' };
+            lastDetectedOrigin = { lat, lng, label: 'My Location' };
             usingDetectedLocation = true;
             updateOriginCurrentItem();
+            map.flyTo([lat, lng], 12, { duration: 1.5 });
           },
           () => {},
           { timeout: 8000, maximumAge: 60000 }
@@ -900,7 +902,8 @@
     }
 
     function resetMapView() {
-      map.flyTo([28.3949, 84.1240], 7, { duration: 1.2 });
+      const target = userOrigin || lastDetectedOrigin || { lat: 28.3949, lng: 84.1240 };
+      map.flyTo([target.lat, target.lng], userOrigin ? 12 : 7, { duration: 1.2 });
     }
 
     // ==========================================
@@ -1974,7 +1977,7 @@
         const hGroup = L.layerGroup([hSurface, hCenter]).addTo(map);
         highwayGeoJsonLayers.push(hGroup);
 
-        map.flyToBounds(hGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
+        map.flyToBounds(hGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
         hCenter.bindPopup(`<strong>${meta.code}: ${meta.name}</strong><br><small>${meta.route}</small>`).openPopup();
       } catch (e) {
         console.error('Highway load error:', e);
@@ -3298,7 +3301,7 @@
           L.marker([endCoord[1], endCoord[0]], { icon: endIcon }).addTo(routeLayerGroup);
         }
 
-        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [60, 60], duration: 1.5 });
+        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
 
         const legend = L.control({ position: 'bottomleft' });
         legend.onAdd = function() {
