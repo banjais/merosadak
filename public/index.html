@@ -3254,7 +3254,7 @@
 
         if (routeLayerGroup) { map.removeLayer(routeLayerGroup); routeLayerGroup = null; }
         if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
-        routeLayerGroup = L.layerGroup().addTo(map);
+        routeLayerGroup = L.featureGroup().addTo(map);
 
         routes.forEach((route) => {
           const type = getRouteType(route);
