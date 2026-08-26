@@ -848,6 +848,12 @@ h1, h2, h3, h4, .font-heading {
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.3;
+  transition: opacity var(--transition-fast);
+}
+
+.route-search-bar:has(input:not(:placeholder-shown)) .search-icon-left {
+  opacity: 0.05;
 }
 
 .route-search-bar input {
@@ -879,6 +885,7 @@ h1, h2, h3, h4, .font-heading {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .route-origin-wrap {
