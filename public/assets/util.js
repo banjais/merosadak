@@ -96,14 +96,6 @@ window.renderSidebarRouteResult = renderSidebarRouteResult;
 window.changeFromLocation = changeFromLocation;
 window.showInfoCard = showInfoCard;
 
-  const container = document.getElementById('sidebarResults');
-  if (!container) return;
-  const div = document.createElement('div');
-  div.className = 'sidebar-result';
-  div.textContent = `${dest.label} (${dest.lat?.toFixed(3)}, ${dest.lng?.toFixed(3)})`;
-  container.appendChild(div);
-}
-
 async function calculateSidebarRoute() {
   // Placeholder: perform route calculation using selected points and preferences
   console.log('Calculating route...');
