@@ -3188,9 +3188,10 @@
           );
           if (passesThroughTunnel) {
             const toll = window.NEPAL_DATA.tollFees.nagdhungaTunnel;
-            const cat = toll.categories[0];
+            const catIndex = activeVehicle === 'bus_truck' ? 2 : 0;
+            const cat = toll.categories[catIndex];
             tollCost = cat.entry;
-            tollLabel = 'Nagdhunga Tunnel Toll';
+            tollLabel = toll.name + ' (' + cat.label + ')';
           }
         }
 
