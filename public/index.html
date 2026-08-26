@@ -223,24 +223,25 @@
             <div id="sidebarSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
           </div>
 
-          <div class="route-origin-wrap">
-            <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
-              <span class="origin-dot"></span>
-              <span id="originLabel">From: My Location</span>
-              <span class="origin-edit">▼</span>
-            </div>
-            <div id="originMenu" class="origin-menu" style="display:none;">
-              <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
-                <span class="origin-menu-icon">📍</span>
-                <span class="origin-menu-text">Detecting location…</span>
-              </div>
-              <div class="origin-menu-divider"></div>
-              <div class="origin-menu-item" onclick="showOriginSearch()">
-                <span class="origin-menu-icon">🔍</span>
-                <span class="origin-menu-text">From Other Location</span>
-              </div>
-            </div>
-          </div>
+           <div class="route-origin-wrap">
+             <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
+               <span class="origin-dot"></span>
+               <span id="originLabel">From: My Location</span>
+               <span class="origin-edit">▼</span>
+             </div>
+             <div id="originMenu" class="origin-menu" style="display:none;">
+               <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
+                 <span class="origin-menu-icon">📍</span>
+                 <span class="origin-menu-text">Detecting location…</span>
+               </div>
+               <div class="origin-menu-divider"></div>
+               <div class="origin-menu-item" onclick="showOriginSearch()">
+                 <span class="origin-menu-icon">🔍</span>
+                 <span class="origin-menu-text">From Other Location</span>
+               </div>
+             </div>
+           </div>
+           <div id="originInfoText" class="origin-info-text" style="display:none; margin-top:6px; font-size:0.75rem; color:var(--text-secondary); line-height:1.4;"></div>
           <div id="originSearchWrap" class="route-search-bar" style="display:none; position:relative;">
             <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
             <span class="search-icon-right">
@@ -807,13 +808,15 @@
     async function updateOriginInfo(lat, lng) {
       const info = document.getElementById('originInfoText');
       if (!info) return;
-      info.textContent = 'Updating location…';
+      info.style.display = 'block';
+      info.innerHTML = '<div>Updating location…</div><div style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">' + `${lat.toFixed(5)}, ${lng.toFixed(5)}` + '</div>';
       try {
         const data = await reverseGeocode(lat, lng);
         const text = formatOriginDetails(data);
-        info.textContent = text || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        const line1 = text || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        info.innerHTML = '<div>' + line1 + '</div><div style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">' + `${lat.toFixed(5)}, ${lng.toFixed(5)}` + '</div>';
       } catch (e) {
-        info.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        info.innerHTML = '<div>' + `${lat.toFixed(5)}, ${lng.toFixed(5)}` + '</div><div style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">' + `${lat.toFixed(5)}, ${lng.toFixed(5)}` + '</div>';
       }
     }
 
