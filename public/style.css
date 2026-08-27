@@ -2161,17 +2161,23 @@ h1, h2, h3, h4, .font-heading {
 }
 
 /* Hide injected extension/bookmark API-key banners */
-div[class*="api"][class*="key"],
-div[id*="api"][id*="key"],
-div:contains("API key required"),
-div:contains("apikey required"),
-div:contains("api_key required"),
-div[class*="bookmark"] > div,
-div[class*="extension"] > div,
+[id*="apiKeyWarning"],
+[id*="api_key"],
+[id*="apikey"],
+[id*="extensionAlert"],
+[id*="bookmarkAlert"],
+[class*="apiKeyWarning"],
+[class*="api_key"],
+[class*="apikey"],
+[class*="extensionAlert"],
+[class*="bookmarkAlert"],
+[class*="injected-banner"],
+[class*="extension-toast"],
+[class*="extension-toast"],
+[data-extension="true"],
 .notification-container,
 #apiKeyWarning,
 #extensionAlert,
-[data-extension="true"],
 .injected-banner,
 .extension-toast {
   display: none !important;

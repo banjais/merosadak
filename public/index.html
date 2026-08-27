@@ -861,6 +861,44 @@
       });
     };
 
+    // Remove injected extension/bookmark elements dynamically
+    const extensionSelectors = [
+      '[id*="apiKeyWarning"]',
+      '[id*="api_key"]',
+      '[id*="apikey"]',
+      '[id*="extensionAlert"]',
+      '[id*="bookmarkAlert"]',
+      '[class*="apiKeyWarning"]',
+      '[class*="api_key"]',
+      '[class*="apikey"]',
+      '[class*="extensionAlert"]',
+      '[class*="bookmarkAlert"]',
+      '[class*="injected-banner"]',
+      '[class*="extension-toast"]',
+      '[data-extension="true"]',
+      '.notification-container'
+    ];
+
+    function cleanInjectedElements() {
+      extensionSelectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          if (el && el.remove) {
+            el.remove();
+          }
+        });
+      });
+    }
+
+    if (window.MutationObserver) {
+      const observer = new MutationObserver(() => {
+        cleanInjectedElements();
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    setInterval(cleanInjectedElements, 2000);
+    window.addEventListener('load', cleanInjectedElements);
+
     // State Variables
     let map;
     let tileLayers = {};

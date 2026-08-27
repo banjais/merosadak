@@ -1,4 +1,4 @@
-const CACHE = "merosadak-v4";
+const CACHE = "merosadak-v5";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
