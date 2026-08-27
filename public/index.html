@@ -64,6 +64,38 @@
         </div>
       </div>
       <div class="header-spacer"></div>
+      <div class="header-menu-dropdown" id="headerMenuDropdown">
+        <button class="header-icon-btn menu-dropdown-btn" onclick="toggleHeaderMenu()" title="Quick Menu">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="1.5"></circle>
+            <circle cx="12" cy="12" r="1.5"></circle>
+            <circle cx="12" cy="19" r="1.5"></circle>
+          </svg>
+        </button>
+        <div class="header-dropdown-menu" id="headerDropdownMenu">
+          <button class="header-dropdown-item" onclick="openModal('sosModal'); closeHeaderMenu();">
+            <span>🚨</span> Emergency SOS
+          </button>
+          <button class="header-dropdown-item" onclick="triggerGeolocation(); closeHeaderMenu();">
+            <span>📍</span> Locate Me
+          </button>
+          <button class="header-dropdown-item" onclick="askAiRouteAdvisor(); closeHeaderMenu();">
+            <span>✨</span> AI Assistant
+          </button>
+          <button class="header-dropdown-item" onclick="openShareTripModal(); closeHeaderMenu();">
+            <span>🔗</span> Share Trip
+          </button>
+          <button class="header-dropdown-item" onclick="openPretripModal(); closeHeaderMenu();">
+            <span>✅</span> Checklist
+          </button>
+          <button class="header-dropdown-item" onclick="saveCurrentRoute(); closeHeaderMenu();">
+            <span>💾</span> Save Route
+          </button>
+          <button class="header-dropdown-item" onclick="toggleFullscreen(); closeHeaderMenu();">
+            <span>⛶</span> Fullscreen
+          </button>
+        </div>
+      </div>
       <button class="header-icon-btn lang-btn" onclick="toggleLanguage()" title="Toggle Language">
         <span id="langLabel">EN</span>
       </button>
@@ -402,65 +434,6 @@
     </button>
   </div>
 
-  <!-- ==========================================
-        5. Bottom App Bar + Expandable Actions
-        ========================================== -->
-  <div class="bottom-app-bar" id="bottomAppBar">
-    <div class="bottom-bar-actions" id="bottomBarActions">
-      <button class="bar-action-btn" onclick="triggerGeolocation()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
-          </svg>
-        </span>
-        <span class="bar-action-label">Locate Me</span>
-      </button>
-      <button class="bar-action-btn" onclick="askAiRouteAdvisor()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line>
-          </svg>
-        </span>
-        <span class="bar-action-label">AI Assistant</span>
-      </button>
-      <button class="bar-action-btn" onclick="openShareTripModal()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
-        </span>
-        <span class="bar-action-label">Share Trip</span>
-      </button>
-      <button class="bar-action-btn" onclick="openPretripModal()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-          </svg>
-        </span>
-        <span class="bar-action-label">Checklist</span>
-      </button>
-      <button class="bar-action-btn" onclick="saveCurrentRoute()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </span>
-        <span class="bar-action-label">Save Route</span>
-      </button>
-      <button class="bar-action-btn" onclick="toggleFullscreen()">
-        <span class="bar-action-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        </span>
-        <span class="bar-action-label">Fullscreen</span>
-      </button>
-    </div>
-    <button class="bottom-bar-fab" id="bottomBarFab" onclick="toggleBottomBar()" title="More Actions">
-      <span class="fab-plus">+</span>
-    </button>
-  </div>
-
   <!-- Offline Status Banner -->
   <div class="offline-banner" id="offlineBanner">
     <span class="offline-banner-dot"></span>
@@ -473,9 +446,6 @@
     <span class="weather-alert-text"></span>
     <button class="weather-alert-close" onclick="document.getElementById('weatherAlertToast').classList.remove('is-visible')">✕</button>
   </div>
-
-  <!-- SOS Floating Button -->
-  <button class="sos-fab" onclick="openModal('sosModal')" title="Emergency SOS Rescue">🚨</button>
 
   <!-- ==========================================
        6. Modals Suite
@@ -583,7 +553,7 @@
             <span style="font-size:0.9rem;">🛡️</span>
             <span>Select Emergency Nature / Distress Category:</span>
           </label>
-          <div id="sosDistressGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;"></div>
+          <div id="sosDistressGrid" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;"></div>
         </div>
 
         <!-- Vehicle, Passengers, and Rescuer Details Form -->
@@ -1616,13 +1586,10 @@
         const t = types[key];
         const selected = sosState.distressType === key;
         const priorityClass = t.priority === 'Critical' ? 'priority-critical' : t.priority === 'Urgent' ? 'priority-urgent' : 'priority-high';
-        return `<button type="button" onclick="setSosDistressType('${key}')" class="sos-distress-btn ${selected ? 'selected' : ''}">
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <span class="distress-emoji">${t.iconEmoji}</span>
-            <span class="distress-priority ${priorityClass}">${t.priority}</span>
-          </div>
-          <div class="distress-label">${t.label}</div>
-          <div class="distress-nepali">${t.nepaliLabel}</div>
+        return `<button type="button" onclick="setSosDistressType('${key}')" class="sos-distress-chip ${selected ? 'selected' : ''}">
+          <span class="distress-emoji">${t.iconEmoji}</span>
+          <span class="distress-label">${t.label}</span>
+          <span class="distress-priority ${priorityClass}">${t.priority}</span>
         </button>`;
       }).join('');
     }
@@ -2551,10 +2518,22 @@
       }
     }
 
-    function toggleBottomBar() {
-      const bar = document.getElementById('bottomAppBar');
-      if (bar) bar.classList.toggle('is-open');
+    function toggleHeaderMenu() {
+      const menu = document.getElementById('headerDropdownMenu');
+      if (menu) menu.classList.toggle('is-open');
     }
+
+    function closeHeaderMenu() {
+      const menu = document.getElementById('headerDropdownMenu');
+      if (menu) menu.classList.remove('is-open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('headerMenuDropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        closeHeaderMenu();
+      }
+    });
 
     function saveCurrentRoute() {
       if (!selectedDestination) {
@@ -2573,7 +2552,7 @@
         date: new Date().toISOString()
       });
       localStorage.setItem('merosadak_saved_routes', JSON.stringify(routes));
-      alert('✅ Route saved! View it anytime from the bottom bar menu.');
+      alert('✅ Route saved! Access it anytime from the menu.');
     }
 
 
