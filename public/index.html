@@ -835,8 +835,9 @@
     // Suppress unhandled promise rejections from external extensions/content scripts
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
-      const isExtensionError = (reason && reason.message && /contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(reason.message)) || (typeof reason === 'object' && reason !== null && /contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(JSON.stringify(reason)));
-      if (isExtensionError) {
+      const reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason);
+      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401/.test(reasonStr);
+      if (isExtensionError || (typeof reason === 'object' && reason !== null && !reason.stack && !reason.name)) {
         event.preventDefault();
         return;
       }
@@ -845,6 +846,20 @@
 
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';
+
+    // Wrap global fetch to suppress unhandled rejections from external/blocked requests
+    const _originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      return _originalFetch.apply(this, args).catch(err => {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url) || '';
+        const isBlocked = /googleapis|google|mapbox|here|tomtom|api\.openstreetmap|photon/.test(url);
+        if (isBlocked) {
+          console.debug('[MeroSadak] Suppressed fetch error for blocked/external service:', url);
+          return Promise.resolve(new Response(JSON.stringify({ error: 'blocked' }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+        return Promise.reject(err);
+      });
+    };
 
     // State Variables
     let map;
