@@ -3909,6 +3909,47 @@ button:focus-visible, select:focus-visible {
   line-height: 1;
 }
 
+/* API Error Toast */
+.api-error-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 1500;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(217, 4, 41, 0.5);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-lg);
+  max-width: 90vw;
+  backdrop-filter: blur(12px);
+}
+.api-error-toast.is-visible {
+  display: flex;
+  animation: slideDownFade 0.3s ease forwards;
+}
+.api-error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.api-error-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+.api-error-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  line-height: 1;
+}
+
 /* Elevation Profile */
 .elevation-profile-wrap {
   background: rgba(0, 0, 0, 0.2);

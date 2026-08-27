@@ -447,6 +447,13 @@
     <button class="weather-alert-close" onclick="document.getElementById('weatherAlertToast').classList.remove('is-visible')">✕</button>
   </div>
 
+  <!-- API Error Toast -->
+  <div class="api-error-toast" id="apiErrorToast">
+    <span class="api-error-icon">🔌</span>
+    <span class="api-error-text"></span>
+    <button class="api-error-close" onclick="document.getElementById('apiErrorToast').classList.remove('is-visible')">✕</button>
+  </div>
+
   <!-- ==========================================
        6. Modals Suite
         ========================================== -->
@@ -924,7 +931,9 @@
         const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=1&accept-language=${lang}`);
         const data = await r.json();
         if (data[0]) return { lat: +data[0].lat, lon: +data[0].lon, display_name: data[0].display_name };
-      } catch (e) {}
+      } catch (e) {
+        console.error('[MeroSadak] Geocode failed for:', q, e);
+      }
       return null;
     }
 
@@ -976,18 +985,41 @@
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
       tileLayers.voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO | DOR Nepal GIS'
+        attribution: '&copy; OpenStreetMap &copy; CARTO | DOR Nepal GIS',
+        errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
       tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri, Earthstar Geographics'
+        attribution: 'Tiles &copy; Esri, Earthstar Geographics',
+        errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
       tileLayers.terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map &copy; OpenStreetMap, SRTM | OpenTopoMap'
+        attribution: 'Map &copy; OpenStreetMap, SRTM | OpenTopoMap',
+        errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
       tileLayers.voyager.addTo(map);
+
+      let tileErrorCount = 0;
+      const maxTileErrors = 5;
+
+      function onTileError(err) {
+        tileErrorCount++;
+        if (tileErrorCount >= maxTileErrors) {
+          tileErrorCount = 0;
+          console.error('[MeroSadak] Multiple tile errors detected, switching basemap');
+          showApiError('Map tiles are loading slowly. Switching basemap...');
+          const fallbacks = ['voyager', 'terrain', 'satellite'];
+          const current = currentMapStyle;
+          const next = fallbacks.find(s => s !== current) || 'voyager';
+          setMapStyle(next);
+        }
+      }
+
+      Object.values(tileLayers).forEach(layer => {
+        layer.on('tileerror', onTileError);
+      });
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -1023,8 +1055,11 @@
     }
 
     function setMapStyle(style) {
-      if (tileLayers[currentMapStyle]) map.removeLayer(tileLayers[currentMapStyle]);
+      if (tileLayers[currentMapStyle]) {
+        map.removeLayer(tileLayers[currentMapStyle]);
+      }
       currentMapStyle = style;
+      tileErrorCount = 0;
       tileLayers[currentMapStyle].addTo(map);
     }
 
@@ -1586,9 +1621,10 @@
         const t = types[key];
         const selected = sosState.distressType === key;
         const priorityClass = t.priority === 'Critical' ? 'priority-critical' : t.priority === 'Urgent' ? 'priority-urgent' : 'priority-high';
+        const labelText = currentLang === 'ne' && t.nepaliLabel ? t.nepaliLabel : t.label;
         return `<button type="button" onclick="setSosDistressType('${key}')" class="sos-distress-chip ${selected ? 'selected' : ''}">
           <span class="distress-emoji">${t.iconEmoji}</span>
-          <span class="distress-label">${t.label}</span>
+          <span class="distress-label">${labelText}</span>
           <span class="distress-priority ${priorityClass}">${t.priority}</span>
         </button>`;
       }).join('');
@@ -2238,17 +2274,19 @@
           const name = f.properties.name || '';
           if (!name || added.has(name)) return;
           added.add(name);
+          const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
+          if (!coords) return;
           const div = document.createElement('div');
           div.textContent = name;
           div.style.padding = '8px 12px';
           div.style.cursor = 'pointer';
           div.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
-          div.onclick = () => addMatrixPlace(name, f.geometry.coordinates[1], f.geometry.coordinates[0]);
+          div.onclick = () => addMatrixPlace(name, coords[1], coords[0]);
           boxEl.appendChild(div);
         });
 
         boxEl.style.display = boxEl.children.length ? 'block' : 'none';
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error('[MeroSadak] Matrix search error:', e); }
     }
 
     function addMatrixPlace(label, lat, lon) {
@@ -2495,6 +2533,10 @@
       updateLangLabel();
     }
 
+    function hasDevanagari(text) {
+      return /[\u0900-\u097F]/.test(text || '');
+    }
+
     function toggleLanguage() {
       currentLang = currentLang === 'en' ? 'ne' : 'en';
       try { localStorage.setItem('merosadak_lang', currentLang); } catch (e) {}
@@ -2724,17 +2766,24 @@
       if (matches.length === 0 && q.length >= 3) {
         try {
           const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(cleanQ) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json());
+          if (res.error) {
+            console.error('[MeroSadak] Photon origin search error:', res.error);
+          }
           (res.features || []).forEach(f => {
             const name = f.properties.name || '';
             const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
             const label = area ? name + ', ' + area : name;
+            const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
+            if (!coords) return;
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.innerHTML = '<span>' + label + '</span> <span class="tag">Map Place</span>';
-            div.onclick = () => selectOriginItem({ label, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] });
+            div.onclick = () => selectOriginItem({ label, lat: coords[1], lng: coords[0] });
             suggest.appendChild(div);
           });
-        } catch (err) {}
+        } catch (err) {
+          console.error('[MeroSadak] Photon origin search failed:', err);
+        }
       }
       suggest.style.display = suggest.children.length ? 'block' : 'none';
     }
@@ -3113,6 +3162,7 @@
     function showPlaceInfoCard(item) {
       const results = document.getElementById('sidebarResults');
       if (!results) return;
+      console.log('[MeroSadak] showPlaceInfoCard:', item.label, 'type:', item.type);
 
       const typeIcon = item.type === 'City Hub' ? '🏙️' :
                        item.type === 'District HQ' ? '🏛️' :
@@ -3144,6 +3194,7 @@
     async function selectSidebarItem(item) {
       document.getElementById('sidebarSuggest').style.display = 'none';
       let dest = item;
+      console.log('[MeroSadak] selectSidebarItem:', item.label, 'type:', item.type);
 
       if (item.type === 'Coordinate') {
         document.getElementById('sidebarSearch').value = item.label;
@@ -3588,8 +3639,12 @@
         results.innerHTML = html;
 
       } catch (err) {
-        console.error('Route calculation error:', err);
-        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Unknown error') + '</div></div>';
+        console.error('[MeroSadak] Route calculation error:', err);
+        const msg = (err.message || 'Unknown error');
+        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + msg + '</div></div>';
+        if (msg.includes('API key') || msg.includes('key') || msg.includes('401') || msg.includes('403')) {
+          showApiError('Routing service error: ' + msg);
+        }
       }
     }
 
@@ -4226,6 +4281,18 @@ Plan your safe mountain highway journey at mero-sadak.app`;
       }, duration);
     }
 
+    function showApiError(message, duration = 6000) {
+      const toast = document.getElementById('apiErrorToast');
+      if (!toast) return;
+      const textEl = toast.querySelector('.api-error-text');
+      if (textEl) textEl.textContent = message;
+      toast.classList.add('is-visible');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.remove('is-visible');
+      }, duration);
+    }
+
     function checkRouteWeatherAlerts() {
       if (!window.__currentRouteCoords || !window.__WEATHER_NODES__) return;
       const alerts = [];
@@ -4376,7 +4443,8 @@ Plan your safe mountain highway journey at mero-sadak.app`;
           const div = document.createElement('div');
           div.className = 'autocomplete-item';
           const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
-          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + item.type + '</span>';
+          const npBadge = currentLang === 'ne' && item.nepaliLabel ? '<span class="tag" style="background:rgba(245,158,11,0.2); color:#fbbf24;">NP</span>' : '';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + item.type + '</span>' + npBadge;
           div.onclick = () => selectSidebarItem(item);
           sidebarSuggest.appendChild(div);
         });
@@ -4384,17 +4452,27 @@ Plan your safe mountain highway journey at mero-sadak.app`;
         if (matches.length === 0 && query.length >= 3) {
           try {
             const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(cleanQ) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json());
+            if (res.error) {
+              console.error('[MeroSadak] Photon API error:', res.error);
+              showApiError('Search service error: ' + res.error);
+            }
             (res.features || []).forEach(f => {
               const name = f.properties.name || '';
               const area = [f.properties.city, f.properties.state].filter(Boolean).join(', ');
               const label = area ? name + ', ' + area : name;
+              const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
+              if (!coords) return;
               const div = document.createElement('div');
               div.className = 'autocomplete-item';
-              div.innerHTML = '<span>' + label + '</span> <span class="tag">Map Place</span>';
-              div.onclick = () => selectSidebarItem({ label, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] });
+              const npTag = hasDevanagari(name) ? ' <span class="tag" style="background:rgba(245,158,11,0.2); color:#fbbf24;">नेपाली</span>' : '';
+              div.innerHTML = '<span>' + label + '</span>' + npTag + ' <span class="tag">Map Place</span>';
+              div.onclick = () => selectSidebarItem({ label, lat: coords[1], lng: coords[0] });
               sidebarSuggest.appendChild(div);
             });
-          } catch (err) {}
+          } catch (err) {
+            console.error('[MeroSadak] Photon search failed:', err);
+            showApiError('Search is temporarily unavailable. Please try again.');
+          }
         }
 
         sidebarSuggest.style.display = sidebarSuggest.children.length ? 'block' : 'none';
