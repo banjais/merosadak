@@ -3551,7 +3551,7 @@
             const midCoord = route.geometry.coordinates[midIndex];
             const labelIcon = L.divIcon({
               className: 'route-label-marker',
-              html: '<div style="background:' + hexToRgba(config.color, 0.2) + '; border:1px solid ' + config.color + '; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; backdrop-filter:blur(4px);">' + meta.badge + '</div>',
+              html: '<div style="background:' + hexToRgba(config.color, 0.2) + '; border:1px solid ' + config.color + '; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; backdrop-filter:blur(4px);">' + config.badge + '</div>',
               iconSize: [100, 18],
               iconAnchor: [50, 9]
             });
