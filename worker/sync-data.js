@@ -2,7 +2,7 @@
  * Sync local public/data/*.json files to Cloudflare KV.
  *
  * Usage:
- *   node worker/sync-data.js --token <CF_API_TOKEN> --account <CF_ACCOUNT_ID> --namespace <KV_NAMESPACE_ID>
+ *   node worker/sync-data.js --token <CLOUDFLARE_API_TOKEN> --account <CLOUDFLARE_ACCOUNT_ID> --namespace <KV_NAMESPACE_ID>
  *
  * Or after running setup-kv.js, it reads namespace ID from wrangler.toml automatically.
  */
@@ -61,13 +61,13 @@ async function main() {
     return idx >= 0 ? args[idx + 1] : null;
   };
 
-  const token = getArg('--token') || process.env.CF_API_TOKEN;
-  const accountId = getArg('--account') || process.env.CF_ACCOUNT_ID;
+  const token = getArg('--token') || process.env.CLOUDFLARE_API_TOKEN;
+  const accountId = getArg('--account') || process.env.CLOUDFLARE_ACCOUNT_ID;
   let namespaceId = getArg('--namespace');
 
   if (!token || !accountId) {
     console.error('Usage: node worker/sync-data.js --token <TOKEN> --account <ACCOUNT_ID> [--namespace <KV_ID>]');
-    console.error('   or: CF_API_TOKEN=... CF_ACCOUNT_ID=... node worker/sync-data.js');
+    console.error('   or: CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... node worker/sync-data.js');
     process.exit(1);
   }
 

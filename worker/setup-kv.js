@@ -2,7 +2,7 @@
  * Create a Cloudflare KV namespace for Mero Sadak data.
  *
  * Usage:
- *   node worker/setup-kv.js --token <CF_API_TOKEN> --account <CF_ACCOUNT_ID>
+ *   node worker/setup-kv.js --token <CLOUDFLARE_API_TOKEN> --account <CLOUDFLARE_ACCOUNT_ID>
  *
  * The token needs "Account > Cloudflare Workers > Edit" permission.
  */
@@ -48,12 +48,12 @@ async function main() {
   const args = process.argv.slice(2);
   const tokenIdx = args.indexOf('--token');
   const accountIdx = args.indexOf('--account');
-  const token = tokenIdx >= 0 ? args[tokenIdx + 1] : process.env.CF_API_TOKEN;
-  const accountId = accountIdx >= 0 ? args[accountIdx + 1] : process.env.CF_ACCOUNT_ID;
+  const token = tokenIdx >= 0 ? args[tokenIdx + 1] : process.env.CLOUDFLARE_API_TOKEN;
+  const accountId = accountIdx >= 0 ? args[accountIdx + 1] : process.env.CLOUDFLARE_ACCOUNT_ID;
 
   if (!token || !accountId) {
     console.error('Usage: node worker/setup-kv.js --token <TOKEN> --account <ACCOUNT_ID>');
-    console.error('   or: CF_API_TOKEN=... CF_ACCOUNT_ID=... node worker/setup-kv.js');
+    console.error('   or: CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... node worker/setup-kv.js');
     process.exit(1);
   }
 

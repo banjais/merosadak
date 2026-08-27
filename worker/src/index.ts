@@ -1,15 +1,18 @@
 /**
  * Mero Sadak — Cloudflare Worker backend
  *
- * Purpose: proxy calls that need a paid/rate-limited API key so the key
- * never ships to the browser. Everything that has a free, keyless public
- * endpoint (Nominatim, Photon, OSRM, Open-Meteo) is called directly from
- * the frontend and does NOT need to go through this worker.
+ * Architecture:
+ *   Free/keyless APIs (Nominatim, Photon, OSRM, Open-Meteo, Overpass)
+ *   are called directly from the browser. This worker exists only to:
+ *   1) Proxy paid/rate-limited APIs so keys never ship to the client
+ *   2) Merge multi-source data (e.g. TomTom + Waze)
+ *   3) Provide fallbacks when a primary source is unreachable
  *
- * Secrets are set with:
+ * Secrets (never committed):
  *   wrangler secret put TOMTOM_API_KEY
  *   wrangler secret put GEMINI_API_KEY
- * Never put real key values in wrangler.toml or in this file.
+ *   wrangler secret put OPENWEATHERMAP_API_KEY
+ *   wrangler secret put WAZE_FEED_URL
  */
 
 export interface Env {
@@ -42,6 +45,15 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// ============================================================
+// WAZE FEED — crowd-sourced traffic alerts & jams
+// Requires: WAZE_FEED_URL (Waze Partner Hub feed URL)
+// Provides:  Real-time accident, hazard, and jam reports from
+//            Waze users. Coverage is good in urban corridors
+//            but sparse on rural highways. Used as both a
+//            primary incidents source and a traffic fallback.
+// ============================================================
+
 async function fetchWazeAlerts(env: Env): Promise<any[]> {
   if (!env.WAZE_FEED_URL) return [];
   try {
@@ -52,11 +64,17 @@ async function fetchWazeAlerts(env: Env): Promise<any[]> {
   }
 }
 
-// Road incidents: merges TomTom's Incidents API (accidents, roadworks,
-// closures, hazards) with Waze's crowd-sourced alerts for the same area.
-// Neither source alone has full coverage in Nepal, so both run and their
-// results are combined rather than one being a strict fallback for the
-// other — more reports found beats picking just one provider.
+// ============================================================
+// INCIDENTS — road accidents, closures, hazards
+// Primary:  TomTom Traffic Incidents API (key required)
+//            Structured incident data with geometry, type,
+//            severity, and descriptions.
+// Secondary: Waze Feed alerts (crowd-sourced)
+//            Merged with TomTom — neither source alone has
+//            full Nepal coverage, so both run and results
+//            are combined.
+// ============================================================
+
 async function handleIncidents(url: URL, env: Env): Promise<Response> {
   const lat = parseFloat(url.searchParams.get("lat") || "");
   const lon = parseFloat(url.searchParams.get("lon") || "");
@@ -113,6 +131,14 @@ async function handleIncidents(url: URL, env: Env): Promise<Response> {
   });
 }
 
+// ============================================================
+// WAZE JAMS — live congestion & speed data
+// Requires: WAZE_FEED_URL
+// Provides:  Jam segments with current speed, free-flow speed,
+//            and severity level (0-5). Used as a fallback when
+//            TomTom traffic data is unavailable for a point.
+// ============================================================
+
 async function fetchWazeJams(env: Env): Promise<any[]> {
   if (!env.WAZE_FEED_URL) return [];
   try {
@@ -123,8 +149,16 @@ async function fetchWazeJams(env: Env): Promise<any[]> {
   }
 }
 
-// Traffic: TomTom primary. If TomTom errors or isn't configured, fall back
-// to estimating conditions from the nearest jam in the Waze feed.
+// ============================================================
+// TRAFFIC — live speed & congestion at a point
+// Primary:   TomTom Traffic Flow API (key required)
+//            Returns current speed, free-flow speed, and
+//            confidence for the nearest road segment.
+// Fallback:  Nearest Waze jam within ~3 km
+//            Estimates speed/severity from Waze crowd data.
+// Final:     Returns `{ source: "none" }` if both fail.
+// ============================================================
+
 async function handleTraffic(url: URL, env: Env): Promise<Response> {
   const lat = url.searchParams.get("lat");
   const lon = url.searchParams.get("lon");
@@ -179,8 +213,15 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
   });
 }
 
-// Weather: Open-Meteo primary (free, keyless). Falls back to OpenWeatherMap
-// only if Open-Meteo is unreachable — normalizes both into the same shape.
+// ============================================================
+// WEATHER — current conditions for a lat/lon
+// Primary:   Open-Meteo (free, keyless)
+//            Temperature, wind, weather code, humidity, etc.
+// Fallback:  OpenWeatherMap Current Weather API (key required)
+//            Same fields, different provider.
+// Final:     Returns 502 if both fail.
+// ============================================================
+
 async function handleWeather(url: URL, env: Env): Promise<Response> {
   const lat = url.searchParams.get("lat");
   const lon = url.searchParams.get("lon");
@@ -188,42 +229,70 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
     return new Response(JSON.stringify({ error: "lat and lon are required" }), { status: 400 });
   }
 
+  let source = "none";
+  let data: any = null;
+
   try {
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m`);
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu`);
     if (res.ok) {
-      const data = await res.json<any>();
+      data = await res.json<any>();
       if (data.current) {
-        return new Response(JSON.stringify({
-          source: "open-meteo",
-          temperature: data.current.temperature_2m,
-          windSpeed: data.current.wind_speed_10m,
-        }), { status: 200, headers: { "Content-Type": "application/json", ...cors(env) } });
+        source = "open-meteo";
       }
     }
   } catch {
     // fall through to OpenWeatherMap
   }
 
-  if (env.OPENWEATHERMAP_API_KEY) {
+  if (source === "none" && env.OPENWEATHERMAP_API_KEY) {
     try {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${env.OPENWEATHERMAP_API_KEY}`);
       if (res.ok) {
-        const data = await res.json<any>();
-        return new Response(JSON.stringify({
-          source: "openweathermap",
-          temperature: data.main?.temp,
-          windSpeed: data.wind?.speed,
-        }), { status: 200, headers: { "Content-Type": "application/json", ...cors(env) } });
+        const owm = await res.json<any>();
+        source = "openweathermap";
+        data = {
+          current: {
+            temperature_2m: owm.main?.temp,
+            weather_code: mapOwmIconToCode(owm.weather?.[0]?.icon || ""),
+            wind_speed_10m: owm.wind?.speed,
+            relative_humidity_2m: owm.main?.humidity,
+            precipitation: owm.rain?.["1h"] || 0,
+            apparent_temperature: owm.main?.feels_like,
+            surface_pressure: owm.main?.pressure,
+          },
+          daily: null,
+        };
       }
     } catch {
       // both failed
     }
   }
 
-  return new Response(JSON.stringify({ source: "none", error: "Weather unavailable" }), {
-    status: 502,
+  if (source === "none") {
+    return new Response(JSON.stringify({ source: "none", error: "Weather unavailable" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", ...cors(env) },
+    });
+  }
+
+  return new Response(JSON.stringify({ source, ...data }), {
+    status: 200,
     headers: { "Content-Type": "application/json", ...cors(env) },
   });
+}
+
+// Rough mapping from OpenWeatherMap icon codes to WMO weather codes
+function mapOwmIconToCode(icon: string): number {
+  if (icon.startsWith("01")) return 0;
+  if (icon.startsWith("02")) return 1;
+  if (icon.startsWith("03")) return 2;
+  if (icon.startsWith("04")) return 3;
+  if (icon.startsWith("09")) return 61;
+  if (icon.startsWith("10")) return 63;
+  if (icon.startsWith("11")) return 95;
+  if (icon.startsWith("13")) return 71;
+  if (icon.startsWith("50")) return 45;
+  return 0;
 }
 
 const POI_TAGS: Record<string, string> = {
@@ -235,9 +304,15 @@ const POI_TAGS: Record<string, string> = {
   police: "amenity=police",
 };
 
-// POIs: Overpass API primary (free, keyless, OpenStreetMap data). Falls
-// back to a Nominatim bounding-box search if Overpass is slow/unreachable
-// (Overpass has no SLA and occasionally rate-limits under load).
+// ============================================================
+// POIS — nearby amenities (fuel, hospitals, hotels, etc.)
+// Primary:   Overpass API (free, keyless, OpenStreetMap data)
+//            Structured query with radius and tag filter.
+// Fallback:  Nominatim bounding-box search
+//            Less precise but no rate-limit under normal load.
+// Final:     Returns empty results if both fail.
+// ============================================================
+
 async function handlePois(url: URL, env: Env): Promise<Response> {
   const lat = parseFloat(url.searchParams.get("lat") || "");
   const lon = parseFloat(url.searchParams.get("lon") || "");
@@ -292,6 +367,14 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
   }
 }
 
+// ============================================================
+// WAZE RAW FEED — passthrough proxy for the Waze Partner feed
+// Requires: WAZE_FEED_URL
+// Provides:  Unmodified Waze JSON feed (alerts + jams).
+//            Frontends that need the full raw feed can call
+//            this endpoint; the worker adds CORS headers.
+// ============================================================
+
 async function handleWaze(env: Env): Promise<Response> {
   const res = await fetch(env.WAZE_FEED_URL);
   const body = await res.text();
@@ -339,6 +422,14 @@ async function setCachedAnswer(env: Env, key: string, value: string): Promise<vo
     // cache write is best-effort, never block the response on it
   }
 }
+
+// ============================================================
+// GEMINI AI ASSISTANT — route safety advisory
+// Primary:   GEMINI_MODEL_PRIMARY (e.g. gemini-2.5-flash)
+// Fallback:  GEMINI_MODEL_SECONDARY (e.g. gemini-2.0-flash-lite)
+// Cache:     Upstash Redis (24h TTL) to dedupe repeat prompts.
+//            Cache is best-effort — failures are silently ignored.
+// ============================================================
 
 async function callGemini(env: Env, model: string, prompt: string): Promise<Response> {
   const upstream = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;

@@ -1423,10 +1423,38 @@
     async function fetchLiveIncidents() {
       if (!layerGroups.incidents) return;
       layerGroups.incidents.clearLayers();
-      const data = Array.isArray(window.__INCIDENTS__) ? window.__INCIDENTS__ : [];
+
+      const center = map.getCenter();
+      let data = [];
+
+      try {
+        const res = await fetch(WORKER_URL + '/api/incidents?lat=' + center.lat + '&lon=' + center.lng + '&radius_km=20');
+        if (res.ok) {
+          const json = await res.json();
+          data = (json.results || []).map((inc: any) => ({
+            title: inc.type || 'Incident',
+            description: inc.description || '',
+            source: inc.source || 'unknown',
+            severity: 'moderate',
+            lat: inc.lat,
+            lng: inc.lon,
+            highwayName: '',
+            locationName: '',
+            status: 'Live',
+            reportedAt: new Date().toLocaleString(),
+          }));
+        }
+      } catch (e) {
+        console.debug('[MeroSadak] Live incidents failed, using static data', e);
+      }
+
+      if (!data.length) {
+        data = Array.isArray(window.__INCIDENTS__) ? window.__INCIDENTS__ : [];
+      }
+
       data.forEach(inc => {
         const isCritical = inc.severity === 'severe' || inc.severity === 'critical';
-        const color = inc.severity === 'severe' || inc.severity === 'critical' ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
+        const color = isCritical ? '#ef4444' : inc.severity === 'moderate' ? '#f59e0b' : '#3b82f6';
         const markerHtml = `
           <div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">
             ${isCritical ? '<div style="position:absolute; width:40px; height:40px; background:rgba(239,68,68,0.4); border-radius:50%; animation:markerPing 1.5s infinite;"></div>' : ''}
@@ -1436,7 +1464,8 @@
           </div>
         `;
         const icon = L.divIcon({ className: 'custom-incident-marker', html: markerHtml, iconSize: [40, 40], iconAnchor: [20, 20] });
-        L.marker([inc.lat, inc.lng], { icon }).bindPopup(`<strong>${inc.title}</strong><br><small>${inc.highwayName} · ${inc.locationName}</small><br>${inc.description}<br><small>Status: ${inc.status} · ${inc.reportedAt}</small>`).addTo(layerGroups.incidents);
+        const sourceTag = inc.source ? `<small>(${inc.source})</small>` : '';
+        L.marker([inc.lat, inc.lng], { icon }).bindPopup(`<strong>${inc.title}</strong><br><small>${inc.description || ''}</small><br>${sourceTag}<br><small>Status: ${inc.status} · ${inc.reportedAt}</small>`).addTo(layerGroups.incidents);
       });
     }
 
@@ -1483,6 +1512,32 @@
     async function fetchLiveTraffic() {
       if (!layerGroups.traffic) return;
       layerGroups.traffic.clearLayers();
+
+      const center = map.getCenter();
+      let liveFlow = null;
+
+      try {
+        const res = await fetch(WORKER_URL + '/api/traffic?lat=' + center.lat + '&lon=' + center.lng);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.source !== 'none') liveFlow = json;
+        }
+      } catch (e) {
+        console.debug('[MeroSadak] Live traffic failed, using static data', e);
+      }
+
+      if (liveFlow) {
+        const level = liveFlow.level || 'unknown';
+        const color = level === 'standstill' ? '#ef4444' : level === 'heavy' ? '#f59e0b' : level === 'moderate' ? '#3b82f6' : '#10b981';
+        const markerHtml = `
+          <div style="position:relative; padding:8px 14px; border-radius:20px; background:${color}; border:2px solid #fff; color:#fff; font-size:12px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+            🚦 ${liveFlow.currentSpeed ?? '?'} / ${liveFlow.freeFlowSpeed ?? '?'} km/h
+          </div>
+        `;
+        const icon = L.divIcon({ className: 'custom-traffic-marker', html: markerHtml, iconSize: [140, 36], iconAnchor: [70, 18] });
+        L.marker([center.lat, center.lng], { icon }).bindPopup(`<strong>🚦 Live Traffic</strong><br><small>Source: ${liveFlow.source}</small><br>Current: ${liveFlow.currentSpeed ?? '—'} km/h<br>Free flow: ${liveFlow.freeFlowSpeed ?? '—'} km/h<br>Level: ${level}${liveFlow.distanceKm ? '<br>Nearest jam: ' + liveFlow.distanceKm + ' km' : ''}`).addTo(layerGroups.traffic);
+      }
+
       const data = Array.isArray(window.__TRAFFIC_CORRIDORS__) ? window.__TRAFFIC_CORRIDORS__ : [];
       data.forEach(tr => {
         const color = tr.level === 'standstill' ? '#ef4444' : tr.level === 'heavy' ? '#f59e0b' : tr.level === 'moderate' ? '#3b82f6' : '#10b981';
@@ -1494,7 +1549,30 @@
     async function fetchLivePois() {
       if (!layerGroups.pois) return;
       layerGroups.pois.clearLayers();
-      const data = Array.isArray(window.__POIS__) ? window.__POIS__ : [];
+
+      const center = map.getCenter();
+      let livePois = [];
+
+      try {
+        const res = await fetch(WORKER_URL + '/api/pois?lat=' + center.lat + '&lon=' + center.lng + '&type=fuel&radius=5000');
+        if (res.ok) {
+          const json = await res.json();
+          livePois = (json.results || []).map((p: any) => ({
+            name: p.name || 'Fuel Station',
+            lat: p.lat,
+            lng: p.lon,
+            category: 'fuel_station',
+            highwayCode: '',
+            locationName: '',
+            description: 'Live POI via Overpass',
+            rating: null,
+          }));
+        }
+      } catch (e) {
+        console.debug('[MeroSadak] Live POIs failed, using static data', e);
+      }
+
+      const data = livePois.length ? livePois : (Array.isArray(window.__POIS__) ? window.__POIS__ : []);
       data.forEach(poi => {
         const icon = poi.category === 'ev_charger' ? '⚡' : poi.category === 'fuel_station' ? '⛽' : poi.category === 'food_rest' ? '🍽️' : poi.category === 'scenic_pass' ? '🏔️' : poi.category === 'emergency_dor' ? '🆘' : '🛣️';
         const marker = L.marker([poi.lat, poi.lng]).bindPopup(`<strong>${icon} ${poi.name}</strong><br><small>${poi.highwayCode} · ${poi.locationName}</small><br>${poi.description}<br><small>Rating: ${poi.rating}/5</small>`);
@@ -2686,8 +2764,11 @@
       if (weatherCoalescer.has(key)) {
         return weatherCoalescer.get(key);
       }
-      const promise = fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu')
-        .then(r => r.json())
+
+      // Weather: try Worker first (Open-Meteo → OpenWeatherMap fallback
+      // with secret key protected server-side), then fall back to direct
+      // Open-Meteo if the Worker is unreachable.
+      const promise = fetchWeatherWithFallback(lat, lng)
         .then(data => {
           weatherCoalescer.delete(key);
           if (weatherCache.size >= weatherCacheMax) {
@@ -2703,6 +2784,23 @@
         });
       weatherCoalescer.set(key, promise);
       return promise;
+    }
+
+    async function fetchWeatherWithFallback(lat, lng) {
+      const omUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu';
+
+      try {
+        const res = await fetch(WORKER_URL + '/api/weather?lat=' + lat + '&lon=' + lng);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.current) return data;
+        }
+      } catch (e) {
+        console.debug('[MeroSadak] Worker weather failed, falling back to Open-Meteo', e);
+      }
+
+      const res = await fetch(omUrl);
+      return res.json();
     }
 
     const SEARCH_CACHE_TTL = 5 * 60 * 1000;
@@ -3726,7 +3824,7 @@
     async function renderContextWeather(place, container) {
       container.innerHTML = '<div style="color:var(--text-secondary);">⏳ Loading weather…</div>';
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu').then(r => r.json());
+        const res = await fetchWeatherWithFallback(place.lat, place.lng);
         if (res.current) {
           const temp = Math.round(res.current.temperature_2m);
           const wind = Math.round(res.current.wind_speed_10m || 0);
@@ -3866,7 +3964,7 @@
       results.innerHTML = '<div class="weather-card"><div style="color:var(--text-secondary);">⏳ Loading weather for ' + place.label + '...</div></div>';
 
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lng + '&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu').then(r => r.json());
+        const res = await fetchWeatherWithFallback(place.lat, place.lng);
         if (res.current) {
           const temp = Math.round(res.current.temperature_2m);
           const wind = Math.round(res.current.wind_speed_10m || 0);
