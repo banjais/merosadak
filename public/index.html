@@ -832,6 +832,18 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="nepalData.js"></script>
   <script>
+    // Force cleanup of any old service workers and caches
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => reg.unregister());
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.forEach(key => caches.delete(key));
+      });
+    }
+
     // Suppress unhandled promise rejections from external extensions/content scripts
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
