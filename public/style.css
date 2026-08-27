@@ -2143,6 +2143,45 @@ h1, h2, h3, h4, .font-heading {
   font-size: 12px !important;
 }
 
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  opacity: 0.45 !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  max-width: 40vw !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.leaflet-control-attribution a {
+  color: rgba(148, 163, 184, 0.6) !important;
+  text-decoration: none !important;
+}
+
+/* Hide injected extension/bookmark API-key banners */
+div[class*="api"][class*="key"],
+div[id*="api"][id*="key"],
+div:contains("API key required"),
+div:contains("apikey required"),
+div:contains("api_key required"),
+div[class*="bookmark"] > div,
+div[class*="extension"] > div,
+.notification-container,
+#apiKeyWarning,
+#extensionAlert,
+[data-extension="true"],
+.injected-banner,
+.extension-toast {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
+
 .route-start-marker, .route-end-marker {
   background: transparent !important;
   border: none !important;
