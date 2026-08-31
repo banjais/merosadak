@@ -283,6 +283,7 @@
           </div>
         </div>
         <div id="originInfoText" class="origin-info-text" style="display:none; margin-top:6px; font-size:0.75rem; color:var(--text-secondary); line-height:1.4;"></div>
+        <div id="routeSearchPanel">
         <div id="originSearchWrap" class="route-search-bar" style="display:none; position:relative;">
           <span class="search-icon-left">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -337,6 +338,12 @@
           </div>
 
         <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
+        </div>
+        </div>
+
+        <div id="routeSearchToggle" style="display:none; margin-bottom:10px;">
+          <button class="calculate-btn" onclick="showRouteSearchPanel()" style="background:rgba(255,255,255,0.06); border:1px solid var(--surface-border);">✏️ Edit Route</button>
+        </div>
 
         <div class="sidebar-results" id="sidebarResults"></div>
 
@@ -383,14 +390,20 @@
       </svg>
       <span class="toggle-label">My Location</span>
     </button>
-    <button class="map-toggle-btn active" id="toggleHighways" onclick="toggleLayer('highways')" title="National Highways">
+    <button class="map-toggle-btn active" id="toggleHighways" onclick="toggleLayer('highways')" title="National Highways" style="display:none;">
       <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 19L20 5"></path>
         <path d="M4 5l16 14"></path>
       </svg>
       <span class="toggle-label">Highways</span>
     </button>
-    <button class="map-toggle-btn" id="toggleWeather" onclick="toggleLayer('weather')" title="Weather & Passes">
+    <button class="map-toggle-btn active" id="toggleOsmroads" onclick="toggleLayer('osmroads')" title="OSM Major Roads">
+      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"></path>
+      </svg>
+      <span class="toggle-label">OSM Roads</span>
+    </button>
+    <button class="map-toggle-btn" id="toggleWeather" onclick="toggleLayer('weather')" title="Weather & Passes" style="display:none;">
       <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M17 18a4 4 0 0 0-8 0h8z"></path>
         <path d="M12 2v2m-4.5 3.5L12 7m7 0l4.5-1.5M6.5 16.5L4 18m14 0l-2.5 1.5M12 14v4"></path>
@@ -959,6 +972,7 @@
     
     // Map Layers
     let highwayGeoJsonLayers = [];
+    let osmRoadLayers = [];
     let boundaryLayer = null;
     let routeLayerGroup = null;
     let routeLegend = null;
@@ -984,6 +998,7 @@
 
     let layerVisibility = {
       highways: true,
+      osmroads: true,
       weather: false,
       traffic: false,
       incidents: true,
@@ -1354,6 +1369,7 @@
 
         renderHighwayDirectory();
         loadMajorHighwaysOverview(safeHighways);
+        loadOSMRoads();
       } catch (err) {
         console.error('Data initialization error:', err);
       }
@@ -1371,22 +1387,46 @@
     }
 
     async function loadMajorHighwaysOverview(highways) {
-      const keyCodes = ['NH01', 'NH17', 'NH44', 'NH08', 'NH47', 'NH13', 'NH03', 'NH58', 'NH39'];
-      for (const h of highways) {
-        if (keyCodes.includes(h.code)) {
-          fetch(`data/highway/${h.file}`).then(r => r.json()).then(geo => {
-            const hSurface = L.geoJSON(geo, { style: { color: '#0f172a', weight: 12, opacity: 0.9, lineCap: 'round', lineJoin: 'round' } });
-            const hCenter = L.geoJSON(geo, {
-              style: { color: '#f59e0b', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' },
-              onEachFeature: {
-                mouseover: (e) => { e.target.setStyle({ weight: 8, opacity: 1 }); e.target.bringToFront(); },
-                mouseout: (e) => { e.target.setStyle({ weight: 5, opacity: 0.95 }); }
-              }
-            }).bindPopup(`<strong>${h.code}: ${h.name}</strong><br><small>${h.route}</small>`);
-            const hLayer = L.layerGroup([hSurface, hCenter]).addTo(map);
-            highwayGeoJsonLayers.push(hLayer);
-          }).catch(() => {});
-        }
+      const promises = highways.map(h => {
+        return fetch(`data/highway/${h.file}`).then(r => r.json()).then(geo => {
+          const hSurface = L.geoJSON(geo, { style: { color: '#0f172a', weight: 6, opacity: 0.7, lineCap: 'round', lineJoin: 'round' } });
+          const hCenter = L.geoJSON(geo, {
+            style: { color: '#f59e0b', weight: 2, opacity: 0.85, lineCap: 'round', lineJoin: 'round' },
+            onEachFeature: {
+              mouseover: (e) => { e.target.setStyle({ weight: 4, opacity: 1 }); e.target.bringToFront(); },
+              mouseout: (e) => { e.target.setStyle({ weight: 2, opacity: 0.85 }); }
+            }
+          }).bindPopup(`<strong>${h.code}: ${h.name}</strong><br><small>${h.route}</small>`);
+          const hLayer = L.layerGroup([hSurface, hCenter]).addTo(map);
+          highwayGeoJsonLayers.push(hLayer);
+        }).catch(() => {});
+      });
+      await Promise.allSettled(promises);
+    }
+
+    async function loadOSMRoads() {
+      try {
+        const query = '[out:geom][timeout:60];(way["highway"]["highway"~"^(motorway|trunk|primary|secondary)$"](26.3,80.0,30.5,88.5););out geom;';
+        const res = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+        if (!res.ok) throw new Error('Overpass HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.elements || !data.elements.length) return;
+        const features = data.elements.map(el => ({
+          type: 'Feature',
+          properties: { highway: el.tags && el.tags.highway, name: (el.tags && (el.tags.name || el.tags.official_name)) || '' },
+          geometry: { type: 'LineString', coordinates: (el.geometry || []).map(p => [p.lon, p.lat]) }
+        }));
+        const geojson = { type: 'FeatureCollection', features };
+        const osmLayer = L.geoJSON(geojson, {
+          style: { color: '#64748b', weight: 2, opacity: 0.3, lineCap: 'round', lineJoin: 'round' }
+        }).addTo(map);
+        osmRoadLayers.push(osmLayer);
+      } catch (e) {
+        console.debug('[MeroSadak] OSM roads load failed:', e);
       }
     }
 
@@ -1654,6 +1694,8 @@
 
       if (name === 'highways') {
         highwayGeoJsonLayers.forEach(l => layerVisibility.highways ? l.addTo(map) : map.removeLayer(l));
+      } else if (name === 'osmroads') {
+        osmRoadLayers.forEach(l => layerVisibility.osmroads ? l.addTo(map) : map.removeLayer(l));
       } else if (layerGroups[name]) {
         layerVisibility[name] ? layerGroups[name].addTo(map) : map.removeLayer(layerGroups[name]);
         if (layerVisibility[name]) {
@@ -1688,6 +1730,13 @@
       const menu = document.getElementById('mapFloatingToggles');
       fab.classList.toggle('is-open');
       menu.classList.toggle('is-open');
+    }
+
+    function showMapToggleOptions() {
+      const highwaysBtn = document.getElementById('toggleHighways');
+      const weatherBtn = document.getElementById('toggleWeather');
+      if (highwaysBtn) highwaysBtn.style.display = '';
+      if (weatherBtn) weatherBtn.style.display = '';
     }
 
     function toggleSidebar() {
@@ -3538,6 +3587,7 @@
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
       openAutoPopup(dest.lat, dest.lng, '<strong>' + dest.label + '</strong>');
       showPlaceInfoCard(dest);
+      showMapToggleOptions();
     }
 
     function computeRouteElevation(coords) {
@@ -3782,29 +3832,6 @@
 
         map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
 
-        const legend = L.control({ position: 'bottomleft' });
-        legend.onAdd = function() {
-          const div = L.DomUtil.create('div', 'route-legend');
-          div.innerHTML = '<div style="font-size:0.7rem; font-weight:800; color:#fff; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Route Options</div>';
-          const prefMetaAll = [
-            getRoutePreferenceMeta('fastest'),
-            getRoutePreferenceMeta('shortest'),
-            getRoutePreferenceMeta('safest'),
-            getRoutePreferenceMeta('scenic'),
-            getRoutePreferenceMeta('ev'),
-            getRoutePreferenceMeta('avoid_toll')
-          ];
-          prefMetaAll.forEach(item => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:4px; padding:3px 6px; border-radius:4px; background:' + (activeRoutePreference === 'fastest' && item.icon === '🚀' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'shortest' && item.icon === '📏' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'scenic' && item.icon === '🏔️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'safest' && item.icon === '🛡️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'ev' && item.icon === '⚡' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'avoid_toll' && item.icon === '🚫' ? 'rgba(255,255,255,0.1)' : 'transparent') + ';';
-            row.innerHTML = '<span style="width:12px; height:3px; background:' + item.color + '; border-radius:2px; display:inline-block; box-shadow:0 0 4px ' + item.color + ';"></span><span style="font-size:0.68rem; color:' + (row.style.background.includes('0.1') ? '#fff' : 'rgba(255,255,255,0.7)') + '; font-weight:' + (row.style.background.includes('0.1') ? '800' : '500') + ';">' + item.badge + '</span>';
-            div.appendChild(row);
-          });
-          return div;
-        };
-        legend.addTo(map);
-        routeLegend = legend;
-
         const cleanOrigin = origin.label === 'My Location' ? 'Kathmandu' : origin.label;
         const cleanDest = dest.label === 'My Location' ? 'Kathmandu' : dest.label;
 
@@ -3899,6 +3926,11 @@
           controlsRow.classList.remove('hidden');
         }
 
+        const searchPanel = document.getElementById('routeSearchPanel');
+        if (searchPanel) searchPanel.style.display = 'none';
+        const searchToggle = document.getElementById('routeSearchToggle');
+        if (searchToggle) searchToggle.style.display = 'block';
+
       } catch (err) {
         console.error('[MeroSadak] Route calculation error:', err);
         const msg = (err.message || 'Unknown error');
@@ -3907,6 +3939,15 @@
           showApiError('Routing service error: ' + msg);
         }
       }
+    }
+
+    function showRouteSearchPanel() {
+      const searchPanel = document.getElementById('routeSearchPanel');
+      if (searchPanel) searchPanel.style.display = 'block';
+      const searchToggle = document.getElementById('routeSearchToggle');
+      if (searchToggle) searchToggle.style.display = 'none';
+      const searchInput = document.getElementById('sidebarSearch');
+      if (searchInput) searchInput.focus();
     }
 
     function switchRouteOption(type) {
