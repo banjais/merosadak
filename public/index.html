@@ -341,21 +341,21 @@
         <div class="sidebar-results" id="sidebarResults"></div>
 
         <div class="route-controls-row hidden" id="routeControlsRow">
-          <select id="sidebarVehicle" onchange="activeVehicle=this.value; calculateSidebarRoute();">
-            <option value="car">Car/Sedan</option>
-            <option value="suv_4wd">SUV/4WD</option>
-            <option value="motorbike">Motorcycle</option>
-            <option value="bus_truck">Bus/Truck</option>
-            <option value="electric_vehicle">EV</option>
-          </select>
-          <select id="sidebarPriority" onchange="activeRoutePreference=this.value; calculateSidebarRoute();">
-            <option value="fastest">Fastest</option>
-            <option value="shortest">Shortest</option>
-            <option value="safest">Safest</option>
-            <option value="scenic">Scenic</option>
-            <option value="ev">EV Priority</option>
-            <option value="avoid_toll">Avoid Toll</option>
-          </select>
+          <div class="route-pref-pills" id="vehiclePills">
+            <button class="pref-pill active" data-value="car" onclick="setVehicle('car')">🚗 Car</button>
+            <button class="pref-pill" data-value="suv_4wd" onclick="setVehicle('suv_4wd')">🚙 SUV</button>
+            <button class="pref-pill" data-value="motorbike" onclick="setVehicle('motorbike')">🏍️ Moto</button>
+            <button class="pref-pill" data-value="bus_truck" onclick="setVehicle('bus_truck')">🚌 Bus</button>
+            <button class="pref-pill" data-value="electric_vehicle" onclick="setVehicle('electric_vehicle')">⚡ EV</button>
+          </div>
+          <div class="route-pref-pills" id="prefPills">
+            <button class="pref-pill active" data-value="fastest" onclick="setRoutePref('fastest')">🚀 Fastest</button>
+            <button class="pref-pill" data-value="shortest" onclick="setRoutePref('shortest')">📏 Shortest</button>
+            <button class="pref-pill" data-value="safest" onclick="setRoutePref('safest')">🛡️ Safest</button>
+            <button class="pref-pill" data-value="scenic" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
+            <button class="pref-pill" data-value="ev" onclick="setRoutePref('ev')">⚡ EV</button>
+            <button class="pref-pill" data-value="avoid_toll" onclick="setRoutePref('avoid_toll')">🚫 No Toll</button>
+          </div>
         </div>
 
         <input type="hidden" id="originSearch" value="My Location">
@@ -2692,13 +2692,15 @@
           document.getElementById('sidebarSearch').value = to;
           if (pref && ['fastest','shortest','safest','scenic','ev','avoid_toll'].includes(pref)) {
             activeRoutePreference = pref;
-            const sel = document.getElementById('sidebarPriority');
-            if (sel) sel.value = pref;
+            document.querySelectorAll('#prefPills .pref-pill').forEach(btn => {
+              btn.classList.toggle('active', btn.dataset.value === pref);
+            });
           }
           if (vehicle && ['car','suv_4wd','motorbike','bus_truck','electric_vehicle'].includes(vehicle)) {
             activeVehicle = vehicle;
-            const sel = document.getElementById('sidebarVehicle');
-            if (sel) sel.value = vehicle;
+            document.querySelectorAll('#vehiclePills .pref-pill').forEach(btn => {
+              btn.classList.toggle('active', btn.dataset.value === vehicle);
+            });
           }
           setMode('route');
         }
@@ -3410,7 +3412,6 @@
               '<div class="place-meta">' + (meta.join(' · ') || 'Selected location') + '</div>' +
             '</div>' +
           '</div>' +
-          '<button class="plan-trip-btn" onclick="calculateSidebarRoute()">🗺️ Plan Trip</button>' +
         '</div>';
     }
 
@@ -3912,10 +3913,27 @@
       const mapped = type === 'other' ? 'safest' : type;
       if (mapped === 'fastest' || mapped === 'shortest' || mapped === 'scenic' || mapped === 'safest' || mapped === 'ev' || mapped === 'avoid_toll') {
         activeRoutePreference = mapped;
-        const sel = document.getElementById('sidebarPriority');
-        if (sel) sel.value = mapped;
+        document.querySelectorAll('#prefPills .pref-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.value === mapped);
+        });
         calculateSidebarRoute();
       }
+    }
+
+    function setVehicle(v) {
+      activeVehicle = v;
+      document.querySelectorAll('#vehiclePills .pref-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === v);
+      });
+      if (selectedDestination) calculateSidebarRoute();
+    }
+
+    function setRoutePref(p) {
+      activeRoutePreference = p;
+      document.querySelectorAll('#prefPills .pref-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === p);
+      });
+      if (selectedDestination) calculateSidebarRoute();
     }
 
     async function renderContextWeather(place, container) {
