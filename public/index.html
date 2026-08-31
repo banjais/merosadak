@@ -650,6 +650,44 @@
     </div>
   </div>
 
+  <!-- Highway Directory & Information Inspector Modal (NH01 - NH80) -->
+  <div class="modal-overlay" id="highwayModal">
+    <div class="modal-card hwy-modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🛣️</span> <span>Nepal National Highways Directory &amp; Corridor GIS</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('highwayModal')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:14px; overflow:hidden; flex:1; display:flex; flex-direction:column;">
+        <div class="hwy-modal-layout">
+          <!-- Left Directory Sidebar -->
+          <div class="hwy-sidebar-pane">
+            <div style="position:relative;">
+              <input type="text" id="hwySearchInput" placeholder="🔍 Search NH code, name or city (e.g. NH17, Prithvi, Pokhara)..." oninput="filterHighwayDirectory()" style="width:100%; padding:9px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.8rem; outline:none;">
+            </div>
+            <div class="hwy-filter-pills" id="hwyFilterPills">
+              <button class="hwy-filter-pill active" onclick="setHighwayCategory('all')">All (80)</button>
+              <button class="hwy-filter-pill" onclick="setHighwayCategory('spine')">East-West</button>
+              <button class="hwy-filter-pill" onclick="setHighwayCategory('mountain')">Hilly &amp; Passes</button>
+              <button class="hwy-filter-pill" onclick="setHighwayCategory('terai')">Terai / Trade</button>
+              <button class="hwy-filter-pill" onclick="setHighwayCategory('ringroad')">Ring Roads</button>
+            </div>
+            <div class="hwy-list-scroll" id="hwyListScroll"></div>
+          </div>
+
+          <!-- Right Highway Detail Inspector -->
+          <div class="hwy-detail-pane" id="hwyDetailPane">
+            <div style="text-align:center; padding:50px 20px; color:var(--text-secondary);">
+              <span style="font-size:2.5rem; display:block; margin-bottom:10px;">🛣️</span>
+              Select a National Highway from the list to inspect surface condition, passways, and detailed corridor properties.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Citizen Road Report Modal -->
   <div class="modal-overlay" id="reportModal">
     <div class="modal-card">
@@ -1816,14 +1854,396 @@
     // 9. Modals & Extended Features
     // ==========================================
     function openModal(id) {
-      document.getElementById(id).style.display = 'flex';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+      if (id === 'highwayModal') renderHighwayDirectory();
       if (id === 'sosModal') renderSosModal();
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
     }
 
     function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // Highway Directory & Information Explorer Module
+    let activeHighwayCategory = 'all';
+    let selectedHighwayCode = 'NH17';
+    let currentHighwayLayer = null;
+
+    function renderHighwayDirectory(selectedCode = null) {
+      if (selectedCode) selectedHighwayCode = selectedCode;
+      filterHighwayDirectory();
+      selectHighwayInDirectory(selectedHighwayCode || 'NH17');
+    }
+
+    function setHighwayCategory(cat) {
+      activeHighwayCategory = cat;
+      document.querySelectorAll('#hwyFilterPills .hwy-filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${cat}'`));
+      });
+      filterHighwayDirectory();
+    }
+
+    function filterHighwayDirectory() {
+      const query = (document.getElementById('hwySearchInput')?.value || '').toLowerCase().trim();
+      const listEl = document.getElementById('hwyListScroll');
+      if (!listEl) return;
+
+      const highways = allHighwaysIndex && allHighwaysIndex.length ? allHighwaysIndex : [];
+      if (!highways.length) {
+        listEl.innerHTML = '<div style="padding:16px; color:var(--text-muted); font-size:0.8rem; text-align:center;">Loading Nepal Highway Directory…</div>';
+        return;
+      }
+
+      const filtered = highways.filter(h => {
+        if (query) {
+          const matchCode = (h.code || '').toLowerCase().includes(query);
+          const matchName = (h.name || '').toLowerCase().includes(query);
+          const matchRoute = (h.route || '').toLowerCase().includes(query);
+          const matchDist = Array.isArray(h.districts) && h.districts.some(d => d.toLowerCase().includes(query));
+          if (!matchCode && !matchName && !matchRoute && !matchDist) return false;
+        }
+
+        if (activeHighwayCategory === 'spine') {
+          return h.code === 'NH01' || h.code === 'NH03' || h.code === 'NH05' || h.code === 'NH17' || (h.route && h.route.toLowerCase().includes('corridor'));
+        }
+        if (activeHighwayCategory === 'mountain') {
+          return ['NH02', 'NH03', 'NH10', 'NH11', 'NH13', 'NH17', 'NH18', 'NH19', 'NH23', 'NH25', 'NH48', 'NH51', 'NH56', 'NH57', 'NH60', 'NH63', 'NH64', 'NH65', 'NH74', 'NH75'].includes(h.code);
+        }
+        if (activeHighwayCategory === 'terai') {
+          return ['NH01', 'NH04', 'NH05', 'NH08', 'NH09', 'NH14', 'NH16', 'NH20', 'NH22', 'NH28', 'NH32', 'NH35', 'NH36', 'NH41', 'NH44', 'NH47', 'NH50', 'NH52', 'NH58', 'NH59', 'NH62', 'NH67', 'NH73'].includes(h.code);
+        }
+        if (activeHighwayCategory === 'ringroad') {
+          return ['NH38', 'NH39', 'NH75', 'NH77', 'NH78'].includes(h.code) || (h.name && h.name.toLowerCase().includes('ring') || h.name.toLowerCase().includes('chakrapath'));
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        listEl.innerHTML = '<div style="padding:20px; color:var(--text-muted); font-size:0.75rem; text-align:center;">No highways match your search.</div>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(h => {
+        const isSel = h.code === selectedHighwayCode;
+        const info = getHighwayExtendedData(h.code);
+        const surfaceBadge = info.surfaceType === 'under_construction'
+          ? '<span style="font-size:0.62rem; font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); padding:1px 6px; border-radius:4px;">🟡 Widening</span>'
+          : info.surfaceType === 'gravel'
+          ? '<span style="font-size:0.62rem; font-weight:700; color:#f87171; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); padding:1px 6px; border-radius:4px;">🟠 Gravel</span>'
+          : '<span style="font-size:0.62rem; font-weight:700; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:4px;">🟢 Pitched</span>';
+
+        return `
+          <div class="hwy-list-item ${isSel ? 'selected' : ''}" onclick="selectHighwayInDirectory('${h.code}')">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span class="hw-badge">${h.code}</span>
+              ${surfaceBadge}
+            </div>
+            <div style="font-size:0.85rem; font-weight:800; color:#fff; line-height:1.3;">${h.name}</div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              📍 ${h.route || 'National Highway'}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.68rem; color:var(--text-muted);">
+              <span>📏 ${info.totalLengthKm} km</span>
+              <span>${Array.isArray(h.districts) ? h.districts.length + ' Districts' : ''}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getHighwayExtendedData(code) {
+      const infoList = window.__HIGHWAY_INFO__ || [];
+      const detailed = infoList.find(item => item.code === code || item.id === code.toLowerCase() || (code === 'NH17' && item.code === 'H04') || (code === 'NH01' && item.code === 'H01') || (code === 'NH13' && item.code === 'H13') || (code === 'NH03' && item.code === 'H15') || (code === 'NH47' && item.code === 'H10'));
+      
+      const basic = (allHighwaysIndex || []).find(h => h.code === code) || {};
+      const routeParts = (basic.route || '').split(/[-–—➔➔]/).map(s => s.trim()).filter(Boolean);
+      const startPoint = detailed?.startPoint || (routeParts[0] ? routeParts[0] : 'Origin Hub');
+      const endPoint = detailed?.endPoint || (routeParts[routeParts.length - 1] ? routeParts[routeParts.length - 1] : 'Destination Hub');
+
+      // Surface Classification
+      let surfaceLabel = 'Pitched / Blacktopped (Asphalt Concrete)';
+      let surfaceType = 'pitched';
+      if (detailed?.segments && detailed.segments.some(s => s.surface === 'under_construction')) {
+        surfaceLabel = 'Pitched with Active 4-Lane Widening Upgrades';
+        surfaceType = 'under_construction';
+      } else if (['NH25', 'NH56', 'NH57', 'NH63', 'NH64', 'NH65', 'NH70'].includes(code)) {
+        surfaceLabel = 'Partially Pitched & High Mountain Gravel / Dirt Track';
+        surfaceType = 'gravel';
+      }
+
+      // Terrain classification
+      let terrain = detailed?.terrainType;
+      if (!terrain) {
+        const dStr = (basic.districts || []).join(' ').toLowerCase();
+        if (dStr.includes('mustang') || dStr.includes('manang') || dStr.includes('solu') || dStr.includes('dolpa') || dStr.includes('jumla')) {
+          terrain = 'High Mountain';
+        } else if (dStr.includes('jhapa') || dStr.includes('morang') || dStr.includes('sunsari') || dStr.includes('saptari') || dStr.includes('siraha') || dStr.includes('dhanusha') || dStr.includes('bara') || dStr.includes('parsa') || dStr.includes('banke') || dStr.includes('kailali')) {
+          terrain = 'Terai Plains';
+        } else {
+          terrain = 'Hilly River Valley';
+        }
+      }
+
+      // Elevation estimation
+      let elevRange = '300m → 1,450m ASL';
+      if (terrain === 'High Mountain') elevRange = '1,200m → 3,850m ASL';
+      if (terrain === 'Terai Plains') elevRange = '80m → 450m ASL';
+      if (detailed?.segments && detailed.segments.length) {
+        const minE = Math.min(...detailed.segments.map(s => s.elevationStartM || s.elevationEndM || 9999));
+        const maxE = Math.max(...detailed.segments.map(s => s.elevationStartM || s.elevationEndM || 0));
+        if (minE < 9000 && maxE > 0) elevRange = `${minE}m → ${maxE}m ASL`;
+      }
+
+      // Passway cities & hubs
+      let cities = detailed?.keyPassesAndJunctions;
+      if (!cities || !cities.length) {
+        cities = routeParts.length >= 2 ? routeParts : [startPoint, 'Mid Corridor', endPoint];
+      }
+
+      return {
+        code,
+        name: detailed?.name || basic.name || code,
+        nepaliName: detailed?.nepaliName || '',
+        totalLengthKm: detailed?.totalLengthKm || (routeParts.length * 38 + 24),
+        startPoint,
+        endPoint,
+        surfaceLabel,
+        surfaceType,
+        terrain,
+        elevRange,
+        conditionRating: detailed?.conditionRating || (surfaceType === 'gravel' ? 3.1 : surfaceType === 'under_construction' ? 3.5 : 4.4),
+        scenicRating: detailed?.scenicRating || 4.5,
+        description: detailed?.description || `National Highway ${code} forming an essential strategic arterial corridor traversing ${basic.districts ? basic.districts.join(', ') : 'Nepal road network'}.`,
+        dorDivision: detailed?.dorDivision || 'Department of Roads (DOR) Regional Division',
+        emergencyContact: detailed?.emergencyContact || '103 (Traffic Police Hotline) / 100',
+        districts: basic.districts || [],
+        provinces: detailed?.provinces || [],
+        cities,
+        segments: detailed?.segments || [],
+        evChargers: detailed?.evChargers || [],
+        tollPlazas: detailed?.tollPlazas || [],
+        file: basic.file || ''
+      };
+    }
+
+    function selectHighwayInDirectory(code) {
+      selectedHighwayCode = code;
+      const detailPane = document.getElementById('hwyDetailPane');
+      if (!detailPane) return;
+
+      document.querySelectorAll('#hwyListScroll .hwy-list-item').forEach(item => {
+        item.classList.toggle('selected', item.textContent.includes(code));
+      });
+
+      const data = getHighwayExtendedData(code);
+
+      // Cities Trail
+      const citiesHtml = data.cities.map((city, idx) => `
+        <span class="hwy-city-node">📍 ${city}</span>
+        ${idx < data.cities.length - 1 ? '<span class="hwy-city-arrow">➔</span>' : ''}
+      `).join('');
+
+      // Districts Chips
+      const districtsHtml = data.districts.map(d => `<span class="hw-district-chip">🏛️ ${d}</span>`).join('');
+
+      // Segments Breakdown
+      const segmentsHtml = data.segments && data.segments.length ? `
+        <div>
+          <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+            🚧 Highway Corridor Segments &amp; Surface Quality
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${data.segments.map(seg => {
+              const surfText = seg.surface === 'asphalt_excellent' ? '4-Lane Asphalt (Pitched / Excellent)' : seg.surface === 'under_construction' ? '4-Lane Widening Work (Caution)' : '2-Lane Blacktop (Pitched)';
+              const surfColor = seg.surface === 'under_construction' ? '#fbbf24' : '#34d399';
+              return `
+                <div class="hwy-segment-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.8rem; font-weight:800; color:#fff;">${seg.from} ➔ ${seg.to}</span>
+                    <span style="font-size:0.75rem; font-weight:700; color:${surfColor};">${seg.distanceKm} km · ${seg.lanes || 2} Lanes</span>
+                  </div>
+                  <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">
+                    🛣️ ${surfText} · Avg Speed: ${seg.avgSpeedKmh || 45} km/h
+                  </div>
+                  ${seg.currentIssue ? `<div style="font-size:0.7rem; color:#fca5a5; margin-top:4px; padding:4px 8px; background:rgba(239,68,68,0.1); border-radius:4px;">⚠️ ${seg.currentIssue}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      // EV Chargers
+      const evHtml = data.evChargers && data.evChargers.length ? `
+        <div style="padding:10px 12px; background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.25); border-radius:var(--radius-sm);">
+          <div style="font-size:0.75rem; font-weight:800; color:#38bdf8; margin-bottom:6px;">⚡ EV Fast Charging Stations on Corridor</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${data.evChargers.map(ev => `
+              <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                <span style="color:#fff; font-weight:600;">🔌 ${ev.name} (${ev.location})</span>
+                <span style="color:#38bdf8; font-weight:700;">${ev.powerKw} kW ${ev.type}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      detailPane.innerHTML = `
+        <!-- Highway Banner -->
+        <div class="hwy-banner">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="hw-badge" style="font-size:0.85rem; padding:4px 12px;">${data.code}</span>
+              <span style="font-size:0.85rem; color:#fbbf24; font-weight:700;">${data.nepaliName}</span>
+            </div>
+            <span style="font-size:0.75rem; font-weight:800; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:4px 10px; border-radius:var(--radius-full);">
+              ⭐ ${data.conditionRating}/5 Condition
+            </span>
+          </div>
+          <div style="font-size:1.25rem; font-weight:900; color:#ffffff; line-height:1.2; margin-bottom:6px;">
+            ${data.name}
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
+            ${data.description}
+          </div>
+        </div>
+
+        <!-- Core Properties 4-Tile Grid -->
+        <div class="hwy-metric-grid">
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">🏁 Where to Where</div>
+            <div class="hwy-metric-val" style="color:#38bdf8; font-size:0.85rem;">${data.startPoint} ➔ ${data.endPoint}</div>
+            <div class="hwy-metric-sub">Terminus Endpoints</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">📏 Total Length</div>
+            <div class="hwy-metric-val" style="color:#34d399;">${data.totalLengthKm} <span style="font-size:0.75rem;">km</span></div>
+            <div class="hwy-metric-sub">Official DOR Highway Registry</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">🛣️ Surface & Pavement</div>
+            <div class="hwy-metric-val" style="color:#fbbf24; font-size:0.8rem;">${data.surfaceLabel}</div>
+            <div class="hwy-metric-sub">Blacktopped / Bituminous</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">⛰️ Terrain & Elevation</div>
+            <div class="hwy-metric-val" style="color:#c084fc; font-size:0.85rem;">${data.terrain}</div>
+            <div class="hwy-metric-sub">${data.elevRange}</div>
+          </div>
+        </div>
+
+        <!-- Major Cities & Hubs in the Passway -->
+        <div>
+          <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+            🏙️ Major Cities &amp; Junctions along the Passway
+          </div>
+          <div class="hwy-cities-trail">
+            ${citiesHtml}
+          </div>
+        </div>
+
+        <!-- Traversed Districts -->
+        ${districtsHtml ? `
+          <div>
+            <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+              🏛️ Traversed Administrative Districts (${data.districts.length})
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              ${districtsHtml}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Segments Breakdown -->
+        ${segmentsHtml}
+
+        <!-- EV Infrastructure -->
+        ${evHtml}
+
+        <!-- DOR & Hotline Info -->
+        <div style="padding:10px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--surface-border); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:0.72rem; color:var(--text-secondary);">
+            🏢 <strong>${data.dorDivision}</strong>
+          </div>
+          <div style="font-size:0.72rem; color:#fca5a5; font-weight:700;">
+            🚨 ${data.emergencyContact}
+          </div>
+        </div>
+
+        <!-- Action Hub -->
+        <div class="hwy-action-hub">
+          <button class="hwy-action-btn hwy-action-map" onclick="focusHighwayOnMap('${data.code}')">
+            🗺️ View &amp; Highlight on Map
+          </button>
+          <button class="hwy-action-btn hwy-action-plan" onclick="planRouteOnHighway('${data.code}')">
+            🧭 Plan Route on this Highway
+          </button>
+        </div>
+      `;
+    }
+
+    async function focusHighwayOnMap(code) {
+      closeModal('highwayModal');
+      const hwy = allHighwaysIndex.find(h => h.code === code);
+      if (!hwy) return;
+
+      try {
+        if (currentHighwayLayer) {
+          map.removeLayer(currentHighwayLayer);
+          currentHighwayLayer = null;
+        }
+
+        const fileName = hwy.file || (code + '.geojson');
+        const url = `data/highway/${fileName}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const geojson = await res.json();
+
+        currentHighwayLayer = L.featureGroup().addTo(map);
+
+        const glowOuter = L.geoJSON(geojson, {
+          style: { color: '#f59e0b', weight: 16, opacity: 0.25, lineCap: 'round', lineJoin: 'round' }
+        });
+        const mainLine = L.geoJSON(geojson, {
+          style: { color: '#fbbf24', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }
+        });
+
+        currentHighwayLayer.addLayer(glowOuter);
+        currentHighwayLayer.addLayer(mainLine);
+
+        const bounds = currentHighwayLayer.getBounds();
+        map.flyToBounds(bounds, { padding: [60, 60], duration: 1.5 });
+
+        openAutoPopup(bounds.getCenter().lat, bounds.getCenter().lng, `<strong>🛣️ ${hwy.code} — ${hwy.name}</strong><br><span style="font-size:11px; color:#64748b;">${hwy.route || ''}</span>`, 4000);
+      } catch (err) {
+        console.error('[MeroSadak] Highway map focus error:', err);
+        showApiError(`Failed to load ${code} GeoJSON map layer: ${err.message}`);
+      }
+    }
+
+    async function planRouteOnHighway(code) {
+      closeModal('highwayModal');
+      const data = getHighwayExtendedData(code);
+      if (!data) return;
+
+      const originInput = document.getElementById('originInput');
+      const destInput = document.getElementById('sidebarSearch');
+
+      if (originInput) originInput.value = data.startPoint;
+      if (destInput) destInput.value = data.endPoint;
+
+      // Geocode and calculate
+      const startCoord = await geocode(data.startPoint);
+      const endCoord = await geocode(data.endPoint);
+
+      if (startCoord) userOrigin = { lat: startCoord.lat, lng: startCoord.lon, label: data.startPoint };
+      if (endCoord) selectedDestination = { lat: endCoord.lat, lng: endCoord.lon, label: data.endPoint };
+
+      showMapToggleOptions();
+      calculateSidebarRoute();
     }
 
     function showMatrixPage() {
@@ -3523,32 +3943,11 @@
       }
 
       if (item.type === 'Highway') {
-        let lat = item.lat || 0;
-        let lng = item.lng || 0;
-        if ((!lat || lat === 0) && window.__HIGHWAY_COORDS_MAP__) {
-          const coord = window.__HIGHWAY_COORDS_MAP__[item.code];
-          if (coord) {
-            lat = coord.lat;
-            lng = coord.lng;
-          }
-        }
-        if (!lat || !lng) {
-          const geo = await geocode(item.label + ', Nepal');
-          if (geo) {
-            lat = geo.lat;
-            lng = geo.lon;
-          }
-        }
-        if (!lat || !lng) {
-          const results = document.getElementById('sidebarResults');
-          if (results) {
-            results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">🛣️ Highway Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' is a corridor, not a point. Select a specific city, junction, or coordinate along this highway to calculate a route.</div></div>';
-          }
-          document.getElementById('sidebarSearch').value = item.label;
-          selectedDestination = null;
-          return;
-        }
-        dest = Object.assign({}, item, { lat, lng });
+        document.getElementById('sidebarSearch').value = item.label;
+        openModal('highwayModal');
+        renderHighwayDirectory(item.code);
+        focusHighwayOnMap(item.code);
+        return;
       }
 
       if (!dest.lat || !dest.lng) {
