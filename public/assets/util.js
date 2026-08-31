@@ -20,10 +20,53 @@ function clearSidebarSearch() {
 }
 
 function getSearchSuggestions(query) {
-  // Simple fuzzy search over the global searchIndex (populated elsewhere)
-  if (!window.searchIndex) return [];
-  const lower = query.toLowerCase();
-  return window.searchIndex.filter(item => item.label && item.label.toLowerCase().includes(lower)).slice(0, 10);
+  if (!window.searchIndex || !Array.isArray(window.searchIndex)) return [];
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return [];
+
+  function getBaseName(label) {
+    if (!label) return '';
+    return label.replace(/\s*\([^)]*\)/g, '').replace(/^[A-Z0-9]{3,4}\s*[—–-]\s*/i, '').trim();
+  }
+
+  const typePriority = { 'City Hub': 10, 'District HQ': 9, 'Airport': 8, 'Highway': 7, 'Bus Station': 6, 'Weather Node': 5, 'Local Unit': 4, 'POI': 3, 'Map Place': 2 };
+
+  const scoredItems = [];
+  window.searchIndex.forEach(item => {
+    const label = (item.label || '').toLowerCase();
+    const baseName = getBaseName(item.label).toLowerCase();
+    const code = (item.code || '').toLowerCase();
+    const district = (item.district || '').toLowerCase();
+
+    let score = -1;
+    if (baseName === q || code === q || label === q) score = 100;
+    else if (baseName.startsWith(q) || code.startsWith(q) || label.startsWith(q)) score = 80;
+    else if (baseName.includes(q) || label.includes(q)) score = 40;
+    else if (district === q || district.startsWith(q)) score = 30;
+
+    if (score > 0) scoredItems.push({ item, score });
+  });
+
+  scoredItems.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return (typePriority[b.item.type] || 0) - (typePriority[a.item.type] || 0);
+  });
+
+  const results = [];
+  const seenKeys = new Set();
+  scoredItems.forEach(({ item }) => {
+    const baseName = getBaseName(item.label).toLowerCase();
+    const dist = (item.district || '').toLowerCase();
+    const dedupKey = item.type === 'Highway' ? ('hwy_' + (item.code || baseName)) :
+                     item.type === 'Airport' ? ('air_' + (item.code || baseName)) :
+                     (baseName + (dist ? ('_' + dist) : ''));
+    if (!seenKeys.has(dedupKey)) {
+      seenKeys.add(dedupKey);
+      results.push({ ...item, label: getBaseName(item.label) });
+    }
+  });
+
+  return results.slice(0, 8);
 }
 
 function selectSidebarItem(item) {

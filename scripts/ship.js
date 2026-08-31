@@ -4,7 +4,11 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 function run(name, cmd) {
   console.log(`\n[ship] ${name}...`);
   try {
-    execSync(cmd, { stdio: 'inherit', cwd: process.cwd(), env: process.env });
+    execSync(cmd, {
+      stdio: 'inherit',
+      cwd: process.cwd(),
+      env: { ...process.env, NODE_OPTIONS: '--no-deprecation' }
+    });
   } catch (e) {
     console.error(`\n[ship] FAILED: ${name}`);
     process.exit(1);
@@ -30,7 +34,7 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'set NODE_OPTIONS=--no-deprecation && firebase deploy --only hosting');
+  run('firebase deploy', 'npx firebase deploy --only hosting');
   console.log('\n[ship] ✅ all steps completed');
 } catch {
   console.error('\n[ship] ❌ ship aborted');

@@ -1,887 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mero Sadak — Nepal Road Network, Highways & Trip Planner</title>
-  <meta name="description" content="Nepal National Highway GIS, live road incidents, route planner, elevation profiles, weather, traffic and emergency SOS locator.">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.json">
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <!-- App Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=20260826-1">
-</head>
-<body>
-
-  <!-- ==========================================
-        Splash / Loading Screen
-        ========================================== -->
-  <div id="splashScreen" class="splash-screen">
-    <div class="splash-content">
-      <div class="splash-logo">
-        <svg viewBox="0 0 24 24" width="64" height="64">
-          <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
-        </svg>
-      </div>
-      <div class="splash-title">MERO SADAK</div>
-      <div class="splash-subtitle">मेरो सडक</div>
-      <div class="splash-desc">Nepal National Road Network & GIS</div>
-      <div class="splash-progress-wrap">
-        <div class="splash-progress-bar">
-          <div id="splashProgress" class="splash-progress-fill"></div>
-        </div>
-        <div id="splashPercent" class="splash-percent">0%</div>
-      </div>
-      <div class="splash-footer">Initializing Map, Routes & Live Data…</div>
-    </div>
-    <div class="splash-glow"></div>
-  </div>
-
-  <!-- ==========================================
-        Clean Top Header
-        ========================================== -->
-  <header class="app-header">
-    <div class="header-row">
-      <button class="header-icon-btn menu-btn" onclick="openDrawer()" title="Menu">
-        <span>☰</span>
-      </button>
-      <div class="header-brand" onclick="resetMapView()">
-        <div class="brand-top">
-          <div class="brand-icon">
-            <svg viewBox="0 0 24 24" width="26" height="26">
-              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
-            </svg>
-          </div>
-          <div class="brand-title">MERO SADAK <span class="np-badge">मेरो सडक</span></div>
-        </div>
-      </div>
-      <div class="header-spacer"></div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <button class="header-icon-btn" onclick="cycleMapStyle()" title="Map Style">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-        </button>
-        <button class="header-icon-btn" onclick="toggleFullscreen()" title="Fullscreen">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-          </svg>
-        </button>
-        <button class="header-icon-btn lang-btn" onclick="toggleLanguage()" title="Toggle Language">
-          <span id="langLabel">EN</span>
-        </button>
-      </div>
-    </div>
-    <div class="header-sub-row">
-      <div class="header-sub">NEPAL NATIONAL HIGHWAY NETWORK &amp; GIS</div>
-    </div>
-  </header>
-
-  <!-- ==========================================
-        Left Drawer Menu (Consolidated & Categorized)
-        ========================================== -->
-  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
-  <div class="app-drawer" id="appDrawer">
-    <div class="drawer-header">
-      <div class="drawer-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="28" height="28">
-            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="var(--accent-gold)"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <div class="brand-title">MERO SADAK <span class="np-badge">मेरो सडक</span></div>
-          <div class="brand-sub">Nepal National Road Network</div>
-        </div>
-      </div>
-      <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
-    </div>
-    <div class="drawer-nav">
-      <!-- Section 1: GIS & Highway Exploration -->
-      <div class="drawer-section-header">🛣️ GIS &amp; Highways</div>
-      <div class="drawer-nav-item" onclick="openModal('highwayModal'); closeDrawer();">
-        <span class="drawer-icon">🛣️</span>
-        <span>National Highways (NH01–NH80)</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('passesModal'); closeDrawer();">
-        <span class="drawer-icon">🏔️</span>
-        <span>Mountain Passes &amp; Weather</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('dialectModal'); closeDrawer();">
-        <span class="drawer-icon">🗣️</span>
-        <span>Transit Driving Dialects</span>
-      </div>
-      <div class="drawer-nav-item" onclick="cycleMapStyle(); closeDrawer();">
-        <span class="drawer-icon">🎨</span>
-        <span>Map Style &amp; Imagery</span>
-      </div>
-
-      <!-- Section 2: Distance & Toll Calculators -->
-      <div class="drawer-section-header">📊 Distance &amp; Tolls</div>
-      <div class="drawer-nav-item" onclick="showMatrixPage(); closeDrawer();">
-        <span class="drawer-icon">📊</span>
-        <span>62-City Nepal Distance Matrix</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('distanceCalcModal'); closeDrawer();">
-        <span class="drawer-icon">📏</span>
-        <span>Point-to-Point Calculator</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('tollModal'); closeDrawer();">
-        <span class="drawer-icon">🚧</span>
-        <span>Nagdhunga Tunnel Tolls</span>
-      </div>
-
-      <!-- Section 3: Safety & Travel Tools -->
-      <div class="drawer-section-header">🛡️ Safety &amp; Travel Tools</div>
-      <div class="drawer-nav-item" onclick="openModal('sosModal'); closeDrawer();" style="color:#fca5a5;">
-        <span class="drawer-icon">🚨</span>
-        <span>Emergency SOS Rescue</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openPretripModal(); closeDrawer();">
-        <span class="drawer-icon">✅</span>
-        <span>Pre-Trip Vehicle Checklist</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('reportModal'); closeDrawer();">
-        <span class="drawer-icon">⚠️</span>
-        <span>Report Road Hazard</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openShareTripModal(); closeDrawer();">
-        <span class="drawer-icon">🔗</span>
-        <span>Share Trip Plan</span>
-      </div>
-      <div class="drawer-nav-item" onclick="openModal('offlineManagerModal'); closeDrawer();">
-        <span class="drawer-icon">📥</span>
-        <span>Offline Map Cache</span>
-      </div>
-    </div>
-    <div class="drawer-footer">
-      <button class="drawer-login-btn" onclick="alert('Sign In coming soon'); closeDrawer();">Sign In</button>
-    </div>
-  </div>
-
-  <!-- ==========================================
-        Full Viewport Leaflet Map
-        ========================================== -->
-  <div id="map"></div>
-
-  <!-- Distance Matrix Full Page -->
-  <div class="matrix-page-overlay" id="matrixPage">
-    <div class="matrix-page-header">
-      <button class="matrix-back-btn" onclick="hideMatrixPage()">← Back to Map</button>
-      <div class="matrix-page-title">📊 Nepal Distance Matrix</div>
-      <div style="width:120px;"></div>
-    </div>
-    <div class="matrix-page-body">
-      <div class="matrix-page-main">
-        <div class="matrix-search-section">
-          <div class="matrix-search-row">
-            <div style="flex:1; position:relative;">
-              <input type="text" id="matrixCityInput" placeholder="Add a city or local place..." autocomplete="off" class="matrix-input">
-              <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
-            </div>
-            <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
-          </div>
-          <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
-          <button class="btn-action-primary" onclick="computeDistanceMatrix()">Calculate Distance</button>
-          <div id="matrixResults" style="margin-top:16px;"></div>
-          <div id="matrixAiSection" style="margin-top:16px; display:none;">
-            <div class="ai-advisor-row">
-              <button class="ai-advisor-btn" onclick="askMatrixAiAdvisor()">✨ AI Route Insight</button>
-            </div>
-            <div id="matrixAiOutput" style="margin-top:8px; display:none; padding:12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-md); font-size:0.85rem; color:#c4b5fd;"></div>
-          </div>
-        </div>
-      </div>
-      <div class="matrix-page-side">
-        <div class="matrix-static-header">
-          <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Full Nepal City-to-City Matrix (62 cities)</div>
-          <button class="btn-header" onclick="exportMatrixPdf()" style="font-size:0.78rem;">📄 Export PDF</button>
-        </div>
-        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2);">
-          <div id="staticMatrixTable" style="padding:8px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==========================================
-        Modals Suite
-        ========================================== -->
-  <aside class="app-sidebar" id="appSidebar">
-    <div class="sidebar-scroll">
-      <div class="route-planner">
-        <div class="route-origin-wrap">
-          <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
-            <span class="origin-dot"></span>
-            <span id="originLabel">My Location</span>
-            <span class="origin-edit">▼</span>
-          </div>
-          <div id="originMenu" class="origin-menu" style="display:none;">
-            <div id="originCurrentItem" class="origin-menu-item origin-current" onclick="locateMeAndSetOrigin()">
-              <span class="origin-menu-icon">📍</span>
-              <span class="origin-menu-text">Detecting location…</span>
-            </div>
-            <div class="origin-menu-divider"></div>
-            <div class="origin-menu-item" onclick="showOriginSearch()">
-              <span class="origin-menu-icon">🔍</span>
-              <span class="origin-menu-text">Change Location</span>
-            </div>
-          </div>
-        </div>
-        <div id="originInfoText" class="origin-info-text" style="display:none; margin-top:6px; font-size:0.75rem; color:var(--text-secondary); line-height:1.4;"></div>
-        <div id="routeSearchPanel">
-        <div id="originSearchWrap" class="route-search-bar" style="display:none; position:relative;">
-          <span class="search-icon-left">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </span>
-          <input type="text" id="originSearchInput" placeholder="From where?" autocomplete="off">
-          <div class="route-actions-row-right">
-            <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="23"></line>
-                <line x1="8" y1="23" x2="16" y2="23"></line>
-              </svg>
-            </button>
-            <button class="icon-btn search-action-btn ai-btn" onclick="askAiRouteAdvisor()" title="AI Assistant">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"></path>
-              </svg>
-            </button>
-          </div>
-          <div id="originSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
-        </div>
-
-        <div class="route-search-wrap">
-          <div class="route-search-bar" style="position:relative;">
-            <span class="search-icon-left">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </span>
-            <input type="text" id="sidebarSearch" placeholder="Where to?" autocomplete="off">
-            <div class="route-actions-row-right">
-              <button class="icon-btn search-action-btn mic-btn" onclick="startVoiceSearch()" title="Voice Search">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-              </button>
-              <button class="icon-btn search-action-btn ai-btn" onclick="askAiRouteAdvisor()" title="AI Assistant">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"></path>
-                </svg>
-              </button>
-            </div>
-            <div id="sidebarSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
-          </div>
-
-        <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
-        </div>
-        </div>
-
-        <div id="routeSearchToggle" style="display:none; margin-bottom:10px;">
-          <button class="calculate-btn" onclick="showRouteSearchPanel()" style="background:rgba(255,255,255,0.06); border:1px solid var(--surface-border);">✏️ Edit Route</button>
-        </div>
-
-        <div class="sidebar-results" id="sidebarResults"></div>
-
-        <div class="route-controls-row hidden" id="routeControlsRow">
-          <div class="route-pref-pills" id="vehiclePills">
-            <button class="pref-pill active" data-value="car" onclick="setVehicle('car')">🚗 Car</button>
-            <button class="pref-pill" data-value="suv_4wd" onclick="setVehicle('suv_4wd')">🚙 SUV</button>
-            <button class="pref-pill" data-value="motorbike" onclick="setVehicle('motorbike')">🏍️ Moto</button>
-            <button class="pref-pill" data-value="bus_truck" onclick="setVehicle('bus_truck')">🚌 Bus</button>
-            <button class="pref-pill" data-value="electric_vehicle" onclick="setVehicle('electric_vehicle')">⚡ EV</button>
-          </div>
-          <div class="route-pref-pills" id="prefPills">
-            <button class="pref-pill active" data-value="fastest" onclick="setRoutePref('fastest')">🚀 Fastest</button>
-            <button class="pref-pill" data-value="shortest" onclick="setRoutePref('shortest')">📏 Shortest</button>
-            <button class="pref-pill" data-value="safest" onclick="setRoutePref('safest')">🛡️ Safest</button>
-            <button class="pref-pill" data-value="scenic" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
-            <button class="pref-pill" data-value="ev" onclick="setRoutePref('ev')">⚡ EV</button>
-            <button class="pref-pill" data-value="avoid_toll" onclick="setRoutePref('avoid_toll')">🚫 No Toll</button>
-          </div>
-        </div>
-
-        <input type="hidden" id="originSearch" value="My Location">
-      </div>
-
-      <div id="aiAdvisorOutput" style="display:none; margin-top:8px; padding:10px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-sm); font-size:0.8rem; color:#c4b5fd;"></div>
-    </div>
-  </aside>
-
-  <!-- ==========================================
-        4. Floating Map Toggles Toolbar (Right Side)
-        ========================================== -->
-  <div class="map-toggle-fab" id="mapToggleFab" onclick="toggleMapToolbar()">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-      <polyline points="2 17 12 22 22 17"></polyline>
-      <polyline points="2 12 12 17 22 12"></polyline>
-    </svg>
-  </div>
-  <div class="map-floating-toggles" id="mapFloatingToggles">
-    <button class="map-toggle-btn" id="toggleGeo" onclick="triggerGeolocation()" title="GPS Locate Me">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"></circle>
-        <path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
-      </svg>
-      <span class="toggle-label">My Location</span>
-    </button>
-    <button class="map-toggle-btn active" id="toggleHighways" onclick="toggleLayer('highways')" title="National Highways" style="display:none;">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19L20 5"></path>
-        <path d="M4 5l16 14"></path>
-      </svg>
-      <span class="toggle-label">Highways</span>
-    </button>
-    <button class="map-toggle-btn active" id="toggleOsmroads" onclick="toggleLayer('osmroads')" title="OSM Major Roads">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"></path>
-      </svg>
-      <span class="toggle-label">OSM Roads</span>
-    </button>
-    <button class="map-toggle-btn" id="toggleWeather" onclick="toggleLayer('weather')" title="Weather & Passes" style="display:none;">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 18a4 4 0 0 0-8 0h8z"></path>
-        <path d="M12 2v2m-4.5 3.5L12 7m7 0l4.5-1.5M6.5 16.5L4 18m14 0l-2.5 1.5M12 14v4"></path>
-      </svg>
-      <span class="toggle-label">Weather</span>
-    </button>
-    <button class="map-toggle-btn" id="toggleTraffic" onclick="toggleLayer('traffic')" title="Traffic Corridors">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="5" r="2"></circle>
-        <circle cx="12" cy="12" r="2"></circle>
-        <circle cx="12" cy="19" r="2"></circle>
-      </svg>
-      <span class="toggle-label">Traffic</span>
-    </button>
-    <button class="map-toggle-btn active" id="toggleIncidents" onclick="toggleLayer('incidents')" title="Road Incidents">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-        <line x1="12" y1="9" x2="12" y2="13"></line>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-      <span class="toggle-label">Incidents</span>
-    </button>
-    <button class="map-toggle-btn" id="toggleBlackspots" onclick="toggleLayer('blackspots')" title="Accident Blackspots">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-        <line x1="12" y1="9" x2="12" y2="13"></line>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-      <span class="toggle-label">Blackspots</span>
-    </button>
-    <button class="map-toggle-btn" id="togglePois" onclick="toggleLayer('pois')" title="POIs & EV">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2a7 7 0 0 1 7 7c0 3.5-3 7-7 10-4-3-7-6.5-7-10a7 7 0 0 1 7-7z"></path>
-        <line x1="12" y1="9" x2="12" y2="13"></line>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-      <span class="toggle-label">POIs & EV</span>
-    </button>
-    <button class="map-toggle-btn btn-sos" onclick="openModal('sosModal')" title="Emergency SOS">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-      </svg>
-      <span class="toggle-label">SOS</span>
-    </button>
-  </div>
-
-  <!-- Offline Status Banner -->
-  <div class="offline-banner" id="offlineBanner">
-    <span class="offline-banner-dot"></span>
-    <span>You are offline. Some map data and live feeds may be unavailable.</span>
-  </div>
-
-  <!-- Weather Alert Toast -->
-  <div class="weather-alert-toast" id="weatherAlertToast">
-    <span class="weather-alert-icon">⚠️</span>
-    <span class="weather-alert-text"></span>
-    <button class="weather-alert-close" onclick="document.getElementById('weatherAlertToast').classList.remove('is-visible')">✕</button>
-  </div>
-
-  <!-- API Error Toast -->
-  <div class="api-error-toast" id="apiErrorToast">
-    <span class="api-error-icon">🔌</span>
-    <span class="api-error-text"></span>
-    <button class="api-error-close" onclick="document.getElementById('apiErrorToast').classList.remove('is-visible')">✕</button>
-  </div>
-
-  <!-- ==========================================
-       6. Modals Suite
-        ========================================== -->
-
-  <!-- SOS Emergency Modal -->
-  <div class="modal-overlay" id="sosModal">
-    <div class="modal-card sos-modal-card" style="width:960px; max-width:96vw; max-height:94vh; display:flex; flex-direction:column;">
-      <div class="modal-header sos-header">
-        <div class="modal-title">
-          <div style="position:relative; display:inline-flex; align-items:center; justify-content:center;">
-            <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg, #dc2626, #991b1b); display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(220,38,38,0.4);">
-              <span style="font-size:1.2rem;">🚨</span>
-            </div>
-            <span style="position:absolute; top:-3px; right:-3px; width:10px; height:10px; background:#f87171; border:2px solid #0f172a; border-radius:50%; animation:sosPulse 1s infinite;"></span>
-          </div>
-          <div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="padding:2px 8px; border-radius:999px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; background:rgba(220,38,38,0.2); border:1px solid rgba(248,113,113,0.4); color:#fca5a5;">Search & Rescue Dispatch</span>
-              <span style="font-size:11px; color:#fca5a5; font-weight:500;">Mero Sadak Nepal SOS</span>
-            </div>
-            <div style="font-size:1.1rem; font-weight:800; color:#fff; letter-spacing:-0.01em; margin-top:2px;">Emergency Highway Rescue Assistant</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button class="modal-close-btn" id="sosAudioBtn" onclick="toggleSosAudio()" title="Acoustic SOS Morse Code Siren" style="padding:8px 12px; border-radius:10px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; background:rgba(15,23,42,0.8); border:1px solid #334155; color:#cbd5e1; cursor:pointer; transition:all 0.2s;">
-            <span id="sosAudioIcon">🔊</span>
-            <span id="sosAudioLabel" class="hidden smInline">Play Siren</span>
-          </button>
-          <button class="modal-close-btn" id="sosStrobeBtn" onclick="toggleSosStrobe()" title="Fullscreen Flashing Visual Beacon" style="padding:8px 12px; border-radius:10px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px; background:rgba(15,23,42,0.8); border:1px solid #334155; color:#cbd5e1; cursor:pointer; transition:all 0.2s;">
-            <span>🔥</span>
-            <span class="hidden smInline">Visual Beacon</span>
-          </button>
-          <button class="modal-close-btn" onclick="closeModal('sosModal'); stopSosBeacon(); stopSosStrobe();">✕</button>
-        </div>
-      </div>
-      <div class="modal-body sos-body" style="overflow-y:auto; flex:1;">
-        <!-- Fullscreen Strobe Beacon Overlay -->
-        <div id="sosStrobeOverlay" style="display:none; position:fixed; inset:0; z-index:9999; cursor:pointer; transition:background-color 0.15s;" onclick="toggleSosStrobe()">
-          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;">
-            <div id="sosStrobeContent" style="background:rgba(0,0,0,0.5); padding:32px; border-radius:24px; backdrop-filter:blur(8px); max-width:420px;">
-              <div style="font-size:3rem; margin-bottom:16px; animation:sosPulse 0.8s infinite;">🚨</div>
-              <h2 style="font-size:1.5rem; font-weight:900; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px; color:#fff;">RESCUE BEACON</h2>
-              <p style="font-size:0.85rem; font-weight:600; opacity:0.9; margin-bottom:16px; color:#fecaca;">Flashing maximum contrast signal for helicopters, rescue teams, and highway traffic.</p>
-              <button onclick="event.stopPropagation(); toggleSosStrobe();" style="padding:10px 20px; border-radius:999px; background:#fff; color:#dc2626; font-weight:700; font-size:0.85rem; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3);">Exit Beacon Mode</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- GPS Status & Nearest Landmark -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-          <div style="background:rgba(15,23,42,0.7); border:1px solid #1e293b; border-radius:16px; padding:16px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <div id="sosGpsDot" style="width:10px; height:10px; border-radius:50%; background:#10b981; animation:sosPulse 2s infinite;"></div>
-                <span id="sosGpsStatus" style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Acquiring GPS...</span>
-              </div>
-              <button onclick="acquireSosLocation()" id="sosRefreshGpsBtn" style="display:flex; align-items:center; gap:4px; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#1e293b; border:1px solid #334155; color:#cbd5e1; cursor:pointer;">
-                <span id="sosRefreshIcon">🔄</span>
-                <span>Refresh GPS</span>
-              </button>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-size:11px; color:#64748b; font-family:monospace;">LAT / LNG:</span>
-              <span id="sosCoords" style="font-size:1.1rem; font-weight:800; color:#10b981; font-family:monospace; margin-left:8px; letter-spacing:-0.02em;">--</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#64748b;">
-              <span id="sosAccuracy">Accuracy: ±--m</span>
-              <span id="sosAltitude">Alt: --m ASL</span>
-            </div>
-            <div id="sosGeoError" style="display:none; margin-top:8px; padding:8px; border-radius:8px; font-size:11px; color:#fbbf24; background:rgba(120,53,15,0.2); border:1px solid rgba(251,191,36,0.3);"></div>
-            <div id="sosManualLocation" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid #1e293b;">
-              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Select Nearest Known Nepal Hub / Junction:</label>
-              <select id="sosManualCity" onchange="handleSosManualCity()" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
-                <option value="">-- Select Location --</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="background:rgba(15,23,42,0.7); border:1px solid #1e293b; border-radius:16px; padding:16px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-              <span style="font-size:0.9rem;">🏔️</span>
-              <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Highway Landmark & Proximity</span>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span id="sosLandmarkDist" style="font-size:1rem; font-weight:700; color:#fff;">--</span>
-            </div>
-            <div style="font-size:11px; color:#64748b; margin-bottom:4px;">
-              District: <strong id="sosLandmarkDistrict" style="color:#e2e8f0;">--</strong> • Province: <strong id="sosLandmarkProvince" style="color:#e2e8f0;">--</strong>
-            </div>
-            <div id="sosLandmarkHighway" style="font-size:11px; color:#fbbf24; font-weight:600;"></div>
-            <div style="margin-top:12px; padding-top:12px; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between;">
-              <span id="sosActiveRoute" style="font-size:11px; color:#64748b;">Independent Highway Travel</span>
-              <button onclick="focusSosOnMap()" style="font-size:11px; font-weight:600; color:#f87171; background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:4px;">
-                <span>Pin on Map</span>
-                <span>📍</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Emergency Distress Nature Selection -->
-        <div style="margin-bottom:20px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:10px;">
-            <span style="font-size:0.9rem;">🛡️</span>
-            <span>Select Emergency Nature / Distress Category:</span>
-          </label>
-          <div id="sosDistressGrid" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;"></div>
-        </div>
-
-        <!-- Vehicle, Passengers, and Rescuer Details Form -->
-        <div style="background:rgba(15,23,42,0.5); border:1px solid #1e293b; border-radius:16px; padding:16px; margin-bottom:20px;">
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
-            <div>
-              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Vehicle Type:</label>
-              <select id="sosVehicleType" onchange="sosState.vehicleType=this.value; updateSosMessage();" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
-                <option value="car">Car / Sedan / Hatchback</option>
-                <option value="suv_4wd">SUV / 4WD Mountain Jeep</option>
-                <option value="motorbike">Motorcycle / Scooter</option>
-                <option value="bus_truck">Bus / Heavy Commercial Truck</option>
-                <option value="electric_vehicle">Electric Vehicle (EV)</option>
-              </select>
-            </div>
-            <div>
-              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Vehicle Plate / Reg No (Optional):</label>
-              <input type="text" id="sosVehiclePlate" placeholder="e.g. BA 02 PA 4821" oninput="sosState.vehiclePlate=this.value; updateSosMessage();" style="width:100%; padding:8px 12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none; font-family:monospace;">
-            </div>
-            <div>
-              <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Persons Onboard:</label>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <button type="button" onclick="adjustSosPassengers(-1)" style="width:32px; height:32px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-weight:700; cursor:pointer; font-size:14px;">−</button>
-                <span id="sosPassengerCount" style="flex:1; text-align:center; font-weight:700; font-size:14px; background:#0f172a; border:1px solid #334155; padding:6px; border-radius:8px;">2 People</span>
-                <button type="button" onclick="adjustSosPassengers(1)" style="width:32px; height:32px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-weight:700; cursor:pointer; font-size:14px;">+</button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; font-weight:600; color:#94a3b8; margin-bottom:6px;">Distress Situation & Immediate Needs (Optional Note):</label>
-            <input type="text" id="sosCustomNotes" placeholder="e.g., Stranded after rockfall 2km past Kurintar, child onboard, 4WD axle damaged, need crane and medical check" oninput="sosState.customNotes=this.value; updateSosMessage();" style="width:100%; padding:10px 14px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none;">
-          </div>
-        </div>
-
-        <!-- Generated Search & Rescue Dispatch Message -->
-        <div style="margin-bottom:20px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:0.9rem;">📋</span>
-              <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">Generated Search & Rescue (SAR) Dispatch Message</span>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button onclick="setSosMessageFormat('full')" id="sosFormatFull" style="padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#dc2626; color:#fff; border:none; cursor:pointer;">Full SAR</button>
-              <button onclick="setSosMessageFormat('compact')" id="sosFormatCompact" style="padding:4px 10px; border-radius:8px; font-size:11px; font-weight:600; background:#1e293b; color:#94a3b8; border:1px solid #334155; cursor:pointer;">Compact SMS</button>
-            </div>
-          </div>
-          <div style="position:relative;">
-            <pre id="sosMessageOutput" style="background:#020617; border:1px solid #1e293b; border-radius:12px; padding:14px; font-size:11px; color:#e2e8f0; font-family:monospace; white-space:pre-wrap; line-height:1.6; max-height:180px; overflow-y:auto; margin:0;"></pre>
-            <button onclick="copySosMessage()" id="sosCopyBtn" style="position:absolute; top:8px; right:8px; padding:6px 12px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px;">
-              <span id="sosCopyIcon">📋</span>
-              <span id="sosCopyLabel">Copy SAR Text</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Share Options -->
-        <div style="margin-bottom:20px;">
-          <label style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:10px;">Send Emergency SOS Via External Channels:</label>
-          <input type="tel" id="sosCustomPhone" placeholder="Optional: Enter specific recipient phone (e.g. +977 98XXXXXXXX)" style="width:100%; padding:10px 14px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff; font-size:12px; outline:none; margin-bottom:10px;">
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <button onclick="sendSosWhatsApp()" style="padding:12px; border-radius:12px; background:#059669; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(5,150,105,0.3);">
-              <span>💬</span>
-              <span>WhatsApp</span>
-            </button>
-            <button onclick="sendSosSms()" style="padding:12px; border-radius:12px; background:#2563eb; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3);">
-              <span>📤</span>
-              <span>SMS</span>
-            </button>
-            <button onclick="sendSosTelegram()" style="padding:12px; border-radius:12px; background:#0ea5e9; border:none; color:#fff; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 12px rgba(14,165,233,0.3);">
-              <span>✈️</span>
-              <span>Telegram</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Nepal Emergency Hotlines Speed-Dial Grid -->
-        <div style="padding-top:16px; border-top:1px solid #1e293b;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-            <span style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8;">
-              <span style="font-size:0.85rem;">📞</span>
-              <span>Nepal Official Emergency Speed-Dial Hotlines</span>
-            </span>
-            <span style="font-size:10px; color:#64748b;">Toll-free 24/7 National Emergency</span>
-          </div>
-          <div id="sosHotlinesGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;"></div>
-        </div>
-      </div>
-      <div style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#64748b;">
-        <span style="display:flex; align-items:center; gap:6px;">
-          <span>ℹ️</span>
-          <span>Mero Sadak SAR Assistant • Offline Coordinates Cached</span>
-        </span>
-        <button onclick="closeModal('sosModal'); stopSosBeacon(); stopSosStrobe();" style="padding:6px 14px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">Close Emergency Panel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Highway Directory Modal (NH01 - NH80) -->
-  <div class="modal-overlay" id="highwayModal">
-    <div class="modal-card" style="width:720px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🛣️</span> <span>Nepal National Highway Directory (DOR GIS)</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('highwayModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="margin-bottom:14px;">
-          <div style="position:relative;">
-            <input type="text" id="hwySearchInput" placeholder="Search by Highway Code, Name or District (e.g. NH01, Prithvi, Chitwan)..." style="width:100%; padding:10px 14px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.88rem; outline:none;" oninput="filterHighwayDirectory()">
-          </div>
-        </div>
-        <div class="hwy-grid" id="hwyGridContent"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Citizen Road Report Modal -->
-  <div class="modal-overlay" id="reportModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🚧</span> <span>Report Highway Hazard / Roadblock</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('reportModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <form onsubmit="submitRoadReport(event)" style="display:flex; flex-direction:column; gap:12px;">
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Hazard Type</label>
-            <select id="reportHazardType" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem;">
-              <option value="landslide">🪨 Landslide / Falling Boulders</option>
-              <option value="roadwork">🏗️ Road Construction / Heavy Sludge</option>
-              <option value="flood">🌊 River Overflow / Flash Flood</option>
-              <option value="accident">💥 Vehicle Breakdown / Accident Blockade</option>
-              <option value="fog">🌫️ Dense Valley Fog / Zero Visibility</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Highway & Location Name</label>
-            <input type="text" id="reportLocation" required placeholder="e.g. NH17 Prithvi Hwy, near Kurintar" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
-          </div>
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Details & Current Status</label>
-            <textarea id="reportDetails" rows="3" placeholder="Describe delays, whether one-way lane is open, emergency equipment on site..." style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;"></textarea>
-          </div>
-          <button type="submit" class="btn-action-primary">Submit Citizen Report</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Regional Dialects & Transit Audio Modal -->
-  <div class="modal-overlay" id="dialectModal">
-    <div class="modal-card" style="width:680px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🗣️</span> <span>Regional Driving & Highway Transit Dialects</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('dialectModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px;">
-          Listen to common roadside driving phrases translated into regional Nepal languages (Doteli, Maithili, Bhojpuri, Newari, Tharu). Click 🔊 to speak.
-        </p>
-        <div style="display:flex; gap:8px; margin-bottom:14px;" id="dialectPills"></div>
-        <div id="dialectPhrasesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mountain Passes Modal -->
-  <div class="modal-overlay" id="passesModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🏔️</span> <span>High Altitude Mountain Passes & Weather</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('passesModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="passesListContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Distance Calculator Modal -->
-  <div class="modal-overlay" id="distanceCalcModal">
-    <div class="modal-card" style="width:480px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📏</span> <span>Distance Calculator</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('distanceCalcModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Point A</label>
-            <input type="text" id="distCalcPointA" placeholder="e.g. Kathmandu" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
-          </div>
-          <div>
-            <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Point B</label>
-            <input type="text" id="distCalcPointB" placeholder="e.g. Pokhara" style="width:100%; margin-top:4px; padding:9px; background:rgba(0,0,0,0.4); border:1px solid var(--surface-border); border-radius:var(--radius-sm); color:#fff; font-size:0.85rem; outline:none;">
-          </div>
-          <button class="btn-action-primary" onclick="calculateSimpleDistance()">Calculate Distance</button>
-          <div id="distCalcResult" style="margin-top:8px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Share Trip Modal -->
-  <div class="modal-overlay" id="shareTripModal">
-    <div class="modal-card" style="width:520px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📤</span> <span>Share Trip Plan</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('shareTripModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="shareTripContent" style="display:flex; flex-direction:column; gap:12px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Offline Manager Modal -->
-  <div class="modal-overlay" id="offlineManagerModal">
-    <div class="modal-card" style="width:560px;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>📥</span> <span>Offline GIS & Tile Pack Manager</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('offlineManagerModal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="offlineManagerContent" style="display:flex; flex-direction:column; gap:12px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pre-Trip Checklist Modal -->
-  <div class="modal-overlay" id="pretripModal">
-    <div class="modal-card" style="width:640px; max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>✅</span> <span>Pre-Trip Checklist</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('pretripModal')">✕</button>
-      </div>
-      <div class="modal-body" style="overflow-y:auto; flex:1;" id="pretripBody"></div>
-      <div style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span style="font-size:11px; color:#64748b;">Progress saved locally</span>
-        <div style="display:flex; gap:8px;">
-          <button onclick="resetPretripChecklist()" style="padding:6px 14px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">Reset All</button>
-          <button onclick="closeModal('pretripModal')" style="padding:6px 14px; border-radius:8px; background:var(--accent-gold); color:#0b192c; border:none; font-size:11px; font-weight:700; cursor:pointer;">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Nagdhunga Tunnel Toll Modal -->
-  <div class="modal-overlay" id="tollModal">
-    <div class="modal-card" style="width:640px; max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span>🚧</span> <span>Nagdhunga Tunnel Toll Fees &amp; Regulations</span>
-        </div>
-        <button class="modal-close-btn" onclick="closeModal('tollModal')">✕</button>
-      </div>
-      <div class="modal-body" style="overflow-y:auto; flex:1;">
-        <div style="padding:10px 14px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:var(--radius-sm); margin-bottom:14px;">
-          <div style="font-size:0.8rem; font-weight:800; color:#fbbf24; margin-bottom:2px;">Official Toll Rate Notification</div>
-          <div style="font-size:0.72rem; color:var(--text-secondary);">Effective from Nepal Gazette, Chaitra 26, 2082 BS (Ministry of Physical Infrastructure &amp; Transport).</div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:var(--radius-sm);">
-            <div>
-              <div style="font-size:0.85rem; font-weight:800; color:#fff;">🚗 Category 1 — Light Vehicles</div>
-              <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">Car, Jeep, Van, SUV, Pickup (up to 9 seats)</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:1.05rem; font-weight:900; color:#38bdf8; font-family:'JetBrains Mono',monospace;">NPR 65</div>
-              <div style="font-size:0.65rem; color:var(--text-muted);">Per Single Entry</div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:var(--radius-sm);">
-            <div>
-              <div style="font-size:0.85rem; font-weight:800; color:#fff;">🚐 Category 2 — Medium Commercial</div>
-              <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">Microbus, Minibus, Medium Truck (10–25 seats / 3–7 tons)</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:1.05rem; font-weight:900; color:#34d399; font-family:'JetBrains Mono',monospace;">NPR 115</div>
-              <div style="font-size:0.65rem; color:var(--text-muted);">Per Single Entry</div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:var(--radius-sm);">
-            <div>
-              <div style="font-size:0.85rem; font-weight:800; color:#fff;">🚌 Category 3 — Heavy Commercial</div>
-              <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">Heavy Buses, Multi-axle Trucks, Containers (>7 tons)</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:1.05rem; font-weight:900; color:#fbbf24; font-family:'JetBrains Mono',monospace;">NPR 260</div>
-              <div style="font-size:0.65rem; color:var(--text-muted);">Per Single Entry</div>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:var(--radius-sm);">
-            <div>
-              <div style="font-size:0.85rem; font-weight:800; color:#fff;">🏍️ Two-Wheelers &amp; Emergency</div>
-              <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">Motorcycles, Scooters, Ambulances, Fire Trucks, Police</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:0.95rem; font-weight:800; color:#a78bfa; font-family:'JetBrains Mono',monospace;">EXEMPT</div>
-              <div style="font-size:0.65rem; color:var(--text-muted);">Free / Restricted lane</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:14px; padding:10px 12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-sm);">
-          <div style="font-size:0.75rem; font-weight:700; color:#fff; margin-bottom:4px;">Tunnel Safety &amp; Corridor Notes:</div>
-          <ul style="font-size:0.7rem; color:var(--text-secondary); padding-left:18px; line-height:1.5;">
-            <li>Speed Limit: Maximum 60 km/h inside the main 2.68 km tunnel.</li>
-            <li>Hazardous materials &amp; overloaded fuel tankers must use the outer bypass.</li>
-            <li>Nagdhunga Tunnel Control &amp; SOS Helpline: <strong>103 / 100</strong>.</li>
-          </ul>
-        </div>
-      </div>
-      <div style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; justify-content:flex-end;">
-        <button onclick="closeModal('tollModal')" class="btn-action-primary" style="width:auto; padding:8px 20px;">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Map Hint Bubble -->
-  <div id="mapHint" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); background:rgba(11,25,44,0.95); border:1px solid var(--accent-gold); color:#ffffff; padding:8px 18px; border-radius:20px; font-size:0.85rem; z-index:1500; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-    Click anywhere on the map to set location 📍
-  </div>
-
-  <!-- ==========================================
-       Scripts
-       ========================================== -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="nepalData.js"></script>
-  <script>
     // Force cleanup of any old service workers and caches
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -3289,133 +2406,185 @@
     }
 
     function getSearchSuggestions(query) {
-      if (!Array.isArray(searchIndex) || !searchIndex.length) return [];
       const q = query.toLowerCase().trim();
-      if (!q) return [];
-      
       const isHighwayQuery = /^(nh\d+|\d+[a-z]?$|highway|road|route|corridor)/i.test(q) || q.includes('highway') || q.includes('nh');
-
-      function getBaseName(label) {
-        if (!label) return '';
-        return label.replace(/\s*\([^)]*\)/g, '').replace(/^[A-Z0-9]{3,4}\s*[—–-]\s*/i, '').trim();
-      }
-
-      const typePriority = {
-        'City Hub': 10,
-        'District HQ': 9,
-        'Airport': 8,
-        'Highway': 7,
-        'Bus Station': 6,
-        'Weather Node': 5,
-        'Local Unit': 4,
-        'POI': 3,
-        'Map Place': 2
-      };
-
-      function computeMatchScore(item) {
+      
+      const matches = searchIndex.filter(item => {
+        if (item.type === 'Highway' && !isHighwayQuery) return false;
         const label = (item.label || '').toLowerCase();
-        const baseName = getBaseName(item.label).toLowerCase();
-        const code = (item.code || '').toLowerCase();
-        const district = (item.district || '').toLowerCase();
         const subLabel = (item.subLabel || '').toLowerCase();
+        const code = (item.code || '').toLowerCase();
         const terms = (item.searchTerms || []).map(t => t.toLowerCase());
+        return label.includes(q) || subLabel.includes(q) || code.includes(q) || terms.some(t => t.includes(q));
+      });
 
-        if (item.type === 'Highway' && !isHighwayQuery) return -1;
-
-        if (baseName === q || code === q || label === q) return 100;
-        if (baseName.startsWith(q) || code.startsWith(q) || label.startsWith(q)) return 80;
-        if (new RegExp('\\b' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(label)) return 60;
-        if (baseName.includes(q) || label.includes(q)) return 40;
-        if (district === q || district.startsWith(q)) return 30;
-        if (terms.some(t => t.startsWith(q) || t === q)) return 25;
-        if (subLabel.includes(q) || terms.some(t => t.includes(q))) return 15;
-        if (district.includes(q)) return 10;
-
-        return -1;
-      }
+      const districtMatches = matches.filter(m => m.type === 'District HQ');
+      const districtNames = districtMatches.map(m => (m.district || '').toLowerCase());
+      const directDistrictMatch = Object.keys(window.__DISTRICT_CITIES__ || {}).find(d => d.includes(q) || q.includes(d));
+      const allDistrictNames = [...new Set([...districtNames, directDistrictMatch].filter(Boolean))];
 
       if (currentMode === 'weather') {
-        const weatherMatches = searchIndex.filter(item => {
-          if (item.type !== 'Weather Node') return false;
-          const score = computeMatchScore(item);
-          return score > 0;
-        });
-
+        const weatherMatches = matches.filter(m => m.type === 'Weather Node');
+        const otherMatches = matches.filter(m => m.type !== 'Weather Node');
+        
         const condition = detectWeatherCondition(query);
-        let condFiltered = [];
-        if (condition) {
-          condFiltered = searchIndex.filter(item => {
+        if (condition && weatherMatches.length === 0 && allDistrictNames.length === 0) {
+          const condFiltered = searchIndex.filter(item => {
             if (item.type !== 'Weather Node') return false;
             const terms = (item.searchTerms || []).map(t => t.toLowerCase());
-            return (item.condition && item.condition.toLowerCase().includes(condition)) || terms.some(t => t.includes(condition));
+            const condMatch = item.condition && item.condition.toLowerCase().includes(condition);
+            const termMatch = terms.some(t => t.includes(condition));
+            return condMatch || termMatch;
           });
+          const unique = [];
+          const seen = new Set();
+          condFiltered.forEach(item => {
+            const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+            if (!seen.has(base)) {
+              seen.add(base);
+              unique.push(item);
+            }
+          });
+          return unique.slice(0, 8);
         }
-
-        const candidateList = [...weatherMatches, ...condFiltered];
+        
+        if (allDistrictNames.length > 0) {
+          const districtCities = [];
+          const seen = new Set();
+          const terrainMap = {};
+          (Array.isArray(window.__DISTRICT_TERRAIN__) ? window.__DISTRICT_TERRAIN__ : []).forEach(t => { terrainMap[t.district.toLowerCase()] = t.terrain; });
+          
+          allDistrictNames.forEach(dn => {
+            const terrain = terrainMap[dn] || 'hills';
+            const isMixed = terrain.includes('mixed');
+            const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
+            const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
+            const sourceList = citiesWithCoords.length > 0 ? citiesWithCoords : (Array.isArray(cities) ? cities.slice(0, 5) : []);
+            
+            if (!isMixed && sourceList.length > 0) {
+              const hq = sourceList[0];
+              const base = hq.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+              if (!seen.has(base)) {
+                seen.add(base);
+                districtCities.push({ label: hq.name, type: 'City Hub', lat: hq.lat, lng: hq.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District' });
+              }
+            } else {
+              sourceList.forEach(c => {
+                const base = c.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                if (!seen.has(base)) {
+                  seen.add(base);
+                  districtCities.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District · ' + terrain.replace(/_/g, ' ') });
+                }
+              });
+            }
+          });
+          return districtCities.slice(0, 8);
+        }
+        
+        const combined = [...weatherMatches, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
         const unique = [];
         const seen = new Set();
-        candidateList.forEach(item => {
-          const key = (item.label || '').toLowerCase();
-          if (!seen.has(key)) {
-            seen.add(key);
+        combined.forEach(item => {
+          const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+          if (!seen.has(base)) {
+            seen.add(base);
             unique.push(item);
           }
         });
         return unique.slice(0, 8);
       }
 
-      const scoredItems = [];
-      searchIndex.forEach(item => {
-        const score = computeMatchScore(item);
-        if (score > 0) {
-          scoredItems.push({ item, score });
+      const districtHqMatches = matches.filter(m => m.type === 'District HQ');
+      const otherMatches = matches.filter(m => m.type !== 'District HQ');
+      const relatedPlaces = [];
+      const seenLabels = new Set();
+      
+      function addUnique(item) {
+        const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+        if (!seenLabels.has(base)) {
+          seenLabels.add(base);
+          relatedPlaces.push(item);
+          return true;
         }
-      });
+        return false;
+      }
 
-      scoredItems.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        const prioA = typePriority[a.item.type] || 0;
-        const prioB = typePriority[b.item.type] || 0;
-        return prioB - prioA;
-      });
-
-      const results = [];
-      const seenKeys = new Set();
-
-      scoredItems.forEach(({ item }) => {
-        const baseName = getBaseName(item.label).toLowerCase();
-        const dist = (item.district || '').toLowerCase();
-        const dedupKey = item.type === 'Highway' ? ('hwy_' + (item.code || baseName)) :
-                         item.type === 'Airport' ? ('air_' + (item.code || baseName)) :
-                         (baseName + (dist ? ('_' + dist) : ''));
-
-        if (!seenKeys.has(dedupKey)) {
-          seenKeys.add(dedupKey);
-
-          let cleanLabel = item.label;
-          let sub = item.subLabel || '';
-
-          if (item.type === 'City Hub' || item.type === 'District HQ') {
-            cleanLabel = getBaseName(item.label);
-            if (item.district && !sub) {
-              sub = item.district.charAt(0).toUpperCase() + item.district.slice(1) + ' District' + (item.province ? (', ' + item.province) : '');
-            }
-          } else if (item.type === 'Local Unit') {
-            cleanLabel = item.palika || getBaseName(item.label);
-            if (item.district && !sub) {
-              sub = item.district + ' District (Local Unit)';
-            }
+      if (allDistrictNames.length > 0) {
+        allDistrictNames.forEach(dn => {
+          const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
+          if (!Array.isArray(cities)) return;
+          const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
+          const hq = citiesWithCoords.length > 0 ? citiesWithCoords[0] : (cities[0] ? { ...cities[0], lat: cities[0].lat || 0, lng: cities[0].lng || 0 } : null);
+          if (hq) {
+            addUnique({ label: hq.name + ' (' + dn.charAt(0).toUpperCase() + dn.slice(1) + ' HQ)', type: 'District HQ', district: dn, hq: hq.name, hqType: hq.type || 'HQ', lat: hq.lat, lng: hq.lng });
           }
+          
+          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
+            if ((a.district || '').toLowerCase() === dn) {
+              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+            }
+          });
+          
+          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+          busStations.forEach(b => {
+            if ((b.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+            }
+          });
+          
+          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
+            if (p.type === 'bus_station') return;
+            if (p.type === 'airport') return;
+            if ((p.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
+            }
+          });
+        });
+      }
 
-          results.push({
-            ...item,
-            label: cleanLabel,
-            subLabel: sub
+      districtHqMatches.forEach(dh => {
+        addUnique(dh);
+        const dn = (dh.district || '').toLowerCase();
+        (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
+          if ((a.district || '').toLowerCase() === dn) {
+            addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+          }
+        });
+        const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+        busStations.forEach(b => {
+          if ((b.location || '').toLowerCase().includes(dn)) {
+            addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+          }
+        });
+      });
+
+      otherMatches.forEach(item => {
+        if (item.type === 'Highway') return;
+        addUnique(item);
+        if (item.type === 'City Hub' && item.district) {
+          const dn = item.district.toLowerCase();
+          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
+            if ((a.district || '').toLowerCase() === dn) {
+              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+            }
+          });
+          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
+          busStations.forEach(b => {
+            if ((b.location || '').toLowerCase().includes(dn)) {
+              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+            }
+          });
+          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
+            if (p.type === 'bus_station') return;
+            if (p.type === 'airport') return;
+            if ((p.location || '').toLowerCase().includes(dn) && p.type !== 'City Hub') {
+              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
+            }
           });
         }
       });
 
-      return results.slice(0, 8);
+      return relatedPlaces.slice(0, 8);
     }
 
     function showPlaceInfoCard(item) {
@@ -3572,8 +2741,7 @@
       selectedDestination = dest;
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
       openAutoPopup(dest.lat, dest.lng, '<strong>' + dest.label + '</strong>');
-      const results = document.getElementById('sidebarResults');
-      if (results) results.innerHTML = '';
+      showPlaceInfoCard(dest);
       showMapToggleOptions();
     }
 
@@ -3620,7 +2788,6 @@
       const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
       const dest = selectedDestination;
       const results = document.getElementById('sidebarResults');
-      if (!results) return;
 
       if (!origin.lat || !origin.lng || !dest.lat || !dest.lng) {
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Missing coordinates for origin or destination.</div></div>';
@@ -3628,86 +2795,75 @@
       }
 
       try {
-        results.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-secondary); font-size:0.85rem;"><span style="display:inline-block; animation:spin 1s linear infinite; margin-right:8px;">🧭</span> Analyzing Nepal highway corridors & terrain…</div>';
+      const cacheKey = origin.lat + ',' + origin.lng + '|' + dest.lat + ',' + dest.lng;
+      const isAvoidToll = activeRoutePreference === 'avoid_toll';
+      const cache = window.__routeCache;
+      const cachedRoutes = isAvoidToll ? cache.avoidTollRoutes : cache.routes;
+      const cacheKeyValid = cache.key === cacheKey && cache.origin && cache.dest;
 
-        const cacheKey = origin.lat + ',' + origin.lng + '|' + dest.lat + ',' + dest.lng;
-        const isAvoidToll = activeRoutePreference === 'avoid_toll';
-        const cache = window.__routeCache;
-        const cachedRoutes = isAvoidToll ? cache.avoidTollRoutes : cache.routes;
-        const cacheKeyValid = cache.key === cacheKey && cache.origin && cache.dest;
+      let routes = cachedRoutes;
+      let needFetch = !cacheKeyValid || !routes;
 
-        let routes = cachedRoutes;
-        let needFetch = !cacheKeyValid || !routes;
-
-        if (needFetch) {
-          try {
-            const exclude = isAvoidToll ? '&exclude=toll' : '';
-            const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true' + exclude;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
-            const data = await res.json();
-            if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
-              results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">No route found</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Try a different destination or check road connections.</div></div>';
-              return;
-            }
-            routes = data.routes;
-            if (isAvoidToll) cache.avoidTollRoutes = routes;
-            else cache.routes = routes;
-            cache.key = cacheKey;
-            cache.origin = origin;
-            cache.dest = dest;
-          } catch (err) {
-            console.error('[MeroSadak] Route fetch error:', err);
-            results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Routing service unavailable</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Please retry in a moment.') + '</div></div>';
+      if (needFetch) {
+        try {
+          const exclude = isAvoidToll ? '&exclude=toll' : '';
+          const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true' + exclude;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
+          const data = await res.json();
+          if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+            results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">No route found</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Try a different destination or transport mode.</div></div>';
             return;
           }
+          routes = data.routes;
+          if (isAvoidToll) {
+            cache.avoidTollRoutes = routes;
+          } else {
+            cache.routes = routes;
+          }
+          cache.key = cacheKey;
+          cache.origin = origin;
+          cache.dest = dest;
+        } catch (err) {
+          console.error('[MeroSadak] Route fetch error:', err);
+          const msg = (err.message || 'Unknown error');
+          results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + msg + '</div></div>';
+          if (msg.includes('API key') || msg.includes('key') || msg.includes('401') || msg.includes('403')) {
+            showApiError('Routing service error: ' + msg);
+          }
+          return;
         }
+      }
 
-        const fastest = routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
-        const shortest = routes.reduce((a, b) => (a.distance <= b.distance ? a : b));
-        const scenic = routes.find(r => r !== fastest && r !== shortest) || routes.reduce((a, b) => (a.distance >= b.distance ? a : b));
+      const fastest = routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
+      const shortest = routes.reduce((a, b) => (a.distance <= b.distance ? a : b));
+      const scenic = routes.find(r => r !== fastest && r !== shortest) || routes.reduce((a, b) => (a.distance >= b.distance ? a : b));
 
-        let chosen;
-        if (activeRoutePreference === 'shortest') chosen = shortest;
-        else if (activeRoutePreference === 'scenic') chosen = scenic;
-        else if (activeRoutePreference === 'avoid_toll') chosen = fastest;
-        else chosen = fastest;
+      let chosen;
+      if (activeRoutePreference === 'shortest') chosen = shortest;
+      else if (activeRoutePreference === 'scenic') chosen = scenic;
+      else if (activeRoutePreference === 'avoid_toll') chosen = fastest;
+      else chosen = fastest;
 
-        const distanceKm = chosen.distance / 1000;
-        const kmFormatted = distanceKm.toFixed(1);
-
-        // Vehicle specifications & dynamic adjustment
-        const vehicleSpecs = {
-          car: { label: 'Car', fullLabel: 'Car / Sedan', icon: '🚗', speedFactor: 1.0, fuelUnit: 'L Petrol', kmPerUnit: 12.0, costPerUnit: 175, advisory: 'Comfortable highway cruising. Recommended tire pressure: 32-34 PSI.' },
-          suv_4wd: { label: 'SUV', fullLabel: 'SUV / 4WD', icon: '🚙', speedFactor: 0.95, fuelUnit: 'L Diesel', kmPerUnit: 9.5, costPerUnit: 170, advisory: 'High clearance ready for rocky mountain segments, bypasses and riverbeds.' },
-          motorbike: { label: 'Moto', fullLabel: 'Motorcycle', icon: '🏍️', speedFactor: 0.88, fuelUnit: 'L Petrol', kmPerUnit: 35.0, costPerUnit: 175, advisory: 'Agile transit. Wear certified helmet with clear visor and rain protective gear.' },
-          bus_truck: { label: 'Bus', fullLabel: 'Bus / Truck', icon: '🚌', speedFactor: 1.35, fuelUnit: 'L Diesel', kmPerUnit: 4.2, costPerUnit: 160, advisory: 'Heavy vehicle corridor. Maintain low gear on mountain ghat descents to prevent brake fade.' },
-          electric_vehicle: { label: 'EV', fullLabel: 'Electric Vehicle', icon: '⚡', speedFactor: 1.02, fuelUnit: 'kWh', kmPerUnit: 6.5, costPerUnit: 9.5, advisory: 'Eco Corridor. Regenerative braking recovers ~12% battery on mountain descents.' }
-        };
-
-        const vSpec = vehicleSpecs[activeVehicle] || vehicleSpecs.car;
-        const adjustedDurationSec = chosen.duration * vSpec.speedFactor;
-        const totalMinutes = Math.round(adjustedDurationSec / 60);
-        const hrs = Math.floor(totalMinutes / 60);
-        const mins = totalMinutes % 60;
-        const durationFormatted = hrs > 0 ? `${hrs}h ${mins}m` : `${mins} min`;
-
-        const unitsNeeded = distanceKm / vSpec.kmPerUnit;
-        const estimatedCost = Math.round(unitsNeeded * vSpec.costPerUnit);
-        const energySubtitle = activeVehicle === 'electric_vehicle' 
-          ? `~${unitsNeeded.toFixed(1)} kWh (${Math.min(100, Math.round((unitsNeeded/40)*100))}% of 40kWh)`
-          : `~${unitsNeeded.toFixed(1)} ${vSpec.fuelUnit} (@ NPR ${vSpec.costPerUnit}/L)`;
+        const km = (chosen.distance / 1000).toFixed(1);
+        const hrs = (chosen.duration / 3600).toFixed(1);
+        const fuelLiters = (chosen.distance / 1000 / 12).toFixed(1);
+        const fuelCost = Math.round(fuelLiters * 175);
 
         function getRoutePreferenceMeta(pref) {
-          if (pref === 'avoid_toll') return { name: 'Toll-Free Route', badge: '🚫 Avoid Toll', color: '#ef4444', icon: '🚫' };
-          if (pref === 'shortest') return { name: 'Direct Distance (Shortest)', badge: '📏 Shortest', color: '#10b981', icon: '📏' };
-          if (pref === 'scenic') return { name: 'Scenic Ridge & Passes', badge: '🏔️ Scenic', color: '#8b5cf6', icon: '🏔️' };
-          if (pref === 'safest') return { name: 'Paved & Safety-Prioritized', badge: '🛡️ Safest', color: '#f59e0b', icon: '🛡️' };
-          if (pref === 'ev') return { name: 'EV Fast-Charging Corridor', badge: '⚡ EV Priority', color: '#06b6d4', icon: '⚡' };
-          return { name: 'Express Corridor (Fastest)', badge: '🚀 Fastest', color: '#38bdf8', icon: '🚀' };
+          if (pref === 'avoid_toll') return { name: 'Toll-Free Route', badge: '🚫 Avoid Toll', color: '#ef4444', icon: '🚫', viaTemplate: (r) => 'via toll-free corridors' };
+          if (pref === 'shortest') return { name: 'Direct Distance (Shortest)', badge: '📏 Shortest', color: '#10b981', icon: '📏', viaTemplate: (r) => { const names = r.legs?.[0]?.steps?.filter(s => s.name && s.name.length > 3).slice(0, 3).map(s => s.name.split(' ').slice(-2).join(' ')); return names && names.length ? 'via ' + names.join(' & ') : 'via direct route'; } };
+          if (pref === 'scenic') return { name: 'Scenic Ridge & Passes', badge: '🏔️ Most Scenic', color: '#8b5cf6', icon: '🏔️', viaTemplate: (r) => 'via scenic highlands' };
+          if (pref === 'safest') return { name: 'Paved & Safety-Prioritized', badge: '🛡️ Safest Surface', color: '#f59e0b', icon: '🛡️', viaTemplate: (r) => 'via safest paved corridors' };
+          if (pref === 'ev') return { name: 'EV Fast-Charging Corridor', badge: '⚡ EV Priority', color: '#06b6d4', icon: '⚡', viaTemplate: (r) => 'via EV charging network' };
+          return { name: 'Express Corridor (Fastest)', badge: '🚀 Fastest', color: '#38bdf8', icon: '🚀', viaTemplate: (r) => { const names = r.legs?.[0]?.steps?.filter(s => s.name && s.name.length > 3).slice(0, 4).map(s => s.name.split(' ').slice(-2).join(' ')); return names && names.length >= 2 ? 'via ' + names.slice(0, 2).join(' & ') + (names.length > 2 ? ' ...' : '') : 'via express corridor'; } };
         }
 
         const prefMeta = getRoutePreferenceMeta(activeRoutePreference);
+        const routeName = prefMeta.name;
+        const routeBadge = prefMeta.badge;
+        const routeColor = prefMeta.color;
+        const viaText = prefMeta.viaTemplate(chosen);
 
         function getRouteType(route) {
           if (route === fastest) return activeRoutePreference === 'avoid_toll' ? 'avoid_toll' : 'fastest';
@@ -3716,64 +2872,139 @@
           return 'other';
         }
 
-        // Draw Map Lines
+        const uniqueRoutes = [];
+        const seenRouteKeys = new Set();
+        routes.forEach((route) => {
+          const key = route.distance + '_' + route.duration;
+          if (!seenRouteKeys.has(key)) {
+            seenRouteKeys.add(key);
+            uniqueRoutes.push(route);
+          }
+        });
+
+        const routeOptions = uniqueRoutes.map((route, idx) => {
+          const type = getRouteType(route);
+          const meta = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
+          if (type === 'other' && idx === 0 && activeRoutePreference === 'safest') meta.color = '#f59e0b';
+          const isChosen = route === chosen;
+          return {
+            route,
+            type,
+            isChosen,
+            label: meta.badge,
+            color: meta.color,
+            name: meta.name,
+            km: (route.distance / 1000).toFixed(1),
+            hrs: (route.duration / 3600).toFixed(1)
+          };
+        });
+
+        function hexToRgba(hex, alpha) {
+          const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+          return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+        }
+
         if (routeLayerGroup) { map.removeLayer(routeLayerGroup); routeLayerGroup = null; }
+        if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
         routeLayerGroup = L.featureGroup().addTo(map);
 
         routes.forEach((route) => {
           const type = getRouteType(route);
           const isChosen = route === chosen;
-          const config = getRoutePreferenceMeta(type === 'other' ? 'safest' : type);
-          const finalLineColor = isChosen ? config.color : 'rgba(255,255,255,0.25)';
+          const config = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
+          const finalLineColor = isChosen ? config.color : hexToRgba(config.color, 0.35);
           const weight = isChosen ? 6 : 3;
-          const opacity = isChosen ? 1 : 0.6;
-          const dashArray = isChosen ? null : '6, 6';
+          const opacity = isChosen ? 1 : 0.7;
+          const dashArray = isChosen ? null : '8, 8';
 
           if (isChosen) {
             const glowOuter = L.geoJSON(route.geometry, {
-              style: { color: config.color, weight: 16, opacity: 0.15, lineCap: 'round', lineJoin: 'round' }
+              style: {
+                color: config.color,
+                weight: 18,
+                opacity: 0.12,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }
             });
             routeLayerGroup.addLayer(glowOuter);
+
+            const glowInner = L.geoJSON(route.geometry, {
+              style: {
+                color: config.color,
+                weight: 10,
+                opacity: 0.25,
+                lineCap: 'round',
+                lineJoin: 'round'
+              }
+            });
+            routeLayerGroup.addLayer(glowInner);
           }
 
           const line = L.geoJSON(route.geometry, {
-            style: { color: finalLineColor, weight: weight, opacity: opacity, dashArray: dashArray, lineCap: 'round', lineJoin: 'round' }
+            style: {
+              color: finalLineColor,
+              weight: weight,
+              opacity: opacity,
+              dashArray: dashArray,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }
           });
           routeLayerGroup.addLayer(line);
+
+          if (!isChosen && uniqueRoutes.length > 1) {
+            const midIndex = Math.floor(route.geometry.coordinates.length / 2);
+            const midCoord = route.geometry.coordinates[midIndex];
+            const labelIcon = L.divIcon({
+              className: 'route-label-marker',
+              html: '<div style="background:' + hexToRgba(config.color, 0.2) + '; border:1px solid ' + config.color + '; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; backdrop-filter:blur(4px);">' + config.badge + '</div>',
+              iconSize: [100, 18],
+              iconAnchor: [50, 9]
+            });
+            L.marker([midCoord[1], midCoord[0]], { icon: labelIcon, interactive: false }).addTo(routeLayerGroup);
+          }
         });
 
-        const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : [];
-        window.__currentRouteCoords = coords;
-        if (coords.length > 0) {
+        const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
+        window.__currentRouteCoords = coords || [];
+        if (coords && coords.length > 0) {
           const startCoord = coords[0];
           const endCoord = coords[coords.length - 1];
           const startIcon = L.divIcon({
             className: 'route-start-marker',
-            html: '<div style="background:#10b981; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 12px #10b981; display:flex; align-items:center; justify-content:center; color:#020617; font-size:11px; font-weight:900;">A</div>',
+            html: '<div style="background:#10b981; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #10b981; display:flex; align-items:center; justify-content:center; color:#020617; font-size:11px; font-weight:900;">A</div>',
             iconSize: [22, 22], iconAnchor: [11, 11]
           });
           const endIcon = L.divIcon({
             className: 'route-end-marker',
-            html: '<div style="background:#f43f5e; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 12px #f43f5e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:900;">B</div>',
+            html: '<div style="background:#f43f5e; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #f43f5e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:900;">B</div>',
             iconSize: [22, 22], iconAnchor: [11, 11]
           });
           L.marker([startCoord[1], startCoord[0]], { icon: startIcon }).addTo(routeLayerGroup);
           L.marker([endCoord[1], endCoord[0]], { icon: endIcon }).addTo(routeLayerGroup);
         }
 
-        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.2 });
+        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
 
         const cleanOrigin = origin.label === 'My Location' ? 'Kathmandu' : origin.label;
         const cleanDest = dest.label === 'My Location' ? 'Kathmandu' : dest.label;
 
-        const elevData = computeRouteElevation(coords);
-        const elevText = elevData ? `${elevData.min}m → ${elevData.max}m` : 'Himalayan Corridor';
-        const elevSub = elevData && elevData.gain ? `+${elevData.gain}m Climb` : 'Mountain Grade';
+        const vehicleLabels = { car: 'Car/Sedan', suv_4wd: 'SUV/4WD', motorbike: 'Motorcycle', bus_truck: 'Bus/Truck', electric_vehicle: 'EV' };
+        const vehicleIcons = { car: '🚗', suv_4wd: '🚙', motorbike: '🏍️', bus_truck: '🚌', electric_vehicle: '⚡' };
 
-        // Toll Check
+        const vLabel = vehicleLabels[activeVehicle] || activeVehicle;
+        const vIcon = vehicleIcons[activeVehicle] || '🚗';
+
+        const elevData = computeRouteElevation(chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : []);
+        const elevText = elevData ? (elevData.gain > 0 ? elevData.min + 'm → ' + elevData.max + 'm (+' + elevData.gain + 'm)' : elevData.min + 'm → ' + elevData.max + 'm') : 'N/A';
+
+        const fuelEff = (chosen.distance / 1000 / fuelLiters).toFixed(1);
+
         let tollCost = 0;
         let tollLabel = '';
-        if (window.NEPAL_DATA && window.NEPAL_DATA.tollFees && coords.length) {
+        if (window.NEPAL_DATA && window.NEPAL_DATA.tollFees && chosen.geometry && chosen.geometry.coordinates) {
+          const coords = chosen.geometry.coordinates;
           const tunnelBox = { minLat: 27.69, maxLat: 27.73, minLng: 85.18, maxLng: 85.30 };
           const passesThroughTunnel = coords.some(([lng, lat]) =>
             lat >= tunnelBox.minLat && lat <= tunnelBox.maxLat &&
@@ -3781,157 +3012,87 @@
           );
           if (passesThroughTunnel) {
             const toll = window.NEPAL_DATA.tollFees.nagdhungaTunnel;
-            const catIndex = activeVehicle === 'bus_truck' ? 2 : activeVehicle === 'motorbike' ? 0 : 1;
-            const cat = toll.categories[catIndex] || toll.categories[0];
+            const catIndex = activeVehicle === 'bus_truck' ? 2 : 0;
+            const cat = toll.categories[catIndex];
             tollCost = cat.entry;
-            tollLabel = `${toll.name} (${cat.label})`;
+            tollLabel = toll.name + ' (' + cat.label + ')';
           }
         }
 
-        // Alternative route comparison cards
-        const altRoutes = routes.filter(r => r !== chosen);
-        const altRoutesHtml = altRoutes.length ? altRoutes.map((r, i) => {
-          const diffKm = ((r.distance - chosen.distance) / 1000).toFixed(1);
-          const diffMin = Math.round((r.duration * vSpec.speedFactor - adjustedDurationSec) / 60);
-          const diffKmText = parseFloat(diffKm) >= 0 ? `+${diffKm} km` : `${diffKm} km`;
-          const diffMinText = diffMin >= 0 ? `+${diffMin} min` : `${diffMin} min`;
-          const rType = r === fastest ? 'fastest' : r === shortest ? 'shortest' : r === scenic ? 'scenic' : 'safest';
-          const rMeta = getRoutePreferenceMeta(rType);
-          return `
-            <div class="report-stat-tile" onclick="switchRouteOption('${rType}')" style="cursor:pointer; transition:all 0.2s;" title="Switch to this route">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.75rem; font-weight:800; color:${rMeta.color};">${rMeta.icon} ${rMeta.name}</span>
-                <span style="font-size:0.68rem; color:var(--text-muted);">${(r.distance/1000).toFixed(1)} km</span>
-              </div>
-              <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">
-                ${diffMinText} · ${diffKmText}
-              </div>
-            </div>
-          `;
-        }).join('') : '';
+        const tollRow = tollCost > 0
+          ? '<div class="route-toll-row"><span class="route-toll-label">🚧 ' + tollLabel + '</span><span class="route-toll-val">NPR ' + tollCost.toLocaleString() + '</span></div>'
+          : '';
 
-        // Vehicle Buttons
-        const vehicleButtons = Object.keys(vehicleSpecs).map(vk => {
-          const spec = vehicleSpecs[vk];
-          const isActive = vk === activeVehicle;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setVehicle('${vk}')">${spec.icon} ${spec.label}</button>`;
-        }).join('');
+        const itinerarySteps = [];
+        if (chosen.legs && chosen.legs[0] && chosen.legs[0].steps) {
+          chosen.legs[0].steps.forEach((step, i) => {
+            if (!step.name || step.name.length < 3) return;
+            const name = step.name.replace(/[^a-zA-Z0-9\s\/\-]/g, '').trim();
+            if (!name) return;
+            const distKm = (step.distance / 1000).toFixed(1);
+            const durMin = Math.round(step.duration / 60);
+            if (itinerarySteps.length >= 8) return;
+            const last = itinerarySteps[itinerarySteps.length - 1];
+            if (last && last.name === name) {
+              last.distKm = (parseFloat(last.distKm) + parseFloat(distKm)).toFixed(1);
+              last.durMin += durMin;
+              return;
+            }
+            itinerarySteps.push({ name, distKm, durMin });
+          });
+        }
 
-        // Route Preference Buttons
-        const prefKeys = ['fastest', 'shortest', 'safest', 'scenic', 'ev', 'avoid_toll'];
-        const prefButtons = prefKeys.map(pk => {
-          const meta = getRoutePreferenceMeta(pk);
-          const isActive = pk === activeRoutePreference;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setRoutePref('${pk}')">${meta.icon} ${meta.badge.replace(/^[^a-zA-Z0-9]+/, '')}</button>`;
-        }).join('');
+        const itineraryHtml = itinerarySteps.length ? '<div class="route-itinerary"><div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Route Itinerary</div>' + itinerarySteps.map(s => '<div class="itinerary-step"><span class="itinerary-name">' + s.name + '</span><span class="itinerary-metrics">' + s.distKm + ' km · ' + (s.durMin >= 60 ? Math.floor(s.durMin / 60) + 'h ' + (s.durMin % 60) + 'm' : s.durMin + ' min') + '</span></div>').join('') + '</div>' : '';
 
-        // Construct Full Ready Report
-        const reportHtml = `
-          <div class="route-report">
-            <!-- Header Section -->
-            <div class="report-header-section">
-              <div class="report-badge-row">
-                <span class="report-badge" style="background:${prefMeta.color}25; border:1px solid ${prefMeta.color}60; color:${prefMeta.color};">
-                  ${prefMeta.icon} ${prefMeta.name}
-                </span>
-                <span style="font-size:0.72rem; font-weight:700; color:#38bdf8;">${vSpec.icon} ${vSpec.fullLabel}</span>
-              </div>
-              <div class="report-endpoints-box">
-                <span class="report-endpoint-from" title="${cleanOrigin}">📍 ${cleanOrigin}</span>
-                <span class="report-endpoint-arrow">➔</span>
-                <span class="report-endpoint-to" title="${cleanDest}">🏁 ${cleanDest}</span>
-              </div>
-            </div>
+        const altRoutesHtml = routeOptions.filter(o => !o.isChosen).map(o => '<div class="alt-route-card" onclick="switchRouteOption(\'' + o.type + '\')" style="cursor:pointer; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid var(--surface-border); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:8px; transition:all 0.2s;"><div><div style="font-size:0.7rem; font-weight:700; color:' + o.color + ';">' + o.label + '</div><div style="font-size:0.65rem; color:var(--text-muted);">' + o.km + ' km · ' + o.hrs + ' hrs</div></div><div style="font-size:0.7rem; color:var(--text-secondary);">→</div></div>').join('');
 
-            <!-- Vehicle Selector Hub -->
-            <div>
-              <div class="report-section-label">🚘 Transport Mode</div>
-              <div class="report-pills-bar">
-                ${vehicleButtons}
-              </div>
-            </div>
+        let html = '<div class="route-report">' +
+          '<div class="route-report-header">' +
+            '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+              '<span class="route-badge" style="background:' + routeColor + '20; border-color:' + routeColor + '50; color:' + routeColor + ';">' + prefMeta.icon + ' ' + routeBadge + '</span>' +
+              '<span style="font-size:0.75rem; font-weight:700; color:#fff;">' + routeName + '</span>' +
+            '</div>' +
+            '<div style="font-size:0.72rem; color:var(--text-secondary); margin-top:4px;">' + viaText + '</div>' +
+            '<div class="route-endpoints" style="margin-top:6px;">' +
+              '<span class="route-point origin">🟢 ' + cleanOrigin + '</span>' +
+              '<span class="route-arrow">→</span>' +
+              '<span class="route-point dest">🔴 ' + cleanDest + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="route-report-body">' +
+            '<div class="route-line"><span class="route-label">Distance</span><span class="route-value">' + km + ' km</span></div>' +
+            '<div class="route-line"><span class="route-label">Duration</span><span class="route-value">' + hrs + ' hrs</span></div>' +
+            '<div class="route-line"><span class="route-label">Elevation</span><span class="route-value">' + elevText + '</span></div>' +
+            '<div class="route-line"><span class="route-label">Est. Fuel Cost</span><span class="route-value">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
+            '<div class="route-line"><span class="route-label">Efficiency</span><span class="route-value">' + fuelEff + ' km/L</span></div>' +
+          '</div>' +
+          (altRoutesHtml ? '<div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:4px;">Alternative Routes</div><div style="display:flex; flex-direction:column; gap:6px;">' + altRoutesHtml + '</div>' : '') +
+          itineraryHtml +
+          '<div class="route-report-footer">' +
+            tollRow +
+            '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:8px;">Estimates based on average fuel economy and route data.</div>' +
+          '</div>' +
+        '</div>';
 
-            <!-- Route Preference Selector Hub -->
-            <div>
-              <div class="report-section-label">🛣️ Route Preference</div>
-              <div class="report-pills-bar">
-                ${prefButtons}
-              </div>
-            </div>
+        results.innerHTML = html;
 
-            <!-- Key Metrics 4-Tile Grid -->
-            <div class="report-stats-grid">
-              <div class="report-stat-tile">
-                <div class="report-stat-title">📏 Distance</div>
-                <div class="report-stat-value" style="color:#38bdf8;">${kmFormatted} <span style="font-size:0.75rem;">km</span></div>
-                <div class="report-stat-sub">Nepal Highway Network</div>
-              </div>
-              <div class="report-stat-tile">
-                <div class="report-stat-title">⏱️ Travel Time</div>
-                <div class="report-stat-value" style="color:#34d399;">${durationFormatted}</div>
-                <div class="report-stat-sub">Adjusted for ${vSpec.label}</div>
-              </div>
-              <div class="report-stat-tile">
-                <div class="report-stat-title">💰 Est. Energy / Fuel</div>
-                <div class="report-stat-value" style="color:#fbbf24;">NPR ${estimatedCost.toLocaleString()}</div>
-                <div class="report-stat-sub">${energySubtitle}</div>
-              </div>
-              <div class="report-stat-tile">
-                <div class="report-stat-title">⛰️ Elevation & Grade</div>
-                <div class="report-stat-value" style="font-size:0.9rem; color:#c084fc;">${elevText}</div>
-                <div class="report-stat-sub">${elevSub}</div>
-              </div>
-            </div>
+        const controlsRow = document.getElementById('routeControlsRow');
+        if (controlsRow && controlsRow.classList.contains('hidden')) {
+          controlsRow.classList.remove('hidden');
+        }
 
-            <!-- Vehicle Advisory Banner -->
-            <div class="report-advisory-card">
-              <span class="report-advisory-icon">${vSpec.icon}</span>
-              <div>
-                <div class="report-advisory-title">${vSpec.fullLabel} Travel Advisory</div>
-                <div class="report-advisory-desc">${vSpec.advisory}</div>
-              </div>
-            </div>
-
-            ${tollCost > 0 ? `
-              <div style="padding:8px 12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.75rem; font-weight:700; color:#fca5a5;">🚧 ${tollLabel}</span>
-                <span style="font-size:0.85rem; font-weight:800; color:#fff; font-family:'JetBrains Mono',monospace;">NPR ${tollCost.toLocaleString()}</span>
-              </div>
-            ` : ''}
-
-            <!-- Alternative Routes List -->
-            ${altRoutesHtml ? `
-              <div>
-                <div class="report-section-label">⚡ Alternative Corridor Comparisons</div>
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                  ${altRoutesHtml}
-                </div>
-              </div>
-            ` : ''}
-
-            <!-- Quick Action Hub -->
-            <div class="report-actions-grid">
-              <button class="report-action-btn" onclick="map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.2 })">
-                🗺️ Focus Route
-              </button>
-              <button class="report-action-btn" onclick="openPretripModal()">
-                ✅ Safety Checklist
-              </button>
-              <button class="report-action-btn" onclick="openShareTripModal()">
-                🔗 Share Plan
-              </button>
-              <button class="report-action-btn report-action-sos" onclick="openModal('sosModal')">
-                🚨 Emergency SOS
-              </button>
-            </div>
-          </div>
-        `;
-
-        results.innerHTML = reportHtml;
+        const searchPanel = document.getElementById('routeSearchPanel');
+        if (searchPanel) searchPanel.style.display = 'none';
+        const searchToggle = document.getElementById('routeSearchToggle');
+        if (searchToggle) searchToggle.style.display = 'block';
 
       } catch (err) {
         console.error('[MeroSadak] Route calculation error:', err);
-        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Error computing route') + '</div></div>';
+        const msg = (err.message || 'Unknown error');
+        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + msg + '</div></div>';
+        if (msg.includes('API key') || msg.includes('key') || msg.includes('401') || msg.includes('403')) {
+          showApiError('Routing service error: ' + msg);
+        }
       }
     }
 
@@ -4819,6 +3980,4 @@ Plan your safe mountain highway journey at mero-sadak.app`;
         console.error('App init error:', e);
       }
     });
-  </script>
-</body>
-</html>
+  
