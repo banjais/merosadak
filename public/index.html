@@ -338,7 +338,9 @@
 
         <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
 
-        <div class="route-controls-row">
+        <div class="sidebar-results" id="sidebarResults"></div>
+
+        <div class="route-controls-row hidden" id="routeControlsRow">
           <select id="sidebarVehicle" onchange="activeVehicle=this.value">
             <option value="car">Car/Sedan</option>
             <option value="suv_4wd">SUV/4WD</option>
@@ -356,7 +358,6 @@
           </select>
         </div>
 
-        <div class="sidebar-results" id="sidebarResults"></div>
         <input type="hidden" id="originSearch" value="My Location">
       </div>
 
@@ -3855,6 +3856,11 @@
         '</div>';
 
         results.innerHTML = html;
+
+        const controlsRow = document.getElementById('routeControlsRow');
+        if (controlsRow && controlsRow.classList.contains('hidden')) {
+          controlsRow.classList.remove('hidden');
+        }
 
       } catch (err) {
         console.error('[MeroSadak] Route calculation error:', err);
