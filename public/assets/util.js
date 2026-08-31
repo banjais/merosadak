@@ -42,7 +42,7 @@ function renderSidebarRouteResult(dest) {
   const header = document.createElement('div');
   header.className = 'route-header';
   header.innerHTML = `
-    <span id="routeFromLabel">From: <strong>My Location</strong></span>
+    <span id="routeFromLabel"><strong>My Location</strong></span>
     <button class="btn-action-primary" style="margin-left:8px;" onclick="changeFromLocation()">Change</button>
   `;
   container.appendChild(header);
@@ -68,7 +68,7 @@ function changeFromLocation() {
   const newFrom = prompt('Enter new start location (e.g., address or coordinates):', 'My Location');
   if (newFrom !== null) {
     const fromLabel = document.getElementById('routeFromLabel');
-    if (fromLabel) fromLabel.innerHTML = `From: <strong>${newFrom}</strong>`;
+    if (fromLabel) fromLabel.innerHTML = `<strong>${newFrom}</strong>`;
   }
 }
 

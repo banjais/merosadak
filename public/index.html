@@ -267,7 +267,7 @@
         <div class="route-origin-wrap">
           <div class="route-origin-chip" onclick="toggleOriginMenu()" title="Origin options">
             <span class="origin-dot"></span>
-            <span id="originLabel">From: My Location</span>
+            <span id="originLabel">My Location</span>
             <span class="origin-edit">▼</span>
           </div>
           <div id="originMenu" class="origin-menu" style="display:none;">
@@ -278,7 +278,7 @@
             <div class="origin-menu-divider"></div>
             <div class="origin-menu-item" onclick="showOriginSearch()">
               <span class="origin-menu-icon">🔍</span>
-              <span class="origin-menu-text">From Other Location</span>
+              <span class="origin-menu-text">Change Location</span>
             </div>
           </div>
         </div>
@@ -2897,7 +2897,7 @@
       const label = document.getElementById('originLabel');
       const menu = document.getElementById('originMenu');
       const currentItem = document.getElementById('originCurrentItem');
-      if (label) label.textContent = 'From Other Location';
+      if (label) label.textContent = 'Change Location';
       if (menu) menu.style.display = 'none';
       if (currentItem) currentItem.style.display = 'none';
       if (wrap) {
@@ -3030,7 +3030,7 @@
           lastDetectedOrigin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'My Location' };
           usingDetectedLocation = true;
           input.value = 'My Location';
-          if (label) label.textContent = 'From: My Location';
+          if (label) label.textContent = 'My Location';
           updateOriginInfo(pos.coords.latitude, pos.coords.longitude);
         },
         () => {
