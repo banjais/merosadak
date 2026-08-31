@@ -4218,12 +4218,15 @@ button:focus-visible, select:focus-visible {
 
 /* Route Result Enhancements */
 .route-enhancements {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 8px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.route-enhancements.is-visible {
+  display: flex;
 }
 .route-enhancement-row {
   display: flex;
