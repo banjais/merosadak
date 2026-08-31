@@ -14,10 +14,10 @@ function run(name, cmd) {
 try {
   run('sync data', 'npm run sync:data');
   run('deploy worker', 'npm run worker:deploy');
-  run('git add', 'git add .');
+  run('git add', "git add -A -- . ':(exclude)merosadak-reference'");
 
   try {
-    run('git commit', 'git commit -m "chore: ship - sync data + deploy worker + hosting"');
+    run('git commit', "git commit -m 'chore: ship - sync data + deploy worker + hosting'");
   } catch {
     console.log('[ship] nothing to commit, continuing...');
   }
