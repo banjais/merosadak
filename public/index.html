@@ -851,8 +851,8 @@
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
       const reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason);
-      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401/.test(reasonStr);
-      if (isExtensionError || (typeof reason === 'object' && reason !== null && !reason.stack && !reason.name)) {
+      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
+      if (isExtensionError || (typeof reason === 'object' && reason !== null && (!reason.stack || !reason.name || /extension|content|script|multiplex|listener/i.test(reasonStr)))) {
         event.preventDefault();
         return;
       }
@@ -863,9 +863,8 @@
     window.addEventListener('error', (event) => {
       const target = event.target;
       const filename = target && target.src ? target.src : (target && target.scriptURL ? target.scriptURL : '');
-      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(filename + ' ' + event.message);
-      const isInlineExtension = event.filename === '' || event.filename === document.location.href || event.filename.includes('(index)');
-      if (isExtensionScript || (isInlineExtension && /SyntaxError|TypeError|ReferenceError/.test(event.message))) {
+      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners/i.test(filename + ' ' + event.message);
+      if (isExtensionScript) {
         event.stopPropagation();
         event.preventDefault();
         return;
@@ -3590,6 +3589,7 @@
         return;
       }
 
+      try {
       const cacheKey = origin.lat + ',' + origin.lng + '|' + dest.lat + ',' + dest.lng;
       const isAvoidToll = activeRoutePreference === 'avoid_toll';
       const cache = window.__routeCache;
