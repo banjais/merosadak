@@ -1011,6 +1011,14 @@
 
     let distanceMatrixData = null;
 
+    window.__routeCache = {
+      key: null,
+      origin: null,
+      dest: null,
+      routes: null,
+      avoidTollRoutes: null
+    };
+
     async function loadDistanceMatrix() {
       try {
         const res = await fetch('data/distance-matrix.json?v=' + Date.now());
