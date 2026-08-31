@@ -957,6 +957,7 @@ h1, h2, h3, h4, .font-heading {
 
 .route-origin-wrap {
   position: relative;
+  margin-bottom: 10px;
 }
 
 .route-origin-chip {
