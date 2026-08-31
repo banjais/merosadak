@@ -14,11 +14,18 @@ function run(name, cmd) {
 try {
   run('sync data', 'npm run sync:data');
   run('deploy worker', 'npm run worker:deploy');
-  run('git add', "git add -A -- . ':(exclude)merosadak-reference'");
-
+  
+  console.log('\n[ship] git add...');
   try {
-    run('git commit', "git commit -m 'chore: ship - sync data + deploy worker + hosting'");
-  } catch {
+    execSync('git add -A -- .', { stdio: 'inherit', cwd: process.cwd(), env: process.env });
+  } catch (e) {
+    console.log('[ship] git add had nothing to stage, continuing...');
+  }
+
+  console.log('\n[ship] git commit...');
+  try {
+    execSync('git commit -m "chore: ship - sync data + deploy worker + hosting"', { stdio: 'inherit', cwd: process.cwd(), env: process.env });
+  } catch (e) {
     console.log('[ship] nothing to commit, continuing...');
   }
 
