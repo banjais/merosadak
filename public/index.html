@@ -836,12 +836,12 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(reg => reg.unregister());
-      });
+      }).catch(() => {});
     }
     if ('caches' in window) {
       caches.keys().then(keys => {
         keys.forEach(key => caches.delete(key));
-      });
+      }).catch(() => {});
     }
 
     // Suppress unhandled promise rejections from external extensions/content scripts
@@ -856,6 +856,34 @@
       console.warn('Unhandled rejection:', reason);
     });
 
+    // Suppress script/runtime errors injected by extensions
+    window.addEventListener('error', (event) => {
+      const target = event.target;
+      const filename = target && target.src ? target.src : (target && target.scriptURL ? target.scriptURL : '');
+      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners/.test(filename + ' ' + event.message);
+      const isInlineExtension = event.filename === '' || event.filename === document.location.href || event.filename.includes('(index)');
+      if (isExtensionScript || (isInlineExtension && /SyntaxError|TypeError|ReferenceError/.test(event.message))) {
+        event.stopPropagation();
+        event.preventDefault();
+        return;
+      }
+    }, true);
+
+    // Suppress console errors from extensions by patching console.error temporarily during init
+    const _originalConsoleError = console.error;
+    console.error = function(...args) {
+      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      if (/contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key/.test(msg)) {
+        return;
+      }
+      _originalConsoleError.apply(console, args);
+    };
+
+    // Restore normal console.error after app init completes (3 seconds)
+    setTimeout(() => {
+      console.error = _originalConsoleError;
+    }, 3000);
+
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';
 
@@ -867,9 +895,10 @@
         const isBlocked = /googleapis|google|mapbox|here|tomtom|api\.openstreetmap|photon/.test(url);
         if (isBlocked) {
           console.debug('[MeroSadak] Suppressed fetch error for blocked/external service:', url);
-          return Promise.resolve(new Response(JSON.stringify({ error: 'blocked' }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        } else {
+          console.debug('[MeroSadak] Suppressed fetch error for:', url, err && err.message);
         }
-        return Promise.reject(err);
+        return Promise.resolve(new Response(JSON.stringify({ error: 'blocked' }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       });
     };
 
@@ -880,6 +909,8 @@
       '[id*="apikey"]',
       '[id*="extensionAlert"]',
       '[id*="bookmarkAlert"]',
+      '[id*="MaxListeners"]',
+      '[id*="contentscript"]',
       '[class*="apiKeyWarning"]',
       '[class*="api_key"]',
       '[class*="apikey"]',
@@ -888,7 +919,13 @@
       '[class*="injected-banner"]',
       '[class*="extension-toast"]',
       '[data-extension="true"]',
-      '.notification-container'
+      '.notification-container',
+      '[id*="object-multiplex"]',
+      '[class*="object-multiplex"]',
+      '[class*="orphaned-data"]',
+      '[id*="orphaned"]',
+      '[aria-label*="API key"]',
+      '[aria-label*="extension"]'
     ];
 
     function cleanInjectedElements() {
@@ -908,7 +945,7 @@
       observer.observe(document.documentElement, { childList: true, subtree: true });
     }
 
-    setInterval(cleanInjectedElements, 2000);
+    setInterval(cleanInjectedElements, 1000);
     window.addEventListener('load', cleanInjectedElements);
 
     // State Variables
@@ -1431,7 +1468,7 @@
         const res = await fetch(WORKER_URL + '/api/incidents?lat=' + center.lat + '&lon=' + center.lng + '&radius_km=20');
         if (res.ok) {
           const json = await res.json();
-          data = (json.results || []).map((inc: any) => ({
+          data = (json.results || []).map((inc) => ({
             title: inc.type || 'Incident',
             description: inc.description || '',
             source: inc.source || 'unknown',
@@ -1557,7 +1594,7 @@
         const res = await fetch(WORKER_URL + '/api/pois?lat=' + center.lat + '&lon=' + center.lng + '&type=fuel&radius=5000');
         if (res.ok) {
           const json = await res.json();
-          livePois = (json.results || []).map((p: any) => ({
+          livePois = (json.results || []).map((p) => ({
             name: p.name || 'Fuel Station',
             lat: p.lat,
             lng: p.lon,

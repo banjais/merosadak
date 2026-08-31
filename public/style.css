@@ -2166,6 +2166,8 @@ h1, h2, h3, h4, .font-heading {
 [id*="apikey"],
 [id*="extensionAlert"],
 [id*="bookmarkAlert"],
+[id*="MaxListeners"],
+[id*="contentscript"],
 [class*="apiKeyWarning"],
 [class*="api_key"],
 [class*="apikey"],
@@ -2179,7 +2181,13 @@ h1, h2, h3, h4, .font-heading {
 #apiKeyWarning,
 #extensionAlert,
 .injected-banner,
-.extension-toast {
+.extension-toast,
+[id*="object-multiplex"],
+[class*="object-multiplex"],
+[class*="orphaned-data"],
+[id*="orphaned"],
+[aria-label*="API key"],
+[aria-label*="extension"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
