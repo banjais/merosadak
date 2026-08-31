@@ -348,9 +348,11 @@
           </select>
           <select id="sidebarPriority" onchange="activeRoutePreference=this.value">
             <option value="fastest">Fastest</option>
+            <option value="shortest">Shortest</option>
             <option value="safest">Safest</option>
             <option value="scenic">Scenic</option>
             <option value="ev">EV Priority</option>
+            <option value="avoid_toll">Avoid Toll</option>
           </select>
         </div>
 
@@ -2671,12 +2673,24 @@
     function restoreFromUrl() {
       const p = new URLSearchParams(location.search);
       const to = p.get('to');
+      const pref = p.get('pref');
+      const vehicle = p.get('vehicle');
       if (!to) return;
       geocode(to).then(([t]) => {
         if (t[0]) {
           const dest = { label: to, lat: +t[0].lat, lng: +t[0].lon };
           selectedDestination = dest;
           document.getElementById('sidebarSearch').value = to;
+          if (pref && ['fastest','shortest','safest','scenic','ev','avoid_toll'].includes(pref)) {
+            activeRoutePreference = pref;
+            const sel = document.getElementById('sidebarPriority');
+            if (sel) sel.value = pref;
+          }
+          if (vehicle && ['car','suv_4wd','motorbike','bus_truck','electric_vehicle'].includes(vehicle)) {
+            activeVehicle = vehicle;
+            const sel = document.getElementById('sidebarVehicle');
+            if (sel) sel.value = vehicle;
+          }
           setMode('route');
         }
       }).catch(() => {});
@@ -3567,7 +3581,8 @@
       }
 
       try {
-        const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true';
+        const exclude = activeRoutePreference === 'avoid_toll' ? '&exclude=toll' : '';
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true' + exclude;
         const res = await fetch(url);
         if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
         const data = await res.json();
@@ -3584,6 +3599,7 @@
         let chosen;
         if (activeRoutePreference === 'shortest') chosen = shortest;
         else if (activeRoutePreference === 'scenic') chosen = scenic;
+        else if (activeRoutePreference === 'avoid_toll') chosen = fastest;
         else chosen = fastest;
 
         const km = (chosen.distance / 1000).toFixed(1);
@@ -3592,6 +3608,7 @@
         const fuelCost = Math.round(fuelLiters * 175);
 
         function getRoutePreferenceMeta(pref) {
+          if (pref === 'avoid_toll') return { name: 'Toll-Free Route', badge: '🚫 Avoid Toll', color: '#ef4444', icon: '🚫', viaTemplate: (r) => 'via toll-free corridors' };
           if (pref === 'shortest') return { name: 'Direct Distance (Shortest)', badge: '📏 Shortest', color: '#10b981', icon: '📏', viaTemplate: (r) => { const names = r.legs?.[0]?.steps?.filter(s => s.name && s.name.length > 3).slice(0, 3).map(s => s.name.split(' ').slice(-2).join(' ')); return names && names.length ? 'via ' + names.join(' & ') : 'via direct route'; } };
           if (pref === 'scenic') return { name: 'Scenic Ridge & Passes', badge: '🏔️ Most Scenic', color: '#8b5cf6', icon: '🏔️', viaTemplate: (r) => 'via scenic highlands' };
           if (pref === 'safest') return { name: 'Paved & Safety-Prioritized', badge: '🛡️ Safest Surface', color: '#f59e0b', icon: '🛡️', viaTemplate: (r) => 'via safest paved corridors' };
@@ -3606,7 +3623,7 @@
         const viaText = prefMeta.viaTemplate(chosen);
 
         function getRouteType(route) {
-          if (route === fastest) return 'fastest';
+          if (route === fastest) return activeRoutePreference === 'avoid_toll' ? 'avoid_toll' : 'fastest';
           if (route === shortest) return 'shortest';
           if (route === scenic) return 'scenic';
           return 'other';
@@ -3624,7 +3641,7 @@
 
         const routeOptions = uniqueRoutes.map((route, idx) => {
           const type = getRouteType(route);
-          const meta = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : getRoutePreferenceMeta('safest');
+          const meta = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
           if (type === 'other' && idx === 0 && activeRoutePreference === 'safest') meta.color = '#f59e0b';
           const isChosen = route === chosen;
           return {
@@ -3651,7 +3668,7 @@
         routes.forEach((route) => {
           const type = getRouteType(route);
           const isChosen = route === chosen;
-          const config = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : getRoutePreferenceMeta('safest');
+          const config = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
           const finalLineColor = isChosen ? config.color : hexToRgba(config.color, 0.35);
           const weight = isChosen ? 6 : 3;
           const opacity = isChosen ? 1 : 0.7;
@@ -3734,13 +3751,14 @@
           const prefMetaAll = [
             getRoutePreferenceMeta('fastest'),
             getRoutePreferenceMeta('shortest'),
-            getRoutePreferenceMeta('scenic'),
             getRoutePreferenceMeta('safest'),
-            getRoutePreferenceMeta('ev')
+            getRoutePreferenceMeta('scenic'),
+            getRoutePreferenceMeta('ev'),
+            getRoutePreferenceMeta('avoid_toll')
           ];
           prefMetaAll.forEach(item => {
             const row = document.createElement('div');
-            row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:4px; padding:3px 6px; border-radius:4px; background:' + (activeRoutePreference === 'fastest' && item.icon === '🚀' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'shortest' && item.icon === '📏' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'scenic' && item.icon === '🏔️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'safest' && item.icon === '🛡️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'ev' && item.icon === '⚡' ? 'rgba(255,255,255,0.1)' : 'transparent') + ';';
+            row.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:4px; padding:3px 6px; border-radius:4px; background:' + (activeRoutePreference === 'fastest' && item.icon === '🚀' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'shortest' && item.icon === '📏' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'scenic' && item.icon === '🏔️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'safest' && item.icon === '🛡️' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'ev' && item.icon === '⚡' ? 'rgba(255,255,255,0.1)' : activeRoutePreference === 'avoid_toll' && item.icon === '🚫' ? 'rgba(255,255,255,0.1)' : 'transparent') + ';';
             row.innerHTML = '<span style="width:12px; height:3px; background:' + item.color + '; border-radius:2px; display:inline-block; box-shadow:0 0 4px ' + item.color + ';"></span><span style="font-size:0.68rem; color:' + (row.style.background.includes('0.1') ? '#fff' : 'rgba(255,255,255,0.7)') + '; font-weight:' + (row.style.background.includes('0.1') ? '800' : '500') + ';">' + item.badge + '</span>';
             div.appendChild(row);
           });
@@ -3850,7 +3868,7 @@
 
     function switchRouteOption(type) {
       const mapped = type === 'other' ? 'safest' : type;
-      if (mapped === 'fastest' || mapped === 'shortest' || mapped === 'scenic' || mapped === 'safest' || mapped === 'ev') {
+      if (mapped === 'fastest' || mapped === 'shortest' || mapped === 'scenic' || mapped === 'safest' || mapped === 'ev' || mapped === 'avoid_toll') {
         activeRoutePreference = mapped;
         const sel = document.getElementById('sidebarPriority');
         if (sel) sel.value = mapped;
@@ -4189,7 +4207,7 @@
       const hrs = hrsEl && hrsEl[1] ? hrsEl[1].textContent.replace(/[^0-9.]/g, '').trim() : '--';
       const vehicleLabels = { car: 'Car/Sedan', suv_4wd: 'SUV/4WD', motorbike: 'Motorcycle', bus_truck: 'Bus/Truck', electric_vehicle: 'EV' };
       const vehicle = vehicleLabels[activeVehicle] || 'Car';
-      const prefLabels = { fastest: 'Fastest', shortest: 'Shortest', scenic: 'Scenic', safest: 'Safest', ev: 'EV Priority' };
+      const prefLabels = { fastest: 'Fastest', shortest: 'Shortest', scenic: 'Scenic', safest: 'Safest', ev: 'EV Priority', avoid_toll: 'Avoid Toll' };
       const pref = prefLabels[activeRoutePreference] || 'Fastest';
       const fuelCostEl = document.getElementById('sidebarResults')?.querySelector('.route-toll-val');
       const fuelCost = fuelCostEl ? fuelCostEl.textContent.replace(/[^0-9]/g, '').trim() : '0';
