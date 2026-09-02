@@ -185,11 +185,11 @@
       <div class="matrix-page-main">
         <div class="matrix-search-section">
           <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🌍 <strong style="color:#7dd3fc;">Type any place in Nepal</strong> — city, village (पालिका), district, market, pass, landmark, or highway. We search <strong>753 local units + 77 districts + OSM</strong> and compute real road distances for up to 6 places.
+            🌍 <strong style="color:#7dd3fc;">Type any place in Nepal</strong> — city, village (पालिका), district, market, pass, landmark, or <strong>highway code (NH04, H04, Prithvi, Mahendra)</strong>. We search <strong>776 local units + 77 districts + <span id="matrixHighwayCount">…</span> named highway link points + OSM</strong> and compute real road distances for up to 6 places.
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
-              <input type="text" id="matrixCityInput" placeholder="Any city, village, district or place in Nepal..." autocomplete="off" class="matrix-input">
+              <input type="text" id="matrixCityInput" placeholder="Any city, village, district, or NH04 / Prithvi link…" autocomplete="off" class="matrix-input">
               <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
             </div>
             <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
@@ -207,7 +207,7 @@
       </div>
       <div class="matrix-page-side">
         <div class="matrix-static-header">
-          <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Full Nepal City-to-City Matrix (62 cities)</div>
+          <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Pre-computed Matrix (62 curated cities)</div>
           <button id="toggleStaticMatrixBtn" class="btn-header" onclick="toggleStaticMatrixView()" style="font-size:0.78rem;">👁️ Show</button>
         </div>
         <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2); display:none;">
@@ -1435,7 +1435,7 @@
         });
 
         renderHighwayDirectory();
-        loadMajorHighwaysOverview(safeHighways);
+        window.__highwayLinkReady = loadMajorHighwaysOverview(safeHighways);
         loadOSMRoads();
       } catch (err) {
         console.error('Data initialization error:', err);
@@ -1453,6 +1453,9 @@
       }
     }
 
+    let highwayLinkIndex = [];
+    let highwayLinkIndexReady = false;
+
     async function loadMajorHighwaysOverview(highways) {
       const promises = highways.map(h => {
         return fetch(`data/highway/${h.file}`).then(r => r.json()).then(geo => {
@@ -1466,9 +1469,90 @@
           }).bindPopup(`<strong>${h.code}: ${h.name}</strong><br><small>${h.route}</small>`);
           const hLayer = L.layerGroup([hSurface, hCenter]).addTo(map);
           highwayGeoJsonLayers.push(hLayer);
+
+          try {
+            const links = extractHighwayLinks(geo, h);
+            links.forEach(link => {
+              highwayLinkIndex.push(link);
+              searchIndex.push(link);
+            });
+          } catch (e) {
+            console.debug('[MeroSadak] Highway link extract failed for', h.code, e);
+          }
         }).catch(() => {});
       });
-      await Promise.allSettled(promises);
+      const results = await Promise.allSettled(promises);
+      highwayLinkIndexReady = true;
+      console.debug('[MeroSadak] Highway link index ready:', highwayLinkIndex.length, 'named road-link points across', highways.length, 'highways');
+    }
+
+    function extractHighwayLinks(geo, highway) {
+      const links = [];
+      if (!geo || !Array.isArray(geo.features)) return links;
+      const hwyCode = highway.code || '';
+      const hwyName = highway.name || '';
+      geo.features.forEach(f => {
+        const p = f.properties || {};
+        const linkName = (p.link_name || p.road_name || '').trim();
+        if (!linkName) return;
+        const coords = p.from_lat && p.from_lng ? { lat: +p.from_lat, lng: +p.from_long } : null;
+        const geom = f.geometry;
+        let startPt = null, endPt = null;
+        if (geom) {
+          if (geom.type === 'LineString' && Array.isArray(geom.coordinates) && geom.coordinates.length) {
+            startPt = geom.coordinates[0];
+            endPt = geom.coordinates[geom.coordinates.length - 1];
+          } else if (geom.type === 'MultiLineString' && Array.isArray(geom.coordinates)) {
+            const firstRing = geom.coordinates[0];
+            if (firstRing && firstRing.length) {
+              startPt = firstRing[0];
+              endPt = firstRing[firstRing.length - 1];
+            }
+          }
+        }
+        const fromLabel = (linkName.split(/\s*[-–—]\s*/)[0] || linkName).trim();
+        const toLabel = (linkName.split(/\s*[-–—]\s*/).slice(-1)[0] || linkName).trim();
+        const fromLat = (startPt && startPt.length >= 2) ? startPt[1] : (coords ? coords.lat : 0);
+        const fromLng = (startPt && startPt.length >= 2) ? startPt[0] : (coords ? coords.lng : 0);
+        const toLat = (endPt && endPt.length >= 2) ? endPt[1] : (fromLat || 0);
+        const toLng = (endPt && endPt.length >= 2) ? endPt[0] : (fromLng || 0);
+
+        if (fromLat && fromLng) {
+          links.push({
+            label: `${hwyCode} · ${fromLabel}`,
+            subLabel: `${linkName} · ${p.dist_name || ''} (km ${p.link_from || '?'})`,
+            type: 'Highway Link',
+            highway: hwyCode,
+            highwayName: hwyName,
+            district: p.dist_name || '',
+            division: p.div_name || '',
+            chainageFrom: p.link_from,
+            chainageTo: p.link_to,
+            linkLenKm: p.link_len,
+            lat: fromLat,
+            lng: fromLng,
+            searchTerms: [hwyCode.toLowerCase(), hwyName.toLowerCase(), fromLabel.toLowerCase(), (p.dist_name || '').toLowerCase()]
+          });
+        }
+        if (toLat && toLng && toLabel && toLabel.toLowerCase() !== fromLabel.toLowerCase()) {
+          links.push({
+            label: `${hwyCode} · ${toLabel}`,
+            subLabel: `${linkName} · ${p.dist_name || ''} (km ${p.link_to || '?'})`,
+            type: 'Highway Link',
+            highway: hwyCode,
+            highwayName: hwyName,
+            district: p.dist_name || '',
+            division: p.div_name || '',
+            chainageFrom: p.link_from,
+            chainageTo: p.link_to,
+            linkLenKm: p.link_len,
+            lat: toLat,
+            lng: toLng,
+            searchTerms: [hwyCode.toLowerCase(), hwyName.toLowerCase(), toLabel.toLowerCase(), (p.dist_name || '').toLowerCase()]
+          });
+        }
+      });
+      return links;
     }
 
     async function loadOSMRoads() {
@@ -2296,10 +2380,20 @@
       calculateSidebarRoute();
     }
 
-    function showMatrixPage() {
+    async function showMatrixPage() {
+      if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
+        try { await window.__highwayLinkReady; } catch (e) {}
+      }
       document.getElementById('matrixPage').style.display = 'block';
       renderMatrixChips();
       renderStaticMatrix();
+      updateMatrixHighwayCount();
+    }
+
+    function updateMatrixHighwayCount() {
+      const el = document.getElementById('matrixHighwayCount');
+      if (!el) return;
+      el.textContent = highwayLinkIndex.length.toLocaleString();
     }
 
     function hideMatrixPage() {
@@ -2976,22 +3070,21 @@
       if (!val) return;
       if (matrixCities.length >= 6) { alert('Maximum 6 cities supported at a time.'); return; }
 
-      const found = searchIndex.find(s => s.label.toLowerCase().includes(val.toLowerCase()) && s.lat);
-      if (found) {
-        matrixCities.push({ name: found.label.split('(')[0].trim(), lat: found.lat, lng: found.lng });
+      const tryAdd = (name, lat, lng) => {
+        matrixCities.push({ name, lat, lng });
         input.value = '';
         renderMatrixChips();
-        return;
-      }
+      };
+
+      const fromLink = highwayLinkIndex.find(l => l.lat && l.lng && (l.label.toLowerCase() === val.toLowerCase() || l.label.toLowerCase().includes(val.toLowerCase())));
+      if (fromLink) { tryAdd(fromLink.label, fromLink.lat, fromLink.lng); return; }
+
+      const found = searchIndex.find(s => s.label.toLowerCase().includes(val.toLowerCase()) && s.lat);
+      if (found) { tryAdd(found.label.split('(')[0].trim(), found.lat, found.lng); return; }
 
       tryPhotonGeocodeForMatrix(val).then(coord => {
-        if (coord) {
-          matrixCities.push({ name: coord.name, lat: coord.lat, lng: coord.lng });
-          input.value = '';
-          renderMatrixChips();
-        } else {
-          alert('Could not find "' + val + '" in our local Nepal data or OSM.\n\nPlease pick a place from the suggestions dropdown (type at least 3 letters).');
-        }
+        if (coord) { tryAdd(coord.name, coord.lat, coord.lng); }
+        else { alert('Could not find "' + val + '" in our local Nepal data or OSM.\n\nPlease pick a place from the suggestions dropdown (type at least 2 letters).'); }
       });
     }
 
@@ -3016,34 +3109,74 @@
 
     async function searchMatrixPlaces(query) {
       const boxEl = document.getElementById('matrixSuggest');
-      if (!query || query.length < 3) { boxEl.style.display = 'none'; return; }
+      if (!query || query.length < 2) { boxEl.style.display = 'none'; return; }
       boxEl.innerHTML = '<div style="padding:8px 12px; color:var(--text-secondary);">Searching...</div>';
       boxEl.style.display = 'block';
 
+      if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
+        try { await window.__highwayLinkReady; } catch (e) {}
+      }
+
       try {
+        const q = query.toLowerCase().trim();
+        const hwyCodeMatch = q.match(/^(nh|h)?\s*(\d{1,3})\b/);
+        const hwyQuery = hwyCodeMatch ? ('nh' + hwyCodeMatch[2]) : null;
+
+        const linkMatches = highwayLinkIndex.filter(l => {
+          if (!l.lat || !l.lng) return false;
+          if (hasDevanagari(l.label || '')) return false;
+          if (hwyQuery && l.highway && l.highway.toLowerCase() === hwyQuery) return true;
+          const hay = ((l.label || '') + ' ' + (l.subLabel || '') + ' ' + (l.highwayName || '') + ' ' + (l.district || '')).toLowerCase();
+          return hay.includes(q);
+        }).slice(0, 8);
+
         const [photonRes, localMatches] = await Promise.all([
           fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json()).catch(() => ({ features: [] })),
-          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat).slice(0, 8))
+          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat && s.type !== 'Highway Link' && s.type !== 'Highway').slice(0, 6))
         ]);
 
         boxEl.innerHTML = '';
         const added = new Set();
 
-        localMatches.forEach(item => {
-          if (added.has(item.label)) return;
-          if (hasDevanagari(item.label)) return;
-          added.add(item.label);
+        if (linkMatches.length) {
+          const header = document.createElement('div');
+          header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:#7dd3fc; background:rgba(56,189,248,0.08); border-bottom:1px solid rgba(56,189,248,0.15); font-weight:700; letter-spacing:0.02em;';
+          header.textContent = `🛣️ Highway link points (${linkMatches.length})`;
+          boxEl.appendChild(header);
+        }
+        linkMatches.forEach(item => {
+          if (added.has(item.label + '|' + item.lat)) return;
+          added.add(item.label + '|' + item.lat);
           const div = document.createElement('div');
           div.className = 'autocomplete-item';
-          div.innerHTML = '<span>' + item.label + '</span> <span class="tag">' + item.type + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
+          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + (item.highway || 'Link') + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
+          div.onclick = () => addMatrixPlace(item.label, item.lat, item.lng);
+          boxEl.appendChild(div);
+        });
+
+        if (localMatches.length) {
+          const header = document.createElement('div');
+          header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:#a78bfa; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.15); font-weight:700; letter-spacing:0.02em;';
+          header.textContent = `🏙️ Local Nepal data (${localMatches.length})`;
+          boxEl.appendChild(header);
+        }
+        localMatches.forEach(item => {
+          if (hasDevanagari(item.label)) return;
+          if (added.has(item.label + '|' + item.lat)) return;
+          added.add(item.label + '|' + item.lat);
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + item.type + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
           div.onclick = () => addMatrixPlace(item.label, item.lat, item.lng);
           boxEl.appendChild(div);
         });
 
         (photonRes.features || []).forEach(f => {
           const name = f.properties.name || '';
-          if (!name || added.has(name) || hasDevanagari(name)) return;
-          added.add(name);
+          if (!name || added.has(name + '|photon') || hasDevanagari(name)) return;
+          added.add(name + '|photon');
           const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
           if (!coords) return;
           const div = document.createElement('div');
@@ -3816,8 +3949,9 @@
       }
 
       const typePriority = {
-        'City Hub': 10,
-        'District HQ': 9,
+        'City Hub': 11,
+        'District HQ': 10,
+        'Highway Link': 9,
         'Airport': 8,
         'Highway': 7,
         'Bus Station': 6,
