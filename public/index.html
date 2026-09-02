@@ -932,10 +932,15 @@
     // Suppress unhandled promise rejections from external extensions/content scripts
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
-      const reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason);
-      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
-      if (isExtensionError || (typeof reason === 'object' && reason !== null && (!reason.stack || !reason.name || /extension|content|script|multiplex|listener/i.test(reasonStr)))) {
+      let reasonStr = '';
+      try { reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason); } catch (e) { reasonStr = String(reason); }
+      const stack = (reason && reason.stack) ? String(reason.stack) : '';
+      const fullStr = reasonStr + ' ' + stack;
+      const isExtNoise = /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|MetaMask|metamask|walletconnect|web3|ethereum|injected|provider|ciphertrace|blockaid|phalanger|zerion|rabby/i.test(fullStr);
+      const hasMinimalShape = reason && typeof reason === 'object' && ('code' in reason || 'httpStatus' in reason) && !('stack' in reason) && (Object.keys(reason).length <= 6);
+      if (isExtNoise || hasMinimalShape) {
         event.preventDefault();
+        event.stopPropagation && event.stopPropagation();
         return;
       }
       console.warn('Unhandled rejection:', reason);
@@ -945,18 +950,20 @@
     window.addEventListener('error', (event) => {
       const target = event.target;
       const filename = target && target.src ? target.src : (target && target.scriptURL ? target.scriptURL : '');
-      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data/i.test(filename + ' ' + event.message);
-      if (isExtensionScript) {
+      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension|contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data/i.test(filename + ' ' + event.message);
+      const msgStr = (event.message || '') + ' ' + (event.error && event.error.stack ? event.error.stack : '');
+      const isWalletNoise = /content\.js|Uncaught.*\{name|code:\s*403|httpError|walletconnect|metamask|web3|ethereum/i.test(msgStr);
+      if (isExtensionScript || isWalletNoise) {
         event.stopPropagation();
         event.preventDefault();
-        return;
+        return false;
       }
     }, true);
 
     // Suppress console errors from extensions by patching console.error temporarily during init
     const _originalConsoleError = console.error;
     const _originalConsoleWarn = console.warn;
-    const _isExtNoise = (s) => /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|chrome-extension|moz-extension|safari-extension|edge-extension/i.test(s);
+    const _isExtNoise = (s) => /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|chrome-extension|moz-extension|safari-extension|edge-extension|metamask|walletconnect|web3|ethereum|ciphertrace|blockaid|phalanger|zerion|rabby|httpError|code.\s*403|Uncaught.{0,30}in.{0,20}promise|api[_-]?key/i.test(s);
     console.error = function(...args) {
       const msg = args.map(a => typeof a === 'object' ? (() => { try { return JSON.stringify(a); } catch(e) { return String(a); } })() : String(a)).join(' ');
       if (_isExtNoise(msg)) return;
@@ -968,11 +975,11 @@
       _originalConsoleWarn.apply(console, args);
     };
 
-    // Restore normal console.error/warn after app init completes (8 seconds — extensions may inject late)
+    // Restore normal console.error/warn after app init completes (30 seconds — wallet/security extensions inject late)
     setTimeout(() => {
       console.error = _originalConsoleError;
       console.warn = _originalConsoleWarn;
-    }, 8000);
+    }, 30000);
 
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';
