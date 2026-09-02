@@ -920,7 +920,7 @@
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
       const reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason);
-      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
+      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
       if (isExtensionError || (typeof reason === 'object' && reason !== null && (!reason.stack || !reason.name || /extension|content|script|multiplex|listener/i.test(reasonStr)))) {
         event.preventDefault();
         return;
@@ -932,7 +932,7 @@
     window.addEventListener('error', (event) => {
       const target = event.target;
       const filename = target && target.src ? target.src : (target && target.scriptURL ? target.scriptURL : '');
-      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners/i.test(filename + ' ' + event.message);
+      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data/i.test(filename + ' ' + event.message);
       if (isExtensionScript) {
         event.stopPropagation();
         event.preventDefault();
@@ -942,18 +942,24 @@
 
     // Suppress console errors from extensions by patching console.error temporarily during init
     const _originalConsoleError = console.error;
+    const _originalConsoleWarn = console.warn;
+    const _isExtNoise = (s) => /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|chrome-extension|moz-extension|safari-extension|edge-extension/i.test(s);
     console.error = function(...args) {
-      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-      if (/contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key/.test(msg)) {
-        return;
-      }
+      const msg = args.map(a => typeof a === 'object' ? (() => { try { return JSON.stringify(a); } catch(e) { return String(a); } })() : String(a)).join(' ');
+      if (_isExtNoise(msg)) return;
       _originalConsoleError.apply(console, args);
     };
+    console.warn = function(...args) {
+      const msg = args.map(a => typeof a === 'object' ? (() => { try { return JSON.stringify(a); } catch(e) { return String(a); } })() : String(a)).join(' ');
+      if (_isExtNoise(msg)) return;
+      _originalConsoleWarn.apply(console, args);
+    };
 
-    // Restore normal console.error after app init completes (3 seconds)
+    // Restore normal console.error/warn after app init completes (8 seconds — extensions may inject late)
     setTimeout(() => {
       console.error = _originalConsoleError;
-    }, 3000);
+      console.warn = _originalConsoleWarn;
+    }, 8000);
 
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';

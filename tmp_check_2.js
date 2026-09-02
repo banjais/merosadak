@@ -15,7 +15,7 @@
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason;
       const reasonStr = typeof reason === 'object' && reason !== null ? JSON.stringify(reason) : String(reason);
-      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
+      const isExtensionError = /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key|Unrecognized|invalid|forbidden|403|401|SyntaxError|catch/i.test(reasonStr);
       if (isExtensionError || (typeof reason === 'object' && reason !== null && (!reason.stack || !reason.name || /extension|content|script|multiplex|listener/i.test(reasonStr)))) {
         event.preventDefault();
         return;
@@ -27,7 +27,7 @@
     window.addEventListener('error', (event) => {
       const target = event.target;
       const filename = target && target.src ? target.src : (target && target.scriptURL ? target.scriptURL : '');
-      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners/i.test(filename + ' ' + event.message);
+      const isExtensionScript = /chrome-extension:|moz-extension:|safari-extension:|edge-extension:|contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data/i.test(filename + ' ' + event.message);
       if (isExtensionScript) {
         event.stopPropagation();
         event.preventDefault();
@@ -37,18 +37,24 @@
 
     // Suppress console errors from extensions by patching console.error temporarily during init
     const _originalConsoleError = console.error;
+    const _originalConsoleWarn = console.warn;
+    const _isExtNoise = (s) => /contentscript|content\.js|ObjectMultiplex|MaxListeners|app-init-liveness|background-liveness|orphaned data|bookmark|chrome-extension|moz-extension|safari-extension|edge-extension/i.test(s);
     console.error = function(...args) {
-      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-      if (/contentscript|content\.js|ObjectMultiplex|MaxListeners|bookmark|extension|chrome-extension|moz-extension|safari-extension|edge-extension|api[_-]?key|API[_-]?key/.test(msg)) {
-        return;
-      }
+      const msg = args.map(a => typeof a === 'object' ? (() => { try { return JSON.stringify(a); } catch(e) { return String(a); } })() : String(a)).join(' ');
+      if (_isExtNoise(msg)) return;
       _originalConsoleError.apply(console, args);
     };
+    console.warn = function(...args) {
+      const msg = args.map(a => typeof a === 'object' ? (() => { try { return JSON.stringify(a); } catch(e) { return String(a); } })() : String(a)).join(' ');
+      if (_isExtNoise(msg)) return;
+      _originalConsoleWarn.apply(console, args);
+    };
 
-    // Restore normal console.error after app init completes (3 seconds)
+    // Restore normal console.error/warn after app init completes (8 seconds — extensions may inject late)
     setTimeout(() => {
       console.error = _originalConsoleError;
-    }, 3000);
+      console.warn = _originalConsoleWarn;
+    }, 8000);
 
     // Configuration & Worker Gateway
     const WORKER_URL = 'https://merosadak.banjays.workers.dev';
@@ -3351,52 +3357,15 @@
           `;
         }).join('') : '';
 
-        // Vehicle Buttons
-        const vehicleButtons = Object.keys(vehicleSpecs).map(vk => {
-          const spec = vehicleSpecs[vk];
-          const isActive = vk === activeVehicle;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setVehicle('${vk}')">${spec.icon} ${spec.label}</button>`;
-        }).join('');
-
-        // Route Preference Buttons
-        const prefKeys = ['fastest', 'shortest', 'safest', 'scenic', 'ev', 'avoid_toll'];
-        const prefButtons = prefKeys.map(pk => {
-          const meta = getRoutePreferenceMeta(pk);
-          const isActive = pk === activeRoutePreference;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setRoutePref('${pk}')">${meta.icon} ${meta.badge.replace(/^[^a-zA-Z0-9]+/, '')}</button>`;
-        }).join('');
-
         // Construct Full Ready Report
         const reportHtml = `
           <div class="route-report">
             <!-- Header Section -->
             <div class="report-header-section">
-              <div class="report-badge-row">
-                <span class="report-badge" style="background:${prefMeta.color}25; border:1px solid ${prefMeta.color}60; color:${prefMeta.color};">
-                  ${prefMeta.icon} ${prefMeta.name}
-                </span>
-                <span style="font-size:0.72rem; font-weight:700; color:#38bdf8;">${vSpec.icon} ${vSpec.fullLabel}</span>
-              </div>
               <div class="report-endpoints-box">
                 <span class="report-endpoint-from" title="${cleanOrigin}">📍 ${cleanOrigin}</span>
                 <span class="report-endpoint-arrow">➔</span>
                 <span class="report-endpoint-to" title="${cleanDest}">🏁 ${cleanDest}</span>
-              </div>
-            </div>
-
-            <!-- Vehicle Selector Hub -->
-            <div>
-              <div class="report-section-label">🚘 Transport Mode</div>
-              <div class="report-pills-bar">
-                ${vehicleButtons}
-              </div>
-            </div>
-
-            <!-- Route Preference Selector Hub -->
-            <div>
-              <div class="report-section-label">🛣️ Route Preference</div>
-              <div class="report-pills-bar">
-                ${prefButtons}
               </div>
             </div>
 
