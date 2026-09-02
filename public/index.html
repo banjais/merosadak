@@ -185,7 +185,7 @@
       <div class="matrix-page-main">
         <div class="matrix-search-section">
           <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🌍 <strong style="color:#7dd3fc;">Type any place in Nepal</strong> — city, village (पालिका), district, market, pass, landmark, or <strong>highway code (NH04, H04, Prithvi, Mahendra)</strong>. We search <strong>776 local units + 77 districts + <span id="matrixHighwayCount">…</span> named highway link points + OSM</strong> and compute real road distances for up to 6 places.
+            🛣️ <strong style="color:#7dd3fc;">Road-path distance via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Get up to <strong>8 places</strong> (cities, villages, districts, NH codes) and we compute the actual road distance along DOR-mapped highways (29,177 km), not OSRM estimates. Pairs show highway codes &amp; segments; tour button draws the road on the map.
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
@@ -1455,6 +1455,17 @@
 
     let highwayLinkIndex = [];
     let highwayLinkIndexReady = false;
+    let highwayGraph = null;
+    let highwayGraphReady = false;
+
+    function normalizeJunctionName(name) {
+      if (!name) return '';
+      return name.toLowerCase()
+        .replace(/\(.*?\)/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/[.,;:`'"!?]/g, '')
+        .trim();
+    }
 
     async function loadMajorHighwaysOverview(highways) {
       const promises = highways.map(h => {
@@ -1484,6 +1495,253 @@
       const results = await Promise.allSettled(promises);
       highwayLinkIndexReady = true;
       console.debug('[MeroSadak] Highway link index ready:', highwayLinkIndex.length, 'named road-link points across', highways.length, 'highways');
+      window.__highwayGraphReady = (async () => {
+        try {
+          buildHighwayGraph();
+          attachAccessNodesToHighwayGraph();
+          highwayGraphReady = true;
+          console.debug('[MeroSadak] Highway graph ready:', Object.keys(highwayGraph.nodes).length, 'junctions,', Object.keys(highwayGraph.adj).reduce((s, k) => s + highwayGraph.adj[k].length, 0), 'edges,', Object.keys(highwayGraph.access).length, 'access points');
+        } catch (e) {
+          console.error('[MeroSadak] Highway graph build failed:', e);
+        }
+      })();
+      try { await window.__highwayGraphReady; } catch (e) {}
+    }
+
+    function buildHighwayGraph() {
+      const nodes = {};
+      const adj = {};
+
+      function ensureNode(name, lat, lng) {
+        const k = normalizeJunctionName(name);
+        if (!k) return null;
+        if (!nodes[k]) {
+          nodes[k] = { name, lat: 0, lng: 0, count: 0, highways: new Set() };
+          adj[k] = [];
+        }
+        if (lat && lng) {
+          nodes[k].lat = (nodes[k].lat * nodes[k].count + lat) / (nodes[k].count + 1);
+          nodes[k].lng = (nodes[k].lng * nodes[k].count + lng) / (nodes[k].count + 1);
+          nodes[k].count++;
+        }
+        return k;
+      }
+
+      function addEdge(fromK, toK, km, hwyCode, hwyName, linkCode, district, fromLabel, toLabel) {
+        if (!fromK || !toK || fromK === toK) return;
+        const w = +km || 0;
+        if (w <= 0) return;
+        const dup = adj[fromK].some(e => e.to === toK && e.linkCode === linkCode);
+        if (dup) return;
+        adj[fromK].push({ to: toK, km: w, highway: hwyCode, highwayName: hwyName, linkCode, district, fromLabel, toLabel });
+        adj[toK].push({ to: fromK, km: w, highway: hwyCode, highwayName: hwyName, linkCode, district, fromLabel, toLabel });
+        if (nodes[fromK]) nodes[fromK].highways.add(hwyCode);
+        if (nodes[toK]) nodes[toK].highways.add(hwyCode);
+      }
+
+      const byLinkCode = new Map();
+      highwayLinkIndex.forEach(link => {
+        if (!link.linkCode) return;
+        if (!byLinkCode.has(link.linkCode)) byLinkCode.set(link.linkCode, { from: null, to: null });
+        const slot = byLinkCode.get(link.linkCode);
+        if (link.endpoint === 'from') slot.from = link;
+        else if (link.endpoint === 'to') slot.to = link;
+      });
+
+      byLinkCode.forEach((slot, linkCode) => {
+        if (!slot.from || !slot.to) return;
+        const fromName = slot.from.label.replace(/^[A-Z]{1,3}\d{1,3}\s*·\s*/, '').trim();
+        const toName = slot.to.label.replace(/^[A-Z]{1,3}\d{1,3}\s*·\s*/, '').trim();
+        if (!fromName || !toName) return;
+        const fromK = ensureNode(fromName, slot.from.lat, slot.from.lng);
+        const toK = ensureNode(toName, slot.to.lat, slot.to.lng);
+        addEdge(fromK, toK, slot.from.linkLenKm, slot.from.highway, slot.from.highwayName, linkCode, slot.from.district, fromName, toName);
+      });
+
+      Object.keys(nodes).forEach(k => {
+        if (!adj[k]) adj[k] = [];
+        nodes[k].highways = Array.from(nodes[k].highways);
+      });
+
+      highwayGraph = { nodes, adj, access: {} };
+    }
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function attachAccessNodesToHighwayGraph() {
+      if (!highwayGraph) return;
+      const accessPoints = [];
+      const seen = new Set();
+
+      function addIfPoint(p) {
+        if (!p || !p.lat || !p.lng) return;
+        const key = (p.name || '').toLowerCase() + '|' + p.lat.toFixed(3) + '|' + p.lng.toFixed(3);
+        if (seen.has(key)) return;
+        seen.add(key);
+        accessPoints.push(p);
+      }
+
+      try {
+        Object.values(window.NEPAL_DATA?.cities || {}).flat().forEach(c => addIfPoint({ name: c.name, lat: c.lat, lng: c.lng, type: 'City Hub', meta: c }));
+      } catch (e) {}
+      try {
+        (window.__PALIKA_COORDS_MAP__ ? Object.values(window.__PALIKA_COORDS_MAP__) : []).forEach(p => addIfPoint({ name: p.Palika + ', ' + p.District, lat: p.lat, lng: p.lng, type: 'Local Unit', meta: p }));
+      } catch (e) {}
+      try {
+        (window.__DISTRICT_CITIES__ ? Object.entries(window.__DISTRICT_CITIES__).flatMap(([d, list]) => list.map(x => ({ ...x, district: d }))) : []).forEach(p => addIfPoint({ name: p.name, lat: p.lat, lng: p.lng, type: 'District HQ', meta: p }));
+      } catch (e) {}
+
+      const junctionArr = Object.entries(highwayGraph.nodes).map(([k, v]) => ({ key: k, name: v.name, lat: v.lat, lng: v.lng })).filter(j => j.lat && j.lng);
+      const MAX_ACCESS_KM = 25;
+      let connectedCount = 0;
+      let skippedFar = 0;
+      accessPoints.forEach(p => {
+        let bestK = null, bestD = Infinity;
+        for (let i = 0; i < junctionArr.length; i++) {
+          const j = junctionArr[i];
+          const d = haversineKm(p.lat, p.lng, j.lat, j.lng);
+          if (d < bestD) { bestD = d; bestK = j.key; }
+        }
+        if (bestK && bestD <= MAX_ACCESS_KM) {
+          const accessKey = 'acc_' + (p.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + p.lat.toFixed(3);
+          highwayGraph.nodes[accessKey] = { name: p.name, lat: p.lat, lng: p.lng, count: 1, highways: [], isAccess: true, accessType: p.type, parent: bestK };
+          highwayGraph.adj[accessKey] = [{ to: bestK, km: Math.max(bestD * 1.2, 0.5), highway: 'access', highwayName: 'access road', linkCode: '-', district: '', fromLabel: p.name, toLabel: highwayGraph.nodes[bestK].name, isAccess: true }];
+          highwayGraph.adj[bestK] = highwayGraph.adj[bestK] || [];
+          highwayGraph.adj[bestK].push({ to: accessKey, km: Math.max(bestD * 1.2, 0.5), highway: 'access', highwayName: 'access road', linkCode: '-', district: '', fromLabel: highwayGraph.nodes[bestK].name, toLabel: p.name, isAccess: true });
+          highwayGraph.access[p.name] = { key: accessKey, lat: p.lat, lng: p.lng, junctionKey: bestK, junctionName: highwayGraph.nodes[bestK].name, accessKm: bestD * 1.2 };
+          connectedCount++;
+        } else {
+          skippedFar++;
+        }
+      });
+      console.debug('[MeroSadak] Access nodes: connected', connectedCount, '· too far (>' + MAX_ACCESS_KM + 'km):', skippedFar);
+    }
+
+    function findNearestAccessKey(name, lat, lng) {
+      if (!highwayGraph || !highwayGraph.access) return null;
+      if (name) {
+        const exact = highwayGraph.access[name];
+        if (exact) return exact.key;
+        const lc = name.toLowerCase();
+        for (const n in highwayGraph.access) {
+          if (n.toLowerCase() === lc) return highwayGraph.access[n].key;
+        }
+      }
+      if (lat && lng) {
+        let bestK = null, bestD = Infinity;
+        for (const k in highwayGraph.access) {
+          const a = highwayGraph.access[k];
+          const d = haversineKm(lat, lng, a.lat, a.lng);
+          if (d < bestD) { bestD = d; bestK = a.key; }
+        }
+        if (bestK) return bestK;
+      }
+      return null;
+    }
+
+    function dijkstra(startKey, endKey) {
+      if (!highwayGraph || !startKey || !endKey) return null;
+      const adj = highwayGraph.adj;
+      if (!adj[startKey] || !adj[endKey]) return null;
+      const dist = {};
+      const prev = {};
+      const visited = {};
+      const heap = [];
+      function heapPush(arr, item) {
+        arr.push(item);
+        let i = arr.length - 1;
+        while (i > 0) {
+          const p = (i - 1) >> 1;
+          if (arr[p].km <= arr[i].km) break;
+          [arr[p], arr[i]] = [arr[i], arr[p]];
+          i = p;
+        }
+      }
+      function heapPop(arr) {
+        if (!arr.length) return null;
+        const top = arr[0];
+        const last = arr.pop();
+        if (arr.length) {
+          arr[0] = last;
+          let i = 0;
+          while (true) {
+            const l = i * 2 + 1, r = i * 2 + 2;
+            let s = i;
+            if (l < arr.length && arr[l].km < arr[s].km) s = l;
+            if (r < arr.length && arr[r].km < arr[s].km) s = r;
+            if (s === i) break;
+            [arr[s], arr[i]] = [arr[i], arr[s]];
+            i = s;
+          }
+        }
+        return top;
+      }
+      dist[startKey] = 0;
+      heapPush(heap, { key: startKey, km: 0 });
+      while (heap.length) {
+        const cur = heapPop(heap);
+        if (visited[cur.key]) continue;
+        visited[cur.key] = true;
+        if (cur.key === endKey) break;
+        const edges = adj[cur.key] || [];
+        for (let i = 0; i < edges.length; i++) {
+          const e = edges[i];
+          if (visited[e.to]) continue;
+          const nd = cur.km + e.km;
+          if (dist[e.to] == null || nd < dist[e.to]) {
+            dist[e.to] = nd;
+            prev[e.to] = { from: cur.key, edge: e };
+            heapPush(heap, { key: e.to, km: nd });
+          }
+        }
+      }
+      if (dist[endKey] == null) return null;
+      const path = [];
+      let curK = endKey;
+      while (curK && curK !== startKey) {
+        const p = prev[curK];
+        if (!p) break;
+        path.unshift({ from: p.from, to: curK, edge: p.edge });
+        curK = p.from;
+      }
+      const edges = path.map(p => p.edge);
+      const segments = edges.map(e => ({ highway: e.highway, highwayName: e.highwayName, linkCode: e.linkCode, fromLabel: e.fromLabel, toLabel: e.toLabel, km: e.km, district: e.district }));
+      return { km: dist[endKey], segments, path };
+    }
+
+    function shortestPathBetween(p1, p2) {
+      if (!highwayGraph) return null;
+      const k1 = findNearestAccessKey(p1.name, p1.lat, p1.lng);
+      const k2 = findNearestAccessKey(p2.name, p2.lat, p2.lng);
+      if (!k1 || !k2) return null;
+      return dijkstra(k1, k2);
+    }
+
+    function haversineOnlyKm(p1, p2) {
+      if (!p1 || !p2 || !p1.lat || !p2.lat) return null;
+      return haversineKm(p1.lat, p1.lng, p2.lat, p2.lng);
+    }
+
+    function nearestNeighborOrder(points) {
+      if (points.length < 2) return points.slice();
+      const remaining = points.slice();
+      const ordered = [remaining.shift()];
+      while (remaining.length) {
+        const last = ordered[ordered.length - 1];
+        let bestIdx = 0, bestD = Infinity;
+        for (let i = 0; i < remaining.length; i++) {
+          const d = haversineOnlyKm(last, remaining[i]) || 0;
+          if (d < bestD) { bestD = d; bestIdx = i; }
+        }
+        ordered.push(remaining.splice(bestIdx, 1)[0]);
+      }
+      return ordered;
     }
 
     function extractHighwayLinks(geo, highway) {
@@ -1495,7 +1753,7 @@
         const p = f.properties || {};
         const linkName = (p.link_name || p.road_name || '').trim();
         if (!linkName) return;
-        const coords = p.from_lat && p.from_lng ? { lat: +p.from_lat, lng: +p.from_long } : null;
+        const propsCoord = (p.from_lat && p.from_long) ? { lat: +p.from_lat, lng: +p.from_long } : null;
         const geom = f.geometry;
         let startPt = null, endPt = null;
         if (geom) {
@@ -1504,18 +1762,22 @@
             endPt = geom.coordinates[geom.coordinates.length - 1];
           } else if (geom.type === 'MultiLineString' && Array.isArray(geom.coordinates)) {
             const firstRing = geom.coordinates[0];
+            const lastRing = geom.coordinates[geom.coordinates.length - 1];
             if (firstRing && firstRing.length) {
               startPt = firstRing[0];
               endPt = firstRing[firstRing.length - 1];
+            }
+            if (lastRing && lastRing.length && lastRing !== firstRing) {
+              endPt = lastRing[lastRing.length - 1];
             }
           }
         }
         const fromLabel = (linkName.split(/\s*[-–—]\s*/)[0] || linkName).trim();
         const toLabel = (linkName.split(/\s*[-–—]\s*/).slice(-1)[0] || linkName).trim();
-        const fromLat = (startPt && startPt.length >= 2) ? startPt[1] : (coords ? coords.lat : 0);
-        const fromLng = (startPt && startPt.length >= 2) ? startPt[0] : (coords ? coords.lng : 0);
-        const toLat = (endPt && endPt.length >= 2) ? endPt[1] : (fromLat || 0);
-        const toLng = (endPt && endPt.length >= 2) ? endPt[0] : (fromLng || 0);
+        const fromLat = (startPt && startPt.length >= 2) ? startPt[1] : (propsCoord ? propsCoord.lat : 0);
+        const fromLng = (startPt && startPt.length >= 2) ? startPt[0] : (propsCoord ? propsCoord.lng : 0);
+        const toLat = (endPt && endPt.length >= 2) ? endPt[1] : fromLat;
+        const toLng = (endPt && endPt.length >= 2) ? endPt[0] : fromLng;
 
         if (fromLat && fromLng) {
           links.push({
@@ -1529,8 +1791,11 @@
             chainageFrom: p.link_from,
             chainageTo: p.link_to,
             linkLenKm: p.link_len,
+            linkCode: p.link_code,
+            linkName,
             lat: fromLat,
             lng: fromLng,
+            endpoint: 'from',
             searchTerms: [hwyCode.toLowerCase(), hwyName.toLowerCase(), fromLabel.toLowerCase(), (p.dist_name || '').toLowerCase()]
           });
         }
@@ -1546,8 +1811,11 @@
             chainageFrom: p.link_from,
             chainageTo: p.link_to,
             linkLenKm: p.link_len,
+            linkCode: p.link_code,
+            linkName,
             lat: toLat,
             lng: toLng,
+            endpoint: 'to',
             searchTerms: [hwyCode.toLowerCase(), hwyName.toLowerCase(), toLabel.toLowerCase(), (p.dist_name || '').toLowerCase()]
           });
         }
@@ -2384,6 +2652,9 @@
       if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
         try { await window.__highwayLinkReady; } catch (e) {}
       }
+      if (window.__highwayGraphReady && typeof window.__highwayGraphReady.then === 'function') {
+        try { await window.__highwayGraphReady; } catch (e) {}
+      }
       document.getElementById('matrixPage').style.display = 'block';
       renderMatrixChips();
       renderStaticMatrix();
@@ -2393,7 +2664,10 @@
     function updateMatrixHighwayCount() {
       const el = document.getElementById('matrixHighwayCount');
       if (!el) return;
-      el.textContent = highwayLinkIndex.length.toLocaleString();
+      const links = highwayLinkIndex.length;
+      const graphNodes = highwayGraph ? Object.keys(highwayGraph.nodes).length : 0;
+      const access = highwayGraph ? Object.keys(highwayGraph.access).length : 0;
+      el.textContent = links.toLocaleString();
     }
 
     function hideMatrixPage() {
@@ -3068,7 +3342,7 @@
       const input = document.getElementById('matrixCityInput');
       const val = input.value.trim();
       if (!val) return;
-      if (matrixCities.length >= 6) { alert('Maximum 6 cities supported at a time.'); return; }
+      if (matrixCities.length >= 8) { alert('Maximum 8 places supported at a time.'); return; }
 
       const tryAdd = (name, lat, lng) => {
         matrixCities.push({ name, lat, lng });
@@ -3115,6 +3389,9 @@
 
       if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
         try { await window.__highwayLinkReady; } catch (e) {}
+      }
+      if (window.__highwayGraphReady && typeof window.__highwayGraphReady.then === 'function') {
+        try { await window.__highwayGraphReady; } catch (e) {}
       }
 
       try {
@@ -3191,7 +3468,7 @@
     }
 
     function addMatrixPlace(label, lat, lon) {
-      if (matrixCities.length >= 6) { alert('Up to 6 places at a time.'); return; }
+      if (matrixCities.length >= 8) { alert('Up to 8 places at a time.'); return; }
       if (matrixCities.some(p => p.name.toLowerCase() === label.toLowerCase())) return;
       matrixCities.push({ name: label, lat, lng: lon });
       document.getElementById('matrixCityInput').value = '';
@@ -3201,37 +3478,197 @@
 
     async function computeDistanceMatrix() {
       if (matrixCities.length < 2) { alert('Please add at least 2 places.'); return; }
-      const coords = matrixCities.map(c => `${c.lng},${c.lat}`).join(';');
       const out = document.getElementById('matrixResults');
-      out.innerHTML = '<p style="color:var(--text-secondary);">Calculating distances via OSRM…</p>';
+      out.innerHTML = '<p style="color:var(--text-secondary);">Computing road distances via Nepal National Highway Graph…</p>';
+
+      if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
+        try { await window.__highwayLinkReady; } catch (e) {}
+      }
+      if (window.__highwayGraphReady && typeof window.__highwayGraphReady.then === 'function') {
+        try { await window.__highwayGraphReady; } catch (e) {}
+      }
 
       try {
-        const data = await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?annotations=distance,duration`).then(r => r.json());
-        if (data.code !== 'Ok') throw new Error();
-
-        let html = '<div class="matrix-result-list">';
-        for (let i = 0; i < matrixCities.length; i++) {
-          for (let j = i + 1; j < matrixCities.length; j++) {
-            const km = (data.distances[i][j] / 1000).toFixed(1);
-            const hr = (data.durations[i][j] / 3600).toFixed(1);
-            const from = matrixCities[i].name;
-            const to = matrixCities[j].name;
-            html += `<div class="matrix-result-line">
-              <div class="matrix-result-route"><span class="matrix-city-from">${from}</span> <span class="matrix-arrow">→</span> <span class="matrix-city-to">${to}</span></div>
-              <div class="matrix-result-metrics">
-                <span class="matrix-metric">${km} km</span>
-                <span class="matrix-metric-divider">|</span>
-                <span class="matrix-metric">${hr} hrs</span>
-              </div>
-            </div>`;
+        const local = highwayGraphReady && highwayGraph;
+        const pairs = [];
+        const ordered = nearestNeighborOrder(matrixCities);
+        for (let i = 0; i < ordered.length; i++) {
+          for (let j = i + 1; j < ordered.length; j++) {
+            const a = ordered[i], b = ordered[j];
+            let km = null, path = null, mode = 'air';
+            if (local) {
+              const sp = shortestPathBetween(a, b);
+              if (sp && sp.km > 0) {
+                km = sp.km;
+                path = sp;
+                mode = 'road';
+              } else {
+                const air = haversineOnlyKm(a, b);
+                if (air) km = air * 1.4;
+                mode = 'fallback';
+              }
+            } else {
+              const air = haversineOnlyKm(a, b);
+              if (air) km = air * 1.4;
+              mode = 'fallback';
+            }
+            pairs.push({ from: a, to: b, km, path, mode });
           }
         }
+
+        const optimal = ordered.length >= 2 ? computeOptimalTour(ordered) : null;
+
+        let html = '<div class="matrix-result-list">';
+        const highwayGroups = {};
+        pairs.forEach(p => {
+          if (p.path && p.path.segments) {
+            p.path.segments.forEach(seg => {
+              const h = seg.highway || 'access';
+              highwayGroups[h] = (highwayGroups[h] || 0) + seg.km;
+            });
+          }
+        });
+        const totalKm = pairs.reduce((s, p) => s + (p.km || 0), 0);
+        const roadKm = pairs.filter(p => p.mode === 'road').reduce((s, p) => s + p.km, 0);
+        const fallbackKm = pairs.filter(p => p.mode === 'fallback').reduce((s, p) => s + p.km, 0);
+        const totalHours = (roadKm / 35) + (fallbackKm / 25);
+        const topHwys = Object.entries(highwayGroups).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        html += `<div class="matrix-summary" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:0.78rem;">
+          <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <span><strong>${ordered.length}</strong> places · <strong style="color:#7dd3fc;">${pairs.length}</strong> pairs</span>
+            <span><strong>${totalKm.toFixed(0)}</strong> km total · <strong>${totalHours.toFixed(1)}</strong> hrs est.</span>
+            <span style="color:var(--text-muted);">Road: <strong style="color:#10b981;">${roadKm.toFixed(0)} km</strong> · Air-fallback: <strong style="color:#fbbf24;">${fallbackKm.toFixed(0)} km</strong></span>
+          </div>
+          ${topHwys.length ? '<div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">Highways used: ' + topHwys.map(([h, km]) => `<span style="background:rgba(99,102,241,0.15); padding:1px 6px; border-radius:3px; margin-right:4px;"><strong>${h}</strong> ${km.toFixed(0)}km</span>`).join('') + '</div>' : ''}
+        </div>`;
+
+        pairs.forEach((p, idx) => {
+          const from = p.from.name, to = p.to.name;
+          const kmStr = p.km ? p.km.toFixed(1) : '—';
+          const hrStr = p.km ? (p.mode === 'road' ? (p.km / 35) : (p.km / 25)).toFixed(1) : '—';
+          const modeTag = p.mode === 'road' ? '<span style="color:#10b981;">🛣️ road</span>' : p.mode === 'fallback' ? '<span style="color:#fbbf24;">✈️ est.</span>' : '—';
+          const segments = p.path ? p.path.segments : [];
+          const hwyCodes = [...new Set(segments.map(s => s.highway).filter(h => h && h !== 'access'))].join(' → ');
+          const pathDetail = hwyCodes ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">via ${hwyCodes} (${segments.length} segments)</div>` : '';
+          let blackspotWarn = '';
+          if (p.path && Array.isArray(window.__BLACKSPOTS__)) {
+            const pathKm = [];
+            let cum = 0;
+            p.path.segments.forEach(seg => {
+              cum += seg.km;
+              pathKm.push({ km: cum, seg });
+            });
+            const nearby = window.__BLACKSPOTS__.filter(bs => {
+              if (!bs.lat || !bs.lng || !bs.highwayCode) return false;
+              const inPath = p.path.segments.some(s => s.highway === bs.highwayCode);
+              if (!inPath) return false;
+              return true;
+            }).slice(0, 2);
+            if (nearby.length) {
+              blackspotWarn = `<div style="font-size:0.68rem; color:#fbbf24; margin-top:2px;">⚠️ near: ${nearby.map(b => b.name).join(', ')}</div>`;
+            }
+          }
+          html += `<div class="matrix-result-line" data-pair-idx="${idx}">
+            <div class="matrix-result-route">
+              <span class="matrix-city-from">${from}</span>
+              <span class="matrix-arrow">→</span>
+              <span class="matrix-city-to">${to}</span>
+              <span style="font-size:0.65rem; margin-left:6px;">${modeTag}</span>
+            </div>
+            <div class="matrix-result-metrics">
+              <span class="matrix-metric">${kmStr} km</span>
+              <span class="matrix-metric-divider">|</span>
+              <span class="matrix-metric">${hrStr} hrs</span>
+            </div>
+            ${pathDetail}${blackspotWarn}
+          </div>`;
+        });
         html += '</div>';
+
+        if (optimal && optimal.km > 0) {
+          html += `<div style="margin-top:14px; padding:10px 12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:8px; font-size:0.8rem;">
+            <div style="font-weight:700; color:#a78bfa; margin-bottom:6px;">🗺️ Suggested Road Tour (nearest-neighbor order):</div>
+            <div style="line-height:1.7;">${optimal.stops.map((s, i) => `<span style="display:inline-block; background:rgba(139,92,246,0.15); padding:2px 8px; border-radius:4px; margin:2px 2px;">${i + 1}. ${s.name}</span>`).join('<span style="color:var(--text-muted);"> → </span>')}</div>
+            <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">Total: <strong style="color:#a78bfa;">${optimal.km.toFixed(0)} km</strong> via ${[...new Set(optimal.highways.filter(h => h && h !== 'access'))].join(', ') || 'national highway network'}</div>
+            <button class="btn-action-primary" style="margin-top:8px; font-size:0.75rem; padding:6px 12px;" onclick="drawOptimalTourOnMap()">🗺️ Draw on Map</button>
+          </div>`;
+        }
+
+        window.__lastMatrixResult = { ordered, pairs, optimal };
         out.innerHTML = html;
         document.getElementById('matrixAiSection').style.display = 'block';
       } catch (err) {
+        console.error('[MeroSadak] Matrix compute error:', err);
         out.innerHTML = '<p style="color:#ef4444;">Could not calculate distances right now.</p>';
       }
+    }
+
+    function computeOptimalTour(orderedPoints) {
+      let totalKm = 0;
+      const stops = orderedPoints.slice();
+      const highways = [];
+      for (let i = 0; i < stops.length - 1; i++) {
+        const sp = shortestPathBetween(stops[i], stops[i + 1]);
+        if (sp && sp.km > 0) {
+          totalKm += sp.km;
+          if (sp.segments) sp.segments.forEach(s => { if (s.highway) highways.push(s.highway); });
+        } else {
+          const air = haversineOnlyKm(stops[i], stops[i + 1]);
+          if (air) totalKm += air * 1.4;
+        }
+      }
+      return { stops, km: totalKm, highways };
+    }
+
+    function drawOptimalTourOnMap() {
+      const last = window.__lastMatrixResult;
+      if (!last || !last.optimal) { alert('No result yet. Click Calculate first.'); return; }
+      const stops = last.optimal.stops;
+      if (!routeLayerGroup) {
+        routeLayerGroup = L.featureGroup().addTo(map);
+      }
+      routeLayerGroup.clearLayers();
+      const latlngs = [];
+      for (let i = 0; i < stops.length; i++) {
+        latlngs.push([stops[i].lat, stops[i].lng]);
+      }
+      for (let i = 0; i < stops.length - 1; i++) {
+        const sp = shortestPathBetween(stops[i], stops[i + 1]);
+        if (sp && sp.segments) {
+          sp.segments.forEach(seg => {
+            if (seg.highway && seg.highway !== 'access') {
+              const linkFile = findHighwayFileForCode(seg.highway);
+              if (linkFile) {
+                fetch('data/highway/' + linkFile).then(r => r.json()).then(geo => {
+                  const features = geo.features.filter(f => f.properties.link_code === seg.linkCode);
+                  features.forEach(f => {
+                    if (f.geometry && f.geometry.type === 'LineString') {
+                      L.polyline(f.geometry.coordinates.map(c => [c[1], c[0]]), { color: '#7c3aed', weight: 5, opacity: 0.9 }).addTo(routeLayerGroup);
+                    } else if (f.geometry && f.geometry.type === 'MultiLineString') {
+                      f.geometry.coordinates.forEach(ring => L.polyline(ring.map(c => [c[1], c[0]]), { color: '#7c3aed', weight: 5, opacity: 0.9 }).addTo(routeLayerGroup));
+                    }
+                  });
+                }).catch(() => {});
+              }
+            }
+          });
+        }
+      }
+      latlngs.forEach((ll, idx) => {
+        L.marker(ll, { icon: L.divIcon({ className: 'matrix-tour-pin', html: `<div style="background:#7c3aed; color:#fff; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:700; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.3);">${idx + 1}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }) }).bindPopup(`<strong>Stop ${idx + 1}</strong><br>${stops[idx].name}`).addTo(routeLayerGroup);
+      });
+      if (latlngs.length >= 2) {
+        const bounds = L.latLngBounds(latlngs);
+        map.flyToBounds(bounds, { padding: [60, 60], duration: 1.2 });
+      }
+      hideMatrixPage();
+    }
+
+    function findHighwayFileForCode(code) {
+      if (!Array.isArray(allHighwaysIndex)) return null;
+      const m = allHighwaysIndex.find(h => h.code === code);
+      return m ? m.file : null;
     }
 
     function renderStaticMatrix() {
