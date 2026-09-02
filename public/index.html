@@ -185,7 +185,7 @@
       <div class="matrix-page-main">
         <div class="matrix-search-section">
           <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong> and we compute the <strong>actual road distance</strong>, layer in <strong>24-hour traffic forecast</strong> (weekday hourly congestion), <strong>active incidents</strong> (DOR-verified), <strong>mountain weather</strong>, <strong>blackspots</strong> (risk + safe driving advice), <strong>nearest services</strong> (fuel/EV/police/hospital), <strong>terrain crossed</strong> (Terai/hill/mountain), and <strong>districts traversed</strong>.
+            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong> and we compute the <strong>actual road distance</strong>, layer in <strong>24-hour traffic forecast</strong>, <strong>active DOR-verified incidents</strong>, <strong>mountain weather</strong>, <strong>blackspots</strong>, <strong>nearest services</strong>, <strong>terrain</strong>, and <strong>districts traversed</strong>. Then click <strong>🤖 AI Road Advisor</strong> for a Gemini-powered trip advisory that references all the above.
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
@@ -206,7 +206,7 @@
           <div id="matrixResults" style="margin-top:16px;"></div>
           <div id="matrixAiSection" style="margin-top:16px; display:none;">
             <div class="ai-advisor-row">
-              <button class="ai-advisor-btn" onclick="askMatrixAiAdvisor()">✨ AI Route Insight</button>
+              <button class="ai-advisor-btn" onclick="askMatrixAiAdvisor()">🤖 AI Road Advisor (live context)</button>
             </div>
             <div id="matrixAiOutput" style="margin-top:8px; display:none; padding:12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:var(--radius-md); font-size:0.85rem; color:#c4b5fd;"></div>
           </div>
@@ -4138,29 +4138,158 @@
       openAutoPopup(lat, lng, '<strong>' + name + '</strong>');
     }
 
+    function buildPathAdvisorPrompt(optimal, matrixCities, departDate) {
+      if (!optimal || !optimal.path) return null;
+      const P = optimal.path;
+      const stops = optimal.stops || [];
+      const dist = (stops.length > 1) ? stops[0].name + ' → ' + stops[stops.length - 1].name : (stops[0] ? stops[0].name : 'Unknown');
+      const terrainKm = {};
+      (P.terrainSegments || []).forEach(ts => { const t = ts.terrain || 'unknown'; terrainKm[t] = (terrainKm[t] || 0) + ts.km; });
+      const terrainStr = Object.entries(terrainKm).filter(([t]) => t !== 'unknown').map(([t, km]) => t + ': ' + km.toFixed(0) + ' km').join(', ') || 'unknown';
+      const districts = (P.districts || []).join(', ') || 'unknown';
+      const trafficLines = (P.trafficHits || []).slice(0, 4).map(t => '- ' + t.name + ' (' + t.highways.join('/') + '): ' + (t.level || '?') + ' · delay ' + (t.delayMinutes || 0) + ' min · ' + (t.cause || '')).join('\n');
+      const incidentLines = (P.incidentHits || []).slice(0, 4).map(i => '- ' + i.name + ' (' + i.highways.join('/') + '): ' + (i.type || '') + ' / ' + (i.severity || '') + (i.estClearance ? ' · ETA ' + i.estClearance : '') + (i.dorVerified ? ' [DOR verified]' : '')).join('\n');
+      const wxLines = (P.weatherHits || []).slice(0, 4).map(w => '- ' + w.name + ' (' + w.highways.join('/') + '): ' + (w.condition || '') + ' · vis ' + (w.visibilityKm || '?') + ' km · grip ' + (w.roadGrip || '') + ' · landslide risk ' + (w.landslideRisk || '')).join('\n');
+      const blackspotLines = (P.blackspotHits || []).slice(0, 4).map(b => '- ' + b.name + ' (' + b.highwayCode + ', ' + (b.district || '') + '): ' + (b.riskLevel || '') + ' · ' + (b.primaryCause || '') + ' · advice: ' + (b.safeDrivingAdvice || '')).join('\n');
+      const svcLines = (P.serviceHits || []).slice(0, 6).map(s => '- ' + (s.type || 'service') + ': ' + s.name + (s.location ? ' (' + s.location + ')' : '')).join('\n');
+      const hwyList = (P.usedHighways || []).filter(h => h && h !== 'access').join(', ');
+      const departTime = departDate ? departDate.toLocaleString('en-NP', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'now';
+      const adv = window.__lastAdvisorForPrompt || null;
+      const advStr = adv ? `Predicted travel time at ${departTime}: ${adv.predictedMin != null ? adv.predictedMin + ' min' : 'n/a'} (peak hours add +${adv.delayMin || 0} min delay). Best: ${adv.bestWindow || 'n/a'}. Worst: ${adv.worstWindow || 'n/a'}.` : 'Departure time: not specified.';
+
+      return `You are MeroSadak AI, an expert Nepal road-safety advisor for the MeroSadak app (merosadak.web.app). A user is planning a trip on Nepal's national highway network. Based on the following live context from the MeroSadak local data graph (DOR-mapped 29,177 km national highways, OSM fallback, DOR-verified incidents, mountain weather, traffic corridors, 7-day travel-time profiles, 8 verified blackspots), produce a tight 4-section advisory in markdown.
+
+TRIP OVERVIEW
+- Route: ${dist} (via ${hwyList || 'national highways'})
+- Stops in order: ${stops.map(s => s.name).join(' → ')}
+- Total road distance: ${(P.km || 0).toFixed(0)} km
+- Terrain crossed: ${terrainStr}
+- Districts traversed: ${districts}
+- ${advStr}
+
+LIVE TRAFFIC (corridors on this path)
+${trafficLines || 'No traffic incidents on this route.'}
+
+ACTIVE INCIDENTS (DOR + citizen)
+${incidentLines || 'No active incidents reported.'}
+
+MOUNTAIN WEATHER ALONG PATH
+${wxLines || 'No weather warnings on path.'}
+
+VERIFIED BLACKSPOTS ON PATH
+${blackspotLines || 'No known blackspots on this path.'}
+
+SERVICES AVAILABLE ON PATH
+${svcLines || 'Limited services — fill fuel before departure.'}
+
+OUTPUT FORMAT (strict markdown, no extra preamble):
+### ⏱️ Timing
+- 1-2 bullets on best departure time vs current selection
+### ⚠️ Key Risks
+- 2-4 bullets sorted by severity, each with the specific segment/place
+### 🛠️ Vehicle & Equipment Prep
+- 2-4 bullets on what to carry/inspect (tyres, brakes, fuel, food, water, first-aid, communication)
+### ↪ Alternative or Detour Tips
+- 1-2 bullets on alternative routing if any risk is severe
+
+Be specific to the data above. Do NOT invent highway names or km. If a section has no data, write "None on this path."`;
+    }
+
     async function askMatrixAiAdvisor() {
       const out = document.getElementById('matrixAiOutput');
       if (!out) return;
       out.style.display = 'block';
-      out.innerHTML = '✨ <em>Querying AI Route Insight…</em>';
+      out.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><div class="ai-spinner"></div><em>🛰️ Building trip context from live data…</em></div>';
 
-      const from = matrixCities.length >= 1 ? matrixCities[0].name : 'Kathmandu';
-      const to = matrixCities.length >= 2 ? matrixCities[1].name : 'Pokhara';
-      const routeInfo = matrixCities.slice(0, 2).map(c => c.name).join(' → ');
+      const last = window.__lastMatrixResult;
+      if (!last || !last.optimal) { out.innerHTML = '<em>Please run Calculate Distance first to set up the trip context.</em>'; return; }
+
+      const departInput = document.getElementById('matrixDepartAt');
+      const departDate = (departInput && departInput.value) ? new Date(departInput.value) : null;
+      const targetH = departDate ? departDate.getHours() : new Date().getHours();
+
+      const adv = getDepartureAdvisor(last.optimal.path ? last.optimal.path.usedHighways : [], targetH);
+      if (adv && adv.forecastByHour) {
+        const cell = adv.forecastByHour[targetH];
+        const totalKm = last.optimal.path ? last.optimal.path.km : 0;
+        const matchedKm = adv.matches.reduce((s, m) => s + (m.distanceKm || 0), 0);
+        const scale = matchedKm > 0 ? totalKm / matchedKm : 1;
+        const predictedMin = cell ? Math.round(cell.travelMinutes * scale) : null;
+        const delayMin = cell ? Math.max(0, Math.round((cell.travelMinutes - (cell.freeFlowMinutes || 0)) * scale)) : null;
+        window.__lastAdvisorForPrompt = { predictedMin, delayMin, bestWindow: adv.best.bestDepartureWindow, worstWindow: adv.best.worstDepartureWindow };
+      } else {
+        window.__lastAdvisorForPrompt = null;
+      }
+
+      const prompt = buildPathAdvisorPrompt(last.optimal, last.ordered, departDate);
+      if (!prompt) { out.innerHTML = '<em>Trip context incomplete — please recalculate.</em>'; return; }
+
+      out.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><div class="ai-spinner"></div><em>🤖 AI analyzing ' + last.optimal.path.usedHighways.filter(h => h && h !== 'access').length + ' highways, ' + (last.optimal.path.incidentHits || []).length + ' incidents, ' + (last.optimal.path.weatherHits || []).length + ' weather nodes, ' + (last.optimal.path.blackspotHits || []).length + ' blackspots…</em></div>';
 
       try {
-        const prompt = `Give a concise 3-4 sentence driving safety advisory for traveling between ${routeInfo} in Nepal. Mention typical road conditions, vehicle safety, and monsoon/landslide precautions.`;
-        const res = await fetch(`${WORKER_URL}/api/assistant`, {
+        const rawRes = await fetch(`${WORKER_URL}/api/assistant`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt })
-        }).then(r => r.json());
+        });
+        const cache = rawRes.headers.get('X-Cache');
+        const model = rawRes.headers.get('X-Model-Used');
+        const res = await rawRes.json();
+        window.__lastAdvisorResponse = { model, cache };
 
         const text = res.candidates?.[0]?.content?.parts?.[0]?.text;
-        out.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>${text || 'Drive carefully, monitor road condition reports, and observe mountain overtaking discipline.'}`;
+        if (text) {
+          out.innerHTML = formatAdvisorMarkdown(text);
+          out.dataset.lastPromptHash = hashString(prompt);
+        } else {
+          out.innerHTML = '<em>AI did not return a response. Please try again.</em>';
+        }
       } catch (e) {
-        out.innerHTML = `<strong>🤖 AI Route Insight:</strong><br>For traveling from ${from} to ${to}: Check Nagdhunga and Mugling landslide clearance before departure. Maintain lower gear descending steep hairpin bends and keep emergency number 103 handy.`;
+        console.warn('[MeroSadak] AI advisor failed, using local fallback:', e);
+        out.innerHTML = buildLocalAdvisorFallback(last.optimal, departDate);
       }
+    }
+
+    function formatAdvisorMarkdown(md) {
+      const escMd = (md || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const html = escMd
+        .replace(/^### (.+)$/gm, '<div style="font-weight:700; color:#c4b5fd; margin-top:10px; margin-bottom:4px; font-size:0.85rem;">$1</div>')
+        .replace(/^## (.+)$/gm, '<div style="font-weight:700; color:#a78bfa; margin-top:10px; margin-bottom:4px; font-size:0.9rem;">$1</div>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;">$1</strong>')
+        .replace(/^- (.+)$/gm, '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>$1</div>')
+        .replace(/\n\n/g, '<div style="height:6px;"></div>')
+        .replace(/\n/g, '<br>');
+      const model = window.__lastAdvisorResponse?.model;
+      const cacheTag = window.__lastAdvisorResponse?.cache;
+      const meta = `<div style="font-size:0.6rem; color:var(--text-muted); margin-top:8px; padding-top:6px; border-top:1px solid rgba(139,92,246,0.15);">🤖 MeroSadak AI · context: live data graph + Gemini ${model || '?'}${cacheTag === 'HIT' ? ' (cached)' : ''}</div>`;
+      return html + meta;
+    }
+
+    function hashString(s) {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return h.toString(36);
+    }
+
+    function buildLocalAdvisorFallback(optimal, departDate) {
+      const P = optimal.path || {};
+      const inc = (P.incidentHits || []).slice(0, 3);
+      const wx = (P.weatherHits || []).slice(0, 3);
+      const bs = (P.blackspotHits || []).slice(0, 3);
+      const traf = (P.trafficHits || []).slice(0, 3);
+      const dist = (optimal.stops || []).map(s => s.name).join(' → ');
+      const fmtList = (arr, key) => arr.length ? arr.map(x => '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>' + (key ? x[key] : x.name) + '</div>').join('') : '<div style="color:var(--text-muted); margin-left:10px;">None on this path.</div>';
+      const departStr = departDate ? departDate.toLocaleString('en-NP', { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'now';
+      return '<div style="font-weight:700; color:#c4b5fd; margin-bottom:6px;">🤖 AI Advisor (offline mode)</div>' +
+        '<div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:8px;">Live AI unavailable — showing structured context-based advisory for: <strong style="color:#fff;">' + dist + '</strong> at ' + departStr + '</div>' +
+        '<div style="font-weight:700; color:#c4b5fd; margin-top:8px; margin-bottom:4px;">⚠️ Key Risks</div>' + fmtList(inc, 'name') + fmtList(bs, 'name') +
+        '<div style="font-weight:700; color:#c4b5fd; margin-top:8px; margin-bottom:4px;">🌫️ Weather</div>' + fmtList(wx, 'name') +
+        '<div style="font-weight:700; color:#c4b5fd; margin-top:8px; margin-bottom:4px;">🚦 Traffic</div>' + fmtList(traf, 'name') +
+        '<div style="font-weight:700; color:#c4b5fd; margin-top:8px; margin-bottom:4px;">🛠️ Equipment Prep</div>' +
+        '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>Full fuel tank + 1 spare; check tyre tread & pressure (mountain sections)</div>' +
+        '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>First-aid kit, 2L water per person, torch, warm layers, power bank, paper map</div>' +
+        '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>Save DOR hotline 103 and local police; share live location with family</div>' +
+        '<div style="margin:2px 0; padding-left:10px; position:relative;"><span style="position:absolute; left:0; color:#a78bfa;">•</span>Engage low gear on all steep descents; avoid overtaking on hairpin bends</div>';
     }
 
     function exportMatrixPdf() {
