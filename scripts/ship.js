@@ -1,15 +1,21 @@
 const { execSync } = require('child_process');
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
-function run(name, cmd) {
+function run(name, cmd, options = {}) {
   console.log(`\n[ship] ${name}...`);
   try {
     execSync(cmd, {
       stdio: 'inherit',
       cwd: process.cwd(),
-      env: { ...process.env, NODE_OPTIONS: '--no-deprecation' }
+      env: { ...process.env, NODE_OPTIONS: '--no-deprecation' },
+      ...options
     });
+    return true;
   } catch (e) {
+    if (options.allowFailure) {
+      console.log(`[ship] ${name} failed (continuing)`);
+      return false;
+    }
     console.error(`\n[ship] FAILED: ${name}`);
     process.exit(1);
   }
@@ -18,7 +24,13 @@ function run(name, cmd) {
 try {
   run('sync data', 'npm run sync:data');
   run('deploy worker', 'npm run worker:deploy');
-  
+
+  console.log('\n[ship] git fetch...');
+  run('git fetch', 'git fetch origin', { allowFailure: true });
+
+  console.log('\n[ship] git rebase onto origin/main (if needed)...');
+  run('git rebase', 'git rebase --autostash origin/main', { allowFailure: true });
+
   console.log('\n[ship] git add...');
   try {
     execSync('git add -A -- .', { stdio: 'inherit', cwd: process.cwd(), env: process.env });
