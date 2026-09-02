@@ -3155,14 +3155,6 @@
       return 'North-West';
     }
 
-    function haversineKm(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
     function formatCoordinates(lat, lng) {
       const latStr = Math.abs(lat).toFixed(5) + (lat >= 0 ? '°N' : '°S');
       const lngStr = Math.abs(lng).toFixed(5) + (lng >= 0 ? '°E' : '°W');
@@ -3432,37 +3424,6 @@
           <div class="drawer-toll-label">${cat.label}</div>
           <div class="drawer-toll-detail">${cat.vehicles}</div>
           <div class="drawer-toll-price">NPR ${cat.entry} / ${cat.exit}</div>
-        </div>
-      `).join('');
-    }
-
-    function renderHighwayDirectory() {
-      const grid = document.getElementById('hwyGridContent');
-      if (!grid || !Array.isArray(allHighwaysIndex) || !allHighwaysIndex.length) return;
-      grid.innerHTML = allHighwaysIndex.map(h => `
-        <div class="hwy-card" onclick="loadAndFocusHighway('${h.code}')">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span class="hwy-badge">${h.code}</span>
-          </div>
-          <div style="font-weight:700; font-size:0.88rem; color:#fff;">${h.name}</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${h.route}</div>
-        </div>
-      `).join('');
-    }
-
-    function filterHighwayDirectory() {
-      const q = document.getElementById('hwySearchInput').value.toLowerCase();
-      if (!Array.isArray(allHighwaysIndex)) return;
-      const filtered = allHighwaysIndex.filter(h => h.code.toLowerCase().includes(q) || h.name.toLowerCase().includes(q) || h.route.toLowerCase().includes(q));
-      const grid = document.getElementById('hwyGridContent');
-      if (!grid) return;
-      grid.innerHTML = filtered.map(h => `
-        <div class="hwy-card" onclick="loadAndFocusHighway('${h.code}')">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span class="hwy-badge">${h.code}</span>
-          </div>
-          <div style="font-weight:700; font-size:0.88rem; color:#fff;">${h.name}</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${h.route}</div>
         </div>
       `).join('');
     }
@@ -6492,12 +6453,6 @@ Plan your safe mountain highway journey at mero-sadak.app`;
         updateRouteEnhancements();
         checkRouteWeatherAlerts();
       }, 500);
-    };
-
-    // Override loadAndFocusHighway to track coords
-    const originalLoadAndFocusHighway = loadAndFocusHighway;
-    loadAndFocusHighway = async function(code) {
-      await originalLoadAndFocusHighway(code);
     };
 
     // Init offline banner on load
