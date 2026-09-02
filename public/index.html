@@ -380,13 +380,15 @@
       </svg>
       <span class="toggle-label">POIs & EV</span>
     </button>
-    <button class="map-toggle-btn btn-sos" onclick="openModal('sosModal')" title="Emergency SOS">
-      <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-      </svg>
-      <span class="toggle-label">SOS</span>
-    </button>
   </div>
+
+  <!-- SOS stays outside the collapsible layer toggles: it must be reachable
+       in one tap regardless of whether the toolbar is open. -->
+  <button class="sos-fab" id="sosFab" onclick="openModal('sosModal')" title="Emergency SOS — always available">
+    <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+    </svg>
+  </button>
 
   <!-- Offline Status Banner -->
   <div class="offline-banner" id="offlineBanner">
