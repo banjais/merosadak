@@ -351,7 +351,7 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .header-brand .brand-title {
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
   font-size: 1rem;
   font-weight: 800;
   color: #ffffff;
@@ -3059,6 +3059,50 @@ button:focus-visible, select:focus-visible {
   color: var(--accent-gold);
 }
 
+/* Map Style toggle — sits on the map, visually distinct from the layer toolbar */
+.map-style-toggle {
+  position: fixed;
+  top: 108px;
+  right: 76px;
+  z-index: 905;
+  height: 36px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 0.75rem;
+  background: rgba(11, 25, 44, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
+  color: #94a3b8;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding-right: 10px;
+}
+.map-style-toggle:hover {
+  background: rgba(11, 25, 44, 0.95);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #86efac;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+}
+.map-style-toggle:active {
+  transform: scale(0.95);
+}
+.map-style-chevron {
+  color: #94a3b8;
+  transition: color 0.18s ease;
+}
+.map-style-toggle:hover .map-style-chevron {
+  color: #86efac;
+}
+
 .map-floating-toggles {
   position: fixed;
   top: 160px;
@@ -3782,6 +3826,13 @@ button:focus-visible, select:focus-visible {
     width: 17px;
     height: 17px;
   }
+  .map-style-toggle {
+    top: 88px;
+    right: 8px;
+    padding: 2px 8px 2px 6px;
+    font-size: 0.72rem;
+    height: 32px;
+  }
   .modal-card {
     max-height: calc(85vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     border-radius: var(--radius-md);
@@ -3958,7 +4009,7 @@ button:focus-visible, select:focus-visible {
   font-size: 1.1rem;
   font-weight: 800;
   color: #fff;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
 }
 
 .matrix-page-body {
@@ -4676,7 +4727,7 @@ button:focus-visible, select:focus-visible {
   font-size: 1.05rem;
   font-weight: 800;
   color: #ffffff;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
   letter-spacing: -0.01em;
 }
 

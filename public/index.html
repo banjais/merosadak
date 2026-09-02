@@ -65,13 +65,6 @@
       </div>
       <div class="header-spacer"></div>
       <div style="display:flex; align-items:center; gap:6px;">
-        <button class="header-icon-btn" onclick="cycleMapStyle()" title="Map Style">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-        </button>
         <button class="header-icon-btn" onclick="toggleFullscreen()" title="Fullscreen">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
@@ -394,6 +387,14 @@
       <span class="toggle-label">POIs & EV</span>
     </button>
   </div>
+
+  <!-- Map Style Toggle (distinct from layer toggle toolbar) -->
+  <button class="map-style-toggle" id="mapStyleToggle" onclick="cycleMapStyle()" title="Map Style: Standard / Satellite / Terrain">
+    <span class="map-style-indicator" id="mapStyleIndicator">🗺️ Standard</span>
+    <svg class="map-style-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </button>
 
   <!-- SOS stays outside the collapsible layer toggles: it must be reachable
        in one tap regardless of whether the toolbar is open. -->
@@ -1279,6 +1280,7 @@
 
     function cycleMapStyle() {
       const styles = ['voyager', 'satellite', 'terrain'];
+      const labels = { voyager: '🗺️ Standard', satellite: '🛰️ Satellite', terrain: '🏔️ Terrain' };
       const nextIndex = (styles.indexOf(currentMapStyle) + 1) % styles.length;
       setMapStyle(styles[nextIndex]);
     }
@@ -1290,6 +1292,12 @@
       currentMapStyle = style;
       tileErrorCount = 0;
       tileLayers[currentMapStyle].addTo(map);
+      const indicator = document.getElementById('mapStyleIndicator');
+      if (indicator) {
+        const styleLabel = { voyager: 'Standard', satellite: 'Satellite', terrain: 'Terrain' };
+        const styleEmoji = { voyager: '🗺️', satellite: '🛰️', terrain: '🏔️' };
+        indicator.textContent = (styleEmoji[style] || '🗺️') + ' ' + (styleLabel[style] || 'Standard');
+      }
     }
 
     function resetMapView() {
