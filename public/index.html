@@ -388,9 +388,8 @@
     </button>
   </div>
 
-  <!-- Map Style Toggle (distinct from layer toggle toolbar) -->
-  <button class="map-style-toggle" id="mapStyleToggle" onclick="cycleMapStyle()" title="Map Style: Standard / Satellite / Terrain">
-    <span class="map-style-indicator" id="mapStyleIndicator">🗺️ Standard</span>
+  <!-- Map Style Toggle — same size & style as .map-toggle-btn -->
+  <button class="map-style-toggle map-toggle-btn" id="mapStyleToggle" onclick="cycleMapStyle()" title="Map Style: Standard / Satellite / Terrain">
     <svg class="map-style-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="6 9 12 15 18 9"></polyline>
     </svg>
@@ -1285,20 +1284,22 @@
       setMapStyle(styles[nextIndex]);
     }
 
-    function setMapStyle(style) {
-      if (tileLayers[currentMapStyle]) {
-        map.removeLayer(tileLayers[currentMapStyle]);
-      }
-      currentMapStyle = style;
-      tileErrorCount = 0;
-      tileLayers[currentMapStyle].addTo(map);
-      const indicator = document.getElementById('mapStyleIndicator');
-      if (indicator) {
-        const styleLabel = { voyager: 'Standard', satellite: 'Satellite', terrain: 'Terrain' };
-        const styleEmoji = { voyager: '🗺️', satellite: '🛰️', terrain: '🏔️' };
-        indicator.textContent = (styleEmoji[style] || '🗺️') + ' ' + (styleLabel[style] || 'Standard');
-      }
+  function setMapStyle(style) {
+    if (tileLayers[currentMapStyle]) {
+      map.removeLayer(tileLayers[currentMapStyle]);
     }
+    currentMapStyle = style;
+    tileErrorCount = 0;
+    tileLayers[currentMapStyle].addTo(map);
+    const toggleBtn = document.getElementById('mapStyleToggle');
+    if (toggleBtn) {
+      const styleLabel = { voyager: 'Standard', satellite: 'Satellite', terrain: 'Terrain' };
+      const styleEmoji = { voyager: '🗺️', satellite: '🛰️', terrain: '🏔️' };
+      const label = styleLabel[style] || 'Standard';
+      const emoji = styleEmoji[style] || '🗺️';
+      toggleBtn.title = 'Map Style: ' + emoji + ' ' + label;
+    }
+  }
 
     function resetMapView() {
       const target = userOrigin || lastDetectedOrigin || { lat: 28.3949, lng: 84.1240 };

@@ -3059,38 +3059,27 @@ button:focus-visible, select:focus-visible {
   color: var(--accent-gold);
 }
 
-/* Map Style toggle — sits on the map, visually distinct from the layer toolbar */
+/* Map Style toggle — matches .map-toggle-btn size and style, sits on the map */
 .map-style-toggle {
   position: fixed;
   top: 108px;
   right: 76px;
   z-index: 905;
-  height: 36px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 0.75rem;
-  background: rgba(11, 25, 44, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
-  color: #94a3b8;
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
-  padding-right: 10px;
+  -webkit-tap-highlight-color: transparent;
 }
 .map-style-toggle:hover {
-  background: rgba(11, 25, 44, 0.95);
-  border-color: rgba(16, 185, 129, 0.45);
-  color: #86efac;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-  transform: translateY(-1px);
+  background: rgba(30, 62, 98, 0.8);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--accent-gold);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
 }
 .map-style-toggle:active {
   transform: scale(0.95);
@@ -3826,13 +3815,12 @@ button:focus-visible, select:focus-visible {
     width: 17px;
     height: 17px;
   }
-  .map-style-toggle {
-    top: 88px;
-    right: 8px;
-    padding: 2px 8px 2px 6px;
-    font-size: 0.72rem;
-    height: 32px;
-  }
+   .map-style-toggle {
+      top: 72px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+    }
   .modal-card {
     max-height: calc(85vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     border-radius: var(--radius-md);
