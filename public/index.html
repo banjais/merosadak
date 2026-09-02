@@ -185,7 +185,7 @@
       <div class="matrix-page-main">
         <div class="matrix-search-section">
           <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Get up to <strong>8 places</strong> (cities, villages, districts, NH codes, airports). We compute the <strong>actual road distance</strong> along DOR-mapped highways, then layer in <strong>live traffic delays</strong>, <strong>active incidents</strong> (with DOR verification), <strong>mountain weather</strong>, <strong>nearest services</strong> (fuel/EV/police/hospital), and a <strong>departure advisor</strong> with best/worst travel windows.
+            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong> and we compute the <strong>actual road distance</strong>, layer in <strong>24-hour traffic forecast</strong> (weekday hourly congestion), <strong>active incidents</strong> (DOR-verified), <strong>mountain weather</strong>, <strong>blackspots</strong> (risk + safe driving advice), <strong>nearest services</strong> (fuel/EV/police/hospital), <strong>terrain crossed</strong> (Terai/hill/mountain), and <strong>districts traversed</strong>.
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
@@ -195,6 +195,13 @@
             <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
           </div>
           <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+            <label style="font-size:0.72rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">
+              🕐 Depart at:
+              <input type="datetime-local" id="matrixDepartAt" style="background:rgba(15,23,42,0.6); border:1px solid var(--surface-border); border-radius:6px; padding:5px 8px; color:#fff; font-size:0.75rem;">
+            </label>
+            <span style="font-size:0.65rem; color:var(--text-muted);">→ used to forecast peak-hour traffic on the path</span>
+          </div>
           <button class="btn-action-primary" onclick="computeDistanceMatrix()">Calculate Distance</button>
           <div id="matrixResults" style="margin-top:16px;"></div>
           <div id="matrixAiSection" style="margin-top:16px; display:none;">
@@ -1714,7 +1721,7 @@
         curK = p.from;
       }
       const edges = path.map(p => p.edge);
-      const segments = edges.map(e => ({ highway: e.highway, highwayName: e.highwayName, linkCode: e.linkCode, fromLabel: e.fromLabel, toLabel: e.toLabel, km: e.km, district: e.district }));
+      const segments = edges.map(e => ({ highway: e.highway, highwayName: e.highwayName, linkCode: e.linkCode, fromLabel: e.fromLabel, toLabel: e.toLabel, km: e.km, district: e.district, _nodeKey: p.to }));
       return { km: dist[endKey], segments, path };
     }
 
@@ -1824,7 +1831,7 @@
       return enriched;
     }
 
-    function getDepartureAdvisor(usedHighways) {
+    function getDepartureAdvisor(usedHighways, targetHour) {
       const arr = Array.isArray(window.__TRAVEL_TIME__) ? window.__TRAVEL_TIME__ : [];
       const usedSet = new Set(usedHighways);
       const expand = (h) => usedSet.has(h) || usedSet.has('N' + h) || (h && h.startsWith('NH') && usedSet.has(h.replace(/^NH/, 'H')));
@@ -1836,13 +1843,89 @@
       const totalKm = matches.reduce((s, m) => s + (m.distanceKm || 0), 0);
       const worst = matches.reduce((best, m) => ((m.peakTimeMinutes || 0) > (best.peakTimeMinutes || 0) ? m : best), matches[0]);
       const best = matches.reduce((bestM, m) => ((m.freeFlowTimeMinutes || 9999) < (bestM.freeFlowTimeMinutes || 9999) ? m : bestM), matches[0]);
-      const now = new Date();
-      const h = now.getHours();
+      const h = (typeof targetHour === 'number') ? targetHour : new Date().getHours();
       let currentPhase = 'off-peak';
       if (h >= 7 && h < 10) currentPhase = 'morning peak';
       else if (h >= 16 && h < 20) currentPhase = 'evening peak';
       else if (h >= 10 && h < 16) currentPhase = 'mid-day';
-      return { matches, totalKm, best, worst, currentPhase, allTips: matches.flatMap(m => m.historicalTips || []).slice(0, 4), allBottlenecks: matches.flatMap(m => m.primaryBottlenecks || []).slice(0, 3) };
+
+      let forecastByHour = null;
+      const withHourly = matches.filter(m => m.hourlyProfiles && m.hourlyProfiles.weekday && m.hourlyProfiles.weekday.length);
+      if (withHourly.length) {
+        const hourMap = new Array(24).fill(null).map((_, i) => ({ hour: i, label: (i === 0 ? 12 : (i > 12 ? i - 12 : i)) + (i < 12 ? ' AM' : ' PM'), travelMinutes: 0, delayMinutes: 0, congestionIndex: 0, levels: [], advisories: [], corridorCount: 0 }));
+        withHourly.forEach(m => {
+          m.hourlyProfiles.weekday.forEach(slot => {
+            const cell = hourMap[slot.hour];
+            if (!cell) return;
+            cell.travelMinutes += slot.travelTimeMinutes || 0;
+            cell.delayMinutes += slot.delayMinutes || 0;
+            cell.congestionIndex = Math.max(cell.congestionIndex, slot.congestionIndex || 0);
+            cell.levels.push(slot.level);
+            if (slot.advisoryNote) cell.advisories.push({ corridor: m.corridorName, note: slot.advisoryNote });
+            cell.corridorCount++;
+          });
+        });
+        forecastByHour = hourMap;
+      }
+      return { matches, totalKm, best, worst, currentPhase, targetHour: h, allTips: matches.flatMap(m => m.historicalTips || []).slice(0, 4), allBottlenecks: matches.flatMap(m => m.primaryBottlenecks || []).slice(0, 3), forecastByHour };
+    }
+
+    function terrainForDistrict(name) {
+      if (!name) return null;
+      const lc = String(name).toLowerCase();
+      const arr = Array.isArray(window.__DISTRICT_TERRAIN__) ? window.__DISTRICT_TERRAIN__ : [];
+      const m = arr.find(x => (x.district || '').toLowerCase() === lc);
+      return m ? m.terrain : null;
+    }
+
+    function terrainColor(terrain) {
+      switch ((terrain || '').toLowerCase()) {
+        case 'terai': return '#10b981';
+        case 'mixed_terai_hills': return '#84cc16';
+        case 'hills': case 'hill': return '#f59e0b';
+        case 'mixed_hills_mountain': case 'mixed_hill_mountain': return '#d97706';
+        case 'mountain': case 'mountains': case 'high mountain': case 'high_mountain': return '#a16207';
+        default: return '#64748b';
+      }
+    }
+
+    function enrichPathWithTerrainAndBlackspots(path) {
+      if (!path || !path.segments) return path;
+      const enriched = { ...path, segments: path.segments.map(s => ({ ...s })) };
+      enriched.terrainSegments = [];
+      enriched.districts = new Set();
+      enriched.palikas = new Set();
+      enriched.blackspotHits = [];
+      enriched.segments.forEach(seg => {
+        if (seg.district) enriched.districts.add(seg.district);
+        seg.terrain = terrainForDistrict(seg.district) || 'unknown';
+        seg.terrainColor = terrainColor(seg.terrain);
+        enriched.terrainSegments.push({ km: seg.km, terrain: seg.terrain, district: seg.district });
+      });
+      enriched.districts = Array.from(enriched.districts);
+      try {
+        (Array.isArray(window.__BLACKSPOTS__) ? window.__BLACKSPOTS__ : []).forEach(bs => {
+          if (!bs.lat || !bs.lng) return;
+          const bsHwys = normalizeHighwayCodes(bs.highwayCode);
+          const usedSet = new Set(path.usedHighways || []);
+          const onPath = bsHwys.some(h => usedSet.has(h) || usedSet.has('N' + h) || (h && h.startsWith('NH') && usedSet.has(h.replace(/^NH/, 'H'))));
+          if (!onPath) return;
+          let nearestDist = Infinity, nearestSeg = null;
+          for (let i = 0; i < enriched.segments.length; i++) {
+            const seg = enriched.segments[i];
+            if (seg.highway && bsHwys.indexOf(seg.highway) === -1 && !bsHwys.some(b => b === seg.highway || ('N' + b) === seg.highway)) continue;
+            const nodeKey = seg._nodeKey;
+            const node = nodeKey && highwayGraph && highwayGraph.nodes[nodeKey];
+            if (!node || !node.lat) continue;
+            const d = haversineKm(bs.lat, bs.lng, node.lat, node.lng);
+            if (d < nearestDist) { nearestDist = d; nearestSeg = seg; }
+          }
+          if (nearestDist < 5) {
+            enriched.blackspotHits.push({ ...bs, distanceFromPathKm: nearestDist, district: nearestSeg ? nearestSeg.district : '' });
+          }
+        });
+      } catch (e) {}
+      return enriched;
     }
 
     function trafficColor(level) {
@@ -3650,7 +3733,16 @@
 
         const optimal = ordered.length >= 2 ? computeOptimalTour(ordered) : null;
         if (optimal) optimal.path = enrichPathWithLiveData(optimal.path || { km: optimal.km, segments: optimal.segments || [] });
-        pairs.forEach(p => { if (p.path) p.path = enrichPathWithLiveData(p.path); });
+        if (optimal && optimal.path) optimal.path = enrichPathWithTerrainAndBlackspots(optimal.path);
+        pairs.forEach(p => { if (p.path) { p.path = enrichPathWithLiveData(p.path); p.path = enrichPathWithTerrainAndBlackspots(p.path); } });
+
+        const departInput = document.getElementById('matrixDepartAt');
+        let targetHour = null;
+        if (departInput && departInput.value) {
+          const d = new Date(departInput.value);
+          if (!isNaN(d.getTime())) targetHour = d.getHours();
+        }
+        const targetDate = (departInput && departInput.value) ? new Date(departInput.value) : null;
 
         let html = '<div class="matrix-result-list">';
         const highwayGroups = {};
@@ -3723,7 +3815,7 @@
         if (optimal && optimal.path) {
           const P = optimal.path;
           const usedHwy = P.usedHighways || [];
-          const advisor = getDepartureAdvisor(usedHwy);
+          const advisor = getDepartureAdvisor(usedHwy, targetHour);
           const sevOrder = { critical: 4, severe: 3, high: 3, moderate: 2, caution: 2, low: 1, minor: 1 };
           const incSorted = (P.incidentHits || []).slice().sort((a, b) => (sevOrder[b.severity] || 0) - (sevOrder[a.severity] || 0));
           const wxSorted = (P.weatherHits || []).slice();
@@ -3776,16 +3868,92 @@
 
           if (advisor) {
             const phaseColor = advisor.currentPhase === 'evening peak' || advisor.currentPhase === 'morning peak' ? '#ef4444' : advisor.currentPhase === 'mid-day' ? '#fbbf24' : '#10b981';
+            const targetH = advisor.targetHour != null ? advisor.targetHour : new Date().getHours();
+            const targetCell = advisor.forecastByHour && advisor.forecastByHour[targetH];
+            const baseMinutes = (P.km || 0) / 35 * 60;
+            const predictedMinutes = targetCell && targetCell.travelMinutes > 0 ? targetCell.travelMinutes * (P.km / Math.max(advisor.matches.reduce((s,m)=>s+(m.distanceKm||0),0), 1)) : null;
+            const baseKmh = P.km && P.km > 0 ? Math.round((P.km / Math.max(1, baseMinutes)) * 60) : 0;
+            const predictedKmh = targetCell && targetCell.avgSpeedKmh ? Math.round(targetCell.avgSpeedKmh) : null;
+            const delayVsBase = (predictedMinutes != null && baseMinutes > 0) ? Math.max(0, Math.round(predictedMinutes - baseMinutes)) : null;
+
+            const cellH = 18;
+            const cellW = 100 / 24;
+            const maxCI = 100;
+            const barChart = advisor.forecastByHour ? `<div style="display:flex; align-items:flex-end; height:${cellH * 2.4}px; gap:1px; margin:6px 0;">
+              ${advisor.forecastByHour.map(cell => {
+                const h = Math.max(2, Math.round((cell.congestionIndex / maxCI) * cellH * 2));
+                const c = cell.congestionIndex >= 80 ? '#ef4444' : cell.congestionIndex >= 50 ? '#f97316' : cell.congestionIndex >= 25 ? '#fbbf24' : '#10b981';
+                const isTarget = cell.hour === targetH;
+                return `<div title="${cell.label} · ${cell.travelMinutes} min · ${cell.levels[0] || ''}${cell.advisories.length ? ' · ' + cell.advisories[0].note.slice(0,40) : ''}" style="flex:1; background:${c}; height:${h}px; border-radius:2px 2px 0 0; ${isTarget ? 'outline:2px solid #fff; outline-offset:-2px;' : ''}"></div>`;
+              }).join('')}
+            </div>
+            <div style="display:flex; font-size:0.55rem; color:var(--text-muted); margin-top:2px;">
+              ${[0, 6, 12, 18, 23].map(h => `<span style="flex:1; text-align:center;">${h === 0 ? '12a' : h < 12 ? h + 'a' : h === 12 ? '12p' : (h - 12) + 'p'}</span>`).join('')}
+            </div>` : '';
+
             html += `<div style="padding:10px 12px; background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.25); border-radius:8px; font-size:0.78rem; grid-column: 1 / -1;">
-              <div style="font-weight:700; color:#c4b5fd; margin-bottom:6px;">⏰ Departure Advisor <span style="font-size:0.65rem; color:var(--text-muted); font-weight:400;">(${advisor.matches.length} matched corridor${advisor.matches.length > 1 ? 's' : ''} on your path)</span></div>
-              <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
-                <span>Now: <strong style="color:${phaseColor};">${advisor.currentPhase}</strong></span>
-                <span>Free-flow: <strong>${advisor.best.freeFlowTimeMinutes} min</strong> (${advisor.best.corridorName})</span>
-                <span>Peak: <strong style="color:#ef4444;">${advisor.worst.peakTimeMinutes} min</strong> (${advisor.worst.corridorName})</span>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-weight:700; color:#c4b5fd;">⏰ Travel Time Forecast</span>
+                <span style="font-size:0.65rem; color:var(--text-muted);">(${advisor.matches.length} corridor${advisor.matches.length > 1 ? 's' : ''} on your path · weekday profile)</span>
               </div>
-              ${advisor.best.bestDepartureWindow ? '<div style="font-size:0.72rem;">🌅 Best: <strong>' + advisor.best.bestDepartureWindow + '</strong> &nbsp; ⛈️ Worst: <strong style="color:#ef4444;">' + advisor.best.worstDepartureWindow + '</strong></div>' : ''}
+              <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:6px;">
+                <div style="background:rgba(0,0,0,0.2); padding:6px 8px; border-radius:4px;">
+                  <div style="font-size:0.6rem; color:var(--text-muted);">Selected hour</div>
+                  <div style="font-weight:700; color:#a78bfa;">${targetH === 0 ? '12 AM' : targetH < 12 ? targetH + ' AM' : targetH === 12 ? '12 PM' : (targetH - 12) + ' PM'}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2); padding:6px 8px; border-radius:4px;">
+                  <div style="font-size:0.6rem; color:var(--text-muted);">Phase</div>
+                  <div style="font-weight:700; color:${phaseColor};">${advisor.currentPhase}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2); padding:6px 8px; border-radius:4px;">
+                  <div style="font-size:0.6rem; color:var(--text-muted);">${targetDate ? 'Predicted time' : 'Free-flow time'}</div>
+                  <div style="font-weight:700; color:#a78bfa;">${predictedMinutes != null ? Math.round(predictedMinutes) + ' min' : Math.round(baseMinutes) + ' min'}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2); padding:6px 8px; border-radius:4px;">
+                  <div style="font-size:0.6rem; color:var(--text-muted);">${targetDate ? 'Predicted delay' : 'Free-flow km/h'}</div>
+                  <div style="font-weight:700; color:${delayVsBase > 10 ? '#ef4444' : delayVsBase > 0 ? '#fbbf24' : '#a78bfa'};">${delayVsBase != null ? '+' + delayVsBase + ' min' : (baseKmh + ' km/h')}</div>
+                </div>
+              </div>
+              ${barChart}
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">Hour-by-hour congestion index for matched corridors. White outline = your selected departure time. <span style="color:#10b981;">■</span> smooth · <span style="color:#fbbf24;">■</span> slow · <span style="color:#f97316;">■</span> heavy · <span style="color:#ef4444;">■</span> standstill</div>
+              ${advisor.best.bestDepartureWindow ? '<div style="font-size:0.72rem; margin-top:6px;">🌅 Best: <strong>' + advisor.best.bestDepartureWindow + '</strong> &nbsp; ⛈️ Worst: <strong style="color:#ef4444;">' + advisor.best.worstDepartureWindow + '</strong></div>' : ''}
               ${advisor.allTips.length ? '<ul style="margin:4px 0 0 16px; padding:0; color:var(--text-muted); font-size:0.7rem;">' + advisor.allTips.map(t => '<li>' + t + '</li>').join('') + '</ul>' : ''}
             </div>`;
+          }
+
+          if ((P.blackspotHits || []).length) {
+            html += `<div style="padding:10px 12px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:0.78rem; grid-column: 1 / -1;">
+              <div style="font-weight:700; color:#fca5a5; margin-bottom:6px;">🚨 Blackspots on Your Path (${P.blackspotHits.length})</div>
+              ${P.blackspotHits.slice(0, 4).map(bs => {
+                const lvl = (bs.riskLevel || '').toLowerCase();
+                const c = lvl === 'high' || lvl === 'critical' ? '#ef4444' : lvl === 'moderate' || lvl === 'medium' ? '#f97316' : '#fbbf24';
+                return `<div style="margin:5px 0; padding:8px 10px; background:rgba(0,0,0,0.22); border-left:4px solid ${c}; border-radius:4px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                    <strong style="color:#fff;">${bs.name}</strong>
+                    <span style="background:${c}; color:#000; padding:1px 6px; border-radius:3px; font-size:0.65rem; font-weight:700;">${(bs.riskLevel || '?').toUpperCase()}</span>
+                  </div>
+                  <div style="color:var(--text-muted); font-size:0.68rem; margin-top:3px;">${bs.highwayCode ? 'via ' + bs.highwayCode + ' · ' : ''}${bs.chainageOrLocation || ''} ${bs.district ? '· ' + bs.district : ''}</div>
+                  <div style="color:var(--text-secondary); font-size:0.7rem; margin-top:3px;"><strong>Cause:</strong> ${bs.primaryCause || '—'}</div>
+                  <div style="color:var(--text-secondary); font-size:0.7rem;"><strong>Stats:</strong> ${bs.annualAccidentStats || '—'}</div>
+                  <div style="color:#86efac; font-size:0.7rem; margin-top:3px;"><strong>✅ Safety:</strong> ${bs.safeDrivingAdvice || '—'}</div>
+                </div>`;
+              }).join('')}
+            </div>`;
+          }
+
+          if (P.districts && P.districts.length) {
+            const terrainGroups = {};
+            (P.terrainSegments || []).forEach(ts => { const t = ts.terrain || 'unknown'; if (!terrainGroups[t]) terrainGroups[t] = { km: 0, districts: new Set() }; terrainGroups[t].km += ts.km; if (ts.district) terrainGroups[t].districts.add(ts.district); });
+            const terrainChips = Object.entries(terrainGroups).filter(([t]) => t !== 'unknown').map(([t, v]) => `<span style="background:${terrainColor(t)}33; border:1px solid ${terrainColor(t)}; padding:2px 8px; border-radius:12px; font-size:0.7rem; color:${terrainColor(t)}; font-weight:700;">${t} · ${v.km.toFixed(0)} km</span>`).join('');
+            html += `<div style="padding:10px 12px; background:rgba(20,184,166,0.06); border:1px solid rgba(20,184,166,0.25); border-radius:8px; font-size:0.78rem; grid-column: 1 / -1;">
+              <div style="font-weight:700; color:#5eead4; margin-bottom:6px;">⛰️ Terrain & Districts Crossed</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">${terrainChips}</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);"><strong>Districts:</strong> ${P.districts.join(' → ')}</div>
+            </div>`;
+          }
+
+          if (!trafSorted.length && !incSorted.length && !wxSorted.length && !svcSorted.length && !advisor && !(P.blackspotHits || []).length) {
+            html += `<div style="grid-column: 1 / -1; padding:10px 12px; background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.2); border-radius:8px; font-size:0.78rem; color:#86efac;">✅ No live incidents, traffic, weather, or blackspots reported for this path.</div>`;
           }
 
           if (!trafSorted.length && !incSorted.length && !wxSorted.length && !svcSorted.length && !advisor) {
@@ -3860,10 +4028,12 @@
                 fetch('data/highway/' + linkFile).then(r => r.json()).then(geo => {
                   const features = geo.features.filter(f => f.properties.link_code === seg.linkCode);
                   features.forEach(f => {
+                    const c = (path.terrainSegments && (path.terrainSegments.find(t => t.km === seg.km && t.district === seg.district) || {}).terrain) || (seg.terrain || null);
+                    const color = c && terrainColor(c) ? terrainColor(c) : '#7c3aed';
                     if (f.geometry && f.geometry.type === 'LineString') {
-                      L.polyline(f.geometry.coordinates.map(c => [c[1], c[0]]), { color: '#7c3aed', weight: 5, opacity: 0.9 }).addTo(routeLayerGroup);
+                      L.polyline(f.geometry.coordinates.map(c => [c[1], c[0]]), { color, weight: 5, opacity: 0.9 }).addTo(routeLayerGroup);
                     } else if (f.geometry && f.geometry.type === 'MultiLineString') {
-                      f.geometry.coordinates.forEach(ring => L.polyline(ring.map(c => [c[1], c[0]]), { color: '#7c3aed', weight: 5, opacity: 0.9 }).addTo(routeLayerGroup));
+                      f.geometry.coordinates.forEach(ring => L.polyline(ring.map(c => [c[1], c[0]]), { color, weight: 5, opacity: 0.9 }).addTo(routeLayerGroup));
                     }
                   });
                 }).catch(() => {});
@@ -3872,6 +4042,11 @@
           });
         }
       }
+      (path.blackspotHits || []).forEach(bs => {
+        const lvl = (bs.riskLevel || '').toLowerCase();
+        const c = lvl === 'high' || lvl === 'critical' ? '#ef4444' : lvl === 'moderate' || lvl === 'medium' ? '#f97316' : '#fbbf24';
+        L.marker([bs.lat, bs.lng], { icon: L.divIcon({ className: 'matrix-blackspot-pin', html: `<div style="background:${c};color:#000;border-radius:6px;padding:2px 6px;font-size:0.7rem;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.5);">🚨 ${(bs.riskLevel || '').toUpperCase()}</div>`, iconSize: [70, 22], iconAnchor: [35, 11] }) }).bindPopup(`<strong>🚨 ${bs.name}</strong> <span style="background:${c};color:#000;padding:1px 4px;border-radius:3px;font-size:0.65rem;">${(bs.riskLevel || '').toUpperCase()}</span><br>${bs.highwayCode ? 'via ' + bs.highwayCode + '<br>' : ''}${bs.primaryCause || ''}<br><em>${bs.annualAccidentStats || ''}</em><br><strong style="color:#86efac;">✅ ${bs.safeDrivingAdvice || ''}</strong>`).addTo(routeLayerGroup);
+      });
       (path.trafficHits || []).forEach(t => {
         L.circleMarker([t.lat, t.lng], { radius: 12, color: trafficColor(t.level), weight: 2, fillColor: trafficColor(t.level), fillOpacity: 0.4 }).bindPopup(`<strong>🚦 ${t.name}</strong><br>Level: <span style="color:${trafficColor(t.level)};font-weight:700;">${t.level}</span><br>Delay: ${t.delayMinutes} min<br><small>${t.cause || ''}</small>`).addTo(routeLayerGroup);
       });
