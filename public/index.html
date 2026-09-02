@@ -184,9 +184,12 @@
     <div class="matrix-page-body">
       <div class="matrix-page-main">
         <div class="matrix-search-section">
+          <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
+            🌍 <strong style="color:#7dd3fc;">Type any place in Nepal</strong> — city, village (पालिका), district, market, pass, landmark, or highway. We search <strong>753 local units + 77 districts + OSM</strong> and compute real road distances for up to 6 places.
+          </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
-              <input type="text" id="matrixCityInput" placeholder="Add a city or local place..." autocomplete="off" class="matrix-input">
+              <input type="text" id="matrixCityInput" placeholder="Any city, village, district or place in Nepal..." autocomplete="off" class="matrix-input">
               <div class="suggestions" id="matrixSuggest" style="position:absolute; top:100%; left:0; right:0; background:rgba(15,23,42,0.98); border:1px solid var(--surface-border); border-radius:var(--radius-sm); margin-top:4px; box-shadow:var(--shadow-lg); z-index:1500; max-height:220px; overflow-y:auto; display:none;"></div>
             </div>
             <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
@@ -2972,15 +2975,38 @@
       const val = input.value.trim();
       if (!val) return;
       if (matrixCities.length >= 6) { alert('Maximum 6 cities supported at a time.'); return; }
-      
+
       const found = searchIndex.find(s => s.label.toLowerCase().includes(val.toLowerCase()) && s.lat);
       if (found) {
         matrixCities.push({ name: found.label.split('(')[0].trim(), lat: found.lat, lng: found.lng });
-      } else {
-        matrixCities.push({ name: val, lat: 27.7, lng: 85.3 });
+        input.value = '';
+        renderMatrixChips();
+        return;
       }
-      input.value = '';
-      renderMatrixChips();
+
+      tryPhotonGeocodeForMatrix(val).then(coord => {
+        if (coord) {
+          matrixCities.push({ name: coord.name, lat: coord.lat, lng: coord.lng });
+          input.value = '';
+          renderMatrixChips();
+        } else {
+          alert('Could not find "' + val + '" in our local Nepal data or OSM.\n\nPlease pick a place from the suggestions dropdown (type at least 3 letters).');
+        }
+      });
+    }
+
+    async function tryPhotonGeocodeForMatrix(query) {
+      try {
+        const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&bbox=80,26,88.3,30.5&limit=1').then(r => r.json()).catch(() => null);
+        if (!res || !res.features || !res.features.length) return null;
+        const f = res.features[0];
+        const name = (f.properties && (f.properties.name || f.properties.city || f.properties.town || f.properties.village || f.properties.county)) || query;
+        const coords = f.geometry && f.geometry.coordinates;
+        if (!coords || coords.length < 2) return null;
+        return { name, lat: coords[1], lng: coords[0] };
+      } catch (e) {
+        return null;
+      }
     }
 
     function removeMatrixCity(index) {
@@ -2997,7 +3023,7 @@
       try {
         const [photonRes, localMatches] = await Promise.all([
           fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json()).catch(() => ({ features: [] })),
-          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat && s.type !== 'Highway').slice(0, 5))
+          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat).slice(0, 8))
         ]);
 
         boxEl.innerHTML = '';
