@@ -185,7 +185,7 @@
       <div class="matrix-page-main">
         <div class="matrix-search-section">
           <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong> and we compute the <strong>actual road distance</strong>, layer in <strong>24-hour traffic forecast</strong>, <strong>active DOR-verified incidents</strong>, <strong>mountain weather</strong>, <strong>blackspots</strong>, <strong>nearest services</strong>, <strong>terrain</strong>, and <strong>districts traversed</strong>. Then click <strong>🤖 AI Road Advisor</strong> for a Gemini-powered trip advisory that references all the above.
+            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong>. Type a <strong>district</strong> → see its HQ city. Type a <strong>city</strong> → see it + that city's bus park, airport, hospital, trademarked places. No highway-name spam, no duplicates. Then <strong>🤖 AI Road Advisor</strong> tailors a trip advisory from all live context.
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
@@ -1297,7 +1297,7 @@
     async function loadData() {
       try {
         const v = Date.now();
-        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, poisRes, travelTimeRes, districtTerrainRes, palikaCoordsRes, hwyCoordsRes] = await Promise.all([
+        const [citiesRes, placesRes, palikaRes, hwyRes, airportsRes, districtRes, hwyInfoRes, blackspotsRes, weatherRes, trafficRes, incidentsRes, userReportsRes, poisRes, travelTimeRes, districtTerrainRes, palikaCoordsRes, hwyCoordsRes] = await Promise.all([
           fetch(`https://merosadak.banjays.workers.dev/api/data/cities.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/places.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/palika-names.json?v=${v}`).then(r => r.json()).catch(() => []),
@@ -1309,6 +1309,7 @@
           fetch(`https://merosadak.banjays.workers.dev/api/data/mountain-weather.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/traffic-corridors.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/incidents.json?v=${v}`).then(r => r.json()).catch(() => []),
+          fetch(`https://merosadak.banjays.workers.dev/api/data/user-reports.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/pois.json?v=${v}`).then(r => r.json()).catch(() => []),
           fetch(`https://merosadak.banjays.workers.dev/api/data/travel-time.json?v=${v}`).then(r => r.json()).catch(() => null),
           fetch(`https://merosadak.banjays.workers.dev/api/data/district-terrain.json?v=${v}`).then(r => r.json()).catch(() => []),
@@ -1324,9 +1325,11 @@
         window.__WEATHER_NODES__ = weatherRes;
         window.__TRAFFIC_CORRIDORS__ = trafficRes;
         window.__INCIDENTS__ = incidentsRes;
+        window.__USER_REPORTS__ = userReportsRes;
         window.__POIS__ = poisRes;
         window.__TRAVEL_TIME__ = travelTimeRes;
         window.__DISTRICT_TERRAIN__ = districtTerrainRes;
+        window.__DISTRICT_HQS__ = districtRes;
         window.__AIRPORTS__ = airportsRes;
         window.__PLACES_API__ = placesRes;
 
@@ -1342,14 +1345,18 @@
         });
 
         if (window.NEPAL_DATA && window.NEPAL_DATA.cities) {
-          const allCities = Object.values(window.NEPAL_DATA.cities).flat();
+          const cityTypes = ['metropolitan', 'sub_metropolitan', 'municipality', 'rural_municipality'];
+          const allCities = [];
+          cityTypes.forEach(t => {
+            (window.NEPAL_DATA.cities[t] || []).forEach(c => { c.cityType = t; allCities.push(c); });
+          });
           allCities.forEach(c => searchIndex.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: c.district, province: c.province }));
           const districtMap = {};
           allCities.forEach(c => {
             if (c.district) {
               const d = c.district.toLowerCase();
               if (!districtMap[d]) districtMap[d] = [];
-              districtMap[d].push({ name: c.name, lat: c.lat, lng: c.lng, province: c.province });
+              districtMap[d].push({ name: c.name, lat: c.lat, lng: c.lng, province: c.province, cityType: c.cityType });
             }
           });
           window.__DISTRICT_CITIES__ = districtMap;
@@ -1769,6 +1776,7 @@
       enriched.incidentHits = [];
       enriched.weatherHits = [];
       enriched.serviceHits = [];
+      enriched.citizenReports = [];
       enriched.usedHighways = new Set();
       enriched.segments.forEach(seg => { if (seg.highway && seg.highway !== 'access') enriched.usedHighways.add(seg.highway); });
 
@@ -1825,6 +1833,13 @@
           const poiHwys = normalizeHighwayCodes(poi.highwayCode);
           if (!expandMatch(poiHwys)) return;
           enriched.serviceHits.push({ id: poi.id, name: poi.name, type: poi.category, location: poi.locationName, lat: poi.lat, lng: poi.lng, contact: poi.contactNumber, facilities: poi.facilities || [], highways: poiHwys, rating: poi.rating });
+        });
+      } catch (e) {}
+      try {
+        (Array.isArray(window.__USER_REPORTS__) ? window.__USER_REPORTS__ : []).forEach(rep => {
+          const repHwys = normalizeHighwayCodes(rep.highwayCode);
+          if (!expandMatch(repHwys)) return;
+          enriched.citizenReports.push({ id: rep.id, location: rep.location, type: rep.incidentType, severity: rep.severity, description: rep.description, reporter: rep.reporterName, createdAt: rep.createdAt, upvotes: rep.upvotes, verified: rep.verified, highways: repHwys });
         });
       } catch (e) {}
       enriched.usedHighways = Array.from(enriched.usedHighways);
@@ -3599,7 +3614,7 @@
     async function searchMatrixPlaces(query) {
       const boxEl = document.getElementById('matrixSuggest');
       if (!query || query.length < 2) { boxEl.style.display = 'none'; return; }
-      boxEl.innerHTML = '<div style="padding:8px 12px; color:var(--text-secondary);">Searching...</div>';
+      boxEl.innerHTML = '<div style="padding:8px 12px; color:var(--text-secondary);">Searching…</div>';
       boxEl.style.display = 'block';
 
       if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
@@ -3610,73 +3625,48 @@
       }
 
       try {
-        const q = query.toLowerCase().trim();
-        const hwyCodeMatch = q.match(/^(nh|h)?\s*(\d{1,3})\b/);
-        const hwyQuery = hwyCodeMatch ? ('nh' + hwyCodeMatch[2]) : null;
-
-        const linkMatches = highwayLinkIndex.filter(l => {
-          if (!l.lat || !l.lng) return false;
-          if (hasDevanagari(l.label || '')) return false;
-          if (hwyQuery && l.highway && l.highway.toLowerCase() === hwyQuery) return true;
-          const hay = ((l.label || '') + ' ' + (l.subLabel || '') + ' ' + (l.highwayName || '') + ' ' + (l.district || '')).toLowerCase();
-          return hay.includes(q);
-        }).slice(0, 8);
-
-        const [photonRes, localMatches] = await Promise.all([
-          fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=80,26,88.3,30.5&limit=5`).then(r => r.json()).catch(() => ({ features: [] })),
-          Promise.resolve(getSearchSuggestions(query).filter(s => s.lat && s.type !== 'Highway Link' && s.type !== 'Highway').slice(0, 6))
-        ]);
-
-        boxEl.innerHTML = '';
-        const added = new Set();
-
-        if (linkMatches.length) {
-          const header = document.createElement('div');
-          header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:#7dd3fc; background:rgba(56,189,248,0.08); border-bottom:1px solid rgba(56,189,248,0.15); font-weight:700; letter-spacing:0.02em;';
-          header.textContent = `🛣️ Highway link points (${linkMatches.length})`;
-          boxEl.appendChild(header);
+        const isHighwayCode = /^(nh|h)\s*\d{1,3}\b/.test(query.toLowerCase().trim());
+        const smart = smartPlaceSearch(query, { includeHighwayLinks: isHighwayCode, limit: 8 });
+        const rendered = smart.sections.length > 0;
+        if (rendered) {
+          renderSmartPlaceResults(boxEl, smart);
+          setSmartSelectHandler((item) => {
+            if (item.isHighwayCode) {
+              alert('"' + item.label + '" is a highway. Please pick a specific place along it (try the city it passes through).');
+              return;
+            }
+            if (!item.lat || !item.lng) { alert('"' + item.label + '" has no coordinates. Please pick a different result.'); return; }
+            addMatrixPlace(item.label, item.lat, item.lng);
+            document.getElementById('matrixCityInput').value = '';
+            document.getElementById('matrixSuggest').style.display = 'none';
+          });
         }
-        linkMatches.forEach(item => {
-          if (added.has(item.label + '|' + item.lat)) return;
-          added.add(item.label + '|' + item.lat);
-          const div = document.createElement('div');
-          div.className = 'autocomplete-item';
-          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
-          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + (item.highway || 'Link') + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
-          div.onclick = () => addMatrixPlace(item.label, item.lat, item.lng);
-          boxEl.appendChild(div);
-        });
 
-        if (localMatches.length) {
-          const header = document.createElement('div');
-          header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:#a78bfa; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.15); font-weight:700; letter-spacing:0.02em;';
-          header.textContent = `🏙️ Local Nepal data (${localMatches.length})`;
-          boxEl.appendChild(header);
+        if (smart.sections.length === 0 && query.length >= 3) {
+          try {
+            const photonRes = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&bbox=80,26,88.3,30.5&limit=5').then(r => r.json()).catch(() => ({ features: [] }));
+            const added = new Set();
+            (photonRes.features || []).forEach(f => {
+              const name = f.properties.name || '';
+              if (!name || added.has(name) || hasDevanagari(name)) return;
+              added.add(name);
+              const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
+              if (!coords) return;
+              const div = document.createElement('div');
+              div.className = 'autocomplete-item';
+              div.innerHTML = '<span>' + name + '</span> <span class="tag">Map Place</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
+              div.onclick = () => addMatrixPlace(name, coords[1], coords[0]);
+              boxEl.appendChild(div);
+            });
+            if (boxEl.children.length > 0) {
+              const header = document.createElement('div');
+              header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:#94a3b8; background:rgba(0,0,0,0.18); border-bottom:1px solid rgba(148,163,184,0.2); font-weight:700;';
+              header.textContent = '🌐 OSM fallback (no exact local match)';
+              boxEl.insertBefore(header, boxEl.firstChild);
+              boxEl.style.display = 'block';
+            }
+          } catch (e) {}
         }
-        localMatches.forEach(item => {
-          if (hasDevanagari(item.label)) return;
-          if (added.has(item.label + '|' + item.lat)) return;
-          added.add(item.label + '|' + item.lat);
-          const div = document.createElement('div');
-          div.className = 'autocomplete-item';
-          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
-          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + item.type + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
-          div.onclick = () => addMatrixPlace(item.label, item.lat, item.lng);
-          boxEl.appendChild(div);
-        });
-
-        (photonRes.features || []).forEach(f => {
-          const name = f.properties.name || '';
-          if (!name || added.has(name + '|photon') || hasDevanagari(name)) return;
-          added.add(name + '|photon');
-          const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : null;
-          if (!coords) return;
-          const div = document.createElement('div');
-          div.className = 'autocomplete-item';
-          div.innerHTML = '<span>' + name + '</span> <span class="tag">Map Place</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
-          div.onclick = () => addMatrixPlace(name, coords[1], coords[0]);
-          boxEl.appendChild(div);
-        });
 
         boxEl.style.display = boxEl.children.length ? 'block' : 'none';
       } catch (e) { console.error('[MeroSadak] Matrix search error:', e); }
@@ -3938,6 +3928,20 @@
                   <div style="color:#86efac; font-size:0.7rem; margin-top:3px;"><strong>✅ Safety:</strong> ${bs.safeDrivingAdvice || '—'}</div>
                 </div>`;
               }).join('')}
+            </div>`;
+          }
+
+          if ((P.citizenReports || []).length) {
+            html += `<div style="padding:10px 12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.3); border-radius:8px; font-size:0.78rem; grid-column: 1 / -1;">
+              <div style="font-weight:700; color:#fcd34d; margin-bottom:6px;">👥 Citizen Reports on Your Path (${P.citizenReports.length})</div>
+              ${P.citizenReports.slice(0, 4).map(rep => `<div style="margin:5px 0; padding:7px 9px; background:rgba(0,0,0,0.22); border-left:3px solid ${rep.verified ? '#10b981' : '#fbbf24'}; border-radius:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                  <strong style="color:#fff;">${rep.type.replace(/_/g, ' ')} — ${rep.location || ''}</strong>
+                  <span style="font-size:0.65rem; color:var(--text-muted);">${rep.severity || 'minor'} ${rep.verified ? '· <span style="color:#10b981; font-weight:700;">VERIFIED</span>' : '· <span style="color:#fbbf24;">unverified</span>'}</span>
+                </div>
+                <div style="color:var(--text-secondary); font-size:0.7rem; margin-top:3px;">${rep.description || ''}</div>
+                <div style="color:var(--text-muted); font-size:0.65rem; margin-top:3px;">via ${(rep.highways || []).join('/')} · reported by ${rep.reporter || 'citizen'} ${rep.createdAt ? '· ' + rep.createdAt : ''} ${rep.upvotes ? '· 👍 ' + rep.upvotes : ''}</div>
+              </div>`).join('')}
             </div>`;
           }
 
@@ -4443,6 +4447,283 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
 
     function hasDevanagari(text) {
       return /[\u0900-\u097F]/.test(text || '');
+    }
+
+    function normalizeText(s) {
+      return (s || '').toLowerCase().trim().replace(/[.,;:`'"!?()]/g, '').replace(/\s+/g, ' ');
+    }
+
+    function roundCoord(n) { return Math.round((+n || 0) * 10000) / 10000; }
+
+    function dedupeByCoord(items, coordDecimals) {
+      const seen = new Set();
+      const out = [];
+      items.forEach(it => {
+        if (!it || it.lat == null || it.lng == null) { out.push(it); return; }
+        const k = roundCoord(it.lat) + '|' + roundCoord(it.lng) + '|' + normalizeText(it.label);
+        if (seen.has(k)) return;
+        seen.add(k);
+        out.push(it);
+      });
+      return out;
+    }
+
+    function smartPlaceSearch(query, opts) {
+      opts = opts || {};
+      const includeHighwayLinks = !!opts.includeHighwayLinks;
+      const limit = opts.limit || 8;
+      const q = normalizeText(query);
+      if (!q || q.length < 2) return { sections: [] };
+
+      const isHighwayCode = /^(nh|h)\s*\d{1,3}\b/.test(q);
+      const sections = [];
+      const seen = new Map();
+      function add(sectionTitle, icon, color, item) {
+        if (!item || !item.label) return;
+        if (item.lat != null && item.lng != null) {
+          const k = roundCoord(item.lat) + '|' + roundCoord(item.lng) + '|' + normalizeText(item.label);
+          if (seen.has(k)) return;
+          seen.set(k, true);
+        }
+        sections.push({ sectionTitle, icon, color, item });
+      }
+
+      if (isHighwayCode) {
+        const m = q.match(/^(nh|h)?\s*(\d{1,3})/);
+        const codeRaw = (m[1] || 'nh') + m[2];
+        const code = codeRaw.toUpperCase().startsWith('NH') ? codeRaw.toUpperCase() : 'NH' + m[2];
+        const meta = (Array.isArray(allHighwaysIndex) ? allHighwaysIndex : []).find(h => h.code && h.code.toLowerCase() === code.toLowerCase());
+        if (meta) {
+          add('Highway', '🛣️', '#7dd3fc', {
+            label: meta.code + ' — ' + meta.name,
+            subLabel: meta.route + ' · ' + (meta.districts || []).length + ' districts',
+            lat: 0, lng: 0,
+            type: 'Highway',
+            code: meta.code,
+            file: meta.file,
+            isHighwayCode: true
+          });
+        }
+      }
+
+      const districts = Array.isArray(window.__DISTRICT_CITIES__) ? window.__DISTRICT_CITIES__ : {};
+      const districtHqsArr = Array.isArray(window.__DISTRICT_HQS__) ? window.__DISTRICT_HQS__ : [];
+      const dq = q;
+      const matchedDistricts = Object.keys(districts).filter(d => normalizeText(d) === dq || normalizeText(d).startsWith(dq));
+      matchedDistricts.forEach(d => {
+        const hqMeta = districtHqsArr.find(x => (x.district || '').toLowerCase() === d.toLowerCase());
+        const hqName = (hqMeta && hqMeta.hqCity) ? hqMeta.hqCity.trim() : null;
+        if (hqName) {
+          const hqInList = (districts[d] || []).find(c => normalizeText(c.name) === normalizeText(hqName));
+          if (hqInList && hqInList.lat && hqInList.lng) {
+            add('District → HQ', '🏛️', '#fbbf24', {
+              label: hqInList.name,
+              subLabel: d + ' District HQ' + (hqMeta && hqMeta.type ? ' · ' + hqMeta.type : ''),
+              lat: hqInList.lat, lng: hqInList.lng,
+              type: 'District HQ',
+              district: d,
+              hq: hqInList.name
+            });
+            return;
+          }
+          if (hqMeta && hqMeta.lat && hqMeta.lng && hqMeta.lat !== 0) {
+            add('District → HQ', '🏛️', '#fbbf24', {
+              label: hqName,
+              subLabel: d + ' District HQ' + (hqMeta && hqMeta.type ? ' · ' + hqMeta.type : ''),
+              lat: hqMeta.lat, lng: hqMeta.lng,
+              type: 'District HQ',
+              district: d,
+              hq: hqName
+            });
+            return;
+          }
+        }
+        const list = districts[d] || [];
+        if (!list.length) return;
+        const ranked = list.slice().sort((a, b) => {
+          const rank = (c) => (c.cityType === 'metropolitan' ? 4 : c.cityType === 'sub_metropolitan' ? 3 : c.cityType === 'municipality' ? 2 : 1);
+          return rank(b) - rank(a);
+        });
+        const hq = ranked[0];
+        add('District → HQ', '🏛️', '#fbbf24', {
+          label: hq.name,
+          subLabel: d + ' (largest municipality)',
+          lat: hq.lat, lng: hq.lng,
+          type: 'District HQ',
+          district: d,
+          hq: hq.name
+        });
+      });
+
+      const allCities = (window.NEPAL_DATA && window.NEPAL_DATA.cities) ? Object.values(window.NEPAL_DATA.cities).flat() : [];
+      const cityMatches = allCities.filter(c => {
+        if (!c || !c.name) return false;
+        return normalizeText(c.name) === q || normalizeText(c.name).startsWith(q) || normalizeText(c.name).includes(q);
+      });
+      cityMatches.slice(0, 4).forEach(c => {
+        add('City / Palika', '🏙️', '#a78bfa', {
+          label: c.name,
+          subLabel: (c.district || '') + (c.province ? ' · ' + c.province : ''),
+          lat: c.lat, lng: c.lng,
+          type: 'City Hub',
+          district: c.district,
+          province: c.province
+        });
+      });
+
+      const palikaCoords = (window.__PALIKA_COORDS_MAP__ ? Object.values(window.__PALIKA_COORDS_MAP__) : []);
+      const palikaMatches = palikaCoords.filter(p => {
+        if (!p || !p.Palika) return false;
+        const n = normalizeText(p.Palika);
+        return n === q || n.startsWith(q) || n.includes(q);
+      });
+      palikaMatches.slice(0, 4).forEach(p => {
+        add('Local Unit', '🏘️', '#86efac', {
+          label: p.Palika + ' (' + p.District + ')',
+          subLabel: p.District + ' District',
+          lat: p.lat, lng: p.lng,
+          type: 'Local Unit',
+          district: p.District,
+          palika: p.Palika
+        });
+      });
+
+      const matchedAirportCodes = [];
+      const airports = Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : [];
+      airports.forEach(a => {
+        const n = normalizeText(a.name) + ' ' + normalizeText(a.shortName) + ' ' + normalizeText(a.code) + ' ' + normalizeText(a.location) + ' ' + normalizeText(a.district);
+        if (n.includes(q) || q.split(' ').some(t => t.length > 2 && n.includes(t))) {
+          add('Airport', '🛫', '#7dd3fc', {
+            label: a.name + ' (' + a.shortName + ')',
+            subLabel: a.location + (a.type ? ' · ' + a.type : ''),
+            lat: a.lat, lng: a.lng,
+            type: 'Airport',
+            code: a.code
+          });
+          matchedAirportCodes.push(a.code);
+        }
+      });
+
+      const landmarks = Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : [];
+      const targetCityNames = cityMatches.map(c => normalizeText(c.name));
+      const targetPalikaNames = palikaMatches.map(p => normalizeText(p.Palika));
+      const targetDistrictNames = matchedDistricts.map(d => normalizeText(d));
+      landmarks.forEach(pl => {
+        if (pl.type === 'airport') return;
+        if (!pl.name) return;
+        const n = normalizeText(pl.name) + ' ' + normalizeText(pl.location || '') + ' ' + normalizeText(pl.highway || '');
+        if (n.includes(q) || q.split(' ').some(t => t.length > 2 && n.includes(t))) {
+          add('Landmark', serviceIcon(pl.type) || '📍', '#fb923c', {
+            label: pl.name,
+            subLabel: (pl.location || '') + (pl.type ? ' · ' + pl.type : ''),
+            lat: pl.lat, lng: pl.lng,
+            type: pl.type,
+            highway: pl.highway
+          });
+          return;
+        }
+        if (targetCityNames.length || targetPalikaNames.length || targetDistrictNames.length) {
+          const locLc = normalizeText(pl.location || '');
+          const isInTargetCity = targetCityNames.some(c => locLc.includes(c));
+          const isInTargetPalika = targetPalikaNames.some(p => locLc.includes(p));
+          const isInTargetDistrict = targetDistrictNames.some(d => locLc.includes(d));
+          if (isInTargetCity || isInTargetPalika || isInTargetDistrict) {
+            add('Landmark in ' + (targetCityNames[0] || targetPalikaNames[0] || matchedDistricts[0] || 'this place'), serviceIcon(pl.type) || '📍', '#fb923c', {
+              label: pl.name,
+              subLabel: (pl.location || '') + (pl.type ? ' · ' + pl.type : ''),
+              lat: pl.lat, lng: pl.lng,
+              type: pl.type,
+              highway: pl.highway
+            });
+          }
+        }
+      });
+
+      const pois = Array.isArray(window.__POIS__) ? window.__POIS__ : [];
+      pois.forEach(poi => {
+        if (!poi.name) return;
+        const n = normalizeText(poi.name) + ' ' + normalizeText(poi.locationName || '') + ' ' + normalizeText(poi.highwayCode || '');
+        if (n.includes(q) || q.split(' ').some(t => t.length > 2 && n.includes(t))) {
+          add('Service', '🛒', '#34d399', {
+            label: poi.name,
+            subLabel: (poi.locationName || '') + (poi.category ? ' · ' + poi.category : ''),
+            lat: poi.lat, lng: poi.lng,
+            type: poi.category,
+            highway: poi.highwayCode
+          });
+        }
+      });
+
+      if (includeHighwayLinks) {
+        const linkMatches = highwayLinkIndex.filter(l => {
+          if (!l.lat || !l.lng) return false;
+          if (hasDevanagari(l.label || '')) return false;
+          const hwyMatch = q.match(/^(nh|h)?\s*(\d{1,3})\b/);
+          if (hwyMatch && l.highway && l.highway.toLowerCase() === ('nh' + hwyMatch[2])) return true;
+          return false;
+        }).slice(0, 6);
+        linkMatches.forEach(l => {
+          add('Highway link', '🛣️', '#7dd3fc', {
+            label: l.label,
+            subLabel: l.subLabel || '',
+            lat: l.lat, lng: l.lng,
+            type: 'Highway Link',
+            highway: l.highway,
+            linkCode: l.linkCode
+          });
+        });
+      }
+
+      const grouped = {};
+      sections.forEach(s => {
+        if (!grouped[s.sectionTitle]) grouped[s.sectionTitle] = [];
+        grouped[s.sectionTitle].push(s);
+      });
+
+      const orderedSections = [];
+      ['Highway', 'District → HQ', 'City / Palika', 'Local Unit', 'Airport', 'Landmark', 'Landmark in ' + (targetCityNames[0] || targetPalikaNames[0] || matchedDistricts[0] || 'this place'), 'Service', 'Highway link'].forEach(title => {
+        if (grouped[title] && grouped[title].length) {
+          orderedSections.push({ title, icon: grouped[title][0].icon, color: grouped[title][0].color, items: grouped[title].slice(0, 4) });
+          delete grouped[title];
+        }
+      });
+      Object.keys(grouped).forEach(title => {
+        orderedSections.push({ title, icon: grouped[title][0].icon, color: grouped[title][0].color, items: grouped[title].slice(0, 4) });
+      });
+
+      return { sections: orderedSections, query, q };
+    }
+
+    function renderSmartPlaceResults(boxEl, result) {
+      if (!boxEl || !result || !result.sections.length) {
+        if (boxEl) boxEl.style.display = 'none';
+        return;
+      }
+      boxEl.innerHTML = '';
+      result.sections.forEach(section => {
+        if (!section.items || !section.items.length) return;
+        const header = document.createElement('div');
+        header.style.cssText = 'padding:6px 12px; font-size:0.7rem; color:' + section.color + '; background:rgba(0,0,0,0.18); border-bottom:1px solid ' + section.color + '33; font-weight:700; letter-spacing:0.02em;';
+        header.textContent = section.icon + ' ' + section.title + ' (' + section.items.length + ')';
+        boxEl.appendChild(header);
+        section.items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'autocomplete-item';
+          const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
+          const tag = item.isHighwayCode ? 'Highway' : (item.type || 'Place');
+          const latLngDisp = (item.lat && item.lng) ? '' : ' <span style="color:#fbbf24; font-size:0.65rem;">(no coords)</span>';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + latLngDisp + ' <span class="tag">' + tag + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
+          div.onclick = () => smartSelectItem(item);
+          boxEl.appendChild(div);
+        });
+      });
+      boxEl.style.display = boxEl.children.length ? 'block' : 'none';
+    }
+
+    let __smartSelectHandler = null;
+    function setSmartSelectHandler(fn) { __smartSelectHandler = fn; }
+    function smartSelectItem(item) {
+      if (typeof __smartSelectHandler === 'function') __smartSelectHandler(item);
     }
 
     function toggleLanguage() {
