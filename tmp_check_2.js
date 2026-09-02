@@ -195,9 +195,8 @@
         const res = await fetch('data/distance-matrix.json?v=' + Date.now());
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
-        console.log('Distance matrix raw bytes:', text.length);
         distanceMatrixData = JSON.parse(text);
-        console.log('Distance matrix loaded:', distanceMatrixData.cities.length, 'cities');
+        console.debug('[MeroSadak] Distance matrix ready:', distanceMatrixData.cities.length, 'cities (hidden until requested)');
       } catch (e) {
         console.error('Distance matrix load error:', e);
         distanceMatrixData = null;
@@ -2200,6 +2199,28 @@
       html += '</tbody></table>';
 
       container.innerHTML = html;
+    }
+
+    let staticMatrixRendered = false;
+    function toggleStaticMatrixView() {
+      const container = document.getElementById('staticMatrixContainer');
+      const placeholder = document.getElementById('staticMatrixPlaceholder');
+      const btn = document.getElementById('toggleStaticMatrixBtn');
+      if (!container || !btn) return;
+      const willShow = container.style.display === 'none';
+      if (willShow) {
+        if (!staticMatrixRendered) {
+          renderStaticMatrix();
+          staticMatrixRendered = true;
+        }
+        container.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        btn.innerHTML = '🙈 Hide';
+      } else {
+        container.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+        btn.innerHTML = '👁️ Show';
+      }
     }
 
     function focusMatrixCity(lat, lng, name) {

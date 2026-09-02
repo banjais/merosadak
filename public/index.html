@@ -205,10 +205,13 @@
       <div class="matrix-page-side">
         <div class="matrix-static-header">
           <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Full Nepal City-to-City Matrix (62 cities)</div>
-          <button class="btn-header" onclick="exportMatrixPdf()" style="font-size:0.78rem;">📄 Export PDF</button>
+          <button id="toggleStaticMatrixBtn" class="btn-header" onclick="toggleStaticMatrixView()" style="font-size:0.78rem;">👁️ Show</button>
         </div>
-        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2);">
+        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2); display:none;">
           <div id="staticMatrixTable" style="padding:8px;"></div>
+        </div>
+        <div id="staticMatrixPlaceholder" style="padding:14px 12px; color:var(--text-secondary); font-size:0.8rem; text-align:center; border:1px dashed var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.1);">
+          62 cities pre-loaded. Click <strong>Show</strong> to display the full table.
         </div>
       </div>
     </div>
@@ -1100,9 +1103,8 @@
         const res = await fetch('data/distance-matrix.json?v=' + Date.now());
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
-        console.log('Distance matrix raw bytes:', text.length);
         distanceMatrixData = JSON.parse(text);
-        console.log('Distance matrix loaded:', distanceMatrixData.cities.length, 'cities');
+        console.debug('[MeroSadak] Distance matrix ready:', distanceMatrixData.cities.length, 'cities (hidden until requested)');
       } catch (e) {
         console.error('Distance matrix load error:', e);
         distanceMatrixData = null;
@@ -3105,6 +3107,28 @@
       html += '</tbody></table>';
 
       container.innerHTML = html;
+    }
+
+    let staticMatrixRendered = false;
+    function toggleStaticMatrixView() {
+      const container = document.getElementById('staticMatrixContainer');
+      const placeholder = document.getElementById('staticMatrixPlaceholder');
+      const btn = document.getElementById('toggleStaticMatrixBtn');
+      if (!container || !btn) return;
+      const willShow = container.style.display === 'none';
+      if (willShow) {
+        if (!staticMatrixRendered) {
+          renderStaticMatrix();
+          staticMatrixRendered = true;
+        }
+        container.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        btn.innerHTML = '🙈 Hide';
+      } else {
+        container.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+        btn.innerHTML = '👁️ Show';
+      }
     }
 
     function focusMatrixCity(lat, lng, name) {
