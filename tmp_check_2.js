@@ -879,8 +879,63 @@
     function toggleMapToolbar() {
       const fab = document.getElementById('mapToggleFab');
       const menu = document.getElementById('mapFloatingToggles');
-      fab.classList.toggle('is-open');
-      menu.classList.toggle('is-open');
+      const willOpen = !menu.classList.contains('is-open');
+      fab.classList.toggle('is-open', willOpen);
+      menu.classList.toggle('is-open', willOpen);
+      if (!willOpen) {
+        clearAllMapOverlays();
+      }
+    }
+
+    function clearAllMapOverlays() {
+      const layerNames = ['incidents', 'weather', 'traffic', 'pois', 'blackspots'];
+      layerNames.forEach(name => {
+        const btn = document.getElementById('toggle' + name.charAt(0).toUpperCase() + name.slice(1));
+        if (btn && btn.classList.contains('active')) {
+          layerVisibility[name] = false;
+          btn.classList.remove('active');
+          if (layerGroups[name]) {
+            try { map.removeLayer(layerGroups[name]); } catch (e) {}
+            layerGroups[name].clearLayers();
+          }
+        }
+      });
+
+      try {
+        if (routeLayerGroup) {
+          routeLayerGroup.clearLayers();
+          map.removeLayer(routeLayerGroup);
+          routeLayerGroup = null;
+        }
+      } catch (e) {}
+
+      try { map.closePopup(); } catch (e) {}
+
+      selectedDestination = null;
+      window.__routeCache = { key: '', origin: null, dest: null, routes: null, avoidTollRoutes: null };
+
+      const results = document.getElementById('sidebarResults');
+      if (results) results.innerHTML = '';
+
+      const searchPanel = document.getElementById('routeSearchPanel');
+      const searchToggle = document.getElementById('routeSearchToggle');
+      if (searchPanel) searchPanel.style.display = 'block';
+      if (searchToggle) searchToggle.style.display = 'none';
+
+      const controlsRow = document.getElementById('routeControlsRow');
+      if (controlsRow) controlsRow.classList.add('hidden');
+
+      const destInput = document.getElementById('sidebarSearch');
+      if (destInput) destInput.value = '';
+      const originInputEl = document.getElementById('originSearchInput');
+      if (originInputEl) originInputEl.value = '';
+
+      if (typeof showMapToggleOptions === 'function') {
+        const highwaysBtn = document.getElementById('toggleHighways');
+        const weatherBtn = document.getElementById('toggleWeather');
+        if (highwaysBtn) highwaysBtn.style.display = 'none';
+        if (weatherBtn) weatherBtn.style.display = 'none';
+      }
     }
 
     function showMapToggleOptions() {
@@ -933,14 +988,396 @@
     // 9. Modals & Extended Features
     // ==========================================
     function openModal(id) {
-      document.getElementById(id).style.display = 'flex';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+      if (id === 'highwayModal') renderHighwayDirectory();
       if (id === 'sosModal') renderSosModal();
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
     }
 
     function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // Highway Directory & Information Explorer Module
+    let activeHighwayCategory = 'all';
+    let selectedHighwayCode = 'NH17';
+    let currentHighwayLayer = null;
+
+    function renderHighwayDirectory(selectedCode = null) {
+      if (selectedCode) selectedHighwayCode = selectedCode;
+      filterHighwayDirectory();
+      selectHighwayInDirectory(selectedHighwayCode || 'NH17');
+    }
+
+    function setHighwayCategory(cat) {
+      activeHighwayCategory = cat;
+      document.querySelectorAll('#hwyFilterPills .hwy-filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(`'${cat}'`));
+      });
+      filterHighwayDirectory();
+    }
+
+    function filterHighwayDirectory() {
+      const query = (document.getElementById('hwySearchInput')?.value || '').toLowerCase().trim();
+      const listEl = document.getElementById('hwyListScroll');
+      if (!listEl) return;
+
+      const highways = allHighwaysIndex && allHighwaysIndex.length ? allHighwaysIndex : [];
+      if (!highways.length) {
+        listEl.innerHTML = '<div style="padding:16px; color:var(--text-muted); font-size:0.8rem; text-align:center;">Loading Nepal Highway Directory…</div>';
+        return;
+      }
+
+      const filtered = highways.filter(h => {
+        if (query) {
+          const matchCode = (h.code || '').toLowerCase().includes(query);
+          const matchName = (h.name || '').toLowerCase().includes(query);
+          const matchRoute = (h.route || '').toLowerCase().includes(query);
+          const matchDist = Array.isArray(h.districts) && h.districts.some(d => d.toLowerCase().includes(query));
+          if (!matchCode && !matchName && !matchRoute && !matchDist) return false;
+        }
+
+        if (activeHighwayCategory === 'spine') {
+          return h.code === 'NH01' || h.code === 'NH03' || h.code === 'NH05' || h.code === 'NH17' || (h.route && h.route.toLowerCase().includes('corridor'));
+        }
+        if (activeHighwayCategory === 'mountain') {
+          return ['NH02', 'NH03', 'NH10', 'NH11', 'NH13', 'NH17', 'NH18', 'NH19', 'NH23', 'NH25', 'NH48', 'NH51', 'NH56', 'NH57', 'NH60', 'NH63', 'NH64', 'NH65', 'NH74', 'NH75'].includes(h.code);
+        }
+        if (activeHighwayCategory === 'terai') {
+          return ['NH01', 'NH04', 'NH05', 'NH08', 'NH09', 'NH14', 'NH16', 'NH20', 'NH22', 'NH28', 'NH32', 'NH35', 'NH36', 'NH41', 'NH44', 'NH47', 'NH50', 'NH52', 'NH58', 'NH59', 'NH62', 'NH67', 'NH73'].includes(h.code);
+        }
+        if (activeHighwayCategory === 'ringroad') {
+          return ['NH38', 'NH39', 'NH75', 'NH77', 'NH78'].includes(h.code) || (h.name && h.name.toLowerCase().includes('ring') || h.name.toLowerCase().includes('chakrapath'));
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        listEl.innerHTML = '<div style="padding:20px; color:var(--text-muted); font-size:0.75rem; text-align:center;">No highways match your search.</div>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(h => {
+        const isSel = h.code === selectedHighwayCode;
+        const info = getHighwayExtendedData(h.code);
+        const surfaceBadge = info.surfaceType === 'under_construction'
+          ? '<span style="font-size:0.62rem; font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); padding:1px 6px; border-radius:4px;">🟡 Widening</span>'
+          : info.surfaceType === 'gravel'
+          ? '<span style="font-size:0.62rem; font-weight:700; color:#f87171; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); padding:1px 6px; border-radius:4px;">🟠 Gravel</span>'
+          : '<span style="font-size:0.62rem; font-weight:700; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:4px;">🟢 Pitched</span>';
+
+        return `
+          <div class="hwy-list-item ${isSel ? 'selected' : ''}" onclick="selectHighwayInDirectory('${h.code}')">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span class="hw-badge">${h.code}</span>
+              ${surfaceBadge}
+            </div>
+            <div style="font-size:0.85rem; font-weight:800; color:#fff; line-height:1.3;">${h.name}</div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              📍 ${h.route || 'National Highway'}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.68rem; color:var(--text-muted);">
+              <span>📏 ${info.totalLengthKm} km</span>
+              <span>${Array.isArray(h.districts) ? h.districts.length + ' Districts' : ''}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getHighwayExtendedData(code) {
+      const infoList = window.__HIGHWAY_INFO__ || [];
+      const detailed = infoList.find(item => item.code === code || item.id === code.toLowerCase() || (code === 'NH17' && item.code === 'H04') || (code === 'NH01' && item.code === 'H01') || (code === 'NH13' && item.code === 'H13') || (code === 'NH03' && item.code === 'H15') || (code === 'NH47' && item.code === 'H10'));
+      
+      const basic = (allHighwaysIndex || []).find(h => h.code === code) || {};
+      const routeParts = (basic.route || '').split(/[-–—➔➔]/).map(s => s.trim()).filter(Boolean);
+      const startPoint = detailed?.startPoint || (routeParts[0] ? routeParts[0] : 'Origin Hub');
+      const endPoint = detailed?.endPoint || (routeParts[routeParts.length - 1] ? routeParts[routeParts.length - 1] : 'Destination Hub');
+
+      // Surface Classification
+      let surfaceLabel = 'Pitched / Blacktopped (Asphalt Concrete)';
+      let surfaceType = 'pitched';
+      if (detailed?.segments && detailed.segments.some(s => s.surface === 'under_construction')) {
+        surfaceLabel = 'Pitched with Active 4-Lane Widening Upgrades';
+        surfaceType = 'under_construction';
+      } else if (['NH25', 'NH56', 'NH57', 'NH63', 'NH64', 'NH65', 'NH70'].includes(code)) {
+        surfaceLabel = 'Partially Pitched & High Mountain Gravel / Dirt Track';
+        surfaceType = 'gravel';
+      }
+
+      // Terrain classification
+      let terrain = detailed?.terrainType;
+      if (!terrain) {
+        const dStr = (basic.districts || []).join(' ').toLowerCase();
+        if (dStr.includes('mustang') || dStr.includes('manang') || dStr.includes('solu') || dStr.includes('dolpa') || dStr.includes('jumla')) {
+          terrain = 'High Mountain';
+        } else if (dStr.includes('jhapa') || dStr.includes('morang') || dStr.includes('sunsari') || dStr.includes('saptari') || dStr.includes('siraha') || dStr.includes('dhanusha') || dStr.includes('bara') || dStr.includes('parsa') || dStr.includes('banke') || dStr.includes('kailali')) {
+          terrain = 'Terai Plains';
+        } else {
+          terrain = 'Hilly River Valley';
+        }
+      }
+
+      // Elevation estimation
+      let elevRange = '300m → 1,450m ASL';
+      if (terrain === 'High Mountain') elevRange = '1,200m → 3,850m ASL';
+      if (terrain === 'Terai Plains') elevRange = '80m → 450m ASL';
+      if (detailed?.segments && detailed.segments.length) {
+        const minE = Math.min(...detailed.segments.map(s => s.elevationStartM || s.elevationEndM || 9999));
+        const maxE = Math.max(...detailed.segments.map(s => s.elevationStartM || s.elevationEndM || 0));
+        if (minE < 9000 && maxE > 0) elevRange = `${minE}m → ${maxE}m ASL`;
+      }
+
+      // Passway cities & hubs
+      let cities = detailed?.keyPassesAndJunctions;
+      if (!cities || !cities.length) {
+        cities = routeParts.length >= 2 ? routeParts : [startPoint, 'Mid Corridor', endPoint];
+      }
+
+      return {
+        code,
+        name: detailed?.name || basic.name || code,
+        nepaliName: detailed?.nepaliName || '',
+        totalLengthKm: detailed?.totalLengthKm || (routeParts.length * 38 + 24),
+        startPoint,
+        endPoint,
+        surfaceLabel,
+        surfaceType,
+        terrain,
+        elevRange,
+        conditionRating: detailed?.conditionRating || (surfaceType === 'gravel' ? 3.1 : surfaceType === 'under_construction' ? 3.5 : 4.4),
+        scenicRating: detailed?.scenicRating || 4.5,
+        description: detailed?.description || `National Highway ${code} forming an essential strategic arterial corridor traversing ${basic.districts ? basic.districts.join(', ') : 'Nepal road network'}.`,
+        dorDivision: detailed?.dorDivision || 'Department of Roads (DOR) Regional Division',
+        emergencyContact: detailed?.emergencyContact || '103 (Traffic Police Hotline) / 100',
+        districts: basic.districts || [],
+        provinces: detailed?.provinces || [],
+        cities,
+        segments: detailed?.segments || [],
+        evChargers: detailed?.evChargers || [],
+        tollPlazas: detailed?.tollPlazas || [],
+        file: basic.file || ''
+      };
+    }
+
+    function selectHighwayInDirectory(code) {
+      selectedHighwayCode = code;
+      const detailPane = document.getElementById('hwyDetailPane');
+      if (!detailPane) return;
+
+      document.querySelectorAll('#hwyListScroll .hwy-list-item').forEach(item => {
+        item.classList.toggle('selected', item.textContent.includes(code));
+      });
+
+      const data = getHighwayExtendedData(code);
+
+      // Cities Trail
+      const citiesHtml = data.cities.map((city, idx) => `
+        <span class="hwy-city-node">📍 ${city}</span>
+        ${idx < data.cities.length - 1 ? '<span class="hwy-city-arrow">➔</span>' : ''}
+      `).join('');
+
+      // Districts Chips
+      const districtsHtml = data.districts.map(d => `<span class="hw-district-chip">🏛️ ${d}</span>`).join('');
+
+      // Segments Breakdown
+      const segmentsHtml = data.segments && data.segments.length ? `
+        <div>
+          <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+            🚧 Highway Corridor Segments &amp; Surface Quality
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${data.segments.map(seg => {
+              const surfText = seg.surface === 'asphalt_excellent' ? '4-Lane Asphalt (Pitched / Excellent)' : seg.surface === 'under_construction' ? '4-Lane Widening Work (Caution)' : '2-Lane Blacktop (Pitched)';
+              const surfColor = seg.surface === 'under_construction' ? '#fbbf24' : '#34d399';
+              return `
+                <div class="hwy-segment-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.8rem; font-weight:800; color:#fff;">${seg.from} ➔ ${seg.to}</span>
+                    <span style="font-size:0.75rem; font-weight:700; color:${surfColor};">${seg.distanceKm} km · ${seg.lanes || 2} Lanes</span>
+                  </div>
+                  <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">
+                    🛣️ ${surfText} · Avg Speed: ${seg.avgSpeedKmh || 45} km/h
+                  </div>
+                  ${seg.currentIssue ? `<div style="font-size:0.7rem; color:#fca5a5; margin-top:4px; padding:4px 8px; background:rgba(239,68,68,0.1); border-radius:4px;">⚠️ ${seg.currentIssue}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      // EV Chargers
+      const evHtml = data.evChargers && data.evChargers.length ? `
+        <div style="padding:10px 12px; background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.25); border-radius:var(--radius-sm);">
+          <div style="font-size:0.75rem; font-weight:800; color:#38bdf8; margin-bottom:6px;">⚡ EV Fast Charging Stations on Corridor</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${data.evChargers.map(ev => `
+              <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                <span style="color:#fff; font-weight:600;">🔌 ${ev.name} (${ev.location})</span>
+                <span style="color:#38bdf8; font-weight:700;">${ev.powerKw} kW ${ev.type}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      detailPane.innerHTML = `
+        <!-- Highway Banner -->
+        <div class="hwy-banner">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="hw-badge" style="font-size:0.85rem; padding:4px 12px;">${data.code}</span>
+              <span style="font-size:0.85rem; color:#fbbf24; font-weight:700;">${data.nepaliName}</span>
+            </div>
+            <span style="font-size:0.75rem; font-weight:800; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); padding:4px 10px; border-radius:var(--radius-full);">
+              ⭐ ${data.conditionRating}/5 Condition
+            </span>
+          </div>
+          <div style="font-size:1.25rem; font-weight:900; color:#ffffff; line-height:1.2; margin-bottom:6px;">
+            ${data.name}
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
+            ${data.description}
+          </div>
+        </div>
+
+        <!-- Core Properties 4-Tile Grid -->
+        <div class="hwy-metric-grid">
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">🏁 Where to Where</div>
+            <div class="hwy-metric-val" style="color:#38bdf8; font-size:0.85rem;">${data.startPoint} ➔ ${data.endPoint}</div>
+            <div class="hwy-metric-sub">Terminus Endpoints</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">📏 Total Length</div>
+            <div class="hwy-metric-val" style="color:#34d399;">${data.totalLengthKm} <span style="font-size:0.75rem;">km</span></div>
+            <div class="hwy-metric-sub">Official DOR Highway Registry</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">🛣️ Surface & Pavement</div>
+            <div class="hwy-metric-val" style="color:#fbbf24; font-size:0.8rem;">${data.surfaceLabel}</div>
+            <div class="hwy-metric-sub">Blacktopped / Bituminous</div>
+          </div>
+          <div class="hwy-metric-tile">
+            <div class="hwy-metric-title">⛰️ Terrain & Elevation</div>
+            <div class="hwy-metric-val" style="color:#c084fc; font-size:0.85rem;">${data.terrain}</div>
+            <div class="hwy-metric-sub">${data.elevRange}</div>
+          </div>
+        </div>
+
+        <!-- Major Cities & Hubs in the Passway -->
+        <div>
+          <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+            🏙️ Major Cities &amp; Junctions along the Passway
+          </div>
+          <div class="hwy-cities-trail">
+            ${citiesHtml}
+          </div>
+        </div>
+
+        <!-- Traversed Districts -->
+        ${districtsHtml ? `
+          <div>
+            <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+              🏛️ Traversed Administrative Districts (${data.districts.length})
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              ${districtsHtml}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Segments Breakdown -->
+        ${segmentsHtml}
+
+        <!-- EV Infrastructure -->
+        ${evHtml}
+
+        <!-- DOR & Hotline Info -->
+        <div style="padding:10px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--surface-border); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:0.72rem; color:var(--text-secondary);">
+            🏢 <strong>${data.dorDivision}</strong>
+          </div>
+          <div style="font-size:0.72rem; color:#fca5a5; font-weight:700;">
+            🚨 ${data.emergencyContact}
+          </div>
+        </div>
+
+        <!-- Action Hub -->
+        <div class="hwy-action-hub">
+          <button class="hwy-action-btn hwy-action-map" onclick="focusHighwayOnMap('${data.code}')">
+            🗺️ View &amp; Highlight on Map
+          </button>
+          <button class="hwy-action-btn hwy-action-plan" onclick="planRouteOnHighway('${data.code}')">
+            🧭 Plan Route on this Highway
+          </button>
+        </div>
+      `;
+    }
+
+    async function focusHighwayOnMap(code) {
+      closeModal('highwayModal');
+      const hwy = allHighwaysIndex.find(h => h.code === code);
+      if (!hwy) return;
+
+      try {
+        if (currentHighwayLayer) {
+          map.removeLayer(currentHighwayLayer);
+          currentHighwayLayer = null;
+        }
+
+        const fileName = hwy.file || (code + '.geojson');
+        const url = `data/highway/${fileName}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const geojson = await res.json();
+
+        currentHighwayLayer = L.featureGroup().addTo(map);
+
+        const glowOuter = L.geoJSON(geojson, {
+          style: { color: '#f59e0b', weight: 16, opacity: 0.25, lineCap: 'round', lineJoin: 'round' }
+        });
+        const mainLine = L.geoJSON(geojson, {
+          style: { color: '#fbbf24', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }
+        });
+
+        currentHighwayLayer.addLayer(glowOuter);
+        currentHighwayLayer.addLayer(mainLine);
+
+        const bounds = currentHighwayLayer.getBounds();
+        map.flyToBounds(bounds, { padding: [60, 60], duration: 1.5 });
+
+        openAutoPopup(bounds.getCenter().lat, bounds.getCenter().lng, `<strong>🛣️ ${hwy.code} — ${hwy.name}</strong><br><span style="font-size:11px; color:#64748b;">${hwy.route || ''}</span>`, 4000);
+      } catch (err) {
+        console.error('[MeroSadak] Highway map focus error:', err);
+        showApiError(`Failed to load ${code} GeoJSON map layer: ${err.message}`);
+      }
+    }
+
+    async function planRouteOnHighway(code) {
+      closeModal('highwayModal');
+      const data = getHighwayExtendedData(code);
+      if (!data) return;
+
+      const originInput = document.getElementById('originInput');
+      const destInput = document.getElementById('sidebarSearch');
+
+      if (originInput) originInput.value = data.startPoint;
+      if (destInput) destInput.value = data.endPoint;
+
+      // Geocode and calculate
+      const startCoord = await geocode(data.startPoint);
+      const endCoord = await geocode(data.endPoint);
+
+      if (startCoord) userOrigin = { lat: startCoord.lat, lng: startCoord.lon, label: data.startPoint };
+      if (endCoord) selectedDestination = { lat: endCoord.lat, lng: endCoord.lon, label: data.endPoint };
+
+      showMapToggleOptions();
+      calculateSidebarRoute();
     }
 
     function showMatrixPage() {
@@ -2406,190 +2843,146 @@
     }
 
     function getSearchSuggestions(query) {
+      if (!Array.isArray(searchIndex) || !searchIndex.length) return [];
       const q = query.toLowerCase().trim();
-      const isHighwayQuery = /^(nh\d+|\d+[a-z]?$|highway|road|route|corridor)/i.test(q) || q.includes('highway') || q.includes('nh');
+      if (!q) return [];
       
-      const matches = searchIndex.filter(item => {
-        if (item.type === 'Highway' && !isHighwayQuery) return false;
-        const label = (item.label || '').toLowerCase();
-        const subLabel = (item.subLabel || '').toLowerCase();
-        const code = (item.code || '').toLowerCase();
-        const terms = (item.searchTerms || []).map(t => t.toLowerCase());
-        return label.includes(q) || subLabel.includes(q) || code.includes(q) || terms.some(t => t.includes(q));
-      });
+      const isHighwayQuery = /^(nh\d+|\d+[a-z]?$|highway|road|route|corridor)/i.test(q) || q.includes('highway') || q.includes('nh');
 
-      const districtMatches = matches.filter(m => m.type === 'District HQ');
-      const districtNames = districtMatches.map(m => (m.district || '').toLowerCase());
-      const directDistrictMatch = Object.keys(window.__DISTRICT_CITIES__ || {}).find(d => d.includes(q) || q.includes(d));
-      const allDistrictNames = [...new Set([...districtNames, directDistrictMatch].filter(Boolean))];
+      function getBaseName(label) {
+        if (!label) return '';
+        return label.replace(/\s*\([^)]*\)/g, '').replace(/^[A-Z0-9]{3,4}\s*[—–-]\s*/i, '').trim();
+      }
+
+      const typePriority = {
+        'City Hub': 10,
+        'District HQ': 9,
+        'Airport': 8,
+        'Highway': 7,
+        'Bus Station': 6,
+        'Weather Node': 5,
+        'Local Unit': 4,
+        'POI': 3,
+        'Map Place': 2
+      };
+
+      function computeMatchScore(item) {
+        const label = (item.label || '').toLowerCase();
+        const baseName = getBaseName(item.label).toLowerCase();
+        const code = (item.code || '').toLowerCase();
+        const district = (item.district || '').toLowerCase();
+        const subLabel = (item.subLabel || '').toLowerCase();
+        const terms = (item.searchTerms || []).map(t => t.toLowerCase());
+
+        if (item.type === 'Highway' && !isHighwayQuery) return -1;
+
+        if (baseName === q || code === q || label === q) return 100;
+        if (baseName.startsWith(q) || code.startsWith(q) || label.startsWith(q)) return 80;
+        if (new RegExp('\\b' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(label)) return 60;
+        if (baseName.includes(q) || label.includes(q)) return 40;
+        if (district === q || district.startsWith(q)) return 30;
+        if (terms.some(t => t.startsWith(q) || t === q)) return 25;
+        if (subLabel.includes(q) || terms.some(t => t.includes(q))) return 15;
+        if (district.includes(q)) return 10;
+
+        return -1;
+      }
 
       if (currentMode === 'weather') {
-        const weatherMatches = matches.filter(m => m.type === 'Weather Node');
-        const otherMatches = matches.filter(m => m.type !== 'Weather Node');
-        
+        const weatherMatches = searchIndex.filter(item => {
+          if (item.type !== 'Weather Node') return false;
+          const score = computeMatchScore(item);
+          return score > 0;
+        });
+
         const condition = detectWeatherCondition(query);
-        if (condition && weatherMatches.length === 0 && allDistrictNames.length === 0) {
-          const condFiltered = searchIndex.filter(item => {
+        let condFiltered = [];
+        if (condition) {
+          condFiltered = searchIndex.filter(item => {
             if (item.type !== 'Weather Node') return false;
             const terms = (item.searchTerms || []).map(t => t.toLowerCase());
-            const condMatch = item.condition && item.condition.toLowerCase().includes(condition);
-            const termMatch = terms.some(t => t.includes(condition));
-            return condMatch || termMatch;
+            return (item.condition && item.condition.toLowerCase().includes(condition)) || terms.some(t => t.includes(condition));
           });
-          const unique = [];
-          const seen = new Set();
-          condFiltered.forEach(item => {
-            const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
-            if (!seen.has(base)) {
-              seen.add(base);
-              unique.push(item);
-            }
-          });
-          return unique.slice(0, 8);
         }
-        
-        if (allDistrictNames.length > 0) {
-          const districtCities = [];
-          const seen = new Set();
-          const terrainMap = {};
-          (Array.isArray(window.__DISTRICT_TERRAIN__) ? window.__DISTRICT_TERRAIN__ : []).forEach(t => { terrainMap[t.district.toLowerCase()] = t.terrain; });
-          
-          allDistrictNames.forEach(dn => {
-            const terrain = terrainMap[dn] || 'hills';
-            const isMixed = terrain.includes('mixed');
-            const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
-            const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
-            const sourceList = citiesWithCoords.length > 0 ? citiesWithCoords : (Array.isArray(cities) ? cities.slice(0, 5) : []);
-            
-            if (!isMixed && sourceList.length > 0) {
-              const hq = sourceList[0];
-              const base = hq.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
-              if (!seen.has(base)) {
-                seen.add(base);
-                districtCities.push({ label: hq.name, type: 'City Hub', lat: hq.lat, lng: hq.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District' });
-              }
-            } else {
-              sourceList.forEach(c => {
-                const base = c.name.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
-                if (!seen.has(base)) {
-                  seen.add(base);
-                  districtCities.push({ label: c.name, type: 'City Hub', lat: c.lat, lng: c.lng, district: dn, subLabel: dn.charAt(0).toUpperCase() + dn.slice(1) + ' District · ' + terrain.replace(/_/g, ' ') });
-                }
-              });
-            }
-          });
-          return districtCities.slice(0, 8);
-        }
-        
-        const combined = [...weatherMatches, ...otherMatches].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
+
+        const candidateList = [...weatherMatches, ...condFiltered];
         const unique = [];
         const seen = new Set();
-        combined.forEach(item => {
-          const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
-          if (!seen.has(base)) {
-            seen.add(base);
+        candidateList.forEach(item => {
+          const key = (item.label || '').toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
             unique.push(item);
           }
         });
         return unique.slice(0, 8);
       }
 
-      const districtHqMatches = matches.filter(m => m.type === 'District HQ');
-      const otherMatches = matches.filter(m => m.type !== 'District HQ');
-      const relatedPlaces = [];
-      const seenLabels = new Set();
-      
-      function addUnique(item) {
-        const base = item.label.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
-        if (!seenLabels.has(base)) {
-          seenLabels.add(base);
-          relatedPlaces.push(item);
-          return true;
+      const scoredItems = [];
+      searchIndex.forEach(item => {
+        const score = computeMatchScore(item);
+        if (score > 0) {
+          scoredItems.push({ item, score });
         }
-        return false;
-      }
-
-      if (allDistrictNames.length > 0) {
-        allDistrictNames.forEach(dn => {
-          const cities = (window.__DISTRICT_CITIES__ && window.__DISTRICT_CITIES__[dn]) || [];
-          if (!Array.isArray(cities)) return;
-          const citiesWithCoords = cities.filter(c => c.lat && c.lat !== 0);
-          const hq = citiesWithCoords.length > 0 ? citiesWithCoords[0] : (cities[0] ? { ...cities[0], lat: cities[0].lat || 0, lng: cities[0].lng || 0 } : null);
-          if (hq) {
-            addUnique({ label: hq.name + ' (' + dn.charAt(0).toUpperCase() + dn.slice(1) + ' HQ)', type: 'District HQ', district: dn, hq: hq.name, hqType: hq.type || 'HQ', lat: hq.lat, lng: hq.lng });
-          }
-          
-          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
-            if ((a.district || '').toLowerCase() === dn) {
-              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
-            }
-          });
-          
-          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
-          busStations.forEach(b => {
-            if ((b.location || '').toLowerCase().includes(dn)) {
-              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
-            }
-          });
-          
-          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
-            if (p.type === 'bus_station') return;
-            if (p.type === 'airport') return;
-            if ((p.location || '').toLowerCase().includes(dn)) {
-              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
-            }
-          });
-        });
-      }
-
-      districtHqMatches.forEach(dh => {
-        addUnique(dh);
-        const dn = (dh.district || '').toLowerCase();
-        (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
-          if ((a.district || '').toLowerCase() === dn) {
-            addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
-          }
-        });
-        const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
-        busStations.forEach(b => {
-          if ((b.location || '').toLowerCase().includes(dn)) {
-            addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
-          }
-        });
       });
 
-      otherMatches.forEach(item => {
-        if (item.type === 'Highway') return;
-        addUnique(item);
-        if (item.type === 'City Hub' && item.district) {
-          const dn = item.district.toLowerCase();
-          (Array.isArray(window.__AIRPORTS__) ? window.__AIRPORTS__ : []).forEach(a => {
-            if ((a.district || '').toLowerCase() === dn) {
-              addUnique({ label: a.code + ' — ' + a.name, type: 'Airport', code: a.code, lat: a.lat, lng: a.lng, district: a.district, location: a.location });
+      scoredItems.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const prioA = typePriority[a.item.type] || 0;
+        const prioB = typePriority[b.item.type] || 0;
+        return prioB - prioA;
+      });
+
+      const results = [];
+      const seenKeys = new Set();
+
+      scoredItems.forEach(({ item }) => {
+        const baseName = getBaseName(item.label).toLowerCase();
+        const dist = (item.district || '').toLowerCase();
+        const dedupKey = item.type === 'Highway' ? ('hwy_' + (item.code || baseName)) :
+                         item.type === 'Airport' ? ('air_' + (item.code || baseName)) :
+                         (baseName + (dist ? ('_' + dist) : ''));
+
+        if (!seenKeys.has(dedupKey)) {
+          seenKeys.add(dedupKey);
+
+          let cleanLabel = item.label;
+          let sub = item.subLabel || '';
+
+          if (item.type === 'City Hub' || item.type === 'District HQ') {
+            cleanLabel = getBaseName(item.label);
+            if (item.district && !sub) {
+              sub = item.district.charAt(0).toUpperCase() + item.district.slice(1) + ' District' + (item.province ? (', ' + item.province) : '');
             }
-          });
-          const busStations = (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).filter(p => p.type === 'bus_station');
-          busStations.forEach(b => {
-            if ((b.location || '').toLowerCase().includes(dn)) {
-              addUnique({ label: b.name, type: 'Bus Station', lat: b.lat, lng: b.lng, location: b.location || '' });
+          } else if (item.type === 'Local Unit') {
+            cleanLabel = item.palika || getBaseName(item.label);
+            if (item.district && !sub) {
+              sub = item.district + ' District (Local Unit)';
             }
-          });
-          (Array.isArray(window.__PLACES_API__) ? window.__PLACES_API__ : []).forEach(p => {
-            if (p.type === 'bus_station') return;
-            if (p.type === 'airport') return;
-            if ((p.location || '').toLowerCase().includes(dn) && p.type !== 'City Hub') {
-              addUnique({ label: p.name, type: p.type, lat: p.lat, lng: p.lng, location: p.location || '' });
-            }
+          }
+
+          results.push({
+            ...item,
+            label: cleanLabel,
+            subLabel: sub
           });
         }
       });
 
-      return relatedPlaces.slice(0, 8);
+      return results.slice(0, 8);
     }
 
     function showPlaceInfoCard(item) {
       const results = document.getElementById('sidebarResults');
       if (!results) return;
+
+      const originInput = document.getElementById('originSearchInput');
+      const destInput = document.getElementById('sidebarSearch');
+      if (originInput && !originInput.value.trim() && destInput && !destInput.value.trim()) {
+        results.innerHTML = '';
+        return;
+      }
+
       console.log('[MeroSadak] showPlaceInfoCard:', item.label, 'type:', item.type);
 
       const typeIcon = item.type === 'City Hub' ? '🏙️' :
@@ -2692,32 +3085,11 @@
       }
 
       if (item.type === 'Highway') {
-        let lat = item.lat || 0;
-        let lng = item.lng || 0;
-        if ((!lat || lat === 0) && window.__HIGHWAY_COORDS_MAP__) {
-          const coord = window.__HIGHWAY_COORDS_MAP__[item.code];
-          if (coord) {
-            lat = coord.lat;
-            lng = coord.lng;
-          }
-        }
-        if (!lat || !lng) {
-          const geo = await geocode(item.label + ', Nepal');
-          if (geo) {
-            lat = geo.lat;
-            lng = geo.lon;
-          }
-        }
-        if (!lat || !lng) {
-          const results = document.getElementById('sidebarResults');
-          if (results) {
-            results.innerHTML = '<div class="result-card" style="border-color:rgba(245,158,11,0.4);"><div class="result-card-title" style="color:#fbbf24;">🛣️ Highway Selected</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + item.label + ' is a corridor, not a point. Select a specific city, junction, or coordinate along this highway to calculate a route.</div></div>';
-          }
-          document.getElementById('sidebarSearch').value = item.label;
-          selectedDestination = null;
-          return;
-        }
-        dest = Object.assign({}, item, { lat, lng });
+        document.getElementById('sidebarSearch').value = item.label;
+        openModal('highwayModal');
+        renderHighwayDirectory(item.code);
+        focusHighwayOnMap(item.code);
+        return;
       }
 
       if (!dest.lat || !dest.lng) {
@@ -2741,7 +3113,8 @@
       selectedDestination = dest;
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
       openAutoPopup(dest.lat, dest.lng, '<strong>' + dest.label + '</strong>');
-      showPlaceInfoCard(dest);
+      const results = document.getElementById('sidebarResults');
+      if (results) results.innerHTML = '';
       showMapToggleOptions();
     }
 
@@ -2788,6 +3161,7 @@
       const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
       const dest = selectedDestination;
       const results = document.getElementById('sidebarResults');
+      if (!results) return;
 
       if (!origin.lat || !origin.lng || !dest.lat || !dest.lng) {
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Missing coordinates for origin or destination.</div></div>';
@@ -2795,75 +3169,86 @@
       }
 
       try {
-      const cacheKey = origin.lat + ',' + origin.lng + '|' + dest.lat + ',' + dest.lng;
-      const isAvoidToll = activeRoutePreference === 'avoid_toll';
-      const cache = window.__routeCache;
-      const cachedRoutes = isAvoidToll ? cache.avoidTollRoutes : cache.routes;
-      const cacheKeyValid = cache.key === cacheKey && cache.origin && cache.dest;
+        results.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-secondary); font-size:0.85rem;"><span style="display:inline-block; animation:spin 1s linear infinite; margin-right:8px;">🧭</span> Analyzing Nepal highway corridors & terrain…</div>';
 
-      let routes = cachedRoutes;
-      let needFetch = !cacheKeyValid || !routes;
+        const cacheKey = origin.lat + ',' + origin.lng + '|' + dest.lat + ',' + dest.lng;
+        const isAvoidToll = activeRoutePreference === 'avoid_toll';
+        const cache = window.__routeCache;
+        const cachedRoutes = isAvoidToll ? cache.avoidTollRoutes : cache.routes;
+        const cacheKeyValid = cache.key === cacheKey && cache.origin && cache.dest;
 
-      if (needFetch) {
-        try {
-          const exclude = isAvoidToll ? '&exclude=toll' : '';
-          const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true' + exclude;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
-          const data = await res.json();
-          if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
-            results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">No route found</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Try a different destination or transport mode.</div></div>';
+        let routes = cachedRoutes;
+        let needFetch = !cacheKeyValid || !routes;
+
+        if (needFetch) {
+          try {
+            const exclude = isAvoidToll ? '&exclude=toll' : '';
+            const url = 'https://router.project-osrm.org/route/v1/driving/' + origin.lng + ',' + origin.lat + ';' + dest.lng + ',' + dest.lat + '?overview=full&geometries=geojson&alternatives=true' + exclude;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
+            const data = await res.json();
+            if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+              results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">No route found</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Try a different destination or check road connections.</div></div>';
+              return;
+            }
+            routes = data.routes;
+            if (isAvoidToll) cache.avoidTollRoutes = routes;
+            else cache.routes = routes;
+            cache.key = cacheKey;
+            cache.origin = origin;
+            cache.dest = dest;
+          } catch (err) {
+            console.error('[MeroSadak] Route fetch error:', err);
+            results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Routing service unavailable</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Please retry in a moment.') + '</div></div>';
             return;
           }
-          routes = data.routes;
-          if (isAvoidToll) {
-            cache.avoidTollRoutes = routes;
-          } else {
-            cache.routes = routes;
-          }
-          cache.key = cacheKey;
-          cache.origin = origin;
-          cache.dest = dest;
-        } catch (err) {
-          console.error('[MeroSadak] Route fetch error:', err);
-          const msg = (err.message || 'Unknown error');
-          results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + msg + '</div></div>';
-          if (msg.includes('API key') || msg.includes('key') || msg.includes('401') || msg.includes('403')) {
-            showApiError('Routing service error: ' + msg);
-          }
-          return;
         }
-      }
 
-      const fastest = routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
-      const shortest = routes.reduce((a, b) => (a.distance <= b.distance ? a : b));
-      const scenic = routes.find(r => r !== fastest && r !== shortest) || routes.reduce((a, b) => (a.distance >= b.distance ? a : b));
+        const fastest = routes.reduce((a, b) => (a.duration <= b.duration ? a : b));
+        const shortest = routes.reduce((a, b) => (a.distance <= b.distance ? a : b));
+        const scenic = routes.find(r => r !== fastest && r !== shortest) || routes.reduce((a, b) => (a.distance >= b.distance ? a : b));
 
-      let chosen;
-      if (activeRoutePreference === 'shortest') chosen = shortest;
-      else if (activeRoutePreference === 'scenic') chosen = scenic;
-      else if (activeRoutePreference === 'avoid_toll') chosen = fastest;
-      else chosen = fastest;
+        let chosen;
+        if (activeRoutePreference === 'shortest') chosen = shortest;
+        else if (activeRoutePreference === 'scenic') chosen = scenic;
+        else if (activeRoutePreference === 'avoid_toll') chosen = fastest;
+        else chosen = fastest;
 
-        const km = (chosen.distance / 1000).toFixed(1);
-        const hrs = (chosen.duration / 3600).toFixed(1);
-        const fuelLiters = (chosen.distance / 1000 / 12).toFixed(1);
-        const fuelCost = Math.round(fuelLiters * 175);
+        const distanceKm = chosen.distance / 1000;
+        const kmFormatted = distanceKm.toFixed(1);
+
+        // Vehicle specifications & dynamic adjustment
+        const vehicleSpecs = {
+          car: { label: 'Car', fullLabel: 'Car / Sedan', icon: '🚗', speedFactor: 1.0, fuelUnit: 'L Petrol', kmPerUnit: 12.0, costPerUnit: 175, advisory: 'Comfortable highway cruising. Recommended tire pressure: 32-34 PSI.' },
+          suv_4wd: { label: 'SUV', fullLabel: 'SUV / 4WD', icon: '🚙', speedFactor: 0.95, fuelUnit: 'L Diesel', kmPerUnit: 9.5, costPerUnit: 170, advisory: 'High clearance ready for rocky mountain segments, bypasses and riverbeds.' },
+          motorbike: { label: 'Moto', fullLabel: 'Motorcycle', icon: '🏍️', speedFactor: 0.88, fuelUnit: 'L Petrol', kmPerUnit: 35.0, costPerUnit: 175, advisory: 'Agile transit. Wear certified helmet with clear visor and rain protective gear.' },
+          bus_truck: { label: 'Bus', fullLabel: 'Bus / Truck', icon: '🚌', speedFactor: 1.35, fuelUnit: 'L Diesel', kmPerUnit: 4.2, costPerUnit: 160, advisory: 'Heavy vehicle corridor. Maintain low gear on mountain ghat descents to prevent brake fade.' },
+          electric_vehicle: { label: 'EV', fullLabel: 'Electric Vehicle', icon: '⚡', speedFactor: 1.02, fuelUnit: 'kWh', kmPerUnit: 6.5, costPerUnit: 9.5, advisory: 'Eco Corridor. Regenerative braking recovers ~12% battery on mountain descents.' }
+        };
+
+        const vSpec = vehicleSpecs[activeVehicle] || vehicleSpecs.car;
+        const adjustedDurationSec = chosen.duration * vSpec.speedFactor;
+        const totalMinutes = Math.round(adjustedDurationSec / 60);
+        const hrs = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        const durationFormatted = hrs > 0 ? `${hrs}h ${mins}m` : `${mins} min`;
+
+        const unitsNeeded = distanceKm / vSpec.kmPerUnit;
+        const estimatedCost = Math.round(unitsNeeded * vSpec.costPerUnit);
+        const energySubtitle = activeVehicle === 'electric_vehicle' 
+          ? `~${unitsNeeded.toFixed(1)} kWh (${Math.min(100, Math.round((unitsNeeded/40)*100))}% of 40kWh)`
+          : `~${unitsNeeded.toFixed(1)} ${vSpec.fuelUnit} (@ NPR ${vSpec.costPerUnit}/L)`;
 
         function getRoutePreferenceMeta(pref) {
-          if (pref === 'avoid_toll') return { name: 'Toll-Free Route', badge: '🚫 Avoid Toll', color: '#ef4444', icon: '🚫', viaTemplate: (r) => 'via toll-free corridors' };
-          if (pref === 'shortest') return { name: 'Direct Distance (Shortest)', badge: '📏 Shortest', color: '#10b981', icon: '📏', viaTemplate: (r) => { const names = r.legs?.[0]?.steps?.filter(s => s.name && s.name.length > 3).slice(0, 3).map(s => s.name.split(' ').slice(-2).join(' ')); return names && names.length ? 'via ' + names.join(' & ') : 'via direct route'; } };
-          if (pref === 'scenic') return { name: 'Scenic Ridge & Passes', badge: '🏔️ Most Scenic', color: '#8b5cf6', icon: '🏔️', viaTemplate: (r) => 'via scenic highlands' };
-          if (pref === 'safest') return { name: 'Paved & Safety-Prioritized', badge: '🛡️ Safest Surface', color: '#f59e0b', icon: '🛡️', viaTemplate: (r) => 'via safest paved corridors' };
-          if (pref === 'ev') return { name: 'EV Fast-Charging Corridor', badge: '⚡ EV Priority', color: '#06b6d4', icon: '⚡', viaTemplate: (r) => 'via EV charging network' };
-          return { name: 'Express Corridor (Fastest)', badge: '🚀 Fastest', color: '#38bdf8', icon: '🚀', viaTemplate: (r) => { const names = r.legs?.[0]?.steps?.filter(s => s.name && s.name.length > 3).slice(0, 4).map(s => s.name.split(' ').slice(-2).join(' ')); return names && names.length >= 2 ? 'via ' + names.slice(0, 2).join(' & ') + (names.length > 2 ? ' ...' : '') : 'via express corridor'; } };
+          if (pref === 'avoid_toll') return { name: 'Toll-Free Route', badge: '🚫 Avoid Toll', color: '#ef4444', icon: '🚫' };
+          if (pref === 'shortest') return { name: 'Direct Distance (Shortest)', badge: '📏 Shortest', color: '#10b981', icon: '📏' };
+          if (pref === 'scenic') return { name: 'Scenic Ridge & Passes', badge: '🏔️ Scenic', color: '#8b5cf6', icon: '🏔️' };
+          if (pref === 'safest') return { name: 'Paved & Safety-Prioritized', badge: '🛡️ Safest', color: '#f59e0b', icon: '🛡️' };
+          if (pref === 'ev') return { name: 'EV Fast-Charging Corridor', badge: '⚡ EV Priority', color: '#06b6d4', icon: '⚡' };
+          return { name: 'Express Corridor (Fastest)', badge: '🚀 Fastest', color: '#38bdf8', icon: '🚀' };
         }
 
         const prefMeta = getRoutePreferenceMeta(activeRoutePreference);
-        const routeName = prefMeta.name;
-        const routeBadge = prefMeta.badge;
-        const routeColor = prefMeta.color;
-        const viaText = prefMeta.viaTemplate(chosen);
 
         function getRouteType(route) {
           if (route === fastest) return activeRoutePreference === 'avoid_toll' ? 'avoid_toll' : 'fastest';
@@ -2872,139 +3257,64 @@
           return 'other';
         }
 
-        const uniqueRoutes = [];
-        const seenRouteKeys = new Set();
-        routes.forEach((route) => {
-          const key = route.distance + '_' + route.duration;
-          if (!seenRouteKeys.has(key)) {
-            seenRouteKeys.add(key);
-            uniqueRoutes.push(route);
-          }
-        });
-
-        const routeOptions = uniqueRoutes.map((route, idx) => {
-          const type = getRouteType(route);
-          const meta = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
-          if (type === 'other' && idx === 0 && activeRoutePreference === 'safest') meta.color = '#f59e0b';
-          const isChosen = route === chosen;
-          return {
-            route,
-            type,
-            isChosen,
-            label: meta.badge,
-            color: meta.color,
-            name: meta.name,
-            km: (route.distance / 1000).toFixed(1),
-            hrs: (route.duration / 3600).toFixed(1)
-          };
-        });
-
-        function hexToRgba(hex, alpha) {
-          const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-          return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
-        }
-
+        // Draw Map Lines
         if (routeLayerGroup) { map.removeLayer(routeLayerGroup); routeLayerGroup = null; }
-        if (routeLegend) { map.removeControl(routeLegend); routeLegend = null; }
         routeLayerGroup = L.featureGroup().addTo(map);
 
         routes.forEach((route) => {
           const type = getRouteType(route);
           const isChosen = route === chosen;
-          const config = type === 'fastest' ? getRoutePreferenceMeta('fastest') : type === 'shortest' ? getRoutePreferenceMeta('shortest') : type === 'scenic' ? getRoutePreferenceMeta('scenic') : type === 'avoid_toll' ? getRoutePreferenceMeta('avoid_toll') : getRoutePreferenceMeta('safest');
-          const finalLineColor = isChosen ? config.color : hexToRgba(config.color, 0.35);
+          const config = getRoutePreferenceMeta(type === 'other' ? 'safest' : type);
+          const finalLineColor = isChosen ? config.color : 'rgba(255,255,255,0.25)';
           const weight = isChosen ? 6 : 3;
-          const opacity = isChosen ? 1 : 0.7;
-          const dashArray = isChosen ? null : '8, 8';
+          const opacity = isChosen ? 1 : 0.6;
+          const dashArray = isChosen ? null : '6, 6';
 
           if (isChosen) {
             const glowOuter = L.geoJSON(route.geometry, {
-              style: {
-                color: config.color,
-                weight: 18,
-                opacity: 0.12,
-                lineCap: 'round',
-                lineJoin: 'round'
-              }
+              style: { color: config.color, weight: 16, opacity: 0.15, lineCap: 'round', lineJoin: 'round' }
             });
             routeLayerGroup.addLayer(glowOuter);
-
-            const glowInner = L.geoJSON(route.geometry, {
-              style: {
-                color: config.color,
-                weight: 10,
-                opacity: 0.25,
-                lineCap: 'round',
-                lineJoin: 'round'
-              }
-            });
-            routeLayerGroup.addLayer(glowInner);
           }
 
           const line = L.geoJSON(route.geometry, {
-            style: {
-              color: finalLineColor,
-              weight: weight,
-              opacity: opacity,
-              dashArray: dashArray,
-              lineCap: 'round',
-              lineJoin: 'round'
-            }
+            style: { color: finalLineColor, weight: weight, opacity: opacity, dashArray: dashArray, lineCap: 'round', lineJoin: 'round' }
           });
           routeLayerGroup.addLayer(line);
-
-          if (!isChosen && uniqueRoutes.length > 1) {
-            const midIndex = Math.floor(route.geometry.coordinates.length / 2);
-            const midCoord = route.geometry.coordinates[midIndex];
-            const labelIcon = L.divIcon({
-              className: 'route-label-marker',
-              html: '<div style="background:' + hexToRgba(config.color, 0.2) + '; border:1px solid ' + config.color + '; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; white-space:nowrap; backdrop-filter:blur(4px);">' + config.badge + '</div>',
-              iconSize: [100, 18],
-              iconAnchor: [50, 9]
-            });
-            L.marker([midCoord[1], midCoord[0]], { icon: labelIcon, interactive: false }).addTo(routeLayerGroup);
-          }
         });
 
-        const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : null;
-        window.__currentRouteCoords = coords || [];
-        if (coords && coords.length > 0) {
+        const coords = chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : [];
+        window.__currentRouteCoords = coords;
+        if (coords.length > 0) {
           const startCoord = coords[0];
           const endCoord = coords[coords.length - 1];
           const startIcon = L.divIcon({
             className: 'route-start-marker',
-            html: '<div style="background:#10b981; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #10b981; display:flex; align-items:center; justify-content:center; color:#020617; font-size:11px; font-weight:900;">A</div>',
+            html: '<div style="background:#10b981; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 12px #10b981; display:flex; align-items:center; justify-content:center; color:#020617; font-size:11px; font-weight:900;">A</div>',
             iconSize: [22, 22], iconAnchor: [11, 11]
           });
           const endIcon = L.divIcon({
             className: 'route-end-marker',
-            html: '<div style="background:#f43f5e; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 14px #f43f5e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:900;">B</div>',
+            html: '<div style="background:#f43f5e; border:2px solid #fff; width:22px; height:22px; border-radius:50%; box-shadow:0 0 12px #f43f5e; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:900;">B</div>',
             iconSize: [22, 22], iconAnchor: [11, 11]
           });
           L.marker([startCoord[1], startCoord[0]], { icon: startIcon }).addTo(routeLayerGroup);
           L.marker([endCoord[1], endCoord[0]], { icon: endIcon }).addTo(routeLayerGroup);
         }
 
-        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.5 });
+        map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.2 });
 
         const cleanOrigin = origin.label === 'My Location' ? 'Kathmandu' : origin.label;
         const cleanDest = dest.label === 'My Location' ? 'Kathmandu' : dest.label;
 
-        const vehicleLabels = { car: 'Car/Sedan', suv_4wd: 'SUV/4WD', motorbike: 'Motorcycle', bus_truck: 'Bus/Truck', electric_vehicle: 'EV' };
-        const vehicleIcons = { car: '🚗', suv_4wd: '🚙', motorbike: '🏍️', bus_truck: '🚌', electric_vehicle: '⚡' };
+        const elevData = computeRouteElevation(coords);
+        const elevText = elevData ? `${elevData.min}m → ${elevData.max}m` : 'Himalayan Corridor';
+        const elevSub = elevData && elevData.gain ? `+${elevData.gain}m Climb` : 'Mountain Grade';
 
-        const vLabel = vehicleLabels[activeVehicle] || activeVehicle;
-        const vIcon = vehicleIcons[activeVehicle] || '🚗';
-
-        const elevData = computeRouteElevation(chosen.geometry && chosen.geometry.coordinates ? chosen.geometry.coordinates : []);
-        const elevText = elevData ? (elevData.gain > 0 ? elevData.min + 'm → ' + elevData.max + 'm (+' + elevData.gain + 'm)' : elevData.min + 'm → ' + elevData.max + 'm') : 'N/A';
-
-        const fuelEff = (chosen.distance / 1000 / fuelLiters).toFixed(1);
-
+        // Toll Check
         let tollCost = 0;
         let tollLabel = '';
-        if (window.NEPAL_DATA && window.NEPAL_DATA.tollFees && chosen.geometry && chosen.geometry.coordinates) {
-          const coords = chosen.geometry.coordinates;
+        if (window.NEPAL_DATA && window.NEPAL_DATA.tollFees && coords.length) {
           const tunnelBox = { minLat: 27.69, maxLat: 27.73, minLng: 85.18, maxLng: 85.30 };
           const passesThroughTunnel = coords.some(([lng, lat]) =>
             lat >= tunnelBox.minLat && lat <= tunnelBox.maxLat &&
@@ -3012,87 +3322,157 @@
           );
           if (passesThroughTunnel) {
             const toll = window.NEPAL_DATA.tollFees.nagdhungaTunnel;
-            const catIndex = activeVehicle === 'bus_truck' ? 2 : 0;
-            const cat = toll.categories[catIndex];
+            const catIndex = activeVehicle === 'bus_truck' ? 2 : activeVehicle === 'motorbike' ? 0 : 1;
+            const cat = toll.categories[catIndex] || toll.categories[0];
             tollCost = cat.entry;
-            tollLabel = toll.name + ' (' + cat.label + ')';
+            tollLabel = `${toll.name} (${cat.label})`;
           }
         }
 
-        const tollRow = tollCost > 0
-          ? '<div class="route-toll-row"><span class="route-toll-label">🚧 ' + tollLabel + '</span><span class="route-toll-val">NPR ' + tollCost.toLocaleString() + '</span></div>'
-          : '';
+        // Alternative route comparison cards
+        const altRoutes = routes.filter(r => r !== chosen);
+        const altRoutesHtml = altRoutes.length ? altRoutes.map((r, i) => {
+          const diffKm = ((r.distance - chosen.distance) / 1000).toFixed(1);
+          const diffMin = Math.round((r.duration * vSpec.speedFactor - adjustedDurationSec) / 60);
+          const diffKmText = parseFloat(diffKm) >= 0 ? `+${diffKm} km` : `${diffKm} km`;
+          const diffMinText = diffMin >= 0 ? `+${diffMin} min` : `${diffMin} min`;
+          const rType = r === fastest ? 'fastest' : r === shortest ? 'shortest' : r === scenic ? 'scenic' : 'safest';
+          const rMeta = getRoutePreferenceMeta(rType);
+          return `
+            <div class="report-stat-tile" onclick="switchRouteOption('${rType}')" style="cursor:pointer; transition:all 0.2s;" title="Switch to this route">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem; font-weight:800; color:${rMeta.color};">${rMeta.icon} ${rMeta.name}</span>
+                <span style="font-size:0.68rem; color:var(--text-muted);">${(r.distance/1000).toFixed(1)} km</span>
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">
+                ${diffMinText} · ${diffKmText}
+              </div>
+            </div>
+          `;
+        }).join('') : '';
 
-        const itinerarySteps = [];
-        if (chosen.legs && chosen.legs[0] && chosen.legs[0].steps) {
-          chosen.legs[0].steps.forEach((step, i) => {
-            if (!step.name || step.name.length < 3) return;
-            const name = step.name.replace(/[^a-zA-Z0-9\s\/\-]/g, '').trim();
-            if (!name) return;
-            const distKm = (step.distance / 1000).toFixed(1);
-            const durMin = Math.round(step.duration / 60);
-            if (itinerarySteps.length >= 8) return;
-            const last = itinerarySteps[itinerarySteps.length - 1];
-            if (last && last.name === name) {
-              last.distKm = (parseFloat(last.distKm) + parseFloat(distKm)).toFixed(1);
-              last.durMin += durMin;
-              return;
-            }
-            itinerarySteps.push({ name, distKm, durMin });
-          });
-        }
+        // Vehicle Buttons
+        const vehicleButtons = Object.keys(vehicleSpecs).map(vk => {
+          const spec = vehicleSpecs[vk];
+          const isActive = vk === activeVehicle;
+          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setVehicle('${vk}')">${spec.icon} ${spec.label}</button>`;
+        }).join('');
 
-        const itineraryHtml = itinerarySteps.length ? '<div class="route-itinerary"><div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">Route Itinerary</div>' + itinerarySteps.map(s => '<div class="itinerary-step"><span class="itinerary-name">' + s.name + '</span><span class="itinerary-metrics">' + s.distKm + ' km · ' + (s.durMin >= 60 ? Math.floor(s.durMin / 60) + 'h ' + (s.durMin % 60) + 'm' : s.durMin + ' min') + '</span></div>').join('') + '</div>' : '';
+        // Route Preference Buttons
+        const prefKeys = ['fastest', 'shortest', 'safest', 'scenic', 'ev', 'avoid_toll'];
+        const prefButtons = prefKeys.map(pk => {
+          const meta = getRoutePreferenceMeta(pk);
+          const isActive = pk === activeRoutePreference;
+          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setRoutePref('${pk}')">${meta.icon} ${meta.badge.replace(/^[^a-zA-Z0-9]+/, '')}</button>`;
+        }).join('');
 
-        const altRoutesHtml = routeOptions.filter(o => !o.isChosen).map(o => '<div class="alt-route-card" onclick="switchRouteOption(\'' + o.type + '\')" style="cursor:pointer; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid var(--surface-border); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:space-between; gap:8px; transition:all 0.2s;"><div><div style="font-size:0.7rem; font-weight:700; color:' + o.color + ';">' + o.label + '</div><div style="font-size:0.65rem; color:var(--text-muted);">' + o.km + ' km · ' + o.hrs + ' hrs</div></div><div style="font-size:0.7rem; color:var(--text-secondary);">→</div></div>').join('');
+        // Construct Full Ready Report
+        const reportHtml = `
+          <div class="route-report">
+            <!-- Header Section -->
+            <div class="report-header-section">
+              <div class="report-badge-row">
+                <span class="report-badge" style="background:${prefMeta.color}25; border:1px solid ${prefMeta.color}60; color:${prefMeta.color};">
+                  ${prefMeta.icon} ${prefMeta.name}
+                </span>
+                <span style="font-size:0.72rem; font-weight:700; color:#38bdf8;">${vSpec.icon} ${vSpec.fullLabel}</span>
+              </div>
+              <div class="report-endpoints-box">
+                <span class="report-endpoint-from" title="${cleanOrigin}">📍 ${cleanOrigin}</span>
+                <span class="report-endpoint-arrow">➔</span>
+                <span class="report-endpoint-to" title="${cleanDest}">🏁 ${cleanDest}</span>
+              </div>
+            </div>
 
-        let html = '<div class="route-report">' +
-          '<div class="route-report-header">' +
-            '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
-              '<span class="route-badge" style="background:' + routeColor + '20; border-color:' + routeColor + '50; color:' + routeColor + ';">' + prefMeta.icon + ' ' + routeBadge + '</span>' +
-              '<span style="font-size:0.75rem; font-weight:700; color:#fff;">' + routeName + '</span>' +
-            '</div>' +
-            '<div style="font-size:0.72rem; color:var(--text-secondary); margin-top:4px;">' + viaText + '</div>' +
-            '<div class="route-endpoints" style="margin-top:6px;">' +
-              '<span class="route-point origin">🟢 ' + cleanOrigin + '</span>' +
-              '<span class="route-arrow">→</span>' +
-              '<span class="route-point dest">🔴 ' + cleanDest + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="route-report-body">' +
-            '<div class="route-line"><span class="route-label">Distance</span><span class="route-value">' + km + ' km</span></div>' +
-            '<div class="route-line"><span class="route-label">Duration</span><span class="route-value">' + hrs + ' hrs</span></div>' +
-            '<div class="route-line"><span class="route-label">Elevation</span><span class="route-value">' + elevText + '</span></div>' +
-            '<div class="route-line"><span class="route-label">Est. Fuel Cost</span><span class="route-value">NPR ' + fuelCost.toLocaleString() + '</span></div>' +
-            '<div class="route-line"><span class="route-label">Efficiency</span><span class="route-value">' + fuelEff + ' km/L</span></div>' +
-          '</div>' +
-          (altRoutesHtml ? '<div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:4px;">Alternative Routes</div><div style="display:flex; flex-direction:column; gap:6px;">' + altRoutesHtml + '</div>' : '') +
-          itineraryHtml +
-          '<div class="route-report-footer">' +
-            tollRow +
-            '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:8px;">Estimates based on average fuel economy and route data.</div>' +
-          '</div>' +
-        '</div>';
+            <!-- Vehicle Selector Hub -->
+            <div>
+              <div class="report-section-label">🚘 Transport Mode</div>
+              <div class="report-pills-bar">
+                ${vehicleButtons}
+              </div>
+            </div>
 
-        results.innerHTML = html;
+            <!-- Route Preference Selector Hub -->
+            <div>
+              <div class="report-section-label">🛣️ Route Preference</div>
+              <div class="report-pills-bar">
+                ${prefButtons}
+              </div>
+            </div>
 
-        const controlsRow = document.getElementById('routeControlsRow');
-        if (controlsRow && controlsRow.classList.contains('hidden')) {
-          controlsRow.classList.remove('hidden');
-        }
+            <!-- Key Metrics 4-Tile Grid -->
+            <div class="report-stats-grid">
+              <div class="report-stat-tile">
+                <div class="report-stat-title">📏 Distance</div>
+                <div class="report-stat-value" style="color:#38bdf8;">${kmFormatted} <span style="font-size:0.75rem;">km</span></div>
+                <div class="report-stat-sub">Nepal Highway Network</div>
+              </div>
+              <div class="report-stat-tile">
+                <div class="report-stat-title">⏱️ Travel Time</div>
+                <div class="report-stat-value" style="color:#34d399;">${durationFormatted}</div>
+                <div class="report-stat-sub">Adjusted for ${vSpec.label}</div>
+              </div>
+              <div class="report-stat-tile">
+                <div class="report-stat-title">💰 Est. Energy / Fuel</div>
+                <div class="report-stat-value" style="color:#fbbf24;">NPR ${estimatedCost.toLocaleString()}</div>
+                <div class="report-stat-sub">${energySubtitle}</div>
+              </div>
+              <div class="report-stat-tile">
+                <div class="report-stat-title">⛰️ Elevation & Grade</div>
+                <div class="report-stat-value" style="font-size:0.9rem; color:#c084fc;">${elevText}</div>
+                <div class="report-stat-sub">${elevSub}</div>
+              </div>
+            </div>
 
-        const searchPanel = document.getElementById('routeSearchPanel');
-        if (searchPanel) searchPanel.style.display = 'none';
-        const searchToggle = document.getElementById('routeSearchToggle');
-        if (searchToggle) searchToggle.style.display = 'block';
+            <!-- Vehicle Advisory Banner -->
+            <div class="report-advisory-card">
+              <span class="report-advisory-icon">${vSpec.icon}</span>
+              <div>
+                <div class="report-advisory-title">${vSpec.fullLabel} Travel Advisory</div>
+                <div class="report-advisory-desc">${vSpec.advisory}</div>
+              </div>
+            </div>
+
+            ${tollCost > 0 ? `
+              <div style="padding:8px 12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem; font-weight:700; color:#fca5a5;">🚧 ${tollLabel}</span>
+                <span style="font-size:0.85rem; font-weight:800; color:#fff; font-family:'JetBrains Mono',monospace;">NPR ${tollCost.toLocaleString()}</span>
+              </div>
+            ` : ''}
+
+            <!-- Alternative Routes List -->
+            ${altRoutesHtml ? `
+              <div>
+                <div class="report-section-label">⚡ Alternative Corridor Comparisons</div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  ${altRoutesHtml}
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Quick Action Hub -->
+            <div class="report-actions-grid">
+              <button class="report-action-btn" onclick="map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.2 })">
+                🗺️ Focus Route
+              </button>
+              <button class="report-action-btn" onclick="openPretripModal()">
+                ✅ Safety Checklist
+              </button>
+              <button class="report-action-btn" onclick="openShareTripModal()">
+                🔗 Share Plan
+              </button>
+              <button class="report-action-btn report-action-sos" onclick="openModal('sosModal')">
+                🚨 Emergency SOS
+              </button>
+            </div>
+          </div>
+        `;
+
+        results.innerHTML = reportHtml;
 
       } catch (err) {
         console.error('[MeroSadak] Route calculation error:', err);
-        const msg = (err.message || 'Unknown error');
-        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + msg + '</div></div>';
-        if (msg.includes('API key') || msg.includes('key') || msg.includes('401') || msg.includes('403')) {
-          showApiError('Routing service error: ' + msg);
-        }
+        results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Error computing route') + '</div></div>';
       }
     }
 

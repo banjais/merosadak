@@ -303,24 +303,6 @@
 
         <div class="sidebar-results" id="sidebarResults"></div>
 
-        <div class="route-controls-row hidden" id="routeControlsRow">
-          <div class="route-pref-pills" id="vehiclePills">
-            <button class="pref-pill active" data-value="car" onclick="setVehicle('car')">🚗 Car</button>
-            <button class="pref-pill" data-value="suv_4wd" onclick="setVehicle('suv_4wd')">🚙 SUV</button>
-            <button class="pref-pill" data-value="motorbike" onclick="setVehicle('motorbike')">🏍️ Moto</button>
-            <button class="pref-pill" data-value="bus_truck" onclick="setVehicle('bus_truck')">🚌 Bus</button>
-            <button class="pref-pill" data-value="electric_vehicle" onclick="setVehicle('electric_vehicle')">⚡ EV</button>
-          </div>
-          <div class="route-pref-pills" id="prefPills">
-            <button class="pref-pill active" data-value="fastest" onclick="setRoutePref('fastest')">🚀 Fastest</button>
-            <button class="pref-pill" data-value="shortest" onclick="setRoutePref('shortest')">📏 Shortest</button>
-            <button class="pref-pill" data-value="safest" onclick="setRoutePref('safest')">🛡️ Safest</button>
-            <button class="pref-pill" data-value="scenic" onclick="setRoutePref('scenic')">🏔️ Scenic</button>
-            <button class="pref-pill" data-value="ev" onclick="setRoutePref('ev')">⚡ EV</button>
-            <button class="pref-pill" data-value="avoid_toll" onclick="setRoutePref('avoid_toll')">🚫 No Toll</button>
-          </div>
-        </div>
-
         <input type="hidden" id="originSearch" value="My Location">
       </div>
 
@@ -1800,8 +1782,63 @@
     function toggleMapToolbar() {
       const fab = document.getElementById('mapToggleFab');
       const menu = document.getElementById('mapFloatingToggles');
-      fab.classList.toggle('is-open');
-      menu.classList.toggle('is-open');
+      const willOpen = !menu.classList.contains('is-open');
+      fab.classList.toggle('is-open', willOpen);
+      menu.classList.toggle('is-open', willOpen);
+      if (!willOpen) {
+        clearAllMapOverlays();
+      }
+    }
+
+    function clearAllMapOverlays() {
+      const layerNames = ['incidents', 'weather', 'traffic', 'pois', 'blackspots'];
+      layerNames.forEach(name => {
+        const btn = document.getElementById('toggle' + name.charAt(0).toUpperCase() + name.slice(1));
+        if (btn && btn.classList.contains('active')) {
+          layerVisibility[name] = false;
+          btn.classList.remove('active');
+          if (layerGroups[name]) {
+            try { map.removeLayer(layerGroups[name]); } catch (e) {}
+            layerGroups[name].clearLayers();
+          }
+        }
+      });
+
+      try {
+        if (routeLayerGroup) {
+          routeLayerGroup.clearLayers();
+          map.removeLayer(routeLayerGroup);
+          routeLayerGroup = null;
+        }
+      } catch (e) {}
+
+      try { map.closePopup(); } catch (e) {}
+
+      selectedDestination = null;
+      window.__routeCache = { key: '', origin: null, dest: null, routes: null, avoidTollRoutes: null };
+
+      const results = document.getElementById('sidebarResults');
+      if (results) results.innerHTML = '';
+
+      const searchPanel = document.getElementById('routeSearchPanel');
+      const searchToggle = document.getElementById('routeSearchToggle');
+      if (searchPanel) searchPanel.style.display = 'block';
+      if (searchToggle) searchToggle.style.display = 'none';
+
+      const controlsRow = document.getElementById('routeControlsRow');
+      if (controlsRow) controlsRow.classList.add('hidden');
+
+      const destInput = document.getElementById('sidebarSearch');
+      if (destInput) destInput.value = '';
+      const originInputEl = document.getElementById('originSearchInput');
+      if (originInputEl) originInputEl.value = '';
+
+      if (typeof showMapToggleOptions === 'function') {
+        const highwaysBtn = document.getElementById('toggleHighways');
+        const weatherBtn = document.getElementById('toggleWeather');
+        if (highwaysBtn) highwaysBtn.style.display = 'none';
+        if (weatherBtn) weatherBtn.style.display = 'none';
+      }
     }
 
     function showMapToggleOptions() {
@@ -3841,6 +3878,14 @@
     function showPlaceInfoCard(item) {
       const results = document.getElementById('sidebarResults');
       if (!results) return;
+
+      const originInput = document.getElementById('originSearchInput');
+      const destInput = document.getElementById('sidebarSearch');
+      if (originInput && !originInput.value.trim() && destInput && !destInput.value.trim()) {
+        results.innerHTML = '';
+        return;
+      }
+
       console.log('[MeroSadak] showPlaceInfoCard:', item.label, 'type:', item.type);
 
       const typeIcon = item.type === 'City Hub' ? '🏙️' :
@@ -4209,52 +4254,15 @@
           `;
         }).join('') : '';
 
-        // Vehicle Buttons
-        const vehicleButtons = Object.keys(vehicleSpecs).map(vk => {
-          const spec = vehicleSpecs[vk];
-          const isActive = vk === activeVehicle;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setVehicle('${vk}')">${spec.icon} ${spec.label}</button>`;
-        }).join('');
-
-        // Route Preference Buttons
-        const prefKeys = ['fastest', 'shortest', 'safest', 'scenic', 'ev', 'avoid_toll'];
-        const prefButtons = prefKeys.map(pk => {
-          const meta = getRoutePreferenceMeta(pk);
-          const isActive = pk === activeRoutePreference;
-          return `<button class="report-pill-btn ${isActive ? 'active' : ''}" onclick="setRoutePref('${pk}')">${meta.icon} ${meta.badge.replace(/^[^a-zA-Z0-9]+/, '')}</button>`;
-        }).join('');
-
         // Construct Full Ready Report
         const reportHtml = `
           <div class="route-report">
             <!-- Header Section -->
             <div class="report-header-section">
-              <div class="report-badge-row">
-                <span class="report-badge" style="background:${prefMeta.color}25; border:1px solid ${prefMeta.color}60; color:${prefMeta.color};">
-                  ${prefMeta.icon} ${prefMeta.name}
-                </span>
-                <span style="font-size:0.72rem; font-weight:700; color:#38bdf8;">${vSpec.icon} ${vSpec.fullLabel}</span>
-              </div>
               <div class="report-endpoints-box">
                 <span class="report-endpoint-from" title="${cleanOrigin}">📍 ${cleanOrigin}</span>
                 <span class="report-endpoint-arrow">➔</span>
                 <span class="report-endpoint-to" title="${cleanDest}">🏁 ${cleanDest}</span>
-              </div>
-            </div>
-
-            <!-- Vehicle Selector Hub -->
-            <div>
-              <div class="report-section-label">🚘 Transport Mode</div>
-              <div class="report-pills-bar">
-                ${vehicleButtons}
-              </div>
-            </div>
-
-            <!-- Route Preference Selector Hub -->
-            <div>
-              <div class="report-section-label">🛣️ Route Preference</div>
-              <div class="report-pills-bar">
-                ${prefButtons}
               </div>
             </div>
 
