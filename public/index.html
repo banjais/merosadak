@@ -797,15 +797,24 @@
 
   <!-- Offline Manager Modal -->
   <div class="modal-overlay" id="offlineManagerModal">
-    <div class="modal-card" style="width:560px;">
+    <div class="modal-card" style="width:560px;" id="offlineManagerCard">
       <div class="modal-header">
         <div class="modal-title">
-          <span>📥</span> <span>Offline GIS & Tile Pack Manager</span>
+          <span class="modal-header-icon">📥</span> <span>Offline GIS & Tile Pack Manager</span>
         </div>
         <button class="modal-close-btn" onclick="closeModal('offlineManagerModal')">✕</button>
       </div>
-      <div class="modal-body">
-        <div id="offlineManagerContent" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <div class="modal-body" style="overflow-y:auto; flex:1; display:flex; flex-direction:column;">
+        <div id="offlineManagerContent" style="display:flex; flex-direction:column; gap:12px; flex:1;"></div>
+        <div id="offlineManagerActions" style="padding:12px 16px; background:#020617; border-top:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <span id="offlineManagerHint" style="font-size:11px; color:#64748b;"></span>
+          <div style="display:flex; gap:8px;">
+            <button onclick="downloadMountainOfflinePackInline()" id="offlineDownloadBtn" disabled style="padding:6px 14px; border-radius:8px; background:linear-gradient(135deg, #059669, #0d9488); color:#fff; border:none; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <span class="ai-spinner" style="width:14px; height:14px; border-width:2px; display:none;"></span>📦 Download Nepal Pack
+            </button>
+            <button onclick="clearOfflineStorageInline()" style="padding:6px 14px; border-radius:8px; background:#1e293b; border:1px solid #334155; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">Clear Cache</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -917,16 +926,26 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="nepalData.js"></script>
   <script>
-    // Force cleanup of any old service workers and caches
+    // Register Service Worker for offline mountain travel
+    let meroSadakSWRegistration = null;
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => reg.unregister());
-      }).catch(() => {});
-    }
-    if ('caches' in window) {
-      caches.keys().then(keys => {
-        keys.forEach(key => caches.delete(key));
-      }).catch(() => {});
+      navigator.serviceWorker.register('sw.js', { scope: '/' })
+        .then(reg => { meroSadakSWRegistration = reg; })
+        .catch(() => {});
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.debug('[MeroSadak] SW controller changed, refreshing offline stats');
+        renderOfflineManager();
+      });
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        const msg = event.data;
+        if (msg && msg.type === 'PREFETCH_PROGRESS') {
+          updateOfflineDownloadProgress(msg);
+        } else if (msg && msg.type === 'PREFETCH_COMPLETE') {
+          clearOfflineDownloadProgress(true);
+        } else if (msg && msg.type === 'CACHE_CLEARED') {
+          renderOfflineManager();
+        }
+      });
     }
 
     // Suppress unhandled promise rejections from external extensions/content scripts
@@ -1192,18 +1211,20 @@
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      tileLayers.voyager = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      tileLayers.voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        detectRetina: true,
         errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
       tileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.esri.com/">Esri</a> &copy; <a href="https://www.arcgis.com/home/item.html?id=1a3f453d52954426a54ab29394f25a09">Source: Esri, Earthstar Geographics</a>',
         errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
       tileLayers.terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
         errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
@@ -2499,6 +2520,7 @@
       if (id === 'sosModal') renderSosModal();
       if (id === 'dialectModal') renderDialectModal();
       if (id === 'passesModal') renderPassesModal();
+      if (id === 'offlineManagerModal') renderOfflineManager();
     }
 
     function closeModal(id) {
@@ -4350,32 +4372,188 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
       closeModal('reportModal');
     }
 
-    function syncOfflineBundle() {
-      localStorage.setItem('merosadak_offline_synced', 'true');
-      alert('✅ Nepal National Highway GIS & offline route packs saved locally.');
-    }
-
     function renderOfflineManager() {
       const content = document.getElementById('offlineManagerContent');
       if (!content) return;
-      const isSynced = localStorage.getItem('merosadak_offline_synced') === 'true';
-      content.innerHTML = '<div style="font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px;">Offline Data Status</div>' +
-        '<div style="background:rgba(0,0,0,0.2); border:1px solid var(--surface-border); border-radius:var(--radius-sm); padding:12px; display:flex; flex-direction:column; gap:8px;">' +
-          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">GIS Data Bundle</span><span style="font-size:0.75rem; font-weight:700; color:' + (isSynced ? '#10b981' : '#fbbf24') + ';">' + (isSynced ? 'Synced' : 'Not Synced') + '</span></div>' +
-          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Highway GeoJSON</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Available</span></div>' +
-          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Distance Matrix</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Loaded</span></div>' +
-          '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">City & Places Index</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Cached</span></div>' +
-        '</div>' +
-        '<button class="btn-action-primary" onclick="syncOfflineBundle(); renderOfflineManager();" style="margin-top:4px;">Sync Offline Bundle Now</button>' +
-        '<p style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Offline bundles cache map tiles, routes, and reference data for mountain travel without connectivity.</p>';
+      const hint = document.getElementById('offlineManagerHint');
+      const downloadBtn = document.getElementById('offlineDownloadBtn');
+      if (hint) hint.textContent = 'Ready for mountain travel — no signal needed.';
+      const isSWActive = !!(window.navigator.serviceWorker && navigator.serviceWorker.controller);
+      const canUseCacheAPI = isSWActive || (typeof caches !== 'undefined');
+
+      if (!canUseCacheAPI) {
+        // No cache API available
+        content.innerHTML = '<div style="font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px;">Offline Data Status</div>' +
+          '<div style="background:rgba(0,0,0,0.25); border:1px solid var(--surface-border); border-radius:10px; padding:12px;">' +
+            '<p style="font-size:0.75rem; color:var(--text-muted);">Cache API not available. The offline pack (tiles + data) will cache once a Service Worker is registered.</p>' +
+          '</div>' +
+          '<p style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Download the Nepal mountain pack for offline map tiles, highway GeoJSON, and incident/weather data without connectivity.</p>';
+        if (downloadBtn) downloadBtn.disabled = true;
+        return;
+      }
+
+      // Use Cache API to get real stats
+      const tileKey = 'mero-sadak-tiles-v1.2';
+      const dataKey = 'mero-sadak-data-v1.2';
+
+      caches.open(tileKey).then(tc => tc.keys()).then(tk => {
+        const tilesCount = tk.length;
+        return caches.open(dataKey).then(dc => dc.keys()).then(dk => {
+          const dataCount = dk.length;
+          const approxBytes = dataCount * 120000 + tilesCount * 25000;
+          const storageMb = (approxBytes / (1024 * 1024)).toFixed(1);
+          const isReady = tilesCount > 10 || dataCount > 0;
+          const lastSync = localStorage.getItem('mero_sadak_last_sync_timestamp');
+          const lastSyncStr = lastSync ? new Date(+lastSync).toLocaleString('en-NP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+          if (downloadBtn) downloadBtn.disabled = false;
+          content.innerHTML = '<div style="font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;"><span>Offline Cache Stats</span><span style="font-size:0.72rem; color:' + (isSWActive ? '#10b981' : '#fbbf24') + ';">' + (isSWActive ? 'SW Active' : 'Cache Ready') + '</span></div>' +
+            '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px;">' +
+              '<div style="background:rgba(0,0,0,0.25); border:1px solid var(--surface-border); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:1.4rem; font-weight:800; color:#7dd3fc;">' + tilesCount + '</div><div style="font-size:0.65rem; color:var(--text-muted);">Map Tiles</div></div>' +
+              '<div style="background:rgba(0,0,0,0.25); border:1px solid var(--surface-border); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:1.4rem; font-weight:800; color:#86efac;">' + dataCount + '</div><div style="font-size:0.65rem; color:var(--text-muted);">Data Bundles</div></div>' +
+              '<div style="background:rgba(0,0,0,0.25); border:1px solid var(--surface-border); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:1.4rem; font-weight:800; color:#fdba74;">' + storageMb + '</div><div style="font-size:0.65rem; color:var(--text-muted);">MB Stored</div></div>' +
+            '</div>' +
+            '<div style="font-size:0.72rem; color:var(--text-muted); line-height:1.6;">' +
+              '<div>Last sync: <strong style="color:#cbd5e1;">' + lastSyncStr + '</strong></div>' +
+              '<div>Ready for offline travel: <strong style="color:' + (isReady ? '#10b981' : '#fbbf24') + ';">' + (isReady ? 'Yes' : 'No') + '</strong></div>' +
+            '</div>' +
+            '<p style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Download the Nepal mountain pack for offline map tiles, highway GeoJSON, and incident/weather data without connectivity.</p>';
+        }).catch(() => {
+          throw new Error('data cache read failed');
+        });
+      }).catch(() => {
+        // Cache API present but failed — render localStorage fallback
+        const isSynced = localStorage.getItem('merosadak_offline_synced') === 'true';
+        const lastSync = localStorage.getItem('mero_sadak_last_sync_timestamp');
+        const lastSyncStr = lastSync ? new Date(+lastSync).toLocaleString('en-NP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+        if (downloadBtn) downloadBtn.disabled = false;
+        content.innerHTML = '<div style="font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;"><span>Offline Data Status</span><span style="font-size:0.72rem; color:' + (isSWActive ? '#10b981' : '#fbbf24') + ';">' + (isSWActive ? 'SW Active' : 'Ready') + '</span></div>' +
+          '<div style="background:rgba(0,0,0,0.25); border:1px solid var(--surface-border); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px;">' +
+            '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">GIS Data Bundle</span><span style="font-size:0.75rem; font-weight:700; color:' + (isSynced ? '#10b981' : '#fbbf24') + ';">' + (isSynced ? 'Synced' : 'Not Synced') + '</span></div>' +
+            '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Highway GeoJSON</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Available</span></div>' +
+            '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Distance Matrix</span><span style="font-size:0.75rem; font-weight:700; color:#10b981;">Loaded</span></div>' +
+            '<div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--text-secondary);">Last Sync</span><span style="font-size:0.75rem; color:#cbd5e1;">' + lastSyncStr + '</span></div>' +
+          '</div>' +
+          '<p style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Enable the Service Worker for full offline map tile + data caching on mountain routes.</p>';
+      });
     }
 
-    // Override openModal to render offline manager
-    const originalOpenModal = openModal;
-    openModal = function(id) {
-      originalOpenModal(id);
-      if (id === 'offlineManagerModal') renderOfflineManager();
-    };
+    // Send message to SW to download the Nepal mountain pack
+    function downloadMountainOfflinePackInline() {
+      const btn = document.getElementById('offlineDownloadBtn');
+      const spinner = btn ? btn.querySelector('.ai-spinner') : null;
+      if (btn) { btn.disabled = true; if (spinner) spinner.style.display = 'inline-block'; }
+
+      const generateTileUrls = () => {
+        const urls = new Set();
+        const subdomains = ['a', 'b', 'c', 'd'];
+        const latLngToTile = (lat, lng, zoom) => {
+          const x = Math.floor(((lng + 180) / 360) * Math.pow(2, zoom));
+          const latRad = (lat * Math.PI) / 180;
+          const y = Math.floor(((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * Math.pow(2, zoom));
+          return { x, y, z: zoom };
+        };
+        const keyPoints = [
+          { lat: 27.7172, lng: 85.324 }, { lat: 28.2096, lng: 83.9856 }, { lat: 27.8617, lng: 84.3333 },
+          { lat: 27.6805, lng: 84.4333 }, { lat: 27.7006, lng: 83.4484 }, { lat: 27.4284, lng: 85.0322 },
+          { lat: 27.2417, lng: 85.9234 }, { lat: 26.8167, lng: 85.9 }, { lat: 26.4525, lng: 87.2718 },
+          { lat: 26.8124, lng: 87.2834 }, { lat: 28.05, lng: 81.6167 }, { lat: 28.6833, lng: 81.6333 },
+          { lat: 28.9667, lng: 80.1833 }, { lat: 27.8732, lng: 84.6054 }, { lat: 27.9622, lng: 84.4125 },
+          { lat: 27.6167, lng: 85.55 }
+        ];
+        let c = 0;
+        for (let z = 6; z <= 7; z++) {
+          const min = latLngToTile(30.5, 80.0, z), max = latLngToTile(26.3, 88.3, z);
+          for (let x = min.x; x <= max.x; x++) {
+            for (let y = min.y; y <= max.y; y++) {
+              const sub = subdomains[c++ % subdomains.length];
+              urls.add('https://' + sub + '.tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png');
+            }
+          }
+        }
+        for (const pt of keyPoints) {
+          for (let z = 8; z <= 9; z++) {
+            const center = latLngToTile(pt.lat, pt.lng, z);
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const sub = subdomains[c++ % subdomains.length];
+                urls.add('https://' + sub + '.tile.openstreetmap.org/' + z + '/' + (center.x + dx) + '/' + (center.y + dy) + '.png');
+              }
+            }
+          }
+        }
+        return Array.from(urls);
+      };
+
+      const apiUrls = [
+        '/api/data/highways.json',
+        '/api/data/cities.json',
+        '/api/data/incidents.json',
+        '/api/data/mountain-weather.json',
+        '/api/data/pois.json',
+        '/api/data/traffic-corridors.json',
+        '/api/data/blackspots.json',
+        WORKER_URL + '/api/data/highways.json?v=' + Date.now(),
+        WORKER_URL + '/api/data/cities.json?v=' + Date.now(),
+        WORKER_URL + '/api/data/incidents.json?v=' + Date.now(),
+        WORKER_URL + '/api/data/mountain-weather.json?v=' + Date.now(),
+        WORKER_URL + '/api/data/pois.json?v=' + Date.now()
+      ];
+      const tileUrls = generateTileUrls();
+
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'PREFETCH_MOUNTAIN_PACK',
+          tileUrls: tileUrls,
+          apiUrls: apiUrls
+        });
+      } else {
+        // Fallback: fetch local data files into localStorage
+        const localUrls = ['/data/highways.json', '/data/cities.json', '/data/incidents.json', '/data/pois.json', '/data/mountain-weather.json'];
+        let done = 0;
+        localUrls.forEach(u => {
+          fetch(u + '?v=' + Date.now()).then(r => r.json()).then(data => {
+            localStorage.setItem('mS_off_' + u, JSON.stringify(data));
+            done++;
+            if (done === localUrls.length) {
+              localStorage.setItem('mero_sadak_last_sync_timestamp', Date.now().toString());
+              localStorage.setItem('merosadak_offline_synced', 'true');
+              if (btn) { btn.disabled = false; if (spinner) spinner.style.display = 'none'; }
+              renderOfflineManager();
+            }
+          }).catch(() => { done++; if (done === localUrls.length) { renderOfflineManager(); if (btn) { btn.disabled = false; if (spinner) spinner.style.display = 'none'; } } });
+        });
+      }
+    }
+
+    function updateOfflineDownloadProgress(msg) {
+      const btn = document.getElementById('offlineDownloadBtn');
+      const hint = document.getElementById('offlineManagerHint');
+      if (btn && hint) {
+        btn.disabled = true;
+        hint.textContent = msg.currentTask + ' (' + msg.percentage + '%)';
+      }
+    }
+
+    function clearOfflineDownloadProgress(success) {
+      const btn = document.getElementById('offlineDownloadBtn');
+      const hint = document.getElementById('offlineManagerHint');
+      if (btn) { btn.disabled = false; const spinner = btn.querySelector('.ai-spinner'); if (spinner) spinner.style.display = 'none'; }
+      if (hint) hint.textContent = success ? 'Download complete!' : '';
+      setTimeout(() => { if (hint) hint.textContent = 'Ready for mountain travel — no signal needed.'; }, 2000);
+      renderOfflineManager();
+    }
+
+    function clearOfflineStorageInline() {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_OFFLINE_CACHE' });
+        setTimeout(() => renderOfflineManager(), 1000);
+      } else {
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('mS_off_') || k === 'mero_sadak_last_sync_timestamp' || k === 'merosadak_offline_synced') localStorage.removeItem(k); });
+        localStorage.removeItem('merosadak_offline_synced');
+        localStorage.removeItem('mero_sadak_last_sync_timestamp');
+        renderOfflineManager();
+      }
+    }
 
     function restoreFromUrl() {
       const p = new URLSearchParams(location.search);

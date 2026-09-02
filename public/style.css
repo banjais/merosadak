@@ -2238,7 +2238,7 @@ h1, h2, h3, h4, .font-heading {
   box-shadow: var(--shadow-md) !important;
   margin-right: 20px !important;
   margin-bottom: 90px !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: 0.75rem !important;
   overflow: hidden;
 }
 
