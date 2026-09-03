@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=20260903-1">
+  <link rel="stylesheet" href="style.css?v=20260903-2">
 </head>
 <body>
 
@@ -1308,7 +1308,9 @@
       }
 
       Object.values(tileLayers).forEach(layer => {
-        layer.on('tileerror', onTileError);
+        if (layer && typeof layer.on === 'function') {
+          layer.on('tileerror', onTileError);
+        }
       });
 
       if (navigator.geolocation) {

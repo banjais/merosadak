@@ -3,9 +3,9 @@
 // Ported from merosadak-reference with three-tier caching strategy
 
 const CACHE_NAMES = {
-  STATIC: 'merosadak-static-v1.2',
-  TILES: 'merosadak-tiles-v1.2',
-  DATA: 'merosadak-data-v1.2',
+  STATIC: 'merosadak-static-v1.3',
+  TILES: 'merosadak-tiles-v1.3',
+  DATA: 'merosadak-data-v1.3',
 };
 
 const PRECACHE_ASSETS = [
@@ -69,7 +69,11 @@ function isTileRequest(url) {
 
 // Helper: Check if request is API
 function isApiRequest(url) {
-  return url.pathname.startsWith('/api/') || url.includes('/api/data/');
+  if (url && url.pathname) {
+    return url.pathname.startsWith('/api/') || url.pathname.startsWith('/api/data/');
+  }
+  const s = String(url || '');
+  return s.includes('/api/');
 }
 
 // Fetch Event Router
