@@ -177,8 +177,9 @@
     <div class="matrix-page-body">
       <div class="matrix-page-main">
         <div class="matrix-search-section">
-          <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); line-height:1.5;">
-            🛣️ <strong style="color:#7dd3fc;">Path Intelligence via Nepal National Highway Network</strong> — Dijkstra over <strong>80 national highways · <span id="matrixHighwayCount">…</span> named link points</strong>. Pick up to <strong>8 places</strong> + a <strong>departure time</strong>. Type a <strong>district</strong> → see its HQ city. Type a <strong>city</strong> → see it + that city's bus park, airport, hospital, trademarked places. No highway-name spam, no duplicates. Then <strong>🤖 AI Road Advisor</strong> tailors a trip advisory from all live context.
+          <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.18); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+            <span>🛣️ <strong style="color:#7dd3fc;">Nepal Highway Network</strong> · <span id="matrixHighwayCount">…</span> named link points</span>
+            <span>Pick up to <strong>8 places</strong> · Traffic forecast auto-applied</span>
           </div>
           <div class="matrix-search-row">
             <div style="flex:1; position:relative;">
@@ -188,14 +189,7 @@
             <button class="btn-header" onclick="addMatrixCityFromInput()">➕ Add</button>
           </div>
           <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-            <label style="font-size:0.72rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">
-              🕐 Depart at:
-              <input type="datetime-local" id="matrixDepartAt" style="background:rgba(15,23,42,0.6); border:1px solid var(--surface-border); border-radius:6px; padding:5px 8px; color:#fff; font-size:0.75rem;">
-            </label>
-            <span style="font-size:0.65rem; color:var(--text-muted);">→ used to forecast peak-hour traffic on the path</span>
-          </div>
-          <button class="btn-action-primary" onclick="computeDistanceMatrix()">Calculate Distance</button>
+          <button class="btn-action-primary" onclick="computeDistanceMatrix()">📊 Calculate Distances</button>
           <div id="matrixResults" style="margin-top:16px;"></div>
           <div id="matrixAiSection" style="margin-top:16px; display:none;">
             <div class="ai-advisor-row">
@@ -390,10 +384,33 @@
 
   <!-- Map Style Toggle — same size & style as .map-toggle-btn -->
   <button class="map-style-toggle map-toggle-btn" id="mapStyleToggle" onclick="cycleMapStyle()" title="Map Style: Standard / Satellite / Terrain">
+    <svg class="map-style-icon" id="mapStyleIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path>
+    </svg>
     <svg class="map-style-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="6 9 12 15 18 9"></polyline>
     </svg>
   </button>
+
+  <!-- Map Layout Toggle — same style as .map-toggle-btn buttons -->
+  <div class="map-layout-toggle" id="mapLayoutToggle">
+    <button class="map-toggle-btn layout-btn active" id="layoutHalf" onclick="switchMapLayout('half')" title="Half Map / Half Report">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <line x1="12" y1="3" x2="12" y2="21"></line>
+      </svg>
+    </button>
+    <button class="map-toggle-btn layout-btn" id="layoutFullMap" onclick="switchMapLayout('fullmap')" title="Full Map">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+      </svg>
+    </button>
+    <button class="map-toggle-btn layout-btn" id="layoutFullReport" onclick="switchMapLayout('fullreport')" title="Full Report">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </div>
 
   <!-- SOS stays outside the collapsible layer toggles: it must be reachable
        in one tap regardless of whether the toolbar is open. -->
@@ -925,6 +942,8 @@
        ========================================== -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="nepalData.js"></script>
+  <script src="js/highway-data.js"></script>
+  <script src="js/route-analysis.js"></script>
   <script>
     // Register Service Worker for offline mountain travel
     let meroSadakSWRegistration = null;
@@ -1298,6 +1317,50 @@
       const label = styleLabel[style] || 'Standard';
       const emoji = styleEmoji[style] || '🗺️';
       toggleBtn.title = 'Map Style: ' + emoji + ' ' + label;
+
+      // Update the icon to reflect the NEXT style in the cycle
+      const nextIdx = (['voyager','satellite','terrain'].indexOf(style) + 1) % 3;
+      const nextStyle = ['voyager','satellite','terrain'][nextIdx];
+      const iconEl = document.getElementById('mapStyleIcon');
+      if (iconEl) {
+        if (nextStyle === 'satellite') {
+          iconEl.innerHTML = '<circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>';
+        } else if (nextStyle === 'terrain') {
+          iconEl.innerHTML = '<path d="M20 14.66V16a4 4 0 0 1-4 4h-.5l-3-3-2.5 2-3-2-2.5 2H6a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h.5l3 3 2.5-2 3 2 2.5-2H18a4 4 0 0 1 4 4z"></path>';
+        } else {
+          iconEl.innerHTML = '<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path>';
+        }
+      }
+    }
+  }
+
+  function switchMapLayout(layout) {
+    window.__currentMapLayout = layout;
+    const layoutBtns = document.querySelectorAll('#mapLayoutToggle .layout-btn');
+    layoutBtns.forEach(btn => {
+      const btnLayout = btn.id.replace('layout', '').toLowerCase();
+      btn.classList.toggle('active', btnLayout === layout);
+    });
+
+    const mapEl = document.getElementById('map');
+    const sidebarEl = document.getElementById('appSidebar');
+
+    if (layout === 'half') {
+      if (mapEl) mapEl.classList.remove('layout-fullmap');
+      if (sidebarEl) sidebarEl.classList.remove('layout-fullmap');
+      if (sidebarEl) sidebarEl.classList.add('layout-half');
+    } else if (layout === 'fullmap') {
+      if (mapEl) mapEl.classList.add('layout-fullmap');
+      if (sidebarEl) sidebarEl.classList.add('layout-fullmap');
+    } else if (layout === 'fullreport') {
+      if (mapEl) mapEl.classList.remove('layout-fullmap');
+      if (sidebarEl) sidebarEl.classList.remove('layout-fullmap');
+      if (sidebarEl) sidebarEl.classList.add('layout-fullreport');
+    }
+
+    // Trigger resize for map
+    if (typeof map !== 'undefined' && map.invalidateSize) {
+      setTimeout(() => map.invalidateSize(), 300);
     }
   }
 
@@ -1485,9 +1548,17 @@
           searchIndex.push({ label: wx.name, type: 'Weather Node', code: wx.highwayCode, lat: wx.lat, lng: wx.lng, searchTerms: terms, condition: wx.condition, summary: wx.summary, elevationM: wx.elevationM, highwayCode: wx.highwayCode });
         });
 
-        renderHighwayDirectory();
-        window.__highwayLinkReady = loadMajorHighwaysOverview(safeHighways);
-        loadOSMRoads();
+        // Backfill from reference data when API data is sparse or empty
+        const refHD = window.__HIGHWAY_DATA__;
+        if (refHD) {
+          if (!blackspotsRes || !blackspotsRes.length) window.__BLACKSPOTS__ = refHD.blackspotHotspots || [];
+          if (!travelTimeRes || !travelTimeRes.length) window.__TRAVEL_TIME__ = Object.values(refHD.trafficCorridors || {}).map(v => ({ highwayCode: v.code, corridorName: v.name, ...v }));
+        }
+
+         renderHighwayDirectory();
+         window.__highwayLinkReady = loadMajorHighwaysOverview(safeHighways);
+         renderHighwaySegments();
+         loadOSMRoads();
       } catch (err) {
         console.error('Data initialization error:', err);
       }
@@ -2356,20 +2427,215 @@
     async function fetchLiveBlackspots() {
       if (!layerGroups.blackspots) return;
       layerGroups.blackspots.clearLayers();
-      const data = Array.isArray(window.__BLACKSPOTS__) ? window.__BLACKSPOTS__ : [];
+
+      let data = Array.isArray(window.__BLACKSPOTS__) ? window.__BLACKSPOTS__ : [];
+      const refData = window.__HIGHWAY_DATA__ ? window.__HIGHWAY_DATA__.blackspotHotspots : [];
+      if (!data.length && refData.length) data = refData;
+
       data.forEach(bs => {
-        const isExtreme = bs.riskLevel === 'critical';
-        const markerColor = isExtreme ? '#ef4444' : bs.riskLevel === 'high' ? '#f97316' : '#f59e0b';
-        const markerHtml = `
-          <div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-            <div style="width:24px; height:24px; background:${markerColor}; border:2px solid #fff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; box-shadow:0 0 10px ${markerColor}90; ${isExtreme ? 'animation:markerPulse 1.8s infinite;' : ''}">
-              ⚠️
-            </div>
-          </div>
-        `;
+        const isExtreme = (bs.riskLevel || '').toLowerCase() === 'critical';
+        const isHigh = (bs.riskLevel || '').toLowerCase() === 'high';
+        const markerColor = isExtreme ? '#ef4444' : isHigh ? '#f97316' : '#f59e0b';
+
+        const popupHtml = '<div class="blackspot-marker-popup">' +
+          '<div class="bs-title" style="color:' + markerColor + ';">⚠️ ' + (bs.name || 'Blackspot') + '</div>' +
+          '<div class="bs-meta">' + (bs.highwayCode || '') + ' · ' + (bs.chainageOrLocation || bs.location || '') + '</div>';
+
+        if (bs.primaryCause || bs.cause) {
+          popupHtml += '<div class="bs-cause">⚠ ' + (bs.primaryCause || bs.cause) + '</div>';
+        }
+        popupHtml += '<div class="bs-meta">📊 ' + (bs.annualAccidentStats || bs.stats || 'High incident zone') + '</div>';
+        if (bs.safeDrivingAdvice || bs.advice) {
+          popupHtml += '<div class="bs-advice">🛡️ ' + (bs.safeDrivingAdvice || bs.advice) + '</div>';
+        }
+        popupHtml += '</div>';
+
+        const markerHtml = '<div style="position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer;">' +
+          '<div style="width:24px; height:24px; background:' + markerColor + '; border:2px solid #fff; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; box-shadow:0 0 10px ' + markerColor + '; ' + (isExtreme ? 'animation:markerPulse 1.8s infinite;' : '') + '">⚠️</div>' +
+          '</div>';
+
         const icon = L.divIcon({ className: 'blackspot-marker', html: markerHtml, iconSize: [24, 24], iconAnchor: [12, 12] });
-        L.marker([bs.lat, bs.lng], { icon }).bindPopup(`<strong>⚠️ ${bs.name}</strong><br><small>${bs.highwayCode} · ${bs.district}</small><br>Risk Level: ${bs.riskLevel}<br><small>${bs.annualAccidentStats} incidents/yr</small>`).addTo(layerGroups.blackspots);
+        L.marker([bs.lat || bs.coordinates[0], bs.lng || bs.coordinates[1]], { icon })
+          .bindPopup(popupHtml, { className: 'custom-dark-popup' })
+          .addTo(layerGroups.blackspots);
       });
+    }
+
+    // Highway Layer with per-segment safety color coding + click for detail
+    function renderHighwaySegments() {
+      const hwyInfo = Array.isArray(window.__HIGHWAY_INFO__) ? window.__HIGHWAY_INFO__ : [];
+      let safetyProfiles = {};
+
+      try {
+        if (typeof __ROUTE_ANALYSIS !== 'undefined') {
+          safetyProfiles = __ROUTE_ANALYSIS.getCorridorSafety();
+        }
+      } catch(e) {}
+
+      hwyInfo.forEach(hwy => {
+        if (hwy.segments && Array.isArray(hwy.segments)) {
+          hwy.segments.forEach(seg => {
+            if (!seg.coordinates || seg.coordinates.length < 2) return;
+
+            // Handle both [lat, lng] (reference) and [lng, lat] (GeoJSON) coordinate orders
+            const latLngs = seg.coordinates.map(c => {
+              if (!c || c.length < 2) return [0, 0];
+              // Detect: lat is typically 27-29 for Nepal, lng is 80-88
+              if (c[0] > 26 && c[0] < 31 && c[1] > 78 && c[1] < 90) {
+                return [c[0], c[1]]; // [lat, lng]
+              }
+              return [c[1], c[0]]; // [lng, lat]
+            });
+            const safety = safetyProfiles[seg.id] || safetyProfiles[(seg.from||'').toLowerCase() + '-' + (seg.to||'').toLowerCase()];
+
+            let color, weight;
+            if (safety) {
+              color = safety.color || '#38bdf8';
+              weight = 5;
+            } else {
+              color = seg.status === 'clear' ? '#10b981' : seg.status === 'caution' ? '#f59e0b' : '#ef4444';
+              weight = seg.lanes >= 4 ? 6 : 4;
+            }
+
+            const polyline = L.polyline(latLngs, {
+              color: color,
+              weight: weight,
+              opacity: 0.85,
+              lineJoin: 'round',
+              lineCap: 'round',
+              smoothFactor: 1
+            });
+
+            const popupContent = '<div style="max-width:280px; font-family:Inter,sans-serif;">' +
+              '<div style="font-size:0.85rem; font-weight:800; color:#fff; margin-bottom:6px;">' + (seg.from || '') + ' → ' + (seg.to || '') + '</div>' +
+              '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:0.72rem; margin-bottom:8px;">' +
+                '<div>🛣️ <strong>' + (seg.distanceKm || seg.km || 0) + ' km</strong></div>' +
+                '<div>🚗 ' + (seg.avgSpeedKmh || 0) + ' km/h</div>' +
+                '<div>📈 ' + (seg.elevationStartM || 0) + '→' + (seg.elevationEndM || 0) + 'm</div>' +
+                '<div>' + (seg.lanes || 0) + ' lanes</div>' +
+              '</div>';
+
+            if (safety) {
+              popupContent += '<div style="margin-bottom:6px; padding:4px 8px; background:rgba(15,23,42,0.8); border-radius:6px; border:1px solid #334155;">' +
+                '<div style="display:flex; gap:4px; align-items:center;">' +
+                  '<span style="font-size:0.65rem; font-weight:800; color:' + safety.color + '; text-transform:uppercase;">Safety Index: ' + safety.score + '/100</span>' +
+                  '<span class="safety-badge ' + (safety.score >= 80 ? 'safety-high' : safety.score >= 60 ? 'safety-moderate' : safety.score >= 40 ? 'safety-elevated' : 'safety-hazard') + '">' +
+                    (safety.tier || 'moderate') +
+                  '</span>' +
+                '</div>';
+              if (safety.hazards && safety.hazards.length) {
+                popupContent += '<div style="font-size:0.65rem; color:var(--text-secondary); margin-top:4px;">⚠️ ' + safety.hazards.join(' · ') + '</div>';
+              }
+              popupContent += '</div>';
+            }
+
+            if (seg.surface) {
+              popupContent += '<div style="font-size:0.65rem; color:var(--text-secondary);">Surface: ' + (seg.surface||'').replace(/_/g,' ') + '</div>';
+            }
+            if (seg.currentIssue) {
+              popupContent += '<div style="font-size:0.65rem; color:#fbbf24; margin-top:2px;">⚠️ ' + seg.currentIssue + '</div>';
+            }
+            popupContent += '<div style="font-size:0.62rem; color:var(--text-muted); margin-top:4px;">' + (hwy.code || '') + ' · ' + (hwy.name || '') + '</div></div>';
+
+            polyline.bindPopup(popupContent, { className: 'custom-dark-popup', closeButton: false });
+
+            polyline.on('click', function(e) {
+              showHighwaySegmentInfo(seg, hwy, safety);
+            });
+
+            highwayGeoJsonLayers.push(polyline);
+            if (layerVisibility.highways) {
+              map.addLayer(polyline);
+            }
+          });
+        }
+      });
+    }
+
+    // Highway Info Panel in sidebar
+    function showHighwaySegmentInfo(seg, hwy, safety) {
+      const results = document.getElementById('sidebarResults');
+      if (!results) return;
+
+      const safetyScore = safety ? safety.score : 50;
+      const safetyTier = safety ? safety.tier : 'moderate';
+      const safetyColor = safety ? safety.color : '#fbbf24';
+      const safetyBadgeClass = safetyScore >= 80 ? 'safety-high' : safetyScore >= 60 ? 'safety-moderate' : safetyScore >= 40 ? 'safety-elevated' : 'safety-hazard';
+
+      // Close popup after clicking for info panel
+      if (map) { try { map.closePopup(); } catch(e) {} }
+
+      results.innerHTML = '<div class="route-report">' +
+        '<div class="report-header-section">' +
+          '<div class="report-endpoints-box" style="font-size:0.85rem;">' +
+            '<span style="color:#38bdf8;">🛣️</span> ' +
+            '<span style="color:#fff; font-weight:800;">' + (hwy.code || '') + ' — ' + (seg.from || '') + ' → ' + (seg.to || '') + '</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="report-stats-grid">' +
+          '<div class="report-stat-tile">' +
+            '<div class="report-stat-title">📏 Distance</div>' +
+            '<div class="report-stat-value" style="color:#38bdf8;">' + (seg.distanceKm || seg.km || 0) + ' <span style="font-size:0.75rem;">km</span></div>' +
+            '<div class="report-stat-sub">' + (seg.surface ? seg.surface.replace(/_/g,' ') : 'Mountain Highway') + '</div>' +
+          '</div>' +
+          '<div class="report-stat-tile">' +
+            '<div class="report-stat-title">⏱️ Avg Speed</div>' +
+            '<div class="report-stat-value" style="color:#34d399;">' + (seg.avgSpeedKmh || '--') + ' km/h</div>' +
+            '<div class="report-stat-sub">Current traffic adjusted</div>' +
+          '</div>' +
+          '<div class="report-stat-tile">' +
+            '<div class="report-stat-title">🏔️ Elevation</div>' +
+            '<div class="report-stat-value" style="font-size:0.9rem; color:#c084fc;">' + (seg.elevationStartM || 0) + '→' + (seg.elevationEndM || 0) + 'm</div>' +
+            '<div class="report-stat-sub">' + ((seg.elevationEndM||0) - (seg.elevationStartM||0) > 0 ? '+Climb' : 'Descent') + '</div>' +
+          '</div>' +
+          '<div class="report-stat-tile">' +
+            '<div class="report-stat-title">🛡️ Safety Index</div>' +
+            '<div class="report-stat-value" style="color:' + safetyColor + ';">' + safetyScore + '/100</div>' +
+            '<div class="report-stat-sub"><span class="safety-badge ' + safetyBadgeClass + '">' + safetyTier + '</span></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="highway-info-section">' +
+          '<div class="hw-section-title">Road Details</div>' +
+          '<div class="hw-info-grid">' +
+            '<div class="hw-info-item"><span class="hw-info-label">Surface</span><span class="hw-info-value">' + (seg.surface ? seg.surface.replace(/_/g,' ') : '--') + '</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Lanes</span><span class="hw-info-value">' + (seg.lanes || '--') + '</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Status</span><span class="hw-info-value" style="color:' + (seg.status === 'clear' ? '#10b981' : seg.status === 'caution' ? '#f59e0b' : '#ef4444') + '">' + (seg.status || '--') + '</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Last Updated</span><span class="hw-info-value">' + (seg.lastUpdated || 'Real-time') + '</span></div>' +
+          '</div>' +
+        '</div>';
+
+      if (safety && safety.hazards && safety.hazards.length) {
+        results.innerHTML += '<div class="highway-info-section">' +
+          '<div class="hw-section-title">⚠️ Hazard Factors</div>' +
+          '<div style="display:flex; flex-direction:column; gap:4px; padding:4px 0;">' +
+            safety.hazards.map(h => '<div style="padding:6px 8px; background:rgba(245,158,11,0.08); border-radius:6px; font-size:0.75rem; color:var(--text-secondary);">• ' + h + '</div>').join('') +
+          '</div>' +
+        '</div>';
+      }
+
+      if (safety && safety.incidents) {
+        results.innerHTML += '<div class="highway-info-section">' +
+          '<div class="hw-section-title">📊 Annual Incidents</div>' +
+          '<div class="hw-info-grid">' +
+            '<div class="hw-info-item"><span class="hw-info-label">Accidents/yr</span><span class="hw-info-value" style="color:' + (safety.incidents > 50 ? '#ef4444' : safety.incidents > 25 ? '#f97316' : '#10b981') + '">' + safety.incidents + '</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Rec. Speed</span><span class="hw-info-value">' + safety.recommendedSpeed + ' km/h</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Risk Level</span><span class="hw-info-value">' + safety.risk + '</span></div>' +
+            '<div class="hw-info-item"><span class="hw-info-label">Risk Color</span><span class="hw-info-value" style="color:' + safety.color + '">' + safety.tier + '</span></div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      if (seg.currentIssue) {
+        results.innerHTML += '<div style="padding:8px 12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm); margin-top:8px;">' +
+          '<div style="font-size:0.68rem; font-weight:800; text-transform:uppercase; color:var(--accent-gold); margin-bottom:2px;">⚠️ Current Issue</div>' +
+          '<div style="font-size:0.75rem; color:var(--text-primary);">' + seg.currentIssue + '</div>' +
+          '<div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px;">⏱️ ' + (seg.lastUpdated || 'Recently updated') + '</div>' +
+        '</div>';
+      }
+
+      results.innerHTML += '</div>';
     }
 
     function toggleLayer(name) {
@@ -3683,7 +3949,7 @@
     async function computeDistanceMatrix() {
       if (matrixCities.length < 2) { alert('Please add at least 2 places.'); return; }
       const out = document.getElementById('matrixResults');
-      out.innerHTML = '<p style="color:var(--text-secondary);">Computing road distances via Nepal National Highway Graph…</p>';
+      out.innerHTML = '<p style="color:var(--text-secondary);">Computing optimal route via Nepal highway network…</p>';
 
       if (window.__highwayLinkReady && typeof window.__highwayLinkReady.then === 'function') {
         try { await window.__highwayLinkReady; } catch (e) {}
@@ -3725,13 +3991,9 @@
         if (optimal && optimal.path) optimal.path = enrichPathWithTerrainAndBlackspots(optimal.path);
         pairs.forEach(p => { if (p.path) { p.path = enrichPathWithLiveData(p.path); p.path = enrichPathWithTerrainAndBlackspots(p.path); } });
 
-        const departInput = document.getElementById('matrixDepartAt');
-        let targetHour = null;
-        if (departInput && departInput.value) {
-          const d = new Date(departInput.value);
-          if (!isNaN(d.getTime())) targetHour = d.getHours();
-        }
-        const targetDate = (departInput && departInput.value) ? new Date(departInput.value) : null;
+        const now = new Date();
+        let targetHour = now.getHours();
+        const targetDate = now;
 
         let html = '<div class="matrix-result-list">';
         const highwayGroups = {};
@@ -3751,37 +4013,28 @@
 
         html += `<div class="matrix-summary" style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:0.78rem;">
           <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <span><strong>${ordered.length}</strong> places · <strong style="color:#7dd3fc;">${pairs.length}</strong> pairs</span>
-            <span><strong>${totalKm.toFixed(0)}</strong> km total · <strong>${totalHours.toFixed(1)}</strong> hrs est.</span>
-            <span style="color:var(--text-muted);">Road: <strong style="color:#10b981;">${roadKm.toFixed(0)} km</strong> · Air-fallback: <strong style="color:#fbbf24;">${fallbackKm.toFixed(0)} km</strong></span>
+            <span><strong>${ordered.length}</strong> places · <strong style="color:#7dd3fc;">${pairs.length}</strong> routes</span>
+            <span><strong>${totalKm.toFixed(0)}</strong> km total · <strong>${totalHours.toFixed(1)}</strong> hrs estimated</span>
           </div>
-          ${topHwys.length ? '<div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">Highways used: ' + topHwys.map(([h, km]) => `<span style="background:rgba(99,102,241,0.15); padding:1px 6px; border-radius:3px; margin-right:4px;"><strong>${h}</strong> ${km.toFixed(0)}km</span>`).join('') + '</div>' : ''}
         </div>`;
 
         pairs.forEach((p, idx) => {
           const from = p.from.name, to = p.to.name;
           const kmStr = p.km ? p.km.toFixed(1) : '—';
           const hrStr = p.km ? (p.mode === 'road' ? (p.km / 35) : (p.km / 25)).toFixed(1) : '—';
-          const modeTag = p.mode === 'road' ? '<span style="color:#10b981;">🛣️ road</span>' : p.mode === 'fallback' ? '<span style="color:#fbbf24;">✈️ est.</span>' : '—';
+          const modeTag = p.mode === 'road' ? '<span style="color:#10b981;">🛣️</span>' : p.mode === 'fallback' ? '<span style="color:#fbbf24;">✈️</span>' : '';
           const segments = p.path ? p.path.segments : [];
-          const hwyCodes = [...new Set(segments.map(s => s.highway).filter(h => h && h !== 'access'))].join(' → ');
-          const pathDetail = hwyCodes ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">via ${hwyCodes} (${segments.length} segments)</div>` : '';
+          const hwyCodes = [...new Set(segments.map(s => s.highway).filter(h => h && h !== 'access'))];
+          const pathDetail = hwyCodes.length ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">via ${hwyCodes.join(', ')}</div>` : '';
           let blackspotWarn = '';
           if (p.path && Array.isArray(window.__BLACKSPOTS__)) {
-            const pathKm = [];
-            let cum = 0;
-            p.path.segments.forEach(seg => {
-              cum += seg.km;
-              pathKm.push({ km: cum, seg });
-            });
             const nearby = window.__BLACKSPOTS__.filter(bs => {
               if (!bs.lat || !bs.lng || !bs.highwayCode) return false;
               const inPath = p.path.segments.some(s => s.highway === bs.highwayCode);
-              if (!inPath) return false;
-              return true;
+              return inPath;
             }).slice(0, 2);
             if (nearby.length) {
-              blackspotWarn = `<div style="font-size:0.68rem; color:#fbbf24; margin-top:2px;">⚠️ near: ${nearby.map(b => b.name).join(', ')}</div>`;
+              blackspotWarn = `<div style="font-size:0.68rem; color:#fbbf24; margin-top:2px;">⚠️ Blackspot: ${nearby.map(b => b.name).join(', ')}</div>`;
             }
           }
           html += `<div class="matrix-result-line" data-pair-idx="${idx}">
@@ -3956,27 +4209,71 @@
           }
 
           if (!trafSorted.length && !incSorted.length && !wxSorted.length && !svcSorted.length && !advisor && !(P.blackspotHits || []).length) {
-            html += `<div style="grid-column: 1 / -1; padding:10px 12px; background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.2); border-radius:8px; font-size:0.78rem; color:#86efac;">✅ No live incidents, traffic, weather, or blackspots reported for this path.</div>`;
-          }
-
-          if (!trafSorted.length && !incSorted.length && !wxSorted.length && !svcSorted.length && !advisor) {
-            html += `<div style="grid-column: 1 / -1; padding:10px 12px; background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.2); border-radius:8px; font-size:0.78rem; color:#86efac;">✅ No live incidents, traffic, or weather warnings reported for this path.</div>`;
+            html += `<div style="grid-column: 1 / -1; padding:10px 12px; background:rgba(34,197,94,0.05); border:1px solid rgba(34,197,94,0.2); border-radius:8px; font-size:0.78rem; color:#86efac;">✅ No active traffic, incidents, weather, or blackspot reports for this path.</div>`;
           }
 
           html += `</div>`;
         }
 
         if (optimal && optimal.km > 0) {
-          html += `<div style="margin-top:14px; padding:10px 12px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:8px; font-size:0.8rem;">
-            <div style="font-weight:700; color:#a78bfa; margin-bottom:6px;">🗺️ Suggested Road Tour (nearest-neighbor order):</div>
-            <div style="line-height:1.7;">${optimal.stops.map((s, i) => `<span style="display:inline-block; background:rgba(139,92,246,0.15); padding:2px 8px; border-radius:4px; margin:2px 2px;">${i + 1}. ${s.name}</span>`).join('<span style="color:var(--text-muted);"> → </span>')}</div>
-            <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">Total: <strong style="color:#a78bfa;">${optimal.km.toFixed(0)} km</strong> via ${[...new Set(optimal.highways.filter(h => h && h !== 'access'))].join(', ') || 'national highway network'}</div>
-            <button class="btn-action-primary" style="margin-top:8px; font-size:0.75rem; padding:6px 12px;" onclick="drawOptimalTourOnMap()">🗺️ Draw on Map</button>
+          html += `<div style="margin-top:14px; padding:10px 12px; background:rgba(139,92,247,0.08); border:1px solid rgba(139,92,247,0.25); border-radius:8px; font-size:0.8rem;">
+            <div style="font-weight:700; color:#a78bfa; margin-bottom:6px;">🗺️ Suggested Route Order</div>
+            <div style="line-height:1.7;">${optimal.stops.map((s, i) => `<span style="display:inline-block; background:rgba(139,92,247,0.15); padding:2px 8px; border-radius:4px; margin:2px 2px;">${i + 1}. ${s.name}</span>`).join('<span style="color:var(--text-muted);"> → </span>')}</div>
+            <div style="margin-top:6px; font-size:0.75rem; color:var(--text-muted);">Total: <strong style="color:#a78bfa;">${optimal.km.toFixed(0)} km</strong></div>
+            <button class="btn-action-primary" style="margin-top:8px; font-size:0.75rem; padding:6px 12px;" onclick="drawOptimalTourOnMap()">🗺️ View on Map</button>
           </div>`;
         }
 
+        // Path Details Tab — shows coordinate lines with source attribution
+        html += `<div style="margin-top:14px; border-top:1px solid var(--surface-border); padding-top:12px;">
+          <div class="path-details-tabs">
+            <button class="path-details-tab active" onclick="showPathDetailTab('overview', this)">📋 Route Overview</button>
+            <button class="path-details-tab" onclick="showPathDetailTab('coordinates', this)">📍 Coordinates</button>
+            <button class="path-details-tab" onclick="showPathDetailTab('sources', this)">📄 Data Sources</button>
+          </div>
+          <div id="pathDetailOverview" class="path-detail-pane">
+            <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.6;">
+              <div>Total distance: <strong style="color:#7dd3fc;">${totalKm.toFixed(1)} km</strong> across <strong>${ordered.length}</strong> stops</div>
+              <div style="margin-top:4px;">Road: <strong style="color:#34d399;">${roadKm.toFixed(0)} km</strong> · Estimated: <strong style="color:#fbbf24;">${fallbackKm.toFixed(0)} km</strong></div>
+              <div style="margin-top:4px;">Est. travel time: <strong style="color:#a78bfa;">${totalHours.toFixed(1)} hrs</strong></div>
+              ${topHwys.length ? '<div style="margin-top:4px;">Highways: ' + topHwys.map(([h, km]) => `<span style="background:rgba(99,102,241,0.15); padding:1px 6px; border-radius:3px; font-size:0.72rem;">${h} ${km.toFixed(0)}km</span>`).join('') + '</div>' : ''}
+            </div>
+          </div>
+          <div id="pathDetailCoordinates" class="path-detail-pane" style="display:none;">
+            <div id="pathCoordinateList" style="font-family:'JetBrains Mono',monospace; line-height:1.5; max-height:300px; overflow-y:auto;"></div>
+          </div>
+          <div id="pathDetailSources" class="path-detail-pane" style="display:none;">
+            <div style="margin-bottom:6px;"><strong>Data source:</strong> Nepal National Highway Graph (DOR-mapped)</div>
+            <div style="margin-bottom:6px;"><strong>Highway data:</strong> Department of Roads (DOR) + OpenStreetMap</div>
+            <div style="margin-bottom:6px;"><strong>Coordinates:</strong> WGS84 (EPSG:4326) — ${roadKm.toFixed(0)} km from highway GeoJSON segments</div>
+            <div style="margin-bottom:6px;"><strong>Traffic profiles:</strong> Historical corridor trends (7-day forecast)</div>
+            <div style="margin-bottom:6px;"><strong>Blackspots:</strong> DOR verified incident data + MeroSadak community reports</div>
+            <div><strong>Offline cache:</strong> data/cities.json, data/highway/*.geojson, data/highway-info.json, data/blackspots.json</div>
+          </div>
+            <div><strong>Offline cache:</strong> data/cities.json, data/highway/*.geojson, data/highway-info.json, data/blackspots.json</div>
+          </div>
+        </div>`;
+
         window.__lastMatrixResult = { ordered, pairs, optimal };
         out.innerHTML = html;
+
+        // Build coordinate path data for the Path Details tab
+        const pathCoords = [];
+        if (optimal && optimal.path && optimal.path.segments) {
+          optimal.path.segments.forEach(seg => {
+            if (seg.coordinates) {
+              seg.coordinates.forEach(c => {
+                if (c.length >= 2) {
+                  // Handle both [lat,lng] and [lng,lat]
+                  const isLatFirst = c[0] > 26 && c[0] < 31;
+                  pathCoords.push({ lat: isLatFirst ? c[0] : c[1], lng: isLatFirst ? c[1] : c[0], seg: seg.highway || 'NH' });
+                }
+              });
+            }
+          });
+        }
+        window.__pathCoordinates = pathCoords;
+
         document.getElementById('matrixAiSection').style.display = 'block';
       } catch (err) {
         console.error('[MeroSadak] Matrix compute error:', err);
@@ -4089,11 +4386,70 @@
       (path.serviceHits || []).forEach(sv => {
         L.marker([sv.lat, sv.lng], { icon: L.divIcon({ className: 'matrix-svc-pin', html: `<div style="background:#10b981;color:#000;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.4);">${serviceIcon(sv.type)}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) }).bindPopup(`<strong>${serviceIcon(sv.type)} ${sv.name}</strong><br>${sv.location || ''} ${sv.open ? '· ' + sv.open : ''}${sv.contact ? '<br>📞 ' + sv.contact : ''}`).addTo(routeLayerGroup);
       });
+      // Animate the coordinate path line drawing
+      if (window.__pathCoordinates && window.__pathCoordinates.length > 1) {
+        const pathColor = '#34d399';
+        const pathCoords = window.__pathCoordinates;
+        let idx = 0;
+        const total = pathCoords.length;
+        const interval = 3000 / total;
+        const timer = setInterval(() => {
+          if (idx >= total - 1) {
+            clearInterval(timer);
+            return;
+          }
+          idx++;
+          const partial = pathCoords.slice(0, idx + 1);
+          const latlngs = partial.map(c => [c.lat, c.lng]);
+          L.polyline(latlngs, { color: pathColor, weight: 4, opacity: 0.8, lineCap: 'round', dashArray: '6, 4', lineJoin: 'round' }).addTo(routeLayerGroup);
+        }, Math.max(20, interval));
+      }
       if (latlngs.length >= 2) {
         const bounds = L.latLngBounds(latlngs);
         map.flyToBounds(bounds, { padding: [80, 80], duration: 1.2 });
       }
       hideMatrixPage();
+    }
+
+    function showPathDetailTab(tab, el) {
+      document.querySelectorAll('.path-detail-pane').forEach(pane => pane.style.display = 'none');
+      document.querySelectorAll('.path-details-tab').forEach(btn => btn.classList.remove('active'));
+      const paneId = 'pathDetail' + tab.charAt(0).toUpperCase() + tab.slice(1);
+      document.getElementById(paneId).style.display = 'block';
+      if (el) el.classList.add('active');
+
+      if (tab === 'coordinates' && window.__pathCoordinates && window.__pathCoordinates.length) {
+        const listEl = document.getElementById('pathCoordinateList');
+        if (listEl) {
+          listEl.innerHTML = window.__pathCoordinates.map((c, i) =>
+            '<div style="display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.03);">' +
+              '<span style="color:var(--text-muted); min-width:50px;">#' + (i + 1) + '</span>' +
+              '<span style="font-family:\'JetBrains Mono\',monospace; color:#7dd3fc;">' + c.lat.toFixed(4) + '°, ' + c.lng.toFixed(4) + '°</span>' +
+              '<span style="color:var(--text-secondary);">via ' + c.seg + '</span>' +
+            '</div>'
+          ).join('');
+        }
+      }
+    }
+
+    function drawPathWithAnimation(pathCoords, color, weight, duration) {
+      if (!pathCoords || pathCoords.length < 2) return;
+      const latlngs = pathCoords.map(c => [c.lat, c.lng]);
+      let drawn = [];
+      let i = 0;
+      const interval = (duration || 2000) / latlngs.length;
+      const timer = setInterval(() => {
+        if (i >= latlngs.length) {
+          clearInterval(timer);
+          L.polyline([...drawn, ...latlngs.slice(i)], { color: color, weight: weight, opacity: 0.9, lineCap: 'round' }).addTo(routeLayerGroup);
+          return;
+        }
+        drawn.push(latlngs[i]);
+        if (drawn.length >= 2) {
+          L.polyline(drawn, { color: color, weight: weight, opacity: 0.9, lineCap: 'round' }).addTo(routeLayerGroup);
+        }
+        i++;
+      }, interval);
     }
 
     function findHighwayFileForCode(code) {
@@ -4230,9 +4586,8 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
       const last = window.__lastMatrixResult;
       if (!last || !last.optimal) { out.innerHTML = '<em>Please run Calculate Distance first to set up the trip context.</em>'; return; }
 
-      const departInput = document.getElementById('matrixDepartAt');
-      const departDate = (departInput && departInput.value) ? new Date(departInput.value) : null;
-      const targetH = departDate ? departDate.getHours() : new Date().getHours();
+      const departDate = new Date();
+      const targetH = departDate.getHours();
 
       const adv = getDepartureAdvisor(last.optimal.path ? last.optimal.path.usedHighways : [], targetH);
       if (adv && adv.forecastByHour) {
@@ -4658,11 +5013,12 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
       const seen = new Map();
       function add(sectionTitle, icon, color, item) {
         if (!item || !item.label) return;
-        if (item.lat != null && item.lng != null) {
-          const k = roundCoord(item.lat) + '|' + roundCoord(item.lng) + '|' + normalizeText(item.label);
-          if (seen.has(k)) return;
-          seen.set(k, true);
+        if (!item.isHighwayCode) {
+          if (!item.lat || !item.lng || item.lat === 0 || item.lng === 0) return;
         }
+        const k = roundCoord(item.lat || 0) + '|' + roundCoord(item.lng || 0) + '|' + normalizeText(item.label);
+        if (seen.has(k)) return;
+        seen.set(k, true);
         sections.push({ sectionTitle, icon, color, item });
       }
 
@@ -4852,6 +5208,59 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
         });
       }
 
+      // Add offline data from __HIGHWAY_DATA__ reference bundle
+      const refData = window.__HIGHWAY_DATA__;
+      if (refData && refData.highwayDirectory && !isHighwayCode) {
+        refData.highwayDirectory.forEach(hwy => {
+          const n = normalizeText(hwy.code || '') + ' ' + normalizeText(hwy.name || '');
+          if (n.includes(q)) {
+            add('Highway', '🛣️', '#7dd3fc', {
+              label: hwy.code + ' ' + hwy.name,
+              subLabel: hwy.terrain + ' · ' + hwy.status.replace(/_/g, ' '),
+              lat: null, lng: null,
+              type: 'Highway',
+              code: hwy.code,
+              isHighwayCode: true,
+              highway: hwy.code,
+              source: 'highway-data.js (offline)'
+            });
+          }
+        });
+      }
+
+      if (refData && refData.mountainPasses && !isHighwayCode) {
+        refData.mountainPasses.forEach(p => {
+          const n = normalizeText(p.name || '') + ' ' + normalizeText(p.code || '');
+          if (n.includes(q)) {
+            add('Mountain Pass', '🏔️', '#a78bfa', {
+              label: p.name + ' (' + p.code + ')',
+              subLabel: p.elevation + 'm · ' + p.note,
+              lat: p.lat, lng: p.lng,
+              type: 'Pass',
+              highway: p.code,
+              source: 'highway-data.js (offline)'
+            });
+          }
+        });
+      }
+
+      if (refData && refData.allPlaces && !isHighwayCode) {
+        refData.allPlaces.forEach(p => {
+          const n = normalizeText(p.name || '') + ' ' + normalizeText(p.district || '') + ' ' + normalizeText(p.type || '');
+          if (n.includes(q)) {
+            const icon = { '✈️': '✈️', '🏙️': '🏙️', '🏔️': '🏔️', '🏰': '🏰', '🚧': '🚧' }[p.icon] || '📍';
+            const color = p.type === 'Airport' ? '#7dd3fc' : p.type === 'Capital' ? '#fbbf24' : p.type === 'Historical' ? '#a78bfa' : p.type === 'Border' ? '#f97316' : p.type === 'Hill Town' ? '#86efac' : '#fb923c';
+            add(p.type || 'Place', icon, color, {
+              label: p.name,
+              subLabel: p.district + ' · ' + p.type,
+              lat: p.lat, lng: p.lng,
+              type: p.type,
+              source: 'highway-data.js (offline)'
+            });
+          }
+        });
+      }
+
       const grouped = {};
       sections.forEach(s => {
         if (!grouped[s.sectionTitle]) grouped[s.sectionTitle] = [];
@@ -4889,8 +5298,7 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
           div.className = 'autocomplete-item';
           const sub = item.subLabel ? '<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">' + item.subLabel + '</div>' : '';
           const tag = item.isHighwayCode ? 'Highway' : (item.type || 'Place');
-          const latLngDisp = (item.lat && item.lng) ? '' : ' <span style="color:#fbbf24; font-size:0.65rem;">(no coords)</span>';
-          div.innerHTML = '<span>' + item.label + '</span>' + sub + latLngDisp + ' <span class="tag">' + tag + '</span> <button class="autocomplete-close" onclick="event.stopPropagation();dismissSearch(this)" title="Remove">✕</button>';
+          div.innerHTML = '<span>' + item.label + '</span>' + sub + ' <span class="tag">' + tag + '</span>';
           div.onclick = () => smartSelectItem(item);
           boxEl.appendChild(div);
         });
@@ -5681,6 +6089,54 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
       return { min: Math.round(minElev), max: Math.round(maxElev), gain: Math.round(totalAscent) };
     }
 
+    function inferHighwaysForRoute(routePath) {
+      if (!routePath || !routePath.length || !window.__BLACKSPOTS__) return [];
+      const matched = [];
+      const seen = new Set();
+      for (const [lat, lng] of routePath) {
+        // Sample every ~5th point for performance
+        matched.push(null); // placeholder
+      }
+      // Check each reference highway segment for proximity
+      const highwayInfo = window.__HIGHWAY_INFO__ || {};
+      const segmentKeys = Object.keys(highwayInfo);
+      for (const key of segmentKeys) {
+        const seg = highwayInfo[key];
+        if (seg.geometry && seg.geometry.length >= 2) {
+          for (let i = 0; i < routePath.length; i += 5) {
+            const [lat, lng] = routePath[i];
+            for (let j = 0; j < seg.geometry.length; j++) {
+              const g = seg.geometry[j];
+              const dist = haversineKm(lat, lng, g.lat || g[1], g.lng || g[0]);
+              if (dist < 6) {
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  matched.push(seg.highway || key);
+                }
+                break;
+              }
+            }
+          }
+        }
+        // Also check direct coords
+        if (seg.coords && seg.coords.length) {
+          for (let i = 0; i < routePath.length; i += 5) {
+            const [lat, lng] = routePath[i];
+            for (const c of seg.coords) {
+              const dist = haversineKm(lat, lng, c.lat, c.lng);
+              if (dist < 6 && !seen.has(key)) {
+                seen.add(key);
+                matched.push(seg.highway || key);
+                break;
+              }
+              if (dist < 6) break;
+            }
+          }
+        }
+      }
+      return matched.filter(Boolean);
+    }
+
     async function calculateSidebarRoute() {
       if (!selectedDestination) return;
       const origin = userOrigin || { lat: 27.7172, lng: 85.324, label: 'Kathmandu' };
@@ -5854,6 +6310,58 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
           }
         }
 
+        // === Route Safety Index (ported from reference) ===
+        let safetyIndex = null;
+        let nearbyBlackspots = [];
+        if (typeof __ROUTE_ANALYSIS !== 'undefined' && __ROUTE_ANALYSIS.computeRouteSafetyIndex) {
+          const routePath = coords.map(c => [c[1], c[0]]);
+
+          // Try to match against reference highway segments for segment safety data
+          let routeSegments = (chosen.routeSegments || []).map(rs => ({
+            from: rs.fromLabel || rs.from || '',
+            to: rs.toLabel || rs.to || '',
+            km: rs.km || rs.distanceKm || 0,
+            highway: rs.highway || rs.linkCode || ''
+          }));
+          // Fallback: infer segment data from highway graph or reference
+          const pathResult = window.__lastPathResult;
+          const segmentsFromGraph = pathResult ? pathResult.segments : [];
+          if (!segmentsFromGraph.length) {
+            // Infer used highways by proximity to reference highway segments
+            const highwaysByRoute = inferHighwaysForRoute(routePath);
+            if (highwaysByRoute.length > 0) {
+              window.__lastPathResult = {
+                segments: highwaysByRoute.map(h => ({
+                  from: '', to: '', km: distanceKm,
+                  highway: h
+                })),
+                usedHighways: highwaysByRoute
+    };
+
+    window.__currentMapLayout = 'half';
+            }
+          }
+          safetyIndex = __ROUTE_ANALYSIS.computeRouteSafetyIndex(routePath, segmentsFromGraph.length ? segmentsFromGraph : routeSegments);
+          nearbyBlackspots = __ROUTE_ANALYSIS.findNearbyBlackspots(routePath, 8);
+        }
+
+        // === Traffic Corridor Forecast (sparkline data) ===
+        let trafficSparkline = null;
+        if (typeof __ROUTE_ANALYSIS !== 'undefined' && __ROUTE_ANALYSIS.buildTrafficSparkline) {
+          const ts = window.__lastPathResult ? window.__lastPathResult.usedHighways : [];
+          if (ts.length) {
+            // Find matching traffic corridor key
+            const corridors = __ROUTE_ANALYSIS.getTrafficCorridors();
+            for (const highway of ts) {
+              const key = 'tr-' + highway.toLowerCase().replace(/\s+/g, '');
+              if (corridors[key]) {
+                trafficSparkline = __ROUTE_ANALYSIS.buildTrafficSparkline(key);
+                break;
+              }
+            }
+          }
+        }
+
         // Alternative route comparison cards
         const altRoutes = routes.filter(r => r !== chosen);
         const altRoutesHtml = altRoutes.length ? altRoutes.map((r, i) => {
@@ -5910,6 +6418,13 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
                 <div class="report-stat-value" style="font-size:0.9rem; color:#c084fc;">${elevText}</div>
                 <div class="report-stat-sub">${elevSub}</div>
               </div>
+              ${safetyIndex ? `
+                <div class="report-stat-tile">
+                  <div class="report-stat-title">🛡️ Route Safety</div>
+                  <div class="report-stat-value" style="color:var(--accent-gold);">${safetyIndex.overall}/100 · ${safetyIndex.category}</div>
+                  <div class="report-stat-sub">${safetyIndex.description}</div>
+                </div>
+              ` : ''}
             </div>
 
             <!-- Vehicle Advisory Banner -->
@@ -5938,6 +6453,97 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
               </div>
             ` : ''}
 
+            <!-- Safety Index — Collapsible Section -->
+            ${safetyIndex ? `
+              <div class="report-collapse-section">
+                <div class="report-section-label" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleReportSection('safetyIndex')">
+                  <span>🛡️ Route Safety Index</span>
+                  <span class="report-collapse-btn" id="safetyIndexToggle">▼</span>
+                </div>
+                <div class="report-section-content" id="safetyIndexContent" style="display:none;">
+                  <div style="margin-top:8px; display:flex; align-items:center; gap:12px;">
+                    <div style="flex:1;">
+                      <div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                        <div style="width:${safetyIndex.overall}%; height:100%; background:${safetyIndex.score>=80?'#10b981':safetyIndex.score>=60?'#f59e0b':'#ef4444'}; border-radius:4px;"></div>
+                      </div>
+                      <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-secondary); margin-top:4px;">
+                        <span>0</span><span>50</span><span>100</span>
+                      </div>
+                    </div>
+                    <div style="min-width:80px; text-align:center;">
+                      <div style="font-size:1.2rem; font-weight:800; color:var(--accent-gold);">${safetyIndex.overall}</div>
+                      <div style="font-size:0.7rem; color:var(--text-secondary);">/${safetyIndex.maxScore || 100}</div>
+                    </div>
+                  </div>
+                  ${safetyIndex.segments && safetyIndex.segments.length ? `
+                    <div style="margin-top:12px;">
+                      <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Segment Breakdown</div>
+                      ${safetyIndex.segments.map(seg => {
+                        const color = __ROUTE_ANALYSIS.getSafetyColor(seg.score);
+                        return `
+                          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                            <span style="font-size:0.7rem; color:var(--text-secondary); min-width:80px;">${seg.name || 'Segment'}</span>
+                            <div style="flex:1; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                              <div style="width:${seg.score}%; height:100%; background:${color}; border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:0.75rem; font-weight:700; color:${color}; min-width:32px; text-align:right;">${seg.score}</span>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  ` : ''}
+                  ${nearbyBlackspots.length ? `
+                    <div style="margin-top:12px; padding:10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px;">
+                      <div style="font-size:0.75rem; font-weight:700; color:#fca5a5; margin-bottom:6px;">⚠️ Blackspots on Route (${nearbyBlackspots.length})</div>
+                      ${nearbyBlackspots.slice(0,3).map(bs => `
+                        <div style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:4px;">
+                          • ${bs.name || bs.location} — ${bs.cause || 'Accident-prone'}
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                  <div style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">
+                      ${safetyIndex.description}
+                      ${safetyIndex.directives ? '<br>' + safetyIndex.directives.map(d => '• ' + d).join('<br>') : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Traffic Corridor Forecast — Collapsible Section -->
+            ${trafficSparkline ? `
+              <div class="report-collapse-section">
+                <div class="report-section-label" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleReportSection('trafficForecast')">
+                  <span>🚦 Traffic Corridor Forecast</span>
+                  <span class="report-collapse-btn" id="trafficForecastToggle">▼</span>
+                </div>
+                <div class="report-section-content" id="trafficForecastContent" style="display:none;">
+                  <div style="margin-top:8px;">
+                    <div class="traffic-sparkline" style="height:60px; display:flex; align-items:flex-end; gap:2px; padding:4px 0;">
+                      ${trafficSparkline.map((h, i) => {
+                        const heights = [4, 8, 12, 20, 32, 44, 52, 48, 40, 30, 22, 16, 10, 6, 4, 2];
+                        const hVal = heights[i % heights.length] || 4;
+                        const barHeight = (h / 100) * 56 + 4;
+                        return `<div class="spark-bar" style="width:12px; height:${barHeight}px; background:var(--accent-gold); border-radius:2px 2px 0 0; opacity:${h/100};"></div>`;
+                      }).join('')}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-secondary);">
+                      <span>0:00</span>
+                      <span>6:00</span>
+                      <span>12:00</span>
+                      <span>18:00</span>
+                      <span>23:00</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:6px; text-align:center;">
+                      Peak traffic expected 7-9 AM & 5-7 PM
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
             <!-- Quick Action Hub -->
             <div class="report-actions-grid">
               <button class="report-action-btn" onclick="map.flyToBounds(routeLayerGroup.getBounds(), { padding: [80, 80], duration: 1.2 })">
@@ -5958,9 +6564,34 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
 
         results.innerHTML = reportHtml;
 
+        // Expand safety index and traffic sections by default on desktop, collapsed on mobile
+        if (window.innerWidth >= 768) {
+          const safetyContent = document.getElementById('safetyIndexContent');
+          const trafficContent = document.getElementById('trafficForecastContent');
+          if (safetyContent) {
+            safetyContent.classList.add('expanded');
+            safetyContent.style.display = 'block';
+          }
+          if (trafficContent) {
+            trafficContent.classList.add('expanded');
+            trafficContent.style.display = 'block';
+          }
+        }
+
       } catch (err) {
         console.error('[MeroSadak] Route calculation error:', err);
         results.innerHTML = '<div class="result-card" style="border-color:rgba(217,4,41,0.5);"><div class="result-card-title" style="color:#ff4d6d;">Route error</div><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">' + (err.message || 'Error computing route') + '</div></div>';
+       }
+     }
+
+    function toggleReportSection(sectionId) {
+      const content = document.getElementById(sectionId + 'Content');
+      const toggle = document.getElementById(sectionId + 'Toggle');
+      if (content && toggle) {
+        const isExpanded = !content.classList.contains('collapsed');
+        content.classList.toggle('collapsed', isExpanded);
+        content.style.display = isExpanded ? 'none' : 'block';
+        toggle.textContent = isExpanded ? '▼' : '▲';
       }
     }
 

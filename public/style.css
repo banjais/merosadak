@@ -843,6 +843,27 @@ h1, h2, h3, h4, .font-heading {
   left: 0;
 }
 
+/* Map Layout Modes: half (default), fullmap, fullreport */
+.app-sidebar.layout-fullmap {
+  transform: translateX(-100%) !important;
+}
+
+.app-sidebar.layout-fullreport {
+  width: 100%;
+  max-width: 100vw;
+  left: 0;
+  transform: none !important;
+}
+
+#map.layout-fullmap {
+  left: 0;
+  width: 100vw;
+}
+
+#map.layout-fullreport {
+  display: none;
+}
+
 .mode-tab:hover {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.06);
@@ -3063,7 +3084,7 @@ button:focus-visible, select:focus-visible {
 .map-style-toggle {
   position: fixed;
   top: 108px;
-  right: 76px;
+  right: 126px;
   z-index: 905;
   width: 40px;
   height: 40px;
@@ -3074,6 +3095,9 @@ button:focus-visible, select:focus-visible {
   cursor: pointer;
   transition: all var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .map-style-toggle:hover {
   background: rgba(30, 62, 98, 0.8);
@@ -3090,6 +3114,15 @@ button:focus-visible, select:focus-visible {
 }
 .map-style-toggle:hover .map-style-chevron {
   color: #86efac;
+}
+.map-style-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+  transition: color 0.18s ease;
+}
+.map-style-toggle:hover .map-style-icon {
+  color: var(--accent-gold);
 }
 
 .map-floating-toggles {
@@ -3817,7 +3850,7 @@ button:focus-visible, select:focus-visible {
   }
    .map-style-toggle {
       top: 72px;
-      right: 8px;
+      right: 12px;
       width: 36px;
       height: 36px;
     }
@@ -4797,4 +4830,411 @@ button:focus-visible, select:focus-visible {
   border-color: #f87171;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   Collapsible Report Sections (Mobile-Friendly Half/Full Map Toggle)
+   ========================================================================== */
+
+.report-collapse-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  touch-action: manipulation;
+}
+
+.report-collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.report-collapse-btn .collapse-icon {
+  transition: transform var(--transition-fast);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.report-collapse-btn.collapsed .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+.report-section-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 12px;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.4s ease;
+}
+
+.report-section-content.expanded {
+  max-height: 500px;
+  opacity: 1;
+  padding: 0 12px;
+}
+
+.report-section-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 12px;
+}
+
+.report-section-content > * {
+  padding: 8px 12px;
+}
+
+/* Map / Report Layout Toggle */
+.map-report-container {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-report-container .map-area {
+  flex: 1;
+  position: relative;
+}
+
+.map-report-container .report-area {
+  height: 0;
+  overflow: hidden;
+  background: var(--surface-dark);
+  border-top: 1px solid var(--surface-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-report-container.half-map .report-area {
+  height: 50vh;
+  max-height: 50vh;
+}
+
+.map-report-container.full-report .map-area {
+  display: none;
+}
+
+.map-report-container.full-report .report-area {
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.map-layout-toggle {
+  position: fixed;
+  top: 154px;
+  right: 126px;
+  z-index: 1099;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface-glass);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-lg);
+}
+
+.map-layout-toggle .layout-btn {
+  width: 40px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.map-layout-toggle .layout-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.map-layout-toggle .layout-btn.active {
+  background: var(--primary-light);
+  color: var(--accent-gold);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Safety Tier Badges */
+.safety-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.safety-high { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.safety-moderate { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+.safety-elevated { background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.4); }
+.safety-hazard { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+/* Path Details Tabs */
+.path-details-tabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 2px;
+  margin-bottom: 12px;
+}
+.path-details-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.path-details-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+.path-details-tab.active {
+  background: var(--accent-gold);
+  color: #0f172a;
+}
+.path-detail-pane {
+  font-size: 0.78rem;
+}
+
+/* Safety Segment Breakdown */
+.safety-segment-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.safety-segment-row:last-child { border-bottom: none; }
+
+.safety-segment-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.safety-segment-bar-container {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.safety-segment-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.safety-segment-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Blackspot Hazard Markers */
+.blackspot-marker-popup {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #f8fafc;
+  max-width: 240px;
+}
+
+.blackspot-marker-popup .bs-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.blackspot-marker-popup .bs-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.blackspot-marker-popup .bs-cause {
+  font-size: 0.7rem;
+  color: #fbbf24;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 4px;
+}
+
+.blackspot-marker-popup .bs-advice {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Traffic Sparkline */
+.traffic-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 60px;
+  padding: 4px 0;
+  margin: 6px 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.traffic-sparkline .spark-bar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 6px;
+  border-radius: 2px 2px 0 0;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.traffic-sparkline .spark-bar.current-hr::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 6px;
+  background: var(--accent-sky);
+  border-radius: 1px;
+}
+
+.traffic-sparkline .spark-label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+/* Highway Info Panel */
+.highway-info-section {
+  margin-top: 12px;
+}
+
+.highway-info-section .hw-section-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.highway-info-section .hw-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.highway-info-section .hw-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.highway-info-section .hw-info-label {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.highway-info-section .hw-info-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Blackspot Risk Badges */
+.blackspot-risk-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.risk-moderate { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.risk-high { background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+.risk-critical { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* Mobile responsive for report sections */
+@media (max-width: 768px) {
+  .report-collapse-btn {
+    font-size: 0.85rem;
+    padding: 10px 14px;
+  }
+
+   .map-layout-toggle {
+     top: 116px;
+     right: 76px;
+   }
+
+   .map-layout-toggle .layout-btn {
+     width: 36px;
+     height: 32px;
+     font-size: 0.7rem;
+   }
+
+  .safety-segment-bar-container {
+    height: 4px;
+  }
+
+  .highway-info-section .hw-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Route safety tier indicator on map lines */
+.route-safety-overlay {
+  pointer-events: none;
+}
+
 
