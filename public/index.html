@@ -293,7 +293,7 @@
             <div id="sidebarSuggest" class="suggestions" style="position:absolute; top:100%; left:0; right:0; display:none;"></div>
           </div>
 
-        <button class="calculate-btn" onclick="calculateSidebarRoute()">Calculate Route</button>
+        <button class="calculate-btn" id="calculateBtn" disabled onclick="calculateSidebarRoute()">Calculate Route</button>
         </div>
         </div>
 
@@ -1140,6 +1140,20 @@
     let activeVehicle = 'car';
     let selectedDestination = null;
     let usingDetectedLocation = false;
+
+    function updateCalculateButton() {
+      const btn = document.getElementById('calculateBtn');
+      if (btn) btn.disabled = !selectedDestination;
+    }
+
+    function clearSearchState() {
+      const suggest = document.getElementById('sidebarSuggest');
+      if (suggest) { suggest.innerHTML = ''; suggest.style.display = 'none'; }
+      const results = document.getElementById('sidebarResults');
+      if (results) results.innerHTML = '';
+      selectedDestination = null;
+      updateCalculateButton();
+    }
 
     let matrixCities = [];
 
@@ -4929,6 +4943,7 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
         if (t[0]) {
           const dest = { label: to, lat: +t[0].lat, lng: +t[0].lon };
           selectedDestination = dest;
+          updateCalculateButton();
           document.getElementById('sidebarSearch').value = to;
           if (pref && ['fastest','shortest','safest','scenic','ev','avoid_toll'].includes(pref)) {
             activeRoutePreference = pref;
@@ -6044,6 +6059,7 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
 
       document.getElementById('sidebarSearch').value = dest.label;
       selectedDestination = dest;
+      updateCalculateButton();
       map.flyTo([dest.lat, dest.lng], 14, { duration: 1.2 });
       openAutoPopup(dest.lat, dest.lng, '<strong>' + dest.label + '</strong>');
       const results = document.getElementById('sidebarResults');
@@ -7307,6 +7323,7 @@ Plan your safe mountain highway journey at mero-sadak.app`;
     document.addEventListener('DOMContentLoaded', () => {
       updateOfflineBanner();
       loadPretripState();
+      updateCalculateButton();
     });
 
     // Start App with Splash Sequence
@@ -7342,6 +7359,7 @@ Plan your safe mountain highway journey at mero-sadak.app`;
       const sidebarSuggest = document.getElementById('sidebarSuggest');
       sidebarSearch.addEventListener('input', debounce(async (e) => {
         try {
+        clearSearchState();
         const query = e.target.value.trim();
         if (query.length < 2) {
           sidebarSuggest.style.display = 'none';

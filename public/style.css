@@ -1133,12 +1133,19 @@ h1, h2, h3, h4, .font-heading {
   margin-top: 4px;
 }
 
-.calculate-btn:hover {
+.calculate-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: 0 4px 12px rgba(217, 4, 41, 0.15);
+  transform: none;
+}
+
+.calculate-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 12px 30px rgba(217, 4, 41, 0.5);
 }
 
-.calculate-btn:active {
+.calculate-btn:active:not(:disabled) {
   transform: scale(0.98);
 }
 
