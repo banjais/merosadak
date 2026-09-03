@@ -190,6 +190,10 @@
           </div>
           <div id="matrixChipsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;"></div>
           <button class="btn-action-primary" onclick="computeDistanceMatrix()">📊 Calculate Distances</button>
+          <div id="matrixResultControls" style="display:none; margin-bottom:10px; gap:8px; align-items:center;">
+            <input type="text" id="matrixResultFilter" placeholder="Filter results..." autocomplete="off" class="matrix-input" style="flex:1;">
+            <button class="btn-header" onclick="exportMatrixPDF()" title="Export to A4 PDF">🖨️ Export PDF</button>
+          </div>
           <div id="matrixResults" style="margin-top:16px;"></div>
           <div id="matrixAiSection" style="margin-top:16px; display:none;">
             <div class="ai-advisor-row">
@@ -204,11 +208,11 @@
           <div style="font-size:0.85rem; font-weight:700; color:#fff;">📋 Pre-computed Matrix (62 curated cities)</div>
           <button id="toggleStaticMatrixBtn" class="btn-header" onclick="toggleStaticMatrixView()" style="font-size:0.78rem;">👁️ Show</button>
         </div>
-        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2); display:none;">
-          <div id="staticMatrixTable" style="padding:8px;"></div>
+        <div id="staticMatrixContainer" style="overflow:auto; max-height:calc(100vh - 120px); border:1px solid var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2);">
+          <div id="staticMatrixTable" style="padding:8px; min-width:100%;"></div>
         </div>
         <div id="staticMatrixPlaceholder" style="padding:14px 12px; color:var(--text-secondary); font-size:0.8rem; text-align:center; border:1px dashed var(--surface-border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.1);">
-          62 cities pre-loaded. Click <strong>Show</strong> to display the full table.
+          62 cities pre-loaded. Use the search above to add your own places.
         </div>
       </div>
     </div>
@@ -3851,7 +3855,7 @@
       const input = document.getElementById('matrixCityInput');
       const val = input.value.trim();
       if (!val) return;
-      if (matrixCities.length >= 8) { alert('Maximum 8 places supported at a time.'); return; }
+      if (matrixCities.length >= 20) { alert('Maximum 20 places supported at a time. Remove some to add more.'); return; }
 
       const tryAdd = (name, lat, lng) => {
         matrixCities.push({ name, lat, lng });
@@ -3952,7 +3956,7 @@
     }
 
     function addMatrixPlace(label, lat, lon) {
-      if (matrixCities.length >= 8) { alert('Up to 8 places at a time.'); return; }
+      if (matrixCities.length >= 20) { alert('Up to 20 places at a time. Remove some to add more.'); return; }
       if (matrixCities.some(p => p.name.toLowerCase() === label.toLowerCase())) return;
       matrixCities.push({ name: label, lat, lng: lon });
       document.getElementById('matrixCityInput').value = '';
@@ -4289,10 +4293,65 @@
         window.__pathCoordinates = pathCoords;
 
         document.getElementById('matrixAiSection').style.display = 'block';
+        const controls = document.getElementById('matrixResultControls');
+        if (controls) controls.style.display = 'flex';
+        const filterInput = document.getElementById('matrixResultFilter');
+        if (filterInput) {
+          filterInput.oninput = filterMatrixResults;
+          filterInput.value = '';
+        }
       } catch (err) {
         console.error('[MeroSadak] Matrix compute error:', err);
         out.innerHTML = '<p style="color:#ef4444;">Could not calculate distances right now.</p>';
       }
+    }
+
+    function filterMatrixResults() {
+      const filterInput = document.getElementById('matrixResultFilter');
+      if (!filterInput) return;
+      const term = filterInput.value.trim().toLowerCase();
+      const rows = document.querySelectorAll('#matrixResults .matrix-result-line');
+      rows.forEach(row => {
+        if (!term) { row.style.display = ''; return; }
+        const from = row.querySelector('.matrix-city-from')?.textContent.toLowerCase() || '';
+        const to = row.querySelector('.matrix-city-to')?.textContent.toLowerCase() || '';
+        const metrics = row.querySelector('.matrix-result-metrics')?.textContent.toLowerCase() || '';
+        row.style.display = (from.includes(term) || to.includes(term) || metrics.includes(term)) ? '' : 'none';
+      });
+    }
+
+    function exportMatrixPDF() {
+      const printWindow = window.open('', '_blank', 'width=800,height=1000');
+      if (!printWindow) { alert('Popup blocked. Please allow popups for PDF export.'); return; }
+      const content = document.getElementById('matrixResults').innerHTML;
+      const styles = `
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20mm; color: #000; }
+          .matrix-result-list { margin-bottom: 10mm; }
+          .matrix-result-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 0.5pt solid #ccc; font-size: 9pt; }
+          .matrix-result-route { display: flex; align-items: center; gap: 4px; }
+          .matrix-city-from, .matrix-city-to { font-weight: 600; }
+          .matrix-metric { font-size: 8pt; color: #444; }
+          .matrix-metric-divider { color: #999; }
+          .matrix-summary { background: #f0f8ff; border: 1pt solid #4a90d9; border-radius: 4pt; padding: 6pt 8pt; margin-bottom: 6pt; font-size: 8pt; }
+          .btn { font-size: 9pt; padding: 3px 8px; background: #007bff; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+          h1 { font-size: 14pt; margin-bottom: 4mm; }
+            h2 { font-size: 11pt; margin: 6mm 0 2mm; }
+          @page { size: A4; margin: 15mm; }
+        </style>
+      `;
+      const html = `<html><head><title>MeroSadak - Distance Matrix</title>${styles}</head>
+        <body>
+          <h1>📊 MeroSadak Distance Matrix</h1>
+          <p>Generated: ${new Date().toLocaleString('en-NP', { timeZone: 'Asia/Kathmandu' })}</p>
+          <h2>Results</h2>
+          <div class="matrix-result-list">${content}</div>
+          <div style="margin-top:10mm; text-align:center; font-size:8pt; color:#999;">Powered by MeroSadak • merosadak.web.app</div>
+        </body></html>`;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); }, 500);
     }
 
     function computeOptimalTour(orderedPoints) {
@@ -4512,20 +4571,12 @@
       const placeholder = document.getElementById('staticMatrixPlaceholder');
       const btn = document.getElementById('toggleStaticMatrixBtn');
       if (!container || !btn) return;
-      const willShow = container.style.display === 'none';
-      if (willShow) {
-        if (!staticMatrixRendered) {
-          renderStaticMatrix();
-          staticMatrixRendered = true;
-        }
-        container.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-        btn.innerHTML = '🙈 Hide';
-      } else {
-        container.style.display = 'none';
-        if (placeholder) placeholder.style.display = 'block';
-        btn.innerHTML = '👁️ Show';
-      }
+      if (!staticMatrixRendered) { renderStaticMatrix(); staticMatrixRendered = true; }
+      const willShow = container.style.display !== 'block';
+      container.style.display = willShow ? 'block' : 'none';
+      if (placeholder) placeholder.style.display = willShow ? 'none' : 'block';
+      btn.innerHTML = willShow ? '🙈 Hide' : '👁️ Show';
+    }
     }
 
     function focusMatrixCity(lat, lng, name) {
