@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=20260826-1">
+  <link rel="stylesheet" href="style.css?v=20260903-1">
 </head>
 <body>
 
@@ -1248,9 +1248,20 @@
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      tileLayers.voyager = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        subdomains: 'abc',
+      // Clean: CARTO Positron (free, no key, crisp road lines, ideal for highway overlays)
+      tileLayers.voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19,
+        detectRetina: true,
+        errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+      });
+
+      // Standard: CARTO Voyager (subtle color, road network visible)
+      tileLayers.standard = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19,
         detectRetina: true,
         errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
@@ -1261,11 +1272,24 @@
       });
 
       tileLayers.terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://opentopomap.org/">OpenTopoMap</a>',
         errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       });
 
+      // OpenFreeMap vector style (no key, no rate-limit). Loaded lazily only when user picks it.
+      tileLayers.openfreemap = {
+        isVector: true,
+        styleUrl: 'https://tiles.openfreemap.org/styles/liberty',
+        maplibreMap: null,
+        ready: false
+      };
+
+      // Default: Positron (cleanest for highway visibility)
       tileLayers.voyager.addTo(map);
+      currentMapStyle = 'voyager';
+
+      // Live enrichment of highway popups via published DoR Google Sheet (roads tab)
+      loadDorRoadsSheet().then(() => { try { refreshHighwayPopups(); } catch (e) {} });
 
       let tileErrorCount = 0;
       const maxTileErrors = 5;
@@ -1276,7 +1300,7 @@
           tileErrorCount = 0;
           console.error('[MeroSadak] Multiple tile errors detected, switching basemap');
           showApiError('Map tiles are loading slowly. Switching basemap...');
-          const fallbacks = ['voyager', 'terrain', 'satellite'];
+          const fallbacks = ['voyager', 'standard', 'terrain', 'satellite'];
           const current = currentMapStyle;
           const next = fallbacks.find(s => s !== current) || 'voyager';
           setMapStyle(next);
@@ -1315,41 +1339,128 @@
     }
 
     function cycleMapStyle() {
-      const styles = ['voyager', 'satellite', 'terrain'];
-      const labels = { voyager: '🗺️ Standard', satellite: '🛰️ Satellite', terrain: '🏔️ Terrain' };
+      const styles = ['voyager', 'standard', 'satellite', 'terrain'];
+      const labels = { voyager: '🧭 Clean', standard: '🗺️ Standard', satellite: '🛰️ Satellite', terrain: '🏔️ Terrain' };
       const nextIndex = (styles.indexOf(currentMapStyle) + 1) % styles.length;
       setMapStyle(styles[nextIndex]);
     }
 
   function setMapStyle(style) {
-    if (tileLayers[currentMapStyle]) {
-      map.removeLayer(tileLayers[currentMapStyle]);
+    // Remove current layer (handle both Leaflet layer and MapLibre vector mode)
+    const cur = tileLayers[currentMapStyle];
+    if (cur && typeof cur.remove === 'function') {
+      map.removeLayer(cur);
+    } else if (cur && cur.isVector && cur.maplibreMap) {
+      try { cur.maplibreMap.getContainer().style.display = 'none'; } catch (e) {}
     }
+
     currentMapStyle = style;
     tileErrorCount = 0;
-    tileLayers[currentMapStyle].addTo(map);
+
+    const next = tileLayers[style];
+    if (next && typeof next.addTo === 'function') {
+      next.addTo(map);
+    } else if (next && next.isVector) {
+      ensureMapLibreStyle(style);
+    }
+
     const toggleBtn = document.getElementById('mapStyleToggle');
     if (toggleBtn) {
-      const styleLabel = { voyager: 'Standard', satellite: 'Satellite', terrain: 'Terrain' };
-      const styleEmoji = { voyager: '🗺️', satellite: '🛰️', terrain: '🏔️' };
+      const styleLabel = { voyager: 'Clean', standard: 'Standard', satellite: 'Satellite', terrain: 'Terrain' };
+      const styleEmoji = { voyager: '🧭', standard: '🗺️', satellite: '🛰️', terrain: '🏔️' };
       const label = styleLabel[style] || 'Standard';
       const emoji = styleEmoji[style] || '🗺️';
       toggleBtn.title = 'Map Style: ' + emoji + ' ' + label;
 
       // Update the icon to reflect the NEXT style in the cycle
-      const nextIdx = (['voyager','satellite','terrain'].indexOf(style) + 1) % 3;
-      const nextStyle = ['voyager','satellite','terrain'][nextIdx];
+      const nextIdx = (['voyager','standard','satellite','terrain'].indexOf(style) + 1) % 4;
+      const nextStyle = ['voyager','standard','satellite','terrain'][nextIdx];
       const iconEl = document.getElementById('mapStyleIcon');
       if (iconEl) {
         if (nextStyle === 'satellite') {
           iconEl.innerHTML = '<circle cx="12" cy="12" r="3"></circle><path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>';
         } else if (nextStyle === 'terrain') {
           iconEl.innerHTML = '<path d="M20 14.66V16a4 4 0 0 1-4 4h-.5l-3-3-2.5 2-3-2-2.5 2H6a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h.5l3 3 2.5-2 3 2 2.5-2H18a4 4 0 0 1 4 4z"></path>';
-        } else {
+        } else if (nextStyle === 'standard') {
           iconEl.innerHTML = '<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path>';
+        } else {
+          iconEl.innerHTML = '<path d="M3 12l3-3 3 3 4-6 5 7 3-3"></path>';
         }
       }
     }
+  }
+
+  // Lazily load MapLibre GL + OpenFreeMap vector style for the OpenFreeMap option
+  let __maplibreLoader = null;
+  function ensureMapLibreStyle(styleKey) {
+    const entry = tileLayers[styleKey];
+    if (!entry || !entry.isVector) return;
+    if (!window.maplibregl) {
+      if (!__maplibreLoader) {
+        __maplibreLoader = new Promise((resolve, reject) => {
+          const css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+          document.head.appendChild(css);
+          const s = document.createElement('script');
+          s.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error('Failed to load MapLibre GL'));
+          document.head.appendChild(s);
+        });
+      }
+      __maplibreLoader.then(() => ensureMapLibreStyle(styleKey)).catch(e => console.warn(e));
+      return;
+    }
+    if (entry.maplibreMap) {
+      entry.maplibreMap.getContainer().style.display = 'block';
+      entry.maplibreMap.resize();
+      return;
+    }
+    // Mount a vector canvas under Leaflet's pane so layers stay interactive
+    let container = document.getElementById('openfreemap-canvas');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'openfreemap-canvas';
+      container.style.cssText = 'position:absolute; inset:0; z-index:0; pointer-events:none;';
+      const mapEl = document.getElementById('map');
+      if (mapEl) mapEl.appendChild(container);
+    }
+    container.style.pointerEvents = 'auto';
+    const vmap = new window.maplibregl.Map({
+      container: container,
+      style: entry.styleUrl,
+      center: [84.124, 28.3949],
+      zoom: 7,
+      attributionControl: true,
+      interactive: true
+    });
+    vmap.addControl(new window.maplibregl.NavigationControl(), 'top-right');
+    vmap.on('load', () => {
+      // Overlay DoR highways from local index on the vector basemap
+      const index = window.__HIGHWAY_INDEX__ || [];
+      index.forEach(h => {
+        const url = `https://merosadak.banjays.workers.dev/api/data/highway/${h.file}`;
+        fetch(url).then(r => r.ok ? r.json() : null).then(g => {
+          if (!g || !window.maplibregl) return;
+          const srcId = 'dor-' + h.code;
+          if (vmap.getSource(srcId)) return;
+          vmap.addSource(srcId, { type: 'geojson', data: g });
+          vmap.addLayer({
+            id: srcId + '-line',
+            type: 'line',
+            source: srcId,
+            paint: {
+              'line-color': '#ff6a00',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.2, 12, 3, 16, 6],
+              'line-opacity': 0.9
+            }
+          });
+        }).catch(() => {});
+      });
+    });
+    entry.maplibreMap = vmap;
+    entry.ready = true;
   }
 
   function switchMapLayout(layout) {
@@ -1438,6 +1549,7 @@
         const safePalika = Array.isArray(palikaRes) ? palikaRes : [];
         const safeHighways = Array.isArray(hwyRes) ? hwyRes : [];
         allHighwaysIndex = safeHighways;
+        window.__HIGHWAY_INDEX__ = safeHighways;
         window.__HIGHWAY_INFO__ = hwyInfoRes;
         window.__BLACKSPOTS__ = blackspotsRes;
         window.__WEATHER_NODES__ = weatherRes;
@@ -2282,6 +2394,81 @@
     // 8. Map Toggles & Layers
     // ==========================================
 
+    // Live DoR Roads-tab Google Sheet loader (keyed by highway code, e.g. NH01).
+    // Returns a Promise; safely resolves to {} on any failure (no breakage).
+    window.__DOR_SHEET__ = {};
+    function loadDorRoadsSheet() {
+      if (window.__DOR_SHEET_LOADED__) return Promise.resolve(window.__DOR_SHEET__);
+      window.__DOR_SHEET_LOADED__ = Promise.resolve().then(async () => {
+        const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2TKtfetBRsarxST98FSo-_g_2uDlpwHZkg7I1s7C2jTlg0YJ6CzI92_lpz5EBa_YbihBS1vIlvzlK/pub?gid=0&single=true&output=csv';
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) return {};
+          const text = await res.text();
+          const rows = text.split(/\r?\n/).filter(Boolean);
+          if (!rows.length) return {};
+          const headers = parseCsvLine(rows[0]).map(h => h.trim());
+          const lookup = {};
+          for (let i = 1; i < rows.length; i++) {
+            const cols = parseCsvLine(rows[i]);
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
+            const code = (row['Road Code'] || row['road_code'] || row['Code'] || row['NH_Code'] || row['Highway Code'] || '').toUpperCase();
+            if (code) lookup[code] = row;
+          }
+          window.__DOR_SHEET__ = lookup;
+          return lookup;
+        } catch (e) {
+          console.debug('[MeroSadak] DoR sheet fetch failed (using local data only)', e);
+          return {};
+        }
+      });
+      return window.__DOR_SHEET_LOADED__;
+    }
+
+    // Minimal CSV line parser (handles quoted fields with commas).
+    function parseCsvLine(line) {
+      const out = []; let cur = ''; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (inQ) {
+          if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (c === '"') { inQ = false; }
+          else { cur += c; }
+        } else {
+          if (c === ',') { out.push(cur); cur = ''; }
+          else if (c === '"') { inQ = true; }
+          else { cur += c; }
+        }
+      }
+      out.push(cur);
+      return out;
+    }
+
+    // Re-attach enriched sheet data to any open highway popups.
+    function refreshHighwayPopups() {
+      try {
+        // No-op for Leaflet (each popup builds content on open); but a global cache is
+        // available via window.__DOR_SHEET__ for any renderer that wants to look up
+        // live attributes (status, surface, division, length) by highway code.
+        const sheet = window.__DOR_SHEET__ || {};
+        const idx = window.__HIGHWAY_INDEX__ || [];
+        if (!idx.length) return;
+        // Decorate global index with any sheet attributes so consumers see them
+        idx.forEach(h => {
+          const row = sheet[h.code];
+          if (row) {
+            h.liveStatus = row['Status'] || row['status'] || '';
+            h.liveSurface = row['Surface'] || row['Pavement'] || row['pavement_type'] || '';
+            h.liveLength = row['Length'] || row['length_km'] || '';
+            h.liveDivision = row['Division'] || row['division'] || '';
+            h.liveRemarks = row['Remarks'] || row['remarks'] || '';
+            h.liveUpdated = row['Last Updated'] || row['updated'] || '';
+          }
+        });
+      } catch (e) { /* non-fatal */ }
+    }
+
     async function fetchLiveIncidents() {
       if (!layerGroups.incidents) return;
       layerGroups.incidents.clearLayers();
@@ -2553,6 +2740,26 @@
             if (seg.currentIssue) {
               popupContent += '<div style="font-size:0.65rem; color:#fbbf24; margin-top:2px;">⚠️ ' + seg.currentIssue + '</div>';
             }
+
+            // Live enrichment from published DoR Google Sheet (if available)
+            const sheet = window.__DOR_SHEET__ || {};
+            const liveRow = sheet[(hwy.code || '').toUpperCase()];
+            if (liveRow) {
+              const liveBits = [];
+              if (liveRow['Status']) liveBits.push('🟢 Status: ' + liveRow['Status']);
+              if (liveRow['Surface'] || liveRow['Pavement']) liveBits.push('🛣️ ' + (liveRow['Surface'] || liveRow['Pavement']));
+              if (liveRow['Length']) liveBits.push('📏 ' + liveRow['Length'] + ' km');
+              if (liveRow['Division']) liveBits.push('🏛️ ' + liveRow['Division']);
+              if (liveRow['Remarks']) liveBits.push('📝 ' + liveRow['Remarks']);
+              if (liveRow['Last Updated']) liveBits.push('🕒 ' + liveRow['Last Updated']);
+              if (liveBits.length) {
+                popupContent += '<div style="margin-top:6px; padding:5px 7px; background:rgba(245,158,11,0.12); border-left:2px solid #f59e0b; border-radius:4px; font-size:0.62rem; color:#fde68a; line-height:1.45;">' +
+                  '<div style="font-weight:700; color:#fbbf24; margin-bottom:2px;">📡 Live DoR Sheet</div>' +
+                  liveBits.join('<br>') +
+                '</div>';
+              }
+            }
+
             popupContent += '<div style="font-size:0.62rem; color:var(--text-muted); margin-top:4px;">' + (hwy.code || '') + ' · ' + (hwy.name || '') + '</div></div>';
 
             polyline.bindPopup(popupContent, { className: 'custom-dark-popup', closeButton: false });
