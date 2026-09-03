@@ -6997,7 +6997,7 @@ Be specific to the data above. Do NOT invent highway names or km. If a section h
           resultEl.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Could not geocode one or both locations.</p>';
           return;
         }
-        const url = 'https://router.project-osrm.org/route/v1/driving/' + geoA[0].lon + ',' + geoA[0].lat + ';' + geoB[0].lon + ',' + geoB[0].lat + '?overview=false';
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + geoA.lon + ',' + geoA.lat + ';' + geoB.lon + ',' + geoB.lat + '?overview=false';
         const res = await fetch(url);
         const data = await res.json();
         if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
