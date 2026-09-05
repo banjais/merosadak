@@ -11,12 +11,12 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "ship": "node scripts/ship.js",
+    "ship": "node scripts/ship.cjs",
     "sync:data": "node worker/sync-data.js",
     "sync:kv:setup": "node worker/setup-kv.js",
-    "worker:deploy": "node deploy-worker.js",
+    "worker:deploy": "node deploy-worker.cjs",
     "worker:tail": "cd worker && npx wrangler tail --config wrangler.toml",
-    "deploy": "node deploy-worker.js"
+    "deploy": "node deploy-worker.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
