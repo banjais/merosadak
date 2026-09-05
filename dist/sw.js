@@ -30,26 +30,26 @@ const API_ENDPOINTS = [
 // Key Nepal highway tile bounding coordinates (Zoom 6, 7, 8 base covers all Nepal)
 const NEPAL_CORE_TILES = [
   // Zoom 6
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/6/46/27.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/6/47/27.png',
-  'https://c.basemaps.cartocdn.com/rastertiles/voyager/6/46/28.png',
-  'https://d.basemaps.cartocdn.com/rastertiles/voyager/6/47/28.png',
+  'https://a.tile.openstreetmap.org/6/46/27.png',
+  'https://b.tile.openstreetmap.org/6/47/27.png',
+  'https://c.tile.openstreetmap.org/6/46/28.png',
+  'https://a.tile.openstreetmap.org/6/47/28.png',
   // Zoom 7 (Nepal East-West & Central)
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/7/93/54.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/7/94/54.png',
-  'https://c.basemaps.cartocdn.com/rastertiles/voyager/7/95/54.png',
-  'https://d.basemaps.cartocdn.com/rastertiles/voyager/7/93/55.png',
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/7/94/55.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/7/95/55.png',
+  'https://a.tile.openstreetmap.org/7/93/54.png',
+  'https://b.tile.openstreetmap.org/7/94/54.png',
+  'https://c.tile.openstreetmap.org/7/95/54.png',
+  'https://a.tile.openstreetmap.org/7/93/55.png',
+  'https://b.tile.openstreetmap.org/7/94/55.png',
+  'https://c.tile.openstreetmap.org/7/95/55.png',
   // Zoom 8 (Kathmandu, Pokhara, Chitwan, Narayanghat, Butwal, Biratnagar)
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/8/187/109.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/8/188/109.png',
-  'https://c.basemaps.cartocdn.com/rastertiles/voyager/8/189/109.png',
-  'https://d.basemaps.cartocdn.com/rastertiles/voyager/8/190/109.png',
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/8/187/110.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/8/188/110.png',
-  'https://c.basemaps.cartocdn.com/rastertiles/voyager/8/189/110.png',
-  'https://d.basemaps.cartocdn.com/rastertiles/voyager/8/190/110.png',
+  'https://a.tile.openstreetmap.org/8/187/109.png',
+  'https://b.tile.openstreetmap.org/8/188/109.png',
+  'https://c.tile.openstreetmap.org/8/189/109.png',
+  'https://a.tile.openstreetmap.org/8/190/109.png',
+  'https://b.tile.openstreetmap.org/8/187/110.png',
+  'https://c.tile.openstreetmap.org/8/188/110.png',
+  'https://a.tile.openstreetmap.org/8/189/110.png',
+  'https://b.tile.openstreetmap.org/8/190/110.png',
 ];
 
 // Install Event: Precaches base static app shell and core tiles
@@ -100,9 +100,9 @@ self.addEventListener('activate', (event) => {
 // Helper: Check if request is a map tile
 function isTileRequest(url) {
   return (
-    url.includes('basemaps.cartocdn.com') ||
     url.includes('tile.openstreetmap.org') ||
-    url.includes('/rastertiles/') ||
+    url.includes('tile.opentopomap.org') ||
+    url.includes('server.arcgisonline.com') ||
     url.match(/\/\d+\/\d+\/\d+(\.png|@2x\.png|\.jpg|\.webp)/i)
   );
 }
