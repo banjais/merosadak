@@ -119,7 +119,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Defaults to 'weather' so interactive weather markers for mountain passes are immediately rendered on the map.
   // When another layer toggle is clicked, it switches; toggling the active layer hides it.
   // When the layer toolbar is closed, all showing layers are closed.
-  const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('weather');
+  const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('highways');
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
 
@@ -262,7 +262,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const highwaysGroup = layersRef.current.highways;
     highwaysGroup.clearLayers();
 
-    if (activeLayer !== 'highways') return;
+    if (activeLayer === 'none') return;
 
     highwaysList.forEach((highway) => {
       const isSelected = activeHighwayInfo?.code === highway.code;
