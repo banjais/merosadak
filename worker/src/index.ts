@@ -15,6 +15,9 @@
  *   wrangler secret put WAZE_FEED_URL
  */
 
+type RoadStatusType = "clear" | "caution" | "obstructed" | "closed";
+type IncidentType = "landslide" | "flood" | "construction" | "fallen_rocks" | "one_way" | "accident" | "bridge_maintenance" | "traffic_jam" | "pothole";
+
 export interface Env {
   TOMTOM_API_KEY: string;
   OPENWEATHERMAP_API_KEY: string;
