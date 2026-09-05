@@ -43,7 +43,7 @@ const LOCAL_STORAGE_CACHE_KEY = 'mero_sadak_offline_bundle_v1';
 const LOCAL_STORAGE_LAST_SYNC_KEY = 'mero_sadak_last_sync_timestamp';
 const LOCAL_STORAGE_CACHED_SEGMENTS_KEY = 'mero_sadak_cached_segments_v1';
 
-// Helper: Convert Lat/Lng to Tile coordinates (OSM/Carto standard)
+// Helper: Convert Lat/Lng to Tile coordinates (OSM standard)
 export function latLngToTile(lat: number, lng: number, zoom: number): { x: number; y: number; z: number } {
   const x = Math.floor(((lng + 180) / 360) * Math.pow(2, zoom));
   const latRad = (lat * Math.PI) / 180;
@@ -60,7 +60,7 @@ export function generateNepalHighwayTileUrls(): string[] {
 
   const getTileUrl = (x: number, y: number, z: number, idx: number) => {
     const sub = subdomains[idx % subdomains.length];
-    return `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+    return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;
@@ -389,7 +389,7 @@ export function generateTilesForSegments(segments: HighwaySegment[]): string[] {
 
   const getTileUrl = (x: number, y: number, z: number, idx: number) => {
     const sub = subdomains[idx % subdomains.length];
-    return `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+    return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;
@@ -524,7 +524,7 @@ export async function cacheSelectedSegments(
         processed,
         total: totalItems,
         percentage: Math.round((processed / totalItems) * 100),
-        currentTask: `Downloading ${tileUrls.length} cartographic tiles along selected mountain corridors...`,
+        currentTask: `Downloading ${tileUrls.length} map tiles along selected mountain corridors...`,
         stage: 'tiles',
         segmentName: items[0].segment.from,
         bytesCached: bytesDownloaded,

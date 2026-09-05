@@ -775,7 +775,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                   <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                   <span>
                     {syncProgress.stage === 'route_data' && 'Packaging Segment Geometry & Elevation...'}
-                    {syncProgress.stage === 'tiles' && 'Fetching & Caching Cartographic Tiles...'}
+                    {syncProgress.stage === 'tiles' && 'Fetching & Caching Map Tiles...'}
                     {syncProgress.stage === 'apis' && 'Synchronizing Weather Nodes & Road Alerts...'}
                     {syncProgress.stage === 'complete' && 'Caching Finalized!'}
                     {syncProgress.stage === 'error' && 'Sync Encountered Interruption'}

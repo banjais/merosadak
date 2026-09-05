@@ -36,7 +36,6 @@ Called directly from the browser:
 - Nominatim (reverse geocoding for map clicks)
 - OSRM (routing, distance, ETA)
 - Open-Meteo (weather)
-- CARTO basemap tiles
 
 Called from the Worker (proxied, see table above):
 - Open-Meteo (weather, primary)
