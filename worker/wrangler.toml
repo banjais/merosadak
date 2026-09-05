@@ -12,6 +12,7 @@ id = "e196f41c0a924657a99decf54d016f87"
 ALLOWED_ORIGIN = "https://merosadak.web.app"
 GEMINI_MODEL_PRIMARY = "gemini-2.5-flash"
 GEMINI_MODEL_SECONDARY = "gemini-2.0-flash-lite"
+DOR_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1gfbACf6IkjNhrC_xUDuiFPUyOmgqsuU8mqKVED7Gook/export?format=csv&gid=0"
 
 # Secrets (set via `wrangler secret put <NAME>`, never written here):
 #   TOMTOM_API_KEY

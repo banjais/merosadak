@@ -221,6 +221,7 @@ export interface RoadIncident {
   dorVerified: boolean;
   alternativeRouteAdvice?: string;
   upvotes: number;
+  source?: 'dor' | 'waze' | 'local' | 'tomtom';
 }
 
 export interface CityNode {

@@ -553,6 +553,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <span>Status: <strong class="text-amber-400 capitalize">${inc.status}</strong></span>
             <span class="font-mono text-slate-400">${inc.reportedAt}</span>
           </div>
+          <div class="text-[10px] pt-1">
+            <span class="px-1.5 py-0.5 rounded ${
+              inc.source === 'dor' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
+              inc.source === 'waze' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30' :
+              inc.dorVerified ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
+              'bg-slate-800 text-slate-400 border border-slate-700'
+            } uppercase font-mono">
+              ${inc.source === 'dor' ? 'DoR Nepal' : inc.source === 'waze' ? 'Waze' : inc.dorVerified ? 'DoR Verified' : 'Community'}
+            </span>
+          </div>
         </div>
       `);
 

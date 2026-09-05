@@ -22,6 +22,7 @@ export interface Env {
   GEMINI_MODEL_PRIMARY: string;
   GEMINI_MODEL_SECONDARY: string;
   WAZE_FEED_URL: string;
+  DOR_GOOGLE_SHEET_URL: string;
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
   ALLOWED_ORIGIN: string;
@@ -62,6 +63,175 @@ async function fetchWazeAlerts(env: Env): Promise<any[]> {
   } catch {
     return [];
   }
+}
+
+// Compact district centroid lookup for geocoding DoR sheet rows
+// that lack explicit coordinates.
+const DISTRICT_CENTROIDS: Record<string, [number, number]> = {"Achham":[29.073,81.306],"Arghakhanchi":[27.915,83.084],"Baglung":[28.331,83.273],"Baitadi":[29.506,80.564],"Bajhang":[29.792,81.156],"Bajura":[29.613,81.543],"Banke":[28.139,81.812],"Bara":[27.062,85.063],"Bardiya":[28.357,81.492],"Bhaktapur":[27.688,85.441],"Bhojpur":[27.157,87.067],"Chitawan":[27.581,84.399],"Dadeldhura":[29.224,80.515],"Dailekh":[28.874,81.699],"Dang":[28.018,82.425],"Darchula":[29.927,80.815],"Dhading":[27.874,84.972],"Dhankuta":[26.972,87.355],"Dhanusha":[26.806,86],"Dolakha":[27.789,86.211],"Dolpa":[29.188,83.088],"Doti":[29.177,80.887],"Gorkha":[28.311,84.775],"Gulmi":[28.086,83.301],"Humla":[30.079,81.913],"Ilam":[26.848,87.951],"Jajarkot":[28.878,82.151],"Jhapa":[26.563,87.961],"Jumla":[29.303,82.29],"Kabhrepalanchok":[27.534,85.596],"Kailali":[28.829,80.828],"Kalikot":[29.172,81.789],"Kanchanpur":[28.839,80.387],"Kapilbastu":[27.637,83.011],"Kaski":[28.34,83.999],"Kathmandu":[27.706,85.362],"Khotang":[27.108,86.783],"Lalitpur":[27.548,85.345],"Lamjung":[28.257,84.419],"Mahottari":[26.861,85.819],"Makawanpur":[27.455,85.087],"Manang":[28.688,84.158],"Morang":[26.659,87.454],"Mugu":[29.606,82.405],"Mustang":[28.955,83.841],"Myagdi":[28.574,83.471],"Nawalparasi East":[27.688,84.009],"Nawalparasi West":[27.563,83.712],"Nuwakot":[27.905,85.201],"Okhaldhunga":[27.316,86.384],"Palpa":[27.82,83.627],"Panchthar":[27.13,87.795],"Parbat":[28.194,83.683],"Parsa":[27.21,84.77],"Pyuthan":[28.127,82.863],"Ramechhap":[27.513,86.18],"Rasuwa":[28.165,85.381],"Rautahat":[26.981,85.272],"Rolpa":[28.325,82.621],"Rukum East":[28.681,82.847],"Rukum West":[28.689,82.458],"Rupandehi":[27.59,83.392],"Salyan":[28.364,82.138],"Sankhuwasabha":[27.586,87.277],"Saptari":[26.619,86.72],"Sarlahi":[26.963,85.579],"Sindhuli":[27.198,85.946],"Sindhupalchok":[27.836,85.693],"Siraha":[26.743,86.336],"Solukhumbu":[27.812,86.72],"Sunsari":[26.664,87.19],"Surkhet":[28.669,81.541],"Syangja":[28.018,83.782],"Tanahu":[27.958,84.241],"Taplejung":[27.694,87.916],"Terhathum":[27.12,87.547],"Udayapur":[26.899,86.628]};
+
+function parseCoord(raw: string): [number, number] | null {
+  const trimmed = (raw || "").trim();
+  if (!trimmed) return null;
+  // Accept "lat,lng" or "lat lng" or "[lat,lng]"
+  const m = trimmed.match(/(-?[\d]+\.[\d]+)\s*[,\s]\s*(-?[\d]+\.[\d]+)/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lng = parseFloat(m[2]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return [lat, lng];
+}
+
+function districtCentroid(name: string): [number, number] {
+  const key = name.replace(/\s+/g, " ").trim();
+  return DISTRICT_CENTROIDS[key] || [27.7, 84.5]; // fallback: Nepal center
+}
+
+function severityFromStatus(status: string): "minor" | "moderate" | "severe" | "critical" {
+  const s = (status || "").toLowerCase();
+  if (s.includes("blocked") || s.includes("closure")) return "severe";
+  if (s.includes("one") || s.includes("single")) return "moderate";
+  if (s.includes("resumed") || s.includes("clear")) return "minor";
+  return "moderate";
+}
+
+function roadStatusFromStatus(status: string): RoadStatusType {
+  const s = (status || "").toLowerCase();
+  if (s.includes("blocked") || s.includes("closure")) return "closed";
+  if (s.includes("one") || s.includes("single")) return "caution";
+  if (s.includes("resumed") || s.includes("clear")) return "clear";
+  return "caution";
+}
+
+function incidentTypeFromStatus(status: string, roadRef: string): IncidentType {
+  const s = (status || "").toLowerCase();
+  if (s.includes("blocked")) return "landslide";
+  if (s.includes("one") || s.includes("single")) return "one_way";
+  if (s.includes("construction") || s.includes("maintenance")) return "construction";
+  if (s.includes("flood")) return "flood";
+  if ((roadRef || "").toLowerCase().includes("bridge")) return "bridge_maintenance";
+  return "traffic_jam";
+}
+
+// Parse DoR Google Sheet CSV into RoadIncident-style objects.
+async function fetchDorSheetIncidents(env: Env): Promise<any[]> {
+  const url = env.DOR_GOOGLE_SHEET_URL;
+  if (!url) return [];
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const text = await res.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const idx = (name: string) => headers.indexOf(name);
+
+    const results: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(",");
+      const get = (name: string) => (cols[idx(name)] || "").trim();
+
+      const status = get("status") || "Unknown";
+      if (!status || status.toLowerCase() === "clear") continue; // skip cleared rows
+
+      const distName = get("dist_name") || get("admin") || get("dist_name_list") || "Unknown";
+      const roadRef = get("road_refno") || "";
+      const roadName = get("road_name") || roadRef;
+      const coord = parseCoord(get("incidentcoordinate"));
+      const [lat, lng] = coord || districtCentroid(distName);
+
+      results.push({
+        id: `dor-${i}-${roadRef}-${distName}`.replace(/\s+/g, "-"),
+        highwayCode: roadRef,
+        highwayName: roadName,
+        locationName: get("incidentplace") || distName,
+        chainageKm: get("chainage") || undefined,
+        lat,
+        lng,
+        type: incidentTypeFromStatus(status, roadRef),
+        severity: severityFromStatus(status),
+        title: `${status}: ${roadName || "Unknown Road"} (${roadRef || "N/A"})`,
+        description: get("remarks") || get("restorationefforts") || `DoR advisory — ${status}`,
+        status: roadStatusFromStatus(status),
+        reportedAt: get("incidentstarted") || get("reportdate") || new Date().toISOString(),
+        estimatedClearance: get("estimatedrestoration") || undefined,
+        dorVerified: true,
+        upvotes: 0,
+        source: "dor",
+      });
+    }
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+// Load locally cached incidents from KV and merge with upstream sources.
+async function loadLocalIncidents(env: Env): Promise<any[]> {
+  try {
+    const raw = await env.DATA.get("incidents.json");
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return (data.incidents || []).map((inc: any) => ({ ...inc, source: inc.source || "local" }));
+  } catch {
+    return [];
+  }
+}
+
+// ============================================================
+// ROAD ALERTS — merged DoR sheet + Waze + local cache
+// ============================================================
+
+async function handleRoadAlerts(env: Env): Promise<Response> {
+  const [dorIncidents, wazeAlerts, localIncidents] = await Promise.all([
+    fetchDorSheetIncidents(env),
+    fetchWazeAlerts(env),
+    loadLocalIncidents(env),
+  ]);
+
+  const wazeIncidents = wazeAlerts.map((a: any) => ({
+    id: `waze-${a.uuid || Math.random().toString(36).slice(2)}`,
+    highwayCode: "",
+    highwayName: a.street || "",
+    locationName: a.street || "Unknown location",
+    lat: a.location?.y,
+    lng: a.location?.x,
+    type: (a.type || "traffic_jam") as any,
+    severity: "moderate",
+    title: `${a.type || "Alert"}: ${a.reportDescription || ""}`.trim(),
+    description: a.reportDescription || "",
+    status: "caution" as RoadStatusType,
+    reportedAt: new Date(a.startTime || Date.now()).toISOString(),
+    dorVerified: false,
+    upvotes: 0,
+    source: "waze",
+  }));
+
+  const merged = [...dorIncidents, ...wazeIncidents, ...localIncidents];
+
+  // Deduplicate by id if present, otherwise by lat/lng + title proximity
+  const seen = new Set<string>();
+  const deduped = merged.filter((inc) => {
+    const key = inc.id || `${inc.lat}-${inc.lng}-${inc.title}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return new Response(
+    JSON.stringify({
+      source: "dor+waze+local",
+      syncedAt: new Date().toISOString(),
+      incidents: deduped,
+      counts: {
+        dor: dorIncidents.length,
+        waze: wazeIncidents.length,
+        local: localIncidents.length,
+        total: deduped.length,
+      },
+    }),
+    { status: 200, headers: { "Content-Type": "application/json", ...cors(env) } }
+  );
 }
 
 // ============================================================
@@ -494,6 +664,9 @@ export default {
 
     if (url.pathname === "/api/traffic") {
       return handleTraffic(url, env);
+    }
+    if (url.pathname === "/api/road-alerts") {
+      return handleRoadAlerts(env);
     }
     if (url.pathname === "/api/weather") {
       return handleWeather(url, env);

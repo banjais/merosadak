@@ -238,8 +238,13 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="font-bold text-white text-base">{incident.title}</span>
-                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-[10px] font-bold">
-                          DOR VERIFIED
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          incident.source === 'dor' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          incident.source === 'waze' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
+                          incident.dorVerified ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          'bg-slate-800 text-slate-400 border border-slate-700'
+                        }`}>
+                          {incident.source === 'dor' ? 'DoR Nepal' : incident.source === 'waze' ? 'Waze' : incident.dorVerified ? 'DoR Verified' : 'Community'}
                         </span>
                       </div>
                       <div className="text-xs text-slate-400 mt-0.5 flex items-center space-x-2">
