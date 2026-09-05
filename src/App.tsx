@@ -141,16 +141,10 @@ function AppContent() {
           setActiveFeature(urlTab as ActiveFeatureType);
         }
 
-        const initialPlan = findOptimizedRoute(origin, dest, urlPref, urlVehicle);
-        if (initialPlan) {
-          setActiveRoute(initialPlan);
-        }
+        // No active route auto-selected on initial load
       }
     } catch (e) {
-      const initialPlan = findOptimizedRoute('ktm', 'pkr', 'fastest', 'car');
-      if (initialPlan) {
-        setActiveRoute(initialPlan);
-      }
+      // No active route auto-selected on initial load
     }
   }, []);
 
