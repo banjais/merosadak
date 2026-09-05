@@ -216,8 +216,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.removeLayer(tileLayerRef.current);
     }
 
-    let url = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    let attribution = '&copy; <a href="https://carto.com/">CARTO</a> | DOR Nepal Highway GIS';
+    let url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    let attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | DoR Nepal Highway GIS';
     let maxZoom = 19;
 
     if (mapStyle === 'satellite') {
@@ -231,7 +231,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     const newLayer = L.tileLayer(url, {
       attribution,
-      subdomains: mapStyle === 'standard' ? 'abcd' : 'abc',
+      subdomains: 'abc',
       maxZoom,
     });
 
