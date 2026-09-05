@@ -379,26 +379,36 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     borderGroup.clearLayers();
 
     fetch('/data/nepal-international-border.geojson')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        if (!data || !data.features) return;
-        const geoJsonLayer = L.geoJSON(data, {
-          style: {
-            color: '#dc2626',
-            weight: 3,
-            opacity: 0.9,
-            fill: false,
-          },
-          onEachFeature: (feature, layer) => {
-            if (feature.properties?.name) {
-              layer.bindTooltip(feature.properties.name, {
-                sticky: true,
-                className: 'custom-dark-tooltip',
-              });
-            }
-          },
-        });
-        borderGroup.addLayer(geoJsonLayer);
+        if (!data || !data.features || !data.features.length) {
+          console.warn('No Nepal border data to render');
+          return;
+        }
+        try {
+          const geoJsonLayer = L.geoJSON(data, {
+            style: {
+              color: '#dc2626',
+              weight: 3,
+              opacity: 0.9,
+              fill: false,
+            },
+            onEachFeature: (feature, layer) => {
+              if (feature.properties?.name) {
+                layer.bindTooltip(feature.properties.name, {
+                  sticky: true,
+                  className: 'custom-dark-tooltip',
+                });
+              }
+            },
+          });
+          borderGroup.addLayer(geoJsonLayer);
+        } catch (e) {
+          console.error('Failed to render Nepal border:', e);
+        }
       })
       .catch(err => console.warn('Failed to load Nepal border:', err));
   }, []);
@@ -410,26 +420,36 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     provincesGroup.clearLayers();
 
     fetch('/data/nepal-provinces.geojson')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        if (!data || !data.features) return;
-        const geoJsonLayer = L.geoJSON(data, {
-          style: {
-            color: '#f59e0b',
-            weight: 1.5,
-            opacity: 0.6,
-            fill: false,
-            dashArray: '4, 4',
-          },
-          onEachFeature: (feature, layer) => {
-            const name = feature.properties?.name || feature.properties?.ADM1_EN || 'Province';
-            layer.bindTooltip(name, {
-              sticky: true,
-              className: 'custom-dark-tooltip',
-            });
-          },
-        });
-        provincesGroup.addLayer(geoJsonLayer);
+        if (!data || !data.features || !data.features.length) {
+          console.warn('No province data to render');
+          return;
+        }
+        try {
+          const geoJsonLayer = L.geoJSON(data, {
+            style: {
+              color: '#f59e0b',
+              weight: 1.5,
+              opacity: 0.6,
+              fill: false,
+              dashArray: '4, 4',
+            },
+            onEachFeature: (feature, layer) => {
+              const name = feature.properties?.name || feature.properties?.ADM1_EN || 'Province';
+              layer.bindTooltip(name, {
+                sticky: true,
+                className: 'custom-dark-tooltip',
+              });
+            },
+          });
+          provincesGroup.addLayer(geoJsonLayer);
+        } catch (e) {
+          console.error('Failed to render provinces:', e);
+        }
       })
       .catch(err => console.warn('Failed to load provinces:', err));
   }, []);
