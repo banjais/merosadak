@@ -1,0 +1,4221 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 1,
+        "id": 14417,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-015",
+        "link_name": "Gwarko-Manohara River(Balkumari)( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 27.45,
+        "link_to": 28.95,
+        "link_len": 1.5,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1614",
+        "shp_len": 1.183,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.332206,
+              27.6666637
+            ],
+            [
+              85.3403688,
+              27.6715177
+            ],
+            [
+              85.3417581,
+              27.6729398
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 2,
+        "id": 14277,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-011",
+        "link_name": "Kalanki - Balkhu (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 18.95,
+        "link_to": 21.95,
+        "link_len": 3,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1610",
+        "shp_len": 2.185,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2817149,
+              27.693329
+            ],
+            [
+              85.281715,
+              27.6933282
+            ],
+            [
+              85.2817769,
+              27.6930698
+            ],
+            [
+              85.2821615,
+              27.6922662
+            ],
+            [
+              85.2837777,
+              27.6898555
+            ],
+            [
+              85.284866,
+              27.6886994
+            ],
+            [
+              85.2901122,
+              27.6877676
+            ],
+            [
+              85.2936477,
+              27.6853899
+            ],
+            [
+              85.2997606,
+              27.6845878
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 3,
+        "id": 14282,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-001",
+        "link_name": "Manohara River - Koteswor (H03) KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 0,
+        "link_to": 1,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1601",
+        "shp_len": 1.032,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3417581,
+              27.6729398
+            ],
+            [
+              85.3440953,
+              27.6752718
+            ],
+            [
+              85.3496393,
+              27.6789843
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 4,
+        "id": 14340,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-010",
+        "link_name": "Swoyambhu - Kalanki (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 15.95,
+        "link_to": 18.95,
+        "link_len": 3,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1609",
+        "shp_len": 2.568,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2836471,
+              27.7163985
+            ],
+            [
+              85.2825412,
+              27.7076836
+            ],
+            [
+              85.2814843,
+              27.6982807
+            ],
+            [
+              85.2817149,
+              27.693329
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 5,
+        "id": 14344,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-008",
+        "link_name": "Balaju Bypass Junction (KTM Ringroad) - Ring road-Balaju ByPass",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 13,
+        "link_to": 13.95,
+        "link_len": 0.95,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "F02102",
+        "shp_len": 0.94,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3057889,
+              27.7352346
+            ],
+            [
+              85.3052773,
+              27.7282412
+            ],
+            [
+              85.3045434,
+              27.7270311
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 6,
+        "id": 14244,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-006",
+        "link_name": "Sankhapark - Maharajganj (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 8.5,
+        "link_to": 9.5,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1606",
+        "shp_len": 1.197,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3444126,
+              27.7316661
+            ],
+            [
+              85.3402196,
+              27.738055
+            ],
+            [
+              85.337124,
+              27.7400088
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 7,
+        "id": 14246,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-007",
+        "link_name": "Maharajganj - Balaju Bypass Junction (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 9.5,
+        "link_to": 13,
+        "link_len": 3.5,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1607",
+        "shp_len": 3.395,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.337124,
+              27.7400088
+            ],
+            [
+              85.3330471,
+              27.742139
+            ],
+            [
+              85.3320953,
+              27.7421873
+            ],
+            [
+              85.3213145,
+              27.7357595
+            ],
+            [
+              85.3181018,
+              27.7351128
+            ],
+            [
+              85.3105351,
+              27.7347628
+            ],
+            [
+              85.3064666,
+              27.7353756
+            ],
+            [
+              85.3057889,
+              27.7352346
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 8,
+        "id": 14437,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-009",
+        "link_name": "Balaju Junction - Banasthali - Swoyambhu (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 13.95,
+        "link_to": 15.95,
+        "link_len": 2,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1608",
+        "shp_len": 2.464,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3045434,
+              27.7270311
+            ],
+            [
+              85.302389,
+              27.7259221
+            ],
+            [
+              85.2975155,
+              27.724761
+            ],
+            [
+              85.2843397,
+              27.7183663
+            ],
+            [
+              85.2837752,
+              27.7175879
+            ],
+            [
+              85.2836471,
+              27.7163985
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 9,
+        "id": 14483,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-002",
+        "link_name": "Tinkune - Sinamangal - Gaushala (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 1,
+        "link_to": 5,
+        "link_len": 4,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1602",
+        "shp_len": 3.591,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3491209,
+              27.6837139
+            ],
+            [
+              85.3498227,
+              27.6860346
+            ],
+            [
+              85.3549461,
+              27.6949696
+            ],
+            [
+              85.3552211,
+              27.6982635
+            ],
+            [
+              85.3522445,
+              27.7025452
+            ],
+            [
+              85.3513959,
+              27.7058972
+            ],
+            [
+              85.3502341,
+              27.7062166
+            ],
+            [
+              85.3464805,
+              27.7057455
+            ],
+            [
+              85.34329,
+              27.7077629
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 10,
+        "id": 14535,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-012",
+        "link_name": "Balkhu - Ekantakuna ( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 21.95,
+        "link_to": 23.95,
+        "link_len": 2,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1611",
+        "shp_len": 2.381,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2997606,
+              27.6845878
+            ],
+            [
+              85.3015995,
+              27.6843558
+            ],
+            [
+              85.3023539,
+              27.6836098
+            ],
+            [
+              85.3023314,
+              27.6741199
+            ],
+            [
+              85.3084009,
+              27.6666676
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 11,
+        "id": 14584,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-005",
+        "link_name": "Chabahil -  Sankhapark (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 6.5,
+        "link_to": 8.5,
+        "link_len": 2,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1605",
+        "shp_len": 1.67,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3467221,
+              27.7173769
+            ],
+            [
+              85.3468564,
+              27.718581
+            ],
+            [
+              85.3448354,
+              27.7240876
+            ],
+            [
+              85.3458803,
+              27.7291608
+            ],
+            [
+              85.3444126,
+              27.7316661
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 12,
+        "id": 14634,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-004",
+        "link_name": "Mitrapark - Chabahil (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 6,
+        "link_to": 6.5,
+        "link_len": 0.5,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1604",
+        "shp_len": 0.486,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3454837,
+              27.7131447
+            ],
+            [
+              85.3467221,
+              27.7173769
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 13,
+        "id": 14660,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-003",
+        "link_name": "Gaushala -  Mitrapark (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 5,
+        "link_to": 6,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1603",
+        "shp_len": 0.637,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.34329,
+              27.7077629
+            ],
+            [
+              85.3454837,
+              27.7131447
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 14,
+        "id": 14685,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-013",
+        "link_name": "Ekantakuna- Kusanti - Satdobato ( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 23.95,
+        "link_to": 25.95,
+        "link_len": 2,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1612",
+        "shp_len": 1.976,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3084009,
+              27.6666676
+            ],
+            [
+              85.3137759,
+              27.6649786
+            ],
+            [
+              85.3225612,
+              27.6579713
+            ],
+            [
+              85.3248184,
+              27.6587455
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 15,
+        "id": 14751,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-014",
+        "link_name": "Satdobato- Gwarko (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 25.95,
+        "link_to": 27.45,
+        "link_len": 1.5,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1613",
+        "shp_len": 1.149,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3248184,
+              27.6587455
+            ],
+            [
+              85.3267909,
+              27.6601158
+            ],
+            [
+              85.332206,
+              27.6666637
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 16,
+        "id": 14417,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-015",
+        "link_name": "Gwarko-Manohara River(Balkumari)( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 27.45,
+        "link_to": 28.95,
+        "link_len": 1.5,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1614",
+        "shp_len": 1.183,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.332206,
+              27.6666637
+            ],
+            [
+              85.3322816,
+              27.6667559
+            ],
+            [
+              85.3324571,
+              27.6669558
+            ],
+            [
+              85.3325309,
+              27.6670431
+            ],
+            [
+              85.3327582,
+              27.6672675
+            ],
+            [
+              85.3329252,
+              27.6673978
+            ],
+            [
+              85.3332258,
+              27.6675887
+            ],
+            [
+              85.3342749,
+              27.668168
+            ],
+            [
+              85.335623,
+              27.6688742
+            ],
+            [
+              85.3378496,
+              27.6700962
+            ],
+            [
+              85.3394088,
+              27.6708961
+            ],
+            [
+              85.3403688,
+              27.6715177
+            ],
+            [
+              85.340542,
+              27.6716925
+            ],
+            [
+              85.3406293,
+              27.671765
+            ],
+            [
+              85.3409721,
+              27.6721225
+            ],
+            [
+              85.3412566,
+              27.672434
+            ],
+            [
+              85.3416495,
+              27.6728182
+            ],
+            [
+              85.3417581,
+              27.6729398
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 17,
+        "id": 14277,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-011",
+        "link_name": "Kalanki - Balkhu (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 18.95,
+        "link_to": 21.95,
+        "link_len": 3,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1610",
+        "shp_len": 2.185,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2817149,
+              27.693329
+            ],
+            [
+              85.281715,
+              27.6933282
+            ],
+            [
+              85.2817769,
+              27.6930698
+            ],
+            [
+              85.2821615,
+              27.6922662
+            ],
+            [
+              85.2837777,
+              27.6898555
+            ],
+            [
+              85.2843164,
+              27.6891086
+            ],
+            [
+              85.2845922,
+              27.6888473
+            ],
+            [
+              85.284866,
+              27.6886994
+            ],
+            [
+              85.2853114,
+              27.6885691
+            ],
+            [
+              85.2864478,
+              27.6883758
+            ],
+            [
+              85.2873944,
+              27.6882595
+            ],
+            [
+              85.2881073,
+              27.6881265
+            ],
+            [
+              85.2894076,
+              27.6879397
+            ],
+            [
+              85.2897623,
+              27.6878643
+            ],
+            [
+              85.2901122,
+              27.6877676
+            ],
+            [
+              85.2902583,
+              27.6877022
+            ],
+            [
+              85.2904197,
+              27.6876168
+            ],
+            [
+              85.2907032,
+              27.6874666
+            ],
+            [
+              85.2908126,
+              27.6873872
+            ],
+            [
+              85.2913674,
+              27.6869846
+            ],
+            [
+              85.2919448,
+              27.6865023
+            ],
+            [
+              85.2922959,
+              27.6862294
+            ],
+            [
+              85.2927662,
+              27.6859022
+            ],
+            [
+              85.2930021,
+              27.6857209
+            ],
+            [
+              85.2933041,
+              27.6855437
+            ],
+            [
+              85.2935135,
+              27.6854452
+            ],
+            [
+              85.2936477,
+              27.6853899
+            ],
+            [
+              85.2939343,
+              27.6853202
+            ],
+            [
+              85.2945012,
+              27.6852275
+            ],
+            [
+              85.2957164,
+              27.6850645
+            ],
+            [
+              85.2966177,
+              27.6849819
+            ],
+            [
+              85.2970206,
+              27.6849225
+            ],
+            [
+              85.2971894,
+              27.6848979
+            ],
+            [
+              85.2972598,
+              27.684886
+            ],
+            [
+              85.2973266,
+              27.6848737
+            ],
+            [
+              85.2982824,
+              27.684783
+            ],
+            [
+              85.2983505,
+              27.6847774
+            ],
+            [
+              85.2987371,
+              27.6847257
+            ],
+            [
+              85.2993529,
+              27.6846476
+            ],
+            [
+              85.2997606,
+              27.6845878
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 18,
+        "id": 14282,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-001",
+        "link_name": "Manohara River - Koteswor (H03) KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 0,
+        "link_to": 1,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1601",
+        "shp_len": 1.032,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3417581,
+              27.6729398
+            ],
+            [
+              85.3419724,
+              27.6731546
+            ],
+            [
+              85.3421098,
+              27.6733066
+            ],
+            [
+              85.3421651,
+              27.6733693
+            ],
+            [
+              85.3422325,
+              27.6734453
+            ],
+            [
+              85.3422325,
+              27.6734453
+            ],
+            [
+              85.3422331,
+              27.6734453
+            ],
+            [
+              85.3422522,
+              27.6734665
+            ],
+            [
+              85.3424777,
+              27.673717
+            ],
+            [
+              85.3426839,
+              27.6739463
+            ],
+            [
+              85.3432554,
+              27.6745182
+            ],
+            [
+              85.3437579,
+              27.6749442
+            ],
+            [
+              85.3440953,
+              27.6752718
+            ],
+            [
+              85.3443906,
+              27.6754802
+            ],
+            [
+              85.3451551,
+              27.6760229
+            ],
+            [
+              85.345917,
+              27.6766078
+            ],
+            [
+              85.3471312,
+              27.6774078
+            ],
+            [
+              85.3476708,
+              27.6777703
+            ],
+            [
+              85.3478809,
+              27.6779007
+            ],
+            [
+              85.3490303,
+              27.6786283
+            ],
+            [
+              85.3491341,
+              27.6786813
+            ],
+            [
+              85.3491875,
+              27.6787128
+            ],
+            [
+              85.3493134,
+              27.6787752
+            ],
+            [
+              85.3494871,
+              27.6788624
+            ],
+            [
+              85.3495675,
+              27.678933
+            ],
+            [
+              85.349609,
+              27.6789646
+            ],
+            [
+              85.3496393,
+              27.6789843
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 19,
+        "id": 14340,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-010",
+        "link_name": "Swoyambhu - Kalanki (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 15.95,
+        "link_to": 18.95,
+        "link_len": 3,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1609",
+        "shp_len": 2.568,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2836471,
+              27.7163985
+            ],
+            [
+              85.2836436,
+              27.7163744
+            ],
+            [
+              85.283623,
+              27.716234
+            ],
+            [
+              85.2836044,
+              27.7161056
+            ],
+            [
+              85.2835982,
+              27.7160628
+            ],
+            [
+              85.2835883,
+              27.7159845
+            ],
+            [
+              85.283441,
+              27.7148168
+            ],
+            [
+              85.2831497,
+              27.7125049
+            ],
+            [
+              85.2829205,
+              27.7106865
+            ],
+            [
+              85.2826543,
+              27.7085706
+            ],
+            [
+              85.282604,
+              27.7081718
+            ],
+            [
+              85.2825451,
+              27.7077369
+            ],
+            [
+              85.2825412,
+              27.7076836
+            ],
+            [
+              85.2825315,
+              27.7075521
+            ],
+            [
+              85.282379,
+              27.7066316
+            ],
+            [
+              85.2820677,
+              27.7035798
+            ],
+            [
+              85.2818117,
+              27.7011825
+            ],
+            [
+              85.2814843,
+              27.6982807
+            ],
+            [
+              85.2815071,
+              27.6976051
+            ],
+            [
+              85.2815786,
+              27.6964508
+            ],
+            [
+              85.2816158,
+              27.6951481
+            ],
+            [
+              85.2816942,
+              27.6937694
+            ],
+            [
+              85.2817149,
+              27.693329
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 20,
+        "id": 14344,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-008",
+        "link_name": "Balaju Bypass Junction (KTM Ringroad) - Ring road-Balaju ByPass",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 13,
+        "link_to": 13.95,
+        "link_len": 0.95,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "F02102",
+        "shp_len": 0.94,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3057889,
+              27.7352346
+            ],
+            [
+              85.3056903,
+              27.735096
+            ],
+            [
+              85.3056238,
+              27.7349968
+            ],
+            [
+              85.3055976,
+              27.7349434
+            ],
+            [
+              85.3054787,
+              27.7347466
+            ],
+            [
+              85.3054562,
+              27.7346548
+            ],
+            [
+              85.3054555,
+              27.7346521
+            ],
+            [
+              85.3054497,
+              27.7346285
+            ],
+            [
+              85.3054486,
+              27.7346015
+            ],
+            [
+              85.3054383,
+              27.7345271
+            ],
+            [
+              85.3054381,
+              27.7345257
+            ],
+            [
+              85.3054493,
+              27.7334383
+            ],
+            [
+              85.3053771,
+              27.7294404
+            ],
+            [
+              85.3052773,
+              27.7282412
+            ],
+            [
+              85.3051632,
+              27.7277741
+            ],
+            [
+              85.3049493,
+              27.727408
+            ],
+            [
+              85.3045434,
+              27.7270311
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 21,
+        "id": 14244,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-006",
+        "link_name": "Sankhapark - Maharajganj (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 8.5,
+        "link_to": 9.5,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1606",
+        "shp_len": 1.197,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3444126,
+              27.7316661
+            ],
+            [
+              85.343432,
+              27.733147
+            ],
+            [
+              85.3427115,
+              27.7343508
+            ],
+            [
+              85.3425725,
+              27.7345824
+            ],
+            [
+              85.3423741,
+              27.7349059
+            ],
+            [
+              85.3423318,
+              27.7349748
+            ],
+            [
+              85.3422515,
+              27.7350853
+            ],
+            [
+              85.3421754,
+              27.7351871
+            ],
+            [
+              85.3408629,
+              27.737189
+            ],
+            [
+              85.3407154,
+              27.737413
+            ],
+            [
+              85.3406692,
+              27.7374905
+            ],
+            [
+              85.3402196,
+              27.738055
+            ],
+            [
+              85.3397649,
+              27.7384892
+            ],
+            [
+              85.3395913,
+              27.7386229
+            ],
+            [
+              85.3395421,
+              27.7386608
+            ],
+            [
+              85.338913,
+              27.7390381
+            ],
+            [
+              85.3384203,
+              27.7393072
+            ],
+            [
+              85.3375764,
+              27.7397682
+            ],
+            [
+              85.337124,
+              27.7400088
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 22,
+        "id": 14246,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-007",
+        "link_name": "Maharajganj - Balaju Bypass Junction (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 9.5,
+        "link_to": 13,
+        "link_len": 3.5,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1607",
+        "shp_len": 3.395,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.337124,
+              27.7400088
+            ],
+            [
+              85.3355407,
+              27.7408318
+            ],
+            [
+              85.335069,
+              27.7411234
+            ],
+            [
+              85.333871,
+              27.7417692
+            ],
+            [
+              85.3338306,
+              27.741791
+            ],
+            [
+              85.3331661,
+              27.7420842
+            ],
+            [
+              85.3330471,
+              27.742139
+            ],
+            [
+              85.3329459,
+              27.7421592
+            ],
+            [
+              85.3326223,
+              27.7422034
+            ],
+            [
+              85.3324015,
+              27.742196
+            ],
+            [
+              85.3322574,
+              27.742194
+            ],
+            [
+              85.3320953,
+              27.7421873
+            ],
+            [
+              85.3319416,
+              27.7421333
+            ],
+            [
+              85.3316825,
+              27.7420421
+            ],
+            [
+              85.3306728,
+              27.7414808
+            ],
+            [
+              85.3298522,
+              27.7409283
+            ],
+            [
+              85.3294996,
+              27.7407106
+            ],
+            [
+              85.3275154,
+              27.7395385
+            ],
+            [
+              85.3262442,
+              27.7387486
+            ],
+            [
+              85.3229686,
+              27.7367698
+            ],
+            [
+              85.3229675,
+              27.7367576
+            ],
+            [
+              85.3213145,
+              27.7357595
+            ],
+            [
+              85.320659,
+              27.7354736
+            ],
+            [
+              85.3203231,
+              27.7353649
+            ],
+            [
+              85.3199052,
+              27.7352796
+            ],
+            [
+              85.3197716,
+              27.7352524
+            ],
+            [
+              85.3197444,
+              27.7352468
+            ],
+            [
+              85.3196109,
+              27.7352349
+            ],
+            [
+              85.3195678,
+              27.735222
+            ],
+            [
+              85.3181841,
+              27.7351191
+            ],
+            [
+              85.3181125,
+              27.7351136
+            ],
+            [
+              85.3181018,
+              27.7351128
+            ],
+            [
+              85.3177504,
+              27.7350858
+            ],
+            [
+              85.3176387,
+              27.7350836
+            ],
+            [
+              85.3169438,
+              27.7350697
+            ],
+            [
+              85.3144736,
+              27.734923
+            ],
+            [
+              85.314355,
+              27.7349159
+            ],
+            [
+              85.3126227,
+              27.7348168
+            ],
+            [
+              85.312054,
+              27.7347892
+            ],
+            [
+              85.3114151,
+              27.7347581
+            ],
+            [
+              85.3110452,
+              27.7347582
+            ],
+            [
+              85.3105351,
+              27.7347628
+            ],
+            [
+              85.3102175,
+              27.7347954
+            ],
+            [
+              85.3093121,
+              27.7349538
+            ],
+            [
+              85.3089781,
+              27.7350126
+            ],
+            [
+              85.308551,
+              27.7350688
+            ],
+            [
+              85.3077647,
+              27.7351841
+            ],
+            [
+              85.3069041,
+              27.7353185
+            ],
+            [
+              85.3066871,
+              27.7353539
+            ],
+            [
+              85.3065553,
+              27.7353699
+            ],
+            [
+              85.3064666,
+              27.7353756
+            ],
+            [
+              85.3063675,
+              27.7353797
+            ],
+            [
+              85.3062534,
+              27.7353694
+            ],
+            [
+              85.3060454,
+              27.7353389
+            ],
+            [
+              85.3057889,
+              27.7352346
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 23,
+        "id": 14437,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-009",
+        "link_name": "Balaju Junction - Banasthali - Swoyambhu (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 13.95,
+        "link_to": 15.95,
+        "link_len": 2,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1608",
+        "shp_len": 2.464,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3045434,
+              27.7270311
+            ],
+            [
+              85.3041996,
+              27.7268185
+            ],
+            [
+              85.3036862,
+              27.7264777
+            ],
+            [
+              85.3036797,
+              27.7264746
+            ],
+            [
+              85.3035489,
+              27.7263868
+            ],
+            [
+              85.3029265,
+              27.7260985
+            ],
+            [
+              85.302389,
+              27.7259221
+            ],
+            [
+              85.302076,
+              27.7258353
+            ],
+            [
+              85.3015536,
+              27.7257371
+            ],
+            [
+              85.3009932,
+              27.7256035
+            ],
+            [
+              85.3002559,
+              27.7254172
+            ],
+            [
+              85.299138,
+              27.7251761
+            ],
+            [
+              85.2979774,
+              27.7249108
+            ],
+            [
+              85.2975961,
+              27.7247919
+            ],
+            [
+              85.2975155,
+              27.724761
+            ],
+            [
+              85.2966108,
+              27.7243456
+            ],
+            [
+              85.2947938,
+              27.723422
+            ],
+            [
+              85.2941401,
+              27.7231126
+            ],
+            [
+              85.2919144,
+              27.7220592
+            ],
+            [
+              85.2914555,
+              27.7218338
+            ],
+            [
+              85.2905103,
+              27.7213935
+            ],
+            [
+              85.2898121,
+              27.7210523
+            ],
+            [
+              85.2892831,
+              27.7207978
+            ],
+            [
+              85.2881974,
+              27.7202544
+            ],
+            [
+              85.287039,
+              27.7196848
+            ],
+            [
+              85.2862558,
+              27.7192941
+            ],
+            [
+              85.2854089,
+              27.7189075
+            ],
+            [
+              85.2847087,
+              27.7185554
+            ],
+            [
+              85.2843397,
+              27.7183663
+            ],
+            [
+              85.2840839,
+              27.7181928
+            ],
+            [
+              85.2839097,
+              27.7179912
+            ],
+            [
+              85.2837752,
+              27.7175879
+            ],
+            [
+              85.283714,
+              27.71725
+            ],
+            [
+              85.2837008,
+              27.7170449
+            ],
+            [
+              85.2836471,
+              27.7163985
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 24,
+        "id": 14483,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-002",
+        "link_name": "Tinkune - Sinamangal - Gaushala (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 1,
+        "link_to": 5,
+        "link_len": 4,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1602",
+        "shp_len": 3.591,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3491209,
+              27.6837139
+            ],
+            [
+              85.3491628,
+              27.6837519
+            ],
+            [
+              85.3492179,
+              27.6838064
+            ],
+            [
+              85.3492904,
+              27.6838666
+            ],
+            [
+              85.3493113,
+              27.6839113
+            ],
+            [
+              85.3493267,
+              27.6839789
+            ],
+            [
+              85.3493294,
+              27.6840121
+            ],
+            [
+              85.3493516,
+              27.6842846
+            ],
+            [
+              85.3493982,
+              27.6848165
+            ],
+            [
+              85.3494093,
+              27.684854
+            ],
+            [
+              85.3495013,
+              27.6851651
+            ],
+            [
+              85.349637,
+              27.6855457
+            ],
+            [
+              85.3497805,
+              27.6859338
+            ],
+            [
+              85.3498227,
+              27.6860346
+            ],
+            [
+              85.3499665,
+              27.6862854
+            ],
+            [
+              85.3500553,
+              27.6864427
+            ],
+            [
+              85.3500796,
+              27.6864873
+            ],
+            [
+              85.3503342,
+              27.6869541
+            ],
+            [
+              85.3504227,
+              27.687107
+            ],
+            [
+              85.3520765,
+              27.6900058
+            ],
+            [
+              85.3527896,
+              27.6912522
+            ],
+            [
+              85.3528977,
+              27.6914362
+            ],
+            [
+              85.3537233,
+              27.692846
+            ],
+            [
+              85.3547981,
+              27.6946544
+            ],
+            [
+              85.3548203,
+              27.6946899
+            ],
+            [
+              85.3548237,
+              27.6946975
+            ],
+            [
+              85.3549461,
+              27.6949696
+            ],
+            [
+              85.3550241,
+              27.6951658
+            ],
+            [
+              85.3550408,
+              27.6952674
+            ],
+            [
+              85.3550554,
+              27.6953334
+            ],
+            [
+              85.355072,
+              27.6954083
+            ],
+            [
+              85.3551446,
+              27.6964331
+            ],
+            [
+              85.3552262,
+              27.6968977
+            ],
+            [
+              85.3552826,
+              27.6976741
+            ],
+            [
+              85.3552211,
+              27.6982635
+            ],
+            [
+              85.3551138,
+              27.6986407
+            ],
+            [
+              85.3548255,
+              27.6992118
+            ],
+            [
+              85.3542897,
+              27.6999232
+            ],
+            [
+              85.3530817,
+              27.7014046
+            ],
+            [
+              85.353015,
+              27.7015051
+            ],
+            [
+              85.3529458,
+              27.7015811
+            ],
+            [
+              85.3526245,
+              27.7019998
+            ],
+            [
+              85.3523224,
+              27.7024179
+            ],
+            [
+              85.3522445,
+              27.7025452
+            ],
+            [
+              85.3521865,
+              27.7026889
+            ],
+            [
+              85.3521298,
+              27.7028666
+            ],
+            [
+              85.3520694,
+              27.7031125
+            ],
+            [
+              85.3520428,
+              27.7032438
+            ],
+            [
+              85.3520029,
+              27.7035232
+            ],
+            [
+              85.3519844,
+              27.7044144
+            ],
+            [
+              85.3519747,
+              27.7045795
+            ],
+            [
+              85.3519323,
+              27.7049554
+            ],
+            [
+              85.351889,
+              27.7051497
+            ],
+            [
+              85.3517852,
+              27.7054253
+            ],
+            [
+              85.3517012,
+              27.7055585
+            ],
+            [
+              85.3516043,
+              27.7056864
+            ],
+            [
+              85.3515195,
+              27.7057969
+            ],
+            [
+              85.3513959,
+              27.7058972
+            ],
+            [
+              85.3512533,
+              27.7059982
+            ],
+            [
+              85.3511157,
+              27.7060649
+            ],
+            [
+              85.3508955,
+              27.70614
+            ],
+            [
+              85.3506492,
+              27.7061988
+            ],
+            [
+              85.350382,
+              27.7062129
+            ],
+            [
+              85.3502341,
+              27.7062166
+            ],
+            [
+              85.3500062,
+              27.7061921
+            ],
+            [
+              85.3495559,
+              27.7061269
+            ],
+            [
+              85.3494975,
+              27.7061191
+            ],
+            [
+              85.349165,
+              27.7060657
+            ],
+            [
+              85.3488193,
+              27.7060084
+            ],
+            [
+              85.3487536,
+              27.7060014
+            ],
+            [
+              85.3483449,
+              27.7059455
+            ],
+            [
+              85.3481063,
+              27.7059043
+            ],
+            [
+              85.3467983,
+              27.7057185
+            ],
+            [
+              85.3466136,
+              27.7057243
+            ],
+            [
+              85.3464953,
+              27.7057431
+            ],
+            [
+              85.3464805,
+              27.7057455
+            ],
+            [
+              85.3463295,
+              27.7057956
+            ],
+            [
+              85.3461789,
+              27.7058571
+            ],
+            [
+              85.3459974,
+              27.7059423
+            ],
+            [
+              85.3456742,
+              27.706151
+            ],
+            [
+              85.3451019,
+              27.7065677
+            ],
+            [
+              85.3450425,
+              27.7065897
+            ],
+            [
+              85.3441038,
+              27.7073137
+            ],
+            [
+              85.3439145,
+              27.7074647
+            ],
+            [
+              85.3437964,
+              27.7075759
+            ],
+            [
+              85.3436854,
+              27.7076506
+            ],
+            [
+              85.3436067,
+              27.7076833
+            ],
+            [
+              85.3435435,
+              27.7077186
+            ],
+            [
+              85.3434814,
+              27.7077422
+            ],
+            [
+              85.3434208,
+              27.7077573
+            ],
+            [
+              85.34329,
+              27.7077629
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 25,
+        "id": 14535,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-012",
+        "link_name": "Balkhu - Ekantakuna ( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 21.95,
+        "link_to": 23.95,
+        "link_len": 2,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1611",
+        "shp_len": 2.381,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.2997606,
+              27.6845878
+            ],
+            [
+              85.3001196,
+              27.6845561
+            ],
+            [
+              85.3002448,
+              27.6845388
+            ],
+            [
+              85.3002551,
+              27.6845377
+            ],
+            [
+              85.3007342,
+              27.6844859
+            ],
+            [
+              85.3014662,
+              27.6843993
+            ],
+            [
+              85.3015995,
+              27.6843558
+            ],
+            [
+              85.301607,
+              27.6843519
+            ],
+            [
+              85.3019304,
+              27.6841864
+            ],
+            [
+              85.3019803,
+              27.6841437
+            ],
+            [
+              85.3020124,
+              27.6841247
+            ],
+            [
+              85.3020899,
+              27.6840508
+            ],
+            [
+              85.3020927,
+              27.6840474
+            ],
+            [
+              85.3021781,
+              27.6839443
+            ],
+            [
+              85.3022983,
+              27.6837295
+            ],
+            [
+              85.3023539,
+              27.6836098
+            ],
+            [
+              85.3023675,
+              27.6835485
+            ],
+            [
+              85.302382,
+              27.683405
+            ],
+            [
+              85.3023878,
+              27.682836
+            ],
+            [
+              85.3023727,
+              27.6826577
+            ],
+            [
+              85.3022913,
+              27.6809933
+            ],
+            [
+              85.3022132,
+              27.6793109
+            ],
+            [
+              85.302173,
+              27.6784358
+            ],
+            [
+              85.302122,
+              27.6773964
+            ],
+            [
+              85.3020747,
+              27.6763963
+            ],
+            [
+              85.3020419,
+              27.6755603
+            ],
+            [
+              85.3020561,
+              27.6750778
+            ],
+            [
+              85.3021085,
+              27.6747699
+            ],
+            [
+              85.3021173,
+              27.6747184
+            ],
+            [
+              85.3021636,
+              27.6745483
+            ],
+            [
+              85.3023314,
+              27.6741199
+            ],
+            [
+              85.302463,
+              27.6738634
+            ],
+            [
+              85.3029632,
+              27.6731144
+            ],
+            [
+              85.3029632,
+              27.6731144
+            ],
+            [
+              85.3038085,
+              27.6720462
+            ],
+            [
+              85.3051779,
+              27.6702902
+            ],
+            [
+              85.3056724,
+              27.6696955
+            ],
+            [
+              85.306223,
+              27.6689799
+            ],
+            [
+              85.3067845,
+              27.6682744
+            ],
+            [
+              85.3071246,
+              27.6678351
+            ],
+            [
+              85.307269,
+              27.6676634
+            ],
+            [
+              85.3075056,
+              27.6673596
+            ],
+            [
+              85.3076631,
+              27.6671848
+            ],
+            [
+              85.3078416,
+              27.6670165
+            ],
+            [
+              85.3080155,
+              27.6668759
+            ],
+            [
+              85.308348,
+              27.666692
+            ],
+            [
+              85.3083764,
+              27.666678
+            ],
+            [
+              85.3084009,
+              27.6666676
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 26,
+        "id": 14584,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-005",
+        "link_name": "Chabahil -  Sankhapark (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 6.5,
+        "link_to": 8.5,
+        "link_len": 2,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1605",
+        "shp_len": 1.67,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3467221,
+              27.7173769
+            ],
+            [
+              85.3467763,
+              27.7174554
+            ],
+            [
+              85.3468039,
+              27.717515
+            ],
+            [
+              85.3468487,
+              27.7176682
+            ],
+            [
+              85.3468736,
+              27.717826
+            ],
+            [
+              85.346895,
+              27.7181384
+            ],
+            [
+              85.3468953,
+              27.7182794
+            ],
+            [
+              85.3468564,
+              27.718581
+            ],
+            [
+              85.346715,
+              27.7190009
+            ],
+            [
+              85.3466274,
+              27.7192351
+            ],
+            [
+              85.3465036,
+              27.7195596
+            ],
+            [
+              85.3464522,
+              27.7196394
+            ],
+            [
+              85.3461715,
+              27.7204073
+            ],
+            [
+              85.3460387,
+              27.720733
+            ],
+            [
+              85.3458397,
+              27.7213257
+            ],
+            [
+              85.3458368,
+              27.7213255
+            ],
+            [
+              85.3456391,
+              27.7218247
+            ],
+            [
+              85.345625,
+              27.7218608
+            ],
+            [
+              85.3455413,
+              27.7220725
+            ],
+            [
+              85.3453983,
+              27.7224445
+            ],
+            [
+              85.3451014,
+              27.7232174
+            ],
+            [
+              85.34497,
+              27.7235381
+            ],
+            [
+              85.3448934,
+              27.7238095
+            ],
+            [
+              85.3448354,
+              27.7240876
+            ],
+            [
+              85.3448195,
+              27.7247059
+            ],
+            [
+              85.3448501,
+              27.7249751
+            ],
+            [
+              85.3449057,
+              27.7252039
+            ],
+            [
+              85.3449299,
+              27.7253036
+            ],
+            [
+              85.3452805,
+              27.7263313
+            ],
+            [
+              85.3457671,
+              27.7277945
+            ],
+            [
+              85.3459052,
+              27.7283429
+            ],
+            [
+              85.3459351,
+              27.7286143
+            ],
+            [
+              85.3459245,
+              27.7288303
+            ],
+            [
+              85.3458803,
+              27.7291608
+            ],
+            [
+              85.3458364,
+              27.7292984
+            ],
+            [
+              85.345671,
+              27.7296051
+            ],
+            [
+              85.3445595,
+              27.7314624
+            ],
+            [
+              85.3444126,
+              27.7316661
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 27,
+        "id": 14634,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-004",
+        "link_name": "Mitrapark - Chabahil (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 6,
+        "link_to": 6.5,
+        "link_len": 0.5,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1604",
+        "shp_len": 0.486,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3454837,
+              27.7131447
+            ],
+            [
+              85.3455385,
+              27.7135299
+            ],
+            [
+              85.345628,
+              27.7140634
+            ],
+            [
+              85.3456657,
+              27.7142887
+            ],
+            [
+              85.3457863,
+              27.7147559
+            ],
+            [
+              85.3459419,
+              27.7153015
+            ],
+            [
+              85.3461294,
+              27.7158626
+            ],
+            [
+              85.3462553,
+              27.7161684
+            ],
+            [
+              85.3465188,
+              27.7168788
+            ],
+            [
+              85.3465627,
+              27.7169941
+            ],
+            [
+              85.3465837,
+              27.7170335
+            ],
+            [
+              85.3466152,
+              27.7170928
+            ],
+            [
+              85.3467221,
+              27.7173769
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 28,
+        "id": 14660,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-003",
+        "link_name": "Gaushala -  Mitrapark (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 5,
+        "link_to": 6,
+        "link_len": 1,
+        "div_name": "Kathmandu",
+        "dist_name": "Kathmandu",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1603",
+        "shp_len": 0.637,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.34329,
+              27.7077629
+            ],
+            [
+              85.343358,
+              27.707891
+            ],
+            [
+              85.3433886,
+              27.7079749
+            ],
+            [
+              85.3434217,
+              27.7080612
+            ],
+            [
+              85.3434943,
+              27.7081951
+            ],
+            [
+              85.3435654,
+              27.708389
+            ],
+            [
+              85.3436529,
+              27.7085689
+            ],
+            [
+              85.3437929,
+              27.7088574
+            ],
+            [
+              85.3438683,
+              27.7090418
+            ],
+            [
+              85.3438985,
+              27.7091335
+            ],
+            [
+              85.343914,
+              27.7091902
+            ],
+            [
+              85.3439234,
+              27.7092387
+            ],
+            [
+              85.3439359,
+              27.7093141
+            ],
+            [
+              85.3439365,
+              27.7093257
+            ],
+            [
+              85.3439459,
+              27.7093548
+            ],
+            [
+              85.3440904,
+              27.7100309
+            ],
+            [
+              85.3441649,
+              27.7102698
+            ],
+            [
+              85.3442699,
+              27.7105341
+            ],
+            [
+              85.3442956,
+              27.7106018
+            ],
+            [
+              85.3445956,
+              27.7111601
+            ],
+            [
+              85.3447013,
+              27.7113569
+            ],
+            [
+              85.3453696,
+              27.7128308
+            ],
+            [
+              85.3454022,
+              27.7129064
+            ],
+            [
+              85.3454466,
+              27.7130073
+            ],
+            [
+              85.3454623,
+              27.7130588
+            ],
+            [
+              85.3454669,
+              27.7130761
+            ],
+            [
+              85.3454837,
+              27.7131447
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 29,
+        "id": 14685,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-013",
+        "link_name": "Ekantakuna- Kusanti - Satdobato ( KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 23.95,
+        "link_to": 25.95,
+        "link_len": 2,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1612",
+        "shp_len": 1.976,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3084009,
+              27.6666676
+            ],
+            [
+              85.3084511,
+              27.6666485
+            ],
+            [
+              85.3085306,
+              27.6666177
+            ],
+            [
+              85.3093862,
+              27.666365
+            ],
+            [
+              85.310465,
+              27.6660525
+            ],
+            [
+              85.3108093,
+              27.6659575
+            ],
+            [
+              85.3111917,
+              27.6658408
+            ],
+            [
+              85.3125113,
+              27.6654473
+            ],
+            [
+              85.3130115,
+              27.66529
+            ],
+            [
+              85.3134327,
+              27.6651384
+            ],
+            [
+              85.3135417,
+              27.665097
+            ],
+            [
+              85.3137759,
+              27.6649786
+            ],
+            [
+              85.3139207,
+              27.6648811
+            ],
+            [
+              85.3142761,
+              27.6646232
+            ],
+            [
+              85.3151098,
+              27.6639605
+            ],
+            [
+              85.315242,
+              27.663849
+            ],
+            [
+              85.3157337,
+              27.6634348
+            ],
+            [
+              85.3162034,
+              27.6630302
+            ],
+            [
+              85.3168486,
+              27.6625175
+            ],
+            [
+              85.3171913,
+              27.6622489
+            ],
+            [
+              85.3181048,
+              27.6615163
+            ],
+            [
+              85.3182748,
+              27.6613744
+            ],
+            [
+              85.3188634,
+              27.6608831
+            ],
+            [
+              85.3202993,
+              27.6597073
+            ],
+            [
+              85.3213264,
+              27.6588773
+            ],
+            [
+              85.3218949,
+              27.6584151
+            ],
+            [
+              85.3222031,
+              27.6581961
+            ],
+            [
+              85.322524,
+              27.6579961
+            ],
+            [
+              85.3225612,
+              27.6579713
+            ],
+            [
+              85.3227854,
+              27.6579277
+            ],
+            [
+              85.3229319,
+              27.6579075
+            ],
+            [
+              85.3230885,
+              27.6579066
+            ],
+            [
+              85.3232846,
+              27.6579382
+            ],
+            [
+              85.3236173,
+              27.658075
+            ],
+            [
+              85.3242175,
+              27.6584277
+            ],
+            [
+              85.3247151,
+              27.6586857
+            ],
+            [
+              85.3247936,
+              27.6587263
+            ],
+            [
+              85.3248184,
+              27.6587455
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 30,
+        "id": 14751,
+        "road_class": "NH",
+        "road_refno": "NH39",
+        "road_name": "Kathmandu Ringroad",
+        "link_code": "NH39-014",
+        "link_name": "Satdobato- Gwarko (KTM Ringroad)",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 25.95,
+        "link_to": 27.45,
+        "link_len": 1.5,
+        "div_name": "Lalitpur",
+        "dist_name": "Lalitpur",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "H1613",
+        "shp_len": 1.149,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              85.3248184,
+              27.6587455
+            ],
+            [
+              85.3251059,
+              27.6589131
+            ],
+            [
+              85.3255738,
+              27.6591948
+            ],
+            [
+              85.3258713,
+              27.6593731
+            ],
+            [
+              85.3261164,
+              27.659546
+            ],
+            [
+              85.3263022,
+              27.6596726
+            ],
+            [
+              85.3264302,
+              27.6597833
+            ],
+            [
+              85.3266181,
+              27.6599512
+            ],
+            [
+              85.3267909,
+              27.6601158
+            ],
+            [
+              85.3269436,
+              27.660283
+            ],
+            [
+              85.3272103,
+              27.6605716
+            ],
+            [
+              85.3278777,
+              27.6614065
+            ],
+            [
+              85.3300228,
+              27.6640011
+            ],
+            [
+              85.3315261,
+              27.6658693
+            ],
+            [
+              85.3321457,
+              27.6665925
+            ],
+            [
+              85.332206,
+              27.6666637
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

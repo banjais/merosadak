@@ -1,9 +1,12 @@
+node_modules/
+dist/
+build/
 .env
 .env.*
 !.env.example
 .firebase/
-node_modules/
 .wrangler/
-
 .dev.vars*
 !.dev.vars.example
+*.log
+.DS_Store

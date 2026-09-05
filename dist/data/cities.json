@@ -1,0 +1,5442 @@
+{
+  "metropolitan": [
+    {
+      "name": "Bhaktapur",
+      "district": "Bhaktapur",
+      "province": "Bagmati",
+      "lat": 27.671,
+      "lng": 85.4298
+    },
+    {
+      "name": "Bharatpur",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.6833,
+      "lng": 84.4333
+    },
+    {
+      "name": "Kathmandu",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.7172,
+      "lng": 85.324
+    },
+    {
+      "name": "Lalitpur",
+      "district": "Lalitpur",
+      "province": "Bagmati",
+      "lat": 27.6588,
+      "lng": 85.3247
+    },
+    {
+      "name": "Biratnagar",
+      "district": "Morang",
+      "province": "Koshi",
+      "lat": 26.4525,
+      "lng": 87.2718
+    },
+    {
+      "name": "Birgunj",
+      "district": "Parsa",
+      "province": "Madhesh",
+      "lat": 27,
+      "lng": 84.8667
+    }
+  ],
+  "rural_municipality": [
+    {
+      "name": "Changunarayan",
+      "district": "Bhaktapur",
+      "province": "Bagmati",
+      "lat": 27.696803,
+      "lng": 85.460723
+    },
+    {
+      "name": "Madhyapur Thimi",
+      "district": "Bhaktapur",
+      "province": "Bagmati",
+      "lat": 27.684098,
+      "lng": 85.380303
+    },
+    {
+      "name": "Suryabinayak",
+      "district": "Bhaktapur",
+      "province": "Bagmati",
+      "lat": 27.64963,
+      "lng": 85.425834
+    },
+    {
+      "name": "Ichchhyakamana",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.797352,
+      "lng": 84.596472
+    },
+    {
+      "name": "Kalika",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.705114,
+      "lng": 84.578581
+    },
+    {
+      "name": "Khairahani",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.605945,
+      "lng": 84.571184
+    },
+    {
+      "name": "Madi",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.420267,
+      "lng": 84.373853
+    },
+    {
+      "name": "Rapti",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.64906,
+      "lng": 84.690402
+    },
+    {
+      "name": "Ratnanagar",
+      "district": "Chitawan",
+      "province": "Bagmati",
+      "lat": 27.617009,
+      "lng": 84.511901
+    },
+    {
+      "name": "Benighat Rorang",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.756015,
+      "lng": 84.766987
+    },
+    {
+      "name": "Gajuri",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.756971,
+      "lng": 84.911414
+    },
+    {
+      "name": "Gangajamuna",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 28.088096,
+      "lng": 84.921471
+    },
+    {
+      "name": "Jwalamukhi",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.924521,
+      "lng": 84.786145
+    },
+    {
+      "name": "Khaniyabash",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 28.080939,
+      "lng": 85.039475
+    },
+    {
+      "name": "Netrawati Dabjong",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.987488,
+      "lng": 84.967145
+    },
+    {
+      "name": "Nilakantha",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.917693,
+      "lng": 84.921762
+    },
+    {
+      "name": "Rubi Valley",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 28.21857,
+      "lng": 85.08114
+    },
+    {
+      "name": "Siddhalek",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.837977,
+      "lng": 84.856854
+    },
+    {
+      "name": "Thakre",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.73858,
+      "lng": 85.064137
+    },
+    {
+      "name": "Tripura Sundari",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 28.014388,
+      "lng": 84.851535
+    },
+    {
+      "name": "Baiteshwor",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.637247,
+      "lng": 86.12703
+    },
+    {
+      "name": "Bhimeshwor",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.6803,
+      "lng": 86.02218
+    },
+    {
+      "name": "Bigu",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.949034,
+      "lng": 86.158688
+    },
+    {
+      "name": "Gaurishankar",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.821226,
+      "lng": 86.340756
+    },
+    {
+      "name": "Jiri",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.668176,
+      "lng": 86.28995
+    },
+    {
+      "name": "Kalinchok",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.745413,
+      "lng": 86.09482
+    },
+    {
+      "name": "Melung",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.542769,
+      "lng": 86.041717
+    },
+    {
+      "name": "Sailung",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.61516,
+      "lng": 85.986407
+    },
+    {
+      "name": "Tamakoshi",
+      "district": "Dolakha",
+      "province": "Bagmati",
+      "lat": 27.545953,
+      "lng": 86.123587
+    },
+    {
+      "name": "Banepa",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.649911,
+      "lng": 85.517485
+    },
+    {
+      "name": "Bethanchowk",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.507449,
+      "lng": 85.499845
+    },
+    {
+      "name": "Bhumlu",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.637499,
+      "lng": 85.732757
+    },
+    {
+      "name": "Chaurideurali",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.576996,
+      "lng": 85.80642
+    },
+    {
+      "name": "Dhulikhel",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.621547,
+      "lng": 85.569438
+    },
+    {
+      "name": "Khanikhola",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.417806,
+      "lng": 85.494513
+    },
+    {
+      "name": "Mahabharat",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.389001,
+      "lng": 85.610536
+    },
+    {
+      "name": "Mandandeupur",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.704263,
+      "lng": 85.607606
+    },
+    {
+      "name": "Namobuddha",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.549065,
+      "lng": 85.641212
+    },
+    {
+      "name": "Panauti",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.581305,
+      "lng": 85.47801
+    },
+    {
+      "name": "Panchkhal",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.632466,
+      "lng": 85.645603
+    },
+    {
+      "name": "Roshi",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.475912,
+      "lng": 85.666278
+    },
+    {
+      "name": "Temal",
+      "district": "Kabhrepalanchok",
+      "province": "Bagmati",
+      "lat": 27.512598,
+      "lng": 85.752352
+    },
+    {
+      "name": "Budhanilakantha",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.7684,
+      "lng": 85.360483
+    },
+    {
+      "name": "Chandragiri",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.6895,
+      "lng": 85.233231
+    },
+    {
+      "name": "Dakshinkali",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.615245,
+      "lng": 85.262706
+    },
+    {
+      "name": "Gokarneshwor",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.765954,
+      "lng": 85.41125
+    },
+    {
+      "name": "Kageshwori Manahora",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.729062,
+      "lng": 85.411077
+    },
+    {
+      "name": "Kirtipur",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.667063,
+      "lng": 85.275168
+    },
+    {
+      "name": "Nagarjun",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.728527,
+      "lng": 85.261211
+    },
+    {
+      "name": "Shankharapur",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.752379,
+      "lng": 85.495671
+    },
+    {
+      "name": "Tarakeshwor",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.775513,
+      "lng": 85.298822
+    },
+    {
+      "name": "Tokha",
+      "district": "Kathmandu",
+      "province": "Bagmati",
+      "lat": 27.775037,
+      "lng": 85.329421
+    },
+    {
+      "name": "Bagmati",
+      "district": "Lalitpur",
+      "province": "Bagmati",
+      "lat": 27.487413,
+      "lng": 85.308913
+    },
+    {
+      "name": "Konjyosom",
+      "district": "Lalitpur",
+      "province": "Bagmati",
+      "lat": 27.526138,
+      "lng": 85.347678
+    },
+    {
+      "name": "Mahalaxmi",
+      "district": "Lalitpur",
+      "province": "Bagmati",
+      "lat": 27.63138,
+      "lng": 85.384756
+    },
+    {
+      "name": "Mahankal",
+      "district": "Lalitpur",
+      "province": "Bagmati",
+      "lat": 27.475977,
+      "lng": 85.400447
+    },
+    {
+      "name": "Bagmati",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.298281,
+      "lng": 85.412385
+    },
+    {
+      "name": "Bakaiya",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.334851,
+      "lng": 85.256015
+    },
+    {
+      "name": "Bhimphedi",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.521656,
+      "lng": 85.115307
+    },
+    {
+      "name": "Indrasarowar",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.599436,
+      "lng": 85.196076
+    },
+    {
+      "name": "Kailash",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.608102,
+      "lng": 84.948685
+    },
+    {
+      "name": "Makawanpurgadhi",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.435976,
+      "lng": 85.144913
+    },
+    {
+      "name": "Manahari",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.478271,
+      "lng": 84.845884
+    },
+    {
+      "name": "Parsa Wildlife Reserve",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.492673,
+      "lng": 84.766854
+    },
+    {
+      "name": "Raksirang",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.598652,
+      "lng": 84.837586
+    },
+    {
+      "name": "Thaha",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.653816,
+      "lng": 85.087989
+    },
+    {
+      "name": "Belkotgadhi",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.826215,
+      "lng": 85.117234
+    },
+    {
+      "name": "Dupcheshwar",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.945779,
+      "lng": 85.429486
+    },
+    {
+      "name": "Kispang",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 28.027666,
+      "lng": 85.129491
+    },
+    {
+      "name": "Langtang National Park",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 28.018102,
+      "lng": 85.442882
+    },
+    {
+      "name": "Likhu",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.890671,
+      "lng": 85.232409
+    },
+    {
+      "name": "Myagang",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.987456,
+      "lng": 85.057695
+    },
+    {
+      "name": "Panchakanya",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.897386,
+      "lng": 85.312175
+    },
+    {
+      "name": "Shivapuri Watershed and Wildlife Reserve",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.819063,
+      "lng": 85.364298
+    },
+    {
+      "name": "Shivapuri",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.849334,
+      "lng": 85.372312
+    },
+    {
+      "name": "Suryagadhi",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.945313,
+      "lng": 85.25456
+    },
+    {
+      "name": "Tadi",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.949428,
+      "lng": 85.3218
+    },
+    {
+      "name": "Tarkeshwar",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.882889,
+      "lng": 85.036914
+    },
+    {
+      "name": "Doramba Shailung",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.541406,
+      "lng": 85.92979
+    },
+    {
+      "name": "Gokulganga",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.579094,
+      "lng": 86.264654
+    },
+    {
+      "name": "Khadadevi",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.431258,
+      "lng": 85.936803
+    },
+    {
+      "name": "Likhu Tamakoshi",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.442005,
+      "lng": 86.186117
+    },
+    {
+      "name": "Manthali",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.407223,
+      "lng": 86.063525
+    },
+    {
+      "name": "Ramechhap",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.322631,
+      "lng": 86.143961
+    },
+    {
+      "name": "Sunapati",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.502027,
+      "lng": 85.853074
+    },
+    {
+      "name": "Umakunda",
+      "district": "Ramechhap",
+      "province": "Bagmati",
+      "lat": 27.64213,
+      "lng": 86.403388
+    },
+    {
+      "name": "Aamachhodingmo",
+      "district": "Rasuwa",
+      "province": "Bagmati",
+      "lat": 28.221068,
+      "lng": 85.24605
+    },
+    {
+      "name": "Gosaikunda",
+      "district": "Rasuwa",
+      "province": "Bagmati",
+      "lat": 28.206161,
+      "lng": 85.514647
+    },
+    {
+      "name": "Kalika",
+      "district": "Rasuwa",
+      "province": "Bagmati",
+      "lat": 28.013544,
+      "lng": 85.221635
+    },
+    {
+      "name": "Naukunda",
+      "district": "Rasuwa",
+      "province": "Bagmati",
+      "lat": 28.021773,
+      "lng": 85.298718
+    },
+    {
+      "name": "Uttargaya",
+      "district": "Rasuwa",
+      "province": "Bagmati",
+      "lat": 28.064468,
+      "lng": 85.18572
+    },
+    {
+      "name": "Dudhouli",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.040701,
+      "lng": 86.222157
+    },
+    {
+      "name": "Ghanglekh",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.335844,
+      "lng": 85.789591
+    },
+    {
+      "name": "Golanjor",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.254086,
+      "lng": 86.065361
+    },
+    {
+      "name": "Hariharpurgadhi",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.245645,
+      "lng": 85.542379
+    },
+    {
+      "name": "Kamalamai",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.185623,
+      "lng": 85.940451
+    },
+    {
+      "name": "Marin",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.254403,
+      "lng": 85.692704
+    },
+    {
+      "name": "Phikkal",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.1874,
+      "lng": 86.277992
+    },
+    {
+      "name": "Sunkoshi",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.380969,
+      "lng": 85.881474
+    },
+    {
+      "name": "Tinpatan",
+      "district": "Sindhuli",
+      "province": "Bagmati",
+      "lat": 27.134918,
+      "lng": 86.132674
+    },
+    {
+      "name": "Balefi",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.783952,
+      "lng": 85.80982
+    },
+    {
+      "name": "Barhabise",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.823925,
+      "lng": 85.904427
+    },
+    {
+      "name": "Bhotekoshi",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.92461,
+      "lng": 85.943237
+    },
+    {
+      "name": "Chautara SangachokGadhi",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.754548,
+      "lng": 85.716637
+    },
+    {
+      "name": "Helambu",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 28.00068,
+      "lng": 85.530107
+    },
+    {
+      "name": "Indrawati",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.785772,
+      "lng": 85.644298
+    },
+    {
+      "name": "Jugal",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 28.008413,
+      "lng": 85.78403
+    },
+    {
+      "name": "Lisangkhu Pakhar",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.673705,
+      "lng": 85.876775
+    },
+    {
+      "name": "Melamchi",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.820853,
+      "lng": 85.547374
+    },
+    {
+      "name": "Panchpokhari Thangpal",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 28.021321,
+      "lng": 85.638391
+    },
+    {
+      "name": "Sunkoshi",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.707904,
+      "lng": 85.80132
+    },
+    {
+      "name": "Tripurasundari",
+      "district": "Sindhupalchok",
+      "province": "Bagmati",
+      "lat": 27.75301,
+      "lng": 85.945089
+    },
+    {
+      "name": "Badigad",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.273601,
+      "lng": 83.233234
+    },
+    {
+      "name": "Bareng",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.147295,
+      "lng": 83.478756
+    },
+    {
+      "name": "Dhorpatan Hunting Reserve",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.538512,
+      "lng": 83.027279
+    },
+    {
+      "name": "Dhorpatan",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.387668,
+      "lng": 83.158019
+    },
+    {
+      "name": "Jaimuni",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.160155,
+      "lng": 83.581319
+    },
+    {
+      "name": "Kanthekhola",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.264677,
+      "lng": 83.518815
+    },
+    {
+      "name": "Nisikhola",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.37903,
+      "lng": 83.023012
+    },
+    {
+      "name": "Taman Khola",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.434468,
+      "lng": 83.226837
+    },
+    {
+      "name": "Tara Khola",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.314655,
+      "lng": 83.397069
+    },
+    {
+      "name": "Aarughat",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.120402,
+      "lng": 84.852678
+    },
+    {
+      "name": "Ajirkot",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.235048,
+      "lng": 84.680624
+    },
+    {
+      "name": "Barpak Sulikot",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.18167,
+      "lng": 84.73107
+    },
+    {
+      "name": "Bhimsenthapa",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.012258,
+      "lng": 84.736458
+    },
+    {
+      "name": "Chum Nubri",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.549916,
+      "lng": 84.844977
+    },
+    {
+      "name": "Dharche",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.312886,
+      "lng": 84.939291
+    },
+    {
+      "name": "Gandaki",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 27.860065,
+      "lng": 84.711777
+    },
+    {
+      "name": "Sahid Lakhan",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 27.927479,
+      "lng": 84.635828
+    },
+    {
+      "name": "Siranchok",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.090799,
+      "lng": 84.594822
+    },
+    {
+      "name": "Annapurna",
+      "district": "Kaski",
+      "province": "Bagmati",
+      "lat": 28.416654,
+      "lng": 83.819037
+    },
+    {
+      "name": "Machhapuchchhre",
+      "district": "Kaski",
+      "province": "Bagmati",
+      "lat": 28.428464,
+      "lng": 83.956162
+    },
+    {
+      "name": "Madi",
+      "district": "Kaski",
+      "province": "Bagmati",
+      "lat": 28.354462,
+      "lng": 84.14007
+    },
+    {
+      "name": "Rupa",
+      "district": "Kaski",
+      "province": "Bagmati",
+      "lat": 28.140581,
+      "lng": 84.169391
+    },
+    {
+      "name": "Dordi",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.276824,
+      "lng": 84.534106
+    },
+    {
+      "name": "Dudhpokhari",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.210812,
+      "lng": 84.576422
+    },
+    {
+      "name": "Kwholasothar",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.28816,
+      "lng": 84.258829
+    },
+    {
+      "name": "MadhyaNepal",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.152564,
+      "lng": 84.261526
+    },
+    {
+      "name": "Marsyangdi",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.371091,
+      "lng": 84.408339
+    },
+    {
+      "name": "Rainas",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.111626,
+      "lng": 84.492963
+    },
+    {
+      "name": "Sundarbazar",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.156932,
+      "lng": 84.364431
+    },
+    {
+      "name": "Dalome",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Manang Ngisyang",
+      "district": "Manang",
+      "province": "Bagmati",
+      "lat": 28.663539,
+      "lng": 84.02985
+    },
+    {
+      "name": "Narpa Bhumi",
+      "district": "Manang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Nason",
+      "district": "Manang",
+      "province": "Bagmati",
+      "lat": 28.592846,
+      "lng": 84.412698
+    },
+    {
+      "name": "Chharka Tangsong",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Gharapjhong",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 28.763564,
+      "lng": 83.724803
+    },
+    {
+      "name": "Lo Ghekar Damodarkunda",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Lomanthang",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Muktichhetra",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Narphu",
+      "district": "Manang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Thasang",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 28.693138,
+      "lng": 83.616847
+    },
+    {
+      "name": "Varagung Muktichhetra",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Annapurna",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.514409,
+      "lng": 83.703869
+    },
+    {
+      "name": "Dhaulagiri",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.605939,
+      "lng": 83.356374
+    },
+    {
+      "name": "Dhorpatan Hunting Reserve",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.618961,
+      "lng": 83.15804
+    },
+    {
+      "name": "Malika",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.421946,
+      "lng": 83.354469
+    },
+    {
+      "name": "Mangala",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.379404,
+      "lng": 83.453291
+    },
+    {
+      "name": "Raghuganga",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.520308,
+      "lng": 83.518436
+    },
+    {
+      "name": "Baudikali",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.81722,
+      "lng": 84.064821
+    },
+    {
+      "name": "Binayee Tribeni",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Bulingtar",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.815518,
+      "lng": 84.194795
+    },
+    {
+      "name": "Hupsekot",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.716549,
+      "lng": 84.045926
+    },
+    {
+      "name": "Madhyabindu",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.637234,
+      "lng": 83.977668
+    },
+    {
+      "name": "Bihadi",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.058501,
+      "lng": 83.602486
+    },
+    {
+      "name": "Jaljala",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.329371,
+      "lng": 83.617474
+    },
+    {
+      "name": "Mahashila",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.090864,
+      "lng": 83.668215
+    },
+    {
+      "name": "Modi",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.293681,
+      "lng": 83.729853
+    },
+    {
+      "name": "Painyu",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.047105,
+      "lng": 83.664939
+    },
+    {
+      "name": "Phalebas",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.151992,
+      "lng": 83.683405
+    },
+    {
+      "name": "Aandhikhola",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.156999,
+      "lng": 83.79955
+    },
+    {
+      "name": "Arjunchaupari",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.104798,
+      "lng": 83.758487
+    },
+    {
+      "name": "Bhirkot",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.038625,
+      "lng": 83.77425
+    },
+    {
+      "name": "Biruwa",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.001903,
+      "lng": 83.897709
+    },
+    {
+      "name": "Chapakot",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 27.917541,
+      "lng": 83.858814
+    },
+    {
+      "name": "Galyang",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 27.952565,
+      "lng": 83.685342
+    },
+    {
+      "name": "Harinas",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 27.983448,
+      "lng": 83.958566
+    },
+    {
+      "name": "Kaligandagi",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 27.947478,
+      "lng": 83.537508
+    },
+    {
+      "name": "Phedikhola",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.17353,
+      "lng": 83.866691
+    },
+    {
+      "name": "Putalibazar",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28.098773,
+      "lng": 83.892087
+    },
+    {
+      "name": "Anbukhaireni",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 27.881198,
+      "lng": 84.479668
+    },
+    {
+      "name": "Bandipur",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 27.918777,
+      "lng": 84.398459
+    },
+    {
+      "name": "Bhanu",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 28.043739,
+      "lng": 84.393195
+    },
+    {
+      "name": "Devghat",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 27.802036,
+      "lng": 84.383012
+    },
+    {
+      "name": "Ghiring",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 27.891634,
+      "lng": 84.054364
+    },
+    {
+      "name": "Myagde",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 28.002426,
+      "lng": 84.159846
+    },
+    {
+      "name": "Rhishing",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 27.890046,
+      "lng": 84.213196
+    },
+    {
+      "name": "Shuklagandaki",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 28.067007,
+      "lng": 84.068225
+    },
+    {
+      "name": "Vyas",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 28.01113,
+      "lng": 84.295111
+    },
+    {
+      "name": "Aathabis",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 29.019862,
+      "lng": 81.494726
+    },
+    {
+      "name": "Bhagawatimai",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.797644,
+      "lng": 81.821389
+    },
+    {
+      "name": "Bhairabi",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.943051,
+      "lng": 81.642601
+    },
+    {
+      "name": "Chamunda Bindrasaini",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.932774,
+      "lng": 81.561509
+    },
+    {
+      "name": "Dungeshwor",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.751357,
+      "lng": 81.719401
+    },
+    {
+      "name": "Gurans",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.709525,
+      "lng": 81.683512
+    },
+    {
+      "name": "Mahabu",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.944173,
+      "lng": 81.693206
+    },
+    {
+      "name": "Naumule",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.935618,
+      "lng": 81.818213
+    },
+    {
+      "name": "Thantikandh",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.995555,
+      "lng": 81.548511
+    },
+    {
+      "name": "Chharka Tangsong",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Dalome",
+      "district": "Mustang",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Dolpo Buddha",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 29.278783,
+      "lng": 83.266331
+    },
+    {
+      "name": "Jagadulla",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 29.239492,
+      "lng": 82.633236
+    },
+    {
+      "name": "Kaike",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 28.916509,
+      "lng": 83.051403
+    },
+    {
+      "name": "Mudkechula",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 29.048802,
+      "lng": 82.519663
+    },
+    {
+      "name": "Shey Phoksundo",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 29.40451,
+      "lng": 82.9836
+    },
+    {
+      "name": "Thuli Bheri",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 28.941721,
+      "lng": 82.874688
+    },
+    {
+      "name": "Tripurasundari",
+      "district": "Dolpa",
+      "province": "Bagmati",
+      "lat": 29.016975,
+      "lng": 82.751776
+    },
+    {
+      "name": "Adanchuli",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.701808,
+      "lng": 81.850718
+    },
+    {
+      "name": "Chankheli",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.804452,
+      "lng": 82.23402
+    },
+    {
+      "name": "Kharpunath",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.905605,
+      "lng": 81.96301
+    },
+    {
+      "name": "Namkha",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.946267,
+      "lng": 81.566801
+    },
+    {
+      "name": "Sarkegad",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.799247,
+      "lng": 81.922068
+    },
+    {
+      "name": "Simkot",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.950716,
+      "lng": 81.82043
+    },
+    {
+      "name": "Tanjakot",
+      "district": "Humla",
+      "province": "Bagmati",
+      "lat": 29.692323,
+      "lng": 81.759732
+    },
+    {
+      "name": "Barekot",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.988185,
+      "lng": 82.278202
+    },
+    {
+      "name": "Bheri",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.70068,
+      "lng": 82.176944
+    },
+    {
+      "name": "Chhedagad",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.749571,
+      "lng": 82.03453
+    },
+    {
+      "name": "Junichande",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.898541,
+      "lng": 81.983584
+    },
+    {
+      "name": "Kuse",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.870429,
+      "lng": 82.141769
+    },
+    {
+      "name": "Nalgad",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.873057,
+      "lng": 82.367855
+    },
+    {
+      "name": "Shiwalaya",
+      "district": "Jajarkot",
+      "province": "Bagmati",
+      "lat": 28.684353,
+      "lng": 81.93684
+    },
+    {
+      "name": "Chandannath",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.296159,
+      "lng": 82.152514
+    },
+    {
+      "name": "Guthichaur",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.201297,
+      "lng": 82.378306
+    },
+    {
+      "name": "Hima",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.277576,
+      "lng": 81.939393
+    },
+    {
+      "name": "Kanakasundari",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.416271,
+      "lng": 82.056503
+    },
+    {
+      "name": "Patrasi",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.370743,
+      "lng": 82.380386
+    },
+    {
+      "name": "Sinja",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.346395,
+      "lng": 82.020856
+    },
+    {
+      "name": "Tatopani",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.134177,
+      "lng": 82.120264
+    },
+    {
+      "name": "Tila",
+      "district": "Jumla",
+      "province": "Bagmati",
+      "lat": 29.189426,
+      "lng": 81.98879
+    },
+    {
+      "name": "Khandachakra",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.151073,
+      "lng": 81.666522
+    },
+    {
+      "name": "Mahawai",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.049724,
+      "lng": 81.853563
+    },
+    {
+      "name": "Naraharinath",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.220503,
+      "lng": 81.528128
+    },
+    {
+      "name": "Pachaljharana",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.247406,
+      "lng": 81.714923
+    },
+    {
+      "name": "Palata",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.347126,
+      "lng": 81.834945
+    },
+    {
+      "name": "Raskot",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.277617,
+      "lng": 81.644545
+    },
+    {
+      "name": "Sanni Tribeni",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.277206,
+      "lng": 81.594726
+    },
+    {
+      "name": "Shuva Kalika",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.085059,
+      "lng": 81.63162
+    },
+    {
+      "name": "Tilagufa",
+      "district": "Kalikot",
+      "province": "Bagmati",
+      "lat": 29.142762,
+      "lng": 81.857436
+    },
+    {
+      "name": "Chhayanath Rara",
+      "district": "Mugu",
+      "province": "Bagmati",
+      "lat": 29.540654,
+      "lng": 82.157468
+    },
+    {
+      "name": "Khatyad",
+      "district": "Mugu",
+      "province": "Bagmati",
+      "lat": 29.516054,
+      "lng": 81.893769
+    },
+    {
+      "name": "Mugum Karmarong",
+      "district": "Mugu",
+      "province": "Bagmati",
+      "lat": 29.657862,
+      "lng": 82.541957
+    },
+    {
+      "name": "Soru",
+      "district": "Mugu",
+      "province": "Bagmati",
+      "lat": 29.620905,
+      "lng": 81.998319
+    },
+    {
+      "name": "Aathbiskot",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 28.823782,
+      "lng": 82.483382
+    },
+    {
+      "name": "Banfikot",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 28.704661,
+      "lng": 82.49109
+    },
+    {
+      "name": "Chaurjahari",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 28.632417,
+      "lng": 82.271758
+    },
+    {
+      "name": "Musikot",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Sani Bheri",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 28.677875,
+      "lng": 82.336092
+    },
+    {
+      "name": "Tribeni",
+      "district": "Rukum_W",
+      "province": "Bagmati",
+      "lat": 28.56728,
+      "lng": 82.416544
+    },
+    {
+      "name": "Bagchaur",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.475728,
+      "lng": 82.328121
+    },
+    {
+      "name": "Bangad Kupinde",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.491145,
+      "lng": 82.055184
+    },
+    {
+      "name": "Chhatreshwori",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.351567,
+      "lng": 82.282959
+    },
+    {
+      "name": "Darma",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.552424,
+      "lng": 82.31203
+    },
+    {
+      "name": "Kalimati",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.291036,
+      "lng": 81.954743
+    },
+    {
+      "name": "Kapurkot",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.255149,
+      "lng": 82.362573
+    },
+    {
+      "name": "Kumakh",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.563953,
+      "lng": 82.188933
+    },
+    {
+      "name": "Sharada",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.386047,
+      "lng": 82.161479
+    },
+    {
+      "name": "Siddha Kumakh",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.462357,
+      "lng": 82.18342
+    },
+    {
+      "name": "Tribeni",
+      "district": "Salyan",
+      "province": "Bagmati",
+      "lat": 28.285227,
+      "lng": 82.229026
+    },
+    {
+      "name": "Barahtal",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.664422,
+      "lng": 81.469319
+    },
+    {
+      "name": "Bheriganga",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.465891,
+      "lng": 81.678082
+    },
+    {
+      "name": "Chaukune",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.871117,
+      "lng": 81.192781
+    },
+    {
+      "name": "Chingad",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.616647,
+      "lng": 81.82772
+    },
+    {
+      "name": "Gurbhakot",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.432089,
+      "lng": 81.892271
+    },
+    {
+      "name": "Lekbeshi",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.543911,
+      "lng": 81.753608
+    },
+    {
+      "name": "Panchpuri",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.780521,
+      "lng": 81.387972
+    },
+    {
+      "name": "Simta",
+      "district": "Surkhet",
+      "province": "Bagmati",
+      "lat": 28.556319,
+      "lng": 81.957879
+    },
+    {
+      "name": "Aamchowk",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 26.962755,
+      "lng": 87.01735
+    },
+    {
+      "name": "Arun",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.190531,
+      "lng": 87.192159
+    },
+    {
+      "name": "Hatuwagadhi",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.002637,
+      "lng": 87.130791
+    },
+    {
+      "name": "Pauwadungma",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.11828,
+      "lng": 87.149927
+    },
+    {
+      "name": "Ramprasad Rai",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.083874,
+      "lng": 87.02779
+    },
+    {
+      "name": "Salpasilichho",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.404949,
+      "lng": 87.023747
+    },
+    {
+      "name": "Shadananda",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.329023,
+      "lng": 87.111235
+    },
+    {
+      "name": "Temkemaiyum",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.20888,
+      "lng": 86.969871
+    },
+    {
+      "name": "Chaubise",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 26.907076,
+      "lng": 87.483974
+    },
+    {
+      "name": "Chhathar Jorpati",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 27.027415,
+      "lng": 87.382709
+    },
+    {
+      "name": "Mahalaxmi",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 27.136583,
+      "lng": 87.325459
+    },
+    {
+      "name": "Pakhribas",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 27.055568,
+      "lng": 87.255134
+    },
+    {
+      "name": "Sangurigadhi",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 26.899017,
+      "lng": 87.295081
+    },
+    {
+      "name": "Shahidbhumi",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 26.950258,
+      "lng": 87.215424
+    },
+    {
+      "name": "Chulachuli",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.767257,
+      "lng": 87.705336
+    },
+    {
+      "name": "Deumai",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.916236,
+      "lng": 87.832203
+    },
+    {
+      "name": "Fakphokthum",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.96193,
+      "lng": 87.753701
+    },
+    {
+      "name": "Illam",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.929009,
+      "lng": 87.909235
+    },
+    {
+      "name": "Mai",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.776661,
+      "lng": 87.867622
+    },
+    {
+      "name": "Maijogmai",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.944691,
+      "lng": 87.966215
+    },
+    {
+      "name": "Mangsebung",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.823561,
+      "lng": 87.730097
+    },
+    {
+      "name": "Rong",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.783356,
+      "lng": 87.982703
+    },
+    {
+      "name": "Sandakpur",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 27.041313,
+      "lng": 87.928298
+    },
+    {
+      "name": "Suryodaya",
+      "district": "Ilam",
+      "province": "Bagmati",
+      "lat": 26.846635,
+      "lng": 87.964946
+    },
+    {
+      "name": "Arjundhara",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.724066,
+      "lng": 87.962483
+    },
+    {
+      "name": "Barhadashi",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.529569,
+      "lng": 87.931564
+    },
+    {
+      "name": "Buddhashanti",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.724326,
+      "lng": 87.998248
+    },
+    {
+      "name": "Gauradhaha",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.533313,
+      "lng": 87.716744
+    },
+    {
+      "name": "Gauriganj",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.473775,
+      "lng": 87.75389
+    },
+    {
+      "name": "Haldibari",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.510632,
+      "lng": 87.966113
+    },
+    {
+      "name": "Jhapa",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.520413,
+      "lng": 87.871511
+    },
+    {
+      "name": "Kachankawal",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.442848,
+      "lng": 87.949892
+    },
+    {
+      "name": "Kamal",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.601705,
+      "lng": 87.730881
+    },
+    {
+      "name": "Kankai",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.6307,
+      "lng": 87.907735
+    },
+    {
+      "name": "Mechinagar",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Shivasataxi",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.616094,
+      "lng": 87.8284
+    },
+    {
+      "name": "Ainselukhark",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.368804,
+      "lng": 86.762726
+    },
+    {
+      "name": "Barahapokhari",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 26.938834,
+      "lng": 86.831253
+    },
+    {
+      "name": "Diktel Rupakot Majhuwagadhi",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.233871,
+      "lng": 86.800436
+    },
+    {
+      "name": "Diprung Chuichumma",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.102803,
+      "lng": 86.784058
+    },
+    {
+      "name": "Halesi Tuwachung",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.162339,
+      "lng": 86.604307
+    },
+    {
+      "name": "Jantedhunga",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 26.97017,
+      "lng": 86.913756
+    },
+    {
+      "name": "Kepilasagadhi",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.344182,
+      "lng": 86.876103
+    },
+    {
+      "name": "Khotehang",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.041793,
+      "lng": 86.837598
+    },
+    {
+      "name": "Rawa Besi",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.277941,
+      "lng": 86.704904
+    },
+    {
+      "name": "Sakela",
+      "district": "Khotang",
+      "province": "Bagmati",
+      "lat": 27.173927,
+      "lng": 86.8781
+    },
+    {
+      "name": "Belbari",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.619318,
+      "lng": 87.433505
+    },
+    {
+      "name": "Budhiganga",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.559233,
+      "lng": 87.297828
+    },
+    {
+      "name": "Dhanpalthan",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.468649,
+      "lng": 87.402595
+    },
+    {
+      "name": "Gramthan",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.551192,
+      "lng": 87.358011
+    },
+    {
+      "name": "Jahada",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.421787,
+      "lng": 87.327317
+    },
+    {
+      "name": "Kanepokhari",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.587088,
+      "lng": 87.500896
+    },
+    {
+      "name": "Katahari",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.494347,
+      "lng": 87.350829
+    },
+    {
+      "name": "Kerabari",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.791586,
+      "lng": 87.414097
+    },
+    {
+      "name": "Letang",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.765036,
+      "lng": 87.521839
+    },
+    {
+      "name": "Miklajung",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.788672,
+      "lng": 87.615322
+    },
+    {
+      "name": "Patahrishanishchare",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.608998,
+      "lng": 87.560072
+    },
+    {
+      "name": "Rangeli",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.500672,
+      "lng": 87.474404
+    },
+    {
+      "name": "Ratuwamai",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.493241,
+      "lng": 87.610501
+    },
+    {
+      "name": "Sundarharaicha",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.655684,
+      "lng": 87.349889
+    },
+    {
+      "name": "Sunwarshi",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.494769,
+      "lng": 87.553797
+    },
+    {
+      "name": "Uralabari",
+      "district": "Morang",
+      "province": "Bagmati",
+      "lat": 26.643756,
+      "lng": 87.619473
+    },
+    {
+      "name": "Champadevi",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.305254,
+      "lng": 86.290421
+    },
+    {
+      "name": "Chisankhugadhi",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.31217,
+      "lng": 86.608746
+    },
+    {
+      "name": "Khijidemba",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.44897,
+      "lng": 86.360612
+    },
+    {
+      "name": "Likhu",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.374308,
+      "lng": 86.264208
+    },
+    {
+      "name": "Manebhanjyang",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.218738,
+      "lng": 86.468398
+    },
+    {
+      "name": "Molung",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.361516,
+      "lng": 86.429333
+    },
+    {
+      "name": "Siddhicharan",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.321363,
+      "lng": 86.512694
+    },
+    {
+      "name": "Sunkoshi",
+      "district": "Okhaldhunga",
+      "province": "Bagmati",
+      "lat": 27.274712,
+      "lng": 86.370564
+    },
+    {
+      "name": "Falelung",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 27.171494,
+      "lng": 87.908646
+    },
+    {
+      "name": "Falgunanda",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 27.051732,
+      "lng": 87.737068
+    },
+    {
+      "name": "Hilihang",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 27.218656,
+      "lng": 87.759059
+    },
+    {
+      "name": "Kummayak",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 27.067725,
+      "lng": 87.63719
+    },
+    {
+      "name": "Miklajung",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 26.938169,
+      "lng": 87.621129
+    },
+    {
+      "name": "Tumbewa",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 26.984102,
+      "lng": 87.57716
+    },
+    {
+      "name": "Yangwarak",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 27.265468,
+      "lng": 87.894544
+    },
+    {
+      "name": "Bhotkhola",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.76586,
+      "lng": 87.449032
+    },
+    {
+      "name": "Chichila",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.480858,
+      "lng": 87.224986
+    },
+    {
+      "name": "Dharmadevi",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.205612,
+      "lng": 87.343479
+    },
+    {
+      "name": "Madi",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.25549,
+      "lng": 87.413532
+    },
+    {
+      "name": "Makalu",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.694761,
+      "lng": 87.219472
+    },
+    {
+      "name": "Panchakhapan",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.350762,
+      "lng": 87.30098
+    },
+    {
+      "name": "Sabhapokhari",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.442492,
+      "lng": 87.345698
+    },
+    {
+      "name": "Silichong",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.551354,
+      "lng": 87.060384
+    },
+    {
+      "name": "Khumbupasanglahmu",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.870338,
+      "lng": 86.732111
+    },
+    {
+      "name": "Likhupike",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.551438,
+      "lng": 86.435535
+    },
+    {
+      "name": "Mahakulung",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.65166,
+      "lng": 86.908487
+    },
+    {
+      "name": "Mapya Dudhkoshi",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.545049,
+      "lng": 86.702039
+    },
+    {
+      "name": "Nechasalyan",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.390247,
+      "lng": 86.603286
+    },
+    {
+      "name": "Solududhakunda",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.561611,
+      "lng": 86.564799
+    },
+    {
+      "name": "Sotang",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.499022,
+      "lng": 86.793758
+    },
+    {
+      "name": "Thulung Dudhkoshi",
+      "district": "Solukhumbu",
+      "province": "Bagmati",
+      "lat": 27.428626,
+      "lng": 86.69807
+    },
+    {
+      "name": "Barahchhetra",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.74556,
+      "lng": 87.128016
+    },
+    {
+      "name": "Barju",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.469761,
+      "lng": 87.204855
+    },
+    {
+      "name": "Bhokraha Narshing",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.589966,
+      "lng": 87.104112
+    },
+    {
+      "name": "Dewanganj",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.468471,
+      "lng": 87.150578
+    },
+    {
+      "name": "Duhabi",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.546131,
+      "lng": 87.244746
+    },
+    {
+      "name": "Gadhi",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.563597,
+      "lng": 87.201844
+    },
+    {
+      "name": "Harinagar",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.508385,
+      "lng": 87.123469
+    },
+    {
+      "name": "Inaruwa",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.605457,
+      "lng": 87.159301
+    },
+    {
+      "name": "Koshi Tappu Wildlife Reserve",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.654018,
+      "lng": 87.014791
+    },
+    {
+      "name": "Koshi",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.563393,
+      "lng": 86.995864
+    },
+    {
+      "name": "Ramdhuni",
+      "district": "Sunsari",
+      "province": "Bagmati",
+      "lat": 26.68857,
+      "lng": 87.18016
+    },
+    {
+      "name": "Aathrai Tribeni",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.311041,
+      "lng": 87.620783
+    },
+    {
+      "name": "Maiwakhola",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.380859,
+      "lng": 87.517288
+    },
+    {
+      "name": "Meringden",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.467715,
+      "lng": 87.544587
+    },
+    {
+      "name": "Mikwakhola",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.565306,
+      "lng": 87.626841
+    },
+    {
+      "name": "Pathibhara Yangwarak",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.319178,
+      "lng": 87.755325
+    },
+    {
+      "name": "Phaktanglung",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.670007,
+      "lng": 87.783206
+    },
+    {
+      "name": "Phungling",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.384092,
+      "lng": 87.72108
+    },
+    {
+      "name": "Sidingba",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.33911,
+      "lng": 87.912038
+    },
+    {
+      "name": "Sirijangha",
+      "district": "Taplejung",
+      "province": "Bagmati",
+      "lat": 27.421879,
+      "lng": 87.876043
+    },
+    {
+      "name": "Aathrai",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.210376,
+      "lng": 87.653142
+    },
+    {
+      "name": "Chhathar",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.038885,
+      "lng": 87.475123
+    },
+    {
+      "name": "Laligurans",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.124173,
+      "lng": 87.455369
+    },
+    {
+      "name": "Menchayam",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.24158,
+      "lng": 87.527667
+    },
+    {
+      "name": "Myanglung",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.138232,
+      "lng": 87.531967
+    },
+    {
+      "name": "Phedap",
+      "district": "Terhathum",
+      "province": "Bagmati",
+      "lat": 27.188781,
+      "lng": 87.583314
+    },
+    {
+      "name": "Belaka",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.826535,
+      "lng": 87.032378
+    },
+    {
+      "name": "Chaudandigadhi",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.806326,
+      "lng": 86.877662
+    },
+    {
+      "name": "Katari",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 27.000525,
+      "lng": 86.366241
+    },
+    {
+      "name": "Koshi Tappu Wildlife Reserve",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.713488,
+      "lng": 86.997392
+    },
+    {
+      "name": "Limchungbung",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 27.082543,
+      "lng": 86.636304
+    },
+    {
+      "name": "Rautamai",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.983032,
+      "lng": 86.668325
+    },
+    {
+      "name": "Tapli",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 27.078826,
+      "lng": 86.544701
+    },
+    {
+      "name": "Triyuga",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.798109,
+      "lng": 86.697511
+    },
+    {
+      "name": "Udayapurgadhi",
+      "district": "Udayapur",
+      "province": "Bagmati",
+      "lat": 26.918349,
+      "lng": 86.53469
+    },
+    {
+      "name": "Bhumekasthan",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 27.98975,
+      "lng": 83.03615
+    },
+    {
+      "name": "Chhatradev",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 27.995731,
+      "lng": 83.228741
+    },
+    {
+      "name": "Malarani",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 28.067845,
+      "lng": 83.091061
+    },
+    {
+      "name": "Panini",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 27.89613,
+      "lng": 83.245175
+    },
+    {
+      "name": "Sitganga",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 27.83806,
+      "lng": 83.009517
+    },
+    {
+      "name": "Baijanath",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 28.234312,
+      "lng": 81.626488
+    },
+    {
+      "name": "Duduwa",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 28.045184,
+      "lng": 81.69979
+    },
+    {
+      "name": "Janki",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 28.091433,
+      "lng": 81.602149
+    },
+    {
+      "name": "Khajura",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 28.12551,
+      "lng": 81.561152
+    },
+    {
+      "name": "Narainapur",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 27.941938,
+      "lng": 81.857599
+    },
+    {
+      "name": "Rapti Sonari",
+      "district": "Banke",
+      "province": "Bagmati",
+      "lat": 28.073588,
+      "lng": 81.927614
+    },
+    {
+      "name": "Badhaiyatal",
+      "district": "BARDIYA",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Bansagadhi",
+      "district": "BARDIYA",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Barbardiya",
+      "district": "BARDIYA",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "BardiyaNationalPark",
+      "district": "Bardiya",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Geruwa",
+      "district": "BARDIYA",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Gulariya",
+      "district": "Bardiya",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Madhuwan",
+      "district": "Bardiya",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Thakurbaba",
+      "district": "Bardiya",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Babai",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 28.172442,
+      "lng": 82.089535
+    },
+    {
+      "name": "Banglachuli",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 27.985265,
+      "lng": 82.659994
+    },
+    {
+      "name": "Dangisharan",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 28.087804,
+      "lng": 82.180102
+    },
+    {
+      "name": "Gadhawa",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 27.769345,
+      "lng": 82.619071
+    },
+    {
+      "name": "Lamahi",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 27.920581,
+      "lng": 82.415003
+    },
+    {
+      "name": "Rajpur",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 27.863775,
+      "lng": 82.299778
+    },
+    {
+      "name": "Rapti",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 27.87367,
+      "lng": 82.711369
+    },
+    {
+      "name": "Shantinagar",
+      "district": "Dang",
+      "province": "Bagmati",
+      "lat": 28.169069,
+      "lng": 82.188901
+    },
+    {
+      "name": "Chandrakot",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.108191,
+      "lng": 83.41096
+    },
+    {
+      "name": "Chatrakot",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 27.983998,
+      "lng": 83.348142
+    },
+    {
+      "name": "Dhurkot",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.116477,
+      "lng": 83.138419
+    },
+    {
+      "name": "Gulmidarbar",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.038515,
+      "lng": 83.311329
+    },
+    {
+      "name": "Isma",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.155537,
+      "lng": 83.208411
+    },
+    {
+      "name": "Kaligandaki",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.051056,
+      "lng": 83.543428
+    },
+    {
+      "name": "Madane",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.170607,
+      "lng": 83.077503
+    },
+    {
+      "name": "Malika",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.220047,
+      "lng": 83.149362
+    },
+    {
+      "name": "Musikot",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.178391,
+      "lng": 83.281137
+    },
+    {
+      "name": "Resunga",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.070008,
+      "lng": 83.260412
+    },
+    {
+      "name": "Rurukshetra",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 27.981354,
+      "lng": 83.421563
+    },
+    {
+      "name": "Satyawati",
+      "district": "Gulmi",
+      "province": "Bagmati",
+      "lat": 28.031687,
+      "lng": 83.467497
+    },
+    {
+      "name": "Banganga",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.681037,
+      "lng": 83.155782
+    },
+    {
+      "name": "Bijayanagar",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.659957,
+      "lng": 82.761054
+    },
+    {
+      "name": "Buddhabhumi",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.680353,
+      "lng": 82.9928
+    },
+    {
+      "name": "Kapilbastu",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.559601,
+      "lng": 83.068699
+    },
+    {
+      "name": "Krishnanagar",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.539933,
+      "lng": 82.812608
+    },
+    {
+      "name": "Maharajgunj",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.546336,
+      "lng": 82.93813
+    },
+    {
+      "name": "Mayadevi",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.520453,
+      "lng": 83.128299
+    },
+    {
+      "name": "Shivaraj",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.693956,
+      "lng": 82.853536
+    },
+    {
+      "name": "Suddhodhan",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.520861,
+      "lng": 83.197045
+    },
+    {
+      "name": "Yashodhara",
+      "district": "Kapilbastu",
+      "province": "Bagmati",
+      "lat": 27.495415,
+      "lng": 83.030237
+    },
+    {
+      "name": "Bardaghat",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.554903,
+      "lng": 83.792082
+    },
+    {
+      "name": "Palhi Nandan",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.473367,
+      "lng": 83.671345
+    },
+    {
+      "name": "Pratappur",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.445617,
+      "lng": 83.792368
+    },
+    {
+      "name": "Sarawal",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.511195,
+      "lng": 83.733619
+    },
+    {
+      "name": "Sunwal",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.609395,
+      "lng": 83.663629
+    },
+    {
+      "name": "Susta",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.441161,
+      "lng": 83.857292
+    },
+    {
+      "name": "Bagnaskali",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.88688,
+      "lng": 83.58613
+    },
+    {
+      "name": "Mathagadhi",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.763542,
+      "lng": 83.656815
+    },
+    {
+      "name": "Nisdi",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.782852,
+      "lng": 83.909081
+    },
+    {
+      "name": "Purbakhola",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.823285,
+      "lng": 83.782106
+    },
+    {
+      "name": "Rainadevi Chhahara",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.853014,
+      "lng": 83.331437
+    },
+    {
+      "name": "Rambha",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.866445,
+      "lng": 83.699356
+    },
+    {
+      "name": "Rampur",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.85501,
+      "lng": 83.874018
+    },
+    {
+      "name": "Ribdikot",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.859967,
+      "lng": 83.419794
+    },
+    {
+      "name": "Tinau",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.769463,
+      "lng": 83.476701
+    },
+    {
+      "name": "Ayirabati",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 27.991484,
+      "lng": 82.92538
+    },
+    {
+      "name": "Gaumukhi",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.249679,
+      "lng": 83.016886
+    },
+    {
+      "name": "Jhimruk",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.143874,
+      "lng": 82.986704
+    },
+    {
+      "name": "Mallarani",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.074288,
+      "lng": 82.905121
+    },
+    {
+      "name": "Mandavi",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.050707,
+      "lng": 82.757081
+    },
+    {
+      "name": "Naubahini",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.247953,
+      "lng": 82.914206
+    },
+    {
+      "name": "Pyuthan",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.119681,
+      "lng": 82.862528
+    },
+    {
+      "name": "Sarumarani",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 27.942259,
+      "lng": 82.833324
+    },
+    {
+      "name": "Sworgadwary",
+      "district": "Pyuthan",
+      "province": "Bagmati",
+      "lat": 28.131754,
+      "lng": 82.690532
+    },
+    {
+      "name": "Gangadev",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.442289,
+      "lng": 82.417598
+    },
+    {
+      "name": "Lungri",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.272097,
+      "lng": 82.815283
+    },
+    {
+      "name": "Madi",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.399101,
+      "lng": 82.505391
+    },
+    {
+      "name": "Pariwartan",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.471695,
+      "lng": 82.560372
+    },
+    {
+      "name": "Rolpa",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 0,
+      "lng": 0
+    },
+    {
+      "name": "Runtigadi",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.181886,
+      "lng": 82.525258
+    },
+    {
+      "name": "Sunchhahari",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.375838,
+      "lng": 82.820404
+    },
+    {
+      "name": "Sunil Smriti",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.259189,
+      "lng": 82.707057
+    },
+    {
+      "name": "Thawang",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.462126,
+      "lng": 82.743641
+    },
+    {
+      "name": "Tribeni",
+      "district": "Rolpa",
+      "province": "Bagmati",
+      "lat": 28.29814,
+      "lng": 82.472078
+    },
+    {
+      "name": "Bhume",
+      "district": "Rukum_E",
+      "province": "Bagmati",
+      "lat": 28.549198,
+      "lng": 82.707991
+    },
+    {
+      "name": "Dhorpatan Hunting Reserve",
+      "district": "Rukum_E",
+      "province": "Bagmati",
+      "lat": 28.734661,
+      "lng": 82.953331
+    },
+    {
+      "name": "Putha Uttarganga",
+      "district": "Rukum_E",
+      "province": "Bagmati",
+      "lat": 28.657041,
+      "lng": 82.820974
+    },
+    {
+      "name": "Sisne",
+      "district": "Rukum_E",
+      "province": "Bagmati",
+      "lat": 28.70651,
+      "lng": 82.624473
+    },
+    {
+      "name": "Gaidahawa",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.585084,
+      "lng": 83.276727
+    },
+    {
+      "name": "Kanchan",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.63788,
+      "lng": 83.266232
+    },
+    {
+      "name": "Kotahimai",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.451966,
+      "lng": 83.350626
+    },
+    {
+      "name": "Lumbini Sanskritik Development Area",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.485395,
+      "lng": 83.278424
+    },
+    {
+      "name": "Lumbini Sanskritik",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.481862,
+      "lng": 83.270305
+    },
+    {
+      "name": "Marchawari",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.373198,
+      "lng": 83.350038
+    },
+    {
+      "name": "Mayadevi",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.516137,
+      "lng": 83.364962
+    },
+    {
+      "name": "Omsatiya",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.532793,
+      "lng": 83.510157
+    },
+    {
+      "name": "Rohini",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.504173,
+      "lng": 83.537541
+    },
+    {
+      "name": "Sainamaina",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.710371,
+      "lng": 83.300624
+    },
+    {
+      "name": "Sammarimai",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.390086,
+      "lng": 83.308513
+    },
+    {
+      "name": "Siddharthanagar",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.50814,
+      "lng": 83.44912
+    },
+    {
+      "name": "Siyari",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.564286,
+      "lng": 83.398493
+    },
+    {
+      "name": "Sudhdhodhan",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.621325,
+      "lng": 83.372535
+    },
+    {
+      "name": "Tillotama",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.596377,
+      "lng": 83.494488
+    },
+    {
+      "name": "Adarshkotwal",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.941956,
+      "lng": 85.136713
+    },
+    {
+      "name": "Baragadhi",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.996543,
+      "lng": 85.138056
+    },
+    {
+      "name": "Bishrampur",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.9935,
+      "lng": 84.909936
+    },
+    {
+      "name": "Devtal",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.947247,
+      "lng": 85.006393
+    },
+    {
+      "name": "Jitpur Simara",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.194133,
+      "lng": 85.009837
+    },
+    {
+      "name": "Karaiyamai",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.029467,
+      "lng": 85.094097
+    },
+    {
+      "name": "Kolhabi",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.071379,
+      "lng": 85.148277
+    },
+    {
+      "name": "Mahagadhimai",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.978136,
+      "lng": 85.055539
+    },
+    {
+      "name": "Pacharauta",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.905113,
+      "lng": 85.079136
+    },
+    {
+      "name": "Parsa Wildlife Reserve",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.281562,
+      "lng": 84.966198
+    },
+    {
+      "name": "Parwanipur",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.055156,
+      "lng": 84.935037
+    },
+    {
+      "name": "Pheta",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.004406,
+      "lng": 84.943622
+    },
+    {
+      "name": "Prasauni",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.045007,
+      "lng": 84.952318
+    },
+    {
+      "name": "Simraungadh",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.896934,
+      "lng": 85.136745
+    },
+    {
+      "name": "Suwarna",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 26.926534,
+      "lng": 85.042967
+    },
+    {
+      "name": "Aaurahi",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.70963,
+      "lng": 86.014622
+    },
+    {
+      "name": "Bateshwor",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.880492,
+      "lng": 85.923958
+    },
+    {
+      "name": "Bideha",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.678868,
+      "lng": 86.054065
+    },
+    {
+      "name": "Chhireshwornath",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.841317,
+      "lng": 85.972064
+    },
+    {
+      "name": "Dhanauji",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.676172,
+      "lng": 85.977223
+    },
+    {
+      "name": "Dhanusadham",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.872998,
+      "lng": 86.045301
+    },
+    {
+      "name": "Ganeshman Charnath",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.928864,
+      "lng": 86.126041
+    },
+    {
+      "name": "Hansapur",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.762646,
+      "lng": 86.028536
+    },
+    {
+      "name": "Janaknandani",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.646577,
+      "lng": 86.137696
+    },
+    {
+      "name": "Janakpurdham",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.729213,
+      "lng": 85.935024
+    },
+    {
+      "name": "Kamala",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.699266,
+      "lng": 86.148165
+    },
+    {
+      "name": "Lakshminiya",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.794484,
+      "lng": 85.939535
+    },
+    {
+      "name": "Mithila Bihari",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.793622,
+      "lng": 85.996141
+    },
+    {
+      "name": "Mithila",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.994119,
+      "lng": 85.96185
+    },
+    {
+      "name": "Mukhiyapatti Musarmiya",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.606156,
+      "lng": 85.886582
+    },
+    {
+      "name": "Nagarain",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.645466,
+      "lng": 85.924009
+    },
+    {
+      "name": "Sabaila",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.801447,
+      "lng": 86.100655
+    },
+    {
+      "name": "Sahidnagar",
+      "district": "Dhanusha",
+      "province": "Bagmati",
+      "lat": 26.732663,
+      "lng": 86.104927
+    },
+    {
+      "name": "Aurahi",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.86536,
+      "lng": 85.803787
+    },
+    {
+      "name": "Balwa",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.771322,
+      "lng": 85.820181
+    },
+    {
+      "name": "Bhangaha",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.849943,
+      "lng": 85.87289
+    },
+    {
+      "name": "Ekdanra",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.68832,
+      "lng": 85.765209
+    },
+    {
+      "name": "Gaushala",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.932589,
+      "lng": 85.771082
+    },
+    {
+      "name": "Loharpatti",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.774063,
+      "lng": 85.865343
+    },
+    {
+      "name": "Mahottari",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.699343,
+      "lng": 85.81444
+    },
+    {
+      "name": "Manra Siswa",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.711738,
+      "lng": 85.753053
+    },
+    {
+      "name": "Matihani",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.644296,
+      "lng": 85.860632
+    },
+    {
+      "name": "Pipra",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.699547,
+      "lng": 85.867874
+    },
+    {
+      "name": "Ramgopalpur",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.812716,
+      "lng": 85.78102
+    },
+    {
+      "name": "Samsi",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.811813,
+      "lng": 85.751818
+    },
+    {
+      "name": "Sonama",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.872808,
+      "lng": 85.724669
+    },
+    {
+      "name": "Bahudaramai",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.082145,
+      "lng": 84.82579
+    },
+    {
+      "name": "Bindabasini",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.03706,
+      "lng": 84.793784
+    },
+    {
+      "name": "Chhipaharmai",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.069643,
+      "lng": 84.673402
+    },
+    {
+      "name": "Chitwan National Park",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.373778,
+      "lng": 84.756286
+    },
+    {
+      "name": "Dhobini",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.095116,
+      "lng": 84.690999
+    },
+    {
+      "name": "Jagarnathpur",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.143621,
+      "lng": 84.727408
+    },
+    {
+      "name": "Jirabhawani",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.200182,
+      "lng": 84.725717
+    },
+    {
+      "name": "Kalikamai",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.072019,
+      "lng": 84.726406
+    },
+    {
+      "name": "Pakahamainpur",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.031834,
+      "lng": 84.731113
+    },
+    {
+      "name": "Parsagadhi",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.15754,
+      "lng": 84.887027
+    },
+    {
+      "name": "Paterwasugauli",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.179833,
+      "lng": 84.78451
+    },
+    {
+      "name": "SakhuwaPrasauni",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.159339,
+      "lng": 84.824212
+    },
+    {
+      "name": "Thori",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.304105,
+      "lng": 84.635035
+    },
+    {
+      "name": "Baudhimai",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.892445,
+      "lng": 85.215232
+    },
+    {
+      "name": "Brindaban",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 27.037628,
+      "lng": 85.369345
+    },
+    {
+      "name": "Chandrapur",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 27.131226,
+      "lng": 85.372294
+    },
+    {
+      "name": "Dewahhi Gonahi",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.922953,
+      "lng": 85.262032
+    },
+    {
+      "name": "Durga Bhagwati",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.835564,
+      "lng": 85.319921
+    },
+    {
+      "name": "Gadhimai",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.945171,
+      "lng": 85.368439
+    },
+    {
+      "name": "Gujara",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 27.106771,
+      "lng": 85.277185
+    },
+    {
+      "name": "Ishanath",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.796364,
+      "lng": 85.217644
+    },
+    {
+      "name": "Katahariya",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.997744,
+      "lng": 85.250213
+    },
+    {
+      "name": "Madhav Narayan",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.893801,
+      "lng": 85.328958
+    },
+    {
+      "name": "Maulapur",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.935616,
+      "lng": 85.200413
+    },
+    {
+      "name": "Paroha",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.851624,
+      "lng": 85.234896
+    },
+    {
+      "name": "Phatuwa Bijayapur",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 27.022251,
+      "lng": 85.202043
+    },
+    {
+      "name": "Rajdevi",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.780083,
+      "lng": 85.316393
+    },
+    {
+      "name": "Rajpur",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.813772,
+      "lng": 85.249274
+    },
+    {
+      "name": "Yemunamai",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.843068,
+      "lng": 85.298464
+    },
+    {
+      "name": "Agnisair Krishna Savaran",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.655685,
+      "lng": 86.794156
+    },
+    {
+      "name": "Balan Bihul",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.574413,
+      "lng": 86.525114
+    },
+    {
+      "name": "Bishnupur",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.52006,
+      "lng": 86.72202
+    },
+    {
+      "name": "Bode Barsain",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.559598,
+      "lng": 86.569336
+    },
+    {
+      "name": "Chhinnamasta",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.463991,
+      "lng": 86.735695
+    },
+    {
+      "name": "Dakneshwori",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.534377,
+      "lng": 86.638371
+    },
+    {
+      "name": "Hanumannagar Kankalini",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.515446,
+      "lng": 86.882169
+    },
+    {
+      "name": "Kanchanrup",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.641814,
+      "lng": 86.891698
+    },
+    {
+      "name": "Khadak",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.63835,
+      "lng": 86.60885
+    },
+    {
+      "name": "Koshi Tappu Wildlife Reserve",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.650199,
+      "lng": 86.975677
+    },
+    {
+      "name": "Mahadeva",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.551824,
+      "lng": 86.819462
+    },
+    {
+      "name": "Rajgadh",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.510334,
+      "lng": 86.675727
+    },
+    {
+      "name": "Rupani",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.630644,
+      "lng": 86.731141
+    },
+    {
+      "name": "Saptakoshi",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.711675,
+      "lng": 86.924458
+    },
+    {
+      "name": "Shambhunath",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.632637,
+      "lng": 86.678813
+    },
+    {
+      "name": "Surunga",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.701614,
+      "lng": 86.54181
+    },
+    {
+      "name": "Tilathi Koiladi",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.491476,
+      "lng": 86.804379
+    },
+    {
+      "name": "Tirahut",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.592299,
+      "lng": 86.857593
+    },
+    {
+      "name": "Bagmati",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 27.078474,
+      "lng": 85.476157
+    },
+    {
+      "name": "Balara",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.795068,
+      "lng": 85.366425
+    },
+    {
+      "name": "Barahathawa",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.989116,
+      "lng": 85.464169
+    },
+    {
+      "name": "Basbariya",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.925778,
+      "lng": 85.44786
+    },
+    {
+      "name": "Bishnu",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.817189,
+      "lng": 85.47418
+    },
+    {
+      "name": "Bramhapuri",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.895235,
+      "lng": 85.610925
+    },
+    {
+      "name": "Chakraghatta",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.902292,
+      "lng": 85.508766
+    },
+    {
+      "name": "Chandranagar",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.937358,
+      "lng": 85.602638
+    },
+    {
+      "name": "Dhankaul",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.881359,
+      "lng": 85.404709
+    },
+    {
+      "name": "Godaita",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.839314,
+      "lng": 85.444134
+    },
+    {
+      "name": "Haripur",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 27.009907,
+      "lng": 85.545163
+    },
+    {
+      "name": "Haripurwa",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.921506,
+      "lng": 85.69286
+    },
+    {
+      "name": "Hariwan",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 27.104773,
+      "lng": 85.573571
+    },
+    {
+      "name": "Ishworpur",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 27.031801,
+      "lng": 85.71575
+    },
+    {
+      "name": "Kabilasi",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.936969,
+      "lng": 85.543057
+    },
+    {
+      "name": "Kaudena",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.853556,
+      "lng": 85.507077
+    },
+    {
+      "name": "Lalbandi",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 27.106261,
+      "lng": 85.688072
+    },
+    {
+      "name": "Malangawa",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.860474,
+      "lng": 85.549401
+    },
+    {
+      "name": "Parsa",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.874667,
+      "lng": 85.65513
+    },
+    {
+      "name": "Ramnagar",
+      "district": "Sarlahi",
+      "province": "Bagmati",
+      "lat": 26.839307,
+      "lng": 85.37783
+    },
+    {
+      "name": "Arnama",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.69607,
+      "lng": 86.2894
+    },
+    {
+      "name": "Aurahi",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.652383,
+      "lng": 86.309271
+    },
+    {
+      "name": "Bariyarpatti",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.636417,
+      "lng": 86.375118
+    },
+    {
+      "name": "Bhagawanpur",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.591376,
+      "lng": 86.470693
+    },
+    {
+      "name": "Bishnupur",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.7278,
+      "lng": 86.253165
+    },
+    {
+      "name": "Dhangadhimai",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.815049,
+      "lng": 86.413977
+    },
+    {
+      "name": "Golbazar",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.804922,
+      "lng": 86.340689
+    },
+    {
+      "name": "Kalyanpur",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.756986,
+      "lng": 86.201661
+    },
+    {
+      "name": "Karjanha",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.872918,
+      "lng": 86.180751
+    },
+    {
+      "name": "Laxmipur Patari",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.669822,
+      "lng": 86.410606
+    },
+    {
+      "name": "Mirchaiya",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.832826,
+      "lng": 86.251647
+    },
+    {
+      "name": "Naraha",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.775626,
+      "lng": 86.28236
+    },
+    {
+      "name": "Nawarajpur",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.61454,
+      "lng": 86.438312
+    },
+    {
+      "name": "Sakhuwanankarkatti",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.633357,
+      "lng": 86.470591
+    },
+    {
+      "name": "Sukhipur",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.694795,
+      "lng": 86.350552
+    },
+    {
+      "name": "Bannigadhi Jayagadh",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.190453,
+      "lng": 81.29637
+    },
+    {
+      "name": "Chaurpati",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.194926,
+      "lng": 81.123092
+    },
+    {
+      "name": "Dhakari",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 28.983269,
+      "lng": 81.228514
+    },
+    {
+      "name": "Kamalbazar",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.061747,
+      "lng": 81.33709
+    },
+    {
+      "name": "Khaptad National Park",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.342882,
+      "lng": 81.176292
+    },
+    {
+      "name": "Mellekh",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.266679,
+      "lng": 81.320963
+    },
+    {
+      "name": "Panchadewal Binayak",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.109085,
+      "lng": 81.451601
+    },
+    {
+      "name": "Ramaroshan",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.197668,
+      "lng": 81.415368
+    },
+    {
+      "name": "Turmakhad",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 28.896185,
+      "lng": 81.442624
+    },
+    {
+      "name": "Dasharathchanda",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.540308,
+      "lng": 80.429839
+    },
+    {
+      "name": "Dilasaini",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.662309,
+      "lng": 80.652851
+    },
+    {
+      "name": "Dogadakedar",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.599701,
+      "lng": 80.526595
+    },
+    {
+      "name": "Melauli",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.426269,
+      "lng": 80.415933
+    },
+    {
+      "name": "Pancheshwar",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.449131,
+      "lng": 80.322396
+    },
+    {
+      "name": "Patan",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.446642,
+      "lng": 80.571417
+    },
+    {
+      "name": "Purchaudi",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.603265,
+      "lng": 80.695211
+    },
+    {
+      "name": "Shivanath",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.381876,
+      "lng": 80.344873
+    },
+    {
+      "name": "Sigas",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.456194,
+      "lng": 80.77747
+    },
+    {
+      "name": "Surnaya",
+      "district": "Baitadi",
+      "province": "Bagmati",
+      "lat": 29.526157,
+      "lng": 80.601926
+    },
+    {
+      "name": "Bithadchir",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.515007,
+      "lng": 80.835552
+    },
+    {
+      "name": "Bungal",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.670255,
+      "lng": 80.937437
+    },
+    {
+      "name": "Chabispathivera",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.553386,
+      "lng": 81.06334
+    },
+    {
+      "name": "Durgathali",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.530967,
+      "lng": 81.001132
+    },
+    {
+      "name": "JayaPrithivi",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.544601,
+      "lng": 81.198028
+    },
+    {
+      "name": "Kedarseu",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.516203,
+      "lng": 80.929729
+    },
+    {
+      "name": "Khaptad National Park",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.422383,
+      "lng": 81.128847
+    },
+    {
+      "name": "Khaptadchhanna",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.455699,
+      "lng": 81.188487
+    },
+    {
+      "name": "Masta",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.546048,
+      "lng": 81.284774
+    },
+    {
+      "name": "Saipal",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.804411,
+      "lng": 81.321678
+    },
+    {
+      "name": "Surma",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.685019,
+      "lng": 81.130455
+    },
+    {
+      "name": "Talkot",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.678428,
+      "lng": 81.278684
+    },
+    {
+      "name": "Thalara",
+      "district": "Bajhang",
+      "province": "Bagmati",
+      "lat": 29.456333,
+      "lng": 81.021071
+    },
+    {
+      "name": "Badimalika",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.439417,
+      "lng": 81.486139
+    },
+    {
+      "name": "Budhiganga",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.3629,
+      "lng": 81.319024
+    },
+    {
+      "name": "Budhinanda",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.534467,
+      "lng": 81.613199
+    },
+    {
+      "name": "Gaumul",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.550093,
+      "lng": 81.442262
+    },
+    {
+      "name": "Himali",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.730481,
+      "lng": 81.667097
+    },
+    {
+      "name": "Jagannath",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.390591,
+      "lng": 81.65118
+    },
+    {
+      "name": "Khaptad Chhededaha",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.407421,
+      "lng": 81.311524
+    },
+    {
+      "name": "Khaptad National Park",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.39269,
+      "lng": 81.198703
+    },
+    {
+      "name": "Swamikartik Khapar",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.423065,
+      "lng": 81.757831
+    },
+    {
+      "name": "Tribeni",
+      "district": "Bajura",
+      "province": "Bagmati",
+      "lat": 29.32928,
+      "lng": 81.424029
+    },
+    {
+      "name": "Ajaymeru",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.356654,
+      "lng": 80.505048
+    },
+    {
+      "name": "Alital",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.125643,
+      "lng": 80.513532
+    },
+    {
+      "name": "Amargadhi",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.29223,
+      "lng": 80.585408
+    },
+    {
+      "name": "Bhageshwar",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.290715,
+      "lng": 80.420144
+    },
+    {
+      "name": "Ganayapdhura",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.257244,
+      "lng": 80.684672
+    },
+    {
+      "name": "Nawadurga",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.352265,
+      "lng": 80.707849
+    },
+    {
+      "name": "Parashuram",
+      "district": "Dadeldhura",
+      "province": "Bagmati",
+      "lat": 29.123135,
+      "lng": 80.350966
+    },
+    {
+      "name": "Apihimal",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.856699,
+      "lng": 80.892309
+    },
+    {
+      "name": "Byans",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.941499,
+      "lng": 80.767429
+    },
+    {
+      "name": "Dunhu",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.883823,
+      "lng": 80.615526
+    },
+    {
+      "name": "Lekam",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.65961,
+      "lng": 80.448683
+    },
+    {
+      "name": "Mahakali",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.800951,
+      "lng": 80.523367
+    },
+    {
+      "name": "Malikaarjun",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.732244,
+      "lng": 80.436964
+    },
+    {
+      "name": "Marma",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.74301,
+      "lng": 80.823043
+    },
+    {
+      "name": "Naugad",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.79563,
+      "lng": 80.663405
+    },
+    {
+      "name": "Shailyashikhar",
+      "district": "Darchula",
+      "province": "Bagmati",
+      "lat": 29.706623,
+      "lng": 80.567434
+    },
+    {
+      "name": "Adharsha",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.348368,
+      "lng": 80.871946
+    },
+    {
+      "name": "Badikedar",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.017389,
+      "lng": 80.867333
+    },
+    {
+      "name": "Bogatan Phudsil",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.057519,
+      "lng": 81.022176
+    },
+    {
+      "name": "Dipayal Silgadi",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.264243,
+      "lng": 80.9671
+    },
+    {
+      "name": "Jorayal",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.099336,
+      "lng": 80.698886
+    },
+    {
+      "name": "K I Singh",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.175701,
+      "lng": 80.965807
+    },
+    {
+      "name": "Khaptad National Park",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.372933,
+      "lng": 81.105129
+    },
+    {
+      "name": "Purbichauki",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.269945,
+      "lng": 81.058516
+    },
+    {
+      "name": "Sayal",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.370163,
+      "lng": 80.967823
+    },
+    {
+      "name": "Shikhar",
+      "district": "Doti",
+      "province": "Bagmati",
+      "lat": 29.249331,
+      "lng": 80.816835
+    },
+    {
+      "name": "Bardagoriya",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.674015,
+      "lng": 81.036696
+    },
+    {
+      "name": "Bhajani",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.525148,
+      "lng": 80.967459
+    },
+    {
+      "name": "Chure",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.936928,
+      "lng": 80.691069
+    },
+    {
+      "name": "Gauriganga",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.75599,
+      "lng": 80.765735
+    },
+    {
+      "name": "Ghodaghodi",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.695689,
+      "lng": 80.940487
+    },
+    {
+      "name": "Janaki",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.56809,
+      "lng": 81.127989
+    },
+    {
+      "name": "Joshipur",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.57357,
+      "lng": 81.024051
+    },
+    {
+      "name": "Kailari",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.60653,
+      "lng": 80.815725
+    },
+    {
+      "name": "Lamkichuha",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.650682,
+      "lng": 81.14637
+    },
+    {
+      "name": "Mohanyal",
+      "district": "Kailali",
+      "province": "Bagmati",
+      "lat": 28.813778,
+      "lng": 81.040891
+    },
+    {
+      "name": "Bedkot",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.991477,
+      "lng": 80.270329
+    },
+    {
+      "name": "Dodhara Chandani",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.899882,
+      "lng": 80.097321
+    },
+    {
+      "name": "Laljhadi",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.759011,
+      "lng": 80.424975
+    },
+    {
+      "name": "Shuklaphanta National Park",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.896811,
+      "lng": 80.274698
+    },
+    {
+      "name": "Shuklaphanta",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.924506,
+      "lng": 80.378894
+    }
+  ],
+  "municipality": [
+    {
+      "name": "Dhunibesi",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.9,
+      "lng": 85
+    },
+    {
+      "name": "Galchi",
+      "district": "Dhading",
+      "province": "Bagmati",
+      "lat": 27.85,
+      "lng": 84.9
+    },
+    {
+      "name": "Bidur",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.9,
+      "lng": 85.15
+    },
+    {
+      "name": "Kakani",
+      "district": "Nuwakot",
+      "province": "Bagmati",
+      "lat": 27.95,
+      "lng": 85.25
+    },
+    {
+      "name": "Baglung",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.2719,
+      "lng": 83.5936
+    },
+    {
+      "name": "Galkot",
+      "district": "Baglung",
+      "province": "Bagmati",
+      "lat": 28.15,
+      "lng": 83.3
+    },
+    {
+      "name": "Gorkha",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28,
+      "lng": 84.6333
+    },
+    {
+      "name": "Palungtar",
+      "district": "Gorkha",
+      "province": "Bagmati",
+      "lat": 28.05,
+      "lng": 84.55
+    },
+    {
+      "name": "Pokhara",
+      "district": "Kaski",
+      "province": "Gandaki",
+      "lat": 28.2096,
+      "lng": 83.9856
+    },
+    {
+      "name": "Besishahar",
+      "district": "Lamjung",
+      "province": "Bagmati",
+      "lat": 28.2333,
+      "lng": 84.3833
+    },
+    {
+      "name": "Chame",
+      "district": "Manang",
+      "province": "Bagmati",
+      "lat": 28.55,
+      "lng": 84.25
+    },
+    {
+      "name": "Beni",
+      "district": "Myagdi",
+      "province": "Bagmati",
+      "lat": 28.3444,
+      "lng": 83.5639
+    },
+    {
+      "name": "Devchuli",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.715101,
+      "lng": 84.205845
+    },
+    {
+      "name": "Gaindakot",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.734773,
+      "lng": 84.327704
+    },
+    {
+      "name": "Kawasoti",
+      "district": "Nawalparasi_E",
+      "province": "Bagmati",
+      "lat": 27.9,
+      "lng": 84.1
+    },
+    {
+      "name": "Kushma",
+      "district": "Parbat",
+      "province": "Bagmati",
+      "lat": 28.2333,
+      "lng": 83.7167
+    },
+    {
+      "name": "Waling",
+      "district": "Syangja",
+      "province": "Bagmati",
+      "lat": 28,
+      "lng": 83.75
+    },
+    {
+      "name": "Bhimad",
+      "district": "Tanahu",
+      "province": "Bagmati",
+      "lat": 28,
+      "lng": 84
+    },
+    {
+      "name": "Dullu",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.75,
+      "lng": 81.6
+    },
+    {
+      "name": "Narayan",
+      "district": "Dailekh",
+      "province": "Bagmati",
+      "lat": 28.7,
+      "lng": 81.9
+    },
+    {
+      "name": "Bhojpur",
+      "district": "Bhojpur",
+      "province": "Bagmati",
+      "lat": 27.2,
+      "lng": 87.05
+    },
+    {
+      "name": "Dhankuta",
+      "district": "Dhankuta",
+      "province": "Bagmati",
+      "lat": 26.9833,
+      "lng": 87.3333
+    },
+    {
+      "name": "Bhadrapur",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.5333,
+      "lng": 88.0833
+    },
+    {
+      "name": "Birtamod",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.4833,
+      "lng": 88.0833
+    },
+    {
+      "name": "Damak",
+      "district": "Jhapa",
+      "province": "Bagmati",
+      "lat": 26.6667,
+      "lng": 87.7
+    },
+    {
+      "name": "Phidim",
+      "district": "Panchthar",
+      "province": "Bagmati",
+      "lat": 26.9833,
+      "lng": 87.75
+    },
+    {
+      "name": "Chainpur",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 29.55,
+      "lng": 81.05
+    },
+    {
+      "name": "Khandbari",
+      "district": "Sankhuwasabha",
+      "province": "Bagmati",
+      "lat": 27.3667,
+      "lng": 87.2167
+    },
+    {
+      "name": "Sandhikharka",
+      "district": "Arghakhanchi",
+      "province": "Bagmati",
+      "lat": 28,
+      "lng": 83.1
+    },
+    {
+      "name": "Rajapur",
+      "district": "Bardiya",
+      "province": "Bagmati",
+      "lat": 28.25,
+      "lng": 81.45
+    },
+    {
+      "name": "Ramgram",
+      "district": "Nawalparasi_W",
+      "province": "Bagmati",
+      "lat": 27.65,
+      "lng": 83.75
+    },
+    {
+      "name": "Tansen",
+      "district": "Palpa",
+      "province": "Bagmati",
+      "lat": 27.8667,
+      "lng": 83.55
+    },
+    {
+      "name": "Devdaha",
+      "district": "Rupandehi",
+      "province": "Bagmati",
+      "lat": 27.65,
+      "lng": 83.35
+    },
+    {
+      "name": "Nijgadh",
+      "district": "Bara",
+      "province": "Bagmati",
+      "lat": 27.15,
+      "lng": 85.05
+    },
+    {
+      "name": "Bardibas",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.9944,
+      "lng": 85.9011
+    },
+    {
+      "name": "Jaleswor",
+      "district": "Mahottari",
+      "province": "Bagmati",
+      "lat": 26.65,
+      "lng": 85.8
+    },
+    {
+      "name": "Pokhariya",
+      "district": "Parsa",
+      "province": "Bagmati",
+      "lat": 27.1,
+      "lng": 84.75
+    },
+    {
+      "name": "Garuda",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.9167,
+      "lng": 85.3
+    },
+    {
+      "name": "Gaur",
+      "district": "Rautahat",
+      "province": "Bagmati",
+      "lat": 26.6833,
+      "lng": 85.25
+    },
+    {
+      "name": "Rajbiraj",
+      "district": "Saptari",
+      "province": "Bagmati",
+      "lat": 26.535168,
+      "lng": 86.763426
+    },
+    {
+      "name": "Lahan",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.762462,
+      "lng": 86.484065
+    },
+    {
+      "name": "Siraha",
+      "district": "Siraha",
+      "province": "Bagmati",
+      "lat": 26.645161,
+      "lng": 86.215871
+    },
+    {
+      "name": "Mangalsen",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.1,
+      "lng": 81.25
+    },
+    {
+      "name": "Sanphebagar",
+      "district": "Achham",
+      "province": "Bagmati",
+      "lat": 29.25,
+      "lng": 81.2
+    },
+    {
+      "name": "Belauri",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.75,
+      "lng": 80.1
+    },
+    {
+      "name": "Beldandi",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.9,
+      "lng": 80
+    },
+    {
+      "name": "Krishnapur",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.8,
+      "lng": 80.2
+    },
+    {
+      "name": "Punarbas",
+      "district": "Kanchanpur",
+      "province": "Bagmati",
+      "lat": 28.85,
+      "lng": 80.15
+    }
+  ],
+  "sub_metropolitan": [
+    {
+      "name": "Godawari",
+      "district": "Lalitpur",
+      "province": "Sudurpashchim",
+      "lat": 28.6,
+      "lng": 80.5
+    },
+    {
+      "name": "Hetauda",
+      "district": "Makawanpur",
+      "province": "Bagmati",
+      "lat": 27.4287,
+      "lng": 85.0322
+    },
+    {
+      "name": "Birendranagar",
+      "district": "Surkhet",
+      "province": "Lumbini",
+      "lat": 28.609606,
+      "lng": 81.650774
+    },
+    {
+      "name": "Dharan",
+      "district": "Sunsari",
+      "province": "Koshi",
+      "lat": 26.8124,
+      "lng": 87.2834
+    },
+    {
+      "name": "Itahari",
+      "district": "Sunsari",
+      "province": "Koshi",
+      "lat": 26.6664,
+      "lng": 87.2798
+    },
+    {
+      "name": "Kohalpur",
+      "district": "Banke",
+      "province": "Lumbini",
+      "lat": 28.1963,
+      "lng": 81.6917
+    },
+    {
+      "name": "Nepalgunj",
+      "district": "Banke",
+      "province": "Lumbini",
+      "lat": 28.05,
+      "lng": 81.6167
+    },
+    {
+      "name": "Ghorahi",
+      "district": "Dang",
+      "province": "Lumbini",
+      "lat": 28.05,
+      "lng": 82.5
+    },
+    {
+      "name": "Tulsipur",
+      "district": "Dang",
+      "province": "Lumbini",
+      "lat": 28.1306,
+      "lng": 82.2961
+    },
+    {
+      "name": "Butwal",
+      "district": "Rupandehi",
+      "province": "Lumbini",
+      "lat": 27.7006,
+      "lng": 83.4484
+    },
+    {
+      "name": "Kalaiya",
+      "district": "Bara",
+      "province": "Madhesh",
+      "lat": 27,
+      "lng": 85
+    },
+    {
+      "name": "Dhangadhi",
+      "district": "Kailali",
+      "province": "Sudurpashchim",
+      "lat": 28.6852,
+      "lng": 80.5975
+    },
+    {
+      "name": "Godawari",
+      "district": "Kailali",
+      "province": "Sudurpashchim",
+      "lat": 28.6,
+      "lng": 80.5
+    },
+    {
+      "name": "Tikapur",
+      "district": "Kailali",
+      "province": "Sudurpashchim",
+      "lat": 28.5,
+      "lng": 81
+    },
+    {
+      "name": "Bhimdatta",
+      "district": "Kanchanpur",
+      "province": "Sudurpashchim",
+      "lat": 28.9667,
+      "lng": 80.1833
+    }
+  ]
+}

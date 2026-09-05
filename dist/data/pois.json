@@ -1,0 +1,261 @@
+[
+  {
+    "id": "poi-ev-mugling",
+    "name": "NEA DC Fast Charging Hub Mugling",
+    "nepaliName": "विद्युत प्राधिकरण फास्ट चार्जिङ मुग्लिन",
+    "category": "ev_charger",
+    "highwayCode": "H04 / H05",
+    "locationName": "Mugling Junction Bus Park",
+    "lat": 27.8625,
+    "lng": 84.555,
+    "rating": 4.8,
+    "description": "Premier 24/7 dual-gun 60kW CCS2 / GB/T DC fast charging station operated by Nepal Electricity Authority. Restrooms and 24h eateries on site.",
+    "facilities": [
+      "24/7 Open",
+      "Washroom",
+      "Dhaba Food",
+      "Security",
+      "Free Air"
+    ],
+    "contactNumber": "+977-56-540112",
+    "evSpecs": {
+      "powerKw": 60,
+      "plugs": [
+        "CCS2 (60kW)",
+        "GB/T (60kW)",
+        "Type 2 (22kW)"
+      ],
+      "operator": "Nepal Electricity Authority (NEA)",
+      "availablePorts": 3,
+      "totalPorts": 4
+    }
+  },
+  {
+    "id": "poi-ev-kurintar",
+    "name": "Tata Power / BYD Supercharger Kurintar",
+    "category": "ev_charger",
+    "highwayCode": "H04",
+    "locationName": "Kurintar Manakamana Cable Car Station",
+    "lat": 27.876,
+    "lng": 84.582,
+    "rating": 4.9,
+    "description": "High-speed 120kW twin gun DC station ideal for quick 20-minute top-ups during Kathmandu-Pokhara transit.",
+    "facilities": [
+      "120kW Supercharger",
+      "Cafeteria",
+      "Clean Toilets",
+      "Souvenirs",
+      "Valet"
+    ],
+    "contactNumber": "+977-56-540055",
+    "evSpecs": {
+      "powerKw": 120,
+      "plugs": [
+        "CCS2 Dual (120kW)",
+        "Type 2 (22kW)"
+      ],
+      "operator": "Sipradi / BYD Nepal",
+      "availablePorts": 2,
+      "totalPorts": 2
+    }
+  },
+  {
+    "id": "poi-ev-itahari",
+    "name": "NEA DC Fast Charging Station Itahari",
+    "category": "ev_charger",
+    "highwayCode": "H01",
+    "locationName": "Itahari Chowk East-West Highway",
+    "lat": 26.6645,
+    "lng": 87.2718,
+    "rating": 4.7,
+    "description": "Eastern Nepal primary 60kW DC fast charging hub with multiple CCS2 connectors for cross-country EV transit.",
+    "facilities": [
+      "24/7 Open",
+      "Well Lit",
+      "Restroom",
+      "Convenience Store"
+    ],
+    "contactNumber": "+977-25-580123",
+    "evSpecs": {
+      "powerKw": 60,
+      "plugs": [
+        "CCS2 (60kW)",
+        "GB/T (60kW)"
+      ],
+      "operator": "Nepal Electricity Authority (NEA)",
+      "availablePorts": 3,
+      "totalPorts": 3
+    }
+  },
+  {
+    "id": "poi-ev-butwal",
+    "name": "NEA / BYD Fast Charging Hub Butwal",
+    "category": "ev_charger",
+    "highwayCode": "H03 / H08",
+    "locationName": "Traffic Chowk Butwal",
+    "lat": 27.7005,
+    "lng": 83.4485,
+    "rating": 4.8,
+    "description": "Western corridor 90kW high-output DC charging station servicing Lumbini and Terai highway travelers.",
+    "facilities": [
+      "90kW DC",
+      "Coffee Bar",
+      "24/7 Security",
+      "Air Pump"
+    ],
+    "contactNumber": "+977-71-540988",
+    "evSpecs": {
+      "powerKw": 90,
+      "plugs": [
+        "CCS2 (90kW)",
+        "GB/T (60kW)",
+        "Type 2"
+      ],
+      "operator": "NEA & BYD Nepal",
+      "availablePorts": 2,
+      "totalPorts": 4
+    }
+  },
+  {
+    "id": "poi-food-malekhu",
+    "name": "Malekhu Riverside Fish Dhabas",
+    "nepaliName": "मलेखु ताजा माछा होटल",
+    "category": "food_rest",
+    "highwayCode": "H04",
+    "locationName": "Malekhu Bridge (Dhading)",
+    "lat": 27.8228,
+    "lng": 84.8155,
+    "rating": 4.7,
+    "description": "Iconic Nepal highway culinary stop famous for fresh local Trishuli river fish curry, roasted machha, and organic dal-bhat.",
+    "facilities": [
+      "Riverside Seating",
+      "Ample Car Parking",
+      "Fresh Fish",
+      "Clean Washrooms",
+      "Cold Drinks"
+    ],
+    "contactNumber": "+977-9841234567"
+  },
+  {
+    "id": "poi-food-mugling",
+    "name": "Mugling Highway Nepali Thakali Thali",
+    "nepaliName": "मुग्लिन थकाली भान्सा घर",
+    "category": "food_rest",
+    "highwayCode": "H04",
+    "locationName": "Mugling Highway Center",
+    "lat": 27.861,
+    "lng": 84.5535,
+    "rating": 4.6,
+    "description": "Authentic Mustang Thakali ghee dal bhat served with mountain jimbu, black lentils, gundruk, and timur spicy chutney.",
+    "facilities": [
+      "Fast Service",
+      "Thakali Set",
+      "Card Payment",
+      "Parking",
+      "Mineral Water"
+    ]
+  },
+  {
+    "id": "poi-fuel-naubise",
+    "name": "NOC Smart Petrol Pump & Service Naubise",
+    "nepaliName": "नेपाल आयल निगम नौबिसे",
+    "category": "fuel_station",
+    "highwayCode": "H02 / H04",
+    "locationName": "Naubise Highway Entry",
+    "lat": 27.721,
+    "lng": 85.177,
+    "rating": 4.5,
+    "description": "24/7 computerized dispensing pumps with nitrogen tyre inflation, automated car wash bay, and clean public restrooms.",
+    "facilities": [
+      "24/7 Fuel",
+      "Nitrogen Air",
+      "Car Wash",
+      "Automated POS",
+      "ATM"
+    ],
+    "fuelSpecs": {
+      "petrolAvailable": true,
+      "dieselAvailable": true,
+      "airPumpAvailable": true,
+      "open24Hours": true
+    }
+  },
+  {
+    "id": "poi-scenic-sindhuli",
+    "name": "Sindhuli Gadhi Historic Ridge Viewpoint",
+    "nepaliName": "सिन्धुलीगढी ऐतिहासिक भ्यू प्वाइन्ट",
+    "category": "scenic_pass",
+    "highwayCode": "H13",
+    "locationName": "Sindhuli Gadhi Crest (1,100m)",
+    "lat": 27.2486,
+    "lng": 85.9186,
+    "rating": 4.9,
+    "description": "Breathtaking panoramic overlook of the Mahabharat range and winding serpentine B.P. Highway curves. Historical Anglo-Nepal war fort museum.",
+    "facilities": [
+      "Panoramic Vista",
+      "Photo Deck",
+      "Tea Stalls",
+      "Historical Fort Museum",
+      "Parking Area"
+    ]
+  },
+  {
+    "id": "poi-scenic-nagdhunga",
+    "name": "Nagdhunga Sisne Khola Valley Overlook",
+    "nepaliName": "नागढुंगा उपत्यका दृश्य",
+    "category": "scenic_pass",
+    "highwayCode": "H04",
+    "locationName": "Nagdhunga Tunnel Exit Point",
+    "lat": 27.701,
+    "lng": 85.195,
+    "rating": 4.6,
+    "description": "Stunning viewpoint overlooking the Dhading valley hills, Nagdhunga tunnel portal viaduct, and Chandragiri ridge.",
+    "facilities": [
+      "Viaduct View",
+      "Fresh Tea",
+      "Vehicle Pullout Bay"
+    ]
+  },
+  {
+    "id": "poi-dor-bharatpur",
+    "name": "DOR Heavy Equipment & Emergency Rescue Depot",
+    "nepaliName": "सडक डिभिजन भरतपुर आपत्कालीन शाखा",
+    "category": "emergency_dor",
+    "highwayCode": "H04 / H05 / H01",
+    "locationName": "Dasdhunga, Chitwan",
+    "lat": 27.75,
+    "lng": 84.48,
+    "rating": 4.9,
+    "description": "Department of Roads rapid deployment station housing hydraulic rock excavators, heavy cranes, wheel loaders, and towing rigs for landslide response.",
+    "facilities": [
+      "24/7 Highway Rescue",
+      "Heavy Tow Crane",
+      "First Aid Station",
+      "Ambulance Hotline"
+    ],
+    "contactNumber": "+977-56-520144 / Hotline: 103"
+  },
+  {
+    "id": "poi-toll-nagdhunga",
+    "name": "Nagdhunga Tunnel Expressway Toll Plaza",
+    "nepaliName": "नागढुंगा सुरुङमार्ग टोल प्लाजा",
+    "category": "toll_plaza",
+    "highwayCode": "H04",
+    "locationName": "Sisne Khola Portal (Dhading side)",
+    "lat": 27.705,
+    "lng": 85.188,
+    "rating": 4.4,
+    "description": "State-of-the-art automated RFID FASTag / QR toll payment system for Nepal’s first national highway tunnel bypass.",
+    "facilities": [
+      "FASTag RFID",
+      "QR Payment",
+      "Emergency Lane",
+      "Information Desk"
+    ],
+    "tollFeeNpr": {
+      "bike": 25,
+      "car": 70,
+      "bus_truck": 150
+    }
+  }
+]

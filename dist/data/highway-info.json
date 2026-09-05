@@ -1,0 +1,279 @@
+[
+  {
+    "id": "h04",
+    "code": "H04",
+    "name": "Prithvi Highway",
+    "nepaliName": "पृथ्वी राजमार्ग",
+    "totalLengthKm": 174,
+    "startPoint": "Naubise (Dhading / Kathmandu Entry)",
+    "endPoint": "Prithvi Chowk, Pokhara",
+    "provinces": ["Bagmati", "Gandaki"],
+    "keyPassesAndJunctions": ["Nagdhunga Tunnel Exit", "Naubise", "Galchhi (Trishuli link)", "Malekhu (Fish hub)", "Mugling Junction", "Dumre (Bandipur entry)", "Damauli", "Kotre", "Pokhara"],
+    "overallStatus": "caution",
+    "conditionRating": 3.4,
+    "scenicRating": 4.6,
+    "terrainType": "Hilly",
+    "description": "Vital mountain arterial highway connecting Kathmandu Valley with the tourist hub of Pokhara, winding alongside the fast-flowing Trishuli and Marshyangdi river valleys. Currently undergoing major 4-lane expansion between Mugling and Pokhara.",
+    "dorDivision": "DOR Road Division Bharatpur & Tanahun (Pokhara)",
+    "emergencyContact": "+977-1-4286577 (Traffic Hotline: 103)",
+    "activeAlertCount": 2,
+    "segments": [
+      { "id": "h04-seg-1", "from": "Naubise", "to": "Galchhi", "distanceKm": 26, "avgSpeedKmh": 45, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 920, "elevationEndM": 580, "coordinates": [[85.1764,27.7214],[85.0872,27.7533],[84.9754,27.8105]] },
+      { "id": "h04-seg-2", "from": "Galchhi", "to": "Malekhu", "distanceKm": 22, "avgSpeedKmh": 40, "surface": "blacktopped_fair", "status": "clear", "lanes": 2, "elevationStartM": 580, "elevationEndM": 450, "coordinates": [[84.9754,27.8105],[84.8912,27.8286],[84.8155,27.8228]] },
+      { "id": "h04-seg-3", "from": "Malekhu", "to": "Mugling", "distanceKm": 40, "avgSpeedKmh": 35, "surface": "blacktopped_fair", "status": "caution", "lanes": 2, "elevationStartM": 450, "elevationEndM": 275, "currentIssue": "Minor rock fall hazard near Benighat & Jogimara curves during heavy rain", "lastUpdated": "1 hour ago", "coordinates": [[84.8155,27.8228],[84.7155,27.8423],[84.5542,27.8617]] },
+      { "id": "h04-seg-4", "from": "Mugling", "to": "Damauli", "distanceKm": 44, "avgSpeedKmh": 30, "surface": "under_construction", "status": "caution", "lanes": 2, "elevationStartM": 275, "elevationEndM": 450, "currentIssue": "Highway widening work in progress (Asian Development Bank funded 4-lane upgrade). Dusty with occasional stop-and-go single lane diversions.", "lastUpdated": "30 mins ago", "coordinates": [[84.5542,27.8617],[84.4223,27.9142],[84.2833,27.9733]] },
+      { "id": "h04-seg-5", "from": "Damauli", "to": "Pokhara", "distanceKm": 42, "avgSpeedKmh": 48, "surface": "asphalt_excellent", "status": "clear", "lanes": 4, "elevationStartM": 450, "elevationEndM": 822, "coordinates": [[84.2833,27.9733],[84.1432,28.0833],[83.9856,28.2096]] }
+    ],
+    "evChargers": [
+      { "id": "ev-kurintar", "name": "Nepal Electricity Authority DC Fast Charger", "location": "Kurintar Cable Car Station", "powerKw": 60, "type": "CCS2", "available": true, "lat": 27.8698, "lng": 84.6288 },
+      { "id": "ev-mugling", "name": "BYD & Tata Fast Hub Mugling", "location": "Near Mugling Bridge Chowk", "powerKw": 50, "type": "CCS2", "available": true, "lat": 27.8625, "lng": 84.5550 },
+      { "id": "ev-dumre", "name": "Bandipur Highway Resort EV Station", "location": "Dumre Chowk", "powerKw": 30, "type": "Type 2", "available": true, "lat": 27.9620, "lng": 84.4120 },
+      { "id": "ev-pkr-prithvi", "name": "Pokhara City Hub Fast Charger", "location": "Prithvi Chowk Pokhara", "powerKw": 120, "type": "CCS2", "available": true, "lat": 28.2090, "lng": 83.9860 }
+    ],
+    "tollPlazas": [
+      { "id": "toll-nagdhunga", "name": "Nagdhunga Tunnel Toll Plaza", "location": "Nagdhunga-Sisne Khola", "costNpr": { "car": 60, "suv_4wd": 80, "motorbike": 25, "bus_truck": 150, "electric_vehicle": 50 }, "lat": 27.7020, "lng": 85.2010 },
+      { "id": "toll-malekhu", "name": "Roads Board Nepal Malekhu Toll", "location": "Malekhu Bridge", "costNpr": { "car": 30, "suv_4wd": 40, "motorbike": 0, "bus_truck": 70, "electric_vehicle": 30 }, "lat": 27.8230, "lng": 84.8160 }
+    ]
+  },
+  {
+    "id": "h05",
+    "code": "H05",
+    "name": "Narayanghat–Mugling Highway",
+    "nepaliName": "नारायणगढ–मुग्लिन सडक",
+    "totalLengthKm": 36,
+    "startPoint": "Mugling (Prithvi Highway Junction)",
+    "endPoint": "Aaptari / Narayanghat (Mahendra Highway Link)",
+    "provinces": ["Bagmati"],
+    "keyPassesAndJunctions": ["Mugling", "Chorkilo", "Jalbire", "Gaighat", "Setidobhan", "Aaptari", "Pulchowk Narayanghat"],
+    "overallStatus": "caution",
+    "conditionRating": 4.1,
+    "scenicRating": 4.2,
+    "terrainType": "Hilly",
+    "description": "The supreme commercial lifeline of Nepal carrying over 90% of imported vehicular freight between the Terai border and Kathmandu / Pokhara. Beautiful wide 2-lane Asian Highway standard along the Trishuli canyon with sophisticated rockfall mitigation barriers.",
+    "dorDivision": "DOR Road Division Bharatpur",
+    "emergencyContact": "+977-56-520100 (Disaster Quick Response)",
+    "activeAlertCount": 1,
+    "segments": [
+      { "id": "h05-seg-1", "from": "Mugling", "to": "Jalbire", "distanceKm": 18, "avgSpeedKmh": 42, "surface": "asphalt_excellent", "status": "caution", "lanes": 2, "elevationStartM": 275, "elevationEndM": 235, "currentIssue": "Single lane controlled crossing near Chorkilo due to drainage clearance work", "lastUpdated": "15 mins ago", "coordinates": [[84.5542,27.8617],[84.5020,27.8102],[84.4750,27.7650]] },
+      { "id": "h05-seg-2", "from": "Jalbire", "to": "Aaptari Narayanghat", "distanceKm": 18, "avgSpeedKmh": 55, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 235, "elevationEndM": 208, "coordinates": [[84.4750,27.7650],[84.4510,27.7120],[84.4333,27.6833]] }
+    ],
+    "evChargers": [
+      { "id": "ev-jalbire", "name": "Highway Oasis Fast Charger", "location": "Jalbire, Chitwan", "powerKw": 60, "type": "CCS2", "available": true, "lat": 27.7650, "lng": 84.4750 },
+      { "id": "ev-narayanghat", "name": "Bharatpur Central Charging Station", "location": "Pulchowk Narayanghat", "powerKw": 120, "type": "CCS2", "available": true, "lat": 27.6850, "lng": 84.4300 }
+    ],
+    "tollPlazas": [
+      { "id": "toll-aaptari", "name": "Roads Board Nepal Aaptari Toll Plaza", "location": "Aaptari Gate, Chitwan", "costNpr": { "car": 35, "suv_4wd": 50, "motorbike": 0, "bus_truck": 80, "electric_vehicle": 35 }, "lat": 27.6950, "lng": 84.4380 }
+    ]
+  },
+  {
+    "id": "h01",
+    "code": "H01",
+    "name": "Mahendra Highway (East–West Highway)",
+    "nepaliName": "महेन्द्र राजमार्ग (पूर्व–पश्चिम राजमार्ग)",
+    "totalLengthKm": 1027,
+    "startPoint": "Kakarbhitta (Eastern Border - India/Assam Link)",
+    "endPoint": "Gaddachauki / Mahendranagar (Western Border)",
+    "provinces": ["Koshi", "Madhesh", "Bagmati", "Gandaki", "Lumbini", "Sudurpashchim"],
+    "keyPassesAndJunctions": ["Kakarbhitta", "Damak", "Itahari (Dharan link)", "Koshi Barrage", "Lahan", "Bardibas (BP Highway junction)", "Pathlaiya (Birgunj link)", "Hetauda", "Narayanghat", "Daunne Hill Pass", "Butwal", "Gorusinghe", "Kohalpur (Nepalgunj link)", "Karnali Chisapani Bridge", "Attariya (Dhangadhi link)", "Mahendranagar"],
+    "overallStatus": "caution",
+    "conditionRating": 3.8,
+    "scenicRating": 4.0,
+    "terrainType": "Plains",
+    "description": "The national spine of Nepal spanning the entire southern Terai belt from east to west. Connects major agricultural, industrial, and demographic centers. Major 4-lane expansion underway along Narayanghat–Butwal and Kamala–Kanchanpur sections.",
+    "dorDivision": "DOR Central Project Directorate & Regional Divisions",
+    "emergencyContact": "103 / +977-1-4286577",
+    "activeAlertCount": 2,
+    "segments": [
+      { "id": "h01-seg-1", "from": "Kakarbhitta", "to": "Itahari", "distanceKm": 85, "avgSpeedKmh": 65, "surface": "asphalt_excellent", "status": "clear", "lanes": 4, "elevationStartM": 145, "elevationEndM": 110, "coordinates": [[88.1565,26.6508],[87.8920,26.6620],[87.2780,26.6650]] },
+      { "id": "h01-seg-2", "from": "Itahari", "to": "Bardibas", "distanceKm": 165, "avgSpeedKmh": 58, "surface": "blacktopped_fair", "status": "clear", "lanes": 2, "elevationStartM": 110, "elevationEndM": 150, "coordinates": [[87.2780,26.6650],[86.9320,26.5210],[85.9024,26.9740]] },
+      { "id": "h01-seg-3", "from": "Bardibas", "to": "Hetauda", "distanceKm": 130, "avgSpeedKmh": 60, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 150, "elevationEndM": 460, "coordinates": [[85.9024,26.9740],[85.3500,27.0500],[85.0331,27.4285]] },
+      { "id": "h01-seg-4", "from": "Hetauda", "to": "Narayanghat", "distanceKm": 76, "avgSpeedKmh": 62, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 460, "elevationEndM": 208, "coordinates": [[85.0331,27.4285],[84.7500,27.5700],[84.4333,27.6833]] },
+      { "id": "h01-seg-5", "from": "Narayanghat", "to": "Butwal (via Daunne Pass)", "distanceKm": 114, "avgSpeedKmh": 35, "surface": "under_construction", "status": "caution", "lanes": 2, "elevationStartM": 208, "elevationEndM": 220, "currentIssue": "Daunne Hill section (14 km) undergoing heavy widening and slope cutting. Expect 40-minute delays during peak hours.", "lastUpdated": "45 mins ago", "coordinates": [[84.4333,27.6833],[83.8900,27.5300],[83.4484,27.7006]] },
+      { "id": "h01-seg-6", "from": "Butwal", "to": "Kohalpur (Nepalgunj)", "distanceKm": 240, "avgSpeedKmh": 70, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 220, "elevationEndM": 150, "coordinates": [[83.4484,27.7006],[82.8500,27.7200],[81.6900,28.1900]] },
+      { "id": "h01-seg-7", "from": "Kohalpur", "to": "Dhangadhi / Mahendranagar", "distanceKm": 217, "avgSpeedKmh": 72, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 150, "elevationEndM": 198, "coordinates": [[81.6900,28.1900],[81.2800,28.6400],[80.5977,28.6946],[80.1833,28.9667]] }
+    ],
+    "evChargers": [
+      { "id": "ev-itahari", "name": "Itahari Sub-Metropolitan Supercharger", "location": "Itahari Chowk", "powerKw": 60, "type": "CCS2", "available": true, "lat": 26.6650, "lng": 87.2780 },
+      { "id": "ev-bardibas", "name": "Bardibas Highway EV Hub", "location": "Sindhuli Highway Junction", "powerKw": 60, "type": "CCS2", "available": true, "lat": 26.9740, "lng": 85.9024 },
+      { "id": "ev-hetauda", "name": "Hetauda Industrial EV Plaza", "location": "Chauki Toll, Hetauda", "powerKw": 90, "type": "CCS2", "available": true, "lat": 27.4285, "lng": 85.0331 },
+      { "id": "ev-butwal", "name": "Butwal Traffic Chowk Mega Charger", "location": "Butwal By-pass", "powerKw": 120, "type": "CCS2", "available": true, "lat": 27.7006, "lng": 83.4484 },
+      { "id": "ev-kohalpur", "name": "Kohalpur Western Nepal EV Hub", "location": "Kohalpur Chauraha", "powerKw": 60, "type": "CCS2", "available": true, "lat": 28.1900, "lng": 81.6900 }
+    ],
+    "tollPlazas": [
+      { "id": "toll-hetauda", "name": "RBN Hetauda Entry Toll", "location": "Rato Mate, Hetauda", "costNpr": { "car": 30, "suv_4wd": 50, "motorbike": 0, "bus_truck": 80, "electric_vehicle": 30 }, "lat": 27.4350, "lng": 85.0210 },
+      { "id": "toll-butwal", "name": "RBN Butwal Toll Gate", "location": "Ramuapur, Butwal", "costNpr": { "car": 30, "suv_4wd": 50, "motorbike": 0, "bus_truck": 80, "electric_vehicle": 30 }, "lat": 27.7050, "lng": 83.4390 }
+    ]
+  },
+  {
+    "id": "h13",
+    "code": "H13",
+    "name": "B.P. Koirala Highway (Banepa–Bardibas)",
+    "nepaliName": "बिपी राजमार्ग (बनेपा–बर्दिबास)",
+    "totalLengthKm": 160,
+    "startPoint": "Dhulikhel / Banepa (Kavre)",
+    "endPoint": "Bardibas (Mahottari)",
+    "provinces": ["Bagmati", "Madhesh"],
+    "keyPassesAndJunctions": ["Dhulikhel", "Bhakundebesi", "Nepalthok", "Khurkot (Manthali link)", "Sindhuli Gadhi", "Sindhuli Madi", "Bardibas"],
+    "overallStatus": "caution",
+    "conditionRating": 4.4,
+    "scenicRating": 4.9,
+    "terrainType": "High Mountain",
+    "description": "An engineering marvel constructed with Japanese JICA grant assistance, featuring geotextile reinforced soil walls and hairpin mountain turns hugging the Sunkoshi and Roshi rivers. Drastically cuts travel time between Kathmandu and Eastern Terai. Restrictive heavy vehicle limits apply.",
+    "dorDivision": "DOR Road Division Sindhuli & Bhaktapur",
+    "emergencyContact": "+977-47-520144 / 103",
+    "activeAlertCount": 1,
+    "segments": [
+      { "id": "h13-seg-1", "from": "Dhulikhel", "to": "Nepalthok", "distanceKm": 50, "avgSpeedKmh": 42, "surface": "asphalt_excellent", "status": "caution", "lanes": 2, "elevationStartM": 1550, "elevationEndM": 520, "currentIssue": "Repaired Roshi river washout sections operating under 20 km/h speed restrictions with concrete paved fords", "lastUpdated": "2 hours ago", "coordinates": [[85.5428,27.6221],[85.6700,27.5020],[85.8700,27.4200]] },
+      { "id": "h13-seg-2", "from": "Nepalthok", "to": "Khurkot", "distanceKm": 37, "avgSpeedKmh": 48, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 520, "elevationEndM": 470, "coordinates": [[85.8700,27.4200],[85.9600,27.3500],[86.0167,27.3333]] },
+      { "id": "h13-seg-3", "from": "Khurkot", "to": "Sindhuli Gadhi Pass", "distanceKm": 33, "avgSpeedKmh": 35, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 470, "elevationEndM": 1100, "coordinates": [[86.0167,27.3333],[85.9400,27.2800],[85.9186,27.2486]] },
+      { "id": "h13-seg-4", "from": "Sindhuli Gadhi", "to": "Bardibas", "distanceKm": 40, "avgSpeedKmh": 50, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 1100, "elevationEndM": 150, "coordinates": [[85.9186,27.2486],[85.9100,27.1500],[85.9024,26.9740]] }
+    ],
+    "evChargers": [
+      { "id": "ev-khurkot", "name": "Khurkot Sunkoshi Fast Hub", "location": "Khurkot Chowk", "powerKw": 60, "type": "CCS2", "available": true, "lat": 27.3333, "lng": 86.0167 },
+      { "id": "ev-sindhuli", "name": "Sindhuli Madi Charging Plaza", "location": "Sindhuli Bazar", "powerKw": 30, "type": "Type 2", "available": true, "lat": 27.2486, "lng": 85.9186 }
+    ],
+    "tollPlazas": []
+  },
+  {
+    "id": "h10",
+    "code": "H10",
+    "name": "Siddhartha Highway",
+    "nepaliName": "सिद्धार्थ राजमार्ग",
+    "totalLengthKm": 181,
+    "startPoint": "Sunauli / Bhairahawa (Indian border)",
+    "endPoint": "Prithvi Chowk, Pokhara",
+    "provinces": ["Lumbini", "Gandaki"],
+    "keyPassesAndJunctions": ["Sunauli", "Bhairahawa", "Butwal", "Siddhababa Rockfall Tunnel", "Tansen (Palpa link)", "Ramdi Bridge", "Galyang", "Waling", "Syangja Bazar", "Kande Pass", "Pokhara"],
+    "overallStatus": "caution",
+    "conditionRating": 3.6,
+    "scenicRating": 4.7,
+    "terrainType": "High Mountain",
+    "description": "Scenic winding hill highway connecting the southern international border at Sunauli/Bhairahawa (Lumbini) directly with Pokhara valley. Famous for the recently inaugurated Siddhababa rock-shed tunnel and lush Palpa/Syangja terraced vistas.",
+    "dorDivision": "DOR Road Division Palpa & Butwal",
+    "emergencyContact": "+977-75-520120 / 103",
+    "activeAlertCount": 1,
+    "segments": [
+      { "id": "h10-seg-1", "from": "Sunauli/Bhairahawa", "to": "Butwal", "distanceKm": 22, "avgSpeedKmh": 65, "surface": "asphalt_excellent", "status": "clear", "lanes": 6, "elevationStartM": 105, "elevationEndM": 220, "coordinates": [[83.4503,27.5045],[83.4500,27.6000],[83.4484,27.7006]] },
+      { "id": "h10-seg-2", "from": "Butwal", "to": "Tansen (Palpa)", "distanceKm": 39, "avgSpeedKmh": 38, "surface": "blacktopped_fair", "status": "caution", "lanes": 2, "elevationStartM": 220, "elevationEndM": 1350, "currentIssue": "Siddhababa slope protection finishing works. Minor single lane movement near Kerabari", "lastUpdated": "1 hour ago", "coordinates": [[83.4484,27.7006],[83.4900,27.7800],[83.5489,27.8683]] },
+      { "id": "h10-seg-3", "from": "Tansen (Palpa)", "to": "Waling (Syangja)", "distanceKm": 55, "avgSpeedKmh": 42, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 1350, "elevationEndM": 750, "coordinates": [[83.5489,27.8683],[83.6200,27.9100],[83.7700,27.9800]] },
+      { "id": "h10-seg-4", "from": "Waling", "to": "Pokhara", "distanceKm": 65, "avgSpeedKmh": 45, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 750, "elevationEndM": 822, "coordinates": [[83.7700,27.9800],[83.8700,28.0900],[83.9856,28.2096]] }
+    ],
+    "evChargers": [
+      { "id": "ev-waling", "name": "Syangja Waling Fast Station", "location": "Waling Bazaar", "powerKw": 60, "type": "CCS2", "available": true, "lat": 27.9800, "lng": 83.7700 },
+      { "id": "ev-palpa", "name": "Palpa Tansen City Charger", "location": "Tansen Buspark", "powerKw": 30, "type": "Type 2", "available": true, "lat": 27.8683, "lng": 83.5489 }
+    ],
+    "tollPlazas": []
+  },
+  {
+    "id": "h02",
+    "code": "H02",
+    "name": "Tribhuvan Highway (Byroad)",
+    "nepaliName": "त्रिभुवन राजपथ",
+    "totalLengthKm": 160,
+    "startPoint": "Tripureshwor / Kathmandu",
+    "endPoint": "Birgunj / Raxaul Border",
+    "provinces": ["Bagmati", "Madhesh"],
+    "keyPassesAndJunctions": ["Kathmandu", "Nagdhunga Pass", "Naubise", "Tistung", "Daman (2,322m view tower)", "Bhainse", "Hetauda", "Amlekhgunj", "Pathlaiya", "Birgunj"],
+    "overallStatus": "clear",
+    "conditionRating": 3.5,
+    "scenicRating": 4.8,
+    "terrainType": "High Mountain",
+    "description": "The historic first highway constructed in Nepal (1956). Traverses extreme mountain altitudes through Daman pass offering panoramic views of Mount Everest and the entire Himalayan Range. The Hetauda-Birgunj segment forms part of the Asian Highway.",
+    "dorDivision": "DOR Road Division Hetauda & Kathmandu",
+    "emergencyContact": "+977-57-520288 / 103",
+    "activeAlertCount": 0,
+    "segments": [
+      { "id": "h02-seg-1", "from": "Kathmandu", "to": "Naubise", "distanceKm": 26, "avgSpeedKmh": 40, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 1400, "elevationEndM": 920, "coordinates": [[85.3240,27.7172],[85.2010,27.7020],[85.1764,27.7214]] },
+      { "id": "h02-seg-2", "from": "Naubise", "to": "Daman Pass", "distanceKm": 55, "avgSpeedKmh": 30, "surface": "blacktopped_fair", "status": "clear", "lanes": 2, "elevationStartM": 920, "elevationEndM": 2322, "coordinates": [[85.1764,27.7214],[85.1000,27.6500],[85.0500,27.6000]] },
+      { "id": "h02-seg-3", "from": "Daman Pass", "to": "Hetauda", "distanceKm": 51, "avgSpeedKmh": 35, "surface": "blacktopped_fair", "status": "clear", "lanes": 2, "elevationStartM": 2322, "elevationEndM": 460, "coordinates": [[85.0500,27.6000],[85.0300,27.5100],[85.0331,27.4285]] },
+      { "id": "h02-seg-4", "from": "Hetauda", "to": "Birgunj Border", "distanceKm": 54, "avgSpeedKmh": 65, "surface": "asphalt_excellent", "status": "clear", "lanes": 4, "elevationStartM": 460, "elevationEndM": 90, "coordinates": [[85.0331,27.4285],[84.9900,27.1800],[84.8774,27.0128]] }
+    ],
+    "evChargers": [
+      { "id": "ev-daman", "name": "Daman Mountain Resort EV Charger", "location": "Daman View Tower", "powerKw": 22, "type": "Type 2", "available": true, "lat": 27.6000, "lng": 85.0500 },
+      { "id": "ev-birgunj", "name": "Birgunj ICD Supercharger", "location": "Dry Port Bypass, Birgunj", "powerKw": 120, "type": "CCS2", "available": true, "lat": 27.0128, "lng": 84.8774 }
+    ],
+    "tollPlazas": []
+  },
+  {
+    "id": "h06",
+    "code": "H06",
+    "name": "Karnali Highway",
+    "nepaliName": "कर्णाली राजमार्ग",
+    "totalLengthKm": 232,
+    "startPoint": "Birendranagar / Surkhet",
+    "endPoint": "Chandannath / Jumla Bazar",
+    "provinces": ["Karnali"],
+    "keyPassesAndJunctions": ["Surkhet", "Bange Shanti", "Dallu", "Kalikot (Manma)", "Nagma (Rara Lake link)", "Jumla"],
+    "overallStatus": "caution",
+    "conditionRating": 2.8,
+    "scenicRating": 5.0,
+    "terrainType": "High Mountain",
+    "description": "The heroic mountain road carving through remote, sheer limestone gorges along the Karnali River to high Himalayan valleys. Essential for travelers visiting Rara National Park and Jumla apples valley.",
+    "dorDivision": "DOR Road Division Jumla & Surkhet",
+    "emergencyContact": "+977-87-520133 / 100",
+    "activeAlertCount": 1,
+    "segments": [
+      { "id": "h06-seg-1", "from": "Surkhet", "to": "Kalikot (Manma)", "distanceKm": 130, "avgSpeedKmh": 28, "surface": "blacktopped_fair", "status": "caution", "lanes": 1.5, "elevationStartM": 660, "elevationEndM": 1450, "currentIssue": "Narrow curves near Gaganekhola and Shubhakalika with dry landslide clearance ongoing", "lastUpdated": "3 hours ago", "coordinates": [[81.6334,28.5997],[81.6500,28.8500],[81.6000,29.1400]] },
+      { "id": "h06-seg-2", "from": "Kalikot", "to": "Jumla", "distanceKm": 102, "avgSpeedKmh": 30, "surface": "gravel", "status": "caution", "lanes": 1.5, "elevationStartM": 1450, "elevationEndM": 2514, "coordinates": [[81.6000,29.1400],[81.9000,29.2000],[82.1838,29.2747]] }
+    ],
+    "evChargers": [
+      { "id": "ev-surkhet", "name": "Surkhet Valley Fast Hub", "location": "Birendranagar Buspark", "powerKw": 60, "type": "CCS2", "available": true, "lat": 28.5997, "lng": 81.6334 }
+    ],
+    "tollPlazas": []
+  },
+  {
+    "id": "h03",
+    "code": "H03",
+    "name": "Araniko Highway",
+    "nepaliName": "अरनिको राजमार्ग",
+    "totalLengthKm": 113,
+    "startPoint": "Maitighar / Kathmandu",
+    "endPoint": "Kodari / Tatopani (China / Tibet Border)",
+    "provinces": ["Bagmati"],
+    "keyPassesAndJunctions": ["Kathmandu", "Bhaktapur (6-lane expressway)", "Banepa", "Dhulikhel", "Panchkhal", "Dolalghat (Indrawati link)", "Bahrabise", "Tatopani Border"],
+    "overallStatus": "caution",
+    "conditionRating": 3.7,
+    "scenicRating": 4.5,
+    "terrainType": "Hilly",
+    "description": "Historic trade corridor connecting Kathmandu with China / Tibet Autonomous Region through the Bhotekoshi river gorge.",
+    "dorDivision": "DOR Road Division Charikot & Bhaktapur",
+    "emergencyContact": "+977-11-660144",
+    "activeAlertCount": 1,
+    "segments": [
+      { "id": "h03-seg-1", "from": "Kathmandu", "to": "Dhulikhel", "distanceKm": 30, "avgSpeedKmh": 50, "surface": "asphalt_excellent", "status": "clear", "lanes": 6, "elevationStartM": 1400, "elevationEndM": 1550, "coordinates": [[85.3240,27.7172],[85.4298,27.6710],[85.5428,27.6221]] },
+      { "id": "h03-seg-2", "from": "Dhulikhel", "to": "Dolalghat", "distanceKm": 27, "avgSpeedKmh": 45, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 1550, "elevationEndM": 630, "coordinates": [[85.5428,27.6221],[85.6500,27.6700],[85.7000,27.6333]] },
+      { "id": "h03-seg-3", "from": "Dolalghat", "to": "Tatopani / Kodari", "distanceKm": 56, "avgSpeedKmh": 32, "surface": "blacktopped_fair", "status": "caution", "lanes": 2, "elevationStartM": 630, "elevationEndM": 1640, "currentIssue": "Drainage repairs near Liping bridge with temporary 1-lane signal", "lastUpdated": "4 hours ago", "coordinates": [[85.7000,27.6333],[85.8900,27.7900],[85.9452,27.9497]] }
+    ],
+    "evChargers": [
+      { "id": "ev-banepa", "name": "Banepa Bus Station Fast Charger", "location": "Banepa Pul", "powerKw": 60, "type": "CCS2", "available": true, "lat": 27.6310, "lng": 85.5230 },
+      { "id": "ev-dolalghat", "name": "Dolalghat River View EV Point", "location": "Dolalghat Bazar", "powerKw": 30, "type": "Type 2", "available": true, "lat": 27.6333, "lng": 85.7000 }
+    ],
+    "tollPlazas": []
+  },
+  {
+    "id": "h15",
+    "code": "H15",
+    "name": "Mid-Hill Highway (Pushpalal Rajmarga)",
+    "nepaliName": "मध्यपहाडी लोकमार्ग (पुष्पलाल राजमार्ग)",
+    "totalLengthKm": 1879,
+    "startPoint": "Chiwabhanjyang (Panchthar, Eastern Border)",
+    "endPoint": "Jhulaghat (Baitadi, Western Border)",
+    "provinces": ["Koshi", "Bagmati", "Gandaki", "Karnali", "Sudurpashchim"],
+    "keyPassesAndJunctions": ["Chiwabhanjyang", "Terhathum", "Bhojpur", "Ghurmi", "Khurkot", "Pati Bhanjyang", "Galchhi", "Gorkha", "Pokhara", "Baglung", "Burtibang", "Rukumkot", "Jajarkot", "Dailekh", "Sanfebagar", "Jhulaghat"],
+    "overallStatus": "caution",
+    "conditionRating": 3.5,
+    "scenicRating": 5.0,
+    "terrainType": "High Mountain",
+    "description": "National pride project weaving across all mid-hill districts of Nepal, serving over 10 modern planned smart hill towns and linking remote agricultural belts.",
+    "dorDivision": "Pushpalal Highway Project Directorate",
+    "emergencyContact": "+977-1-4287890",
+    "activeAlertCount": 2,
+    "segments": [
+      { "id": "h15-seg-1", "from": "Pokhara", "to": "Baglung", "distanceKm": 72, "avgSpeedKmh": 45, "surface": "asphalt_excellent", "status": "clear", "lanes": 2, "elevationStartM": 822, "elevationEndM": 1020, "coordinates": [[83.9856,28.2096],[83.7500,28.2500],[83.6006,28.2725]] }
+    ],
+    "evChargers": [
+      { "id": "ev-baglung", "name": "Baglung Kalika EV Station", "location": "Baglung Buspark", "powerKw": 60, "type": "CCS2", "available": true, "lat": 28.2725, "lng": 83.6006 }
+    ],
+    "tollPlazas": []
+  }
+]

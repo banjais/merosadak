@@ -1,0 +1,4595 @@
+[
+  {
+    "District": "Bhaktapur",
+    "Palika": "Bhaktapur",
+    "lat": 27.675961,
+    "lng": 85.430782
+  },
+  {
+    "District": "Bhaktapur",
+    "Palika": "Changunarayan",
+    "lat": 27.696803,
+    "lng": 85.460723
+  },
+  {
+    "District": "Bhaktapur",
+    "Palika": "Madhyapur Thimi",
+    "lat": 27.684098,
+    "lng": 85.380303
+  },
+  {
+    "District": "Bhaktapur",
+    "Palika": "Suryabinayak",
+    "lat": 27.64963,
+    "lng": 85.425834
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Bharatpur",
+    "lat": 27.662529,
+    "lng": 84.390389
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Chitawan National Park",
+    "lat": 27.517932,
+    "lng": 84.307243
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Ichchhyakamana",
+    "lat": 27.797352,
+    "lng": 84.596472
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Kalika",
+    "lat": 27.705114,
+    "lng": 84.578581
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Khairahani",
+    "lat": 27.605945,
+    "lng": 84.571184
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Madi",
+    "lat": 27.420267,
+    "lng": 84.373853
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Rapti",
+    "lat": 27.64906,
+    "lng": 84.690402
+  },
+  {
+    "District": "Chitawan",
+    "Palika": "Ratnanagar",
+    "lat": 27.617009,
+    "lng": 84.511901
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Benighat Rorang",
+    "lat": 27.756015,
+    "lng": 84.766987
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Dhunibesi",
+    "lat": 27.736085,
+    "lng": 85.187838
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Gajuri",
+    "lat": 27.756971,
+    "lng": 84.911414
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Galchi",
+    "lat": 27.792538,
+    "lng": 84.993016
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Gangajamuna",
+    "lat": 28.088096,
+    "lng": 84.921471
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Jwalamukhi",
+    "lat": 27.924521,
+    "lng": 84.786145
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Khaniyabash",
+    "lat": 28.080939,
+    "lng": 85.039475
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Netrawati Dabjong",
+    "lat": 27.987488,
+    "lng": 84.967145
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Nilakantha",
+    "lat": 27.917693,
+    "lng": 84.921762
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Rubi Valley",
+    "lat": 28.21857,
+    "lng": 85.08114
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Siddhalek",
+    "lat": 27.837977,
+    "lng": 84.856854
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Thakre",
+    "lat": 27.73858,
+    "lng": 85.064137
+  },
+  {
+    "District": "Dhading",
+    "Palika": "Tripura Sundari",
+    "lat": 28.014388,
+    "lng": 84.851535
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Baiteshwor",
+    "lat": 27.637247,
+    "lng": 86.12703
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Bhimeshwor",
+    "lat": 27.6803,
+    "lng": 86.02218
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Bigu",
+    "lat": 27.949034,
+    "lng": 86.158688
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Gaurishankar",
+    "lat": 27.821226,
+    "lng": 86.340756
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Jiri",
+    "lat": 27.668176,
+    "lng": 86.28995
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Kalinchok",
+    "lat": 27.745413,
+    "lng": 86.09482
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Melung",
+    "lat": 27.542769,
+    "lng": 86.041717
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Sailung",
+    "lat": 27.61516,
+    "lng": 85.986407
+  },
+  {
+    "District": "Dolakha",
+    "Palika": "Tamakoshi",
+    "lat": 27.545953,
+    "lng": 86.123587
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Banepa",
+    "lat": 27.649911,
+    "lng": 85.517485
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Bethanchowk",
+    "lat": 27.507449,
+    "lng": 85.499845
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Bhumlu",
+    "lat": 27.637499,
+    "lng": 85.732757
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Chaurideurali",
+    "lat": 27.576996,
+    "lng": 85.80642
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Dhulikhel",
+    "lat": 27.621547,
+    "lng": 85.569438
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Khanikhola",
+    "lat": 27.417806,
+    "lng": 85.494513
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Mahabharat",
+    "lat": 27.389001,
+    "lng": 85.610536
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Mandandeupur",
+    "lat": 27.704263,
+    "lng": 85.607606
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Namobuddha",
+    "lat": 27.549065,
+    "lng": 85.641212
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Panauti",
+    "lat": 27.581305,
+    "lng": 85.47801
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Panchkhal",
+    "lat": 27.632466,
+    "lng": 85.645603
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Roshi",
+    "lat": 27.475912,
+    "lng": 85.666278
+  },
+  {
+    "District": "Kabhrepalanchok",
+    "Palika": "Temal",
+    "lat": 27.512598,
+    "lng": 85.752352
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Budhanilakantha",
+    "lat": 27.7684,
+    "lng": 85.360483
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Chandragiri",
+    "lat": 27.6895,
+    "lng": 85.233231
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Dakshinkali",
+    "lat": 27.615245,
+    "lng": 85.262706
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Gokarneshwor",
+    "lat": 27.765954,
+    "lng": 85.41125
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Kageshwori Manahora",
+    "lat": 27.729062,
+    "lng": 85.411077
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Kathmandu",
+    "lat": 27.711713,
+    "lng": 85.330349
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Kirtipur",
+    "lat": 27.667063,
+    "lng": 85.275168
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Nagarjun",
+    "lat": 27.728527,
+    "lng": 85.261211
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Shankharapur",
+    "lat": 27.752379,
+    "lng": 85.495671
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Tarakeshwor",
+    "lat": 27.775513,
+    "lng": 85.298822
+  },
+  {
+    "District": "Kathmandu",
+    "Palika": "Tokha",
+    "lat": 27.775037,
+    "lng": 85.329421
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Bagmati",
+    "lat": 27.487413,
+    "lng": 85.308913
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Godawari",
+    "lat": 27.583054,
+    "lng": 85.328714
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Konjyosom",
+    "lat": 27.526138,
+    "lng": 85.347678
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Lalitpur",
+    "lat": 27.644932,
+    "lng": 85.315276
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Mahalaxmi",
+    "lat": 27.63138,
+    "lng": 85.384756
+  },
+  {
+    "District": "Lalitpur",
+    "Palika": "Mahankal",
+    "lat": 27.475977,
+    "lng": 85.400447
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Bagmati",
+    "lat": 27.298281,
+    "lng": 85.412385
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Bakaiya",
+    "lat": 27.334851,
+    "lng": 85.256015
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Bhimphedi",
+    "lat": 27.521656,
+    "lng": 85.115307
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Chitawan National Park",
+    "lat": 27.489171,
+    "lng": 84.703531
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Hetauda",
+    "lat": 27.409223,
+    "lng": 85.0324
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Indrasarowar",
+    "lat": 27.599436,
+    "lng": 85.196076
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Kailash",
+    "lat": 27.608102,
+    "lng": 84.948685
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Makawanpurgadhi",
+    "lat": 27.435976,
+    "lng": 85.144913
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Manahari",
+    "lat": 27.478271,
+    "lng": 84.845884
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Parsa Wildlife Reserve",
+    "lat": 27.492673,
+    "lng": 84.766854
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Raksirang",
+    "lat": 27.598652,
+    "lng": 84.837586
+  },
+  {
+    "District": "Makawanpur",
+    "Palika": "Thaha",
+    "lat": 27.653816,
+    "lng": 85.087989
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Belkotgadhi",
+    "lat": 27.826215,
+    "lng": 85.117234
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Bidur",
+    "lat": 27.928938,
+    "lng": 85.134647
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Dupcheshwar",
+    "lat": 27.945779,
+    "lng": 85.429486
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Kakani",
+    "lat": 27.812081,
+    "lng": 85.224082
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Kispang",
+    "lat": 28.027666,
+    "lng": 85.129491
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Langtang National Park",
+    "lat": 28.018102,
+    "lng": 85.442882
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Likhu",
+    "lat": 27.890671,
+    "lng": 85.232409
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Myagang",
+    "lat": 27.987456,
+    "lng": 85.057695
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Panchakanya",
+    "lat": 27.897386,
+    "lng": 85.312175
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Shivapuri Watershed and Wildlife Reserve",
+    "lat": 27.819063,
+    "lng": 85.364298
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Shivapuri",
+    "lat": 27.849334,
+    "lng": 85.372312
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Suryagadhi",
+    "lat": 27.945313,
+    "lng": 85.25456
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Tadi",
+    "lat": 27.949428,
+    "lng": 85.3218
+  },
+  {
+    "District": "Nuwakot",
+    "Palika": "Tarkeshwar",
+    "lat": 27.882889,
+    "lng": 85.036914
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Doramba Shailung",
+    "lat": 27.541406,
+    "lng": 85.92979
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Gokulganga",
+    "lat": 27.579094,
+    "lng": 86.264654
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Khadadevi",
+    "lat": 27.431258,
+    "lng": 85.936803
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Likhu Tamakoshi",
+    "lat": 27.442005,
+    "lng": 86.186117
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Manthali",
+    "lat": 27.407223,
+    "lng": 86.063525
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Ramechhap",
+    "lat": 27.322631,
+    "lng": 86.143961
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Sunapati",
+    "lat": 27.502027,
+    "lng": 85.853074
+  },
+  {
+    "District": "Ramechhap",
+    "Palika": "Umakunda",
+    "lat": 27.64213,
+    "lng": 86.403388
+  },
+  {
+    "District": "Rasuwa",
+    "Palika": "Aamachhodingmo",
+    "lat": 28.221068,
+    "lng": 85.24605
+  },
+  {
+    "District": "Rasuwa",
+    "Palika": "Gosaikunda",
+    "lat": 28.206161,
+    "lng": 85.514647
+  },
+  {
+    "District": "Rasuwa",
+    "Palika": "Kalika",
+    "lat": 28.013544,
+    "lng": 85.221635
+  },
+  {
+    "District": "Rasuwa",
+    "Palika": "Naukunda",
+    "lat": 28.021773,
+    "lng": 85.298718
+  },
+  {
+    "District": "Rasuwa",
+    "Palika": "Uttargaya",
+    "lat": 28.064468,
+    "lng": 85.18572
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Dudhouli",
+    "lat": 27.040701,
+    "lng": 86.222157
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Ghanglekh",
+    "lat": 27.335844,
+    "lng": 85.789591
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Golanjor",
+    "lat": 27.254086,
+    "lng": 86.065361
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Hariharpurgadhi",
+    "lat": 27.245645,
+    "lng": 85.542379
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Kamalamai",
+    "lat": 27.185623,
+    "lng": 85.940451
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Marin",
+    "lat": 27.254403,
+    "lng": 85.692704
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Phikkal",
+    "lat": 27.1874,
+    "lng": 86.277992
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Sunkoshi",
+    "lat": 27.380969,
+    "lng": 85.881474
+  },
+  {
+    "District": "Sindhuli",
+    "Palika": "Tinpatan",
+    "lat": 27.134918,
+    "lng": 86.132674
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Balefi",
+    "lat": 27.783952,
+    "lng": 85.80982
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Barhabise",
+    "lat": 27.823925,
+    "lng": 85.904427
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Bhotekoshi",
+    "lat": 27.92461,
+    "lng": 85.943237
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Chautara SangachokGadhi",
+    "lat": 27.754548,
+    "lng": 85.716637
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Helambu",
+    "lat": 28.00068,
+    "lng": 85.530107
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Indrawati",
+    "lat": 27.785772,
+    "lng": 85.644298
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Jugal",
+    "lat": 28.008413,
+    "lng": 85.78403
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Lisangkhu Pakhar",
+    "lat": 27.673705,
+    "lng": 85.876775
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Melamchi",
+    "lat": 27.820853,
+    "lng": 85.547374
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Panchpokhari Thangpal",
+    "lat": 28.021321,
+    "lng": 85.638391
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Sunkoshi",
+    "lat": 27.707904,
+    "lng": 85.80132
+  },
+  {
+    "District": "Sindhupalchok",
+    "Palika": "Tripurasundari",
+    "lat": 27.75301,
+    "lng": 85.945089
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Badigad",
+    "lat": 28.273601,
+    "lng": 83.233234
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Baglung",
+    "lat": 28.243991,
+    "lng": 83.595911
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Bareng",
+    "lat": 28.147295,
+    "lng": 83.478756
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Dhorpatan Hunting Reserve",
+    "lat": 28.538512,
+    "lng": 83.027279
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Dhorpatan",
+    "lat": 28.387668,
+    "lng": 83.158019
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Galkot",
+    "lat": 28.236223,
+    "lng": 83.378906
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Jaimuni",
+    "lat": 28.160155,
+    "lng": 83.581319
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Kanthekhola",
+    "lat": 28.264677,
+    "lng": 83.518815
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Nisikhola",
+    "lat": 28.37903,
+    "lng": 83.023012
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Taman Khola",
+    "lat": 28.434468,
+    "lng": 83.226837
+  },
+  {
+    "District": "Baglung",
+    "Palika": "Tara Khola",
+    "lat": 28.314655,
+    "lng": 83.397069
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Aarughat",
+    "lat": 28.120402,
+    "lng": 84.852678
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Ajirkot",
+    "lat": 28.235048,
+    "lng": 84.680624
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Barpak Sulikot",
+    "lat": 28.18167,
+    "lng": 84.73107
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Bhimsenthapa",
+    "lat": 28.012258,
+    "lng": 84.736458
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Chum Nubri",
+    "lat": 28.549916,
+    "lng": 84.844977
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Dharche",
+    "lat": 28.312886,
+    "lng": 84.939291
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Gandaki",
+    "lat": 27.860065,
+    "lng": 84.711777
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Gorkha",
+    "lat": 27.967765,
+    "lng": 84.583013
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Palungtar",
+    "lat": 28.007962,
+    "lng": 84.499465
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Sahid Lakhan",
+    "lat": 27.927479,
+    "lng": 84.635828
+  },
+  {
+    "District": "Gorkha",
+    "Palika": "Siranchok",
+    "lat": 28.090799,
+    "lng": 84.594822
+  },
+  {
+    "District": "Kaski",
+    "Palika": "Annapurna",
+    "lat": 28.416654,
+    "lng": 83.819037
+  },
+  {
+    "District": "Kaski",
+    "Palika": "Machhapuchchhre",
+    "lat": 28.428464,
+    "lng": 83.956162
+  },
+  {
+    "District": "Kaski",
+    "Palika": "Madi",
+    "lat": 28.354462,
+    "lng": 84.14007
+  },
+  {
+    "District": "Kaski",
+    "Palika": "Pokhara",
+    "lat": 28.201699,
+    "lng": 83.994719
+  },
+  {
+    "District": "Kaski",
+    "Palika": "Rupa",
+    "lat": 28.140581,
+    "lng": 84.169391
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Besishahar",
+    "lat": 28.216647,
+    "lng": 84.376501
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Dordi",
+    "lat": 28.276824,
+    "lng": 84.534106
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Dudhpokhari",
+    "lat": 28.210812,
+    "lng": 84.576422
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Kwholasothar",
+    "lat": 28.28816,
+    "lng": 84.258829
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "MadhyaNepal",
+    "lat": 28.152564,
+    "lng": 84.261526
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Marsyangdi",
+    "lat": 28.371091,
+    "lng": 84.408339
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Rainas",
+    "lat": 28.111626,
+    "lng": 84.492963
+  },
+  {
+    "District": "Lamjung",
+    "Palika": "Sundarbazar",
+    "lat": 28.156932,
+    "lng": 84.364431
+  },
+  {
+    "District": "Manang",
+    "Palika": "Chame",
+    "lat": 28.517307,
+    "lng": 84.249097
+  },
+  {
+    "District": "Manang",
+    "Palika": "Manang Ngisyang",
+    "lat": 28.663539,
+    "lng": 84.02985
+  },
+  {
+    "District": "Manang",
+    "Palika": "Nason",
+    "lat": 28.592846,
+    "lng": 84.412698
+  },
+  {
+    "District": "Mustang",
+    "Palika": "Gharapjhong",
+    "lat": 28.763564,
+    "lng": 83.724803
+  },
+  {
+    "District": "Mustang",
+    "Palika": "Thasang",
+    "lat": 28.693138,
+    "lng": 83.616847
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Annapurna",
+    "lat": 28.514409,
+    "lng": 83.703869
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Beni",
+    "lat": 28.349402,
+    "lng": 83.536434
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Dhaulagiri",
+    "lat": 28.605939,
+    "lng": 83.356374
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Dhorpatan Hunting Reserve",
+    "lat": 28.618961,
+    "lng": 83.15804
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Malika",
+    "lat": 28.421946,
+    "lng": 83.354469
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Mangala",
+    "lat": 28.379404,
+    "lng": 83.453291
+  },
+  {
+    "District": "Myagdi",
+    "Palika": "Raghuganga",
+    "lat": 28.520308,
+    "lng": 83.518436
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Baudikali",
+    "lat": 27.81722,
+    "lng": 84.064821
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Binayee Tribeni",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Bulingtar",
+    "lat": 27.815518,
+    "lng": 84.194795
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Chitawan National Park",
+    "lat": 27.570705,
+    "lng": 84.063299
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Devchuli",
+    "lat": 27.715101,
+    "lng": 84.205845
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Gaindakot",
+    "lat": 27.734773,
+    "lng": 84.327704
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Hupsekot",
+    "lat": 27.716549,
+    "lng": 84.045926
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Kawasoti",
+    "lat": 27.652811,
+    "lng": 84.123999
+  },
+  {
+    "District": "Nawalparasi_E",
+    "Palika": "Madhyabindu",
+    "lat": 27.637234,
+    "lng": 83.977668
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Bihadi",
+    "lat": 28.058501,
+    "lng": 83.602486
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Jaljala",
+    "lat": 28.329371,
+    "lng": 83.617474
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Kushma",
+    "lat": 28.235486,
+    "lng": 83.708764
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Mahashila",
+    "lat": 28.090864,
+    "lng": 83.668215
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Modi",
+    "lat": 28.293681,
+    "lng": 83.729853
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Painyu",
+    "lat": 28.047105,
+    "lng": 83.664939
+  },
+  {
+    "District": "Parbat",
+    "Palika": "Phalebas",
+    "lat": 28.151992,
+    "lng": 83.683405
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Aandhikhola",
+    "lat": 28.156999,
+    "lng": 83.79955
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Arjunchaupari",
+    "lat": 28.104798,
+    "lng": 83.758487
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Bhirkot",
+    "lat": 28.038625,
+    "lng": 83.77425
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Biruwa",
+    "lat": 28.001903,
+    "lng": 83.897709
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Chapakot",
+    "lat": 27.917541,
+    "lng": 83.858814
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Galyang",
+    "lat": 27.952565,
+    "lng": 83.685342
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Harinas",
+    "lat": 27.983448,
+    "lng": 83.958566
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Kaligandagi",
+    "lat": 27.947478,
+    "lng": 83.537508
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Phedikhola",
+    "lat": 28.17353,
+    "lng": 83.866691
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Putalibazar",
+    "lat": 28.098773,
+    "lng": 83.892087
+  },
+  {
+    "District": "Syangja",
+    "Palika": "Waling",
+    "lat": 27.984975,
+    "lng": 83.763678
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Anbukhaireni",
+    "lat": 27.881198,
+    "lng": 84.479668
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Bandipur",
+    "lat": 27.918777,
+    "lng": 84.398459
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Bhanu",
+    "lat": 28.043739,
+    "lng": 84.393195
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Bhimad",
+    "lat": 27.960688,
+    "lng": 84.055851
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Devghat",
+    "lat": 27.802036,
+    "lng": 84.383012
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Ghiring",
+    "lat": 27.891634,
+    "lng": 84.054364
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Myagde",
+    "lat": 28.002426,
+    "lng": 84.159846
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Rhishing",
+    "lat": 27.890046,
+    "lng": 84.213196
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Shuklagandaki",
+    "lat": 28.067007,
+    "lng": 84.068225
+  },
+  {
+    "District": "Tanahu",
+    "Palika": "Vyas",
+    "lat": 28.01113,
+    "lng": 84.295111
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Aathabis",
+    "lat": 29.019862,
+    "lng": 81.494726
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Bhagawatimai",
+    "lat": 28.797644,
+    "lng": 81.821389
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Bhairabi",
+    "lat": 28.943051,
+    "lng": 81.642601
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Chamunda Bindrasaini",
+    "lat": 28.932774,
+    "lng": 81.561509
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Dullu",
+    "lat": 28.838483,
+    "lng": 81.609491
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Dungeshwor",
+    "lat": 28.751357,
+    "lng": 81.719401
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Gurans",
+    "lat": 28.709525,
+    "lng": 81.683512
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Mahabu",
+    "lat": 28.944173,
+    "lng": 81.693206
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Narayan",
+    "lat": 28.861456,
+    "lng": 81.739824
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Naumule",
+    "lat": 28.935618,
+    "lng": 81.818213
+  },
+  {
+    "District": "Dailekh",
+    "Palika": "Thantikandh",
+    "lat": 28.995555,
+    "lng": 81.548511
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Dolpo Buddha",
+    "lat": 29.278783,
+    "lng": 83.266331
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Jagadulla",
+    "lat": 29.239492,
+    "lng": 82.633236
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Kaike",
+    "lat": 28.916509,
+    "lng": 83.051403
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Mudkechula",
+    "lat": 29.048802,
+    "lng": 82.519663
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Shey Phoksundo",
+    "lat": 29.40451,
+    "lng": 82.9836
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Thuli Bheri",
+    "lat": 28.941721,
+    "lng": 82.874688
+  },
+  {
+    "District": "Dolpa",
+    "Palika": "Tripurasundari",
+    "lat": 29.016975,
+    "lng": 82.751776
+  },
+  {
+    "District": "Humla",
+    "Palika": "Adanchuli",
+    "lat": 29.701808,
+    "lng": 81.850718
+  },
+  {
+    "District": "Humla",
+    "Palika": "Chankheli",
+    "lat": 29.804452,
+    "lng": 82.23402
+  },
+  {
+    "District": "Humla",
+    "Palika": "Kharpunath",
+    "lat": 29.905605,
+    "lng": 81.96301
+  },
+  {
+    "District": "Humla",
+    "Palika": "Namkha",
+    "lat": 29.946267,
+    "lng": 81.566801
+  },
+  {
+    "District": "Humla",
+    "Palika": "Sarkegad",
+    "lat": 29.799247,
+    "lng": 81.922068
+  },
+  {
+    "District": "Humla",
+    "Palika": "Simkot",
+    "lat": 29.950716,
+    "lng": 81.82043
+  },
+  {
+    "District": "Humla",
+    "Palika": "Tanjakot",
+    "lat": 29.692323,
+    "lng": 81.759732
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Barekot",
+    "lat": 28.988185,
+    "lng": 82.278202
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Bheri",
+    "lat": 28.70068,
+    "lng": 82.176944
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Chhedagad",
+    "lat": 28.749571,
+    "lng": 82.03453
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Junichande",
+    "lat": 28.898541,
+    "lng": 81.983584
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Kuse",
+    "lat": 28.870429,
+    "lng": 82.141769
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Nalgad",
+    "lat": 28.873057,
+    "lng": 82.367855
+  },
+  {
+    "District": "Jajarkot",
+    "Palika": "Shiwalaya",
+    "lat": 28.684353,
+    "lng": 81.93684
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Chandannath",
+    "lat": 29.296159,
+    "lng": 82.152514
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Guthichaur",
+    "lat": 29.201297,
+    "lng": 82.378306
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Hima",
+    "lat": 29.277576,
+    "lng": 81.939393
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Kanakasundari",
+    "lat": 29.416271,
+    "lng": 82.056503
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Patrasi",
+    "lat": 29.370743,
+    "lng": 82.380386
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Sinja",
+    "lat": 29.346395,
+    "lng": 82.020856
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Tatopani",
+    "lat": 29.134177,
+    "lng": 82.120264
+  },
+  {
+    "District": "Jumla",
+    "Palika": "Tila",
+    "lat": 29.189426,
+    "lng": 81.98879
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Khandachakra",
+    "lat": 29.151073,
+    "lng": 81.666522
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Mahawai",
+    "lat": 29.049724,
+    "lng": 81.853563
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Naraharinath",
+    "lat": 29.220503,
+    "lng": 81.528128
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Pachaljharana",
+    "lat": 29.247406,
+    "lng": 81.714923
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Palata",
+    "lat": 29.347126,
+    "lng": 81.834945
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Raskot",
+    "lat": 29.277617,
+    "lng": 81.644545
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Sanni Tribeni",
+    "lat": 29.277206,
+    "lng": 81.594726
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Shuva Kalika",
+    "lat": 29.085059,
+    "lng": 81.63162
+  },
+  {
+    "District": "Kalikot",
+    "Palika": "Tilagufa",
+    "lat": 29.142762,
+    "lng": 81.857436
+  },
+  {
+    "District": "Mugu",
+    "Palika": "Chhayanath Rara",
+    "lat": 29.540654,
+    "lng": 82.157468
+  },
+  {
+    "District": "Mugu",
+    "Palika": "Khatyad",
+    "lat": 29.516054,
+    "lng": 81.893769
+  },
+  {
+    "District": "Mugu",
+    "Palika": "Mugum Karmarong",
+    "lat": 29.657862,
+    "lng": 82.541957
+  },
+  {
+    "District": "Mugu",
+    "Palika": "Soru",
+    "lat": 29.620905,
+    "lng": 81.998319
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Aathbiskot",
+    "lat": 28.823782,
+    "lng": 82.483382
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Banfikot",
+    "lat": 28.704661,
+    "lng": 82.49109
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Chaurjahari",
+    "lat": 28.632417,
+    "lng": 82.271758
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Musikot",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Sani Bheri",
+    "lat": 28.677875,
+    "lng": 82.336092
+  },
+  {
+    "District": "Rukum_W",
+    "Palika": "Tribeni",
+    "lat": 28.56728,
+    "lng": 82.416544
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Bagchaur",
+    "lat": 28.475728,
+    "lng": 82.328121
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Bangad Kupinde",
+    "lat": 28.491145,
+    "lng": 82.055184
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Chhatreshwori",
+    "lat": 28.351567,
+    "lng": 82.282959
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Darma",
+    "lat": 28.552424,
+    "lng": 82.31203
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Kalimati",
+    "lat": 28.291036,
+    "lng": 81.954743
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Kapurkot",
+    "lat": 28.255149,
+    "lng": 82.362573
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Kumakh",
+    "lat": 28.563953,
+    "lng": 82.188933
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Sharada",
+    "lat": 28.386047,
+    "lng": 82.161479
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Siddha Kumakh",
+    "lat": 28.462357,
+    "lng": 82.18342
+  },
+  {
+    "District": "Salyan",
+    "Palika": "Tribeni",
+    "lat": 28.285227,
+    "lng": 82.229026
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Barahtal",
+    "lat": 28.664422,
+    "lng": 81.469319
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Bheriganga",
+    "lat": 28.465891,
+    "lng": 81.678082
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Birendranagar",
+    "lat": 28.609606,
+    "lng": 81.650774
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Chaukune",
+    "lat": 28.871117,
+    "lng": 81.192781
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Chingad",
+    "lat": 28.616647,
+    "lng": 81.82772
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Gurbhakot",
+    "lat": 28.432089,
+    "lng": 81.892271
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Lekbeshi",
+    "lat": 28.543911,
+    "lng": 81.753608
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Panchpuri",
+    "lat": 28.780521,
+    "lng": 81.387972
+  },
+  {
+    "District": "Surkhet",
+    "Palika": "Simta",
+    "lat": 28.556319,
+    "lng": 81.957879
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Aamchowk",
+    "lat": 26.962755,
+    "lng": 87.01735
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Arun",
+    "lat": 27.190531,
+    "lng": 87.192159
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Bhojpur",
+    "lat": 27.19524,
+    "lng": 87.061989
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Hatuwagadhi",
+    "lat": 27.002637,
+    "lng": 87.130791
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Pauwadungma",
+    "lat": 27.11828,
+    "lng": 87.149927
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Ramprasad Rai",
+    "lat": 27.083874,
+    "lng": 87.02779
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Salpasilichho",
+    "lat": 27.404949,
+    "lng": 87.023747
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Shadananda",
+    "lat": 27.329023,
+    "lng": 87.111235
+  },
+  {
+    "District": "Bhojpur",
+    "Palika": "Temkemaiyum",
+    "lat": 27.20888,
+    "lng": 86.969871
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Chaubise",
+    "lat": 26.907076,
+    "lng": 87.483974
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Chhathar Jorpati",
+    "lat": 27.027415,
+    "lng": 87.382709
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Dhankuta",
+    "lat": 26.978162,
+    "lng": 87.329376
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Mahalaxmi",
+    "lat": 27.136583,
+    "lng": 87.325459
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Pakhribas",
+    "lat": 27.055568,
+    "lng": 87.255134
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Sangurigadhi",
+    "lat": 26.899017,
+    "lng": 87.295081
+  },
+  {
+    "District": "Dhankuta",
+    "Palika": "Shahidbhumi",
+    "lat": 26.950258,
+    "lng": 87.215424
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Chulachuli",
+    "lat": 26.767257,
+    "lng": 87.705336
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Deumai",
+    "lat": 26.916236,
+    "lng": 87.832203
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Fakphokthum",
+    "lat": 26.96193,
+    "lng": 87.753701
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Illam",
+    "lat": 26.929009,
+    "lng": 87.909235
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Mai",
+    "lat": 26.776661,
+    "lng": 87.867622
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Maijogmai",
+    "lat": 26.944691,
+    "lng": 87.966215
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Mangsebung",
+    "lat": 26.823561,
+    "lng": 87.730097
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Rong",
+    "lat": 26.783356,
+    "lng": 87.982703
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Sandakpur",
+    "lat": 27.041313,
+    "lng": 87.928298
+  },
+  {
+    "District": "Ilam",
+    "Palika": "Suryodaya",
+    "lat": 26.846635,
+    "lng": 87.964946
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Arjundhara",
+    "lat": 26.724066,
+    "lng": 87.962483
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Barhadashi",
+    "lat": 26.529569,
+    "lng": 87.931564
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Birtamod",
+    "lat": 26.602601,
+    "lng": 87.965182
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Buddhashanti",
+    "lat": 26.724326,
+    "lng": 87.998248
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Damak",
+    "lat": 26.661579,
+    "lng": 87.671521
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Gauradhaha",
+    "lat": 26.533313,
+    "lng": 87.716744
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Gauriganj",
+    "lat": 26.473775,
+    "lng": 87.75389
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Haldibari",
+    "lat": 26.510632,
+    "lng": 87.966113
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Jhapa",
+    "lat": 26.520413,
+    "lng": 87.871511
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Kachankawal",
+    "lat": 26.442848,
+    "lng": 87.949892
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Kamal",
+    "lat": 26.601705,
+    "lng": 87.730881
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Kankai",
+    "lat": 26.6307,
+    "lng": 87.907735
+  },
+  {
+    "District": "Jhapa",
+    "Palika": "Shivasataxi",
+    "lat": 26.616094,
+    "lng": 87.8284
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Ainselukhark",
+    "lat": 27.368804,
+    "lng": 86.762726
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Barahapokhari",
+    "lat": 26.938834,
+    "lng": 86.831253
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Diktel Rupakot Majhuwagadhi",
+    "lat": 27.233871,
+    "lng": 86.800436
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Diprung Chuichumma",
+    "lat": 27.102803,
+    "lng": 86.784058
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Halesi Tuwachung",
+    "lat": 27.162339,
+    "lng": 86.604307
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Jantedhunga",
+    "lat": 26.97017,
+    "lng": 86.913756
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Kepilasagadhi",
+    "lat": 27.344182,
+    "lng": 86.876103
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Khotehang",
+    "lat": 27.041793,
+    "lng": 86.837598
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Rawa Besi",
+    "lat": 27.277941,
+    "lng": 86.704904
+  },
+  {
+    "District": "Khotang",
+    "Palika": "Sakela",
+    "lat": 27.173927,
+    "lng": 86.8781
+  },
+  {
+    "District": "Morang",
+    "Palika": "Belbari",
+    "lat": 26.619318,
+    "lng": 87.433505
+  },
+  {
+    "District": "Morang",
+    "Palika": "Biratnagar",
+    "lat": 26.452875,
+    "lng": 87.282151
+  },
+  {
+    "District": "Morang",
+    "Palika": "Budhiganga",
+    "lat": 26.559233,
+    "lng": 87.297828
+  },
+  {
+    "District": "Morang",
+    "Palika": "Dhanpalthan",
+    "lat": 26.468649,
+    "lng": 87.402595
+  },
+  {
+    "District": "Morang",
+    "Palika": "Gramthan",
+    "lat": 26.551192,
+    "lng": 87.358011
+  },
+  {
+    "District": "Morang",
+    "Palika": "Jahada",
+    "lat": 26.421787,
+    "lng": 87.327317
+  },
+  {
+    "District": "Morang",
+    "Palika": "Kanepokhari",
+    "lat": 26.587088,
+    "lng": 87.500896
+  },
+  {
+    "District": "Morang",
+    "Palika": "Katahari",
+    "lat": 26.494347,
+    "lng": 87.350829
+  },
+  {
+    "District": "Morang",
+    "Palika": "Kerabari",
+    "lat": 26.791586,
+    "lng": 87.414097
+  },
+  {
+    "District": "Morang",
+    "Palika": "Letang",
+    "lat": 26.765036,
+    "lng": 87.521839
+  },
+  {
+    "District": "Morang",
+    "Palika": "Miklajung",
+    "lat": 26.788672,
+    "lng": 87.615322
+  },
+  {
+    "District": "Morang",
+    "Palika": "Patahrishanishchare",
+    "lat": 26.608998,
+    "lng": 87.560072
+  },
+  {
+    "District": "Morang",
+    "Palika": "Rangeli",
+    "lat": 26.500672,
+    "lng": 87.474404
+  },
+  {
+    "District": "Morang",
+    "Palika": "Ratuwamai",
+    "lat": 26.493241,
+    "lng": 87.610501
+  },
+  {
+    "District": "Morang",
+    "Palika": "Sundarharaicha",
+    "lat": 26.655684,
+    "lng": 87.349889
+  },
+  {
+    "District": "Morang",
+    "Palika": "Sunwarshi",
+    "lat": 26.494769,
+    "lng": 87.553797
+  },
+  {
+    "District": "Morang",
+    "Palika": "Uralabari",
+    "lat": 26.643756,
+    "lng": 87.619473
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Champadevi",
+    "lat": 27.305254,
+    "lng": 86.290421
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Chisankhugadhi",
+    "lat": 27.31217,
+    "lng": 86.608746
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Khijidemba",
+    "lat": 27.44897,
+    "lng": 86.360612
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Likhu",
+    "lat": 27.374308,
+    "lng": 86.264208
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Manebhanjyang",
+    "lat": 27.218738,
+    "lng": 86.468398
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Molung",
+    "lat": 27.361516,
+    "lng": 86.429333
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Siddhicharan",
+    "lat": 27.321363,
+    "lng": 86.512694
+  },
+  {
+    "District": "Okhaldhunga",
+    "Palika": "Sunkoshi",
+    "lat": 27.274712,
+    "lng": 86.370564
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Falelung",
+    "lat": 27.171494,
+    "lng": 87.908646
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Falgunanda",
+    "lat": 27.051732,
+    "lng": 87.737068
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Hilihang",
+    "lat": 27.218656,
+    "lng": 87.759059
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Kummayak",
+    "lat": 27.067725,
+    "lng": 87.63719
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Miklajung",
+    "lat": 26.938169,
+    "lng": 87.621129
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Phidim",
+    "lat": 27.119629,
+    "lng": 87.789339
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Tumbewa",
+    "lat": 26.984102,
+    "lng": 87.57716
+  },
+  {
+    "District": "Panchthar",
+    "Palika": "Yangwarak",
+    "lat": 27.265468,
+    "lng": 87.894544
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Bhotkhola",
+    "lat": 27.76586,
+    "lng": 87.449032
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Chainpur",
+    "lat": 27.296832,
+    "lng": 87.339934
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Chichila",
+    "lat": 27.480858,
+    "lng": 87.224986
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Dharmadevi",
+    "lat": 27.205612,
+    "lng": 87.343479
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Khandbari",
+    "lat": 27.378258,
+    "lng": 87.195795
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Madi",
+    "lat": 27.25549,
+    "lng": 87.413532
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Makalu",
+    "lat": 27.694761,
+    "lng": 87.219472
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Panchakhapan",
+    "lat": 27.350762,
+    "lng": 87.30098
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Sabhapokhari",
+    "lat": 27.442492,
+    "lng": 87.345698
+  },
+  {
+    "District": "Sankhuwasabha",
+    "Palika": "Silichong",
+    "lat": 27.551354,
+    "lng": 87.060384
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Khumbupasanglahmu",
+    "lat": 27.870338,
+    "lng": 86.732111
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Likhupike",
+    "lat": 27.551438,
+    "lng": 86.435535
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Mahakulung",
+    "lat": 27.65166,
+    "lng": 86.908487
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Mapya Dudhkoshi",
+    "lat": 27.545049,
+    "lng": 86.702039
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Nechasalyan",
+    "lat": 27.390247,
+    "lng": 86.603286
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Solududhakunda",
+    "lat": 27.561611,
+    "lng": 86.564799
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Sotang",
+    "lat": 27.499022,
+    "lng": 86.793758
+  },
+  {
+    "District": "Solukhumbu",
+    "Palika": "Thulung Dudhkoshi",
+    "lat": 27.428626,
+    "lng": 86.69807
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Barahchhetra",
+    "lat": 26.74556,
+    "lng": 87.128016
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Barju",
+    "lat": 26.469761,
+    "lng": 87.204855
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Bhokraha Narshing",
+    "lat": 26.589966,
+    "lng": 87.104112
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Dewanganj",
+    "lat": 26.468471,
+    "lng": 87.150578
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Dharan",
+    "lat": 26.805539,
+    "lng": 87.276349
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Duhabi",
+    "lat": 26.546131,
+    "lng": 87.244746
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Gadhi",
+    "lat": 26.563597,
+    "lng": 87.201844
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Harinagar",
+    "lat": 26.508385,
+    "lng": 87.123469
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Inaruwa",
+    "lat": 26.605457,
+    "lng": 87.159301
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Itahari",
+    "lat": 26.667956,
+    "lng": 87.264113
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Koshi Tappu Wildlife Reserve",
+    "lat": 26.654018,
+    "lng": 87.014791
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Koshi",
+    "lat": 26.563393,
+    "lng": 86.995864
+  },
+  {
+    "District": "Sunsari",
+    "Palika": "Ramdhuni",
+    "lat": 26.68857,
+    "lng": 87.18016
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Aathrai Tribeni",
+    "lat": 27.311041,
+    "lng": 87.620783
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Maiwakhola",
+    "lat": 27.380859,
+    "lng": 87.517288
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Meringden",
+    "lat": 27.467715,
+    "lng": 87.544587
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Mikwakhola",
+    "lat": 27.565306,
+    "lng": 87.626841
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Pathibhara Yangwarak",
+    "lat": 27.319178,
+    "lng": 87.755325
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Phaktanglung",
+    "lat": 27.670007,
+    "lng": 87.783206
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Phungling",
+    "lat": 27.384092,
+    "lng": 87.72108
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Sidingba",
+    "lat": 27.33911,
+    "lng": 87.912038
+  },
+  {
+    "District": "Taplejung",
+    "Palika": "Sirijangha",
+    "lat": 27.421879,
+    "lng": 87.876043
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Aathrai",
+    "lat": 27.210376,
+    "lng": 87.653142
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Chhathar",
+    "lat": 27.038885,
+    "lng": 87.475123
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Laligurans",
+    "lat": 27.124173,
+    "lng": 87.455369
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Menchayam",
+    "lat": 27.24158,
+    "lng": 87.527667
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Myanglung",
+    "lat": 27.138232,
+    "lng": 87.531967
+  },
+  {
+    "District": "Terhathum",
+    "Palika": "Phedap",
+    "lat": 27.188781,
+    "lng": 87.583314
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Belaka",
+    "lat": 26.826535,
+    "lng": 87.032378
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Chaudandigadhi",
+    "lat": 26.806326,
+    "lng": 86.877662
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Katari",
+    "lat": 27.000525,
+    "lng": 86.366241
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Koshi Tappu Wildlife Reserve",
+    "lat": 26.713488,
+    "lng": 86.997392
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Limchungbung",
+    "lat": 27.082543,
+    "lng": 86.636304
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Rautamai",
+    "lat": 26.983032,
+    "lng": 86.668325
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Tapli",
+    "lat": 27.078826,
+    "lng": 86.544701
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Triyuga",
+    "lat": 26.798109,
+    "lng": 86.697511
+  },
+  {
+    "District": "Udayapur",
+    "Palika": "Udayapurgadhi",
+    "lat": 26.918349,
+    "lng": 86.53469
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Bhumekasthan",
+    "lat": 27.98975,
+    "lng": 83.03615
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Chhatradev",
+    "lat": 27.995731,
+    "lng": 83.228741
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Malarani",
+    "lat": 28.067845,
+    "lng": 83.091061
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Panini",
+    "lat": 27.89613,
+    "lng": 83.245175
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Sandhikharka",
+    "lat": 27.970183,
+    "lng": 83.139275
+  },
+  {
+    "District": "Arghakhanchi",
+    "Palika": "Sitganga",
+    "lat": 27.83806,
+    "lng": 83.009517
+  },
+  {
+    "District": "Banke",
+    "Palika": "Baijanath",
+    "lat": 28.234312,
+    "lng": 81.626488
+  },
+  {
+    "District": "Banke",
+    "Palika": "Duduwa",
+    "lat": 28.045184,
+    "lng": 81.69979
+  },
+  {
+    "District": "Banke",
+    "Palika": "Janki",
+    "lat": 28.091433,
+    "lng": 81.602149
+  },
+  {
+    "District": "Banke",
+    "Palika": "Khajura",
+    "lat": 28.12551,
+    "lng": 81.561152
+  },
+  {
+    "District": "Banke",
+    "Palika": "Kohalpur",
+    "lat": 28.216584,
+    "lng": 81.724023
+  },
+  {
+    "District": "Banke",
+    "Palika": "Narainapur",
+    "lat": 27.941938,
+    "lng": 81.857599
+  },
+  {
+    "District": "Banke",
+    "Palika": "Nepalgunj",
+    "lat": 28.068048,
+    "lng": 81.652719
+  },
+  {
+    "District": "Banke",
+    "Palika": "Rapti Sonari",
+    "lat": 28.073588,
+    "lng": 81.927614
+  },
+  {
+    "Palika": "Badhaiyatal",
+    "lat": 28.174046,
+    "lng": 81.491904
+  },
+  {
+    "Palika": "Bansagadhi",
+    "lat": 28.258202,
+    "lng": 81.531941
+  },
+  {
+    "Palika": "Barbardiya",
+    "lat": 28.307855,
+    "lng": 81.400489
+  },
+  {
+    "Palika": "BardiyaNationalPark",
+    "lat": 28.456101,
+    "lng": 81.445595
+  },
+  {
+    "Palika": "Geruwa",
+    "lat": 28.484319,
+    "lng": 81.199584
+  },
+  {
+    "Palika": "Gulariya",
+    "lat": 28.212623,
+    "lng": 81.349706
+  },
+  {
+    "Palika": "Madhuwan",
+    "lat": 28.362105,
+    "lng": 81.258271
+  },
+  {
+    "Palika": "Rajapur",
+    "lat": 28.4353,
+    "lng": 81.152786
+  },
+  {
+    "Palika": "Thakurbaba",
+    "lat": 28.447367,
+    "lng": 81.291088
+  },
+  {
+    "District": "Dang",
+    "Palika": "Babai",
+    "lat": 28.172442,
+    "lng": 82.089535
+  },
+  {
+    "District": "Dang",
+    "Palika": "Banglachuli",
+    "lat": 27.985265,
+    "lng": 82.659994
+  },
+  {
+    "District": "Dang",
+    "Palika": "Dangisharan",
+    "lat": 28.087804,
+    "lng": 82.180102
+  },
+  {
+    "District": "Dang",
+    "Palika": "Gadhawa",
+    "lat": 27.769345,
+    "lng": 82.619071
+  },
+  {
+    "District": "Dang",
+    "Palika": "Ghorahi",
+    "lat": 28.02494,
+    "lng": 82.479635
+  },
+  {
+    "District": "Dang",
+    "Palika": "Lamahi",
+    "lat": 27.920581,
+    "lng": 82.415003
+  },
+  {
+    "District": "Dang",
+    "Palika": "Rajpur",
+    "lat": 27.863775,
+    "lng": 82.299778
+  },
+  {
+    "District": "Dang",
+    "Palika": "Rapti",
+    "lat": 27.87367,
+    "lng": 82.711369
+  },
+  {
+    "District": "Dang",
+    "Palika": "Shantinagar",
+    "lat": 28.169069,
+    "lng": 82.188901
+  },
+  {
+    "District": "Dang",
+    "Palika": "Tulsipur",
+    "lat": 28.101148,
+    "lng": 82.308088
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Chandrakot",
+    "lat": 28.108191,
+    "lng": 83.41096
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Chatrakot",
+    "lat": 27.983998,
+    "lng": 83.348142
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Dhurkot",
+    "lat": 28.116477,
+    "lng": 83.138419
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Gulmidarbar",
+    "lat": 28.038515,
+    "lng": 83.311329
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Isma",
+    "lat": 28.155537,
+    "lng": 83.208411
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Kaligandaki",
+    "lat": 28.051056,
+    "lng": 83.543428
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Madane",
+    "lat": 28.170607,
+    "lng": 83.077503
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Malika",
+    "lat": 28.220047,
+    "lng": 83.149362
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Musikot",
+    "lat": 28.178391,
+    "lng": 83.281137
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Resunga",
+    "lat": 28.070008,
+    "lng": 83.260412
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Rurukshetra",
+    "lat": 27.981354,
+    "lng": 83.421563
+  },
+  {
+    "District": "Gulmi",
+    "Palika": "Satyawati",
+    "lat": 28.031687,
+    "lng": 83.467497
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Banganga",
+    "lat": 27.681037,
+    "lng": 83.155782
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Bijayanagar",
+    "lat": 27.659957,
+    "lng": 82.761054
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Buddhabhumi",
+    "lat": 27.680353,
+    "lng": 82.9928
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Kapilbastu",
+    "lat": 27.559601,
+    "lng": 83.068699
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Krishnanagar",
+    "lat": 27.539933,
+    "lng": 82.812608
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Maharajgunj",
+    "lat": 27.546336,
+    "lng": 82.93813
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Mayadevi",
+    "lat": 27.520453,
+    "lng": 83.128299
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Shivaraj",
+    "lat": 27.693956,
+    "lng": 82.853536
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Suddhodhan",
+    "lat": 27.520861,
+    "lng": 83.197045
+  },
+  {
+    "District": "Kapilbastu",
+    "Palika": "Yashodhara",
+    "lat": 27.495415,
+    "lng": 83.030237
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Bardaghat",
+    "lat": 27.554903,
+    "lng": 83.792082
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Palhi Nandan",
+    "lat": 27.473367,
+    "lng": 83.671345
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Pratappur",
+    "lat": 27.445617,
+    "lng": 83.792368
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Ramgram",
+    "lat": 27.531706,
+    "lng": 83.654099
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Sarawal",
+    "lat": 27.511195,
+    "lng": 83.733619
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Sunwal",
+    "lat": 27.609395,
+    "lng": 83.663629
+  },
+  {
+    "District": "Nawalparasi_W",
+    "Palika": "Susta",
+    "lat": 27.441161,
+    "lng": 83.857292
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Bagnaskali",
+    "lat": 27.88688,
+    "lng": 83.58613
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Mathagadhi",
+    "lat": 27.763542,
+    "lng": 83.656815
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Nisdi",
+    "lat": 27.782852,
+    "lng": 83.909081
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Purbakhola",
+    "lat": 27.823285,
+    "lng": 83.782106
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Rainadevi Chhahara",
+    "lat": 27.853014,
+    "lng": 83.331437
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Rambha",
+    "lat": 27.866445,
+    "lng": 83.699356
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Rampur",
+    "lat": 27.85501,
+    "lng": 83.874018
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Ribdikot",
+    "lat": 27.859967,
+    "lng": 83.419794
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Tansen",
+    "lat": 27.874582,
+    "lng": 83.510193
+  },
+  {
+    "District": "Palpa",
+    "Palika": "Tinau",
+    "lat": 27.769463,
+    "lng": 83.476701
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Ayirabati",
+    "lat": 27.991484,
+    "lng": 82.92538
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Gaumukhi",
+    "lat": 28.249679,
+    "lng": 83.016886
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Jhimruk",
+    "lat": 28.143874,
+    "lng": 82.986704
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Mallarani",
+    "lat": 28.074288,
+    "lng": 82.905121
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Mandavi",
+    "lat": 28.050707,
+    "lng": 82.757081
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Naubahini",
+    "lat": 28.247953,
+    "lng": 82.914206
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Pyuthan",
+    "lat": 28.119681,
+    "lng": 82.862528
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Sarumarani",
+    "lat": 27.942259,
+    "lng": 82.833324
+  },
+  {
+    "District": "Pyuthan",
+    "Palika": "Sworgadwary",
+    "lat": 28.131754,
+    "lng": 82.690532
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Gangadev",
+    "lat": 28.442289,
+    "lng": 82.417598
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Lungri",
+    "lat": 28.272097,
+    "lng": 82.815283
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Madi",
+    "lat": 28.399101,
+    "lng": 82.505391
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Pariwartan",
+    "lat": 28.471695,
+    "lng": 82.560372
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Rolpa",
+    "lat": null,
+    "lng": null
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Runtigadi",
+    "lat": 28.181886,
+    "lng": 82.525258
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Sunchhahari",
+    "lat": 28.375838,
+    "lng": 82.820404
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Sunil Smriti",
+    "lat": 28.259189,
+    "lng": 82.707057
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Thawang",
+    "lat": 28.462126,
+    "lng": 82.743641
+  },
+  {
+    "District": "Rolpa",
+    "Palika": "Tribeni",
+    "lat": 28.29814,
+    "lng": 82.472078
+  },
+  {
+    "District": "Rukum_E",
+    "Palika": "Bhume",
+    "lat": 28.549198,
+    "lng": 82.707991
+  },
+  {
+    "District": "Rukum_E",
+    "Palika": "Dhorpatan Hunting Reserve",
+    "lat": 28.734661,
+    "lng": 82.953331
+  },
+  {
+    "District": "Rukum_E",
+    "Palika": "Putha Uttarganga",
+    "lat": 28.657041,
+    "lng": 82.820974
+  },
+  {
+    "District": "Rukum_E",
+    "Palika": "Sisne",
+    "lat": 28.70651,
+    "lng": 82.624473
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Butwal",
+    "lat": 27.688788,
+    "lng": 83.424388
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Devdaha",
+    "lat": 27.633089,
+    "lng": 83.560807
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Gaidahawa",
+    "lat": 27.585084,
+    "lng": 83.276727
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Kanchan",
+    "lat": 27.63788,
+    "lng": 83.266232
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Kotahimai",
+    "lat": 27.451966,
+    "lng": 83.350626
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Lumbini Sanskritik Development Area",
+    "lat": 27.485395,
+    "lng": 83.278424
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Lumbini Sanskritik",
+    "lat": 27.481862,
+    "lng": 83.270305
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Marchawari",
+    "lat": 27.373198,
+    "lng": 83.350038
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Mayadevi",
+    "lat": 27.516137,
+    "lng": 83.364962
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Omsatiya",
+    "lat": 27.532793,
+    "lng": 83.510157
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Rohini",
+    "lat": 27.504173,
+    "lng": 83.537541
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Sainamaina",
+    "lat": 27.710371,
+    "lng": 83.300624
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Sammarimai",
+    "lat": 27.390086,
+    "lng": 83.308513
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Siddharthanagar",
+    "lat": 27.50814,
+    "lng": 83.44912
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Siyari",
+    "lat": 27.564286,
+    "lng": 83.398493
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Sudhdhodhan",
+    "lat": 27.621325,
+    "lng": 83.372535
+  },
+  {
+    "District": "Rupandehi",
+    "Palika": "Tillotama",
+    "lat": 27.596377,
+    "lng": 83.494488
+  },
+  {
+    "District": "Bara",
+    "Palika": "Adarshkotwal",
+    "lat": 26.941956,
+    "lng": 85.136713
+  },
+  {
+    "District": "Bara",
+    "Palika": "Baragadhi",
+    "lat": 26.996543,
+    "lng": 85.138056
+  },
+  {
+    "District": "Bara",
+    "Palika": "Bishrampur",
+    "lat": 26.9935,
+    "lng": 84.909936
+  },
+  {
+    "District": "Bara",
+    "Palika": "Devtal",
+    "lat": 26.947247,
+    "lng": 85.006393
+  },
+  {
+    "District": "Bara",
+    "Palika": "Jitpur Simara",
+    "lat": 27.194133,
+    "lng": 85.009837
+  },
+  {
+    "District": "Bara",
+    "Palika": "Kalaiya",
+    "lat": 27.028404,
+    "lng": 85.00798
+  },
+  {
+    "District": "Bara",
+    "Palika": "Karaiyamai",
+    "lat": 27.029467,
+    "lng": 85.094097
+  },
+  {
+    "District": "Bara",
+    "Palika": "Kolhabi",
+    "lat": 27.071379,
+    "lng": 85.148277
+  },
+  {
+    "District": "Bara",
+    "Palika": "Mahagadhimai",
+    "lat": 26.978136,
+    "lng": 85.055539
+  },
+  {
+    "District": "Bara",
+    "Palika": "Nijgadh",
+    "lat": 27.249832,
+    "lng": 85.143966
+  },
+  {
+    "District": "Bara",
+    "Palika": "Pacharauta",
+    "lat": 26.905113,
+    "lng": 85.079136
+  },
+  {
+    "District": "Bara",
+    "Palika": "Parsa Wildlife Reserve",
+    "lat": 27.281562,
+    "lng": 84.966198
+  },
+  {
+    "District": "Bara",
+    "Palika": "Parwanipur",
+    "lat": 27.055156,
+    "lng": 84.935037
+  },
+  {
+    "District": "Bara",
+    "Palika": "Pheta",
+    "lat": 27.004406,
+    "lng": 84.943622
+  },
+  {
+    "District": "Bara",
+    "Palika": "Prasauni",
+    "lat": 27.045007,
+    "lng": 84.952318
+  },
+  {
+    "District": "Bara",
+    "Palika": "Simraungadh",
+    "lat": 26.896934,
+    "lng": 85.136745
+  },
+  {
+    "District": "Bara",
+    "Palika": "Suwarna",
+    "lat": 26.926534,
+    "lng": 85.042967
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Aaurahi",
+    "lat": 26.70963,
+    "lng": 86.014622
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Bateshwor",
+    "lat": 26.880492,
+    "lng": 85.923958
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Bideha",
+    "lat": 26.678868,
+    "lng": 86.054065
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Chhireshwornath",
+    "lat": 26.841317,
+    "lng": 85.972064
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Dhanauji",
+    "lat": 26.676172,
+    "lng": 85.977223
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Dhanusadham",
+    "lat": 26.872998,
+    "lng": 86.045301
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Ganeshman Charnath",
+    "lat": 26.928864,
+    "lng": 86.126041
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Hansapur",
+    "lat": 26.762646,
+    "lng": 86.028536
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Janaknandani",
+    "lat": 26.646577,
+    "lng": 86.137696
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Janakpurdham",
+    "lat": 26.729213,
+    "lng": 85.935024
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Kamala",
+    "lat": 26.699266,
+    "lng": 86.148165
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Lakshminiya",
+    "lat": 26.794484,
+    "lng": 85.939535
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Mithila Bihari",
+    "lat": 26.793622,
+    "lng": 85.996141
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Mithila",
+    "lat": 26.994119,
+    "lng": 85.96185
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Mukhiyapatti Musarmiya",
+    "lat": 26.606156,
+    "lng": 85.886582
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Nagarain",
+    "lat": 26.645466,
+    "lng": 85.924009
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Sabaila",
+    "lat": 26.801447,
+    "lng": 86.100655
+  },
+  {
+    "District": "Dhanusha",
+    "Palika": "Sahidnagar",
+    "lat": 26.732663,
+    "lng": 86.104927
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Aurahi",
+    "lat": 26.86536,
+    "lng": 85.803787
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Balwa",
+    "lat": 26.771322,
+    "lng": 85.820181
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Bardibas",
+    "lat": 27.01991,
+    "lng": 85.85645
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Bhangaha",
+    "lat": 26.849943,
+    "lng": 85.87289
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Ekdanra",
+    "lat": 26.68832,
+    "lng": 85.765209
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Gaushala",
+    "lat": 26.932589,
+    "lng": 85.771082
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Jaleswor",
+    "lat": 26.653926,
+    "lng": 85.805707
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Loharpatti",
+    "lat": 26.774063,
+    "lng": 85.865343
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Mahottari",
+    "lat": 26.699343,
+    "lng": 85.81444
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Manra Siswa",
+    "lat": 26.711738,
+    "lng": 85.753053
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Matihani",
+    "lat": 26.644296,
+    "lng": 85.860632
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Pipra",
+    "lat": 26.699547,
+    "lng": 85.867874
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Ramgopalpur",
+    "lat": 26.812716,
+    "lng": 85.78102
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Samsi",
+    "lat": 26.811813,
+    "lng": 85.751818
+  },
+  {
+    "District": "Mahottari",
+    "Palika": "Sonama",
+    "lat": 26.872808,
+    "lng": 85.724669
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Bahudaramai",
+    "lat": 27.082145,
+    "lng": 84.82579
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Bindabasini",
+    "lat": 27.03706,
+    "lng": 84.793784
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Birgunj",
+    "lat": 27.099062,
+    "lng": 84.89888
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Chhipaharmai",
+    "lat": 27.069643,
+    "lng": 84.673402
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Chitwan National Park",
+    "lat": 27.373778,
+    "lng": 84.756286
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Dhobini",
+    "lat": 27.095116,
+    "lng": 84.690999
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Jagarnathpur",
+    "lat": 27.143621,
+    "lng": 84.727408
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Jirabhawani",
+    "lat": 27.200182,
+    "lng": 84.725717
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Kalikamai",
+    "lat": 27.072019,
+    "lng": 84.726406
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Pakahamainpur",
+    "lat": 27.031834,
+    "lng": 84.731113
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Parsagadhi",
+    "lat": 27.15754,
+    "lng": 84.887027
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Paterwasugauli",
+    "lat": 27.179833,
+    "lng": 84.78451
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Pokhariya",
+    "lat": 27.080161,
+    "lng": 84.762693
+  },
+  {
+    "District": "Parsa",
+    "Palika": "SakhuwaPrasauni",
+    "lat": 27.159339,
+    "lng": 84.824212
+  },
+  {
+    "District": "Parsa",
+    "Palika": "Thori",
+    "lat": 27.304105,
+    "lng": 84.635035
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Baudhimai",
+    "lat": 26.892445,
+    "lng": 85.215232
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Brindaban",
+    "lat": 27.037628,
+    "lng": 85.369345
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Chandrapur",
+    "lat": 27.131226,
+    "lng": 85.372294
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Dewahhi Gonahi",
+    "lat": 26.922953,
+    "lng": 85.262032
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Durga Bhagwati",
+    "lat": 26.835564,
+    "lng": 85.319921
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Gadhimai",
+    "lat": 26.945171,
+    "lng": 85.368439
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Garuda",
+    "lat": 26.95803,
+    "lng": 85.321352
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Gaur",
+    "lat": 26.779594,
+    "lng": 85.277008
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Gujara",
+    "lat": 27.106771,
+    "lng": 85.277185
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Ishanath",
+    "lat": 26.796364,
+    "lng": 85.217644
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Katahariya",
+    "lat": 26.997744,
+    "lng": 85.250213
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Madhav Narayan",
+    "lat": 26.893801,
+    "lng": 85.328958
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Maulapur",
+    "lat": 26.935616,
+    "lng": 85.200413
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Paroha",
+    "lat": 26.851624,
+    "lng": 85.234896
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Phatuwa Bijayapur",
+    "lat": 27.022251,
+    "lng": 85.202043
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Rajdevi",
+    "lat": 26.780083,
+    "lng": 85.316393
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Rajpur",
+    "lat": 26.813772,
+    "lng": 85.249274
+  },
+  {
+    "District": "Rautahat",
+    "Palika": "Yemunamai",
+    "lat": 26.843068,
+    "lng": 85.298464
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Agnisair Krishna Savaran",
+    "lat": 26.655685,
+    "lng": 86.794156
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Balan Bihul",
+    "lat": 26.574413,
+    "lng": 86.525114
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Bishnupur",
+    "lat": 26.52006,
+    "lng": 86.72202
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Bode Barsain",
+    "lat": 26.559598,
+    "lng": 86.569336
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Chhinnamasta",
+    "lat": 26.463991,
+    "lng": 86.735695
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Dakneshwori",
+    "lat": 26.534377,
+    "lng": 86.638371
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Hanumannagar Kankalini",
+    "lat": 26.515446,
+    "lng": 86.882169
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Kanchanrup",
+    "lat": 26.641814,
+    "lng": 86.891698
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Khadak",
+    "lat": 26.63835,
+    "lng": 86.60885
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Koshi Tappu Wildlife Reserve",
+    "lat": 26.650199,
+    "lng": 86.975677
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Mahadeva",
+    "lat": 26.551824,
+    "lng": 86.819462
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Rajbiraj",
+    "lat": 26.535168,
+    "lng": 86.763426
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Rajgadh",
+    "lat": 26.510334,
+    "lng": 86.675727
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Rupani",
+    "lat": 26.630644,
+    "lng": 86.731141
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Saptakoshi",
+    "lat": 26.711675,
+    "lng": 86.924458
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Shambhunath",
+    "lat": 26.632637,
+    "lng": 86.678813
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Surunga",
+    "lat": 26.701614,
+    "lng": 86.54181
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Tilathi Koiladi",
+    "lat": 26.491476,
+    "lng": 86.804379
+  },
+  {
+    "District": "Saptari",
+    "Palika": "Tirahut",
+    "lat": 26.592299,
+    "lng": 86.857593
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Bagmati",
+    "lat": 27.078474,
+    "lng": 85.476157
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Balara",
+    "lat": 26.795068,
+    "lng": 85.366425
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Barahathawa",
+    "lat": 26.989116,
+    "lng": 85.464169
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Basbariya",
+    "lat": 26.925778,
+    "lng": 85.44786
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Bishnu",
+    "lat": 26.817189,
+    "lng": 85.47418
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Bramhapuri",
+    "lat": 26.895235,
+    "lng": 85.610925
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Chakraghatta",
+    "lat": 26.902292,
+    "lng": 85.508766
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Chandranagar",
+    "lat": 26.937358,
+    "lng": 85.602638
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Dhankaul",
+    "lat": 26.881359,
+    "lng": 85.404709
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Godaita",
+    "lat": 26.839314,
+    "lng": 85.444134
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Haripur",
+    "lat": 27.009907,
+    "lng": 85.545163
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Haripurwa",
+    "lat": 26.921506,
+    "lng": 85.69286
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Hariwan",
+    "lat": 27.104773,
+    "lng": 85.573571
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Ishworpur",
+    "lat": 27.031801,
+    "lng": 85.71575
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Kabilasi",
+    "lat": 26.936969,
+    "lng": 85.543057
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Kaudena",
+    "lat": 26.853556,
+    "lng": 85.507077
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Lalbandi",
+    "lat": 27.106261,
+    "lng": 85.688072
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Malangawa",
+    "lat": 26.860474,
+    "lng": 85.549401
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Parsa",
+    "lat": 26.874667,
+    "lng": 85.65513
+  },
+  {
+    "District": "Sarlahi",
+    "Palika": "Ramnagar",
+    "lat": 26.839307,
+    "lng": 85.37783
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Arnama",
+    "lat": 26.69607,
+    "lng": 86.2894
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Aurahi",
+    "lat": 26.652383,
+    "lng": 86.309271
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Bariyarpatti",
+    "lat": 26.636417,
+    "lng": 86.375118
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Bhagawanpur",
+    "lat": 26.591376,
+    "lng": 86.470693
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Bishnupur",
+    "lat": 26.7278,
+    "lng": 86.253165
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Dhangadhimai",
+    "lat": 26.815049,
+    "lng": 86.413977
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Golbazar",
+    "lat": 26.804922,
+    "lng": 86.340689
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Kalyanpur",
+    "lat": 26.756986,
+    "lng": 86.201661
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Karjanha",
+    "lat": 26.872918,
+    "lng": 86.180751
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Lahan",
+    "lat": 26.762462,
+    "lng": 86.484065
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Laxmipur Patari",
+    "lat": 26.669822,
+    "lng": 86.410606
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Mirchaiya",
+    "lat": 26.832826,
+    "lng": 86.251647
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Naraha",
+    "lat": 26.775626,
+    "lng": 86.28236
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Nawarajpur",
+    "lat": 26.61454,
+    "lng": 86.438312
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Sakhuwanankarkatti",
+    "lat": 26.633357,
+    "lng": 86.470591
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Siraha",
+    "lat": 26.645161,
+    "lng": 86.215871
+  },
+  {
+    "District": "Siraha",
+    "Palika": "Sukhipur",
+    "lat": 26.694795,
+    "lng": 86.350552
+  },
+  {
+    "District": "Achham",
+    "Palika": "Bannigadhi Jayagadh",
+    "lat": 29.190453,
+    "lng": 81.29637
+  },
+  {
+    "District": "Achham",
+    "Palika": "Chaurpati",
+    "lat": 29.194926,
+    "lng": 81.123092
+  },
+  {
+    "District": "Achham",
+    "Palika": "Dhakari",
+    "lat": 28.983269,
+    "lng": 81.228514
+  },
+  {
+    "District": "Achham",
+    "Palika": "Kamalbazar",
+    "lat": 29.061747,
+    "lng": 81.33709
+  },
+  {
+    "District": "Achham",
+    "Palika": "Khaptad National Park",
+    "lat": 29.342882,
+    "lng": 81.176292
+  },
+  {
+    "District": "Achham",
+    "Palika": "Mangalsen",
+    "lat": 29.105217,
+    "lng": 81.22997
+  },
+  {
+    "District": "Achham",
+    "Palika": "Mellekh",
+    "lat": 29.266679,
+    "lng": 81.320963
+  },
+  {
+    "District": "Achham",
+    "Palika": "Panchadewal Binayak",
+    "lat": 29.109085,
+    "lng": 81.451601
+  },
+  {
+    "District": "Achham",
+    "Palika": "Ramaroshan",
+    "lat": 29.197668,
+    "lng": 81.415368
+  },
+  {
+    "District": "Achham",
+    "Palika": "Sanphebagar",
+    "lat": 29.264152,
+    "lng": 81.207954
+  },
+  {
+    "District": "Achham",
+    "Palika": "Turmakhad",
+    "lat": 28.896185,
+    "lng": 81.442624
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Dasharathchanda",
+    "lat": 29.540308,
+    "lng": 80.429839
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Dilasaini",
+    "lat": 29.662309,
+    "lng": 80.652851
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Dogadakedar",
+    "lat": 29.599701,
+    "lng": 80.526595
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Melauli",
+    "lat": 29.426269,
+    "lng": 80.415933
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Pancheshwar",
+    "lat": 29.449131,
+    "lng": 80.322396
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Patan",
+    "lat": 29.446642,
+    "lng": 80.571417
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Purchaudi",
+    "lat": 29.603265,
+    "lng": 80.695211
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Shivanath",
+    "lat": 29.381876,
+    "lng": 80.344873
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Sigas",
+    "lat": 29.456194,
+    "lng": 80.77747
+  },
+  {
+    "District": "Baitadi",
+    "Palika": "Surnaya",
+    "lat": 29.526157,
+    "lng": 80.601926
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Bithadchir",
+    "lat": 29.515007,
+    "lng": 80.835552
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Bungal",
+    "lat": 29.670255,
+    "lng": 80.937437
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Chabispathivera",
+    "lat": 29.553386,
+    "lng": 81.06334
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Durgathali",
+    "lat": 29.530967,
+    "lng": 81.001132
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "JayaPrithivi",
+    "lat": 29.544601,
+    "lng": 81.198028
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Kedarseu",
+    "lat": 29.516203,
+    "lng": 80.929729
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Khaptad National Park",
+    "lat": 29.422383,
+    "lng": 81.128847
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Khaptadchhanna",
+    "lat": 29.455699,
+    "lng": 81.188487
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Masta",
+    "lat": 29.546048,
+    "lng": 81.284774
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Saipal",
+    "lat": 29.804411,
+    "lng": 81.321678
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Surma",
+    "lat": 29.685019,
+    "lng": 81.130455
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Talkot",
+    "lat": 29.678428,
+    "lng": 81.278684
+  },
+  {
+    "District": "Bajhang",
+    "Palika": "Thalara",
+    "lat": 29.456333,
+    "lng": 81.021071
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Badimalika",
+    "lat": 29.439417,
+    "lng": 81.486139
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Budhiganga",
+    "lat": 29.3629,
+    "lng": 81.319024
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Budhinanda",
+    "lat": 29.534467,
+    "lng": 81.613199
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Gaumul",
+    "lat": 29.550093,
+    "lng": 81.442262
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Himali",
+    "lat": 29.730481,
+    "lng": 81.667097
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Jagannath",
+    "lat": 29.390591,
+    "lng": 81.65118
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Khaptad Chhededaha",
+    "lat": 29.407421,
+    "lng": 81.311524
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Khaptad National Park",
+    "lat": 29.39269,
+    "lng": 81.198703
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Swamikartik Khapar",
+    "lat": 29.423065,
+    "lng": 81.757831
+  },
+  {
+    "District": "Bajura",
+    "Palika": "Tribeni",
+    "lat": 29.32928,
+    "lng": 81.424029
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Ajaymeru",
+    "lat": 29.356654,
+    "lng": 80.505048
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Alital",
+    "lat": 29.125643,
+    "lng": 80.513532
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Amargadhi",
+    "lat": 29.29223,
+    "lng": 80.585408
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Bhageshwar",
+    "lat": 29.290715,
+    "lng": 80.420144
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Ganayapdhura",
+    "lat": 29.257244,
+    "lng": 80.684672
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Nawadurga",
+    "lat": 29.352265,
+    "lng": 80.707849
+  },
+  {
+    "District": "Dadeldhura",
+    "Palika": "Parashuram",
+    "lat": 29.123135,
+    "lng": 80.350966
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Apihimal",
+    "lat": 29.856699,
+    "lng": 80.892309
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Byans",
+    "lat": 29.941499,
+    "lng": 80.767429
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Dunhu",
+    "lat": 29.883823,
+    "lng": 80.615526
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Lekam",
+    "lat": 29.65961,
+    "lng": 80.448683
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Mahakali",
+    "lat": 29.800951,
+    "lng": 80.523367
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Malikaarjun",
+    "lat": 29.732244,
+    "lng": 80.436964
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Marma",
+    "lat": 29.74301,
+    "lng": 80.823043
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Naugad",
+    "lat": 29.79563,
+    "lng": 80.663405
+  },
+  {
+    "District": "Darchula",
+    "Palika": "Shailyashikhar",
+    "lat": 29.706623,
+    "lng": 80.567434
+  },
+  {
+    "District": "Doti",
+    "Palika": "Adharsha",
+    "lat": 29.348368,
+    "lng": 80.871946
+  },
+  {
+    "District": "Doti",
+    "Palika": "Badikedar",
+    "lat": 29.017389,
+    "lng": 80.867333
+  },
+  {
+    "District": "Doti",
+    "Palika": "Bogatan Phudsil",
+    "lat": 29.057519,
+    "lng": 81.022176
+  },
+  {
+    "District": "Doti",
+    "Palika": "Dipayal Silgadi",
+    "lat": 29.264243,
+    "lng": 80.9671
+  },
+  {
+    "District": "Doti",
+    "Palika": "Jorayal",
+    "lat": 29.099336,
+    "lng": 80.698886
+  },
+  {
+    "District": "Doti",
+    "Palika": "K I Singh",
+    "lat": 29.175701,
+    "lng": 80.965807
+  },
+  {
+    "District": "Doti",
+    "Palika": "Khaptad National Park",
+    "lat": 29.372933,
+    "lng": 81.105129
+  },
+  {
+    "District": "Doti",
+    "Palika": "Purbichauki",
+    "lat": 29.269945,
+    "lng": 81.058516
+  },
+  {
+    "District": "Doti",
+    "Palika": "Sayal",
+    "lat": 29.370163,
+    "lng": 80.967823
+  },
+  {
+    "District": "Doti",
+    "Palika": "Shikhar",
+    "lat": 29.249331,
+    "lng": 80.816835
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Bardagoriya",
+    "lat": 28.674015,
+    "lng": 81.036696
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Bhajani",
+    "lat": 28.525148,
+    "lng": 80.967459
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Chure",
+    "lat": 28.936928,
+    "lng": 80.691069
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Dhangadhi",
+    "lat": 28.708832,
+    "lng": 80.659501
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Gauriganga",
+    "lat": 28.75599,
+    "lng": 80.765735
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Ghodaghodi",
+    "lat": 28.695689,
+    "lng": 80.940487
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Godawari",
+    "lat": 28.855175,
+    "lng": 80.581564
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Janaki",
+    "lat": 28.56809,
+    "lng": 81.127989
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Joshipur",
+    "lat": 28.57357,
+    "lng": 81.024051
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Kailari",
+    "lat": 28.60653,
+    "lng": 80.815725
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Lamkichuha",
+    "lat": 28.650682,
+    "lng": 81.14637
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Mohanyal",
+    "lat": 28.813778,
+    "lng": 81.040891
+  },
+  {
+    "District": "Kailali",
+    "Palika": "Tikapur",
+    "lat": 28.486409,
+    "lng": 81.081878
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Bedkot",
+    "lat": 28.991477,
+    "lng": 80.270329
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Belauri",
+    "lat": 28.711844,
+    "lng": 80.353164
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Beldandi",
+    "lat": 28.76899,
+    "lng": 80.267002
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Bhimdatta",
+    "lat": 28.988409,
+    "lng": 80.18452
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Dodhara Chandani",
+    "lat": 28.899882,
+    "lng": 80.097321
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Krishnapur",
+    "lat": 28.860587,
+    "lng": 80.476847
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Laljhadi",
+    "lat": 28.759011,
+    "lng": 80.424975
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Punarbas",
+    "lat": 28.661197,
+    "lng": 80.472225
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Shuklaphanta National Park",
+    "lat": 28.896811,
+    "lng": 80.274698
+  },
+  {
+    "District": "Kanchanpur",
+    "Palika": "Shuklaphanta",
+    "lat": 28.924506,
+    "lng": 80.378894
+  }
+]

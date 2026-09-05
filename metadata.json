@@ -1,0 +1,10 @@
+{
+  "name": "Mero Sadak - Nepal Highway & Route Planner",
+  "description": "Comprehensive Nepal highway information, live road status and obstruction tracker, distance calculator, real-time mountain pass weather monitor, real-time D3 traffic flow visualizer with historical and live speed variances, and AI-powered dynamic route planning with trip optimization based on current terrain and road conditions.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

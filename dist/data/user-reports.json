@@ -1,0 +1,38 @@
+[
+  {
+    "id": "usr-1",
+    "highwayCode": "H04",
+    "location": "Near Benighat Trishuli riverside",
+    "incidentType": "fallen_rocks",
+    "severity": "minor",
+    "description": "Small gravel and stones fallen on outer shoulder. Drive in center lane.",
+    "reporterName": "Bishal Sharma (Bus Driver)",
+    "createdAt": "45m ago",
+    "upvotes": 12,
+    "verified": true
+  },
+  {
+    "id": "usr-2",
+    "highwayCode": "H01",
+    "location": "Hetauda Bypass Ratomate",
+    "incidentType": "pothole",
+    "severity": "minor",
+    "description": "Deep pothole after railway overpass bridge on the left lane toward Narayanghat.",
+    "reporterName": "Sujan Thapa",
+    "createdAt": "2h ago",
+    "upvotes": 21,
+    "verified": true
+  },
+  {
+    "id": "usr-3",
+    "highwayCode": "H10",
+    "location": "Near Ramdi Bridge, Palpa",
+    "incidentType": "traffic_jam",
+    "severity": "minor",
+    "description": "Slow moving queue of heavy fertilizer trucks ascending toward Tansen.",
+    "reporterName": "Kabita Shrestha",
+    "createdAt": "3h ago",
+    "upvotes": 8,
+    "verified": false
+  }
+]

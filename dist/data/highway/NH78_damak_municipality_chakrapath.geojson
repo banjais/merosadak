@@ -1,0 +1,3993 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 1,
+        "id": 14296,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-003",
+        "link_name": "Tarabari - Betani River",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 7.02,
+        "link_to": 10.27,
+        "link_len": 3.25,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.25,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6450745,
+              26.6635886
+            ],
+            [
+              87.6458864,
+              26.6574267
+            ],
+            [
+              87.645133,
+              26.6487624
+            ],
+            [
+              87.6491776,
+              26.6426256
+            ],
+            [
+              87.6507232,
+              26.6392587
+            ],
+            [
+              87.6543134,
+              26.6377617
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 2,
+        "id": 14283,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-006",
+        "link_name": "Damak Border - Refugee Camp",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 20.58,
+        "link_to": 25.74,
+        "link_len": 5.16,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 5.158,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.674586,
+              26.6188848
+            ],
+            [
+              87.6762396,
+              26.6243853
+            ],
+            [
+              87.6839273,
+              26.6363279
+            ],
+            [
+              87.688728,
+              26.6414263
+            ],
+            [
+              87.6982338,
+              26.6485579
+            ],
+            [
+              87.7027594,
+              26.6543712
+            ],
+            [
+              87.7035245,
+              26.6561523
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 3,
+        "id": 14365,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-004",
+        "link_name": "Betani River - Ratuwa Khola",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 10.27,
+        "link_to": 15.99,
+        "link_len": 5.72,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 5.725,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6543134,
+              26.6377617
+            ],
+            [
+              87.654894,
+              26.637411
+            ],
+            [
+              87.6551689,
+              26.6358061
+            ],
+            [
+              87.6553515,
+              26.6282677
+            ],
+            [
+              87.6566174,
+              26.6239727
+            ],
+            [
+              87.6564375,
+              26.6168769
+            ],
+            [
+              87.6569791,
+              26.6127511
+            ],
+            [
+              87.6554598,
+              26.6112226
+            ],
+            [
+              87.656106,
+              26.6100371
+            ],
+            [
+              87.6558821,
+              26.6090727
+            ],
+            [
+              87.6544564,
+              26.608248
+            ],
+            [
+              87.6528643,
+              26.6059809
+            ],
+            [
+              87.6511411,
+              26.6049067
+            ],
+            [
+              87.6465996,
+              26.59895
+            ],
+            [
+              87.6440804,
+              26.5923973
+            ],
+            [
+              87.6445625,
+              26.5913817
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 4,
+        "id": 14431,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-005",
+        "link_name": "Ratuwa Khola - Damak Border",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 15.99,
+        "link_to": 20.58,
+        "link_len": 4.59,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 4.585,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6445625,
+              26.5913817
+            ],
+            [
+              87.6537565,
+              26.5939181
+            ],
+            [
+              87.6621335,
+              26.5991111
+            ],
+            [
+              87.664496,
+              26.6016592
+            ],
+            [
+              87.6670852,
+              26.6034536
+            ],
+            [
+              87.6717335,
+              26.6099313
+            ],
+            [
+              87.6734449,
+              26.6137213
+            ],
+            [
+              87.6738057,
+              26.6175029
+            ],
+            [
+              87.674586,
+              26.6188848
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 5,
+        "id": 14456,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-002",
+        "link_name": "View Tower - Tarabari",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 3.66,
+        "link_to": 7.02,
+        "link_len": 3.36,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.358,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6579979,
+              26.6893924
+            ],
+            [
+              87.6550871,
+              26.6841187
+            ],
+            [
+              87.654104,
+              26.6801783
+            ],
+            [
+              87.6516073,
+              26.6763912
+            ],
+            [
+              87.6508409,
+              26.673089
+            ],
+            [
+              87.6482761,
+              26.6731849
+            ],
+            [
+              87.647209,
+              26.6683735
+            ],
+            [
+              87.6450745,
+              26.6635886
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 6,
+        "id": 14766,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-001",
+        "link_name": "Refugee Camp - View Tower",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 0,
+        "link_to": 3.66,
+        "link_len": 3.66,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.661,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N1",
+        "path": "E:/output/links_2022_23_44N1.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6699564,
+              26.718034
+            ],
+            [
+              87.6697212,
+              26.7175705
+            ],
+            [
+              87.6666092,
+              26.7164497
+            ],
+            [
+              87.6645066,
+              26.7144109
+            ],
+            [
+              87.6590547,
+              26.704354
+            ],
+            [
+              87.6584056,
+              26.699979
+            ],
+            [
+              87.6592326,
+              26.6913238
+            ],
+            [
+              87.6579979,
+              26.6893924
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 7,
+        "id": 14296,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-003",
+        "link_name": "Tarabari - Betani River",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 7.02,
+        "link_to": 10.27,
+        "link_len": 3.25,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.25,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6450745,
+              26.6635886
+            ],
+            [
+              87.6450575,
+              26.6634868
+            ],
+            [
+              87.6450524,
+              26.6634812
+            ],
+            [
+              87.6450506,
+              26.6634354
+            ],
+            [
+              87.6450156,
+              26.6631353
+            ],
+            [
+              87.6449864,
+              26.6626773
+            ],
+            [
+              87.6449855,
+              26.6626774
+            ],
+            [
+              87.6449985,
+              26.6625394
+            ],
+            [
+              87.6450075,
+              26.6622215
+            ],
+            [
+              87.645051,
+              26.6618051
+            ],
+            [
+              87.6451014,
+              26.6611205
+            ],
+            [
+              87.6451541,
+              26.6608636
+            ],
+            [
+              87.6451958,
+              26.6607197
+            ],
+            [
+              87.6452499,
+              26.6606159
+            ],
+            [
+              87.6453497,
+              26.6604355
+            ],
+            [
+              87.6454578,
+              26.6602256
+            ],
+            [
+              87.6455144,
+              26.6600788
+            ],
+            [
+              87.6455593,
+              26.6599033
+            ],
+            [
+              87.6456097,
+              26.6596558
+            ],
+            [
+              87.6456264,
+              26.6595916
+            ],
+            [
+              87.6456795,
+              26.6592559
+            ],
+            [
+              87.6457353,
+              26.6588367
+            ],
+            [
+              87.6457287,
+              26.6588363
+            ],
+            [
+              87.6457538,
+              26.6587232
+            ],
+            [
+              87.6458248,
+              26.6580917
+            ],
+            [
+              87.6458702,
+              26.6576662
+            ],
+            [
+              87.6458864,
+              26.6574267
+            ],
+            [
+              87.6458515,
+              26.6569127
+            ],
+            [
+              87.6458411,
+              26.6564336
+            ],
+            [
+              87.6458428,
+              26.6561611
+            ],
+            [
+              87.6458312,
+              26.6556595
+            ],
+            [
+              87.6458063,
+              26.6553184
+            ],
+            [
+              87.6457495,
+              26.6548594
+            ],
+            [
+              87.6456795,
+              26.6544731
+            ],
+            [
+              87.6456008,
+              26.6538729
+            ],
+            [
+              87.6455906,
+              26.6538201
+            ],
+            [
+              87.6455827,
+              26.6537796
+            ],
+            [
+              87.6455172,
+              26.6532986
+            ],
+            [
+              87.6455159,
+              26.6532991
+            ],
+            [
+              87.6455147,
+              26.6532773
+            ],
+            [
+              87.6454599,
+              26.6527665
+            ],
+            [
+              87.6454183,
+              26.6523958
+            ],
+            [
+              87.6453467,
+              26.6518114
+            ],
+            [
+              87.6452579,
+              26.651318
+            ],
+            [
+              87.6452441,
+              26.6511677
+            ],
+            [
+              87.6452355,
+              26.6509767
+            ],
+            [
+              87.6452502,
+              26.6506698
+            ],
+            [
+              87.6452454,
+              26.6504359
+            ],
+            [
+              87.645235,
+              26.6502573
+            ],
+            [
+              87.6451448,
+              26.6496964
+            ],
+            [
+              87.6450974,
+              26.6493135
+            ],
+            [
+              87.6450942,
+              26.6490851
+            ],
+            [
+              87.6451008,
+              26.6489621
+            ],
+            [
+              87.645133,
+              26.6487624
+            ],
+            [
+              87.6452141,
+              26.6485627
+            ],
+            [
+              87.645367,
+              26.6483045
+            ],
+            [
+              87.6457271,
+              26.6477956
+            ],
+            [
+              87.6462213,
+              26.6471148
+            ],
+            [
+              87.6469806,
+              26.6459533
+            ],
+            [
+              87.6473819,
+              26.645313
+            ],
+            [
+              87.6477383,
+              26.6448329
+            ],
+            [
+              87.6478995,
+              26.6445613
+            ],
+            [
+              87.6479199,
+              26.6445319
+            ],
+            [
+              87.6481515,
+              26.6441982
+            ],
+            [
+              87.6485233,
+              26.6436111
+            ],
+            [
+              87.6488836,
+              26.6430852
+            ],
+            [
+              87.6491776,
+              26.6426256
+            ],
+            [
+              87.6492752,
+              26.6424521
+            ],
+            [
+              87.6494214,
+              26.642121
+            ],
+            [
+              87.6495829,
+              26.6417531
+            ],
+            [
+              87.6497595,
+              26.6413012
+            ],
+            [
+              87.6500113,
+              26.6408053
+            ],
+            [
+              87.6503437,
+              26.6401006
+            ],
+            [
+              87.6504919,
+              26.6397627
+            ],
+            [
+              87.6506719,
+              26.6393241
+            ],
+            [
+              87.6507232,
+              26.6392587
+            ],
+            [
+              87.6507666,
+              26.6392296
+            ],
+            [
+              87.650803,
+              26.6392099
+            ],
+            [
+              87.6508819,
+              26.6391882
+            ],
+            [
+              87.6509878,
+              26.6391562
+            ],
+            [
+              87.6514326,
+              26.6390497
+            ],
+            [
+              87.6516549,
+              26.6389514
+            ],
+            [
+              87.6522979,
+              26.6386758
+            ],
+            [
+              87.6531001,
+              26.6383386
+            ],
+            [
+              87.6536361,
+              26.638077
+            ],
+            [
+              87.6540772,
+              26.6378653
+            ],
+            [
+              87.6541279,
+              26.6378489
+            ],
+            [
+              87.6543134,
+              26.6377617
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 8,
+        "id": 14283,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-006",
+        "link_name": "Damak Border - Refugee Camp",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 20.58,
+        "link_to": 25.74,
+        "link_len": 5.16,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 5.158,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.674586,
+              26.6188848
+            ],
+            [
+              87.6746022,
+              26.6190319
+            ],
+            [
+              87.6746216,
+              26.6190992
+            ],
+            [
+              87.6746946,
+              26.6195787
+            ],
+            [
+              87.6746834,
+              26.6198151
+            ],
+            [
+              87.6746712,
+              26.6200352
+            ],
+            [
+              87.6746718,
+              26.620132
+            ],
+            [
+              87.6747018,
+              26.6202697
+            ],
+            [
+              87.6748398,
+              26.6206392
+            ],
+            [
+              87.6750412,
+              26.6210643
+            ],
+            [
+              87.6751795,
+              26.6214158
+            ],
+            [
+              87.6752596,
+              26.6216732
+            ],
+            [
+              87.6753722,
+              26.6220574
+            ],
+            [
+              87.675688,
+              26.6231751
+            ],
+            [
+              87.6759255,
+              26.6237246
+            ],
+            [
+              87.6762396,
+              26.6243853
+            ],
+            [
+              87.6763897,
+              26.6246394
+            ],
+            [
+              87.6766193,
+              26.6250091
+            ],
+            [
+              87.6770619,
+              26.6257245
+            ],
+            [
+              87.677625,
+              26.6266594
+            ],
+            [
+              87.6776484,
+              26.6267267
+            ],
+            [
+              87.6777536,
+              26.6268876
+            ],
+            [
+              87.6781064,
+              26.6276095
+            ],
+            [
+              87.6781968,
+              26.6277978
+            ],
+            [
+              87.6783683,
+              26.6280662
+            ],
+            [
+              87.6788289,
+              26.6287418
+            ],
+            [
+              87.6793246,
+              26.6295065
+            ],
+            [
+              87.6801605,
+              26.6308118
+            ],
+            [
+              87.6802778,
+              26.6310059
+            ],
+            [
+              87.6804234,
+              26.6312469
+            ],
+            [
+              87.680713,
+              26.6316142
+            ],
+            [
+              87.6808574,
+              26.6318394
+            ],
+            [
+              87.6810159,
+              26.6321269
+            ],
+            [
+              87.6810571,
+              26.6322303
+            ],
+            [
+              87.6811207,
+              26.6323759
+            ],
+            [
+              87.681194,
+              26.6325184
+            ],
+            [
+              87.6812102,
+              26.6325453
+            ],
+            [
+              87.6816663,
+              26.6331382
+            ],
+            [
+              87.6822756,
+              26.6340461
+            ],
+            [
+              87.6827331,
+              26.634673
+            ],
+            [
+              87.6830253,
+              26.635042
+            ],
+            [
+              87.6835849,
+              26.6357857
+            ],
+            [
+              87.6839273,
+              26.6363279
+            ],
+            [
+              87.684109,
+              26.636522
+            ],
+            [
+              87.6846055,
+              26.6370434
+            ],
+            [
+              87.6850218,
+              26.6374786
+            ],
+            [
+              87.6860507,
+              26.6385333
+            ],
+            [
+              87.6866663,
+              26.6391212
+            ],
+            [
+              87.6871226,
+              26.6395545
+            ],
+            [
+              87.6875811,
+              26.6399544
+            ],
+            [
+              87.6877167,
+              26.6401158
+            ],
+            [
+              87.6878298,
+              26.6402506
+            ],
+            [
+              87.6882097,
+              26.6407055
+            ],
+            [
+              87.6883902,
+              26.6409626
+            ],
+            [
+              87.6886229,
+              26.6412764
+            ],
+            [
+              87.6886657,
+              26.6413459
+            ],
+            [
+              87.688728,
+              26.6414263
+            ],
+            [
+              87.6887444,
+              26.64144
+            ],
+            [
+              87.6887965,
+              26.6414838
+            ],
+            [
+              87.6889314,
+              26.6415904
+            ],
+            [
+              87.6890224,
+              26.6416623
+            ],
+            [
+              87.689117,
+              26.641714
+            ],
+            [
+              87.6893331,
+              26.6418322
+            ],
+            [
+              87.6897373,
+              26.6420608
+            ],
+            [
+              87.6901025,
+              26.6422642
+            ],
+            [
+              87.6905152,
+              26.6425082
+            ],
+            [
+              87.6909573,
+              26.6427845
+            ],
+            [
+              87.6913618,
+              26.6430603
+            ],
+            [
+              87.6919873,
+              26.6435148
+            ],
+            [
+              87.6925358,
+              26.6439392
+            ],
+            [
+              87.6928332,
+              26.6442246
+            ],
+            [
+              87.693325,
+              26.644708
+            ],
+            [
+              87.6937981,
+              26.6452125
+            ],
+            [
+              87.6942234,
+              26.645672
+            ],
+            [
+              87.6944195,
+              26.6458541
+            ],
+            [
+              87.6947112,
+              26.6460857
+            ],
+            [
+              87.6949025,
+              26.6462298
+            ],
+            [
+              87.695386,
+              26.6465266
+            ],
+            [
+              87.6959544,
+              26.6469478
+            ],
+            [
+              87.6963537,
+              26.6472194
+            ],
+            [
+              87.6973523,
+              26.6478836
+            ],
+            [
+              87.6980148,
+              26.6483701
+            ],
+            [
+              87.6982338,
+              26.6485579
+            ],
+            [
+              87.6984515,
+              26.648834
+            ],
+            [
+              87.6985707,
+              26.6490486
+            ],
+            [
+              87.6990961,
+              26.6498456
+            ],
+            [
+              87.6992639,
+              26.650101
+            ],
+            [
+              87.6997942,
+              26.650855
+            ],
+            [
+              87.6998429,
+              26.6509273
+            ],
+            [
+              87.6999715,
+              26.651101
+            ],
+            [
+              87.7000671,
+              26.6511505
+            ],
+            [
+              87.7001263,
+              26.6511726
+            ],
+            [
+              87.7001799,
+              26.6511925
+            ],
+            [
+              87.7001799,
+              26.6511925
+            ],
+            [
+              87.7002568,
+              26.6511798
+            ],
+            [
+              87.7003106,
+              26.6511998
+            ],
+            [
+              87.7003497,
+              26.651225
+            ],
+            [
+              87.7004188,
+              26.6512938
+            ],
+            [
+              87.700751,
+              26.6517441
+            ],
+            [
+              87.7009275,
+              26.6519767
+            ],
+            [
+              87.7017438,
+              26.6530345
+            ],
+            [
+              87.7019942,
+              26.6533739
+            ],
+            [
+              87.7025934,
+              26.6541471
+            ],
+            [
+              87.7027594,
+              26.6543712
+            ],
+            [
+              87.7028352,
+              26.6545094
+            ],
+            [
+              87.7028613,
+              26.654614
+            ],
+            [
+              87.7029763,
+              26.6550955
+            ],
+            [
+              87.7031288,
+              26.655479
+            ],
+            [
+              87.7032325,
+              26.6557397
+            ],
+            [
+              87.7032374,
+              26.6557519
+            ],
+            [
+              87.7033069,
+              26.6558767
+            ],
+            [
+              87.7034412,
+              26.6560353
+            ],
+            [
+              87.7035245,
+              26.6561523
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 9,
+        "id": 14365,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-004",
+        "link_name": "Betani River - Ratuwa Khola",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 10.27,
+        "link_to": 15.99,
+        "link_len": 5.72,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 5.725,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6543134,
+              26.6377617
+            ],
+            [
+              87.6545024,
+              26.6376727
+            ],
+            [
+              87.6546645,
+              26.6375957
+            ],
+            [
+              87.6547005,
+              26.6375751
+            ],
+            [
+              87.6547202,
+              26.6375678
+            ],
+            [
+              87.6547833,
+              26.637531
+            ],
+            [
+              87.6548315,
+              26.6374995
+            ],
+            [
+              87.6548694,
+              26.6374617
+            ],
+            [
+              87.654894,
+              26.637411
+            ],
+            [
+              87.6549695,
+              26.6369864
+            ],
+            [
+              87.6550436,
+              26.636537
+            ],
+            [
+              87.655113,
+              26.6361803
+            ],
+            [
+              87.6551689,
+              26.6358061
+            ],
+            [
+              87.6552007,
+              26.6351899
+            ],
+            [
+              87.655232,
+              26.6348236
+            ],
+            [
+              87.6552871,
+              26.6341342
+            ],
+            [
+              87.6553693,
+              26.6334796
+            ],
+            [
+              87.6554351,
+              26.6329744
+            ],
+            [
+              87.6555176,
+              26.6324549
+            ],
+            [
+              87.655536,
+              26.6322559
+            ],
+            [
+              87.6555615,
+              26.6320475
+            ],
+            [
+              87.6555793,
+              26.6318373
+            ],
+            [
+              87.6555624,
+              26.631417
+            ],
+            [
+              87.6555436,
+              26.6309225
+            ],
+            [
+              87.6555306,
+              26.6305268
+            ],
+            [
+              87.6554833,
+              26.6300156
+            ],
+            [
+              87.6554479,
+              26.6295782
+            ],
+            [
+              87.6554133,
+              26.6291137
+            ],
+            [
+              87.6553726,
+              26.6287148
+            ],
+            [
+              87.6553611,
+              26.6285172
+            ],
+            [
+              87.6553485,
+              26.62843
+            ],
+            [
+              87.6553449,
+              26.6283693
+            ],
+            [
+              87.6553425,
+              26.6283267
+            ],
+            [
+              87.6553515,
+              26.6282677
+            ],
+            [
+              87.6553709,
+              26.6282128
+            ],
+            [
+              87.6554296,
+              26.6280163
+            ],
+            [
+              87.6558121,
+              26.6267959
+            ],
+            [
+              87.6559771,
+              26.6262298
+            ],
+            [
+              87.656246,
+              26.625384
+            ],
+            [
+              87.6563802,
+              26.6249769
+            ],
+            [
+              87.6565518,
+              26.6243969
+            ],
+            [
+              87.6565977,
+              26.6241515
+            ],
+            [
+              87.6566174,
+              26.6239727
+            ],
+            [
+              87.6566253,
+              26.6234634
+            ],
+            [
+              87.6566137,
+              26.6232208
+            ],
+            [
+              87.6566082,
+              26.6231265
+            ],
+            [
+              87.6566056,
+              26.6230816
+            ],
+            [
+              87.6566036,
+              26.6230479
+            ],
+            [
+              87.656612,
+              26.6230205
+            ],
+            [
+              87.6566255,
+              26.6229928
+            ],
+            [
+              87.6566735,
+              26.622914
+            ],
+            [
+              87.6566921,
+              26.6228456
+            ],
+            [
+              87.6566851,
+              26.6225104
+            ],
+            [
+              87.6567029,
+              26.6219984
+            ],
+            [
+              87.6567492,
+              26.6215031
+            ],
+            [
+              87.6567707,
+              26.6211396
+            ],
+            [
+              87.6567684,
+              26.6205407
+            ],
+            [
+              87.6567563,
+              26.6200324
+            ],
+            [
+              87.6567523,
+              26.6194899
+            ],
+            [
+              87.6567208,
+              26.6189915
+            ],
+            [
+              87.6567173,
+              26.6182419
+            ],
+            [
+              87.6566934,
+              26.6177881
+            ],
+            [
+              87.6566661,
+              26.6176205
+            ],
+            [
+              87.6565692,
+              26.6172896
+            ],
+            [
+              87.6564984,
+              26.617106
+            ],
+            [
+              87.6564545,
+              26.6169977
+            ],
+            [
+              87.6564429,
+              26.6169262
+            ],
+            [
+              87.6564375,
+              26.6168769
+            ],
+            [
+              87.6564425,
+              26.6168339
+            ],
+            [
+              87.6564578,
+              26.6167949
+            ],
+            [
+              87.6565406,
+              26.6165816
+            ],
+            [
+              87.6566564,
+              26.616333
+            ],
+            [
+              87.6567259,
+              26.6161496
+            ],
+            [
+              87.656754,
+              26.6160312
+            ],
+            [
+              87.6567736,
+              26.6158501
+            ],
+            [
+              87.6567942,
+              26.6155587
+            ],
+            [
+              87.6568746,
+              26.6149177
+            ],
+            [
+              87.6569109,
+              26.6145512
+            ],
+            [
+              87.6569941,
+              26.6139573
+            ],
+            [
+              87.657037,
+              26.613532
+            ],
+            [
+              87.6570531,
+              26.6133353
+            ],
+            [
+              87.657048,
+              26.6131171
+            ],
+            [
+              87.6570254,
+              26.6129876
+            ],
+            [
+              87.6569791,
+              26.6127511
+            ],
+            [
+              87.6569077,
+              26.6124707
+            ],
+            [
+              87.656837,
+              26.6122894
+            ],
+            [
+              87.6567369,
+              26.6121185
+            ],
+            [
+              87.6566035,
+              26.611957
+            ],
+            [
+              87.6564787,
+              26.6118368
+            ],
+            [
+              87.6562745,
+              26.6116842
+            ],
+            [
+              87.6560414,
+              26.6115522
+            ],
+            [
+              87.6556579,
+              26.6114205
+            ],
+            [
+              87.6556141,
+              26.6113989
+            ],
+            [
+              87.6555647,
+              26.6113675
+            ],
+            [
+              87.655525,
+              26.611331
+            ],
+            [
+              87.6554951,
+              26.6112919
+            ],
+            [
+              87.6554769,
+              26.611259
+            ],
+            [
+              87.6554598,
+              26.6112226
+            ],
+            [
+              87.6554514,
+              26.6111859
+            ],
+            [
+              87.6554483,
+              26.6111331
+            ],
+            [
+              87.6554608,
+              26.6110672
+            ],
+            [
+              87.6555228,
+              26.6109056
+            ],
+            [
+              87.6556959,
+              26.6104358
+            ],
+            [
+              87.6557667,
+              26.6102974
+            ],
+            [
+              87.6557918,
+              26.6102546
+            ],
+            [
+              87.6558146,
+              26.6102152
+            ],
+            [
+              87.6558345,
+              26.6101929
+            ],
+            [
+              87.6558597,
+              26.6101737
+            ],
+            [
+              87.6559085,
+              26.6101511
+            ],
+            [
+              87.6560492,
+              26.6100927
+            ],
+            [
+              87.6560493,
+              26.6100926
+            ],
+            [
+              87.656072,
+              26.6100759
+            ],
+            [
+              87.656097,
+              26.6100544
+            ],
+            [
+              87.656106,
+              26.6100371
+            ],
+            [
+              87.6561069,
+              26.6100078
+            ],
+            [
+              87.6561059,
+              26.6099707
+            ],
+            [
+              87.6561014,
+              26.6099461
+            ],
+            [
+              87.6560567,
+              26.6097062
+            ],
+            [
+              87.6560164,
+              26.6094424
+            ],
+            [
+              87.6559741,
+              26.6092755
+            ],
+            [
+              87.6559545,
+              26.6091976
+            ],
+            [
+              87.6559204,
+              26.6091272
+            ],
+            [
+              87.6558821,
+              26.6090727
+            ],
+            [
+              87.6558281,
+              26.6090054
+            ],
+            [
+              87.655749,
+              26.6089371
+            ],
+            [
+              87.6553493,
+              26.6086969
+            ],
+            [
+              87.6548658,
+              26.6084809
+            ],
+            [
+              87.6546037,
+              26.6083671
+            ],
+            [
+              87.654562,
+              26.6083398
+            ],
+            [
+              87.6544989,
+              26.6082887
+            ],
+            [
+              87.6544564,
+              26.608248
+            ],
+            [
+              87.654411,
+              26.6081983
+            ],
+            [
+              87.6543755,
+              26.6081482
+            ],
+            [
+              87.6543365,
+              26.6080802
+            ],
+            [
+              87.6543102,
+              26.6080161
+            ],
+            [
+              87.6541846,
+              26.607709
+            ],
+            [
+              87.6540692,
+              26.6073609
+            ],
+            [
+              87.6539798,
+              26.607158
+            ],
+            [
+              87.6539367,
+              26.6070632
+            ],
+            [
+              87.6538923,
+              26.6069887
+            ],
+            [
+              87.6538543,
+              26.6069387
+            ],
+            [
+              87.6537978,
+              26.6068716
+            ],
+            [
+              87.6537318,
+              26.6068139
+            ],
+            [
+              87.6535587,
+              26.6066373
+            ],
+            [
+              87.6532164,
+              26.6063067
+            ],
+            [
+              87.6528643,
+              26.6059809
+            ],
+            [
+              87.6525736,
+              26.6057626
+            ],
+            [
+              87.6521845,
+              26.6054904
+            ],
+            [
+              87.6519543,
+              26.6053161
+            ],
+            [
+              87.6517326,
+              26.6051872
+            ],
+            [
+              87.6515252,
+              26.6050936
+            ],
+            [
+              87.6512423,
+              26.6049672
+            ],
+            [
+              87.6511775,
+              26.6049298
+            ],
+            [
+              87.6511411,
+              26.6049067
+            ],
+            [
+              87.6511194,
+              26.6048784
+            ],
+            [
+              87.6511028,
+              26.6048499
+            ],
+            [
+              87.6510092,
+              26.6046909
+            ],
+            [
+              87.650949,
+              26.6045757
+            ],
+            [
+              87.6506834,
+              26.6041423
+            ],
+            [
+              87.6504343,
+              26.603778
+            ],
+            [
+              87.6498856,
+              26.6029571
+            ],
+            [
+              87.6494414,
+              26.6023384
+            ],
+            [
+              87.6490726,
+              26.6018108
+            ],
+            [
+              87.6488424,
+              26.6014703
+            ],
+            [
+              87.6486565,
+              26.6012021
+            ],
+            [
+              87.6484082,
+              26.600894
+            ],
+            [
+              87.6483047,
+              26.600793
+            ],
+            [
+              87.6480403,
+              26.6005105
+            ],
+            [
+              87.6476852,
+              26.6000903
+            ],
+            [
+              87.6473281,
+              26.5997197
+            ],
+            [
+              87.6469795,
+              26.5993668
+            ],
+            [
+              87.6467662,
+              26.5991561
+            ],
+            [
+              87.6467281,
+              26.599114
+            ],
+            [
+              87.6466932,
+              26.5990729
+            ],
+            [
+              87.6466576,
+              26.5990317
+            ],
+            [
+              87.6465996,
+              26.59895
+            ],
+            [
+              87.6465359,
+              26.5988021
+            ],
+            [
+              87.6464198,
+              26.598355
+            ],
+            [
+              87.6463342,
+              26.5979605
+            ],
+            [
+              87.6463209,
+              26.5978586
+            ],
+            [
+              87.6462155,
+              26.5974459
+            ],
+            [
+              87.6461772,
+              26.5973261
+            ],
+            [
+              87.6460391,
+              26.5970173
+            ],
+            [
+              87.6459603,
+              26.5968465
+            ],
+            [
+              87.6459009,
+              26.596686
+            ],
+            [
+              87.6456936,
+              26.5961778
+            ],
+            [
+              87.6455133,
+              26.5957044
+            ],
+            [
+              87.6452803,
+              26.5952289
+            ],
+            [
+              87.6450184,
+              26.5947729
+            ],
+            [
+              87.6447695,
+              26.594368
+            ],
+            [
+              87.6446425,
+              26.5941645
+            ],
+            [
+              87.6446047,
+              26.594074
+            ],
+            [
+              87.6445604,
+              26.5939589
+            ],
+            [
+              87.6444523,
+              26.5935418
+            ],
+            [
+              87.6442763,
+              26.5930119
+            ],
+            [
+              87.6441927,
+              26.592758
+            ],
+            [
+              87.6441489,
+              26.5926069
+            ],
+            [
+              87.6440804,
+              26.5923973
+            ],
+            [
+              87.6440742,
+              26.5923346
+            ],
+            [
+              87.644078,
+              26.5922691
+            ],
+            [
+              87.6440906,
+              26.592228
+            ],
+            [
+              87.6441086,
+              26.5921933
+            ],
+            [
+              87.6441313,
+              26.5921518
+            ],
+            [
+              87.6442926,
+              26.5918672
+            ],
+            [
+              87.6445102,
+              26.5914742
+            ],
+            [
+              87.6445625,
+              26.5913817
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 10,
+        "id": 14431,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-005",
+        "link_name": "Ratuwa Khola - Damak Border",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 15.99,
+        "link_to": 20.58,
+        "link_len": 4.59,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 4.585,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6445625,
+              26.5913817
+            ],
+            [
+              87.6464808,
+              26.5918838
+            ],
+            [
+              87.6490928,
+              26.5925104
+            ],
+            [
+              87.6497486,
+              26.5926982
+            ],
+            [
+              87.6500779,
+              26.5927668
+            ],
+            [
+              87.6508752,
+              26.5929973
+            ],
+            [
+              87.6515275,
+              26.5931874
+            ],
+            [
+              87.6520702,
+              26.5933466
+            ],
+            [
+              87.6527373,
+              26.5935337
+            ],
+            [
+              87.6531579,
+              26.5936603
+            ],
+            [
+              87.653426,
+              26.593749
+            ],
+            [
+              87.6537565,
+              26.5939181
+            ],
+            [
+              87.6543522,
+              26.5943
+            ],
+            [
+              87.6548725,
+              26.5946336
+            ],
+            [
+              87.6557102,
+              26.5951707
+            ],
+            [
+              87.65634,
+              26.5955779
+            ],
+            [
+              87.6566309,
+              26.5957985
+            ],
+            [
+              87.6575499,
+              26.5964421
+            ],
+            [
+              87.6577927,
+              26.5966108
+            ],
+            [
+              87.6579957,
+              26.5967431
+            ],
+            [
+              87.6582511,
+              26.5968707
+            ],
+            [
+              87.6585137,
+              26.5969935
+            ],
+            [
+              87.6592469,
+              26.5973261
+            ],
+            [
+              87.6597561,
+              26.5975971
+            ],
+            [
+              87.6602425,
+              26.5979075
+            ],
+            [
+              87.6605443,
+              26.5981005
+            ],
+            [
+              87.6614528,
+              26.5986905
+            ],
+            [
+              87.6619156,
+              26.5989817
+            ],
+            [
+              87.6621335,
+              26.5991111
+            ],
+            [
+              87.6624028,
+              26.5993484
+            ],
+            [
+              87.6628081,
+              26.5998134
+            ],
+            [
+              87.663483,
+              26.6005225
+            ],
+            [
+              87.6640565,
+              26.6011665
+            ],
+            [
+              87.664496,
+              26.6016592
+            ],
+            [
+              87.6647807,
+              26.6019025
+            ],
+            [
+              87.6651724,
+              26.6021768
+            ],
+            [
+              87.665557,
+              26.6024154
+            ],
+            [
+              87.6659626,
+              26.6026711
+            ],
+            [
+              87.6664516,
+              26.6029813
+            ],
+            [
+              87.6668505,
+              26.6032508
+            ],
+            [
+              87.6670852,
+              26.6034536
+            ],
+            [
+              87.6671885,
+              26.6035501
+            ],
+            [
+              87.6672529,
+              26.6036236
+            ],
+            [
+              87.667288,
+              26.603667
+            ],
+            [
+              87.6674466,
+              26.603896
+            ],
+            [
+              87.6678039,
+              26.6046537
+            ],
+            [
+              87.6679575,
+              26.6049257
+            ],
+            [
+              87.6680853,
+              26.6050998
+            ],
+            [
+              87.6682793,
+              26.6053339
+            ],
+            [
+              87.6684565,
+              26.6056655
+            ],
+            [
+              87.6686901,
+              26.6060216
+            ],
+            [
+              87.6688854,
+              26.6062781
+            ],
+            [
+              87.6693637,
+              26.6067915
+            ],
+            [
+              87.6697855,
+              26.6072377
+            ],
+            [
+              87.6700048,
+              26.6074773
+            ],
+            [
+              87.6704797,
+              26.6080179
+            ],
+            [
+              87.6707724,
+              26.6083554
+            ],
+            [
+              87.6709414,
+              26.6085906
+            ],
+            [
+              87.6712133,
+              26.6090867
+            ],
+            [
+              87.6713389,
+              26.6093082
+            ],
+            [
+              87.6715598,
+              26.6096603
+            ],
+            [
+              87.6717335,
+              26.6099313
+            ],
+            [
+              87.6718286,
+              26.6101453
+            ],
+            [
+              87.6719232,
+              26.6104358
+            ],
+            [
+              87.6721686,
+              26.6110794
+            ],
+            [
+              87.6723619,
+              26.6115162
+            ],
+            [
+              87.6725579,
+              26.6118267
+            ],
+            [
+              87.6727798,
+              26.6121968
+            ],
+            [
+              87.6729299,
+              26.6125792
+            ],
+            [
+              87.6730161,
+              26.6127688
+            ],
+            [
+              87.6732717,
+              26.6133287
+            ],
+            [
+              87.6734449,
+              26.6137213
+            ],
+            [
+              87.6734764,
+              26.6138324
+            ],
+            [
+              87.6734985,
+              26.6139102
+            ],
+            [
+              87.6735143,
+              26.6139658
+            ],
+            [
+              87.6735115,
+              26.6146054
+            ],
+            [
+              87.6734969,
+              26.6150001
+            ],
+            [
+              87.6734627,
+              26.6153575
+            ],
+            [
+              87.673481,
+              26.6154579
+            ],
+            [
+              87.6735215,
+              26.6155506
+            ],
+            [
+              87.6736721,
+              26.6158565
+            ],
+            [
+              87.6738464,
+              26.6161815
+            ],
+            [
+              87.6738712,
+              26.6162637
+            ],
+            [
+              87.6738878,
+              26.6163755
+            ],
+            [
+              87.6738783,
+              26.6164705
+            ],
+            [
+              87.6738321,
+              26.6168709
+            ],
+            [
+              87.6738162,
+              26.6169325
+            ],
+            [
+              87.6738107,
+              26.6170298
+            ],
+            [
+              87.6737988,
+              26.6172983
+            ],
+            [
+              87.6738057,
+              26.6175029
+            ],
+            [
+              87.673862,
+              26.6177367
+            ],
+            [
+              87.6739511,
+              26.6179329
+            ],
+            [
+              87.6740343,
+              26.6180708
+            ],
+            [
+              87.6743285,
+              26.6183902
+            ],
+            [
+              87.6744822,
+              26.6186141
+            ],
+            [
+              87.6745698,
+              26.6188161
+            ],
+            [
+              87.6745746,
+              26.6188312
+            ],
+            [
+              87.674586,
+              26.6188848
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 11,
+        "id": 14456,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-002",
+        "link_name": "View Tower - Tarabari",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 3.66,
+        "link_to": 7.02,
+        "link_len": 3.36,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.358,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6579979,
+              26.6893924
+            ],
+            [
+              87.6579349,
+              26.6893181
+            ],
+            [
+              87.657806,
+              26.6891303
+            ],
+            [
+              87.6576942,
+              26.6889329
+            ],
+            [
+              87.6576291,
+              26.6887626
+            ],
+            [
+              87.6575563,
+              26.6885453
+            ],
+            [
+              87.6575073,
+              26.6883067
+            ],
+            [
+              87.6574631,
+              26.6881512
+            ],
+            [
+              87.6573753,
+              26.6879346
+            ],
+            [
+              87.6572586,
+              26.6876114
+            ],
+            [
+              87.6570976,
+              26.6873442
+            ],
+            [
+              87.6568833,
+              26.6870211
+            ],
+            [
+              87.656755,
+              26.6868627
+            ],
+            [
+              87.6565976,
+              26.6866146
+            ],
+            [
+              87.6565162,
+              26.6864653
+            ],
+            [
+              87.6563519,
+              26.6861206
+            ],
+            [
+              87.6562846,
+              26.6860191
+            ],
+            [
+              87.6561615,
+              26.6858853
+            ],
+            [
+              87.6559066,
+              26.6856192
+            ],
+            [
+              87.655811,
+              26.6854852
+            ],
+            [
+              87.6557116,
+              26.6853278
+            ],
+            [
+              87.6555597,
+              26.6850444
+            ],
+            [
+              87.6554234,
+              26.6848347
+            ],
+            [
+              87.6552552,
+              26.6845082
+            ],
+            [
+              87.6550871,
+              26.6841187
+            ],
+            [
+              87.6550409,
+              26.6839711
+            ],
+            [
+              87.6549859,
+              26.6835234
+            ],
+            [
+              87.6549648,
+              26.6833544
+            ],
+            [
+              87.6549046,
+              26.6829023
+            ],
+            [
+              87.6548716,
+              26.6825954
+            ],
+            [
+              87.6548102,
+              26.6822718
+            ],
+            [
+              87.6547805,
+              26.6821672
+            ],
+            [
+              87.6547527,
+              26.6820392
+            ],
+            [
+              87.654656,
+              26.6817341
+            ],
+            [
+              87.6545919,
+              26.6815379
+            ],
+            [
+              87.6544611,
+              26.6811218
+            ],
+            [
+              87.6543427,
+              26.6807457
+            ],
+            [
+              87.6541925,
+              26.680406
+            ],
+            [
+              87.654104,
+              26.6801783
+            ],
+            [
+              87.6539858,
+              26.6799564
+            ],
+            [
+              87.653704,
+              26.6794867
+            ],
+            [
+              87.6535023,
+              26.6792079
+            ],
+            [
+              87.6533826,
+              26.6789828
+            ],
+            [
+              87.6531988,
+              26.6786244
+            ],
+            [
+              87.653001,
+              26.6782419
+            ],
+            [
+              87.6527267,
+              26.6777932
+            ],
+            [
+              87.6525763,
+              26.6775773
+            ],
+            [
+              87.65244,
+              26.6773462
+            ],
+            [
+              87.65241,
+              26.6773048
+            ],
+            [
+              87.6523782,
+              26.6772748
+            ],
+            [
+              87.6523418,
+              26.6772528
+            ],
+            [
+              87.652306,
+              26.6772399
+            ],
+            [
+              87.6522564,
+              26.6772276
+            ],
+            [
+              87.6522146,
+              26.6772206
+            ],
+            [
+              87.6521803,
+              26.677212
+            ],
+            [
+              87.6521448,
+              26.6772047
+            ],
+            [
+              87.6521154,
+              26.6771948
+            ],
+            [
+              87.6520781,
+              26.6771786
+            ],
+            [
+              87.652032,
+              26.6771413
+            ],
+            [
+              87.6519646,
+              26.6770173
+            ],
+            [
+              87.6518486,
+              26.6768325
+            ],
+            [
+              87.6516073,
+              26.6763912
+            ],
+            [
+              87.6515429,
+              26.6762321
+            ],
+            [
+              87.6514793,
+              26.6760437
+            ],
+            [
+              87.6514443,
+              26.6758742
+            ],
+            [
+              87.6514175,
+              26.6757268
+            ],
+            [
+              87.6514056,
+              26.6756182
+            ],
+            [
+              87.6513401,
+              26.675225
+            ],
+            [
+              87.6512874,
+              26.6748807
+            ],
+            [
+              87.6512203,
+              26.6745461
+            ],
+            [
+              87.651106,
+              26.6740899
+            ],
+            [
+              87.6509422,
+              26.6734299
+            ],
+            [
+              87.6508848,
+              26.6732187
+            ],
+            [
+              87.6508409,
+              26.673089
+            ],
+            [
+              87.6508289,
+              26.6730772
+            ],
+            [
+              87.6508049,
+              26.6730727
+            ],
+            [
+              87.6507789,
+              26.6730784
+            ],
+            [
+              87.6507111,
+              26.673097
+            ],
+            [
+              87.6505852,
+              26.6731315
+            ],
+            [
+              87.650338,
+              26.6731679
+            ],
+            [
+              87.650033,
+              26.6732036
+            ],
+            [
+              87.6494154,
+              26.6732934
+            ],
+            [
+              87.6492333,
+              26.6733093
+            ],
+            [
+              87.6489921,
+              26.6732987
+            ],
+            [
+              87.6483309,
+              26.6732206
+            ],
+            [
+              87.6483039,
+              26.6732094
+            ],
+            [
+              87.6482761,
+              26.6731849
+            ],
+            [
+              87.6482683,
+              26.6731571
+            ],
+            [
+              87.6482649,
+              26.6731212
+            ],
+            [
+              87.6482289,
+              26.6728684
+            ],
+            [
+              87.6481933,
+              26.6725796
+            ],
+            [
+              87.648088,
+              26.6721489
+            ],
+            [
+              87.6480647,
+              26.672007
+            ],
+            [
+              87.648061,
+              26.6719002
+            ],
+            [
+              87.6480872,
+              26.6715331
+            ],
+            [
+              87.6480759,
+              26.6712532
+            ],
+            [
+              87.6480502,
+              26.671027
+            ],
+            [
+              87.6479908,
+              26.6707821
+            ],
+            [
+              87.6478619,
+              26.6703333
+            ],
+            [
+              87.6475617,
+              26.6694377
+            ],
+            [
+              87.6474128,
+              26.6690327
+            ],
+            [
+              87.647209,
+              26.6683735
+            ],
+            [
+              87.6470862,
+              26.668073
+            ],
+            [
+              87.6467918,
+              26.6672357
+            ],
+            [
+              87.6466178,
+              26.6668295
+            ],
+            [
+              87.6462887,
+              26.6660839
+            ],
+            [
+              87.6460287,
+              26.665621
+            ],
+            [
+              87.6458019,
+              26.6652128
+            ],
+            [
+              87.6455658,
+              26.6647308
+            ],
+            [
+              87.6453077,
+              26.6642137
+            ],
+            [
+              87.6451662,
+              26.6638939
+            ],
+            [
+              87.6451312,
+              26.6637874
+            ],
+            [
+              87.6450871,
+              26.6636758
+            ],
+            [
+              87.6450745,
+              26.6635886
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "fid": 12,
+        "id": 14766,
+        "road_class": "NH",
+        "road_refno": "NH78",
+        "road_name": "Damak Na.Pa. Chakrapath",
+        "link_code": "NH78-001",
+        "link_name": "Refugee Camp - View Tower",
+        "link_ori": null,
+        "link_des": null,
+        "link_from": 0,
+        "link_to": 3.66,
+        "link_len": 3.66,
+        "div_name": "Damak",
+        "dist_name": "Jhapa",
+        "dyear": "2025",
+        "upload_by": "P.Malla",
+        "add_date": "2024-06-04",
+        "old_link": "New",
+        "shp_len": 3.661,
+        "orderid": null,
+        "road_code": null,
+        "iyear": null,
+        "inotes": null,
+        "iupdate": null,
+        "iprogram": null,
+        "from_ch": null,
+        "to_ch": null,
+        "from_long": null,
+        "from_lat": null,
+        "to_long": null,
+        "to_lat": null,
+        "pave_type": null,
+        "pave_thick": null,
+        "base_thick": null,
+        "subbase_th": null,
+        "pave_width": null,
+        "for_width": null,
+        "no_lanes": null,
+        "subgrade_t": null,
+        "left_shoul": null,
+        "left_sho_1": null,
+        "right_shou": null,
+        "right_sh_1": null,
+        "constructi": null,
+        "last_resur": null,
+        "dcode": null,
+        "sdi_value": null,
+        "iri_value": null,
+        "aadt_value": null,
+        "com_veh": null,
+        "layer": "links_2022_23_44N2",
+        "path": "E:/output/links_2022_23_44N2.shp"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              87.6699564,
+              26.718034
+            ],
+            [
+              87.6699325,
+              26.7180078
+            ],
+            [
+              87.6698889,
+              26.7179459
+            ],
+            [
+              87.6698766,
+              26.7179122
+            ],
+            [
+              87.6697435,
+              26.7175875
+            ],
+            [
+              87.6697212,
+              26.7175705
+            ],
+            [
+              87.6697033,
+              26.7175646
+            ],
+            [
+              87.6696694,
+              26.7175628
+            ],
+            [
+              87.6696108,
+              26.717569
+            ],
+            [
+              87.6695628,
+              26.7175717
+            ],
+            [
+              87.6694846,
+              26.7175761
+            ],
+            [
+              87.6694217,
+              26.7175734
+            ],
+            [
+              87.6693368,
+              26.7175631
+            ],
+            [
+              87.6692412,
+              26.7175515
+            ],
+            [
+              87.6690485,
+              26.7174717
+            ],
+            [
+              87.6688768,
+              26.7173661
+            ],
+            [
+              87.6687357,
+              26.7172478
+            ],
+            [
+              87.6686255,
+              26.717185
+            ],
+            [
+              87.6685041,
+              26.7171189
+            ],
+            [
+              87.6684779,
+              26.7171046
+            ],
+            [
+              87.6680791,
+              26.7168892
+            ],
+            [
+              87.6678551,
+              26.7167681
+            ],
+            [
+              87.6677093,
+              26.7166973
+            ],
+            [
+              87.6676335,
+              26.7166659
+            ],
+            [
+              87.6675598,
+              26.7166492
+            ],
+            [
+              87.6675153,
+              26.7166378
+            ],
+            [
+              87.6672723,
+              26.7165986
+            ],
+            [
+              87.6670051,
+              26.716574
+            ],
+            [
+              87.6668395,
+              26.7165503
+            ],
+            [
+              87.6667641,
+              26.7165268
+            ],
+            [
+              87.666732,
+              26.7165137
+            ],
+            [
+              87.6666092,
+              26.7164497
+            ],
+            [
+              87.6665672,
+              26.7164179
+            ],
+            [
+              87.6665271,
+              26.7163759
+            ],
+            [
+              87.6663841,
+              26.716225
+            ],
+            [
+              87.6659856,
+              26.7157777
+            ],
+            [
+              87.6653518,
+              26.7151862
+            ],
+            [
+              87.66484,
+              26.7147532
+            ],
+            [
+              87.6645066,
+              26.7144109
+            ],
+            [
+              87.6643678,
+              26.714181
+            ],
+            [
+              87.6641707,
+              26.7138121
+            ],
+            [
+              87.664004,
+              26.7134912
+            ],
+            [
+              87.6638641,
+              26.7133289
+            ],
+            [
+              87.6636461,
+              26.7130735
+            ],
+            [
+              87.6635079,
+              26.7128548
+            ],
+            [
+              87.6632006,
+              26.7124009
+            ],
+            [
+              87.6631326,
+              26.7122954
+            ],
+            [
+              87.6630772,
+              26.7122199
+            ],
+            [
+              87.6630615,
+              26.7121989
+            ],
+            [
+              87.6629942,
+              26.7121089
+            ],
+            [
+              87.6629757,
+              26.7120715
+            ],
+            [
+              87.6629574,
+              26.7120161
+            ],
+            [
+              87.6629363,
+              26.7118899
+            ],
+            [
+              87.6629258,
+              26.711753
+            ],
+            [
+              87.6628761,
+              26.7116113
+            ],
+            [
+              87.6627608,
+              26.7114411
+            ],
+            [
+              87.662716,
+              26.711361
+            ],
+            [
+              87.6626577,
+              26.7111994
+            ],
+            [
+              87.6626183,
+              26.7110177
+            ],
+            [
+              87.662599,
+              26.7109466
+            ],
+            [
+              87.6625902,
+              26.7109245
+            ],
+            [
+              87.6625702,
+              26.7108826
+            ],
+            [
+              87.6625589,
+              26.7108595
+            ],
+            [
+              87.6625515,
+              26.7108407
+            ],
+            [
+              87.6625437,
+              26.7108152
+            ],
+            [
+              87.6625424,
+              26.7107927
+            ],
+            [
+              87.6625478,
+              26.7107564
+            ],
+            [
+              87.6625751,
+              26.7105581
+            ],
+            [
+              87.6625775,
+              26.7105141
+            ],
+            [
+              87.6625757,
+              26.7104827
+            ],
+            [
+              87.6625683,
+              26.7104425
+            ],
+            [
+              87.6625392,
+              26.7103729
+            ],
+            [
+              87.6624497,
+              26.7101925
+            ],
+            [
+              87.6619708,
+              26.7093358
+            ],
+            [
+              87.6617708,
+              26.7090018
+            ],
+            [
+              87.6615107,
+              26.7085626
+            ],
+            [
+              87.6611576,
+              26.7079263
+            ],
+            [
+              87.6608102,
+              26.7073437
+            ],
+            [
+              87.6605189,
+              26.7068643
+            ],
+            [
+              87.6600917,
+              26.7062247
+            ],
+            [
+              87.6598985,
+              26.7058803
+            ],
+            [
+              87.6596928,
+              26.705577
+            ],
+            [
+              87.6595093,
+              26.7052253
+            ],
+            [
+              87.6593556,
+              26.7049128
+            ],
+            [
+              87.6591652,
+              26.7045492
+            ],
+            [
+              87.6590941,
+              26.7044264
+            ],
+            [
+              87.6590547,
+              26.704354
+            ],
+            [
+              87.6590276,
+              26.7042753
+            ],
+            [
+              87.6589352,
+              26.7040241
+            ],
+            [
+              87.658866,
+              26.7038055
+            ],
+            [
+              87.6587874,
+              26.7034895
+            ],
+            [
+              87.658766,
+              26.7032518
+            ],
+            [
+              87.658732,
+              26.7028477
+            ],
+            [
+              87.6587225,
+              26.7028116
+            ],
+            [
+              87.6587147,
+              26.7027814
+            ],
+            [
+              87.6585941,
+              26.7022624
+            ],
+            [
+              87.6585562,
+              26.7020863
+            ],
+            [
+              87.6585331,
+              26.701905
+            ],
+            [
+              87.6585254,
+              26.7015586
+            ],
+            [
+              87.6585036,
+              26.7012714
+            ],
+            [
+              87.6584832,
+              26.7009211
+            ],
+            [
+              87.6584689,
+              26.7006336
+            ],
+            [
+              87.6584252,
+              26.7003586
+            ],
+            [
+              87.6584058,
+              26.7000691
+            ],
+            [
+              87.6584056,
+              26.699979
+            ],
+            [
+              87.6584093,
+              26.6998715
+            ],
+            [
+              87.6584204,
+              26.6997824
+            ],
+            [
+              87.6584492,
+              26.6993307
+            ],
+            [
+              87.6585165,
+              26.698509
+            ],
+            [
+              87.6585544,
+              26.6977417
+            ],
+            [
+              87.6585726,
+              26.6971936
+            ],
+            [
+              87.6586584,
+              26.6965591
+            ],
+            [
+              87.6586875,
+              26.6961569
+            ],
+            [
+              87.6587365,
+              26.6954071
+            ],
+            [
+              87.6587849,
+              26.6948621
+            ],
+            [
+              87.6589278,
+              26.6940898
+            ],
+            [
+              87.6589842,
+              26.693853
+            ],
+            [
+              87.6590163,
+              26.6935452
+            ],
+            [
+              87.6590549,
+              26.6930885
+            ],
+            [
+              87.6591431,
+              26.692195
+            ],
+            [
+              87.6591835,
+              26.691772
+            ],
+            [
+              87.6592311,
+              26.6913847
+            ],
+            [
+              87.6592326,
+              26.6913238
+            ],
+            [
+              87.6592273,
+              26.6912768
+            ],
+            [
+              87.6592172,
+              26.6912322
+            ],
+            [
+              87.6590404,
+              26.6909095
+            ],
+            [
+              87.6588334,
+              26.6906694
+            ],
+            [
+              87.6586579,
+              26.6904547
+            ],
+            [
+              87.6585013,
+              26.6902189
+            ],
+            [
+              87.6582991,
+              26.6898907
+            ],
+            [
+              87.6580488,
+              26.6894679
+            ],
+            [
+              87.6579979,
+              26.6893924
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,287 @@
+[
+  {
+    "id": "poi-1",
+    "name": "Nepal Oil Corp — Malekhu Highway Petroleum Hub",
+    "type": "fuel",
+    "highway": "NH17",
+    "location": "Malekhu, Dhading",
+    "lat": 27.8080,
+    "lng": 84.8250,
+    "open": "24/7",
+    "amenities": ["Diesel/Petrol", "EV 60kW DC Charger", "Clean Restrooms", "Fresh Malekhu Fish Cafe"]
+  },
+  {
+    "id": "poi-2",
+    "name": "NEA Electric Vehicle Ultra-Fast Charging Station",
+    "type": "ev",
+    "highway": "NH17",
+    "location": "Kurintar / Cable Car Gate, Chitwan",
+    "lat": 27.8720,
+    "lng": 84.5860,
+    "open": "24/7",
+    "amenities": ["120kW Dual CCS2 Guns", "Manakamana Cable Car Walkway", "Restaurant", "Cafe"]
+  },
+  {
+    "id": "poi-3",
+    "name": "Mugling Highway Trauma Emergency & Police Post",
+    "type": "police_hospital",
+    "highway": "NH17 / NH44",
+    "location": "Mugling Chowk, Chitwan",
+    "lat": 27.8580,
+    "lng": 84.5540,
+    "open": "24/7",
+    "amenities": ["Emergency First Aid 102", "Nepal Highway Patrol 103", "Tow Crane"]
+  },
+  {
+    "id": "poi-4",
+    "name": "Narayangarh Bypass Fuel & Rest Plaza",
+    "type": "fuel",
+    "highway": "NH01 / NH44",
+    "location": "Aaptaari, Bharatpur",
+    "lat": 27.7020,
+    "lng": 84.4410,
+    "open": "24/7",
+    "amenities": ["High-speed Dispensers", "ATM", "Tyre Air & Repair", "Food Court"]
+  },
+  {
+    "id": "poi-5",
+    "name": "Butwal Highway EV Hub & Rest Stop",
+    "type": "ev",
+    "highway": "NH01 / NH47",
+    "location": "Chauraha, Butwal",
+    "lat": 27.6985,
+    "lng": 83.4560,
+    "open": "24/7",
+    "amenities": ["60kW CCS2 Charger", "Lumbini Provincial Hospital (1km)", "Lodging"]
+  },
+  {
+    "id": "poi-6",
+    "name": "Sindhuli Khurkot Highway Medical Center",
+    "type": "hospital",
+    "highway": "NH13",
+    "location": "Khurkot, Sindhuli",
+    "lat": 27.3340,
+    "lng": 85.9810,
+    "open": "24/7",
+    "amenities": ["Ambulance Station", "Pharmacy", "Emergency Trauma Unit"]
+  },
+  {
+    "id": "poi-7",
+    "name": "Dharan Bhedetar Tourist & Highway Police Post",
+    "type": "police",
+    "highway": "NH08 (Koshi Highway)",
+    "location": "Bhedetar, Dhankuta",
+    "lat": 26.8780,
+    "lng": 87.3270,
+    "open": "24/7",
+    "amenities": ["Tourist Police 1144", "Road Clearance Patrol", "Weather Station"]
+  },
+  {
+    "id": "poi-8",
+    "name": "Kathmandu Ring Road Service Center",
+    "type": "fuel",
+    "highway": "NH39",
+    "location": "Kalanki, Kathmandu",
+    "lat": 27.6900,
+    "lng": 85.2800,
+    "open": "24/7",
+    "amenities": ["Diesel/Petrol", "ATM", "Convenience Store"]
+  },
+  {
+    "id": "poi-9",
+    "name": "Pokhara Lakeside EV Charging Point",
+    "type": "ev",
+    "highway": "NH17",
+    "location": "Lakeside, Pokhara",
+    "lat": 28.2100,
+    "lng": 83.9800,
+    "open": "06:00-22:00",
+    "amenities": ["50kW CCS2", "Cafe", "Parking"]
+  },
+  {
+    "id": "poi-10",
+    "name": "Biratnagar Medical College Hospital",
+    "type": "hospital",
+    "highway": "NH08",
+    "location": "Biratnagar, Morang",
+    "lat": 26.4550,
+    "lng": 87.2750,
+    "open": "24/7",
+    "amenities": ["Emergency", "Ambulance", "Pharmacy"]
+  },
+  {
+    "id": "poi-11",
+    "name": "Mahendranagar Border Checkpost",
+    "type": "police",
+    "highway": "NH01",
+    "location": "Mahendranagar, Kanchanpur",
+    "lat": 28.9667,
+    "lng": 80.1833,
+    "open": "24/7",
+    "amenities": ["Customs", "Immigration", "Border Security"]
+  },
+  {
+    "id": "poi-12",
+    "name": "Koshi Barrage Rest Area",
+    "type": "rest_area",
+    "highway": "NH01",
+    "location": "Koshi Barrage, Sunsari",
+    "lat": 26.5220,
+    "lng": 86.9300,
+    "open": "24/7",
+    "amenities": ["Parking", "Restrooms", "Picnic Area"]
+  },
+  {
+    "id": "pass-1",
+    "name": "Thorong La Pass (थोरङ ला)",
+    "type": "pass",
+    "highway": "Annapurna Circuit / NH48 Link",
+    "location": "Mustang / Manang",
+    "lat": 28.7933,
+    "lng": 83.9350,
+    "altitude": "5,416 m",
+    "condition": "Snow / Icy winds",
+    "status": "Restricted to Trekking / Extreme 4WD"
+  },
+  {
+    "id": "pass-2",
+    "name": "Korala Border Pass (कोरोला नाका)",
+    "type": "pass",
+    "highway": "NH48 (Kaligandaki Corridor)",
+    "location": "Mustang",
+    "lat": 29.3190,
+    "lng": 83.9780,
+    "altitude": "4,660 m",
+    "condition": "Chilly winds",
+    "status": "Bilateral Trade Pass Open"
+  },
+  {
+    "id": "pass-3",
+    "name": "Nagdhunga Pass (नागढुङ्गा भञ्ज्याङ)",
+    "type": "pass",
+    "highway": "NH17",
+    "location": "Kathmandu / Dhading",
+    "lat": 27.6980,
+    "lng": 85.2085,
+    "altitude": "1,500 m",
+    "condition": "Light Fog / Foggy Mornings",
+    "status": "Open — Tunnel Bypass testing"
+  },
+  {
+    "id": "pass-4",
+    "name": "Khurkot - Sindhuli Pass (सिन्धुली गढी)",
+    "type": "pass",
+    "highway": "NH13 (BP Highway)",
+    "location": "Sindhuli",
+    "lat": 27.2830,
+    "lng": 85.8830,
+    "altitude": "1,420 m",
+    "condition": "Clear Sky / Scenic",
+    "status": "Open (Strict vehicle length & weight limits)"
+  },
+  {
+    "id": "pass-5",
+    "name": "Daunne Hill Pass (दाउन्ने डाँडा)",
+    "type": "pass",
+    "highway": "NH01 (Mahendra)",
+    "location": "Nawalparasi",
+    "lat": 27.5615,
+    "lng": 83.8210,
+    "altitude": "520 m",
+    "condition": "Hazy / Heavy Truck Traffic",
+    "status": "Open — Under 4-lane expansion"
+  },
+  {
+    "id": "pass-6",
+    "name": "Siddhababa Pass (सिद्धबाबा)",
+    "type": "pass",
+    "highway": "NH47 (Siddhartha)",
+    "location": "Palpa",
+    "lat": 27.7485,
+    "lng": 83.4725,
+    "altitude": "680 m",
+    "condition": "Dry / Rockfall screen active",
+    "status": "Open with cautious speed (<30 km/h)"
+  },
+  {
+    "id": "airport-1",
+    "name": "Tribhuvan International Airport (TIA)",
+    "type": "airport",
+    "highway": "NH17",
+    "location": "Kathmandu",
+    "lat": 27.6968,
+    "lng": 85.3591
+  },
+  {
+    "id": "airport-2",
+    "name": "Pokhara International Airport",
+    "type": "airport",
+    "highway": "NH47",
+    "location": "Pokhara, Kaski",
+    "lat": 28.2006,
+    "lng": 83.9821
+  },
+  {
+    "id": "airport-3",
+    "name": "Gautam Buddha Airport",
+    "type": "airport",
+    "highway": "NH01",
+    "location": "Bhairahawa, Rupandehi",
+    "lat": 27.5057,
+    "lng": 83.4163
+  },
+  {
+    "id": "airport-4",
+    "name": "Biratnagar Airport",
+    "type": "airport",
+    "highway": "NH08",
+    "location": "Biratnagar, Morang",
+    "lat": 26.4815,
+    "lng": 87.2637
+  },
+  {
+    "id": "airport-5",
+    "name": "Nepalgunj Airport",
+    "type": "airport",
+    "highway": "NH58",
+    "location": "Nepalgunj, Banke",
+    "lat": 28.1036,
+    "lng": 81.667
+  },
+  {
+    "id": "bus-1",
+    "name": "Kathmandu Bus Park (Koteshwor)",
+    "type": "bus_station",
+    "highway": "NH17 / NH37",
+    "location": "Koteshwor, Kathmandu",
+    "lat": 27.6786,
+    "lng": 85.3477
+  },
+  {
+    "id": "bus-2",
+    "name": "Pokhara Bus Park",
+    "type": "bus_station",
+    "highway": "NH47",
+    "location": "Pokhara, Kaski",
+    "lat": 28.2096,
+    "lng": 83.9856
+  },
+  {
+    "id": "bus-3",
+    "name": "Butwal Bus Station",
+    "type": "bus_station",
+    "highway": "NH01 / NH47",
+    "location": "Butwal, Rupandehi",
+    "lat": 27.7006,
+    "lng": 83.4484
+  },
+  {
+    "id": "bus-4",
+    "name": "Birgunj Bus Station",
+    "type": "bus_station",
+    "highway": "NH01",
+    "location": "Birgunj, Parsa",
+    "lat": 27.0,
+    "lng": 84.8667
+  }
+]
