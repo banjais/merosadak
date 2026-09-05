@@ -102,6 +102,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     route: L.LayerGroup;
     alternatives: L.LayerGroup;
     offlineOverlay: L.LayerGroup;
+    nepalBorder: L.LayerGroup;
+    provinces: L.LayerGroup;
   }>({
     highways: L.layerGroup(),
     cities: L.layerGroup(),
@@ -113,6 +115,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
     offlineOverlay: L.layerGroup(),
+    nepalBorder: L.layerGroup(),
+    provinces: L.layerGroup(),
   });
 
   // Mutually Exclusive Overlay Layer Selection
@@ -198,6 +202,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
     layersRef.current.offlineOverlay.addTo(map);
+    layersRef.current.nepalBorder.addTo(map);
+    layersRef.current.provinces.addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -364,6 +370,68 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
 
     offlineGroup.addLayer(offlinePolygon);
+  }, []);
+
+  // Render Nepal International Border (always visible)
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const borderGroup = layersRef.current.nepalBorder;
+    borderGroup.clearLayers();
+
+    fetch('/data/nepal-international-border.geojson')
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.features) return;
+        const geoJsonLayer = L.geoJSON(data, {
+          style: {
+            color: '#dc2626',
+            weight: 3,
+            opacity: 0.9,
+            fill: false,
+          },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties?.name) {
+              layer.bindTooltip(feature.properties.name, {
+                sticky: true,
+                className: 'custom-dark-tooltip',
+              });
+            }
+          },
+        });
+        borderGroup.addLayer(geoJsonLayer);
+      })
+      .catch(err => console.warn('Failed to load Nepal border:', err));
+  }, []);
+
+  // Render Province Boundaries (always visible)
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const provincesGroup = layersRef.current.provinces;
+    provincesGroup.clearLayers();
+
+    fetch('/data/nepal-provinces.geojson')
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.features) return;
+        const geoJsonLayer = L.geoJSON(data, {
+          style: {
+            color: '#f59e0b',
+            weight: 1.5,
+            opacity: 0.6,
+            fill: false,
+            dashArray: '4, 4',
+          },
+          onEachFeature: (feature, layer) => {
+            const name = feature.properties?.name || feature.properties?.ADM1_EN || 'Province';
+            layer.bindTooltip(name, {
+              sticky: true,
+              className: 'custom-dark-tooltip',
+            });
+          },
+        });
+        provincesGroup.addLayer(geoJsonLayer);
+      })
+      .catch(err => console.warn('Failed to load provinces:', err));
   }, []);
 
   // Render Live Traffic Corridors Layer (shows everywhere across Nepal when selected)
