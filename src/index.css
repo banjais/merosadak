@@ -199,3 +199,36 @@ path.animated-route-flow {
   animation: navHeadlightFlicker 2s ease-in-out infinite;
 }
 
+/* Splash Screen Animations & Shimmer Styles */
+@keyframes splashPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.animate-splash-pulse {
+  animation: splashPulse 2.4s ease-in-out infinite;
+}
+
+.splash-shimmer-text {
+  background: linear-gradient(90deg, #ffffff 0%, #fbbf24 50%, #ffffff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2.2s linear infinite;
+}
+
+

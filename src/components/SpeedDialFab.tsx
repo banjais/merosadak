@@ -8,6 +8,7 @@ import {
   CloudFog,
   ShieldAlert,
   Menu,
+  Route,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 
@@ -191,7 +192,30 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
               </button>
             </div>
 
-            {/* 6. Open Left Menu Drawer */}
+            {/* 6. Highways Directory (NH01-NH80) */}
+            <div className="flex items-center space-x-2.5 group">
+              <span className="hidden sm:inline-block px-2.5 py-1 rounded-xl bg-slate-900/95 text-emerald-300 text-xs font-bold border border-emerald-500/40 shadow-xl backdrop-blur-md transition group-hover:scale-105">
+                National Highways Network (NH01–NH80)
+              </span>
+              <button
+                onClick={() =>
+                  handleAction(() =>
+                    onSelectFeature(activeFeature === 'highways' ? null : 'highways')
+                  )
+                }
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ring-2 ring-slate-950 ${
+                  activeFeature === 'highways'
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-300 font-black shadow-emerald-500/40'
+                    : 'bg-slate-900/95 text-emerald-400 border-slate-700 hover:bg-slate-800'
+                }`}
+                title="Nepal 80 National Highways Inventory & GIS"
+                id="fab-btn-highways"
+              >
+                <Route className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 7. Open Left Menu Drawer */}
             <div className="flex items-center space-x-2.5 group">
               <span className="hidden sm:inline-block px-2.5 py-1 rounded-xl bg-slate-900/95 text-indigo-300 text-xs font-bold border border-indigo-500/40 shadow-xl backdrop-blur-md transition group-hover:scale-105">
                 All Tools &amp; Highways Drawer

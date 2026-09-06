@@ -19,6 +19,7 @@ import { AppDrawer } from './components/AppDrawer';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard';
+import { SplashScreen } from './components/SplashScreen';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { getStoredOfflineBundle } from './utils/offlineSync';
 import {
@@ -309,6 +310,9 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+      {/* Animated Flash / Splash Screen */}
+      <SplashScreen />
+
       {/* Offline Status Banner */}
       <OfflineStatusBanner />
 
