@@ -549,8 +549,8 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
           </div>
         </div>
 
-        {/* 4 Compact Route Detail Metrics */}
-        <div className="grid grid-cols-4 gap-1.5 mt-2.5 pt-2 border-t border-slate-800/60 text-center">
+        {/* 3 Compact Route Detail Metrics */}
+        <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-slate-800/60 text-center">
           <div className="bg-slate-900/80 p-1.5 rounded-lg border border-slate-800">
             <div className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center justify-center space-x-1">
               <Compass className="w-2.5 h-2.5 text-emerald-400" />
@@ -573,16 +573,6 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
 
           <div className="bg-slate-900/80 p-1.5 rounded-lg border border-slate-800">
             <div className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center justify-center space-x-1">
-              <Mountain className="w-2.5 h-2.5 text-purple-400" />
-              <span>Peak</span>
-            </div>
-            <div className="text-xs font-black text-purple-300 font-mono mt-0.5">
-              {stats.maxElev}m
-            </div>
-          </div>
-
-          <div className="bg-slate-900/80 p-1.5 rounded-lg border border-slate-800">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center justify-center space-x-1">
               <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
               <span>Safety</span>
             </div>
@@ -598,9 +588,12 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
         <div className="p-3 sm:p-3.5 space-y-2.5">
           {/* Header Row: Title & Navigation Badge */}
           <div className="flex items-center justify-between text-[11px]">
-            <div className="flex items-center space-x-1.5 font-bold text-slate-200">
+            <div className="flex items-center space-x-2 font-bold text-slate-200">
               <Mountain className="w-3.5 h-3.5 text-sky-400" />
               <span>Mountain Elevation Profile</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                Peak {stats.maxElev}m
+              </span>
             </div>
 
             <div className="flex items-center space-x-2">

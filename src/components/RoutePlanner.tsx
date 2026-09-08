@@ -20,7 +20,6 @@ import { RouteOptionsSelector } from './RouteOptionsSelector';
 import { HighwaySafetyIndexCard } from './HighwaySafetyIndexCard';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 import { CarbonFootprintCard } from './CarbonFootprintCard';
-import { TerrainFiltersPanel } from './TerrainFiltersPanel';
 import { WeatherPassesPanel } from './WeatherPassesPanel';
 import { HighwayPOIsPanel } from './HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './TrafficCorridorPanel';
@@ -152,7 +151,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // mode: 'my_location' (single destination search bar) vs 'custom_from_to' (From & To inputs)
   const [locationMode, setLocationMode] = useState<'my_location' | 'custom_from_to'>('my_location');
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
-  const [showTerrainFilters, setShowTerrainFilters] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
 
   // Search queries & Autocompletions
@@ -996,35 +994,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     </button>
                   ))}
                 </div>
-              </div>
+               </div>
+             </div>
+           )}
+         </div>
+         )}
+       </div>
 
-              {/* Terrain & Surface Filters toggle inside dropdown */}
-              <div className="pt-2 border-t border-slate-800/70">
-                <button
-                  type="button"
-                  onClick={() => setShowTerrainFilters(!showTerrainFilters)}
-                  className="w-full text-[11px] font-semibold text-slate-400 hover:text-teal-300 flex items-center justify-between py-1 transition"
-                >
-                  <span className="flex items-center space-x-1.5">
-                    <SlidersHorizontal className="w-3 h-3 text-teal-400" />
-                    <span>Terrain &amp; Highway Surface Constraints</span>
-                  </span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showTerrainFilters ? 'rotate-180 text-teal-400' : ''}`} />
-                </button>
-
-                {showTerrainFilters && (
-                  <div className="mt-2">
-                    <TerrainFiltersPanel filters={terrainFilters} onChange={setTerrainFilters} />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        )}
-      </div>
-
-      {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
+       {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
       {routePlan && hasCalculated && (
         <div
           id="route-results-panel"
@@ -1287,6 +1264,51 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   </div>
                 );
               })()}
+            </div>
+
+            {/* Route Terrain & Surface Info */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <span className="text-slate-400 font-semibold">Route Terrain:</span>
+              <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">
+                Peak {routePlan.maxElevationM}m
+              </span>
+              <span className="px-2 py-0.5 rounded bg-slate-800 text-emerald-300 border border-slate-700">
+                +{routePlan.elevationGainM}m climb
+              </span>
+              {(() => {
+                const surfaces = [...new Set(routePlan.steps.map((s) => s.surface))];
+                const surfaceLabels = {
+                  asphalt_excellent: 'Excellent Asphalt',
+                  blacktopped_fair: 'Blacktopped',
+                  gravel: 'Gravel',
+                  under_construction: 'Under Construction',
+                  offroad_mud: 'Off-road/Mud',
+                } as const;
+                return surfaces.map((s) => (
+                  <span key={s} className="px-2 py-0.5 rounded bg-slate-800 text-sky-300 border border-slate-700">
+                    {surfaceLabels[s as keyof typeof surfaceLabels] || s}
+                  </span>
+                ));
+              })()}
+              {(routePlan.statusSummary.cautionKm > 0 || routePlan.statusSummary.obstructedKm > 0) && (
+                <>
+                  {routePlan.statusSummary.cautionKm > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                      {routePlan.statusSummary.cautionKm} km caution
+                    </span>
+                  )}
+                  {routePlan.statusSummary.obstructedKm > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-300 border border-red-500/30">
+                      {routePlan.statusSummary.obstructedKm} km obstructed
+                    </span>
+                  )}
+                </>
+              )}
+              {routePlan.incidentsOnRoute.length > 0 && (
+                <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-300 border border-red-500/30">
+                  {routePlan.incidentsOnRoute.length} incident(s)
+                </span>
+              )}
             </div>
 
             {/* ELEVATION PROFILE VISUALIZATION (RECHARTS) - DIRECTLY BENEATH ROUTE DETAILS */}

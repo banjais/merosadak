@@ -131,7 +131,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
 
-  // Weather markers reference for programmatic open/toggle of detailed weather popups
   const weatherMarkersRef = useRef<Map<string, L.Marker>>(new Map());
 
   const showCities = false;
@@ -488,21 +487,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         dashArray: corridor.level === 'standstill' ? '5, 10' : undefined,
       });
 
-      polyline.bindPopup(`
-        <div class="space-y-1.5 text-xs font-sans">
-          <div class="flex items-center justify-between font-bold border-b border-slate-700 pb-1">
-            <span class="text-amber-400 font-bold">${corridor.name}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-white font-mono">${corridor.highwayCode}</span>
-          </div>
-          <div class="text-slate-300 font-medium">${corridor.section}</div>
-          <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-900 p-2 rounded mt-1 border border-slate-800">
-            <div>Avg Speed: <strong class="text-cyan-400">${corridor.avgSpeedKmh} km/h</strong></div>
-            <div>Delay: <strong class="text-rose-400">+${corridor.delayMinutes} mins</strong></div>
-          </div>
-          <p class="text-slate-400 text-[11px] mt-1">${corridor.cause}</p>
-        </div>
-      `);
-
       trafficGroup.addLayer(polyline);
     });
   }, [activeLayer, liveTrafficCorridors]);
@@ -544,31 +528,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
       const marker = L.marker([inc.lat, inc.lng], { icon });
-
-      marker.bindPopup(`
-        <div class="space-y-1.5 text-xs font-sans">
-          <div class="flex items-center justify-between font-bold border-b border-slate-700 pb-1">
-            <span class="text-rose-400 font-bold">${inc.title}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 uppercase font-mono">${inc.severity}</span>
-          </div>
-          <div class="text-slate-200 font-medium">${inc.locationName} (${inc.highwayCode})</div>
-          <p class="text-slate-300 text-[11px]">${inc.description}</p>
-          <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
-            <span>Status: <strong class="text-amber-400 capitalize">${inc.status}</strong></span>
-            <span class="font-mono text-slate-400">${inc.reportedAt}</span>
-          </div>
-          <div class="text-[10px] pt-1">
-            <span class="px-1.5 py-0.5 rounded ${
-              inc.source === 'dor' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
-              inc.source === 'waze' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30' :
-              inc.dorVerified ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
-              'bg-slate-800 text-slate-400 border border-slate-700'
-            } uppercase font-mono">
-              ${inc.source === 'dor' ? 'DoR Nepal' : inc.source === 'waze' ? 'Waze' : inc.dorVerified ? 'DoR Verified' : 'Community'}
-            </span>
-          </div>
-        </div>
-      `);
 
       incidentsGroup.addLayer(marker);
     });
@@ -625,18 +584,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
       const marker = L.marker([poi.lat, poi.lng], { icon });
-
-      marker.bindPopup(`
-        <div class="space-y-1.5 text-xs font-sans">
-          <div class="flex items-center justify-between font-bold border-b border-slate-700 pb-1">
-            <span class="text-teal-400 font-bold">${poi.name}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-white font-mono">${poi.highwayCode}</span>
-          </div>
-          <div class="text-slate-300 text-[11px]">${poi.locationName}</div>
-          <div class="text-[10px] text-slate-400">Category: <strong class="text-amber-300 capitalize">${poi.category.replace('_', ' ')}</strong></div>
-          ${poi.details ? `<p class="text-slate-300 text-[10px] mt-1">${poi.details}</p>` : ''}
-        </div>
-      `);
 
       poisGroup.addLayer(marker);
     });
@@ -821,7 +768,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         className: 'custom-weather-marker',
         iconSize: [92, 38],
         iconAnchor: [46, 38],
-        popupAnchor: [0, -36],
       });
 
       const marker = L.marker([node.lat, node.lng], { icon: customIcon });
@@ -841,216 +787,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               node.landslideRisk === 'severe' || node.landslideRisk === 'high'
                 ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50'
                 : 'bg-amber-500/20 text-amber-300'
-            }">${node.landslideRisk} Hazard</span>
-          </div>
-          <div class="text-[10px] text-sky-400 mt-2 font-bold flex items-center space-x-1">
-            <span>👉 Click to toggle detailed pass weather popup</span>
+             }">${node.landslideRisk} Hazard</span>
           </div>
         </div>`,
         { sticky: true, className: 'custom-dark-tooltip', direction: 'top' }
       );
 
-      // Detailed Interactive Weather Report Popup for Mountain Passes
-      const popupContent = `
-        <div class="p-3.5 text-slate-100 font-sans max-w-[310px] text-xs space-y-2.5">
-          <!-- Pass Identification Header -->
-          <div class="flex items-start justify-between border-b border-slate-700/80 pb-2.5 gap-2">
-            <div>
-              <div class="flex items-center space-x-1.5 flex-wrap gap-1 mb-1">
-                <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/40">
-                  ${node.highwayCode}
-                </span>
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700 font-mono">
-                  ⛰️ ${node.elevationM}m ASL
-                </span>
-              </div>
-              <h4 class="font-black text-sm text-white leading-tight">${node.name}</h4>
-              <div class="text-[11px] text-slate-400 mt-0.5">${node.nepaliName}</div>
-            </div>
-            <div class="text-right shrink-0">
-              <span class="text-2xl leading-none block">${conditionEmoji}</span>
-              <div class="text-base font-black text-white leading-tight mt-0.5">${node.tempC}°C</div>
-              <div class="text-[9px] text-slate-400 font-medium">${conditionName}</div>
-            </div>
-          </div>
-
-          <!-- Safety & Grip Badges -->
-          <div class="grid grid-cols-2 gap-1.5 text-[10px]">
-            <div class="p-1.5 rounded-lg border ${landslideBadge.color} flex flex-col justify-center">
-              <span class="text-[9px] text-slate-400 uppercase font-semibold">Landslide Hazard</span>
-              <span class="font-black tracking-wide">${landslideBadge.text}</span>
-            </div>
-            <div class="p-1.5 rounded-lg border ${gripBadge.color} flex flex-col justify-center">
-              <span class="text-[9px] text-slate-400 uppercase font-semibold">Road Surface Grip</span>
-              <span class="font-black tracking-wide">${gripBadge.text}</span>
-            </div>
-          </div>
-
-          <!-- Meteorological Telemetry 4-Card Grid -->
-          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-            <div class="p-2 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
-              <div>
-                <div class="text-[10px] text-slate-400">🌧️ Rain Prob.</div>
-                <div class="font-black text-sky-300 text-xs mt-0.5">${node.rainProbabilityPercent}%</div>
-              </div>
-              <div class="w-1.5 h-6 rounded-full bg-slate-700 overflow-hidden">
-                <div class="bg-sky-400 h-full" style="height: ${node.rainProbabilityPercent}%;"></div>
-              </div>
-            </div>
-            <div class="p-2 rounded-lg bg-slate-800/80 border border-slate-700/60">
-              <div class="text-[10px] text-slate-400">💧 Humidity</div>
-              <div class="font-black text-slate-200 text-xs mt-0.5">${node.humidityPercent}%</div>
-            </div>
-            <div class="p-2 rounded-lg bg-slate-800/80 border border-slate-700/60">
-              <div class="text-[10px] text-slate-400">💨 Wind Speed</div>
-              <div class="font-black text-slate-200 text-xs mt-0.5">${node.windSpeedKmh} km/h</div>
-            </div>
-            <div class="p-2 rounded-lg bg-slate-800/80 border border-slate-700/60">
-              <div class="text-[10px] text-slate-400">👁️ Visibility</div>
-              <div class="font-black ${node.visibilityKm <= 2.0 ? 'text-amber-400' : 'text-slate-200'} text-xs mt-0.5">
-                ${node.visibilityKm} km ${node.visibilityKm <= 2.0 ? '⚠️' : ''}
-              </div>
-            </div>
-          </div>
-
-          <!-- Field Pass Condition Advisory -->
-          <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 text-[11px] leading-relaxed text-slate-300">
-            <div class="text-[9px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center space-x-1">
-              <span>⚠️ Field Pass Advisory:</span>
-            </div>
-            <p class="italic text-slate-200">"${node.summary}"</p>
-          </div>
-
-          <!-- Origin / Destination Quick Route Buttons -->
-          <div class="flex items-center space-x-1.5 pt-1">
-            <button
-              type="button"
-              class="wx-popup-set-origin flex-1 py-1.5 px-2 bg-slate-800 hover:bg-emerald-600/30 text-emerald-300 hover:text-emerald-200 rounded-lg text-[10px] font-bold border border-slate-700 hover:border-emerald-500/50 transition text-center cursor-pointer"
-              title="Set this mountain pass as route departure"
-            >
-              📍 Set Origin
-            </button>
-            <button
-              type="button"
-              class="wx-popup-set-dest flex-1 py-1.5 px-2 bg-slate-800 hover:bg-rose-600/30 text-rose-300 hover:text-rose-200 rounded-lg text-[10px] font-bold border border-slate-700 hover:border-rose-500/50 transition text-center cursor-pointer"
-              title="Set this mountain pass as route destination"
-            >
-              🏁 Set Dest
-            </button>
-            <button
-              type="button"
-              class="wx-popup-close-btn px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg text-[10px] font-bold border border-slate-700 transition cursor-pointer"
-              title="Close weather popup"
-            >
-              ✕
-            </button>
-          </div>
-
-          <!-- Telemetry Footer -->
-          <div class="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-800/80">
-            <span>⏱️ Updated ${node.lastUpdated}</span>
-            <span class="text-cyan-400 font-semibold">Nepal DoHM Telemetry</span>
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent, {
-        className: 'custom-weather-popup',
-        autoClose: true,
-        closeOnClick: false,
-        closeButton: true,
-        maxWidth: 320,
-        minWidth: 280,
-      });
-
-      // Hook up toggle on click:
-      // Leaflet's default bindPopup click handler always calls _openPopup without closing if open.
-      // We detach Leaflet's internal _openPopup click listener and implement clean toggle:
-      marker.off('click', (marker as any)._openPopup);
-      marker.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        if (marker.isPopupOpen()) {
-          marker.closePopup();
-        } else {
-          marker.openPopup();
-        }
-        if (onSelectWeatherNode) {
-          onSelectWeatherNode(node);
-        }
-      });
-
-      // Bind interactive button listeners once popup opens in DOM
-      marker.on('popupopen', (e) => {
-        const popupEl = e.popup.getElement();
-        if (popupEl) {
-          const closeBtn = popupEl.querySelector('.wx-popup-close-btn');
-          if (closeBtn) {
-            closeBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              marker.closePopup();
-            });
-          }
-
-          const originBtn = popupEl.querySelector('.wx-popup-set-origin');
-          if (originBtn && onSelectCity) {
-            originBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              onSelectCity(
-                {
-                  id: node.id,
-                  name: node.name,
-                  nepaliName: node.nepaliName,
-                  lat: node.lat,
-                  lng: node.lng,
-                  elevationM: node.elevationM,
-                  highwayCode: node.highwayCode,
-                },
-                'origin'
-              );
-              marker.closePopup();
-            });
-          }
-
-          const destBtn = popupEl.querySelector('.wx-popup-set-dest');
-          if (destBtn && onSelectCity) {
-            destBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              onSelectCity(
-                {
-                  id: node.id,
-                  name: node.name,
-                  nepaliName: node.nepaliName,
-                  lat: node.lat,
-                  lng: node.lng,
-                  elevationM: node.elevationM,
-                  highwayCode: node.highwayCode,
-                },
-                'destination'
-              );
-              marker.closePopup();
-            });
-          }
-        }
-      });
-
       weatherMarkersRef.current.set(node.id, marker);
       weatherGroup.addLayer(marker);
     });
   }, [activeLayer, weatherNodes, selectedWeatherNodeId, onSelectWeatherNode, onSelectCity]);
-
-  // Programmatically open/toggle popup when a mountain pass is selected externally (e.g. sidebar or route plan)
-  useEffect(() => {
-    if (!selectedWeatherNodeId) return;
-    if (activeLayer !== 'weather') {
-      setActiveLayer('weather');
-    }
-    const targetMarker = weatherMarkersRef.current.get(selectedWeatherNodeId);
-    if (targetMarker && mapInstanceRef.current) {
-      if (!targetMarker.isPopupOpen()) {
-        targetMarker.openPopup();
-      }
-    }
-  }, [selectedWeatherNodeId, activeLayer]);
 
   // Render Blackspots Layer (Global Nepal Accident Blackspots)
   useEffect(() => {
@@ -1234,53 +980,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           { className: 'custom-dark-tooltip', sticky: true }
         );
 
-        // Detailed Segment Popup
-        const segPopupContent = `
-          <div style="font-family: system-ui, sans-serif; color: #f8fafc; padding: 2px; min-width: 220px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
-              <span style="font-size: 10px; font-weight: 800; background: ${segmentColor}25; color: ${segmentColor}; padding: 2px 6px; border-radius: 4px; border: 1px solid ${segmentColor}60; text-transform: uppercase;">
-                ${safetyTier.replace('_', ' ')}
-              </span>
-              <span style="font-size: 12px; font-weight: 900; color: ${segmentColor};">
-                Safety Score: ${safetyScore}/100
-              </span>
-            </div>
-            <div style="font-size: 13px; font-weight: 800; color: #ffffff;">
-              ${step.from.name} ➔ ${step.to.name}
-            </div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 1px;">
-              ${step.highway.name} (${step.highway.code}) • ${step.distanceKm} km • ~${step.estimatedMinutes} mins
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 11px; background: rgba(15,23,42,0.85); padding: 6px 8px; border-radius: 6px; border: 1px solid #334155;">
-              <div>
-                <div style="color: #64748b; font-size: 9px; font-weight: 700;">ROAD QUALITY</div>
-                <strong style="color: #38bdf8;">${safetyData?.roadQualityScore ?? step.roadConditionScore}/100</strong>
-              </div>
-              <div>
-                <div style="color: #64748b; font-size: 9px; font-weight: 700;">ACCIDENT CRASH RATE</div>
-                <strong style="color: #f59e0b;">~${safetyData?.annualAccidentIncidents ?? 25}/yr</strong>
-              </div>
-              <div>
-                <div style="color: #64748b; font-size: 9px; font-weight: 700;">SAFE ADVISORY SPEED</div>
-                <strong style="color: #10b981;">${safetyData?.recommendedSpeedKmh ?? 50} km/h</strong>
-              </div>
-              <div>
-                <div style="color: #64748b; font-size: 9px; font-weight: 700;">RISK LEVEL</div>
-                <strong style="color: ${segmentColor}; text-transform: uppercase;">${safetyData?.accidentRiskLevel ?? 'moderate'}</strong>
-              </div>
-            </div>
-
-            ${safetyData?.hazardFactors && safetyData.hazardFactors.length > 0 ? `
-              <div style="margin-top: 6px; font-size: 10px; color: #cbd5e1; background: rgba(30,41,59,0.7); padding: 5px 7px; border-radius: 6px;">
-                <strong style="color: #fbbf24;">Hazard Factors:</strong> ${safetyData.hazardFactors.join('; ')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-
-        segLine.bindPopup(segPopupContent, { className: 'custom-dark-popup', closeButton: false });
-
         segLine.on('mouseover', () => {
           segLine.setStyle({ weight: 9, opacity: 1 });
         });
@@ -1446,8 +1145,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           weight: 3,
           opacity: 1,
           fillOpacity: 0.9,
-        }).addTo(mapInstanceRef.current!);
-        marker.bindPopup('You are here').openPopup();
+         }).addTo(mapInstanceRef.current!);
         mapInstanceRef.current!.flyTo([latitude, longitude], 14, { duration: 1.5 });
       },
       () => {},
