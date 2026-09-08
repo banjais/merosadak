@@ -121,6 +121,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-http(s) schemes (e.g. chrome-extension, data, blob)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
   // Strategy 1: Map Tiles -> Cache-First with Stale-While-Revalidate
   if (isTileRequest(event.request.url)) {
     event.respondWith(
