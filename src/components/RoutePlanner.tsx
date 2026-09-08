@@ -71,6 +71,7 @@ import {
   Scale,
   Milestone,
 } from 'lucide-react';
+import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -82,14 +83,6 @@ interface RoutePlannerProps {
   onToggleMapFull?: () => void;
   isMapFull?: boolean;
 }
-
-const VEHICLE_CONFIGS: { type: VehicleType; label: string; icon: any; shortName: string; desc: string }[] = [
-  { type: 'car', label: 'Car / Sedan', icon: Car, shortName: 'Car', desc: 'Standard sedan or hatchback' },
-  { type: 'suv_4wd', label: 'SUV / 4WD Jeep', icon: Mountain, shortName: 'SUV/4WD', desc: 'High ground clearance 4x4' },
-  { type: 'motorbike', label: 'Motorcycle', icon: Bike, shortName: 'Bike', desc: 'Motorcycle or scooter' },
-  { type: 'bus_truck', label: 'Bus / Heavy Cargo', icon: Truck, shortName: 'Truck', desc: 'Commercial bus or truck' },
-  { type: 'electric_vehicle', label: 'Electric Vehicle', icon: Zap, shortName: 'EV', desc: 'Battery electric vehicle' },
-];
 
 const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: string; desc: string }[] = [
   { pref: 'fastest', icon: '⚡', label: 'Fastest', desc: 'Shortest travel time' },
@@ -130,7 +123,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [vehicle, setVehicle] = useState<VehicleType>(initialVehicle);
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
   const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
-  const [isReportExpanded, setIsReportExpanded] = useState<boolean>(true);
+  const [isReportExpanded, setIsReportExpanded] = useState<boolean>(false);
   const [terrainFilters, setTerrainFilters] = useState<TerrainFilterOptions>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -160,6 +153,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [locationMode, setLocationMode] = useState<'my_location' | 'custom_from_to'>('my_location');
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [showTerrainFilters, setShowTerrainFilters] = useState<boolean>(false);
+  const [originSelected, setOriginSelected] = useState<boolean>(false);
 
   // Search queries & Autocompletions
   const [singleSearchQuery, setSingleSearchQuery] = useState<string>('');
@@ -244,7 +238,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Sync destination search box with selected city name
   useEffect(() => {
     if (destCity) {
-      setSingleSearchQuery(destCity.name);
       setDestSearchQuery(destCity.name);
     }
   }, [destCity]);
@@ -254,18 +247,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setOriginSearchQuery(originCity.name);
     }
   }, [originCity]);
-
-  // Initial calculation on mount
-  useEffect(() => {
-    if (originId && destId && originId !== destId) {
-      const plan = findOptimizedRoute(originId, destId, preference, vehicle, terrainFilters);
-      if (plan) {
-        setRoutePlan(plan);
-        setHasCalculated(true);
-        onRouteCalculated(plan);
-      }
-    }
-  }, []);
 
   // Fetch optional telemetry data when respective tabs are clicked
   useEffect(() => {
@@ -417,6 +398,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         });
 
         setOriginId(closestCity.id);
+        setOriginSelected(true);
         setSpeechTranscriptNotice(`Detected location: ${closestCity.name} (${closestCity.district})`);
         setIsLocationMenuOpen(false);
         setTimeout(() => setSpeechTranscriptNotice(null), 3500);
@@ -615,7 +597,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
       {/* Main Clean Route Planner Box */}
-      <div className="bg-slate-900/95 border border-slate-800 p-4 sm:p-5 rounded-2xl shadow-2xl space-y-4">
+      <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
         {/* 1. MY LOCATION CARD / PICKER */}
         <div className="relative" ref={locationMenuRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
@@ -635,27 +617,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
                 </div>
                 <div className="text-sm font-black text-white truncate font-display">
-                  {originCity.name} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                  {originCity.name} {originSelected && <span className="text-[10px] font-normal text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">GPS</span>} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
                 </div>
               </div>
-            </div>
-
-            {/* Quick Status / Toggle indicator */}
-            <div className="flex items-center space-x-2 self-start sm:self-auto">
-              <button
-                onClick={() => {
-                  setLocationMode(locationMode === 'my_location' ? 'custom_from_to' : 'my_location');
-                  setIsLocationMenuOpen(false);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border flex items-center space-x-1.5 ${
-                  locationMode === 'custom_from_to'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700'
-                }`}
-                title="Toggle between Single Search and Custom From/To inputs"
-              >
-                <span>{locationMode === 'custom_from_to' ? 'Custom From ➔ To' : 'Change Location'}</span>
-              </button>
             </div>
           </div>
 
@@ -712,13 +676,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
 
         {/* 2. SEARCH INPUT BARS */}
-        {locationMode === 'my_location' ? (
+        {!hasCalculated && (
+          <>
+            {locationMode === 'my_location' ? (
           /* SINGLE SEARCH BAR with functional Mic and AI icons */
           <div className="space-y-2 relative" ref={singleSearchRef}>
-            <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
-              <span>Where do you want to go in Nepal?</span>
-            </label>
-
             <div className="relative flex items-center">
               <div className="absolute left-3.5 text-slate-400 pointer-events-none">
                 <Search className="w-4 h-4 text-emerald-400" />
@@ -732,7 +694,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   setIsSingleDropdownOpen(true);
                 }}
                 onFocus={() => setIsSingleDropdownOpen(true)}
-                placeholder="Search destination (e.g. Pokhara, Mustang, Chitwan, Lumbini, Birgunj)..."
+                placeholder="Where to?"
                 className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
               />
 
@@ -936,7 +898,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             onClick={() => handleCalculateRoute()}
             disabled={isCalculating}
             id="btn-calculate-route-main"
-            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white rounded-xl text-sm font-black tracking-wide transition shadow-xl shadow-emerald-950/50 flex items-center justify-center space-x-2 border border-emerald-400/30"
+            className={`w-full py-3.5 rounded-xl text-sm font-black tracking-wide transition shadow-xl flex items-center justify-center space-x-2 border ${
+              destId
+                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white shadow-emerald-950/50 border-emerald-400/30'
+                : 'bg-slate-800 text-slate-400 cursor-not-allowed border-slate-700'
+            }`}
           >
             {isCalculating ? (
               <>
@@ -951,9 +917,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             )}
           </button>
         </div>
+          </>
+        )}
 
-        {/* 4. VEHICLE PROFILE & ROUTING PRIORITY (LOCATED AFTER CALCULATE BUTTON UNDER A DROPDOWN) */}
-        <div className="pt-1 border-t border-slate-800/60">
+         {hasCalculated && (
+         <div className="pt-1 border-t border-slate-800/60">
           <button
             type="button"
             onClick={() => setShowVehicleOptions(!showVehicleOptions)}
@@ -1053,6 +1021,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
@@ -1100,44 +1069,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 )}
               </button>
 
-              {/* View/Full Map Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (onToggleMapFull) {
-                    onToggleMapFull();
-                  } else if (onViewOnMap) {
-                    onViewOnMap();
-                  }
-                  const mapElem = document.getElementById('map');
-                  if (mapElem) {
-                    mapElem.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
-                title={isMapFull ? "Reduce Map View" : "Full Map View"}
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
-              </button>
-
               {/* Primary View Mode Switcher */}
               <div className="flex items-center space-x-1 bg-slate-950 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResultsViewMode('overview');
-                    setIsReportExpanded(true);
-                  }}
-                  className={`px-2 sm:px-3 py-1 rounded-lg font-bold transition flex items-center space-x-1 text-[11px] ${
-                    resultsViewMode === 'overview'
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Compass className="w-3 h-3" />
-                  <span>Overview</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -1154,6 +1087,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <span>Compare</span>
                 </button>
               </div>
+            </div>
 
               <button
                 onClick={() => setIsShareModalOpen(true)}
@@ -1163,7 +1097,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <Share2 className="w-3.5 h-3.5 text-emerald-400" />
               </button>
             </div>
-          </div>
 
           {/* REDUCED REPORT SUMMARY (When user clicks Reduce Report) */}
           {!isReportExpanded && (

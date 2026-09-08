@@ -45,6 +45,8 @@ import {
   X,
   Info,
   CloudRain,
+  Route,
+  Repeat,
 } from 'lucide-react';
 
 interface InteractiveMapProps {
@@ -62,6 +64,7 @@ interface InteractiveMapProps {
   liveIncidents?: RoadIncident[];
   livePOIs?: HighwayPOI[];
   liveTrafficCorridors?: TrafficCorridor[];
+  isDimmed?: boolean;
 }
 
 export type ActiveMapOverlayLayer =
@@ -88,6 +91,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   liveIncidents,
   livePOIs,
   liveTrafficCorridors,
+  isDimmed,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -123,9 +127,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Defaults to 'weather' so interactive weather markers for mountain passes are immediately rendered on the map.
   // When another layer toggle is clicked, it switches; toggling the active layer hides it.
   // When the layer toolbar is closed, all showing layers are closed.
-  const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('highways');
+  const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('none');
   const [showLegend, setShowLegend] = useState(false);
-  const [isToolbarOpen, setIsToolbarOpen] = useState(true);
+  const [isToolbarOpen, setIsToolbarOpen] = useState(false);
 
   // Weather markers reference for programmatic open/toggle of detailed weather popups
   const weatherMarkersRef = useRef<Map<string, L.Marker>>(new Map());
@@ -1428,215 +1432,209 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
+  const [showMapStyle, setShowMapStyle] = useState(false);
+
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const marker = L.circleMarker([latitude, longitude], {
+          radius: 8,
+          fillColor: '#3b82f6',
+          color: '#ffffff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.9,
+        }).addTo(mapInstanceRef.current!);
+        marker.bindPopup('You are here').openPopup();
+        mapInstanceRef.current!.flyTo([latitude, longitude], 14, { duration: 1.5 });
+      },
+      () => {},
+      { timeout: 8000 }
+    );
+  };
+
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800/90 shadow-2xl bg-slate-950">
       {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" id="nepal-gis-canvas" />
 
-      {/* Top-Left Quick Weather Layer Toggle Chip */}
-      <div className="absolute top-4 left-4 z-[1000] flex items-center space-x-2">
-        <button
-          type="button"
-          onClick={() => handleToggleLayer('weather')}
-          className={`px-3 py-2 rounded-xl backdrop-blur-md border text-xs font-bold transition flex items-center space-x-2 shadow-2xl ${
-            activeLayer === 'weather'
-              ? 'bg-slate-950/90 text-sky-400 border-sky-500/60 ring-1 ring-sky-500/40'
-              : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-900'
-          }`}
-          id="btn-quick-weather-layer-toggle"
-          title="Toggle Mountain Pass Weather Markers on Map"
-        >
-          <CloudRain className="w-4 h-4 text-sky-400" />
-          <span>Mountain Passes Weather</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-400/30">
-            {HIGHWAY_WEATHER_NODES.length}
-          </span>
-          {activeLayer === 'weather' && (
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+      {/* Dimming overlay when no route */}
+      {isDimmed && (
+        <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px] z-[500] pointer-events-none" />
+      )}
+
+      {/* My Location GPS Button */}
+      <button
+        type="button"
+        onClick={handleMyLocation}
+        className="absolute top-3 right-3 z-[1000] w-9 h-9 rounded-full bg-slate-950/90 hover:bg-slate-900 text-sky-300 border border-sky-500/40 shadow-2xl shadow-black/50 flex items-center justify-center backdrop-blur-xl transition"
+        title="My Location"
+        id="btn-my-location-gps"
+      >
+        <Locate className="w-4 h-4" />
+      </button>
+
+      {/* Map Style Selector */}
+      {showMapStyle && (
+        <div className="absolute top-3 right-16 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
+          <button
+            type="button"
+            onClick={() => { setMapStyle('standard'); setShowMapStyle(false); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'standard' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            title="Standard"
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMapStyle('satellite'); setShowMapStyle(false); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'satellite' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            title="Satellite"
+          >
+            <Globe className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMapStyle('terrain'); setShowMapStyle(false); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'terrain' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            title="Terrain"
+          >
+            <Mountain className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => setShowMapStyle(!showMapStyle)}
+        className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+        title="Map Style"
+        id="btn-map-style-toggle"
+      >
+        <Globe className="w-4 h-4" />
+      </button>
+
+      {/* Layer Toolbar - vertical stack top-to-bottom */}
+      {isToolbarOpen && (
+        <div className="absolute top-14 right-2 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
+          <button
+            type="button"
+            onClick={() => handleToggleLayer('highways')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              activeLayer === 'highways'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Highways"
+            id="toggle-layer-highways"
+          >
+            <Route className="w-4 h-4" />
+            <span className="text-xs font-bold">Highways</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleLayer('weather')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              activeLayer === 'weather'
+                ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-sky-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Weather"
+            id="toggle-layer-weather"
+          >
+            <CloudRain className="w-4 h-4" />
+            <span className="text-xs font-bold">Weather</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleLayer('incidents')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              activeLayer === 'incidents'
+                ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-rose-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Incidents"
+            id="toggle-layer-incidents"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span className="text-xs font-bold">Incidents</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleLayer('traffic')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              activeLayer === 'traffic'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Traffic"
+            id="toggle-layer-traffic"
+          >
+            <Gauge className="w-4 h-4" />
+            <span className="text-xs font-bold">Traffic</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleLayer('pois')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              activeLayer === 'pois'
+                ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-teal-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="POIs"
+            id="toggle-layer-pois"
+          >
+            <Fuel className="w-4 h-4" />
+            <span className="text-xs font-bold">POIs</span>
+          </button>
+          {hasAlternatives && (
+            <button
+              type="button"
+              onClick={() => handleToggleLayer('alternatives')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+                activeLayer === 'alternatives'
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-purple-500/20'
+                  : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+              }`}
+              title="Alternatives"
+              id="toggle-layer-alternatives"
+            >
+              <Repeat className="w-4 h-4" />
+              <span className="text-xs font-bold">Alternatives</span>
+            </button>
           )}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setShowLegend(!showLegend)}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              showLegend
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20'
+                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Legend"
+            id="toggle-map-legend"
+          >
+            <Info className="w-4 h-4" />
+            <span className="text-xs font-bold">Legend</span>
+          </button>
+        </div>
+      )}
 
-      {/* Professional Right-Aligned Vertical Icon Layer Toolbar */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end space-y-2">
-        <button
-          onClick={handleToggleToolbar}
-          className={`w-10 h-10 backdrop-blur-md rounded-xl shadow-2xl flex items-center justify-center transition border ${
-            isToolbarOpen
-              ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/10'
-              : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:bg-slate-900'
-          }`}
-          title={isToolbarOpen ? "Close Map Layers (Hides all showing layers)" : "Open Map Layers Toolbar"}
-          id="toggle-toolbar-collapse"
-        >
-          <Layers className={`w-5 h-5 ${isToolbarOpen ? 'rotate-90 text-emerald-400' : 'text-slate-300'} transition-transform`} />
-        </button>
-
-        {isToolbarOpen && (
-          <div className="bg-slate-950/95 backdrop-blur-md p-1.5 rounded-2xl border border-slate-800 shadow-2xl flex flex-col space-y-1.5 animate-fadeIn">
-            {/* Highways Toggle (Show Everywhere) */}
-            <button
-              onClick={() => handleToggleLayer('highways')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                activeLayer === 'highways'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 ring-1 ring-emerald-400 shadow-md shadow-emerald-500/20'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-layer-highways"
-              title="National Highways (Show Everywhere)"
-            >
-              <span>🛣️</span>
-              {activeLayer === 'highways' && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* Weather Passes & Nodes Toggle (Show Everywhere) */}
-            <button
-              onClick={() => handleToggleLayer('weather')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                activeLayer === 'weather'
-                  ? 'bg-sky-500/20 text-sky-400 border border-sky-500/50 ring-1 ring-sky-400 shadow-md shadow-sky-500/20'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-layer-weather"
-              title="Weather Passes & Met Nodes (Show Everywhere)"
-            >
-              <CloudRain className="w-4 h-4 text-sky-400" />
-              {activeLayer === 'weather' && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-sky-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* Road Hazards & Incidents Toggle (Show Everywhere) */}
-            <button
-              onClick={() => handleToggleLayer('incidents')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                activeLayer === 'incidents'
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50 ring-1 ring-rose-400 shadow-md shadow-rose-500/20'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-layer-incidents"
-              title="Road Hazards & Incidents (Show Everywhere)"
-            >
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              {activeLayer === 'incidents' && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* Traffic Corridors Toggle (Show Everywhere) */}
-            <button
-              onClick={() => handleToggleLayer('traffic')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                activeLayer === 'traffic'
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 ring-1 ring-amber-400 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-layer-traffic"
-              title="Live Traffic Corridors (Show Everywhere)"
-            >
-              <Gauge className="w-4 h-4 text-amber-400" />
-              {activeLayer === 'traffic' && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* POIs, Fuel & EV Fast Chargers Toggle (Show Everywhere) */}
-            <button
-              onClick={() => handleToggleLayer('pois')}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                activeLayer === 'pois'
-                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/50 ring-1 ring-teal-400 shadow-md shadow-teal-500/20'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-layer-pois"
-              title="POIs, Fuel & EV Chargers (Show Everywhere)"
-            >
-              <Fuel className="w-4 h-4 text-teal-400" />
-              {activeLayer === 'pois' && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-teal-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* Alternatives Toggle (Show Everywhere) */}
-            {hasAlternatives && (
-              <button
-                onClick={() => handleToggleLayer('alternatives')}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                  activeLayer === 'alternatives'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 ring-1 ring-purple-400 shadow-md shadow-purple-500/20'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-                id="toggle-layer-alternatives"
-                title="Alternative Routes (Show Everywhere)"
-              >
-                <span>🔄</span>
-                {activeLayer === 'alternatives' && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-400 rounded-full ring-1 ring-slate-950" />
-                )}
-              </button>
-            )}
-
-            {/* Map Symbology & Safety Legend Toggle */}
-            <button
-              onClick={() => setShowLegend(!showLegend)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition relative ${
-                showLegend
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-950'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-              id="toggle-map-legend"
-              title={showLegend ? "Hide Map Legend" : "Show Map Legend"}
-            >
-              <Info className="w-4 h-4" />
-              {showLegend && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full ring-1 ring-slate-950" />
-              )}
-            </button>
-
-            {/* Map Style Selector: Standard, Satellite, Terrain */}
-            <div className="pt-2 pb-1 border-t border-slate-800 flex flex-col space-y-1.5">
-              <button
-                onClick={() => setMapStyle('standard')}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                  mapStyle === 'standard'
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-sm'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-                title="Standard Map View"
-                id="btn-map-style-standard"
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setMapStyle('satellite')}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                  mapStyle === 'satellite'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-                title="Satellite Map View"
-                id="btn-map-style-satellite"
-              >
-                <Globe className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setMapStyle('terrain')}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                  mapStyle === 'terrain'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-                title="Terrain Topo Map View"
-                id="btn-map-style-terrain"
-              >
-                <Mountain className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Toolbar toggle button */}
+      <button
+        type="button"
+        onClick={handleToggleToolbar}
+        className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
+          isToolbarOpen
+            ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/10'
+            : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'
+        }`}
+        title={isToolbarOpen ? "Close layers" : "Open layers"}
+        id="toggle-toolbar-collapse"
+      >
+        <Layers className={`w-4 h-4 ${isToolbarOpen ? 'rotate-90 text-emerald-400' : 'text-slate-300'} transition-transform`} />
+      </button>
 
       {/* Map Legend Overlay Component with Smooth Slide-in Fade Animation */}
       <div

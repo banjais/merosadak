@@ -138,7 +138,7 @@ function AppContent() {
         if (urlVehicle) setPlannerVehicle(urlVehicle);
         if (urlPref) setPlannerPref(urlPref);
 
-        if (urlTab && ['route', 'incidents', 'weather', 'pois', 'traffic', 'highways', 'dialects', 'steps'].includes(urlTab)) {
+        if (urlTab && ['incidents', 'weather', 'pois', 'traffic', 'highways', 'dialects', 'steps'].includes(urlTab)) {
           setActiveFeature(urlTab as ActiveFeatureType);
         }
 
@@ -542,11 +542,38 @@ function AppContent() {
       </header>
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      <main className="flex-1 w-full h-[calc(100dvh-57px)] relative overflow-hidden bg-slate-950">
-        {/* Full Interactive GIS Map Canvas - No boxes, edge-to-edge */}
-        <div className="absolute inset-0 z-0">
+      <main className="flex-1 w-full overflow-y-auto bg-slate-950">
+        {/* Route Planner as Main Content */}
+        <div className="w-full bg-slate-900">
+          <RoutePlanner
+            initialOriginId={plannerOrigin}
+            initialDestId={plannerDest}
+            initialVehicle={plannerVehicle}
+            initialPreference={plannerPref}
+            onRouteCalculated={handleRouteCalculated}
+            onViewOnMap={(target) => {
+              if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
+                setFocusedTarget(target);
+              } else if (activeRoute?.origin?.lat != null && activeRoute?.destination?.lat != null) {
+                setFocusedTarget({
+                  lat: (activeRoute.origin.lat + activeRoute.destination.lat) / 2,
+                  lng: (activeRoute.origin.lng + activeRoute.destination.lng) / 2,
+                  title: 'Planned Route',
+                  zoom: 8,
+                });
+              }
+              if (window.innerWidth < 640) {
+                setActiveFeature(null);
+              }
+            }}
+          />
+        </div>
+
+        {/* Interactive Map After Route Planner */}
+        <div className="w-full h-[50vh]">
           <InteractiveMap
             activeRoute={activeRoute}
+            isDimmed={!activeRoute}
             onSelectAlternativeRoute={(altRoute) => setActiveRoute(altRoute)}
             onSelectCity={handleSelectCityOnMap}
             focusedTarget={focusedTarget}
@@ -556,11 +583,11 @@ function AppContent() {
           />
         </div>
 
-        {/* Floating Active Route Elevation Profile Card (Appears beneath route details when a route is active on the map) */}
-        {activeRoute && activeFeature !== 'route' && (
+        {/* Floating Active Route Elevation Profile Card */}
+        {activeRoute && (
           <ActiveRouteElevationCard
             activeRoute={activeRoute}
-            onOpenPlanner={() => setActiveFeature('route')}
+            onOpenPlanner={() => {}}
             onClearRoute={() => setActiveRoute(null)}
             onViewOnMap={(target) => setFocusedTarget(target)}
           />
@@ -576,7 +603,7 @@ function AppContent() {
         />
 
         {/* Feature Sliding Panel / Bottom Sheet (Progressive Disclosure - Only Shown When Clicked) */}
-        {activeFeature && (
+        {activeFeature && activeFeature !== 'route' && (
           <>
             {/* Backdrop click to dismiss on mobile */}
             <div
@@ -604,28 +631,26 @@ function AppContent() {
                     {activeFeature === 'highways' && <Route className="w-4 h-4" />}
                     {activeFeature === 'dialects' && <Languages className="w-4 h-4" />}
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black text-white leading-none">
-                      {activeFeature === 'steps' && 'Travel Sequence & Tips'}
-                      {activeFeature === 'route' && 'Route & ETA Planner'}
-                      {activeFeature === 'incidents' && `Live Road Alerts (${incidents.length})`}
-                      {activeFeature === 'weather' && 'Passes & Weather Telemetry'}
-                      {activeFeature === 'traffic' && 'Traffic Corridors & Speed'}
-                      {activeFeature === 'pois' && 'POIs & EV Fast Charging'}
-                      {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
-                      {activeFeature === 'dialects' && 'Transit Regional Dialects'}
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-none">
-                      {activeFeature === 'steps' && 'Step-by-step journey prep & vehicle tips'}
-                      {activeFeature === 'route' && 'Point-to-point transit and mountain profile'}
-                      {activeFeature === 'incidents' && 'Landslides, roadworks and DoR notices'}
-                      {activeFeature === 'weather' && 'High-altitude passes, fog and rain'}
-                      {activeFeature === 'traffic' && 'Real-time speed variance and bottlenecks'}
-                      {activeFeature === 'pois' && 'Fuel, EV charging and medical facilities'}
-                      {activeFeature === 'highways' && 'Nepal road network inventory'}
-                      {activeFeature === 'dialects' && 'Transit driving phrases in local tongues'}
-                    </p>
-                  </div>
+                    <div>
+                      <h3 className="text-sm font-black text-white leading-none">
+                        {activeFeature === 'steps' && 'Travel Sequence & Tips'}
+                        {activeFeature === 'incidents' && `Live Road Alerts (${incidents.length})`}
+                        {activeFeature === 'weather' && 'Passes & Weather Telemetry'}
+                        {activeFeature === 'traffic' && 'Traffic Corridors & Speed'}
+                        {activeFeature === 'pois' && 'POIs & EV Fast Charging'}
+                        {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
+                        {activeFeature === 'dialects' && 'Transit Regional Dialects'}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5 leading-none">
+                        {activeFeature === 'steps' && 'Step-by-step journey prep & vehicle tips'}
+                        {activeFeature === 'incidents' && 'Landslides, roadworks and DoR notices'}
+                        {activeFeature === 'weather' && 'High-altitude passes, fog and rain'}
+                        {activeFeature === 'traffic' && 'Real-time speed variance and bottlenecks'}
+                        {activeFeature === 'pois' && 'Fuel, EV charging and medical facilities'}
+                        {activeFeature === 'highways' && 'Nepal road network inventory'}
+                        {activeFeature === 'dialects' && 'Transit driving phrases in local tongues'}
+                      </p>
+                    </div>
                 </div>
 
                 <button
@@ -665,30 +690,7 @@ function AppContent() {
                   />
                 )}
 
-                {activeFeature === 'route' && (
-                  <RoutePlanner
-                    initialOriginId={plannerOrigin}
-                    initialDestId={plannerDest}
-                    initialVehicle={plannerVehicle}
-                    initialPreference={plannerPref}
-                    onRouteCalculated={handleRouteCalculated}
-                    onViewOnMap={(target) => {
-                      if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
-                        setFocusedTarget(target);
-                      } else if (activeRoute?.origin?.lat != null && activeRoute?.destination?.lat != null) {
-                        setFocusedTarget({
-                          lat: (activeRoute.origin.lat + activeRoute.destination.lat) / 2,
-                          lng: (activeRoute.origin.lng + activeRoute.destination.lng) / 2,
-                          title: 'Planned Route',
-                          zoom: 8,
-                        });
-                      }
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                  />
-                )}
+
 
                 {activeFeature === 'incidents' && (
                   <RoadAlertsFeed
