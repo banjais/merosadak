@@ -32,12 +32,55 @@ export interface Env {
   DATA: KVNamespace;
 }
 
-function cors(env: Env) {
-  return {
-    "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
+function validateCors(env: Env, request: Request): Response | null {
+  const allowedOrigin = env.ALLOWED_ORIGIN;
+  if (!allowedOrigin || allowedOrigin === "*") return null;
+  const origin = request.headers.get("Origin");
+  if (origin && origin !== allowedOrigin) {
+    return new Response(JSON.stringify({ error: "CORS origin not allowed" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": allowedOrigin },
+    });
+  }
+  return null;
+}
+
+function corsHeaders(env: Env, request?: Request): Record<string, string> {
+  const origin = env.ALLOWED_ORIGIN || "*";
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
+  if (request) {
+    const reqOrigin = request.headers.get("Origin");
+    if (reqOrigin && origin !== "*" && reqOrigin === origin) {
+      headers["Access-Control-Allow-Origin"] = origin;
+    } else if (origin === "*") {
+      headers["Access-Control-Allow-Origin"] = "*";
+    }
+  } else {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
+}
+
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit & { timeoutMs?: number }): Promise<Response> {
+  const timeoutMs = init?.timeoutMs ?? FETCH_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(input, { ...init, signal: controller.signal });
+    return res;
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // Haversine distance in km — used to find the nearest Waze jam to a point.
@@ -61,7 +104,7 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): num
 async function fetchWazeAlerts(env: Env): Promise<any[]> {
   if (!env.WAZE_FEED_URL) return [];
   try {
-    const data = await fetch(env.WAZE_FEED_URL).then(r => r.json<any>());
+    const data = await fetchWithTimeout(env.WAZE_FEED_URL).then(r => r.json<any>());
     return data.alerts || [];
   } catch {
     return [];
@@ -120,7 +163,7 @@ async function fetchDorSheetIncidents(env: Env): Promise<any[]> {
   const url = env.DOR_GOOGLE_SHEET_URL;
   if (!url) return [];
   try {
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url);
     if (!res.ok) return [];
     const text = await res.text();
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
@@ -233,7 +276,7 @@ async function handleRoadAlerts(env: Env): Promise<Response> {
         total: deduped.length,
       },
     }),
-    { status: 200, headers: { "Content-Type": "application/json", ...cors(env) } }
+    { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } }
   );
 }
 
@@ -264,7 +307,7 @@ async function handleIncidents(url: URL, env: Env): Promise<Response> {
       const bbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
       const fields = "{incidents{type,geometry{type,coordinates},properties{iconCategory,events{description}}}}";
       const upstream = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox}&fields=${encodeURIComponent(fields)}&key=${env.TOMTOM_API_KEY}`;
-      const res = await fetch(upstream);
+      const res = await fetchWithTimeout(upstream);
       if (res.ok) {
         const data = await res.json<any>();
         for (const inc of data.incidents || []) {
@@ -300,7 +343,7 @@ async function handleIncidents(url: URL, env: Env): Promise<Response> {
 
   return new Response(JSON.stringify({ source: "combined", results }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...cors(env) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
   });
 }
 
@@ -315,7 +358,7 @@ async function handleIncidents(url: URL, env: Env): Promise<Response> {
 async function fetchWazeJams(env: Env): Promise<any[]> {
   if (!env.WAZE_FEED_URL) return [];
   try {
-    const data = await fetch(env.WAZE_FEED_URL).then(r => r.json<any>());
+    const data = await fetchWithTimeout(env.WAZE_FEED_URL).then(r => r.json<any>());
     return data.jams || [];
   } catch {
     return [];
@@ -342,13 +385,13 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
   if (env.TOMTOM_API_KEY) {
     try {
       const upstream = `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${lat},${lon}&key=${env.TOMTOM_API_KEY}`;
-      const res = await fetch(upstream);
+      const res = await fetchWithTimeout(upstream);
       if (res.ok) {
         const data = await res.json<any>();
         if (data.flowSegmentData) {
           return new Response(JSON.stringify({ source: "tomtom", ...data.flowSegmentData }), {
             status: 200,
-            headers: { "Content-Type": "application/json", ...cors(env) },
+            headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
           });
         }
       }
@@ -377,12 +420,12 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
       freeFlowSpeed: null,
       level: nearest.level, // Waze severity 0-5
       distanceKm: Math.round(nearestDist * 10) / 10,
-    }), { status: 200, headers: { "Content-Type": "application/json", ...cors(env) } });
+    }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
   }
 
   return new Response(JSON.stringify({ source: "none", message: "No traffic data available for this point" }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...cors(env) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
   });
 }
 
@@ -406,7 +449,7 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
   let data: any = null;
 
   try {
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu`);
+    const res = await fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation,apparent_temperature,surface_pressure&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKathmandu`);
     if (res.ok) {
       data = await res.json<any>();
       if (data.current) {
@@ -419,7 +462,7 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
 
   if (source === "none" && env.OPENWEATHERMAP_API_KEY) {
     try {
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${env.OPENWEATHERMAP_API_KEY}`);
+      const res = await fetchWithTimeout(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${env.OPENWEATHERMAP_API_KEY}`);
       if (res.ok) {
         const owm = await res.json<any>();
         source = "openweathermap";
@@ -444,13 +487,13 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
   if (source === "none") {
     return new Response(JSON.stringify({ source: "none", error: "Weather unavailable" }), {
       status: 502,
-      headers: { "Content-Type": "application/json", ...cors(env) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
     });
   }
 
   return new Response(JSON.stringify({ source, ...data }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...cors(env) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
   });
 }
 
@@ -499,7 +542,7 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
   try {
     const [k, v] = tag.split("=");
     const query = `[out:json][timeout:15];node["${k}"="${v}"](around:${radius},${lat},${lon});out body ${Math.min(radius / 100, 60)};`;
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
+    const res = await fetchWithTimeout("https://overpass-api.de/api/interpreter", {
       method: "POST",
       body: "data=" + encodeURIComponent(query),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -513,7 +556,7 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
       }));
       return new Response(JSON.stringify({ source: "overpass", results }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...cors(env) },
+        headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
       });
     }
   } catch {
@@ -523,19 +566,19 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
   try {
     const delta = radius / 111000; // rough degrees for the radius, for a bounding box
     const viewbox = `${lon - delta},${lat + delta},${lon + delta},${lat - delta}`;
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&${tag.replace("=", "=")}&viewbox=${viewbox}&bounded=1&limit=20`, {
+    const res = await fetchWithTimeout(`https://nominatim.openstreetmap.org/search?format=json&${tag.replace("=", "=")}&viewbox=${viewbox}&bounded=1&limit=20`, {
       headers: { "User-Agent": "MeroSadak/1.0" },
     });
     const data = await res.json<any[]>();
     const results = data.map((e: any) => ({ name: e.display_name?.split(",")[0] || type, lat: parseFloat(e.lat), lon: parseFloat(e.lon) }));
     return new Response(JSON.stringify({ source: "nominatim-fallback", results }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...cors(env) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
     });
   } catch {
     return new Response(JSON.stringify({ source: "none", results: [], error: "POI lookup failed" }), {
       status: 502,
-      headers: { "Content-Type": "application/json", ...cors(env) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
     });
   }
 }
@@ -549,14 +592,14 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
 // ============================================================
 
 async function handleWaze(env: Env): Promise<Response> {
-  const res = await fetch(env.WAZE_FEED_URL);
+  const res = await fetchWithTimeout(env.WAZE_FEED_URL);
   const body = await res.text();
   // NOTE: check the Waze Partner Hub agreement in your dashboard for any
   // attribution, caching, or refresh-rate requirements before shipping
   // this to end users — those terms aren't something I can verify here.
   return new Response(body, {
     status: res.status,
-    headers: { "Content-Type": "application/json", ...cors(env) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
   });
 }
 
@@ -573,7 +616,7 @@ async function hashPrompt(prompt: string): Promise<string> {
 async function getCachedAnswer(env: Env, key: string): Promise<string | null> {
   if (!env.UPSTASH_REDIS_REST_URL) return null;
   try {
-    const res = await fetch(`${env.UPSTASH_REDIS_REST_URL}/get/${key}`, {
+    const res = await fetchWithTimeout(`${env.UPSTASH_REDIS_REST_URL}/get/${key}`, {
       headers: { Authorization: `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}` },
     });
     const data = await res.json<{ result: string | null }>();
@@ -588,7 +631,7 @@ async function setCachedAnswer(env: Env, key: string, value: string): Promise<vo
   try {
     // 24h TTL — long enough to dedupe repeat questions, short enough that
     // stale trip conditions don't linger forever.
-    await fetch(`${env.UPSTASH_REDIS_REST_URL}/set/${key}/${encodeURIComponent(value)}?EX=86400`, {
+    await fetchWithTimeout(`${env.UPSTASH_REDIS_REST_URL}/set/${key}/${encodeURIComponent(value)}?EX=86400`, {
       headers: { Authorization: `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}` },
     });
   } catch {
@@ -606,7 +649,7 @@ async function setCachedAnswer(env: Env, key: string, value: string): Promise<vo
 
 async function callGemini(env: Env, model: string, prompt: string): Promise<Response> {
   const upstream = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
-  return fetch(upstream, {
+  return fetchWithTimeout(upstream, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
@@ -614,9 +657,21 @@ async function callGemini(env: Env, model: string, prompt: string): Promise<Resp
 }
 
 async function handleAssistant(request: Request, env: Env): Promise<Response> {
-  const { prompt } = await request.json<{ prompt?: string }>();
-  if (!prompt) {
-    return new Response(JSON.stringify({ error: "prompt is required" }), { status: 400 });
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!checkRateLimit(ip, aiRateLimitMap, AI_RATE_LIMIT_MAX_REQUESTS)) {
+    return new Response(JSON.stringify({ error: "AI rate limit exceeded. Try again in 60s." }), { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+  }
+
+  const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
+  if (!bodyValidation.ok) {
+    return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+  }
+  const { prompt } = bodyValidation as { prompt?: string };
+  if (!prompt || typeof prompt !== "string") {
+    return new Response(JSON.stringify({ error: "prompt is required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+  }
+  if (prompt.length > 2000) {
+    return new Response(JSON.stringify({ error: "Prompt too long (max 2000 chars)" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
   }
 
   const cacheKey = `gemini:${await hashPrompt(prompt)}`;
@@ -624,12 +679,10 @@ async function handleAssistant(request: Request, env: Env): Promise<Response> {
   if (cached) {
     return new Response(cached, {
       status: 200,
-      headers: { "Content-Type": "application/json", "X-Cache": "HIT", ...cors(env) },
+      headers: { "Content-Type": "application/json", "X-Cache": "HIT", ...corsHeaders(env, request) },
     });
   }
 
-  // Try the primary model first; if it errors (e.g. rate-limited /
-  // "Resource Exhausted"), fall back to the secondary model automatically.
   const models = [
     env.GEMINI_MODEL_PRIMARY || "gemini-2.5-flash",
     env.GEMINI_MODEL_SECONDARY || "gemini-2.0-flash-lite",
@@ -644,25 +697,117 @@ async function handleAssistant(request: Request, env: Env): Promise<Response> {
       await setCachedAnswer(env, cacheKey, body);
       return new Response(body, {
         status: 200,
-        headers: { "Content-Type": "application/json", "X-Cache": "MISS", "X-Model-Used": model, ...cors(env) },
+        headers: { "Content-Type": "application/json", "X-Cache": "MISS", "X-Model-Used": model, ...corsHeaders(env, request) },
       });
     }
-    // else: fall through and try the next model in the list
   }
 
   const body = lastRes ? await lastRes.text() : JSON.stringify({ error: "no response from any model" });
   return new Response(body, {
     status: lastRes ? lastRes.status : 502,
-    headers: { "Content-Type": "application/json", ...cors(env) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+  });
+}
+
+// ============================================================
+// RATE LIMITING — simple in-memory sliding window per IP
+// ============================================================
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 30;
+const AI_RATE_LIMIT_MAX_REQUESTS = 10;
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
+const aiRateLimitMap = new Map<string, { count: number; windowStart: number }>();
+
+function checkRateLimit(ip: string, map: Map<string, { count: number; windowStart: number }>, max: number): boolean {
+  const now = Date.now();
+  const entry = map.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    map.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= max;
+}
+
+// ============================================================
+// INPUT VALIDATION
+// ============================================================
+
+function validateJsonBody(body: unknown): { ok: boolean; error?: string } {
+  if (typeof body !== "object" || body === null) {
+    return { ok: false, error: "Request body must be a JSON object" };
+  }
+  const obj = body as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (keys.length > 50) {
+    return { ok: false, error: "Request body has too many fields (max 50)" };
+  }
+  const totalLength = JSON.stringify(body).length;
+  if (totalLength > 10_000) {
+    return { ok: false, error: "Request body exceeds 10KB limit" };
+  }
+  return { ok: true };
+}
+
+// ============================================================
+// HEALTH CHECK
+// ============================================================
+
+async function handleHealth(env: Env): Promise<Response> {
+  const checks: Record<string, boolean> = {
+    worker: true,
+    upstash: !!env.UPSTASH_REDIS_REST_URL,
+    tomtom: !!env.TOMTOM_API_KEY,
+    gemini: !!env.GEMINI_API_KEY,
+    waze: !!env.WAZE_FEED_URL,
+    openweathermap: !!env.OPENWEATHERMAP_API_KEY,
+    dorSheet: !!env.DOR_GOOGLE_SHEET_URL,
+  };
+  const degraded = Object.values(checks).filter(Boolean).length / Object.keys(checks).length;
+  const status = degraded > 0.6 ? 200 : 503;
+  return new Response(JSON.stringify({ status: degraded > 0.6 ? "ok" : "degraded", checks, degraded }), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
   });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
+    // Rate limiting (skip health check and OPTIONS)
+    if (request.method !== "OPTIONS" && url.pathname !== "/health") {
+      if (!checkRateLimit(ip, rateLimitMap, RATE_LIMIT_MAX_REQUESTS)) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again in 60s." }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+        });
+      }
+    }
+
+    // Request size limit
+    const contentLength = request.headers.get("Content-Length");
+    if (contentLength && parseInt(contentLength, 10) > 10_000) {
+      return new Response(JSON.stringify({ error: "Request body too large (max 10KB)" }), {
+        status: 413,
+        headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+      });
+    }
+
+    // CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: cors(env) });
+      return new Response(null, { headers: corsHeaders(env, request) });
+    }
+
+    // CORS origin validation
+    const corsBlock = validateCors(env, request);
+    if (corsBlock) return corsBlock;
+
+    // Health check
+    if (url.pathname === "/health" && request.method === "GET") {
+      return handleHealth(env);
     }
 
     if (url.pathname === "/api/traffic") {
@@ -692,14 +837,14 @@ export default {
       if (!key) {
         return new Response(JSON.stringify({ error: "data key is required" }), {
           status: 400,
-          headers: { "Content-Type": "application/json", ...cors(env) },
+          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
         });
       }
       const value = await env.DATA.get(key);
       if (!value) {
         return new Response(JSON.stringify({ error: "data not found", key }), {
           status: 404,
-          headers: { "Content-Type": "application/json", ...cors(env) },
+          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
         });
       }
       return new Response(value, {
@@ -707,14 +852,14 @@ export default {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "public, max-age=60, s-maxage=300",
-          ...cors(env),
+          ...corsHeaders(env, request),
         },
       });
     }
 
     return new Response(JSON.stringify({ error: "not found" }), {
       status: 404,
-      headers: { "Content-Type": "application/json", ...cors(env) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
     });
   },
 };

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useHaptic } from './hooks/useHaptic';
+import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
 import { InteractiveMap } from './components/InteractiveMap';
 import { HighwayDirectory } from './components/HighwayDirectory';
@@ -95,6 +97,31 @@ function AppContent() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
+  const { triggerLight: hapticLight } = useHaptic();
+  const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('mero-sadak-theme');
+        if (saved === 'light' || saved === 'dark') return saved;
+      } catch {}
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      try { localStorage.setItem('mero-sadak-theme', theme); } catch {}
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    hapticLight();
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   // Offline context
   const { isOnline, cacheStats, setIsOfflineManagerOpen } = useOffline();
 
@@ -181,13 +208,17 @@ function AppContent() {
       }
     } catch (err) {
       console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
-      const offlineBundle = getStoredOfflineBundle();
-      if (offlineBundle) {
-        if (offlineBundle.incidents) setIncidents(offlineBundle.incidents);
-        if (offlineBundle.userReports) setUserReports(offlineBundle.userReports);
-        if (offlineBundle.weatherNodes) setWeatherNodes(offlineBundle.weatherNodes);
-        if (offlineBundle.pois) setPois(offlineBundle.pois);
-        if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
+      try {
+        const offlineBundle = getStoredOfflineBundle();
+        if (offlineBundle) {
+          if (offlineBundle.incidents) setIncidents(offlineBundle.incidents);
+          if (offlineBundle.userReports) setUserReports(offlineBundle.userReports);
+          if (offlineBundle.weatherNodes) setWeatherNodes(offlineBundle.weatherNodes);
+          if (offlineBundle.pois) setPois(offlineBundle.pois);
+          if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
+        }
+      } catch (offlineErr) {
+        console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
       }
     } finally {
       setIsRefreshingWeather(false);
@@ -526,6 +557,33 @@ function AppContent() {
               id="btn-header-maximize"
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-xl border text-xs font-semibold transition ${
+                theme === 'dark'
+                  ? 'bg-slate-800/90 hover:bg-slate-700 text-amber-300 border-slate-700/80'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+              }`}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              id="btn-header-theme"
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+
+            {/* Text Scale Toggle */}
+            <button
+              onClick={() => {
+                hapticLight();
+                setTextScale(prev => prev === 'small' ? 'medium' : prev === 'medium' ? 'large' : prev === 'large' ? 'xlarge' : 'small');
+              }}
+              className="p-2 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 rounded-xl text-xs font-black transition"
+              title={`Text Size: ${textScale}`}
+              id="btn-header-textscale"
+            >
+              Aa
             </button>
 
             {/* Language Toggle */}

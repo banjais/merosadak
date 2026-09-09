@@ -158,7 +158,9 @@ function extractAndParseJson(text: string): any | null {
   // 1. Direct parse attempt
   try {
     return JSON.parse(trimmed);
-  } catch {}
+  } catch (e) {
+    console.warn('[Mero Sadak] JSON direct parse failed:', (e as Error).message);
+  }
 
   // 2. Strip standard markdown code blocks
   const unmarkdown = trimmed
@@ -168,7 +170,9 @@ function extractAndParseJson(text: string): any | null {
     .trim();
   try {
     return JSON.parse(unmarkdown);
-  } catch {}
+  } catch (e) {
+    console.warn('[Mero Sadak] JSON markdown-stripped parse failed:', (e as Error).message);
+  }
 
   // 3. Extract the outermost JSON object { ... }
   const firstBrace = trimmed.indexOf('{');
@@ -177,12 +181,15 @@ function extractAndParseJson(text: string): any | null {
     const jsonCandidate = trimmed.substring(firstBrace, lastBrace + 1);
     try {
       return JSON.parse(jsonCandidate);
-    } catch {
+    } catch (e) {
+      console.warn('[Mero Sadak] JSON object extraction parse failed:', (e as Error).message);
       // Try stripping trailing commas before } or ]
       try {
         const cleanedCommas = jsonCandidate.replace(/,\s*([\]}])/g, '$1');
         return JSON.parse(cleanedCommas);
-      } catch {}
+      } catch (e2) {
+        console.warn('[Mero Sadak] JSON comma-cleaned parse failed:', (e2 as Error).message);
+      }
     }
   }
 
@@ -193,11 +200,14 @@ function extractAndParseJson(text: string): any | null {
     const arrayCandidate = trimmed.substring(firstBracket, lastBracket + 1);
     try {
       return JSON.parse(arrayCandidate);
-    } catch {
+    } catch (e) {
+      console.warn('[Mero Sadak] JSON array extraction parse failed:', (e as Error).message);
       try {
         const cleanedCommas = arrayCandidate.replace(/,\s*([\]}])/g, '$1');
         return JSON.parse(cleanedCommas);
-      } catch {}
+      } catch (e2) {
+        console.warn('[Mero Sadak] JSON array comma-cleaned parse failed:', (e2 as Error).message);
+      }
     }
   }
 

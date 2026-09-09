@@ -49,7 +49,9 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
     if (mediaRecorderRef.current && isRecording) {
       try {
         mediaRecorderRef.current.stop();
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[Mero Sadak] MediaRecorder stop warning:', e);
+      }
     }
     setIsRecording(false);
     setRecordingTime(0);
@@ -120,7 +122,9 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
         if (recognitionInstance) {
           try {
             recognitionInstance.stop();
-          } catch (e) {}
+          } catch (e) {
+            console.warn('[Mero Sadak] SpeechRecognition stop warning:', e);
+          }
         }
 
         if (!description.trim()) {

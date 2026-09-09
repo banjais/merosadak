@@ -18,8 +18,12 @@ import {
   Layers,
   ChevronRight,
   Sparkles,
+  Type,
+  Contrast,
 } from 'lucide-react';
 import { SubViewTab } from '../App';
+import { useTextScale } from '../hooks/useTextScale';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface AppDrawerProps {
   isOpen: boolean;
@@ -54,6 +58,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onCycleMapStyle,
   incidentsCount = 0,
 }) => {
+  const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
+  const { triggerLight: hapticLight } = useHaptic();
+
   if (!isOpen) return null;
 
   return (
@@ -331,6 +338,60 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400" />
               </button>
+            </div>
+          </div>
+
+          {/* Accessibility Section */}
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2.5">
+              Accessibility &amp; Display
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <Type className="w-4 h-4 text-indigo-400" />
+                  <span className="text-xs font-bold text-slate-300">Text Size</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {(['small', 'medium', 'large', 'xlarge'] as const).map((scale) => (
+                    <button
+                      key={scale}
+                      onClick={() => {
+                        hapticLight();
+                        setTextScale(scale);
+                      }}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-black transition ${
+                        textScale === scale
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                      }`}
+                    >
+                      {scale === 'small' ? 'S' : scale === 'medium' ? 'M' : scale === 'large' ? 'L' : 'XL'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <Contrast className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-slate-300">High Contrast</span>
+                </div>
+              <button
+                onClick={() => {
+                  hapticLight();
+                  setHighContrast(!highContrast);
+                }}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                    highContrast ? 'bg-amber-500' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      highContrast ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

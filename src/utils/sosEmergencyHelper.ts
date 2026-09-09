@@ -335,7 +335,7 @@ class SosAudioBeacon {
     };
 
     if (ctx.state === 'suspended') {
-      ctx.resume().then(() => playWarbleCycle());
+      ctx.resume().then(() => playWarbleCycle()).catch(() => {});
     } else {
       playWarbleCycle();
     }
@@ -376,7 +376,7 @@ class SosAudioBeacon {
     };
 
     if (ctx.state === 'suspended') {
-      ctx.resume().then(() => playTone());
+      ctx.resume().then(() => playTone()).catch(() => {});
     } else {
       playTone();
     }
@@ -421,7 +421,7 @@ class SosAudioBeacon {
     };
 
     if (ctx.state === 'suspended') {
-      ctx.resume().then(() => playNext());
+      ctx.resume().then(() => playNext()).catch(() => {});
     } else {
       playNext();
     }
@@ -437,19 +437,25 @@ class SosAudioBeacon {
       try {
         this.oscillatorNode.stop();
         this.oscillatorNode.disconnect();
-      } catch {}
+      } catch {
+        // Expected if already stopped
+      }
       this.oscillatorNode = null;
     }
     if (this.gainNode) {
       try {
         this.gainNode.disconnect();
-      } catch {}
+      } catch {
+        // Expected if already disconnected
+      }
       this.gainNode = null;
     }
     if (this.ctx) {
       try {
         this.ctx.close();
-      } catch {}
+      } catch {
+        // Expected if already closed
+      }
       this.ctx = null;
     }
   }

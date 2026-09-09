@@ -91,10 +91,14 @@ self.addEventListener('activate', (event) => {
       );
       await self.clients.claim();
 
-      const allClients = await self.clients.matchAll({ includeUncontrolled: true });
-      allClients.forEach((client) => {
-        client.postMessage({ type: 'MEROSADAK_RELOAD' });
-      });
+      try {
+        const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+        allClients.forEach((client) => {
+          client.postMessage({ type: 'MEROSADAK_RELOAD' });
+        });
+      } catch {
+        // Ignore client matching errors during activation
+      }
     })()
   );
 });
@@ -304,7 +308,7 @@ function notifyProgress(processed, total, currentTask) {
         currentTask,
       });
     });
-  });
+  }).catch(() => {});
 }
 
 async function calculateCacheStats() {

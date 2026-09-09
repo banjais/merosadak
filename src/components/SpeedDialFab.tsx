@@ -10,6 +10,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface SpeedDialFabProps {
   activeFeature: ActiveFeatureType;
@@ -28,36 +29,77 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { triggerLight: hapticLight, triggerMedium: hapticMedium } = useHaptic();
+
+  const resetAutoHide = () => {
+    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    if (isOpen) {
+      autoHideTimerRef.current = setTimeout(() => {
+        setIsOpen(false);
+      }, 5000);
+    }
+  };
+
+  const openFab = () => {
+    hapticMedium();
+    setIsOpen(true);
+    resetAutoHide();
+  };
+
+  const closeFab = () => {
+    hapticLight();
+    setIsOpen(false);
+    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+  };
+
+  const toggleFab = () => {
+    if (isOpen) {
+      closeFab();
+    } else {
+      openFab();
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (fabRef.current && !fabRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        closeFab();
       }
     };
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      resetAutoHide();
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
     };
   }, [isOpen]);
 
   const handleAction = (callback: () => void) => {
+    hapticLight();
     callback();
     setIsOpen(false);
+    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
   };
 
   return (
     <div
       ref={fabRef}
       className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex items-center justify-end"
+      onPointerEnter={resetAutoHide}
+      onPointerLeave={() => {
+        if (isOpen) {
+          autoHideTimerRef.current = setTimeout(() => setIsOpen(false), 1500);
+        }
+      }}
     >
       {isOpen && (
         <>
           <div
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] sm:hidden"
-            onClick={() => setIsOpen(false)}
+            onClick={closeFab}
           />
           <div className="flex items-center justify-end space-x-2 mb-3 z-50 animate-fadeIn">
             <button
@@ -152,7 +194,7 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
 
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={toggleFab}
         className={`w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform active:scale-90 ring-4 ring-slate-950/80 ${
           isOpen
             ? 'bg-slate-800 text-amber-400 border border-amber-500/50 rotate-45 shadow-amber-500/20'

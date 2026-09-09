@@ -119,14 +119,18 @@ export const PreTripChecklist: React.FC<PreTripChecklistProps> = ({
     setCheckedIds(allChecked);
     try {
       localStorage.setItem(storageKey, JSON.stringify(allChecked));
-    } catch {}
+    } catch (e) {
+      console.warn('[Mero Sadak] localStorage setItem warning:', e);
+    }
   };
 
   const resetAll = () => {
     setCheckedIds({});
     try {
       localStorage.removeItem(storageKey);
-    } catch {}
+    } catch (e) {
+      console.warn('[Mero Sadak] localStorage removeItem warning:', e);
+    }
   };
 
   // Inspect weather conditions along the route
@@ -912,7 +916,7 @@ export const PreTripChecklist: React.FC<PreTripChecklistProps> = ({
     navigator.clipboard.writeText(text).then(() => {
       setCopiedText(true);
       setTimeout(() => setCopiedText(false), 2500);
-    });
+    }).catch(() => {});
   };
 
   return (

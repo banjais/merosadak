@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { TextScaleProvider } from './hooks/useTextScale';
 
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
@@ -13,7 +14,9 @@ if (typeof window !== 'undefined') {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <TextScaleProvider>
+        <App />
+      </TextScaleProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

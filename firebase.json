@@ -30,7 +30,7 @@
     ],
     "rewrites": [
       {
-        "source": "**/!(*.geojson|*.json|*.js|*.css|*.png|*.jpg|*.svg|*.ico|*.txt)",
+        "source": "**",
         "destination": "/index.html"
       }
     ]
