@@ -116,6 +116,9 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (event.data?.type === 'PREFETCH_COMPLETE' || event.data?.type === 'CACHE_CLEARED') {
         refreshStats().catch(() => {});
       }
+      if (event.data?.type === 'MEROSADAK_RELOAD') {
+        window.location.reload();
+      }
     };
 
     if ('serviceWorker' in navigator) {

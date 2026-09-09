@@ -10,10 +10,6 @@ const CACHE_NAMES = {
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/src/main.tsx',
-  '/src/index.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap',
 ];
 
 // Core API endpoints to cache for offline mountain travel
@@ -29,19 +25,16 @@ const API_ENDPOINTS = [
 
 // Key Nepal highway tile bounding coordinates (Zoom 6, 7, 8 base covers all Nepal)
 const NEPAL_CORE_TILES = [
-  // Zoom 6
   'https://a.tile.openstreetmap.org/6/46/27.png',
   'https://b.tile.openstreetmap.org/6/47/27.png',
   'https://c.tile.openstreetmap.org/6/46/28.png',
   'https://a.tile.openstreetmap.org/6/47/28.png',
-  // Zoom 7 (Nepal East-West & Central)
   'https://a.tile.openstreetmap.org/7/93/54.png',
   'https://b.tile.openstreetmap.org/7/94/54.png',
   'https://c.tile.openstreetmap.org/7/95/54.png',
   'https://a.tile.openstreetmap.org/7/93/55.png',
   'https://b.tile.openstreetmap.org/7/94/55.png',
   'https://c.tile.openstreetmap.org/7/95/55.png',
-  // Zoom 8 (Kathmandu, Pokhara, Chitwan, Narayanghat, Butwal, Biratnagar)
   'https://a.tile.openstreetmap.org/8/187/109.png',
   'https://b.tile.openstreetmap.org/8/188/109.png',
   'https://c.tile.openstreetmap.org/8/189/109.png',
@@ -59,8 +52,17 @@ self.addEventListener('install', (event) => {
     (async () => {
       try {
         const staticCache = await caches.open(CACHE_NAMES.STATIC);
-        await staticCache.addAll(PRECACHE_ASSETS.map((url) => new Request(url, { mode: 'no-cors' })));
-        
+        await Promise.allSettled(
+          PRECACHE_ASSETS.map(async (url) => {
+            try {
+              const req = new Request(url, { mode: 'no-cors' });
+              await staticCache.add(req);
+            } catch (e) {
+              console.warn('[SW] Skipping precache for:', url, e.message);
+            }
+          })
+        );
+
         const tileCache = await caches.open(CACHE_NAMES.TILES);
         await Promise.allSettled(
           NEPAL_CORE_TILES.map(async (tileUrl) => {
@@ -68,7 +70,7 @@ self.addEventListener('install', (event) => {
               const res = await fetch(tileUrl, { mode: 'no-cors' });
               if (res) await tileCache.put(tileUrl, res);
             } catch (e) {
-              // Ignore tile prefetch network error if offline during install
+              console.warn('[SW] Skipping tile prefetch:', tileUrl, e.message);
             }
           })
         );
@@ -83,33 +85,36 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      const activeCacheKeys = Object.values(CACHE_NAMES);
       const allCacheKeys = await caches.keys();
       await Promise.all(
-        allCacheKeys.map((key) => {
-          if (!activeCacheKeys.includes(key)) {
-            return caches.delete(key);
-          }
-        })
+        allCacheKeys.map((key) => caches.delete(key))
       );
       await self.clients.claim();
+
+      const allClients = await self.clients.matchAll({ includeUncontrolled: true });
+      allClients.forEach((client) => {
+        client.postMessage({ type: 'MEROSADAK_RELOAD' });
+      });
     })()
   );
 });
 
 // Helper: Check if request is a map tile
 function isTileRequest(url) {
+  const u = new URL(url, self.location.href);
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
   return (
-    url.includes('tile.openstreetmap.org') ||
-    url.includes('tile.opentopomap.org') ||
-    url.includes('server.arcgisonline.com') ||
-    url.match(/\/\d+\/\d+\/\d+(\.png|@2x\.png|\.jpg|\.webp)/i)
+    u.hostname.includes('tile.openstreetmap.org') ||
+    u.hostname.includes('tile.opentopomap.org') ||
+    u.hostname.includes('server.arcgisonline.com') ||
+    u.pathname.match(/\/\d+\/\d+\/\d+(\.png|@2x\.png|\.jpg|\.webp)/i)
   );
 }
 
 // Helper: Check if request is API
 function isApiRequest(url) {
-  return url.pathname.startsWith('/api/');
+  const u = new URL(url, self.location.href);
+  return u.pathname.startsWith('/api/');
 }
 
 // Fetch Event Router
@@ -134,18 +139,16 @@ self.addEventListener('fetch', (event) => {
         const cachedResponse = await tileCache.match(event.request);
 
         if (cachedResponse) {
-          // In the background, refresh the tile if online
           fetch(event.request)
             .then((networkRes) => {
               if (networkRes && networkRes.status === 200) {
                 tileCache.put(event.request, networkRes);
               }
             })
-            .catch(() => {}); // Silent fail when in mountain offline mode
+            .catch(() => {});
           return cachedResponse;
         }
 
-        // Not in cache, fetch from network and cache
         try {
           const networkResponse = await fetch(event.request);
           if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
@@ -153,7 +156,6 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         } catch (err) {
-          // If offline and tile not found, return an empty 200 or transparent pixel fallback
           return new Response('', { status: 408, statusText: 'Tile Offline' });
         }
       })()
@@ -167,17 +169,14 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         const dataCache = await caches.open(CACHE_NAMES.DATA);
         try {
-          // Try fetching from live network
           const networkResponse = await fetch(event.request);
           if (networkResponse && networkResponse.status === 200) {
             dataCache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
         } catch (error) {
-          // Network failed (mountain gorge, no signal) -> retrieve cached version
           const cachedResponse = await dataCache.match(event.request);
           if (cachedResponse) {
-            // Add custom header to indicate offline cached response
             const headers = new Headers(cachedResponse.headers);
             headers.set('X-MeroSadak-Offline-Cached', 'true');
             return new Response(await cachedResponse.blob(), {
@@ -199,19 +198,24 @@ self.addEventListener('fetch', (event) => {
   // Strategy 3: Static App Shell & CSS/JS -> Stale-While-Revalidate
   event.respondWith(
     (async () => {
-      const staticCache = await caches.open(CACHE_NAMES.STATIC);
-      const cached = await staticCache.match(event.request);
-
-      if (cached) return cached;
-
       try {
-        const networkRes = await fetch(event.request);
-        if (networkRes && networkRes.status === 200) {
-          staticCache.put(event.request, networkRes.clone());
+        const staticCache = await caches.open(CACHE_NAMES.STATIC);
+        const cached = await staticCache.match(event.request);
+
+        if (cached) return cached;
+
+        try {
+          const networkRes = await fetch(event.request);
+          if (networkRes && networkRes.status === 200) {
+            staticCache.put(event.request, networkRes.clone());
+          }
+          return networkRes;
+        } catch {
+          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
         }
-        return networkRes;
-      } catch {
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      } catch (err) {
+        console.warn('[SW] Static fetch strategy failed:', err);
+        return fetch(event.request);
       }
     })()
   );
@@ -229,7 +233,6 @@ self.addEventListener('message', async (event) => {
     const dataCache = await caches.open(CACHE_NAMES.DATA);
     const tileCache = await caches.open(CACHE_NAMES.TILES);
 
-    // Cache APIs
     for (const apiUrl of apiUrls) {
       try {
         const res = await fetch(apiUrl);
@@ -243,7 +246,6 @@ self.addEventListener('message', async (event) => {
       notifyProgress(processedItems, totalItems, `Cached API: ${apiUrl}`);
     }
 
-    // Cache Map Tiles
     for (const tileUrl of tileUrls) {
       try {
         const res = await fetch(tileUrl, { mode: 'no-cors' });
@@ -259,7 +261,6 @@ self.addEventListener('message', async (event) => {
       }
     }
 
-    // Send complete notification
     if (event.source) {
       event.source.postMessage({
         type: 'PREFETCH_COMPLETE',

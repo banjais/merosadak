@@ -140,11 +140,11 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
-      const tileCache = await caches.open('mero-sadak-tiles-v1.2');
+      const tileCache = await caches.open('mero-sadak-tiles-v1.3');
       const tileKeys = await tileCache.keys();
       tilesCount = tileKeys.length;
 
-      const dataCache = await caches.open('mero-sadak-data-v1.2');
+      const dataCache = await caches.open('mero-sadak-data-v1.3');
       const dataKeys = await dataCache.keys();
       dataEndpointsCount = dataKeys.length;
     } catch (e) {
