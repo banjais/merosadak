@@ -2,9 +2,9 @@
 // Version 1.2.0 - Mountain Offline Caching & Map Tile Engine
 
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v1.3',
-  TILES: 'mero-sadak-tiles-v1.3',
-  DATA: 'mero-sadak-data-v1.3',
+  STATIC: 'mero-sadak-static-v1.4',
+  TILES: 'mero-sadak-tiles-v1.4',
+  DATA: 'mero-sadak-data-v1.4',
 };
 
 const PRECACHE_ASSETS = [
@@ -211,7 +211,17 @@ self.addEventListener('fetch', (event) => {
         try {
           const networkRes = await fetch(event.request);
           if (networkRes && networkRes.status === 200) {
-            staticCache.put(event.request, networkRes.clone());
+            const contentType = networkRes.headers.get('content-type') || '';
+            const isHtml = contentType.includes('text/html');
+            const url = new URL(event.request.url);
+            const isHtmlPath =
+              url.pathname.endsWith('.html') ||
+              url.pathname === '/' ||
+              !url.pathname.includes('.');
+
+            if (!isHtml || isHtmlPath) {
+              staticCache.put(event.request, networkRes.clone());
+            }
           }
           return networkRes;
         } catch {

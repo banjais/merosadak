@@ -84,7 +84,7 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     registerServiceWorker().then(() => {
       refreshStats().catch(() => {});
-    });
+    }).catch(() => {});
 
     const handleOnline = () => {
       setRealOnline(true);

@@ -24,6 +24,7 @@ function run(name, cmd, options = {}) {
 try {
   run('sync data', 'npm run sync:data');
   run('deploy worker', 'npm run worker:deploy');
+  run('build', 'npm run build');
 
   console.log('\n[ship] git fetch...');
   run('git fetch', 'git fetch origin', { allowFailure: true });
