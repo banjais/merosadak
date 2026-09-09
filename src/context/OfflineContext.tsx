@@ -83,24 +83,24 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Listen for online/offline events and register service worker
   useEffect(() => {
     registerServiceWorker().then(() => {
-      refreshStats();
+      refreshStats().catch(() => {});
     });
 
     const handleOnline = () => {
       setRealOnline(true);
-      refreshStats();
+      refreshStats().catch(() => {});
     };
 
     const handleOffline = () => {
       setRealOnline(false);
-      refreshStats();
+      refreshStats().catch(() => {});
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     // Initial stats check
-    refreshStats();
+    refreshStats().catch(() => {});
 
     // Listen to Service Worker messages if SW is sending progress
     const handleSwMessage = (event: MessageEvent) => {
@@ -114,7 +114,7 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
       }
       if (event.data?.type === 'PREFETCH_COMPLETE' || event.data?.type === 'CACHE_CLEARED') {
-        refreshStats();
+        refreshStats().catch(() => {});
       }
     };
 

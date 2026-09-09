@@ -53,13 +53,13 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
       if (isMounted && data && data.length > 0) {
         setHighways(data);
       }
-    });
+    }).catch(() => {});
 
     loadRealtimeIncidents().then((incData) => {
       if (isMounted && incData && incData.length > 0) {
         setIncidents(incData);
       }
-    });
+    }).catch(() => {});
 
     return () => {
       isMounted = false;

@@ -2,9 +2,9 @@
 // Version 1.2.0 - Mountain Offline Caching & Map Tile Engine
 
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v1.2',
-  TILES: 'mero-sadak-tiles-v1.2',
-  DATA: 'mero-sadak-data-v1.2',
+  STATIC: 'mero-sadak-static-v1.3',
+  TILES: 'mero-sadak-tiles-v1.3',
+  DATA: 'mero-sadak-data-v1.3',
 };
 
 const PRECACHE_ASSETS = [
@@ -121,6 +121,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-http(s) schemes (e.g. chrome-extension, data, blob)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
   // Strategy 1: Map Tiles -> Cache-First with Stale-While-Revalidate
   if (isTileRequest(event.request.url)) {
     event.respondWith(
@@ -197,16 +202,17 @@ self.addEventListener('fetch', (event) => {
       const staticCache = await caches.open(CACHE_NAMES.STATIC);
       const cached = await staticCache.match(event.request);
 
-      const fetchPromise = fetch(event.request)
-        .then((networkRes) => {
-          if (networkRes && networkRes.status === 200) {
-            staticCache.put(event.request, networkRes.clone());
-          }
-          return networkRes;
-        })
-        .catch(() => cached);
+      if (cached) return cached;
 
-      return cached || fetchPromise;
+      try {
+        const networkRes = await fetch(event.request);
+        if (networkRes && networkRes.status === 200) {
+          staticCache.put(event.request, networkRes.clone());
+        }
+        return networkRes;
+      } catch {
+        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      }
     })()
   );
 });

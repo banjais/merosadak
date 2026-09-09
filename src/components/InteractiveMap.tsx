@@ -172,7 +172,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       if (isMounted && data && data.length > 0) {
         setHighwaysList(data);
       }
-    });
+    }).catch(() => {});
     return () => {
       isMounted = false;
     };
