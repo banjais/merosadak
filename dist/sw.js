@@ -85,10 +85,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      const allCacheKeys = await caches.keys();
-      await Promise.all(
-        allCacheKeys.map((key) => caches.delete(key))
-      );
+      try {
+        const allCacheKeys = await caches.keys();
+        await Promise.all(
+          allCacheKeys.map((key) => caches.delete(key))
+        );
+      } catch (err) {
+        console.warn('[SW] Cache cleanup skipped:', err);
+      }
       await self.clients.claim();
 
       try {
@@ -139,14 +143,19 @@ self.addEventListener('fetch', (event) => {
   if (isTileRequest(event.request.url)) {
     event.respondWith(
       (async () => {
-        const tileCache = await caches.open(CACHE_NAMES.TILES);
+        let tileCache;
+        try {
+          tileCache = await caches.open(CACHE_NAMES.TILES);
+        } catch {
+          return fetch(event.request).catch(() => new Response('', { status: 408, statusText: 'Tile Offline' }));
+        }
         const cachedResponse = await tileCache.match(event.request);
 
         if (cachedResponse) {
           fetch(event.request)
             .then((networkRes) => {
               if (networkRes && networkRes.status === 200) {
-                tileCache.put(event.request, networkRes);
+                tileCache.put(event.request, networkRes).catch(() => {});
               }
             })
             .catch(() => {});
@@ -156,7 +165,7 @@ self.addEventListener('fetch', (event) => {
         try {
           const networkResponse = await fetch(event.request);
           if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-            tileCache.put(event.request, networkResponse.clone());
+            tileCache.put(event.request, networkResponse.clone()).catch(() => {});
           }
           return networkResponse;
         } catch (err) {
@@ -171,11 +180,19 @@ self.addEventListener('fetch', (event) => {
   if (isApiRequest(url)) {
     event.respondWith(
       (async () => {
-        const dataCache = await caches.open(CACHE_NAMES.DATA);
+        let dataCache;
+        try {
+          dataCache = await caches.open(CACHE_NAMES.DATA);
+        } catch {
+          return fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'Offline cache unavailable' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          }));
+        }
         try {
           const networkResponse = await fetch(event.request);
           if (networkResponse && networkResponse.status === 200) {
-            dataCache.put(event.request, networkResponse.clone());
+            dataCache.put(event.request, networkResponse.clone()).catch(() => {});
           }
           return networkResponse;
         } catch (error) {

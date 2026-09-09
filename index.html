@@ -20,6 +20,14 @@
   </head>
   <body class="bg-slate-900 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
     <div id="root"></div>
+    <script>
+      window.addEventListener('unhandledrejection', (event) => {
+        if (event?.reason && typeof event.reason === 'object' && !(event.reason instanceof Error)) {
+          console.warn('[Mero Sadak] Suppressed unhandled promise rejection:', event.reason);
+          event.preventDefault();
+        }
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

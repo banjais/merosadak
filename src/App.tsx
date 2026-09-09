@@ -181,32 +181,33 @@ function AppContent() {
   // Fetch updated data from server or local offline bundle
   const fetchLiveFeeds = async () => {
     setIsRefreshingWeather(true);
-    try {
-      const [alertsRes, wxRes, poiRes, trRes] = await Promise.all([
-        fetch('/api/road-alerts'),
-        fetch('/api/weather'),
-        fetch('/api/pois'),
-        fetch('/api/traffic'),
-      ]);
+    const results = await Promise.allSettled([
+      fetch('/api/road-alerts').then((res) => res.json()),
+      fetch('/api/weather').then((res) => res.json()),
+      fetch('/api/pois').then((res) => res.json()),
+      fetch('/api/traffic').then((res) => res.json()),
+    ]);
 
-      if (alertsRes.ok) {
-        const data = await alertsRes.json();
-        if (data.incidents) setIncidents(data.incidents);
+    let hasNetworkError = false;
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        hasNetworkError = true;
+        return;
+      }
+      const data = result.value;
+      if (index === 0 && data?.incidents) {
+        setIncidents(data.incidents);
         if (data.userReports) setUserReports(data.userReports);
+      } else if (index === 1 && data?.weatherNodes) {
+        setWeatherNodes(data.weatherNodes);
+      } else if (index === 2 && data?.pois) {
+        setPois(data.pois);
+      } else if (index === 3 && data?.corridors) {
+        setTrafficCorridors(data.corridors);
       }
-      if (wxRes.ok) {
-        const data = await wxRes.json();
-        if (data.weatherNodes) setWeatherNodes(data.weatherNodes);
-      }
-      if (poiRes.ok) {
-        const data = await poiRes.json();
-        if (data.pois) setPois(data.pois);
-      }
-      if (trRes.ok) {
-        const data = await trRes.json();
-        if (data.corridors) setTrafficCorridors(data.corridors);
-      }
-    } catch (err) {
+    });
+
+    if (hasNetworkError) {
       console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
       try {
         const offlineBundle = getStoredOfflineBundle();
@@ -220,9 +221,8 @@ function AppContent() {
       } catch (offlineErr) {
         console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
       }
-    } finally {
-      setIsRefreshingWeather(false);
     }
+    setIsRefreshingWeather(false);
   };
 
   useEffect(() => {
