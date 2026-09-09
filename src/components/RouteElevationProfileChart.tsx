@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ReferenceLine,
+  ReferenceDot,
   ReferenceArea,
   Brush,
 } from 'recharts';
@@ -40,6 +41,8 @@ import {
   ZoomOut,
   RotateCcw,
   ScanLine,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { getDistanceKm } from '../utils/geoUtils';
 
@@ -143,6 +146,11 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
   const [refAreaRight, setRefAreaRight] = useState<number | null>(null);
   const [showBrush, setShowBrush] = useState<boolean>(false);
   const isDraggingZoomRef = useRef<boolean>(false);
+
+  // Drive simulation states
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simProgressKm, setSimProgressKm] = useState(0);
+  const [simSpeed, setSimSpeed] = useState(1);
 
   // Reset zoom on route change
   useEffect(() => {
@@ -832,6 +840,45 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
     route.totalDistanceKm ||
     (elevationPoints.length > 0 ? elevationPoints[elevationPoints.length - 1].distance : 10);
 
+  // Drive simulation animation loop
+  useEffect(() => {
+    if (!isSimulating) return;
+    const interval = setInterval(() => {
+      setSimProgressKm((prev) => {
+        const step = 0.3 * simSpeed;
+        const next = prev + step;
+        if (next >= totalDistanceKm) {
+          setIsSimulating(false);
+          return totalDistanceKm;
+        }
+        return Math.round(next * 10) / 10;
+      });
+    }, 80);
+    return () => clearInterval(interval);
+  }, [isSimulating, simSpeed, totalDistanceKm]);
+
+  // Interpolate current position for simulation marker
+  const simCurrentPosition = useMemo(() => {
+    if (!elevationPoints || elevationPoints.length === 0 || simProgressKm <= 0) {
+      return { distance: 0, elevation: stats.maxElevation || 1200, grade: 0 };
+    }
+    const clampedDist = Math.max(0, Math.min(totalDistanceKm, simProgressKm));
+    let p0 = elevationPoints[0];
+    let p1 = elevationPoints[elevationPoints.length - 1];
+    for (let i = 0; i < elevationPoints.length - 1; i++) {
+      if (elevationPoints[i].distance <= clampedDist && elevationPoints[i + 1].distance >= clampedDist) {
+        p0 = elevationPoints[i];
+        p1 = elevationPoints[i + 1];
+        break;
+      }
+    }
+    const segmentSpan = Math.max(0.001, p1.distance - p0.distance);
+    const ratio = Math.max(0, Math.min(1, (clampedDist - p0.distance) / segmentSpan));
+    const elevation = Math.round(p0.elevation + (p1.elevation - p0.elevation) * ratio);
+    const grade = Math.round((p0.grade + (p1.grade - p0.grade) * ratio) * 10) / 10;
+    return { distance: clampedDist, elevation, grade };
+  }, [elevationPoints, simProgressKm, totalDistanceKm, stats.maxElevation]);
+
   // Standard Y-axis bounds
   const minElevVal = Math.max(0, Math.floor(stats.minElevation / 100) * 100 - 100);
   const maxElevVal = Math.ceil(stats.maxElevation / 100) * 100 + 150;
@@ -1094,6 +1141,45 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
           >
             {isExpandedView ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
+
+          {/* Drive Simulation Controls */}
+          <div className="flex items-center gap-1 text-xs bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => {
+                if (isSimulating) {
+                  setIsSimulating(false);
+                } else {
+                  if (simProgressKm >= totalDistanceKm) setSimProgressKm(0);
+                  setIsSimulating(true);
+                }
+              }}
+              className="p-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white transition"
+              title={isSimulating ? 'Pause Drive Simulation' : 'Play Drive Simulation'}
+            >
+              {isSimulating ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsSimulating(false); setSimProgressKm(0); }}
+              className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+              title="Reset Simulation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            <select
+              value={simSpeed}
+              onChange={(e) => setSimSpeed(Number(e.target.value))}
+              className="bg-slate-950 text-emerald-300 font-bold border border-emerald-500/30 rounded px-1 py-0.5 text-[10px] focus:outline-none"
+            >
+              <option value={1}>1x</option>
+              <option value={2}>2x</option>
+              <option value={4}>4x</option>
+            </select>
+            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+              KM {simProgressKm.toFixed(1)} • {simCurrentPosition.elevation}m • {simCurrentPosition.grade > 0 ? '+' : ''}{simCurrentPosition.grade}%
+            </span>
+          </div>
         </div>
       </div>
 
@@ -1548,6 +1634,32 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
                   fillOpacity: 0.25,
                 } as any)}
               />
+            )}
+
+            {/* Drive Simulation Marker */}
+            {isSimulating && simProgressKm > 0 && (
+              <>
+                <ReferenceLine
+                  x={simProgressKm}
+                  stroke="#10b981"
+                  strokeDasharray="3 3"
+                  strokeOpacity={0.8}
+                  label={{
+                    value: `KM ${simProgressKm.toFixed(1)}`,
+                    fill: '#10b981',
+                    fontSize: 9,
+                    position: 'insideTop',
+                  }}
+                />
+                <ReferenceDot
+                  x={simProgressKm}
+                  y={simCurrentPosition.elevation}
+                  r={8}
+                  fill="#10b981"
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                />
+              </>
             )}
 
             {/* Base Mountain Area */}

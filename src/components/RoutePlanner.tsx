@@ -1052,7 +1052,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   type="button"
                   onClick={() => {
                     setResultsViewMode('comparison');
-                    setIsReportExpanded(true);
+      setIsReportExpanded(false);
                   }}
                   className={`px-2 sm:px-3 py-1 rounded-lg font-bold transition flex items-center space-x-1 text-[11px] ${
                     resultsViewMode === 'comparison'
@@ -1073,6 +1073,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               >
                 <Share2 className="w-3.5 h-3.5 text-emerald-400" />
               </button>
+            </div>
+
+            {/* ELEVATION PROFILE VISUALIZATION (RECHARTS) - DIRECTLY BENEATH ROUTE DETAILS */}
+            <div
+              id="route-elevation-profile-card"
+              key={`route-elevation-profile-${calcKey}`}
+              className="pt-1 animate-fade-in-smooth transition-all duration-500 ease-out"
+            >
+              <RouteElevationProfileChart
+                activeRoute={routePlan}
+                routePlan={routePlan}
+                vehicle={vehicle}
+                onViewOnMap={onViewOnMap}
+              />
             </div>
 
           {/* REDUCED REPORT SUMMARY (When user clicks Reduce Report) */}
@@ -1309,20 +1323,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {routePlan.incidentsOnRoute.length} incident(s)
                 </span>
               )}
-            </div>
-
-            {/* ELEVATION PROFILE VISUALIZATION (RECHARTS) - DIRECTLY BENEATH ROUTE DETAILS */}
-            <div
-              id="route-elevation-profile-card"
-              key={`route-elevation-profile-${calcKey}`}
-              className="pt-1 animate-fade-in-smooth transition-all duration-500 ease-out"
-            >
-              <RouteElevationProfileChart
-                activeRoute={routePlan}
-                routePlan={routePlan}
-                vehicle={vehicle}
-                onViewOnMap={onViewOnMap}
-              />
             </div>
 
               {/* STRUCTURED FUEL COST BREAKDOWN FOR SELECTED VEHICLE */}
@@ -2111,28 +2111,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           </div>
                         ))}
                       </div>
-
-                      {/* Elevation Profile Chart */}
-                      <RouteElevationProfileChart
-                        activeRoute={routePlan}
-                        routePlan={routePlan}
-                        vehicle={vehicle}
-                        onViewOnMap={onViewOnMap}
-                      />
                     </>
                   )}
-                </div>
-              )}
-
-              {/* MODULE CONTENT: Elevation Profile & Steep Gradients */}
-              {activeModuleTab === 'elevation' && (
-                <div className="space-y-4">
-                  <RouteElevationProfileChart
-                    activeRoute={routePlan}
-                    routePlan={routePlan}
-                    vehicle={vehicle}
-                    onViewOnMap={onViewOnMap}
-                  />
                 </div>
               )}
 
