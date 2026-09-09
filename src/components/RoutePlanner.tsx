@@ -160,6 +160,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isSingleDropdownOpen, setIsSingleDropdownOpen] = useState<boolean>(false);
   const [isOriginDropdownOpen, setIsOriginDropdownOpen] = useState<boolean>(false);
   const [isDestDropdownOpen, setIsDestDropdownOpen] = useState<boolean>(false);
+  const [showSearchPanel, setShowSearchPanel] = useState<boolean>(false);
 
   // AI Prompt Bar State
   const [isAiPromptOpen, setIsAiPromptOpen] = useState<boolean>(false);
@@ -332,6 +333,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setIsLocationMenuOpen(false);
       setIsAiPromptOpen(false);
       setLocationMode('my_location');
+      setShowSearchPanel(false);
 
       // Update URL silently
       if (typeof window !== 'undefined' && window.history?.replaceState) {
@@ -596,7 +598,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
+        {/* Destination Instruction */}
+        {!hasCalculated && !destId && (
+          <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 text-center animate-fadeIn">
+            Tap the map or use the search below to select your destination
+          </div>
+        )}
+
         {/* 1. MY LOCATION CARD / PICKER */}
+        {!hasCalculated && (
         <div className="relative" ref={locationMenuRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
@@ -670,11 +680,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               </button>
             </div>
-          )}
-        </div>
+           )}
+         </div>
+         )}
 
-        {/* 2. SEARCH INPUT BARS */}
-        {!hasCalculated && (
+         {/* 2. SEARCH INPUT BARS */}
+        {(!hasCalculated || showSearchPanel) && (
           <>
             {locationMode === 'my_location' ? (
           /* SINGLE SEARCH BAR with functional Mic and AI icons */
@@ -891,6 +902,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
         {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON */}
+        {destId && (
         <div className="pt-2">
           <button
             onClick={() => handleCalculateRoute()}
@@ -915,11 +927,32 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             )}
           </button>
         </div>
+        )}
           </>
         )}
 
          {hasCalculated && (
-         <div className="pt-1 border-t border-slate-800/60">
+          <>
+            {/* From/To Summary with Change Location */}
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <span className="text-sm font-bold text-white truncate">{originCity.name}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-sm font-bold text-white truncate">{destCity.name}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSearchPanel(!showSearchPanel)}
+                  className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-[10px] font-bold transition shrink-0"
+                >
+                  <span>{showSearchPanel ? 'Hide' : 'Change Location'}</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showSearchPanel ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="pt-1 border-t border-slate-800/60">
           <button
             type="button"
             onClick={() => setShowVehicleOptions(!showVehicleOptions)}
@@ -996,10 +1029,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                </div>
              </div>
-           )}
-         </div>
-         )}
-       </div>
+            )}
+          </div>
+          </>
+          )}
+        </div>
 
        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
       {routePlan && hasCalculated && (

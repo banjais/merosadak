@@ -115,6 +115,7 @@ function isTileRequest(url) {
     u.hostname.includes('tile.openstreetmap.org') ||
     u.hostname.includes('tile.opentopomap.org') ||
     u.hostname.includes('server.arcgisonline.com') ||
+    u.hostname.includes('basemaps.cartocdn.com') ||
     u.pathname.match(/\/\d+\/\d+\/\d+(\.png|@2x\.png|\.jpg|\.webp)/i)
   );
 }

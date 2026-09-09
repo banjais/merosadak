@@ -39,6 +39,7 @@ import {
   Ticket,
   ShieldAlert,
   Gauge,
+  Landmark,
   Map as MapIcon,
   Globe,
   Locate,
@@ -179,7 +180,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, []);
 
   // Map Style: Standard, Satellite, Terrain
-  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial'>('standard');
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   // Initialize map
@@ -236,6 +237,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       url = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
       attribution = 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)';
       maxZoom = 17;
+    } else if (mapStyle === 'territorial') {
+      url = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | &copy; <a href="https://carto.com/">CARTO</a>';
+      maxZoom = 19;
     }
 
     const newLayer = L.tileLayer(url, {
@@ -1200,6 +1205,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Terrain"
           >
             <Mountain className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMapStyle('territorial'); setShowMapStyle(false); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'territorial' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            title="Territorial"
+          >
+            <Landmark className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
