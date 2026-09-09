@@ -1176,7 +1176,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Map Style Selector */}
       {showMapStyle && (
-        <div className="absolute top-3 right-16 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
+        <div className="absolute top-3 right-28 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
           <button
             type="button"
             onClick={() => { setMapStyle('standard'); setShowMapStyle(false); }}
@@ -1206,7 +1206,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <button
         type="button"
         onClick={() => setShowMapStyle(!showMapStyle)}
-        className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+        className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
         title="Map Style"
         id="btn-map-style-toggle"
       >
@@ -1215,7 +1215,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
       {isToolbarOpen && (
-        <div className="absolute top-14 right-2 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
+        <div className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
           <button
             type="button"
             onClick={() => handleToggleLayer('highways')}
@@ -1323,12 +1323,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <button
         type="button"
         onClick={handleToggleToolbar}
-        className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
+        className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
           isToolbarOpen
             ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/10'
             : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'
         }`}
-        title={isToolbarOpen ? "Close layers" : "Open layers"}
+        title="Layers"
         id="toggle-toolbar-collapse"
       >
         <Layers className={`w-4 h-4 ${isToolbarOpen ? 'rotate-90 text-emerald-400' : 'text-slate-300'} transition-transform`} />
