@@ -143,23 +143,36 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setActiveLayer((prev) => (prev === layer ? 'none' : layer));
   };
 
-  // Toggle toolbar: when closed, close all showing layers immediately
+  const closeLayerToolbar = () => {
+    setIsToolbarOpen(false);
+    setActiveLayer('none');
+    setShowLegend(false);
+    layersRef.current.highways.clearLayers();
+    layersRef.current.weather.clearLayers();
+    layersRef.current.incidents.clearLayers();
+    layersRef.current.pois.clearLayers();
+    layersRef.current.traffic.clearLayers();
+    layersRef.current.alternatives.clearLayers();
+  };
+
   const handleToggleToolbar = () => {
-    setIsToolbarOpen((prev) => {
-      const next = !prev;
-      if (!next) {
-        // Close all showing layers and legend
-        setActiveLayer('none');
-        setShowLegend(false);
-        layersRef.current.highways.clearLayers();
-        layersRef.current.weather.clearLayers();
-        layersRef.current.incidents.clearLayers();
-        layersRef.current.pois.clearLayers();
-        layersRef.current.traffic.clearLayers();
-        layersRef.current.alternatives.clearLayers();
-      }
-      return next;
-    });
+    if (isToolbarOpen) {
+      closeLayerToolbar();
+      return;
+    }
+
+    setIsToolbarOpen(true);
+    setShowMapStyle(false);
+  };
+
+  const handleToggleMapStyle = () => {
+    if (showMapStyle) {
+      setShowMapStyle(false);
+      return;
+    }
+
+    setShowMapStyle(true);
+    closeLayerToolbar();
   };
 
   // 79 Highways state loaded from GeoJSON dataset
@@ -1218,7 +1231,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       )}
       <button
         type="button"
-        onClick={() => setShowMapStyle(!showMapStyle)}
+        onClick={handleToggleMapStyle}
         className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
         title="Map Style"
         id="btn-map-style-toggle"

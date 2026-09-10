@@ -524,7 +524,7 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                           </div>
                         )}
                         <div className="text-[9px] text-slate-400 leading-tight line-clamp-2">
-                          {pt.stepInstruction}
+                          {pt.instruction}
                         </div>
                         <div className="text-[8px] text-cyan-400/80 pt-0.5 border-t border-slate-800">
                           Click to set navigation progress here

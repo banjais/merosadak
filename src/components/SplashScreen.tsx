@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SplashScreenProps {
   onFinished?: () => void;
@@ -9,12 +9,52 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished }) => {
   const [statusText, setStatusText] = useState('Initializing Map, Routes & Live Data…');
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
+  const hasFinishedRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  const clearTimers = useCallback(() => {
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (hideTimeoutRef.current !== null) {
+      window.clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  }, []);
+
+  const finishSplash = useCallback(() => {
+    if (hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+    clearTimers();
+    setIsFadingOut(true);
+    hideTimeoutRef.current = window.setTimeout(() => {
+      hideTimeoutRef.current = null;
+      if (!isMountedRef.current) return;
+      setIsHidden(true);
+      if (onFinished) onFinished();
+    }, 600);
+  }, [clearTimers, onFinished]);
 
   useEffect(() => {
-    let currentPct = 0;
-    const interval = setInterval(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (hasFinishedRef.current || intervalRef.current !== null) return;
+
+    let currentPct = progressRef.current;
+    intervalRef.current = window.setInterval(() => {
       const increment = Math.floor(Math.random() * 12) + 8;
       currentPct = Math.min(100, currentPct + increment);
+      progressRef.current = currentPct;
       setProgress(currentPct);
 
       if (currentPct < 30) {
@@ -28,19 +68,24 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished }) => {
       }
 
       if (currentPct >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsFadingOut(true);
-          setTimeout(() => {
-            setIsHidden(true);
-            if (onFinished) onFinished();
-          }, 600);
-        }, 350);
+        if (intervalRef.current !== null) {
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        finishSplash();
       }
     }, 120);
 
-    return () => clearInterval(interval);
-  }, [onFinished]);
+    return () => {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (!hasFinishedRef.current) {
+        clearTimers();
+      }
+    };
+  }, [clearTimers, finishSplash]);
 
   if (isHidden) return null;
 
@@ -105,13 +150,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished }) => {
 
         {/* Skip Link */}
         <button
-          onClick={() => {
-            setIsFadingOut(true);
-            setTimeout(() => {
-              setIsHidden(true);
-              if (onFinished) onFinished();
-            }, 600);
-          }}
+          onClick={finishSplash}
           className="mt-4 text-[11px] text-slate-500 hover:text-amber-400 transition underline underline-offset-4 cursor-pointer"
         >
           Skip loading screen

@@ -94,15 +94,6 @@ self.addEventListener('activate', (event) => {
         console.warn('[SW] Cache cleanup skipped:', err);
       }
       await self.clients.claim();
-
-      try {
-        const allClients = await self.clients.matchAll({ includeUncontrolled: true });
-        allClients.forEach((client) => {
-          client.postMessage({ type: 'MEROSADAK_RELOAD' });
-        });
-      } catch {
-        // Ignore client matching errors during activation
-      }
     })()
   );
 });

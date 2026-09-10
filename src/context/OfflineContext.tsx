@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   registerServiceWorker,
   getOfflineCacheStats,
@@ -39,6 +39,15 @@ const defaultStats: OfflineCacheStats = {
   cachedSegmentsCount: 0,
 };
 
+let serviceWorkerRegistrationPromise: Promise<boolean> | null = null;
+
+function ensureServiceWorkerRegistered(): Promise<boolean> {
+  if (!serviceWorkerRegistrationPromise) {
+    serviceWorkerRegistrationPromise = registerServiceWorker().catch(() => false);
+  }
+  return serviceWorkerRegistrationPromise;
+}
+
 const OfflineContext = createContext<OfflineContextType>({
   isOnline: true,
   isSimulatedOffline: false,
@@ -71,20 +80,36 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Computed online status considering simulation
   const effectiveOnline = isSimulatedOffline ? false : realOnline;
 
+  const statsRequestRef = useRef<Promise<void> | null>(null);
+
   const refreshStats = useCallback(async () => {
-    const stats = await getOfflineCacheStats();
-    setCacheStats(stats);
-    const bundle = getStoredOfflineBundle();
-    setCachedBundle(bundle);
-    const ids = getCachedSegmentIds();
-    setCachedSegmentIds(ids);
+    if (statsRequestRef.current) return statsRequestRef.current;
+
+    const request = (async () => {
+      const stats = await getOfflineCacheStats();
+      setCacheStats(stats);
+      const bundle = getStoredOfflineBundle();
+      setCachedBundle(bundle);
+      const ids = getCachedSegmentIds();
+      setCachedSegmentIds(ids);
+    })();
+
+    statsRequestRef.current = request;
+
+    try {
+      await request;
+    } finally {
+      statsRequestRef.current = null;
+    }
   }, []);
 
   // Listen for online/offline events and register service worker
   useEffect(() => {
-    registerServiceWorker().then(() => {
-      refreshStats().catch(() => {});
-    }).catch(() => {});
+    ensureServiceWorkerRegistered()
+      .then(() => {
+        refreshStats().catch(() => {});
+      })
+      .catch(() => {});
 
     const handleOnline = () => {
       setRealOnline(true);
@@ -99,9 +124,6 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial stats check
-    refreshStats().catch(() => {});
-
     // Listen to Service Worker messages if SW is sending progress
     const handleSwMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PREFETCH_PROGRESS') {
@@ -115,9 +137,6 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       if (event.data?.type === 'PREFETCH_COMPLETE' || event.data?.type === 'CACHE_CLEARED') {
         refreshStats().catch(() => {});
-      }
-      if (event.data?.type === 'MEROSADAK_RELOAD') {
-        window.location.reload();
       }
     };
 

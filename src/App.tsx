@@ -183,57 +183,70 @@ function AppContent() {
   }, []);
 
   const [isRefreshingWeather, setIsRefreshingWeather] = useState(false);
+  const liveFeedsInFlightRef = useRef<Promise<void> | null>(null);
 
   // Fetch updated data from server or local offline bundle
-  const fetchLiveFeeds = async () => {
+  const fetchLiveFeeds = useCallback(async () => {
+    if (liveFeedsInFlightRef.current) return liveFeedsInFlightRef.current;
+
     setIsRefreshingWeather(true);
-    const results = await Promise.allSettled([
-      fetch('/api/road-alerts').then((res) => res.json()),
-      fetch('/api/weather').then((res) => res.json()),
-      fetch('/api/pois').then((res) => res.json()),
-      fetch('/api/traffic').then((res) => res.json()),
-    ]);
+    const request = (async () => {
+      const results = await Promise.allSettled([
+        fetch('/api/road-alerts').then((res) => res.json()),
+        fetch('/api/weather').then((res) => res.json()),
+        fetch('/api/pois').then((res) => res.json()),
+        fetch('/api/traffic').then((res) => res.json()),
+      ]);
 
-    let hasNetworkError = false;
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        hasNetworkError = true;
-        return;
-      }
-      const data = result.value;
-      if (index === 0 && data?.incidents) {
-        setIncidents(data.incidents);
-        if (data.userReports) setUserReports(data.userReports);
-      } else if (index === 1 && data?.weatherNodes) {
-        setWeatherNodes(data.weatherNodes);
-      } else if (index === 2 && data?.pois) {
-        setPois(data.pois);
-      } else if (index === 3 && data?.corridors) {
-        setTrafficCorridors(data.corridors);
-      }
-    });
-
-    if (hasNetworkError) {
-      console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
-      try {
-        const offlineBundle = getStoredOfflineBundle();
-        if (offlineBundle) {
-          if (offlineBundle.incidents) setIncidents(offlineBundle.incidents);
-          if (offlineBundle.userReports) setUserReports(offlineBundle.userReports);
-          if (offlineBundle.weatherNodes) setWeatherNodes(offlineBundle.weatherNodes);
-          if (offlineBundle.pois) setPois(offlineBundle.pois);
-          if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
+      let hasNetworkError = false;
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          hasNetworkError = true;
+          return;
         }
-      } catch (offlineErr) {
-        console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
+        const data = result.value;
+        if (index === 0 && data?.incidents) {
+          setIncidents(data.incidents);
+          if (data.userReports) setUserReports(data.userReports);
+        } else if (index === 1 && data?.weatherNodes) {
+          setWeatherNodes(data.weatherNodes);
+        } else if (index === 2 && data?.pois) {
+          setPois(data.pois);
+        } else if (index === 3 && data?.corridors) {
+          setTrafficCorridors(data.corridors);
+        }
+      });
+
+      if (hasNetworkError) {
+        console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
+        try {
+          const offlineBundle = getStoredOfflineBundle();
+          if (offlineBundle) {
+            if (offlineBundle.incidents) setIncidents(offlineBundle.incidents);
+            if (offlineBundle.userReports) setUserReports(offlineBundle.userReports);
+            if (offlineBundle.weatherNodes) setWeatherNodes(offlineBundle.weatherNodes);
+            if (offlineBundle.pois) setPois(offlineBundle.pois);
+            if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
+          }
+        } catch (offlineErr) {
+          console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
+        }
       }
+    })();
+
+    liveFeedsInFlightRef.current = request;
+
+    try {
+      await request;
+    } finally {
+      liveFeedsInFlightRef.current = null;
+      setIsRefreshingWeather(false);
     }
-    setIsRefreshingWeather(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchLiveFeeds();
-  }, []);
+  }, [fetchLiveFeeds]);
 
   const handleRouteCalculated = (route: RoutePlanResult) => {
     setActiveRoute(route);
