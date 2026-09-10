@@ -119,6 +119,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
   const [destId, setDestId] = useState<string>(initialDestId);
+  const [userPickedDestination, setUserPickedDestination] = useState<boolean>(false);
+  const [needsRecalculation, setNeedsRecalculation] = useState<boolean>(false);
   const [vehicle, setVehicle] = useState<VehicleType>(initialVehicle);
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
   const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
@@ -334,6 +336,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setIsAiPromptOpen(false);
       setLocationMode('my_location');
       setShowSearchPanel(false);
+      setNeedsRecalculation(false);
 
       // Update URL silently
       if (typeof window !== 'undefined' && window.history?.replaceState) {
@@ -457,6 +460,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setDestId(matched.id);
             setSingleSearchQuery(matched.name);
             setDestSearchQuery(matched.name);
+            setUserPickedDestination(true);
+            if (hasCalculated) setNeedsRecalculation(true);
           } else if (target === 'origin') {
             setOriginId(matched.id);
             setOriginSearchQuery(matched.name);
@@ -510,7 +515,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       const data = await res.json();
       if (data && data.destId) {
         if (data.originId) setOriginId(data.originId);
-        if (data.destId) setDestId(data.destId);
+        if (data.destId) {
+          setDestId(data.destId);
+          setUserPickedDestination(true);
+          if (hasCalculated) setNeedsRecalculation(true);
+        }
         if (data.vehicle) setVehicle(data.vehicle);
         if (data.preference) setPreference(data.preference);
 
@@ -599,14 +608,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
         {/* Destination Instruction */}
-        {!hasCalculated && !destId && (
+        {!hasCalculated && !userPickedDestination && (
           <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 text-center animate-fadeIn">
             Tap the map or use the search below to select your destination
           </div>
         )}
 
         {/* 1. MY LOCATION CARD / PICKER */}
-        {!hasCalculated && (
+        {userPickedDestination && !hasCalculated && (
         <div className="relative" ref={locationMenuRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
@@ -750,6 +759,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       setSingleSearchQuery(c.name);
                       setDestSearchQuery(c.name);
                       setIsSingleDropdownOpen(false);
+                      setUserPickedDestination(true);
+                      if (hasCalculated) setNeedsRecalculation(true);
                     }}
                     className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
                   >
@@ -843,7 +854,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 onChange={(e) => {
                   setDestId(e.target.value);
                   const selectedCity = CITIES_AND_JUNCTIONS.find((c) => c.id === e.target.value);
-                  if (selectedCity) setSingleSearchQuery(selectedCity.name);
+                  if (selectedCity) {
+                    setSingleSearchQuery(selectedCity.name);
+                    setUserPickedDestination(true);
+                    if (hasCalculated) setNeedsRecalculation(true);
+                  }
                 }}
                 className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-cyan-500 transition"
               >
@@ -902,7 +917,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
         {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON */}
-        {destId && (
+        {userPickedDestination && (!hasCalculated || needsRecalculation) && (
         <div className="pt-2">
           <button
             onClick={() => handleCalculateRoute()}

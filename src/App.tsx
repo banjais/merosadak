@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useHaptic } from './hooks/useHaptic';
 import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
@@ -34,6 +34,7 @@ import {
   TrafficCorridor,
   VehicleType,
   RoutePreference,
+  RouteSimulationControls,
 } from './types';
 import {
   LIVE_ROAD_INCIDENTS,
@@ -43,7 +44,7 @@ import {
   TRAFFIC_CORRIDORS,
   CITIES_AND_JUNCTIONS,
 } from './data/nepalHighwaysData';
-import { findOptimizedRoute } from './utils/routeOptimizer';
+import { getRoutePointAtDistance } from './utils/routeElevationProfile';
 import {
   Compass,
   AlertTriangle,
@@ -77,6 +78,11 @@ export type ActiveFeatureType = SubViewTab | 'steps' | null;
 function AppContent() {
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
   const [activeRoute, setActiveRoute] = useState<RoutePlanResult | null>(null);
+  const [simulationProgressKm, setSimulationProgressKm] = useState<number>(0);
+  const [isSimulationPlaying, setIsSimulationPlaying] = useState<boolean>(false);
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
+  const [followOnMap, setFollowOnMap] = useState<boolean>(true);
+  const lastMapSyncRef = useRef<number>(0);
   const [plannerOrigin, setPlannerOrigin] = useState<string>('ktm');
   const [plannerDest, setPlannerDest] = useState<string>('pkr');
   const [plannerVehicle, setPlannerVehicle] = useState<VehicleType>('car');

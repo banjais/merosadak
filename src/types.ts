@@ -302,6 +302,18 @@ export interface RouteStep {
   safetyData?: SegmentSafetyData;
 }
 
+export interface RouteSimulationControls {
+  progressKm: number;
+  isPlaying: boolean;
+  speed: number;
+  followOnMap: boolean;
+  onToggle: () => void;
+  onReset: () => void;
+  onSeek: (progressKm: number) => void;
+  onSetSpeed: (speed: number) => void;
+  onToggleFollowOnMap: () => void;
+}
+
 export interface RoutePlanResult {
   id: string;
   origin: CityNode;

@@ -13,7 +13,13 @@ import {
   ReferenceArea,
   Brush,
 } from 'recharts';
-import { RoutePlanResult, VehicleType } from '../types';
+import { RoutePlanResult, RouteSimulationControls, VehicleType } from '../types';
+import {
+  buildRouteElevationProfile,
+  getRouteElevationPosition,
+  RouteElevationProfilePoint,
+  SteepHazardZone,
+} from '../utils/routeElevationProfile';
 import {
   Mountain,
   TrendingUp,
@@ -44,51 +50,12 @@ import {
   Play,
   Pause,
 } from 'lucide-react';
-import { getDistanceKm } from '../utils/geoUtils';
 
-export interface ElevationProfilePoint {
-  distance: number; // km from origin
-  elevation: number; // meters ASL
-  grade: number; // slope gradient percentage (+ incline, - descent)
-  stepIndex: number;
-  instruction: string;
-  highwayCode?: string;
-  surface: string;
-  roadStatus: string;
-  lat: number;
-  lng: number;
-  isSummit?: boolean;
-  isValley?: boolean;
-  isSteepIncline: boolean; // >= steepThreshold (e.g. >8% incline)
-  isExtremeIncline: boolean; // >= 10% incline
-  isSteepDescent: boolean; // <= -steepThreshold
-  landmarkLabel?: string;
-  steepElevation?: number | null; // elevation value if steep, null otherwise for specialized overlays
-}
-
-export interface SteepHazardZone {
-  id: string;
-  title: string;
-  highwayCode?: string;
-  startKm: number;
-  endKm: number;
-  lengthKm: number;
-  startElevation: number;
-  endElevation: number;
-  elevationDiff: number;
-  avgGrade: number;
-  maxGrade: number;
-  direction: 'climb' | 'descent';
-  severity: 'steep' | 'extreme';
-  lat: number;
-  lng: number;
-  vehicleAdvice: string;
-}
 
 export interface RouteElevationProfileChartProps {
   activeRoute?: RoutePlanResult | null;
-  routePlan?: RoutePlanResult | null;
   vehicle?: VehicleType;
+  simulationControls: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title: string; zoom?: number }) => void;
   steepThreshold?: number; // Incline gradient % threshold, default 8.0
 }
@@ -109,16 +76,15 @@ const VEHICLE_OPTIONS: Array<{
 
 export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProps> = ({
   activeRoute,
-  routePlan,
   vehicle: initialVehicleProp,
+  simulationControls,
   onViewOnMap,
   steepThreshold = 8.0,
 }) => {
-  // Normalize route prop from activeRoute or routePlan
-  const route = activeRoute || routePlan;
+  const route = activeRoute;
 
-  const [hoveredPoint, setHoveredPoint] = useState<ElevationProfilePoint | null>(null);
-  const [selectedPoint, setSelectedPoint] = useState<ElevationProfilePoint | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<RouteElevationProfilePoint | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<RouteElevationProfilePoint | null>(null);
 
   // Active vehicle for performance testing (defaults to route vehicle, user can switch)
   const [activeVehicle, setActiveVehicle] = useState<VehicleType>(
@@ -147,11 +113,6 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
   const [showBrush, setShowBrush] = useState<boolean>(false);
   const isDraggingZoomRef = useRef<boolean>(false);
 
-  // Drive simulation states
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simProgressKm, setSimProgressKm] = useState(0);
-  const [simSpeed, setSimSpeed] = useState(1);
-
   // Reset zoom on route change
   useEffect(() => {
     setZoomDomain(null);
@@ -161,7 +122,6 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
     setHoveredPoint(null);
   }, [route?.id, route?.totalDistanceKm]);
 
-  // Dynamically calculate elevation points based on activeRoute coordinates
   const {
     elevationPoints,
     stats,
@@ -169,384 +129,10 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
     steepHazardZones,
     steepPointsCount,
     steepInclineKm,
-  } = useMemo(() => {
-    if (!route) {
-      return {
-        elevationPoints: [],
-        stats: {
-          totalAscent: 0,
-          totalDescent: 0,
-          maxElevation: 0,
-          minElevation: 0,
-          peakSummitName: 'N/A',
-          peakSummitKm: 0,
-          maxGrade: 0,
-          minGrade: 0,
-          avgGrade: 0,
-          steepDistanceKm: 0,
-          extremeDistanceKm: 0,
-          steepDescentDistanceKm: 0,
-        },
-        altitudeZones: {
-          lowlandDistKm: 0,
-          midHillDistKm: 0,
-          highPassDistKm: 0,
-          lowlandPercent: 0,
-          midHillPercent: 0,
-          highPassPercent: 0,
-        },
-        steepHazardZones: [],
-        steepPointsCount: 0,
-        steepInclineKm: 0,
-      };
-    }
-
-    const totalDist = route.totalDistanceKm || 10;
-    const originElev = route.origin?.elevationM ?? 1350;
-    const destElev = route.destination?.elevationM ?? 822;
-    const maxElev = route.maxElevationM ?? Math.max(originElev, destElev, 1480);
-    const steps = route.steps || [];
-
-    // Extract real polyline pathCoordinates
-    const pathCoords: [number, number][] =
-      route.pathCoordinates && route.pathCoordinates.length >= 2
-        ? route.pathCoordinates
-        : [
-            [route.origin.lat, route.origin.lng],
-            [route.destination.lat, route.destination.lng],
-          ];
-
-    // 1. Build step-based elevation checkpoints / milestones
-    let currentStepDist = 0;
-    let currentStepElev = originElev;
-
-    interface Milestone {
-      distance: number;
-      elevation: number;
-      stepIndex: number;
-      instruction: string;
-      highwayCode?: string;
-      surface: string;
-      roadStatus: string;
-    }
-
-    const milestones: Milestone[] = [
-      {
-        distance: 0,
-        elevation: originElev,
-        stepIndex: 0,
-        instruction: `Departure: ${route.origin.name}`,
-        highwayCode: steps[0]?.highwayCode,
-        surface: steps[0]?.surface || 'asphalt_excellent',
-        roadStatus: steps[0]?.roadStatus || 'clear',
-      },
-    ];
-
-    steps.forEach((step, idx) => {
-      const stepDist = step.distanceKm || 1;
-      const stepElevChange = step.elevationChangeM || 0;
-      currentStepDist += stepDist;
-      currentStepElev += stepElevChange;
-
-      // Realistic physical clamp
-      currentStepElev = Math.max(60, Math.min(maxElev + 100, currentStepElev));
-
-      milestones.push({
-        distance: Math.min(totalDist, Math.round(currentStepDist * 10) / 10),
-        elevation: Math.round(currentStepElev),
-        stepIndex: idx,
-        instruction: step.instruction,
-        highwayCode: step.highwayCode,
-        surface: step.surface,
-        roadStatus: step.roadStatus,
-      });
-    });
-
-    // Anchor destination milestone
-    if (milestones.length > 0) {
-      milestones[milestones.length - 1].elevation = destElev;
-      milestones[milestones.length - 1].distance = totalDist;
-    }
-
-    // 2. Measure cumulative distance along actual polyline coordinates
-    const coordCumulativeKm: number[] = [0];
-    let totalPathKm = 0;
-    for (let i = 1; i < pathCoords.length; i++) {
-      const segKm = getDistanceKm(
-        pathCoords[i - 1][0],
-        pathCoords[i - 1][1],
-        pathCoords[i][0],
-        pathCoords[i][1]
-      );
-      totalPathKm += segKm;
-      coordCumulativeKm.push(totalPathKm);
-    }
-
-    // 3. Coordinate interpolation helper
-    const getPointLatLng = (sampleDistKm: number): [number, number] => {
-      if (pathCoords.length <= 1 || sampleDistKm <= 0) {
-        return pathCoords[0];
-      }
-      if (totalPathKm <= 0) {
-        const frac = totalDist > 0 ? Math.min(1, Math.max(0, sampleDistKm / totalDist)) : 0;
-        return [
-          route.origin.lat + (route.destination.lat - route.origin.lat) * frac,
-          route.origin.lng + (route.destination.lng - route.origin.lng) * frac,
-        ];
-      }
-
-      // Find segment along cumulative distance
-      const normalizedPathDist = (sampleDistKm / totalDist) * totalPathKm;
-      for (let i = 0; i < coordCumulativeKm.length - 1; i++) {
-        if (
-          normalizedPathDist >= coordCumulativeKm[i] &&
-          normalizedPathDist <= coordCumulativeKm[i + 1]
-        ) {
-          const span = coordCumulativeKm[i + 1] - coordCumulativeKm[i] || 0.001;
-          const segFrac = Math.max(0, Math.min(1, (normalizedPathDist - coordCumulativeKm[i]) / span));
-          return [
-            pathCoords[i][0] + (pathCoords[i + 1][0] - pathCoords[i][0]) * segFrac,
-            pathCoords[i][1] + (pathCoords[i + 1][1] - pathCoords[i][1]) * segFrac,
-          ];
-        }
-      }
-      return pathCoords[pathCoords.length - 1];
-    };
-
-    // 4. Sample route points dynamically (adapting resolution to distance)
-    const TARGET_SAMPLES = Math.max(45, Math.min(120, Math.round(totalDist * 1.5)));
-    const rawPoints: ElevationProfilePoint[] = [];
-
-    let highestElev = -Infinity;
-    let lowestElev = Infinity;
-    let peakIndex = 0;
-    let valleyIndex = 0;
-
-    for (let i = 0; i <= TARGET_SAMPLES; i++) {
-      const sampleDist = (i / TARGET_SAMPLES) * totalDist;
-
-      // Milestone segment lookup
-      let prevM = milestones[0];
-      let nextM = milestones[milestones.length - 1];
-
-      for (let m = 0; m < milestones.length - 1; m++) {
-        if (sampleDist >= milestones[m].distance && sampleDist <= milestones[m + 1].distance) {
-          prevM = milestones[m];
-          nextM = milestones[m + 1];
-          break;
-        }
-      }
-
-      const segmentSpan = nextM.distance - prevM.distance || 0.001;
-      const t = Math.max(0, Math.min(1, (sampleDist - prevM.distance) / segmentSpan));
-
-      // Cosine ease for natural topography
-      const smoothT = (1 - Math.cos(t * Math.PI)) / 2;
-      let interpElev = prevM.elevation + (nextM.elevation - prevM.elevation) * smoothT;
-
-      // Add gentle mountain undulation for long stretches
-      if (segmentSpan > 12) {
-        const ripple = Math.sin(t * Math.PI) * (Math.abs(nextM.elevation - prevM.elevation) * 0.06 + 8);
-        interpElev += ripple;
-      }
-
-      interpElev = Math.round(Math.max(60, Math.min(maxElev, interpElev)));
-
-      // Calculate slope grade percentage
-      let grade = 0;
-      if (rawPoints.length > 0) {
-        const prevP = rawPoints[rawPoints.length - 1];
-        const dDistKm = sampleDist - prevP.distance;
-        const dElevM = interpElev - prevP.elevation;
-        if (dDistKm > 0) {
-          grade = Math.round((dElevM / (dDistKm * 1000)) * 100 * 10) / 10;
-        }
-      }
-
-      if (interpElev > highestElev) {
-        highestElev = interpElev;
-        peakIndex = i;
-      }
-      if (interpElev < lowestElev) {
-        lowestElev = interpElev;
-        valleyIndex = i;
-      }
-
-      const [pLat, pLng] = getPointLatLng(sampleDist);
-
-      const isSteepIncline = grade >= customSteepThreshold; // Specifically >= steepThreshold (e.g. >8% incline)
-      const isExtremeIncline = grade >= 10.0;
-      const isSteepDescent = grade <= -customSteepThreshold;
-
-      rawPoints.push({
-        distance: Math.round(sampleDist * 10) / 10,
-        elevation: interpElev,
-        grade,
-        stepIndex: prevM.stepIndex,
-        instruction: prevM.instruction,
-        highwayCode: prevM.highwayCode,
-        surface: prevM.surface,
-        roadStatus: prevM.roadStatus,
-        lat: pLat,
-        lng: pLng,
-        isSteepIncline,
-        isExtremeIncline,
-        isSteepDescent,
-        steepElevation: isSteepIncline ? interpElev : null,
-      });
-    }
-
-    // Mark summit and valley milestones
-    if (rawPoints[peakIndex]) {
-      rawPoints[peakIndex].isSummit = true;
-      rawPoints[peakIndex].landmarkLabel = `Summit Pass: ${rawPoints[peakIndex].elevation}m`;
-    }
-    if (rawPoints[valleyIndex] && valleyIndex !== 0 && valleyIndex !== rawPoints.length - 1) {
-      rawPoints[valleyIndex].isValley = true;
-      rawPoints[valleyIndex].landmarkLabel = `Valley Base: ${rawPoints[valleyIndex].elevation}m`;
-    }
-
-    if (rawPoints[0]) rawPoints[0].landmarkLabel = `Start: ${route.origin.name}`;
-    if (rawPoints[rawPoints.length - 1])
-      rawPoints[rawPoints.length - 1].landmarkLabel = `Destination: ${route.destination.name}`;
-
-    // Compute aggregate climbing statistics
-    let totalAscent = 0;
-    let totalDescent = 0;
-    let maxPositiveGrade = 0;
-    let maxNegativeGrade = 0;
-    let steepDist = 0;
-    let extremeDist = 0;
-    let steepDescentDist = 0;
-    let countSteep = 0;
-
-    let lowlandDistKm = 0;
-    let midHillDistKm = 0;
-    let highPassDistKm = 0;
-
-    for (let i = 1; i < rawPoints.length; i++) {
-      const pPrev = rawPoints[i - 1];
-      const pCurr = rawPoints[i];
-      const segDist = pCurr.distance - pPrev.distance;
-      const dElev = pCurr.elevation - pPrev.elevation;
-
-      if (dElev > 0) totalAscent += dElev;
-      else totalDescent += Math.abs(dElev);
-
-      if (pCurr.grade > maxPositiveGrade) maxPositiveGrade = pCurr.grade;
-      if (pCurr.grade < maxNegativeGrade) maxNegativeGrade = pCurr.grade;
-
-      if (pCurr.isSteepIncline) {
-        steepDist += segDist;
-        countSteep++;
-      }
-      if (pCurr.isExtremeIncline) {
-        extremeDist += segDist;
-      }
-      if (pCurr.isSteepDescent) {
-        steepDescentDist += segDist;
-      }
-
-      const avgElev = (pCurr.elevation + pPrev.elevation) / 2;
-      if (avgElev < 500) lowlandDistKm += segDist;
-      else if (avgElev <= 1500) midHillDistKm += segDist;
-      else highPassDistKm += segDist;
-    }
-
-    // Group contiguous steep/extreme gradient segments into identified Steep Hazard Zones
-    const identifiedZones: SteepHazardZone[] = [];
-    let currentCluster: ElevationProfilePoint[] = [];
-
-    rawPoints.forEach((pt) => {
-      if (Math.abs(pt.grade) >= customSteepThreshold - 0.5) {
-        currentCluster.push(pt);
-      } else {
-        if (currentCluster.length >= 2) {
-          const first = currentCluster[0];
-          const last = currentCluster[currentCluster.length - 1];
-          const lengthKm = Math.round((last.distance - first.distance) * 10) / 10;
-          const elevDiff = last.elevation - first.elevation;
-          const maxG = Math.max(...currentCluster.map((p) => Math.abs(p.grade)));
-          const avgG =
-            Math.round(
-              (currentCluster.reduce((acc, p) => acc + p.grade, 0) / currentCluster.length) * 10
-            ) / 10;
-          const midPt = currentCluster[Math.floor(currentCluster.length / 2)];
-
-          const isExtreme = maxG >= 10.0;
-          const direction = elevDiff >= 0 ? 'climb' : 'descent';
-
-          let title = first.instruction || 'Mountain Pass Sector';
-          if (title.length > 38) title = title.substring(0, 35) + '...';
-
-          let vehicleAdvice = '';
-          if (direction === 'climb') {
-            vehicleAdvice = isExtreme
-              ? 'Extreme climb (>10%): Shift to 1st/2nd gear. Monitor engine coolant and EV battery draw.'
-              : `Steep climb (>${customSteepThreshold}%): Downshift to 2nd gear. Turn off AC if engine strains.`;
-          } else {
-            vehicleAdvice = isExtreme
-              ? 'Critical descent: Severe risk of brake fluid boiling! Mandatory low-gear engine braking.'
-              : 'Steep downhill: Downshift to engine brake. Avoid riding footbrake.';
-          }
-
-          identifiedZones.push({
-            id: `zone-${first.distance}-${last.distance}`,
-            title,
-            highwayCode: first.highwayCode,
-            startKm: first.distance,
-            endKm: last.distance,
-            lengthKm: Math.max(0.5, lengthKm),
-            startElevation: first.elevation,
-            endElevation: last.elevation,
-            elevationDiff: Math.round(elevDiff),
-            avgGrade: Math.abs(avgG),
-            maxGrade: Math.round(maxG * 10) / 10,
-            direction,
-            severity: isExtreme ? 'extreme' : 'steep',
-            lat: midPt.lat,
-            lng: midPt.lng,
-            vehicleAdvice,
-          });
-        }
-        currentCluster = [];
-      }
-    });
-
-    const totalAltitudeDist = lowlandDistKm + midHillDistKm + highPassDistKm || 1;
-
-    return {
-      elevationPoints: rawPoints,
-      stats: {
-        totalAscent: Math.round(totalAscent),
-        totalDescent: Math.round(totalDescent),
-        maxElevation: highestElev === -Infinity ? maxElev : highestElev,
-        minElevation: lowestElev === Infinity ? 0 : lowestElev,
-        peakSummitName: rawPoints[peakIndex]?.landmarkLabel || 'Mountain Pass Summit',
-        peakSummitKm: rawPoints[peakIndex]?.distance || 0,
-        maxGrade: maxPositiveGrade,
-        minGrade: maxNegativeGrade,
-        avgGrade:
-          Math.round(
-            (rawPoints.reduce((acc, p) => acc + Math.abs(p.grade), 0) / (rawPoints.length || 1)) * 10
-          ) / 10,
-        steepDistanceKm: Math.round(steepDist * 10) / 10,
-        extremeDistanceKm: Math.round(extremeDist * 10) / 10,
-        steepDescentDistanceKm: Math.round(steepDescentDist * 10) / 10,
-      },
-      altitudeZones: {
-        lowlandDistKm: Math.round(lowlandDistKm * 10) / 10,
-        midHillDistKm: Math.round(midHillDistKm * 10) / 10,
-        highPassDistKm: Math.round(highPassDistKm * 10) / 10,
-        lowlandPercent: Math.round((lowlandDistKm / totalAltitudeDist) * 100),
-        midHillPercent: Math.round((midHillDistKm / totalAltitudeDist) * 100),
-        highPassPercent: Math.round((highPassDistKm / totalAltitudeDist) * 100),
-      },
-      steepHazardZones: identifiedZones,
-      steepPointsCount: countSteep,
-      steepInclineKm: Math.round(steepDist * 10) / 10,
-    };
-  }, [route, customSteepThreshold]);
+  } = useMemo(
+    () => buildRouteElevationProfile(route, customSteepThreshold),
+    [route, customSteepThreshold]
+  );
 
   // Vehicle-specific mechanical strain calculations
   const vehicleImpact = useMemo(() => {
@@ -743,7 +329,7 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
   // Custom Tooltip for Recharts
   const CustomElevationTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
-    const pt: ElevationProfilePoint = payload[0].payload;
+    const pt: RouteElevationProfilePoint = payload[0].payload;
     if (!pt) return null;
 
     const isSteep = pt.grade >= customSteepThreshold;
@@ -840,44 +426,15 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
     route.totalDistanceKm ||
     (elevationPoints.length > 0 ? elevationPoints[elevationPoints.length - 1].distance : 10);
 
-  // Drive simulation animation loop
-  useEffect(() => {
-    if (!isSimulating) return;
-    const interval = setInterval(() => {
-      setSimProgressKm((prev) => {
-        const step = 0.3 * simSpeed;
-        const next = prev + step;
-        if (next >= totalDistanceKm) {
-          setIsSimulating(false);
-          return totalDistanceKm;
-        }
-        return Math.round(next * 10) / 10;
-      });
-    }, 80);
-    return () => clearInterval(interval);
-  }, [isSimulating, simSpeed, totalDistanceKm]);
-
-  // Interpolate current position for simulation marker
-  const simCurrentPosition = useMemo(() => {
-    if (!elevationPoints || elevationPoints.length === 0 || simProgressKm <= 0) {
-      return { distance: 0, elevation: stats.maxElevation || 1200, grade: 0 };
-    }
-    const clampedDist = Math.max(0, Math.min(totalDistanceKm, simProgressKm));
-    let p0 = elevationPoints[0];
-    let p1 = elevationPoints[elevationPoints.length - 1];
-    for (let i = 0; i < elevationPoints.length - 1; i++) {
-      if (elevationPoints[i].distance <= clampedDist && elevationPoints[i + 1].distance >= clampedDist) {
-        p0 = elevationPoints[i];
-        p1 = elevationPoints[i + 1];
-        break;
-      }
-    }
-    const segmentSpan = Math.max(0.001, p1.distance - p0.distance);
-    const ratio = Math.max(0, Math.min(1, (clampedDist - p0.distance) / segmentSpan));
-    const elevation = Math.round(p0.elevation + (p1.elevation - p0.elevation) * ratio);
-    const grade = Math.round((p0.grade + (p1.grade - p0.grade) * ratio) * 10) / 10;
-    return { distance: clampedDist, elevation, grade };
-  }, [elevationPoints, simProgressKm, totalDistanceKm, stats.maxElevation]);
+  const simCurrentPosition = useMemo(
+    () =>
+      getRouteElevationPosition(
+        elevationPoints,
+        simulationControls.progressKm,
+        route
+      ),
+    [elevationPoints, route, simulationControls.progressKm]
+  );
 
   // Standard Y-axis bounds
   const minElevVal = Math.max(0, Math.floor(stats.minElevation / 100) * 100 - 100);
@@ -1146,38 +703,33 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
           <div className="flex items-center gap-1 text-xs bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
             <button
               type="button"
-              onClick={() => {
-                if (isSimulating) {
-                  setIsSimulating(false);
-                } else {
-                  if (simProgressKm >= totalDistanceKm) setSimProgressKm(0);
-                  setIsSimulating(true);
-                }
-              }}
+              onClick={simulationControls.onToggle}
               className="p-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white transition"
-              title={isSimulating ? 'Pause Drive Simulation' : 'Play Drive Simulation'}
+              title={simulationControls.isPlaying ? 'Pause Drive Simulation' : 'Play Drive Simulation'}
+              aria-label={simulationControls.isPlaying ? 'Pause Drive Simulation' : 'Play Drive Simulation'}
             >
-              {isSimulating ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              {simulationControls.isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
             </button>
             <button
               type="button"
-              onClick={() => { setIsSimulating(false); setSimProgressKm(0); }}
+              onClick={simulationControls.onReset}
               className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
               title="Reset Simulation"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
             <select
-              value={simSpeed}
-              onChange={(e) => setSimSpeed(Number(e.target.value))}
+              value={simulationControls.speed}
+              onChange={(e) => simulationControls.onSetSpeed(Number(e.target.value))}
               className="bg-slate-950 text-emerald-300 font-bold border border-emerald-500/30 rounded px-1 py-0.5 text-[10px] focus:outline-none"
+              aria-label="Drive simulation speed"
             >
               <option value={1}>1x</option>
               <option value={2}>2x</option>
               <option value={4}>4x</option>
             </select>
             <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
-              KM {simProgressKm.toFixed(1)} • {simCurrentPosition.elevation}m • {simCurrentPosition.grade > 0 ? '+' : ''}{simCurrentPosition.grade}%
+              KM {simulationControls.progressKm.toFixed(1)} • {simCurrentPosition.elevation}m • {simCurrentPosition.grade > 0 ? '+' : ''}{simCurrentPosition.grade}%
             </span>
           </div>
         </div>
@@ -1636,31 +1188,26 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
               />
             )}
 
-            {/* Drive Simulation Marker */}
-            {isSimulating && simProgressKm > 0 && (
-              <>
-                <ReferenceLine
-                  x={simProgressKm}
-                  stroke="#10b981"
-                  strokeDasharray="3 3"
-                  strokeOpacity={0.8}
-                  label={{
-                    value: `KM ${simProgressKm.toFixed(1)}`,
-                    fill: '#10b981',
-                    fontSize: 9,
-                    position: 'insideTop',
-                  }}
-                />
-                <ReferenceDot
-                  x={simProgressKm}
-                  y={simCurrentPosition.elevation}
-                  r={8}
-                  fill="#10b981"
-                  stroke="#ffffff"
-                  strokeWidth={2}
-                />
-              </>
-            )}
+            <ReferenceLine
+              x={simulationControls.progressKm}
+              stroke={simulationControls.isPlaying ? '#10b981' : '#38bdf8'}
+              strokeDasharray="3 3"
+              strokeOpacity={0.8}
+              label={{
+                value: `KM ${simulationControls.progressKm.toFixed(1)}`,
+                fill: simulationControls.isPlaying ? '#10b981' : '#38bdf8',
+                fontSize: 9,
+                position: 'insideTop',
+              }}
+            />
+            <ReferenceDot
+              x={simulationControls.progressKm}
+              y={simCurrentPosition.elevation}
+              r={8}
+              fill={simulationControls.isPlaying ? '#10b981' : '#38bdf8'}
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
 
             {/* Base Mountain Area */}
             <Area

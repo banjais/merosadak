@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Mountain,
   Compass,
@@ -28,25 +28,22 @@ import {
   ReferenceLine,
   ReferenceDot,
 } from 'recharts';
-import { RoutePlanResult } from '../types';
+import { RoutePlanResult, RouteSimulationControls } from '../types';
+import {
+  buildRouteElevationProfile,
+  getRouteElevationPosition,
+  RouteElevationProfilePoint,
+} from '../utils/routeElevationProfile';
 
 interface ActiveRouteElevationCardProps {
   activeRoute: RoutePlanResult;
+  simulationControls: RouteSimulationControls;
   onOpenPlanner: () => void;
   onClearRoute: () => void;
   onViewOnMap?: (target: { lat: number; lng: number; title: string; zoom?: number }) => void;
 }
 
-interface MiniElevationPoint {
-  distance: number;
-  elevation: number;
-  grade: number;
-  isSteep: boolean;
-  lat: number;
-  lng: number;
-  landmark?: string;
-  stepInstruction?: string;
-}
+type MiniElevationPoint = RouteElevationProfilePoint;
 
 /**
  * Animated SVG Navigation Progress Marker
@@ -282,212 +279,47 @@ const AnimatedElevationProgressMarker: React.FC<AnimatedMarkerProps> = ({
 
 export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> = ({
   activeRoute,
+  simulationControls,
   onOpenPlanner,
   onClearRoute,
   onViewOnMap,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [hoveredPoint, setHoveredPoint] = useState<MiniElevationPoint | null>(null);
-
-  // Navigation simulation & progress tracking
-  const [navProgressKm, setNavProgressKm] = useState<number>(0);
-  const [isNavigating, setIsNavigating] = useState<boolean>(false);
-  const [navSpeed, setNavSpeed] = useState<number>(2); // 1x, 2x, 4x
-  const [followOnMap, setFollowOnMap] = useState<boolean>(true);
-
-  const lastMapSyncRef = useRef<number>(0);
-
-  // Derive elevation points from active route path coordinates and steps
-  const { elevationPoints, stats, steepPointsCount, peakPoint } = useMemo(() => {
-    const coords = activeRoute.pathCoordinates || [];
-    const totalDist = activeRoute.totalDistanceKm || 100;
-    const originAlt = activeRoute.origin.elevationM || 1350;
-    const destAlt = activeRoute.destination.elevationM || 820;
-    const maxPass = activeRoute.maxElevationM || Math.max(originAlt, destAlt, 1500);
-
-    const steps = activeRoute.steps || [];
-    const points: MiniElevationPoint[] = [];
-
-    const numPoints = Math.max(40, Math.min(100, coords.length || 60));
-
-    let prevElev = originAlt;
-    let totalClimb = 0;
-    let steepCount = 0;
-    let highestPoint = { distance: 0, elevation: originAlt, label: 'Summit Pass' };
-
-    for (let i = 0; i < numPoints; i++) {
-      const progress = i / (numPoints - 1);
-      const distance = Math.round(progress * totalDist * 10) / 10;
-
-      // Coordinate matching
-      let lat = activeRoute.origin.lat + (activeRoute.destination.lat - activeRoute.origin.lat) * progress;
-      let lng = activeRoute.origin.lng + (activeRoute.destination.lng - activeRoute.origin.lng) * progress;
-      if (coords.length > 0) {
-        const coordIdx = Math.min(coords.length - 1, Math.floor(progress * coords.length));
-        lat = coords[coordIdx][0];
-        lng = coords[coordIdx][1];
-      }
-
-      // Elevation estimation along Nepal mountain corridors
-      const baseInterpolated = originAlt + (destAlt - originAlt) * progress;
-      const ridgeOffset = Math.sin(progress * Math.PI) * (maxPass - Math.min(originAlt, destAlt));
-      const valleyWave = Math.sin(progress * Math.PI * 4) * 85;
-      const roughElev = Math.round(Math.max(120, baseInterpolated + ridgeOffset * 0.85 + valleyWave));
-
-      // Calculate slope grade %
-      let grade = 0;
-      if (i > 0 && points.length > 0) {
-        const distDiff = Math.max(0.2, distance - points[points.length - 1].distance);
-        const elevDiff = roughElev - prevElev;
-        grade = Math.round((elevDiff / (distDiff * 1000)) * 1000) / 10;
-        if (elevDiff > 0) totalClimb += elevDiff;
-      }
-
-      const isSteep = Math.abs(grade) >= 8.0;
-      if (isSteep) steepCount++;
-
-      // Check if near key step instruction
-      let landmark: string | undefined;
-      const stepIdx = Math.min(steps.length - 1, Math.floor(progress * steps.length));
-      if (steps[stepIdx]) {
-        if (i === 0) landmark = activeRoute.origin.name;
-        else if (i === numPoints - 1) landmark = activeRoute.destination.name;
-        else if (roughElev > highestPoint.elevation) {
-          highestPoint = { distance, elevation: roughElev, label: 'Summit Pass' };
-          landmark = 'Peak Summit';
-        }
-      }
-
-      points.push({
-        distance,
-        elevation: roughElev,
-        grade,
-        isSteep,
-        lat,
-        lng,
-        landmark,
-        stepInstruction: steps[stepIdx]?.instruction || `Highway chainage km ${distance}`,
-      });
-
-      prevElev = roughElev;
-    }
-
-    const minElev = Math.min(...points.map((p) => p.elevation));
-    const maxElev = Math.max(...points.map((p) => p.elevation));
-
-    return {
-      elevationPoints: points,
-      stats: {
-        minElev,
-        maxElev,
-        totalClimb: Math.round(activeRoute.elevationGainM || totalClimb),
-      },
-      steepPointsCount: steepCount,
-      peakPoint: highestPoint,
-    };
-  }, [activeRoute]);
-
   const totalDist = activeRoute.totalDistanceKm || 100;
+
+  const profile = useMemo(
+    () => buildRouteElevationProfile(activeRoute, 8),
+    [activeRoute]
+  );
+  const elevationPoints = profile.elevationPoints;
+  const peakPoint = elevationPoints.reduce<RouteElevationProfilePoint | null>(
+    (peak, point) => (!peak || point.elevation > peak.elevation ? point : peak),
+    null
+  );
+  const stats = {
+    minElev: profile.stats.minElevation,
+    maxElev: profile.stats.maxElevation,
+    totalClimb: profile.stats.totalAscent,
+  };
+  const steepPointsCount = profile.steepPointsCount;
   const yMin = Math.max(0, Math.floor(stats.minElev / 100) * 100 - 100);
   const yMax = Math.ceil(stats.maxElev / 100) * 100 + 100;
 
-  // Initialize progress to a sensible starting position (e.g. 10% into the trip)
-  useEffect(() => {
-    if (navProgressKm === 0 && totalDist > 0) {
-      setNavProgressKm(Math.round(totalDist * 0.12 * 10) / 10);
-    }
-  }, [totalDist]);
-
-  // Current interpolated position for the navigation progress marker
   const currentNavPosition = useMemo(() => {
-    if (!elevationPoints || elevationPoints.length === 0) {
-      return {
-        distance: 0,
-        elevation: 1200,
-        grade: 0,
-        tiltAngle: 0,
-        lat: activeRoute.origin.lat,
-        lng: activeRoute.origin.lng,
-        landmark: activeRoute.origin.name,
-        stepInstruction: 'Starting journey',
-      };
-    }
-
-    const clampedDist = Math.max(0, Math.min(totalDist, navProgressKm));
-
-    // Find bounding points in elevationPoints
-    let p0 = elevationPoints[0];
-    let p1 = elevationPoints[elevationPoints.length - 1];
-
-    for (let i = 0; i < elevationPoints.length - 1; i++) {
-      if (elevationPoints[i].distance <= clampedDist && elevationPoints[i + 1].distance >= clampedDist) {
-        p0 = elevationPoints[i];
-        p1 = elevationPoints[i + 1];
-        break;
-      }
-    }
-
-    const segmentSpan = Math.max(0.001, p1.distance - p0.distance);
-    const ratio = Math.max(0, Math.min(1, (clampedDist - p0.distance) / segmentSpan));
-
-    const elevation = Math.round(p0.elevation + (p1.elevation - p0.elevation) * ratio);
-    const grade = Math.round((p0.grade + (p1.grade - p0.grade) * ratio) * 10) / 10;
-    const lat = p0.lat + (p1.lat - p0.lat) * ratio;
-    const lng = p0.lng + (p1.lng - p0.lng) * ratio;
-
-    // Tilt angle in degrees matching mountain grade (-25 deg downhill to +25 deg uphill)
-    const tiltAngle = Math.max(-25, Math.min(25, -grade * 1.5));
-
+    const position = getRouteElevationPosition(
+      elevationPoints,
+      simulationControls.progressKm,
+      activeRoute
+    );
     return {
-      distance: clampedDist,
-      elevation,
-      grade,
-      tiltAngle,
-      lat,
-      lng,
-      landmark: p1.landmark || p0.landmark,
-      stepInstruction: p1.stepInstruction || p0.stepInstruction,
+      ...position,
+      tiltAngle: Math.max(-25, Math.min(25, -position.grade * 1.5)),
     };
-  }, [elevationPoints, navProgressKm, totalDist, activeRoute]);
+  }, [activeRoute, elevationPoints, simulationControls.progressKm]);
 
-  // Animated Navigation Loop: simulates vehicle progressing along the route
-  useEffect(() => {
-    if (!isNavigating) return;
-
-    const interval = setInterval(() => {
-      setNavProgressKm((prev) => {
-        // Step size based on navSpeed (e.g. 0.35 km per 80ms tick)
-        const step = 0.3 * navSpeed;
-        const next = prev + step;
-        if (next >= totalDist) {
-          setIsNavigating(false);
-          return totalDist;
-        }
-        return Math.round(next * 10) / 10;
-      });
-    }, 80);
-
-    return () => clearInterval(interval);
-  }, [isNavigating, navSpeed, totalDist]);
-
-  // Sync with interactive map when navigating with followOnMap enabled
-  useEffect(() => {
-    if (!followOnMap || !onViewOnMap) return;
-
-    const now = Date.now();
-    // Throttle map centering calls to avoid jitter (at most once every 900ms)
-    if (now - lastMapSyncRef.current > 900) {
-      lastMapSyncRef.current = now;
-      onViewOnMap({
-        lat: currentNavPosition.lat,
-        lng: currentNavPosition.lng,
-        title: `Navigation Progress: KM ${currentNavPosition.distance} (${currentNavPosition.elevation}m ASL)`,
-        zoom: 13,
-      });
-    }
-  }, [currentNavPosition, followOnMap, onViewOnMap]);
-
-  const progressPercent = Math.round((navProgressKm / totalDist) * 100);
+  const isNavigating = simulationControls.isPlaying;
+  const progressPercent = Math.round((simulationControls.progressKm / totalDist) * 100);
 
   return (
     <div
@@ -624,12 +456,12 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                 onClick={(state: any) => {
                   if (state && state.activePayload && state.activePayload[0]) {
                     const pt: MiniElevationPoint = state.activePayload[0].payload;
-                    setNavProgressKm(pt.distance);
+                    simulationControls.onSeek(pt.distance);
                     if (onViewOnMap) {
                       onViewOnMap({
                         lat: pt.lat,
                         lng: pt.lng,
-                        title: `${pt.landmark || 'Elevation Point'}: ${pt.elevation}m ASL (${pt.grade > 0 ? '+' : ''}${pt.grade}%)`,
+                        title: `${pt.landmarkLabel || 'Elevation Point'}: ${pt.elevation}m ASL (${pt.grade > 0 ? '+' : ''}${pt.grade}%)`,
                         zoom: 13,
                       });
                     }
@@ -673,7 +505,7 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                           <span>KM {pt.distance}</span>
                           <span
                             className={
-                              pt.isSteep
+                              pt.isSteepIncline
                                 ? 'text-red-400 font-black'
                                 : pt.grade > 0
                                 ? 'text-amber-400'
@@ -686,9 +518,9 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                         <div className="text-sm font-extrabold text-white font-mono">
                           {pt.elevation.toLocaleString()}m <span className="text-[10px] text-slate-400 font-normal">ASL</span>
                         </div>
-                        {pt.landmark && (
+                        {pt.landmarkLabel && (
                           <div className="text-[10px] font-semibold text-amber-300">
-                            ⛰️ {pt.landmark}
+                            ⛰️ {pt.landmarkLabel}
                           </div>
                         )}
                         <div className="text-[9px] text-slate-400 leading-tight line-clamp-2">
@@ -813,8 +645,8 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                 min="0"
                 max={totalDist}
                 step="0.1"
-                value={navProgressKm}
-                onChange={(e) => setNavProgressKm(parseFloat(e.target.value))}
+                value={simulationControls.progressKm}
+                onChange={(e) => simulationControls.onSeek(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300 transition"
                 aria-label="Route navigation progress along elevation path"
               />
@@ -825,7 +657,7 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
               {/* Playback Controls */}
               <div className="flex items-center space-x-1">
                 <button
-                  onClick={() => setIsNavigating(!isNavigating)}
+                  onClick={simulationControls.onToggle}
                   className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg font-bold text-xs transition shadow-sm ${
                     isNavigating
                       ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'
@@ -847,10 +679,7 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                 </button>
 
                 <button
-                  onClick={() => {
-                    setIsNavigating(false);
-                    setNavProgressKm(0);
-                  }}
+                  onClick={simulationControls.onReset}
                   className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
                   title="Reset to Route Start"
                 >
@@ -859,20 +688,24 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
 
                 {/* Speed Multiplier */}
                 <button
-                  onClick={() => setNavSpeed((s) => (s === 1 ? 2 : s === 2 ? 4 : 1))}
+                  onClick={() =>
+                    simulationControls.onSetSpeed(
+                      simulationControls.speed === 1 ? 2 : simulationControls.speed === 2 ? 4 : 1
+                    )
+                  }
                   className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 font-mono font-bold transition text-[10px]"
                   title="Simulation Speed Multiplier"
                 >
-                  {navSpeed}x
+                  {simulationControls.speed}x
                 </button>
               </div>
 
               {/* Map Sync & Summit Shortcuts */}
               <div className="flex items-center space-x-1.5">
                 <button
-                  onClick={() => setFollowOnMap(!followOnMap)}
+                  onClick={simulationControls.onToggleFollowOnMap}
                   className={`flex items-center space-x-1 px-1.5 py-0.5 rounded transition ${
-                    followOnMap
+                    simulationControls.followOnMap
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                       : 'text-slate-400 hover:text-slate-300 bg-slate-800/60'
                   }`}
@@ -884,7 +717,7 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
 
                 {peakPoint && (
                   <button
-                    onClick={() => setNavProgressKm(peakPoint.distance)}
+                    onClick={() => simulationControls.onSeek(peakPoint.distance)}
                     className="flex items-center space-x-1 px-1.5 py-0.5 rounded text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition"
                     title={`Jump to Summit Pass (${peakPoint.elevation}m)`}
                   >
