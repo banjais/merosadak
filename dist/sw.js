@@ -10,6 +10,7 @@ const CACHE_NAMES = {
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
+  '/manifest.json',
 ];
 
 // Core API endpoints to cache for offline mountain travel
@@ -81,14 +82,17 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate Event: Clean up outdated caches
+// Activate Event: Clean up outdated caches only (preserve current version)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       try {
         const allCacheKeys = await caches.keys();
+        const currentCaches = Object.values(CACHE_NAMES);
         await Promise.all(
-          allCacheKeys.map((key) => caches.delete(key))
+          allCacheKeys
+            .filter((key) => !currentCaches.includes(key) && key.startsWith('mero-sadak-'))
+            .map((key) => caches.delete(key))
         );
       } catch (err) {
         console.warn('[SW] Cache cleanup skipped:', err);
@@ -117,6 +121,12 @@ function isApiRequest(url) {
   return u.pathname.startsWith('/api/');
 }
 
+// Helper: Check if request is for manifest.json
+function isManifestRequest(url) {
+  const u = new URL(url, self.location.href);
+  return u.pathname === '/manifest.json';
+}
+
 // Fetch Event Router
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
@@ -128,6 +138,40 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-http(s) schemes (e.g. chrome-extension, data, blob)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  // Strategy 0: Manifest -> Cache-First (critical for PWA)
+  if (isManifestRequest(event.request.url)) {
+    event.respondWith(
+      (async () => {
+        try {
+          const staticCache = await caches.open(CACHE_NAMES.STATIC);
+          const cached = await staticCache.match(event.request);
+          if (cached) return cached;
+
+          const networkRes = await fetch(event.request);
+          if (networkRes && networkRes.status === 200) {
+            staticCache.put(event.request, networkRes.clone());
+          }
+          return networkRes;
+        } catch {
+          // Return minimal valid manifest to prevent PWA install failure
+          return new Response(JSON.stringify({
+            name: 'Mero Sadak',
+            short_name: 'MeroSadak',
+            start_url: '/',
+            display: 'standalone',
+            background_color: '#070f1e',
+            theme_color: '#070f1e',
+            icons: []
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      })()
+    );
     return;
   }
 
