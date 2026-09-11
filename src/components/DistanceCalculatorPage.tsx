@@ -273,46 +273,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 Please choose different origin and destination locations.
               </div>
             )}
-
-            {/* Toggle Controls */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button
-                onClick={() => setShowCorridors(!showCorridors)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700 flex items-center space-x-2"
-              >
-                <span>{showCorridors ? 'Hide' : 'Show'} All Corridors</span>
-                <span className="text-[10px] text-slate-400">({CITIES_AND_JUNCTIONS.length} cities)</span>
-              </button>
-              <button
-                onClick={() => setShowDistanceMatrix(!showDistanceMatrix)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700 flex items-center space-x-2"
-              >
-                <span>{showDistanceMatrix ? 'Hide' : 'Show'} Distance Matrix</span>
-                <span className="text-[10px] text-slate-400">(full table)</span>
-              </button>
-            </div>
           </div>
-
-          {/* All Corridors List */}
-          {showCorridors && (
-            <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
-              <h3 className="text-lg font-bold text-white">All Highway Corridors</h3>
-              <p className="text-xs text-slate-400">Complete list of all {CITIES_AND_JUNCTIONS.length} cities and junctions in the network.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {CITIES_AND_JUNCTIONS.map((city) => (
-                  <div key={city.id} className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-bold text-white">{city.name}</div>
-                      <div className="text-[11px] text-slate-400">{city.district} • {city.elevationM}m</div>
-                    </div>
-                    {city.isMajorHub && (
-                      <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full border border-emerald-500/30">HUB</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Full Distance Matrix Table */}
           {showDistanceMatrix && (
