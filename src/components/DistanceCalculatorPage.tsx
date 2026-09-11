@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
-import { CityNode, VehicleType } from '../types';
-import { Calculator, ArrowRight, Car, ArrowUpDown, MapPin, ChevronDown, ArrowLeft } from 'lucide-react';
+import { CityNode } from '../types';
+import { Calculator, ArrowRight, ArrowUpDown, MapPin, ChevronDown, ArrowLeft } from 'lucide-react';
 
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
@@ -12,7 +12,6 @@ interface DistanceCalculatorPageProps {
 export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack, onPlanFullRoute }) => {
   const [originId, setOriginId] = useState<string>('ktm');
   const [destId, setDestId] = useState<string>('pkr');
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('car');
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
@@ -26,7 +25,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setDestId(temp);
   };
 
-  const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', selectedVehicle) : null;
+  const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
   const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
 
   const handleSelectOrigin = (cityId: string) => {
@@ -163,24 +162,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               </div>
             </div>
 
-            {/* Vehicle Selector */}
-            <div className="flex items-center space-x-4 pt-2 border-t border-slate-800">
-              <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
-                <Car className="w-3.5 h-3.5 text-slate-400" />
-                <span>Vehicle Type</span>
-              </label>
-              <select
-                value={selectedVehicle}
-                onChange={(e) => setSelectedVehicle(e.target.value as VehicleType)}
-                className="bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-              >
-                <option value="car">Car / SUV</option>
-                <option value="bike">Motorcycle</option>
-                <option value="bus">Bus / Truck</option>
-              </select>
-            </div>
-
-            {/* Calculation Result Display */}
+        {/* Calculation Result Display */}
             {routeResult ? (
               <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">

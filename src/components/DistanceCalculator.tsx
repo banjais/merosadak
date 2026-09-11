@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
-import { CityNode, VehicleType } from '../types';
+import { CityNode } from '../types';
 import { ArrowRight, Car, ArrowUpDown, MapPin, ChevronDown } from 'lucide-react';
 
 interface DistanceCalculatorProps {
@@ -11,7 +11,6 @@ interface DistanceCalculatorProps {
 export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFullRoute }) => {
   const [originId, setOriginId] = useState<string>('ktm');
   const [destId, setDestId] = useState<string>('pkr');
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('car');
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
@@ -26,7 +25,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
   };
 
   // Calculate route between chosen pair
-  const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', selectedVehicle) : null;
+  const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
   const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
 
   // Key hubs for distance matrix
