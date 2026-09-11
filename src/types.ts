@@ -366,6 +366,8 @@ export interface RoutePlanResult {
     bestDepartureWindow: string;
     emergencyContacts: string[];
   };
+   dataSource?: string;
+  corridorsTraversed?: string;
 }
 
 export interface UserRoadReport {

@@ -16,6 +16,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
+  const [showCorridors, setShowCorridors] = useState(false);
+  const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
 
   const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0];
   const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destId) || CITIES_AND_JUNCTIONS[1];
@@ -28,8 +30,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', selectedVehicle) : null;
   const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
-
-  const keyHubs = CITIES_AND_JUNCTIONS.filter((c) => c.isMajorHub);
 
   const handleSelectOrigin = (cityId: string) => {
     setOriginId(cityId);
@@ -290,74 +290,115 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 Please choose different origin and destination locations.
               </div>
             )}
+
+            {/* Toggle Controls */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                onClick={() => setShowCorridors(!showCorridors)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700 flex items-center space-x-2"
+              >
+                <span>{showCorridors ? 'Hide' : 'Show'} All Corridors</span>
+                <span className="text-[10px] text-slate-400">({CITIES_AND_JUNCTIONS.length} cities)</span>
+              </button>
+              <button
+                onClick={() => setShowDistanceMatrix(!showDistanceMatrix)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700 flex items-center space-x-2"
+              >
+                <span>{showDistanceMatrix ? 'Hide' : 'Show'} Distance Matrix</span>
+                <span className="text-[10px] text-slate-400">(full table)</span>
+              </button>
+            </div>
           </div>
 
-          {/* Comprehensive City-to-City Distance Matrix Table */}
-          <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-bold text-white">Nepal Major Hubs Distance Matrix (km)</h3>
-                <p className="text-xs text-slate-400">Click any cell to load the calculation instantly into the calculator.</p>
+          {/* All Corridors List */}
+          {showCorridors && (
+            <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+              <h3 className="text-lg font-bold text-white">All Highway Corridors</h3>
+              <p className="text-xs text-slate-400">Complete list of all {CITIES_AND_JUNCTIONS.length} cities and junctions in the network.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {CITIES_AND_JUNCTIONS.map((city) => (
+                  <div key={city.id} className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-bold text-white">{city.name}</div>
+                      <div className="text-[11px] text-slate-400">{city.district} • {city.elevationM}m</div>
+                    </div>
+                    {city.isMajorHub && (
+                      <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-full border border-emerald-500/30">HUB</span>
+                    )}
+                  </div>
+                ))}
               </div>
-              <input
-                type="text"
-                placeholder="Filter matrix hubs..."
-                value={matrixFilter}
-                onChange={(e) => setMatrixFilter(e.target.value)}
-                className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-              />
             </div>
+          )}
 
-            <div className="overflow-x-auto rounded-xl border border-slate-800">
-              <table className="w-full text-center text-xs text-slate-300">
-                <thead className="bg-slate-950 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  <tr>
-                    <th className="py-2.5 px-3 text-left bg-slate-900 sticky left-0 z-10 border-r border-slate-800">City Hub</th>
-                    {keyHubs
+          {/* Full Distance Matrix Table */}
+          {showDistanceMatrix && (
+            <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Nepal Full Distance Matrix (km)</h3>
+                  <p className="text-xs text-slate-400">All {CITIES_AND_JUNCTIONS.length} cities and junctions. Click any cell to calculate that route.</p>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Filter cities..."
+                  value={matrixFilter}
+                  onChange={(e) => setMatrixFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-slate-800">
+                <table className="w-full text-center text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-3 text-left bg-slate-900 sticky left-0 z-10 border-r border-slate-800">City</th>
+                      {CITIES_AND_JUNCTIONS
+                        .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
+                        .map((hub) => (
+                          <th key={hub.id} className="py-2.5 px-3 whitespace-nowrap">
+                            {hub.name.split(' ')[0]}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {CITIES_AND_JUNCTIONS
                       .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                      .map((hub) => (
-                        <th key={hub.id} className="py-2.5 px-3 whitespace-nowrap">
-                          {hub.name.split(' ')[0]}
-                        </th>
-                      ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {keyHubs
-                    .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                    .map((rowHub) => (
-                      <tr key={rowHub.id} className="hover:bg-slate-850/40 transition">
-                        <td className="py-2.5 px-3 text-left font-bold text-white bg-slate-900/95 sticky left-0 z-10 border-r border-slate-800 whitespace-nowrap">
-                          {rowHub.name.split(' ')[0]} <span className="text-[10px] text-slate-500 font-normal">({rowHub.elevationM}m)</span>
-                        </td>
-                        {keyHubs
-                          .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                          .map((colHub) => {
-                            if (rowHub.id === colHub.id) {
+                      .map((rowHub) => (
+                        <tr key={rowHub.id} className="hover:bg-slate-850/40 transition">
+                          <td className="py-2.5 px-3 text-left font-bold text-white bg-slate-900/95 sticky left-0 z-10 border-r border-slate-800 whitespace-nowrap">
+                            {rowHub.name.split(' ')[0]} <span className="text-[10px] text-slate-500 font-normal">({rowHub.elevationM}m)</span>
+                          </td>
+                          {CITIES_AND_JUNCTIONS
+                            .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
+                            .map((colHub) => {
+                              if (rowHub.id === colHub.id) {
+                                return (
+                                  <td key={colHub.id} className="py-2.5 px-3 text-slate-600 bg-slate-950/40">
+                                    -
+                                  </td>
+                                );
+                              }
+                              const dist = findOptimizedRoute(rowHub.id, colHub.id, 'fastest', 'car')?.totalDistanceKm || calculateDirectDistanceKm(rowHub.lat, rowHub.lng, colHub.lat, colHub.lng);
                               return (
-                                <td key={colHub.id} className="py-2.5 px-3 text-slate-600 bg-slate-950/40">
-                                  -
+                                <td
+                                  key={colHub.id}
+                                  onClick={() => handleMatrixCellClick(rowHub.id, colHub.id)}
+                                  className="py-2.5 px-3 font-semibold text-slate-200 hover:bg-emerald-500/20 hover:text-emerald-300 cursor-pointer transition"
+                                  title={`${rowHub.name} to ${colHub.name}`}
+                                >
+                                  {dist}
                                 </td>
                               );
-                            }
-                            const dist = findOptimizedRoute(rowHub.id, colHub.id, 'fastest', 'car')?.totalDistanceKm || calculateDirectDistanceKm(rowHub.lat, rowHub.lng, colHub.lat, colHub.lng);
-                            return (
-                              <td
-                                key={colHub.id}
-                                onClick={() => handleMatrixCellClick(rowHub.id, colHub.id)}
-                                className="py-2.5 px-3 font-semibold text-slate-200 hover:bg-emerald-500/20 hover:text-emerald-300 cursor-pointer transition"
-                                title={`Calculate ${rowHub.name} to ${colHub.name}`}
-                              >
-                                {dist}
-                              </td>
-                            );
-                          })}
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+                            })}
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
     </div>

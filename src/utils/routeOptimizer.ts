@@ -47,8 +47,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'mgl',
     toId: 'dml',
-    distanceKm: 44,
-    baseTimeMinutes: 75,
+    distanceKm: 84,
+    baseTimeMinutes: 135,
     highwayCode: 'H04',
     highwayName: 'Prithvi Highway (Tanahun)',
     surface: 'under_construction',
@@ -60,8 +60,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'dml',
     toId: 'pkr',
-    distanceKm: 42,
-    baseTimeMinutes: 55,
+    distanceKm: 86,
+    baseTimeMinutes: 90,
     highwayCode: 'H04',
     highwayName: 'Prithvi Highway (Pokhara entry)',
     surface: 'asphalt_excellent',
@@ -73,8 +73,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'mgl',
     toId: 'cht',
-    distanceKm: 36,
-    baseTimeMinutes: 50,
+    distanceKm: 18,
+    baseTimeMinutes: 30,
     highwayCode: 'H05',
     highwayName: 'Narayanghat-Mugling Road',
     surface: 'asphalt_excellent',
@@ -99,8 +99,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'htd',
     toId: 'brg',
-    distanceKm: 54,
-    baseTimeMinutes: 55,
+    distanceKm: 105,
+    baseTimeMinutes: 90,
     highwayCode: 'H02',
     highwayName: 'Tribhuvan Highway (Terai Section)',
     surface: 'asphalt_excellent',
@@ -112,8 +112,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'nbz',
     toId: 'htd',
-    distanceKm: 106,
-    baseTimeMinutes: 200,
+    distanceKm: 132,
+    baseTimeMinutes: 240,
     highwayCode: 'H02',
     highwayName: 'Tribhuvan Highway (Daman Pass)',
     surface: 'blacktopped_fair',
@@ -151,8 +151,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'btl',
     toId: 'plp',
-    distanceKm: 39,
-    baseTimeMinutes: 60,
+    distanceKm: 61,
+    baseTimeMinutes: 90,
     highwayCode: 'H10',
     highwayName: 'Siddhartha Highway (Siddhababa section)',
     surface: 'blacktopped_fair',
@@ -164,8 +164,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'plp',
     toId: 'pkr',
-    distanceKm: 120,
-    baseTimeMinutes: 170,
+    distanceKm: 159,
+    baseTimeMinutes: 220,
     highwayCode: 'H10',
     highwayName: 'Siddhartha Highway (Syangja section)',
     surface: 'asphalt_excellent',
@@ -203,8 +203,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'dhk',
     toId: 'kdr',
-    distanceKm: 83,
-    baseTimeMinutes: 155,
+    distanceKm: 113,
+    baseTimeMinutes: 200,
     highwayCode: 'H03',
     highwayName: 'Araniko Highway (Bhotekoshi Gorge)',
     surface: 'blacktopped_fair',
@@ -294,8 +294,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'brt',
     toId: 'kkr',
-    distanceKm: 105,
-    baseTimeMinutes: 105,
+    distanceKm: 62,
+    baseTimeMinutes: 75,
     highwayCode: 'H01',
     highwayName: 'Mahendra Highway (Jhapa-Morang 4-lane)',
     surface: 'asphalt_excellent',
@@ -372,8 +372,8 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   {
     fromId: 'dhg',
     toId: 'mhn',
-    distanceKm: 52,
-    baseTimeMinutes: 50,
+    distanceKm: 217,
+    baseTimeMinutes: 210,
     highwayCode: 'H01',
     highwayName: 'Mahendra Highway (Far Western Terminus)',
     surface: 'asphalt_excellent',
@@ -816,6 +816,8 @@ export function findRouteByPreference(
       timeDiffMinutes: preference === 'fastest' ? 45 : -25,
       reason: viaHighways
     },
+    dataSource: 'Department of Roads, Nepal',
+    corridorsTraversed: viaHighways,
     aiAdvisory: {
       summary: `Travel route between ${origin.name} and ${destination.name} via ${viaShort} is currently ${roadConditionScore > 75 ? 'Optimal' : 'Moderate with caution zones'}. Total distance is ${totalDistanceKm} km with an estimated drive time of ${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m.${hasActiveTerrainFilters ? ' (Terrain optimization filters active).' : ''}`,
       riskLevel: roadConditionScore > 75 ? 'Low' : roadConditionScore > 50 ? 'Moderate' : 'High',

@@ -1,0 +1,397 @@
+{
+  "NH01": {
+    "name": "Existing East-West Highway",
+    "totalLengthKm": 2055.260000000001,
+    "segmentCount": 140
+  },
+  "NH02": {
+    "name": "Kechana-Chandragadhi-Charali-Ilam-Phidim, Ganeshchok-Taplejung-Olanchungola (Mechi Ragmarg)",
+    "totalLengthKm": 775.1999999999999,
+    "segmentCount": 26
+  },
+  "NH03": {
+    "name": "Pushpalal Mid Hill Highway",
+    "totalLengthKm": 3517.2799999999993,
+    "segmentCount": 182
+  },
+  "NH04": {
+    "name": "Birtamod-Chandragadi-Bhadrapur-Mechi Pul",
+    "totalLengthKm": 25.06,
+    "segmentCount": 2
+  },
+  "NH05": {
+    "name": "Postal Highway",
+    "totalLengthKm": 2032,
+    "segmentCount": 84
+  },
+  "NH06": {
+    "name": "Chatara-Mulghat-Majhitar-Amarapurdanda-Ganeshchok (Tamor Corridor)",
+    "totalLengthKm": 270,
+    "segmentCount": 10
+  },
+  "NH07": {
+    "name": "Pakali-Naya Koshipul-Rupnagar, Pakali-Nadaha Koshipul Chatara",
+    "totalLengthKm": 172.38,
+    "segmentCount": 10
+  },
+  "NH08": {
+    "name": "Rani-Biratnagar-Itahari-Dharan-Dhankuta-Hile, Leguwaghat-Tumlingtar-Khandbari-Num-Kimathanka (Koshi Rajmarg)",
+    "totalLengthKm": 640,
+    "segmentCount": 32
+  },
+  "NH09": {
+    "name": "Bahundangi-Shantinagar-Dharan-Chatara-Ghaighat-Katari Sindhulimadi-Hetauda-Gaidakot-Rampur-Ramdi-Ridi-Balkot-Sandhikharka-Bijuwar-Sitalpati-Surkhet-Baddichaur-Sahajpur-Budar-Jogbudha-Rupal (Madan Bhandari Rajmarg)",
+    "totalLengthKm": 2157.879999999999,
+    "segmentCount": 84
+  },
+  "NH10": {
+    "name": "Deurali-Mudhe-Chainpur-Bohoratar",
+    "totalLengthKm": 150,
+    "segmentCount": 8
+  },
+  "NH11": {
+    "name": "Phikkal-Shreeantu-Chabbise, Ilam",
+    "totalLengthKm": 49.42,
+    "segmentCount": 2
+  },
+  "NH12": {
+    "name": "Ghurmi-Chatara Udayapur",
+    "totalLengthKm": 242.62,
+    "segmentCount": 10
+  },
+  "NH13": {
+    "name": "Bardibas-Sindhuli-Khurkot-Dhulikhel (B.P. Rajmarg)",
+    "totalLengthKm": 295,
+    "segmentCount": 10
+  },
+  "NH14": {
+    "name": "Gaighat-Mahuli Khola-Rupani-Rajbiraj-Chhinnamasta Niur, Kunauli-Rajbiraj-Kanchanpur Barrier-Phattepur-Basaha Udayapur",
+    "totalLengthKm": 113.05999999999997,
+    "segmentCount": 14
+  },
+  "NH15": {
+    "name": "Gwarko-Lubhu-Lakuribhanjyang-Kushadevi-Panauti-Dahaltar",
+    "totalLengthKm": 93.9,
+    "segmentCount": 6
+  },
+  "NH16": {
+    "name": "Thadi-Bhagawanpur-Lahan, Kadmahachok-Gaighat-Mohure-Kharpa-Solu",
+    "totalLengthKm": 351.96000000000004,
+    "segmentCount": 14
+  },
+  "NH17": {
+    "name": "Naubise-Mugling-Pokhara (Prithvi Rajmarg)",
+    "totalLengthKm": 346.82000000000005,
+    "segmentCount": 24
+  },
+  "NH18": {
+    "name": "Balaju-Trishuli-Dhunche-Syaphrubesi",
+    "totalLengthKm": 216.04000000000002,
+    "segmentCount": 14
+  },
+  "NH19": {
+    "name": "Ridi-Balkot-Hanshpur-Pyuthan, Pyuthan-Surkhet Road",
+    "totalLengthKm": 467.80000000000007,
+    "segmentCount": 30
+  },
+  "NH20": {
+    "name": "Madar-Chauharwa, Mirchaiya-Katari-Ghurmi, Hilepani-Okhaldhunga-Salleri",
+    "totalLengthKm": 391.21999999999997,
+    "segmentCount": 16
+  },
+  "NH21": {
+    "name": "Sitapaila-Dharke",
+    "totalLengthKm": 46.4,
+    "segmentCount": 6
+  },
+  "NH22": {
+    "name": "Dhalkebar-Janakpur-Jatahi, Ghorghans-Nimchaur-Thalahighat-Akraharghat",
+    "totalLengthKm": 87.26,
+    "segmentCount": 8
+  },
+  "NH23": {
+    "name": "Diktel-Solu-Junbesi-Khahare-Jiribazar-Tamakoshi -Charikot-Khadichaur",
+    "totalLengthKm": 715.44,
+    "segmentCount": 18
+  },
+  "NH24": {
+    "name": "Lalgadh-Ranibas (R.T.O. Road)-Bishmat-Bahunmara-B.P. Rajmarg",
+    "totalLengthKm": 39.22,
+    "segmentCount": 4
+  },
+  "NH25": {
+    "name": "Dumre-Beshisahar-Chame",
+    "totalLengthKm": 216.82,
+    "segmentCount": 10
+  },
+  "NH26": {
+    "name": "Jamunibas-Bateshwar-Shantipur-Kurtha-Janakpur",
+    "totalLengthKm": 47.599999999999994,
+    "segmentCount": 4
+  },
+  "NH28": {
+    "name": "Bhittamod-Jaleswor-Bardibas, Khurkot-Manthali-Tamakoshi-Singati-Lamagagar-Lapchegaun",
+    "totalLengthKm": 393.1400000000001,
+    "segmentCount": 22
+  },
+  "NH29": {
+    "name": "Kanchanban-Janaki Medical College-Mithileshwar Sabaila-Siraha-Naktajijh-Ramlaxman Chowk-Healthpost Mahendra Rajmarg",
+    "totalLengthKm": 43.96,
+    "segmentCount": 8
+  },
+  "NH30": {
+    "name": "Janakpur (Mujeliya) Dhanushadham-Dharapani Ramayan Circuit, Tarapatti-Pathara-Ma. Ra.Ma. - Pushpalpur",
+    "totalLengthKm": 51.92,
+    "segmentCount": 4
+  },
+  "NH31": {
+    "name": "Dolalghat-Chautara",
+    "totalLengthKm": 50.24,
+    "segmentCount": 2
+  },
+  "NH32": {
+    "name": "Nawalpur-Malangawa-Sonbarsha",
+    "totalLengthKm": 58.379999999999995,
+    "segmentCount": 6
+  },
+  "NH33": {
+    "name": "Nijgadh-Kathmandu",
+    "totalLengthKm": 163.6,
+    "segmentCount": 8
+  },
+  "NH34": {
+    "name": "Kathmandu-Dhulikhel-Dolalghat-Khadichaur-Kodari (Arniko Rajmarg)",
+    "totalLengthKm": 228.00000000000006,
+    "segmentCount": 32
+  },
+  "NH35": {
+    "name": "Piluhawa Manmat - Kalaiya - Martihawa",
+    "totalLengthKm": 53.32,
+    "segmentCount": 2
+  },
+  "NH36": {
+    "name": "Chandranigahpur-Gaur",
+    "totalLengthKm": 90.88,
+    "segmentCount": 6
+  },
+  "NH37": {
+    "name": "Hetauda-Bagmati-Tikabhairav-Bhaisepati-Ekantakuna (Kanti Rajpath)",
+    "totalLengthKm": 177.40000000000003,
+    "segmentCount": 8
+  },
+  "NH38": {
+    "name": "Kathmandu Outer Ringroad",
+    "totalLengthKm": 144.01999999999998,
+    "segmentCount": 14
+  },
+  "NH39": {
+    "name": "Kathmandu Ringroad",
+    "totalLengthKm": 57.900000000000006,
+    "segmentCount": 30
+  },
+  "NH40": {
+    "name": "Samakhushi-Tokha-Gurje-Bidur",
+    "totalLengthKm": 68.6,
+    "segmentCount": 8
+  },
+  "NH41": {
+    "name": "Sirsiya-Pathlaiya, Hetauda-Bhaise-Palung-Naubise-Kathmandu (Tribhuvan Rajpath)",
+    "totalLengthKm": 313.95999999999987,
+    "segmentCount": 30
+  },
+  "NH42": {
+    "name": "Thori-Bhandara-Malekhu, Galchi-Trishuli-Betrawati-Mailung-Syaphrubesi-Rasuwagadhi",
+    "totalLengthKm": 383.82,
+    "segmentCount": 28
+  },
+  "NH43": {
+    "name": "Malekhu-Dhading-Salyantar",
+    "totalLengthKm": 126.98000000000002,
+    "segmentCount": 4
+  },
+  "NH44": {
+    "name": "Thori-Bharatpur-Mugling, Aanbukharieni-Gorkha-Ghyampesal, Aarughat-Sirdibas-Roila Bhanjyang",
+    "totalLengthKm": 462.9800000000001,
+    "segmentCount": 16
+  },
+  "NH45": {
+    "name": "Khairenitar Bhimad Kawasoti",
+    "totalLengthKm": 212,
+    "segmentCount": 4
+  },
+  "NH46": {
+    "name": "Bhumahi-Parasi",
+    "totalLengthKm": 14.02,
+    "segmentCount": 2
+  },
+  "NH47": {
+    "name": "Belahiya-Bhairahawa-Butwal-Bartung-Ramdi-Syangja-Pokhara (Siddharth Rajmarg)",
+    "totalLengthKm": 362.43999999999994,
+    "segmentCount": 26
+  },
+  "NH48": {
+    "name": "Tansen-Ridi-Korla",
+    "totalLengthKm": 672.8600000000001,
+    "segmentCount": 20
+  },
+  "NH49": {
+    "name": "Bartung Tansen Ridi Wamitaksar Kharwang",
+    "totalLengthKm": 96.8,
+    "segmentCount": 2
+  },
+  "NH50": {
+    "name": "Jitpur-Taulihawa-Khunuwa",
+    "totalLengthKm": 66.1,
+    "segmentCount": 8
+  },
+  "NH51": {
+    "name": "Taulihawa-Gorusinge-Sandhikharka",
+    "totalLengthKm": 166.26000000000002,
+    "segmentCount": 12
+  },
+  "NH52": {
+    "name": "Kakarhawa(IB)-Rudrapur, Sajlhandi-Sandhikhark-Devisthan, Burtibang-Dhorpatan",
+    "totalLengthKm": 431.08,
+    "segmentCount": 22
+  },
+  "NH53": {
+    "name": "Bhalubang Liwang Rolpa Madichaur Darbot",
+    "totalLengthKm": 255.83999999999997,
+    "segmentCount": 10
+  },
+  "NH54": {
+    "name": "Koilabas-Lamahi, Arjunkholagau-Ghorahi-Holeri-Ghartigaun-Thawang-Lukum (Sahid Marg)",
+    "totalLengthKm": 534.5799999999999,
+    "segmentCount": 20
+  },
+  "NH55": {
+    "name": "Ameliya-Tulsipur-Shitalpti-Tharmare-Musikot",
+    "totalLengthKm": 337.35999999999996,
+    "segmentCount": 16
+  },
+  "NH56": {
+    "name": "Tharmare-Chaurjahari-Jajarkot Khalanga-Jumla Kudari-Mugu Rara (Rara Rajmarg)",
+    "totalLengthKm": 462.26,
+    "segmentCount": 14
+  },
+  "NH57": {
+    "name": "Chinchu-Kudu-Jajarkot -Dunai-Dho-Tinje-Marim (Bheri Corridor)",
+    "totalLengthKm": 668.3600000000001,
+    "segmentCount": 16
+  },
+  "NH58": {
+    "name": "Bahundangi-Shantinagar-Dharan-Chatara-Ghaighat-Katari Sindhulimadi-Hetauda-Gaidakot-Rampur-Ramdi-Ridi-Balkot-Sandhikharka-Bijuwar-Sitalpati-Surkhet-Baddichaur-Sahajpur-Budar-Jogbudha-Rupal (Madan Bhandari Rajmarg)",
+    "totalLengthKm": 1075.9599999999998,
+    "segmentCount": 42
+  },
+  "NH59": {
+    "name": "Murtiya (IB)-Gulariya-Bhurigaun-Telpani-Surkhet-Mathillo Dungeshwor-Bank-Bayuli Nagma Sadak",
+    "totalLengthKm": 318.46000000000004,
+    "segmentCount": 16
+  },
+  "NH60": {
+    "name": "Surkhet-Dailekh-Mahabulekh-Galje, Nagma-Gamgadhi-Nakchelagna",
+    "totalLengthKm": 651.88,
+    "segmentCount": 18
+  },
+  "NH61": {
+    "name": "Surkhet Tallo Dundeshwor-Saatkhamba-Dullu-Pipalkot-Khulalu-Manma-Jumla Sadak",
+    "totalLengthKm": 350.94,
+    "segmentCount": 10
+  },
+  "NH62": {
+    "name": "Khakraula-Tikapur-Lamki-Lodeghat-Bayalpata, Saphebagar-Chainpur",
+    "totalLengthKm": 399.0999999999999,
+    "segmentCount": 20
+  },
+  "NH63": {
+    "name": "Saphebagar-Martadi-Kolti",
+    "totalLengthKm": 199.72,
+    "segmentCount": 8
+  },
+  "NH64": {
+    "name": "Khodpe-Chainpur (Bajhang)",
+    "totalLengthKm": 226.09999999999997,
+    "segmentCount": 12
+  },
+  "NH65": {
+    "name": "Khuttiya-Dipayal-Chainpur-Uraibhanjyang",
+    "totalLengthKm": 626.7599999999999,
+    "segmentCount": 12
+  },
+  "NH66": {
+    "name": "Dhangadhi-Sahajpur-Budar-Syaule, Satbajh-Thaktoli-Darchula-Tinkar",
+    "totalLengthKm": 682.0400000000001,
+    "segmentCount": 18
+  },
+  "NH67": {
+    "name": "Chandani-Bhimdatta-Bramhadev-Pancheshwar-Jhulaghat",
+    "totalLengthKm": 374.78,
+    "segmentCount": 14
+  },
+  "NH68": {
+    "name": "Bhimad-Rampur-Mityal-Arung Khola",
+    "totalLengthKm": 196.9,
+    "segmentCount": 10
+  },
+  "NH69": {
+    "name": "Jagat Bhanjyang-Mandalithan-Keware Bhanjyang-Barikuna-Kishan-Chapakot-Gajarkot Sadak, Syangja",
+    "totalLengthKm": 78.74,
+    "segmentCount": 6
+  },
+  "NH70": {
+    "name": "Seti Dovan-Wejang-Panchmul-Aaruchaur Ghante Deurali, Syangja",
+    "totalLengthKm": 85.76,
+    "segmentCount": 4
+  },
+  "NH71": {
+    "name": "Bhaluwang-Nuwakot-Khandaha-Kharwang",
+    "totalLengthKm": 310.06,
+    "segmentCount": 12
+  },
+  "NH72": {
+    "name": "Dumkibas-Baguban Triveni",
+    "totalLengthKm": 48.14,
+    "segmentCount": 4
+  },
+  "NH73": {
+    "name": "Surunga-Sharnamati-Tangandubba-Lasunganj, Jhapa",
+    "totalLengthKm": 50,
+    "segmentCount": 4
+  },
+  "NH74": {
+    "name": "Ilam (Biplate)-Maipokhari-Sandakpur, Ilam",
+    "totalLengthKm": 99.18,
+    "segmentCount": 2
+  },
+  "NH75": {
+    "name": "Sworna Sagarmatha Ringroad (Okhaldhunga-Solu-Salleri-Khotang-Diktel-Okhaldhunga)",
+    "totalLengthKm": 321.11999999999995,
+    "segmentCount": 10
+  },
+  "NH76": {
+    "name": "Damak-Chisapani-Rabi",
+    "totalLengthKm": 97.20000000000002,
+    "segmentCount": 8
+  },
+  "NH77": {
+    "name": "Bharatpur Mahanagariya Brihat Chakrapath",
+    "totalLengthKm": 173.70000000000002,
+    "segmentCount": 10
+  },
+  "NH78": {
+    "name": "Damak Na.Pa. Chakrapath",
+    "totalLengthKm": 51.47999999999999,
+    "segmentCount": 12
+  },
+  "NH79": {
+    "name": "Godar (Dhanusha) Chisapani-Mainawati-Kalapani-Dudhauli, Sindhuli",
+    "totalLengthKm": 67.03999999999999,
+    "segmentCount": 8
+  },
+  "NH80": {
+    "name": "Mahendra Rajmarg Bastipurchowk (Siraha)-B.P. Cancer Hospital-Belsot-Katari, Udayapur",
+    "totalLengthKm": 26.900000000000002,
+    "segmentCount": 6
+  }
+}
