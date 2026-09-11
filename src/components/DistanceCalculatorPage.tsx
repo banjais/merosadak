@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode, VehicleType } from '../types';
-import { Calculator, ArrowRight, Car, Fuel, Zap, Clock, ArrowUpDown, Mountain, MapPin, Check, ChevronDown, X, ArrowLeft } from 'lucide-react';
+import { Calculator, ArrowRight, Car, ArrowUpDown, MapPin, ChevronDown, ArrowLeft } from 'lucide-react';
 
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
@@ -16,7 +16,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
-  const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
 
   const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0];
   const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destId) || CITIES_AND_JUNCTIONS[1];
@@ -74,42 +73,13 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               </div>
             </div>
           </div>
-
-          {/* Load in Route Optimizer Button - Moved to Header */}
-          {routeResult && onPlanFullRoute && (
-            <button
-              onClick={() => onPlanFullRoute(originId, destId)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5 hidden sm:flex"
-            >
-              <span>Load in Route Optimizer</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Interactive Pair Calculator Card */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto">
         <div className="space-y-6">
-
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-            <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-1 text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg">
-                GEOGRAPHIC MILEAGE ENGINE
-              </span>
-              <span className="text-xs text-slate-400">Roads Board Nepal Calibration</span>
-            </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight mt-1 font-display">
-              Nepal Inter-City Distance & Elevation Calculator
-            </h2>
-            <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-              Accurate driving distances, aerial displacements, and mountain altitude variance along verified highway corridors.
-            </p>
-          </div>
-
-          {/* Interactive Pair Calculator Card */}
-          <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+              <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               {/* Origin Selector - Dropdown Button */}
               <div className="md:col-span-5 space-y-1.5 relative">
@@ -219,15 +189,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     <ArrowRight className="w-5 h-5 text-emerald-400" />
                     <span className="text-lg font-bold text-white">{destination.name}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => onPlanFullRoute && onPlanFullRoute(originId, destId)}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5 sm:hidden"
-                    >
-                      <span>Load in Route Optimizer</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
                 </div>
 
                 {/* Metrics Grid */}
@@ -276,8 +237,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
           </div>
 
           {/* Full Distance Matrix Table */}
-          {showDistanceMatrix && (
-            <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
+          <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-bold text-white">Nepal Full Distance Matrix (km)</h3>
@@ -342,7 +302,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 </table>
               </div>
             </div>
-          )}
         </div>
       </main>
     </div>

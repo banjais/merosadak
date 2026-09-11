@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode, VehicleType } from '../types';
-import { Calculator, ArrowRight, Car, Fuel, Zap, Clock, ArrowUpDown, Mountain, MapPin, Check } from 'lucide-react';
+import { ArrowRight, Car, ArrowUpDown, MapPin, ChevronDown } from 'lucide-react';
 
 interface DistanceCalculatorProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
@@ -13,6 +13,8 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
   const [destId, setDestId] = useState<string>('pkr');
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('car');
   const [matrixFilter, setMatrixFilter] = useState<string>('');
+  const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
+  const [destDropdownOpen, setDestDropdownOpen] = useState(false);
 
   const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0];
   const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destId) || CITIES_AND_JUNCTIONS[1];
@@ -32,43 +34,42 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-        <div className="flex items-center space-x-2">
-          <span className="px-2.5 py-1 text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg">
-            GEOGRAPHIC MILEAGE ENGINE
-          </span>
-          <span className="text-xs text-slate-400">Roads Board Nepal Calibration</span>
-        </div>
-        <h2 className="text-2xl font-bold text-white tracking-tight mt-1 font-display">
-          Nepal Inter-City Distance & Elevation Calculator
-        </h2>
-        <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-          Accurate driving distances, aerial displacements, and mountain altitude variance along verified highway corridors.
-        </p>
-      </div>
-
       {/* Interactive Pair Calculator Card */}
       <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-          {/* Origin Selector */}
-          <div className="md:col-span-5 space-y-1.5">
+          {/* Origin Selector - Dropdown Button */}
+          <div className="md:col-span-5 space-y-1.5 relative">
             <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
               <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Origin Location (City / Junction)</span>
+              <span>Origin Location</span>
             </label>
-            <select
-              id="select-calc-origin"
-              value={originId}
-              onChange={(e) => setOriginId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-            >
-              {CITIES_AND_JUNCTIONS.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name} ({city.district} - {city.elevationM}m)
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                onClick={() => setOriginDropdownOpen(!originDropdownOpen)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition flex items-center justify-between"
+                aria-expanded={originDropdownOpen}
+              >
+                <span>{origin.name} <span className="text-slate-500 font-normal">({origin.district} - {origin.elevationM}m)</span></span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${originDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {originDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                  {CITIES_AND_JUNCTIONS.map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => { setOriginId(city.id); setOriginDropdownOpen(false); }}
+                      className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
+                        originId === city.id
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Swap Button */}
@@ -82,24 +83,39 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
             </button>
           </div>
 
-          {/* Destination Selector */}
-          <div className="md:col-span-5 space-y-1.5">
+          {/* Destination Selector - Dropdown Button */}
+          <div className="md:col-span-5 space-y-1.5 relative">
             <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
               <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Destination Location (City / Junction)</span>
+              <span>Destination Location</span>
             </label>
-            <select
-              id="select-calc-dest"
-              value={destId}
-              onChange={(e) => setDestId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
-            >
-              {CITIES_AND_JUNCTIONS.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name} ({city.district} - {city.elevationM}m)
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                onClick={() => setDestDropdownOpen(!destDropdownOpen)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition flex items-center justify-between"
+                aria-expanded={destDropdownOpen}
+              >
+                <span>{destination.name} <span className="text-slate-500 font-normal">({destination.district} - {destination.elevationM}m)</span></span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${destDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {destDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                  {CITIES_AND_JUNCTIONS.map((city) => (
+                    <button
+                      key={city.id}
+                      onClick={() => { setDestId(city.id); setDestDropdownOpen(false); }}
+                      className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
+                        destId === city.id
+                          ? 'bg-cyan-500/20 text-cyan-300'
+                          : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -111,15 +127,6 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                 <span className="text-lg font-bold text-white">{origin.name}</span>
                 <ArrowRight className="w-5 h-5 text-emerald-400" />
                 <span className="text-lg font-bold text-white">{destination.name}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => onPlanFullRoute && onPlanFullRoute(originId, destId)}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5"
-                >
-                  <span>Open in Route Optimizer</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
               </div>
             </div>
 
