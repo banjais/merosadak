@@ -16,6 +16,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
+  const [originSearch, setOriginSearch] = useState<string>('');
+  const [destSearch, setDestSearch] = useState<string>('');
   const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
 
   useEffect(() => {
@@ -24,6 +26,23 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const origin = allCities.find((c) => c.id === originId) || allCities[0];
   const destination = allCities.find((c) => c.id === destId) || allCities[1];
+
+  const normalizedOriginSearch = originSearch.trim().toLowerCase();
+  const normalizedDestSearch = destSearch.trim().toLowerCase();
+  const filteredOriginCities = normalizedOriginSearch
+    ? allCities.filter((city) =>
+        city.name.toLowerCase().includes(normalizedOriginSearch) ||
+        city.district.toLowerCase().includes(normalizedOriginSearch) ||
+        city.nepaliName.includes(originSearch.trim())
+      )
+    : allCities;
+  const filteredDestCities = normalizedDestSearch
+    ? allCities.filter((city) =>
+        city.name.toLowerCase().includes(normalizedDestSearch) ||
+        city.district.toLowerCase().includes(normalizedDestSearch) ||
+        city.nepaliName.includes(destSearch.trim())
+      )
+    : allCities;
 
   const snapToNearestRoutingNode = (city: CityNode): CityNode => {
     if (CITIES_AND_JUNCTIONS.some((c) => c.id === city.id)) return city;
@@ -53,11 +72,13 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const handleSelectOrigin = (cityId: string) => {
     setOriginId(cityId);
+    setOriginSearch('');
     setOriginDropdownOpen(false);
   };
 
   const handleSelectDest = (cityId: string) => {
     setDestId(cityId);
+    setDestSearch('');
     setDestDropdownOpen(false);
   };
 
@@ -111,7 +132,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 </label>
                 <div className="relative">
                   <button
-                    onClick={() => setOriginDropdownOpen(!originDropdownOpen)}
+                    onClick={() => {
+                      if (!originDropdownOpen) setOriginSearch('');
+                      setOriginDropdownOpen(!originDropdownOpen);
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition flex items-center justify-between"
                     aria-expanded={originDropdownOpen}
                   >
@@ -120,19 +144,37 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   </button>
                   {originDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                      {allCities.map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => handleSelectOrigin(city.id)}
-                          className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
-                            originId === city.id
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : 'text-slate-100 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
-                        </button>
-                      ))}
+                      <div className="sticky top-0 z-10 p-2 bg-slate-950 border-b border-slate-800">
+                        <input
+                          type="text"
+                          value={originSearch}
+                          onChange={(e) => setOriginSearch(e.target.value)}
+                          placeholder="Type to search..."
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto">
+                        {filteredOriginCities.length > 0 ? (
+                          filteredOriginCities.map((city) => (
+                            <button
+                              key={city.id}
+                              onClick={() => handleSelectOrigin(city.id)}
+                              className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
+                                originId === city.id
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-xs text-slate-500">
+                            No matching locations found
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -157,7 +199,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 </label>
                 <div className="relative">
                   <button
-                    onClick={() => setDestDropdownOpen(!destDropdownOpen)}
+                    onClick={() => {
+                      if (!destDropdownOpen) setDestSearch('');
+                      setDestDropdownOpen(!destDropdownOpen);
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition flex items-center justify-between"
                     aria-expanded={destDropdownOpen}
                   >
@@ -166,19 +211,37 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   </button>
                   {destDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                      {allCities.map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => handleSelectDest(city.id)}
-                          className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
-                            destId === city.id
-                              ? 'bg-cyan-500/20 text-cyan-300'
-                              : 'text-slate-100 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
-                        </button>
-                      ))}
+                      <div className="sticky top-0 z-10 p-2 bg-slate-950 border-b border-slate-800">
+                        <input
+                          type="text"
+                          value={destSearch}
+                          onChange={(e) => setDestSearch(e.target.value)}
+                          placeholder="Type to search..."
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto">
+                        {filteredDestCities.length > 0 ? (
+                          filteredDestCities.map((city) => (
+                            <button
+                              key={city.id}
+                              onClick={() => handleSelectDest(city.id)}
+                              className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
+                                destId === city.id
+                                  ? 'bg-cyan-500/20 text-cyan-300'
+                                  : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-xs text-slate-500">
+                            No matching locations found
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

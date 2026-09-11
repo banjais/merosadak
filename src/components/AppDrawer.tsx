@@ -83,13 +83,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-black text-base tracking-tight text-white font-display">MERO SADAK</span>
-                <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded">
-                  मेरो सडक
-                </span>
+                <span className="font-black text-base tracking-tight text-white font-display">Distance Calculator</span>
               </div>
               <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                National Highway GIS Hub
+                Nepal Inter-City Distance & Elevation
               </div>
             </div>
           </div>
