@@ -134,7 +134,15 @@
     ],
     "rewrites": [
       {
-        "source": "**/!(*.geojson|*.json|*.js|*.css|*.png|*.jpg|*.jpeg|*.svg|*.ico|*.txt|*.webp|*.avif|*.gif|*.woff|*.woff2|*.ttf|*.map)",
+        "source": "/manifest.json",
+        "destination": "/manifest.json"
+      },
+      {
+        "source": "**/*.@(geojson|json|js|css|png|jpg|jpeg|svg|ico|txt|webp|avif|gif|woff|woff2|ttf|map)",
+        "destination": "/index.html"
+      },
+      {
+        "source": "**",
         "destination": "/index.html"
       }
     ]

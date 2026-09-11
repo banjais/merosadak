@@ -7,6 +7,7 @@ import { HighwayDirectory } from './components/HighwayDirectory';
 import { RoadAlertsFeed } from './components/RoadAlertsFeed';
 import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
+import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { WeatherPassesPanel } from './components/WeatherPassesPanel';
 import { HighwayPOIsPanel } from './components/HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './components/TrafficCorridorPanel';
@@ -101,7 +102,7 @@ function AppContent() {
   // Modals & Drawers
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isDistanceModalOpen, setIsDistanceModalOpen] = useState(false);
+  const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
   const [isTollModalOpen, setIsTollModalOpen] = useState(false);
   const [isPreTripModalOpen, setIsPreTripModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -390,7 +391,7 @@ function AppContent() {
           setActiveFeature('steps');
           setIsDrawerOpen(false);
         }}
-        onOpenDistanceMatrix={() => setIsDistanceModalOpen(true)}
+        onOpenDistanceMatrix={() => setIsDistanceCalculatorOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
         onOpenSosModal={() => setIsSosModalOpen(true)}
         onOpenPreTripModal={() => setIsPreTripModalOpen(true)}
@@ -629,8 +630,20 @@ function AppContent() {
         </div>
       </header>
 
+      {/* Distance Calculator Page - Full Page View */}
+      {isDistanceCalculatorOpen && (
+        <DistanceCalculatorPage
+          onBack={() => setIsDistanceCalculatorOpen(false)}
+          onPlanFullRoute={(originId, destId) => {
+            setIsDistanceCalculatorOpen(false);
+            handleDistanceMatrixSelect(originId, destId);
+          }}
+        />
+      )}
+
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      <main className="flex-1 w-full overflow-y-auto bg-slate-950">
+      {!isDistanceCalculatorOpen && (
+        <main className="flex-1 w-full overflow-y-auto bg-slate-950">
         {/* Route Planner as Main Content */}
         <div className="w-full bg-slate-900">
           <RoutePlanner
@@ -872,13 +885,7 @@ function AppContent() {
           </>
         )}
       </main>
-
-      {/* Distance Matrix Modal */}
-      <DistanceMatrixModal
-        isOpen={isDistanceModalOpen}
-        onClose={() => setIsDistanceModalOpen(false)}
-        onSelectRoute={handleDistanceMatrixSelect}
-      />
+      )}
 
       {/* Nagdhunga Tunnel Toll Modal */}
       <TollCalculatorModal
