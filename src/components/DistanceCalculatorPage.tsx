@@ -16,7 +16,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
-  const [showCorridors, setShowCorridors] = useState(false);
   const [showDistanceMatrix, setShowDistanceMatrix] = useState(false);
 
   const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0];
@@ -105,7 +104,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               Nepal Inter-City Distance & Elevation Calculator
             </h2>
             <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-              Accurate driving distances, aerial displacements, mountain altitude variance, and multi-vehicle fuel / time estimations along verified highway corridors.
+              Accurate driving distances, aerial displacements, and mountain altitude variance along verified highway corridors.
             </p>
           </div>
 
@@ -232,7 +231,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
                     <div className="text-xs text-slate-400 font-medium">Road Driving Distance</div>
                     <div className="text-2xl font-black text-emerald-400 mt-0.5 font-display">
@@ -242,28 +241,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   </div>
 
                   <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
-                    <div className="text-xs text-slate-400 font-medium">Estimated Drive Time</div>
-                    <div className="text-2xl font-black text-cyan-400 mt-0.5 font-display">
-                      {Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-1">Avg Speed: ~{Math.round(routeResult.totalDistanceKm / (routeResult.estimatedTimeMinutes / 60))} km/h</div>
-                  </div>
-
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
                     <div className="text-xs text-slate-400 font-medium">Elevation Delta</div>
                     <div className="text-2xl font-black text-purple-400 mt-0.5 font-display flex items-baseline space-x-1">
                       <span>{destination.elevationM - origin.elevationM > 0 ? `+${destination.elevationM - origin.elevationM}` : destination.elevationM - origin.elevationM}</span>
                       <span className="text-sm font-normal text-slate-400">m</span>
                     </div>
                     <div className="text-[11px] text-slate-500 mt-1">{origin.elevationM}m ➔ {destination.elevationM}m</div>
-                  </div>
-
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
-                    <div className="text-xs text-slate-400 font-medium">Est. Petrol / Diesel Cost</div>
-                    <div className="text-2xl font-black text-amber-400 mt-0.5 font-display">
-                      Rs. {routeResult.fuelEstimate.costNpr.toLocaleString()}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-1">~{routeResult.fuelEstimate.liters} Liters required</div>
                   </div>
                 </div>
 

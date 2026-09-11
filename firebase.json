@@ -138,8 +138,8 @@
         "destination": "/manifest.json"
       },
       {
-        "source": "**/*.@(geojson|js|css|png|jpg|jpeg|svg|ico|txt|webp|avif|gif|woff|woff2|ttf|map)",
-        "destination": "/index.html"
+        "source": "/sw.js",
+        "destination": "/sw.js"
       },
       {
         "source": "**",
