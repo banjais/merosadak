@@ -85,6 +85,7 @@ interface LiveFeedResponse {
 }
 
 function AppContent() {
+  const [isAppReady, setIsAppReady] = useState(false);
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
   const [activeRoute, setActiveRoute] = useState<RoutePlanResult | null>(null);
   const [simulationProgressKm, setSimulationProgressKm] = useState<number>(0);
@@ -241,6 +242,7 @@ function AppContent() {
           console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
         }
       }
+      setIsAppReady(true);
     })();
 
     liveFeedsInFlightRef.current = request;
@@ -370,7 +372,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       {/* Animated Flash / Splash Screen */}
-      <SplashScreen />
+      <SplashScreen isReady={isAppReady} onFinished={() => setIsAppReady(true)} />
 
       {/* Offline Status Banner */}
       <OfflineStatusBanner />
