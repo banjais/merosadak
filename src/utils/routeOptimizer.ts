@@ -404,6 +404,71 @@ export function calculateDirectDistanceKm(lat1: number, lon1: number, lat2: numb
   return Math.round(R * c);
 }
 
+function buildAerialRouteResult(
+  origin: CityNode,
+  destination: CityNode,
+  preference: RoutePreference,
+  vehicle: VehicleType
+): RoutePlanResult {
+  const aerialKm = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+  const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
+  const estimatedMinutes = Math.round((aerialKm / (vehicleConfig.mileageKmPerL * 0.6)) * 60);
+  const fuelLiters = Math.round((aerialKm / vehicleConfig.mileageKmPerL) * 10) / 10;
+
+  return {
+    id: `aerial-${origin.id}-${destination.id}-${preference}-${vehicle}`,
+    origin,
+    destination,
+    preference,
+    vehicle,
+    routeName: 'Aerial Distance Approximation',
+    routeBadge: '📐 Approximate',
+    routeColor: '#94a3b8',
+    viaHighlights: 'No DoR highway corridor coverage',
+    totalDistanceKm: aerialKm,
+    estimatedTimeMinutes: estimatedMinutes,
+    roadConditionScore: 0,
+    safetyIndex: {
+      overallScore: 0,
+      safetyTier: 'moderate',
+      tierLabel: 'Unknown',
+      color: '#94a3b8',
+      roadQualityAverage: 0,
+      accidentRiskSummary: { safeKm: 0, moderateKm: 0, elevatedRiskKm: 0, highHazardKm: 0, safePercentage: 0 },
+      totalHistoricalAnnualAccidents: 0,
+      activeBlackspots: [],
+      segmentBreakdown: [],
+      keySafetyDirectives: ['No DoR highway data available for this pair. Use aerial distance only for rough reference.']
+    },
+    statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
+    fuelEstimate: {
+      liters: fuelLiters,
+      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerL),
+      avgMileageKmPerLiter: vehicleConfig.mileageKmPerL
+    },
+    evEstimate: {
+      kwhRequired: Math.round((aerialKm / 6.2) * 10) / 10,
+      recommendedChargingStops: [],
+      batteryUsagePercent: Math.round(((aerialKm / 6.2) / 50) * 100)
+    },
+    totalTollCostNpr: 0,
+    elevationGainM: Math.abs(destination.elevationM - origin.elevationM),
+    maxElevationM: Math.max(origin.elevationM, destination.elevationM),
+    incidentsOnRoute: [],
+    steps: [{
+      instruction: `Straight-line aerial path from ${origin.name} to ${destination.name} (no DoR highway route available)`,
+      highwayCode: 'AERIAL',
+      distanceKm: aerialKm,
+      durationMinutes: estimatedMinutes,
+      roadStatus: 'clear',
+      surface: 'asphalt_excellent'
+    }],
+    pathCoordinates: [[origin.lat, origin.lng], [destination.lat, destination.lng]],
+    dataSource: 'Aerial Distance Estimation',
+    corridorsTraversed: 'None — no Department of Roads highway corridor covers this origin-destination pair'
+  };
+}
+
 // Helper to determine scenic rating (1 - 5) based on highway codes traversed
 function calculateRouteScenicRating(highwayCodes: string[]): number {
   let score = 3.6;
@@ -956,7 +1021,14 @@ export function findOptimizedRoute(
   terrainFilters: TerrainFilterOptions = {}
 ): RoutePlanResult | null {
   const allOptions = findAllRouteOptions(originId, destinationId, vehicle, terrainFilters);
-  if (allOptions.length === 0) return null;
+  if (allOptions.length === 0) {
+    const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
+    const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
+    if (origin && destination) {
+      return buildAerialRouteResult(origin, destination, preference, vehicle);
+    }
+    return null;
+  }
 
   // Find matching option for current preference, or default to fastest
   let selected = allOptions.find(opt => opt.preference === preference);

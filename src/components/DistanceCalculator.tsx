@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
-import { ArrowRight, Car, ArrowUpDown, MapPin, ChevronDown } from 'lucide-react';
+import { loadExpandedCities } from '../utils/cityDataLoader';
+import { ArrowRight, ArrowUpDown, MapPin, ChevronDown } from 'lucide-react';
 
 interface DistanceCalculatorProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
@@ -14,9 +15,28 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
+  const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
 
-  const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0];
-  const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destId) || CITIES_AND_JUNCTIONS[1];
+  useEffect(() => {
+    loadExpandedCities().then(setAllCities);
+  }, []);
+
+  const origin = allCities.find((c) => c.id === originId) || allCities[0];
+  const destination = allCities.find((c) => c.id === destId) || allCities[1];
+
+  const snapToNearestRoutingNode = (city: CityNode): CityNode => {
+    if (CITIES_AND_JUNCTIONS.some((c) => c.id === city.id)) return city;
+    let nearest = CITIES_AND_JUNCTIONS[0];
+    let minDist = Infinity;
+    for (const c of CITIES_AND_JUNCTIONS) {
+      const d = calculateDirectDistanceKm(city.lat, city.lng, c.lat, c.lng);
+      if (d < minDist) {
+        minDist = d;
+        nearest = c;
+      }
+    }
+    return nearest;
+  };
 
   const swapCities = () => {
     const temp = originId;
@@ -24,11 +44,12 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     setDestId(temp);
   };
 
-  // Calculate route between chosen pair
-  const routeResult = originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
+  const originRouting = snapToNearestRoutingNode(origin);
+  const destRouting = snapToNearestRoutingNode(destination);
+
+  const routeResult = originId !== destId ? findOptimizedRoute(originRouting.id, destRouting.id, 'fastest', 'car') : null;
   const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
 
-  // Key hubs for distance matrix
   const keyHubs = CITIES_AND_JUNCTIONS.filter((c) => c.isMajorHub);
 
   return (
@@ -53,7 +74,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               </button>
               {originDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                  {CITIES_AND_JUNCTIONS.map((city) => (
+                  {allCities.map((city) => (
                     <button
                       key={city.id}
                       onClick={() => { setOriginId(city.id); setOriginDropdownOpen(false); }}
@@ -99,7 +120,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               </button>
               {destDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                  {CITIES_AND_JUNCTIONS.map((city) => (
+                  {allCities.map((city) => (
                     <button
                       key={city.id}
                       onClick={() => { setDestId(city.id); setDestDropdownOpen(false); }}
@@ -149,6 +170,11 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               </div>
             </div>
 
+            <div className="text-[11px] text-slate-500 flex items-center space-x-1.5">
+              <span>Source:</span>
+              <span className="font-medium text-slate-400">{routeResult.dataSource}</span>
+            </div>
+
             {/* Step summary of highways traversed */}
             <div className="pt-2">
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
@@ -179,7 +205,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold text-white">Nepal Major Hubs Distance Matrix (km)</h3>
-            <p className="text-xs text-slate-400">Click any cell to load the calculation instantly into the calculator.</p>
+            <p className="text-xs text-slate-400">Search {allCities.length} places. Click any cell to load the calculation instantly into the calculator.</p>
           </div>
           <input
             type="text"
