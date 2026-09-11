@@ -138,7 +138,7 @@
         "destination": "/manifest.json"
       },
       {
-        "source": "**/*.@(geojson|json|js|css|png|jpg|jpeg|svg|ico|txt|webp|avif|gif|woff|woff2|ttf|map)",
+        "source": "**/*.@(geojson|js|css|png|jpg|jpeg|svg|ico|txt|webp|avif|gif|woff|woff2|ttf|map)",
         "destination": "/index.html"
       },
       {
