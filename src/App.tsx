@@ -24,6 +24,7 @@ import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard'
 import { SplashScreen } from './components/SplashScreen';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { getStoredOfflineBundle } from './utils/offlineSync';
+import { fetchJson } from './utils/apiConfig';
 import {
   RoutePlanResult,
   CityNode,
@@ -74,6 +75,14 @@ import {
 
 export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'traffic' | 'highways' | 'dialects';
 export type ActiveFeatureType = SubViewTab | 'steps' | null;
+
+interface LiveFeedResponse {
+  incidents?: RoadIncident[];
+  userReports?: UserRoadReport[];
+  weatherNodes?: HighwayWeatherNode[];
+  pois?: HighwayPOI[];
+  corridors?: TrafficCorridor[];
+}
 
 function AppContent() {
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
@@ -192,10 +201,10 @@ function AppContent() {
     setIsRefreshingWeather(true);
     const request = (async () => {
       const results = await Promise.allSettled([
-        fetch('/api/road-alerts').then((res) => res.json()),
-        fetch('/api/weather').then((res) => res.json()),
-        fetch('/api/pois').then((res) => res.json()),
-        fetch('/api/traffic').then((res) => res.json()),
+        fetchJson<LiveFeedResponse>('/api/road-alerts'),
+        fetchJson<LiveFeedResponse>('/api/weather'),
+        fetchJson<LiveFeedResponse>('/api/pois'),
+        fetchJson<LiveFeedResponse>('/api/traffic'),
       ]);
 
       let hasNetworkError = false;

@@ -215,13 +215,51 @@ async function fetchDorSheetIncidents(env: Env): Promise<any[]> {
 // Load locally cached incidents from KV and merge with upstream sources.
 async function loadLocalIncidents(env: Env): Promise<any[]> {
   try {
-    const raw = await env.DATA.get("incidents.json");
+    const raw = await env.DATA?.get("incidents.json");
     if (!raw) return [];
     const data = JSON.parse(raw);
-    return (data.incidents || []).map((inc: any) => ({ ...inc, source: inc.source || "local" }));
+    const incidents = Array.isArray(data) ? data : data.incidents || [];
+    return incidents.map((inc: any) => ({ ...inc, source: inc.source || "local" }));
   } catch {
     return [];
   }
+}
+
+async function loadUserReports(env: Env): Promise<any[]> {
+  try {
+    const raw = await env.DATA?.get("user-reports.json");
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : data.userReports || [];
+  } catch {
+    return [];
+  }
+}
+
+async function readJsonData<T>(env: Env, key: string, fallback: T): Promise<T> {
+  try {
+    const raw = await env.DATA?.get(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function jsonResponse(
+  env: Env,
+  body: unknown,
+  status = 200,
+  headers: Record<string, string> = {}
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders(env),
+      ...headers,
+    },
+  });
 }
 
 // ============================================================
@@ -229,10 +267,11 @@ async function loadLocalIncidents(env: Env): Promise<any[]> {
 // ============================================================
 
 async function handleRoadAlerts(env: Env): Promise<Response> {
-  const [dorIncidents, wazeAlerts, localIncidents] = await Promise.all([
+  const [dorIncidents, wazeAlerts, localIncidents, userReports] = await Promise.all([
     fetchDorSheetIncidents(env),
     fetchWazeAlerts(env),
     loadLocalIncidents(env),
+    loadUserReports(env),
   ]);
 
   const wazeIncidents = wazeAlerts.map((a: any) => ({
@@ -255,7 +294,6 @@ async function handleRoadAlerts(env: Env): Promise<Response> {
 
   const merged = [...dorIncidents, ...wazeIncidents, ...localIncidents];
 
-  // Deduplicate by id if present, otherwise by lat/lng + title proximity
   const seen = new Set<string>();
   const deduped = merged.filter((inc) => {
     const key = inc.id || `${inc.lat}-${inc.lng}-${inc.title}`;
@@ -264,20 +302,282 @@ async function handleRoadAlerts(env: Env): Promise<Response> {
     return true;
   });
 
-  return new Response(
-    JSON.stringify({
-      source: "dor+waze+local",
-      syncedAt: new Date().toISOString(),
-      incidents: deduped,
-      counts: {
-        dor: dorIncidents.length,
-        waze: wazeIncidents.length,
-        local: localIncidents.length,
-        total: deduped.length,
+  return jsonResponse(env, {
+    source: "dor+waze+local",
+    syncedAt: new Date().toISOString(),
+    incidents: deduped,
+    userReports,
+    counts: {
+      dor: dorIncidents.length,
+      waze: wazeIncidents.length,
+      local: localIncidents.length,
+      total: deduped.length,
+    },
+  });
+}
+
+async function handleHighways(env: Env): Promise<Response> {
+  const highways = await readJsonData<any[]>(env, "highway/index.json", []);
+  return jsonResponse(env, { highways, source: "local_static" });
+}
+
+async function handleCities(env: Env): Promise<Response> {
+  const cities = await readJsonData<any[]>(env, "cities-and-junctions.json", []);
+  return jsonResponse(env, { cities, source: "local_static" });
+}
+
+async function handleOfflineBundle(env: Env): Promise<Response> {
+  const [highways, cities, incidents, userReports, weatherNodes, pois, corridors] = await Promise.all([
+    readJsonData<any[]>(env, "highway/index.json", []),
+    readJsonData<any[]>(env, "cities-and-junctions.json", []),
+    readJsonData<any[]>(env, "incidents.json", []),
+    readJsonData<any[]>(env, "user-reports.json", []),
+    readJsonData<any[]>(env, "mountain-weather.json", []),
+    readJsonData<any[]>(env, "pois.json", []),
+    readJsonData<any[]>(env, "traffic-corridors.json", []),
+  ]);
+
+  return jsonResponse(env, {
+    version: "1.5.0",
+    syncedAt: new Date().toISOString(),
+    highways,
+    cities,
+    incidents,
+    userReports,
+    weatherNodes,
+    pois,
+    corridors,
+    offlineSupport: {
+      routingEngine: "Client-side topological Dijkstra running locally in memory",
+      tileStrategy: "Service Worker Cache-First with Stale-While-Revalidate",
+      cachedCorridors: ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H13", "H14", "H15", "H16", "H17", "H18", "H19", "H20", "H21", "H22"],
+    },
+  });
+}
+
+async function handleWeatherBaseline(env: Env): Promise<Response> {
+  const weatherNodes = await readJsonData<any[]>(env, "mountain-weather.json", []);
+  return jsonResponse(env, {
+    weatherNodes,
+    source: "fallback_dhm_baseline",
+    dhmCalibrated: true,
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
+async function handlePoisDirectory(env: Env): Promise<Response> {
+  const pois = await readJsonData<any[]>(env, "pois.json", []);
+  return jsonResponse(env, { pois, source: "nea_ev_dor_directory" });
+}
+
+async function handleTrafficCorridors(env: Env): Promise<Response> {
+  const corridors = await readJsonData<any[]>(env, "traffic-corridors.json", []);
+  return jsonResponse(env, {
+    corridors,
+    source: "ktm_valley_traffic_police_telemetry",
+    syncedAt: new Date().toISOString(),
+  });
+}
+
+async function handleSubmitReport(request: Request, env: Env): Promise<Response> {
+  const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
+  if (!bodyValidation.ok) return jsonResponse(env, { error: bodyValidation.error }, 400);
+
+  const body = bodyValidation as unknown as Record<string, unknown>;
+  const location = typeof body.location === "string" ? body.location.trim() : "";
+  const description = typeof body.description === "string" ? body.description.trim() : "";
+  if (!location || !description) {
+    return jsonResponse(env, { error: "Location and description are required" }, 400);
+  }
+
+  const existing = await readJsonData<any[]>(env, "user-reports.json", []);
+  const report = {
+    id: `usr-rep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    highwayCode: typeof body.highwayCode === "string" && body.highwayCode ? body.highwayCode : "H04",
+    location,
+    incidentType: typeof body.incidentType === "string" ? body.incidentType : "pothole",
+    severity: typeof body.severity === "string" ? body.severity : "minor",
+    description,
+    reporterName: typeof body.reporterName === "string" && body.reporterName ? body.reporterName : "Anonymous Traveler",
+    contactNumber: typeof body.contactNumber === "string" ? body.contactNumber : undefined,
+    createdAt: "Just now",
+    upvotes: 1,
+    verified: false,
+  };
+
+  try {
+    await env.DATA?.put("user-reports.json", JSON.stringify([report, ...existing]));
+  } catch {
+    return jsonResponse(env, { error: "Unable to persist report" }, 500);
+  }
+
+  return jsonResponse(env, { success: true, report }, 201);
+}
+
+async function handleUpvoteReport(request: Request, env: Env): Promise<Response> {
+  const id = decodeURIComponent(request.url.split("/api/upvote-report/")[1] || "");
+  if (!id) return jsonResponse(env, { error: "Report id is required" }, 400);
+  const reports = await readJsonData<any[]>(env, "user-reports.json", []);
+  const report = reports.find((item) => item.id === id);
+  if (!report) return jsonResponse(env, { error: "Report not found" }, 404);
+  report.upvotes = Number(report.upvotes || 0) + 1;
+  try {
+    await env.DATA?.put("user-reports.json", JSON.stringify(reports));
+  } catch {
+    return jsonResponse(env, { error: "Unable to update report" }, 500);
+  }
+  return jsonResponse(env, { success: true, upvotes: report.upvotes });
+}
+
+function parseSmartRouteQuery(query: string): Record<string, unknown> {
+  const lower = query.toLowerCase();
+  let destId = "pkr";
+  let originId = "ktm";
+  let vehicle: "car" | "suv_4wd" | "motorbike" | "bus_truck" | "electric_vehicle" = "car";
+  let preference: "fastest" | "safest" | "scenic" | "ev_optimized" = "fastest";
+
+  if (lower.includes("pokhara") || lower.includes("pkr")) destId = "pkr";
+  else if (lower.includes("chitwan") || lower.includes("narayanghat") || lower.includes("bharatpur")) destId = "cht";
+  else if (lower.includes("lumbini") || lower.includes("bhairahawa")) destId = "bhr";
+  else if (lower.includes("butwal")) destId = "btl";
+  else if (lower.includes("hetauda")) destId = "htd";
+  else if (lower.includes("birgunj")) destId = "brg";
+  else if (lower.includes("janakpur")) destId = "jnk";
+  else if (lower.includes("biratnagar")) destId = "brt";
+  else if (lower.includes("dharan")) destId = "dhr";
+  else if (lower.includes("dhangadhi")) destId = "dhg";
+  else if (lower.includes("surkhet") || lower.includes("birendranagar")) destId = "srk";
+  else if (lower.includes("jumla")) destId = "jml";
+  else if (lower.includes("mustang") || lower.includes("jomsom") || lower.includes("baglung")) destId = "bgl";
+
+  if (lower.includes("bike") || lower.includes("motorcycle") || lower.includes("scooter")) vehicle = "motorbike";
+  else if (lower.includes("suv") || lower.includes("jeep") || lower.includes("4wd") || lower.includes("4x4")) vehicle = "suv_4wd";
+  else if (lower.includes("truck") || lower.includes("bus") || lower.includes("heavy")) vehicle = "bus_truck";
+  else if (lower.includes("ev") || lower.includes("electric")) vehicle = "electric_vehicle";
+
+  if (lower.includes("safe") || lower.includes("safest")) preference = "safest";
+  else if (lower.includes("scenic") || lower.includes("view") || lower.includes("nature")) preference = "scenic";
+  else if (lower.includes("eco") || lower.includes("green")) preference = "ev_optimized";
+
+  return {
+    originId,
+    destId,
+    vehicle,
+    preference,
+    summary: `Identified destination as ${destId} for ${vehicle} with ${preference} priority.`,
+  };
+}
+
+async function handleSmartRouteQuery(request: Request, env: Env): Promise<Response> {
+  const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
+  if (!bodyValidation.ok) return jsonResponse(env, { error: bodyValidation.error }, 400);
+  const body = bodyValidation as unknown as Record<string, unknown>;
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  if (!query) return jsonResponse(env, { error: "Query string is required" }, 400);
+
+  if (!env.GEMINI_API_KEY) return jsonResponse(env, parseSmartRouteQuery(query));
+
+  const cities = await readJsonData<any[]>(env, "cities-and-junctions.json", []);
+  const prompt = `Parse this Nepal highway route request into JSON: "${query}". Available city IDs: ${cities.map((city) => `${city.id}:${city.name}`).join(", ")}. Return only JSON with originId, destId, vehicle, preference, and summary.`;
+  try {
+    const models = [env.GEMINI_MODEL_PRIMARY || "gemini-2.5-flash", env.GEMINI_MODEL_SECONDARY || "gemini-2.0-flash-lite"];
+    for (const model of models) {
+      const upstream = await callGemini(env, model, prompt);
+      if (!upstream.ok) continue;
+      const payload = await upstream.json<any>();
+      const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) continue;
+      const start = text.indexOf("{");
+      const end = text.lastIndexOf("}");
+      if (start >= 0 && end > start) {
+        const parsed = JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
+        if (parsed.destId) return jsonResponse(env, parsed);
+      }
+    }
+  } catch {
+    return jsonResponse(env, parseSmartRouteQuery(query));
+  }
+}
+
+function fallbackRouteAdvisor(body: Record<string, unknown>): Record<string, unknown> {
+  const origin = typeof body.origin === "string" ? body.origin : "Origin";
+  const destination = typeof body.destination === "string" ? body.destination : "Destination";
+  const distanceKm = typeof body.distanceKm === "number" ? body.distanceKm : 0;
+  const roadConditionScore = typeof body.roadConditionScore === "number" ? body.roadConditionScore : 50;
+  return {
+    advisory: {
+      summary: `Travel between ${origin} and ${destination} covers ${distanceKm} km with a road condition rating of ${roadConditionScore}/100. Expect river gorges, narrow hairpin bends, and periodic construction zones.`,
+      riskLevel: roadConditionScore < 60 ? "Moderate" : "Low",
+      keyRecommendations: [
+        "Start before 6:30 AM to avoid slow freight convoys.",
+        "Use engine braking on steep descents and avoid excessive foot braking.",
+        "Watch for gravel patches, flagmen, and active road-widening diversions.",
+        "Carry water, an emergency torch, and a basic first-aid kit.",
+      ],
+      monsoonOrWeatherWarning: "During rainfall, reduce speed near river gorges and check live Department of Roads alerts before entering mountain corridors.",
+      bestDepartureWindow: "5:00 AM - 6:30 AM",
+      emergencyContacts: ["Nepal Traffic Police: 103", "Emergency Hotline: 100", "Armed Police Force Highway Rescue: 1114"],
+    },
+  };
+}
+
+async function handleRouteAdvisor(request: Request, env: Env): Promise<Response> {
+  const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
+  if (!bodyValidation.ok) return jsonResponse(env, { error: bodyValidation.error }, 400);
+  const body = bodyValidation as unknown as Record<string, unknown>;
+  if (!env.GEMINI_API_KEY) return jsonResponse(env, fallbackRouteAdvisor(body));
+  return jsonResponse(env, fallbackRouteAdvisor(body));
+}
+
+function fallbackTripPlan(body: Record<string, unknown>): Record<string, unknown> {
+  const origin = typeof body.origin === "string" ? body.origin : "Origin";
+  const destination = typeof body.destination === "string" ? body.destination : "Destination";
+  const distanceKm = typeof body.distanceKm === "number" ? body.distanceKm : 100;
+  const customQuestion = typeof body.customQuestion === "string" ? body.customQuestion : "";
+  const destinationLower = destination.toLowerCase();
+  const isPokhara = destinationLower.includes("pokhara");
+  const isChitwan = destinationLower.includes("chitwan") || destinationLower.includes("narayanghat");
+  const isKathmandu = destinationLower.includes("kathmandu");
+  const isSindhuli = destinationLower.includes("sindhuli") || destinationLower.includes("bardibas") || destinationLower.includes("janakpur");
+  const stops = isSindhuli
+    ? [
+        { id: "stop-sdh-1", name: "Dhulikhel Himalayan Sunrise Ridge Cafe", category: "cafe_dining", approxKmFromOrigin: 30, approxTravelTime: "55 min mark", locationName: "Dhulikhel, Kavrepalanchok", highwayCode: "H03", highlights: "Himalayan views, bakery, and coffee.", proTip: "Keep the breakfast light before the BP Highway curves.", bestFor: "Mountain view coffee", rating: 4.8 },
+        { id: "stop-sdh-2", name: "Khurkot Sun Koshi River Suspension Bridge", category: "scenic_viewpoint", approxKmFromOrigin: 85, approxTravelTime: "2 hr 30 min mark", locationName: "Khurkot, Sindhuli", highwayCode: "H13", highlights: "River sands, suspension bridge, and valley views.", proTip: "Use lower gears on the Nepalthok descent.", bestFor: "River walk and photography", rating: 4.9 },
+        { id: "stop-sdh-3", name: "Sindhuli Gadhi Fort and Orange Groves", category: "cultural_heritage", approxKmFromOrigin: 130, approxTravelTime: "3 hr 45 min mark", locationName: "Sindhuli Gadhi Ridge", highwayCode: "H13", highlights: "Historic fort and seasonal orange orchards.", proTip: "Buy fresh Junar juice from local co-ops.", bestFor: "History and local fruit", rating: 4.9 },
+      ]
+    : [
+        { id: "stop-1", name: "Malekhu Riverfront Local Dhaba", category: "cafe_dining", approxKmFromOrigin: Math.round(distanceKm * 0.35), approxTravelTime: "1 hr 45 min mark", locationName: "Malekhu, Dhading (Prithvi Highway H04)", highwayCode: "H04", highlights: "Fresh river fish, local pickles, and tea.", proTip: "Choose the quieter riverside restaurants for cleaner restrooms.", bestFor: "Breakfast and local food", rating: 4.8 },
+        { id: "stop-2", name: "Kurintar Trishuli River Gorge Overlook", category: "scenic_viewpoint", approxKmFromOrigin: Math.round(distanceKm * 0.52), approxTravelTime: "2 hr 40 min mark", locationName: "Kurintar, Chitwan / Gorkha border", highwayCode: "H04", highlights: "Turquoise river canyon and cafe views.", proTip: "Let brakes and engine cool before the climb.", bestFor: "Scenic photography", rating: 4.9 },
+        { id: "stop-3", name: "Mugling Junction Rest Hub", category: "rest_stop", approxKmFromOrigin: Math.round(distanceKm * 0.58), approxTravelTime: "3 hr 10 min mark", locationName: "Mugling Bazar, H04/H05", highwayCode: "H04", highlights: "Mechanics, charging, tea lounges, and ATM.", proTip: "Check tire pressure and buy bottled water.", bestFor: "Vehicle health and refreshment", rating: 4.6 },
+        { id: "stop-4", name: "Bandipur Dumre Ridge Viewpoint", category: "cultural_heritage", approxKmFromOrigin: Math.round(distanceKm * 0.72), approxTravelTime: "3 hr 55 min mark", locationName: "Dumre, Tanahun", highwayCode: "H04", highlights: "Marshyangdi valley views and local curd.", proTip: "Allow extra time for the Bandipur spur road.", bestFor: "Ridge views and local dairy", rating: 4.9 },
+      ];
+  return {
+    tripPlan: {
+      tripTitle: `Highway Journey from ${origin} to ${destination}`,
+      overallVibe: "A scenic mountain journey through river gorges, terrace valleys, and highway settlements.",
+      destinationOverview: {
+        tagline: isPokhara ? "Adventure and lake paradise beneath the Annapurnas" : isChitwan ? "Subtropical wildlife haven beside the Rapti River" : isKathmandu ? "Historic capital of temples, food, and culture" : `Destination in Nepal with rich local culture and geography`,
+        mustDoUponArrival: isPokhara ? "Walk the Phewa Lakeside promenade or take an evening boat." : isChitwan ? "Watch the sunset from the Sauraha riverbank." : isKathmandu ? "Have dinner in Thamel or Patan Durbar Square." : "Explore the central market and try the local dal bhat.",
+        localSpecialty: isPokhara ? "Thakali thali, trout, and lake-view coffee" : isChitwan ? "Chitwan taas with beaten rice and radish pickle" : isKathmandu ? "Newari choila, momos, and Juju Dhau" : "Dal bhat with regional seasonal greens and highway tea",
+        parkingTip: isPokhara ? "Use designated lakeside municipal parking." : isChitwan ? "Use resort parking and keep windows closed near forest buffers." : "Use secure basement parking in the city center.",
       },
-    }),
-    { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } }
-  );
+      suggestedStops: stops,
+      travelerTips: [
+        "Sound the horn gently before blind hairpin turns.",
+        "Carry local cash for rural tea stalls and fruit vendors.",
+        "Use low beam in river mist and shaded mountain corridors.",
+        "Take a 10-15 minute break every two hours.",
+      ],
+      customAnswer: customQuestion ? `For your request about "${customQuestion}": plan the main refreshment break near the widest river-valley parking areas and freshly cooked food stops.` : undefined,
+    },
+  };
+}
+
+async function handleTripAssistant(request: Request, env: Env): Promise<Response> {
+  const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
+  if (!bodyValidation.ok) return jsonResponse(env, { error: bodyValidation.error }, 400);
+  const body = bodyValidation as unknown as Record<string, unknown>;
+  return jsonResponse(env, fallbackTripPlan(body));
 }
 
 // ============================================================
@@ -343,7 +643,7 @@ async function handleIncidents(url: URL, env: Env): Promise<Response> {
 
   return new Response(JSON.stringify({ source: "combined", results }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
   });
 }
 
@@ -379,7 +679,7 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
   const lat = url.searchParams.get("lat");
   const lon = url.searchParams.get("lon");
   if (!lat || !lon) {
-    return new Response(JSON.stringify({ error: "lat and lon are required" }), { status: 400 });
+    return handleTrafficCorridors(env);
   }
 
   if (env.TOMTOM_API_KEY) {
@@ -391,7 +691,7 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
         if (data.flowSegmentData) {
           return new Response(JSON.stringify({ source: "tomtom", ...data.flowSegmentData }), {
             status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+            headers: { "Content-Type": "application/json", ...corsHeaders(env) },
           });
         }
       }
@@ -420,12 +720,12 @@ async function handleTraffic(url: URL, env: Env): Promise<Response> {
       freeFlowSpeed: null,
       level: nearest.level, // Waze severity 0-5
       distanceKm: Math.round(nearestDist * 10) / 10,
-    }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+    }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders(env) } });
   }
 
   return new Response(JSON.stringify({ source: "none", message: "No traffic data available for this point" }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
   });
 }
 
@@ -442,7 +742,7 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
   const lat = url.searchParams.get("lat");
   const lon = url.searchParams.get("lon");
   if (!lat || !lon) {
-    return new Response(JSON.stringify({ error: "lat and lon are required" }), { status: 400 });
+    return handleWeatherBaseline(env);
   }
 
   let source = "none";
@@ -487,13 +787,13 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
   if (source === "none") {
     return new Response(JSON.stringify({ source: "none", error: "Weather unavailable" }), {
       status: 502,
-      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env) },
     });
   }
 
   return new Response(JSON.stringify({ source, ...data }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
   });
 }
 
@@ -534,9 +834,12 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
   const lon = parseFloat(url.searchParams.get("lon") || "");
   const type = url.searchParams.get("type") || "fuel";
   const radius = Math.min(parseInt(url.searchParams.get("radius") || "5000", 10), 20000);
+  if (isNaN(lat) || isNaN(lon)) {
+    return handlePoisDirectory(env);
+  }
   const tag = POI_TAGS[type];
-  if (isNaN(lat) || isNaN(lon) || !tag) {
-    return new Response(JSON.stringify({ error: "valid lat, lon and a known type are required" }), { status: 400 });
+  if (!tag) {
+    return jsonResponse(env, { error: "Unknown POI type" }, 400);
   }
 
   try {
@@ -556,7 +859,7 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
       }));
       return new Response(JSON.stringify({ source: "overpass", results }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+        headers: { "Content-Type": "application/json", ...corsHeaders(env) },
       });
     }
   } catch {
@@ -573,12 +876,12 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
     const results = data.map((e: any) => ({ name: e.display_name?.split(",")[0] || type, lat: parseFloat(e.lat), lon: parseFloat(e.lon) }));
     return new Response(JSON.stringify({ source: "nominatim-fallback", results }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env) },
     });
   } catch {
     return new Response(JSON.stringify({ source: "none", results: [], error: "POI lookup failed" }), {
       status: 502,
-      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env) },
     });
   }
 }
@@ -592,15 +895,19 @@ async function handlePois(url: URL, env: Env): Promise<Response> {
 // ============================================================
 
 async function handleWaze(env: Env): Promise<Response> {
-  const res = await fetchWithTimeout(env.WAZE_FEED_URL);
-  const body = await res.text();
-  // NOTE: check the Waze Partner Hub agreement in your dashboard for any
-  // attribution, caching, or refresh-rate requirements before shipping
-  // this to end users — those terms aren't something I can verify here.
-  return new Response(body, {
-    status: res.status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
-  });
+  if (!env.WAZE_FEED_URL) {
+    return jsonResponse(env, { error: "Waze feed is not configured" }, 503);
+  }
+  try {
+    const res = await fetchWithTimeout(env.WAZE_FEED_URL);
+    const body = await res.text();
+    return new Response(body, {
+      status: res.status,
+      headers: { "Content-Type": "application/json", ...corsHeaders(env) },
+    });
+  } catch {
+    return jsonResponse(env, { error: "Waze feed unavailable" }, 502);
+  }
 }
 
 // ---- Upstash Redis (REST API — works from Workers, no TCP needed) ----
@@ -659,19 +966,19 @@ async function callGemini(env: Env, model: string, prompt: string): Promise<Resp
 async function handleAssistant(request: Request, env: Env): Promise<Response> {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   if (!checkRateLimit(ip, aiRateLimitMap, AI_RATE_LIMIT_MAX_REQUESTS)) {
-    return new Response(JSON.stringify({ error: "AI rate limit exceeded. Try again in 60s." }), { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+    return new Response(JSON.stringify({ error: "AI rate limit exceeded. Try again in 60s." }), { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders(env) } });
   }
 
   const bodyValidation = validateJsonBody(await request.json().catch(() => ({})));
   if (!bodyValidation.ok) {
-    return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+    return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env) } });
   }
   const { prompt } = bodyValidation as { prompt?: string };
   if (!prompt || typeof prompt !== "string") {
-    return new Response(JSON.stringify({ error: "prompt is required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+    return new Response(JSON.stringify({ error: "prompt is required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env) } });
   }
   if (prompt.length > 2000) {
-    return new Response(JSON.stringify({ error: "Prompt too long (max 2000 chars)" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env, request) } });
+    return new Response(JSON.stringify({ error: "Prompt too long (max 2000 chars)" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(env) } });
   }
 
   const cacheKey = `gemini:${await hashPrompt(prompt)}`;
@@ -679,7 +986,7 @@ async function handleAssistant(request: Request, env: Env): Promise<Response> {
   if (cached) {
     return new Response(cached, {
       status: 200,
-      headers: { "Content-Type": "application/json", "X-Cache": "HIT", ...corsHeaders(env, request) },
+      headers: { "Content-Type": "application/json", "X-Cache": "HIT", ...corsHeaders(env) },
     });
   }
 
@@ -697,7 +1004,7 @@ async function handleAssistant(request: Request, env: Env): Promise<Response> {
       await setCachedAnswer(env, cacheKey, body);
       return new Response(body, {
         status: 200,
-        headers: { "Content-Type": "application/json", "X-Cache": "MISS", "X-Model-Used": model, ...corsHeaders(env, request) },
+        headers: { "Content-Type": "application/json", "X-Cache": "MISS", "X-Model-Used": model, ...corsHeaders(env) },
       });
     }
   }
@@ -705,7 +1012,7 @@ async function handleAssistant(request: Request, env: Env): Promise<Response> {
   const body = lastRes ? await lastRes.text() : JSON.stringify({ error: "no response from any model" });
   return new Response(body, {
     status: lastRes ? lastRes.status : 502,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
   });
 }
 
@@ -768,7 +1075,7 @@ async function handleHealth(env: Env): Promise<Response> {
   const status = degraded > 0.6 ? 200 : 503;
   return new Response(JSON.stringify({ status: degraded > 0.6 ? "ok" : "degraded", checks, degraded }), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(env) },
   });
 }
 
@@ -782,7 +1089,7 @@ export default {
       if (!checkRateLimit(ip, rateLimitMap, RATE_LIMIT_MAX_REQUESTS)) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again in 60s." }), {
           status: 429,
-          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+          headers: { "Content-Type": "application/json", ...corsHeaders(env) },
         });
       }
     }
@@ -792,13 +1099,13 @@ export default {
     if (contentLength && parseInt(contentLength, 10) > 10_000) {
       return new Response(JSON.stringify({ error: "Request body too large (max 10KB)" }), {
         status: 413,
-        headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+        headers: { "Content-Type": "application/json", ...corsHeaders(env) },
       });
     }
 
     // CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders(env, request) });
+      return new Response(null, { headers: corsHeaders(env) });
     }
 
     // CORS origin validation
@@ -822,6 +1129,33 @@ export default {
     if (url.pathname === "/api/pois") {
       return handlePois(url, env);
     }
+    if (url.pathname === "/api/highways" && request.method === "GET") {
+      return handleHighways(env);
+    }
+    if (url.pathname === "/api/cities" && request.method === "GET") {
+      return handleCities(env);
+    }
+    if (url.pathname === "/api/offline-bundle" && request.method === "GET") {
+      return handleOfflineBundle(env);
+    }
+    if (url.pathname === "/api/submit-report" && request.method === "POST") {
+      return handleSubmitReport(request, env);
+    }
+    if (url.pathname.startsWith("/api/upvote-report/") && request.method === "POST") {
+      return handleUpvoteReport(request, env);
+    }
+    if (url.pathname === "/api/ai-smart-route-query" && request.method === "POST") {
+      return handleSmartRouteQuery(request, env);
+    }
+    if (url.pathname === "/api/ai-route-advisor" && request.method === "POST") {
+      return handleRouteAdvisor(request, env);
+    }
+    if (url.pathname === "/api/ai-trip-assistant" && request.method === "POST") {
+      return handleTripAssistant(request, env);
+    }
+    if (url.pathname === "/api/health" && request.method === "GET") {
+      return handleHealth(env);
+    }
     if (url.pathname === "/api/incidents") {
       return handleIncidents(url, env);
     }
@@ -837,14 +1171,14 @@ export default {
       if (!key) {
         return new Response(JSON.stringify({ error: "data key is required" }), {
           status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+          headers: { "Content-Type": "application/json", ...corsHeaders(env) },
         });
       }
       const value = await env.DATA.get(key);
       if (!value) {
         return new Response(JSON.stringify({ error: "data not found", key }), {
           status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+          headers: { "Content-Type": "application/json", ...corsHeaders(env) },
         });
       }
       return new Response(value, {
@@ -852,14 +1186,14 @@ export default {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "public, max-age=60, s-maxage=300",
-          ...corsHeaders(env, request),
+          ...corsHeaders(env),
         },
       });
     }
 
     return new Response(JSON.stringify({ error: "not found" }), {
       status: 404,
-      headers: { "Content-Type": "application/json", ...corsHeaders(env, request) },
+      headers: { "Content-Type": "application/json", ...corsHeaders(env) },
     });
   },
 };

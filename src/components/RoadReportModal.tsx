@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { IncidentType } from '../types';
+import { fetchJson } from '../utils/apiConfig';
 import { X, Radio, MapPin, Send, AlertTriangle, CheckCircle2, Loader2, Mic, MicOff, Square, Play, Volume2, RotateCcw } from 'lucide-react';
 
 interface RoadReportModalProps {
@@ -182,7 +183,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/submit-report', {
+      const data = await fetchJson<{ success?: boolean }>('/api/submit-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -197,7 +198,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
         }),
       });
 
-      if (res.ok) {
+      if (data.success) {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);

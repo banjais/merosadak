@@ -71,7 +71,7 @@
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=3600"
+            "value": "no-cache, no-store, must-revalidate"
           },
           {
             "key": "Content-Type",
@@ -134,7 +134,7 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "**/!(*.geojson|*.json|*.js|*.css|*.png|*.jpg|*.jpeg|*.svg|*.ico|*.txt|*.webp|*.avif|*.gif|*.woff|*.woff2|*.ttf|*.map)",
         "destination": "/index.html"
       }
     ]

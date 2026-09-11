@@ -1,5 +1,6 @@
 // Mero Sadak Nepal GIS - Offline Mountain Synchronization & Service Worker Bridge
 import { HighwaySegment } from '../types';
+import { getApiUrl } from './apiConfig';
 
 export interface OfflineCacheStats {
   isServiceWorkerActive: boolean;
@@ -140,11 +141,11 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
-      const tileCache = await caches.open('mero-sadak-tiles-v1.3');
+      const tileCache = await caches.open('mero-sadak-tiles-v1.5');
       const tileKeys = await tileCache.keys();
       tilesCount = tileKeys.length;
 
-      const dataCache = await caches.open('mero-sadak-data-v1.3');
+      const dataCache = await caches.open('mero-sadak-data-v1.5');
       const dataKeys = await dataCache.keys();
       dataEndpointsCount = dataKeys.length;
     } catch (e) {
@@ -181,7 +182,7 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 export async function downloadMountainOfflinePack(
   onProgress?: (progress: PrefetchProgress) => void
 ): Promise<{ success: boolean; totalTiles: number; error?: string }> {
-  const apiUrls = [
+  const apiEndpoints = [
     '/api/highways',
     '/api/cities',
     '/api/road-alerts',
@@ -190,6 +191,7 @@ export async function downloadMountainOfflinePack(
     '/api/traffic',
     '/api/offline-bundle',
   ];
+  const apiUrls = apiEndpoints.map((endpoint) => getApiUrl(endpoint));
 
   const tileUrls = generateNepalHighwayTileUrls();
   const totalItems = apiUrls.length + tileUrls.length;
@@ -209,20 +211,22 @@ export async function downloadMountainOfflinePack(
 
     let offlineBundleData: any = null;
 
-    for (const url of apiUrls) {
+    for (let index = 0; index < apiEndpoints.length; index++) {
+      const endpoint = apiEndpoints[index];
+      const url = apiUrls[index];
       try {
         const res = await fetch(url);
         if (res.ok) {
           const cloned = res.clone();
-          if (url === '/api/offline-bundle') {
+          if (endpoint === '/api/offline-bundle') {
             offlineBundleData = await res.json();
             if (typeof window !== 'undefined') {
               localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(offlineBundleData));
             }
           }
           if ('caches' in window) {
-            const dataCache = await caches.open('mero-sadak-data-v1.3');
-            await dataCache.put(url, cloned);
+            const dataCache = await caches.open('mero-sadak-data-v1.5');
+            await dataCache.put(endpoint, cloned);
           }
         }
       } catch (err) {
@@ -259,7 +263,7 @@ export async function downloadMountainOfflinePack(
           try {
             const res = await fetch(tileUrl, { mode: 'no-cors' });
             if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v1.3');
+              const tileCache = await caches.open('mero-sadak-tiles-v1.5');
               await tileCache.put(tileUrl, res);
             }
           } catch (e) {
@@ -374,7 +378,7 @@ export async function removeCachedSegments(segmentIds: string[]): Promise<void> 
     }
     localStorage.setItem(LOCAL_STORAGE_CACHED_SEGMENTS_KEY, JSON.stringify(cached));
     if ('caches' in window) {
-      const dataCache = await caches.open('mero-sadak-data-v1.2');
+      const dataCache = await caches.open('mero-sadak-data-v1.5');
       await dataCache.put(
         '/api/cached-segments',
         new Response(JSON.stringify(cached), {
@@ -511,7 +515,7 @@ export async function cacheSelectedSegments(
 
     if ('caches' in window) {
       try {
-        const dataCache = await caches.open('mero-sadak-data-v1.3');
+        const dataCache = await caches.open('mero-sadak-data-v1.5');
         await dataCache.put(
           '/api/cached-segments',
           new Response(JSON.stringify(cachedSegmentsMap), {
@@ -546,7 +550,7 @@ export async function cacheSelectedSegments(
           try {
             const res = await fetch(tileUrl, { mode: 'no-cors' });
             if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v1.3');
+              const tileCache = await caches.open('mero-sadak-tiles-v1.5');
               await tileCache.put(tileUrl, res);
             }
           } catch {
@@ -592,12 +596,13 @@ export async function cacheSelectedSegments(
     }
 
     const endpoints = ['/api/road-alerts', '/api/weather', '/api/highways'];
-    for (const ep of endpoints) {
+    for (const endpoint of endpoints) {
       try {
-        const res = await fetch(ep);
+        const url = getApiUrl(endpoint);
+        const res = await fetch(url);
         if (res.ok && 'caches' in window) {
-      const dataCache = await caches.open('mero-sadak-data-v1.3');
-          await dataCache.put(ep, res.clone());
+          const dataCache = await caches.open('mero-sadak-data-v1.5');
+          await dataCache.put(endpoint, res.clone());
         }
       } catch {
         // Fallback

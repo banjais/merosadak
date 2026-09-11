@@ -2,9 +2,9 @@
 // Version 1.2.0 - Mountain Offline Caching & Map Tile Engine
 
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v1.4',
-  TILES: 'mero-sadak-tiles-v1.4',
-  DATA: 'mero-sadak-data-v1.4',
+  STATIC: 'mero-sadak-static-v1.5',
+  TILES: 'mero-sadak-tiles-v1.5',
+  DATA: 'mero-sadak-data-v1.5',
 };
 
 const PRECACHE_ASSETS = [

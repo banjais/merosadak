@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { RoutePlanResult, VehicleType, RoutePreference, TripAssistantPlan, TripAssistantStop, TripStopCategory } from '../types';
+import { fetchJson } from '../utils/apiConfig';
 import {
   Sparkles,
   Coffee,
@@ -112,7 +113,7 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
     }
 
     try {
-      const response = await fetch('/api/ai-trip-assistant', {
+      const data = await fetchJson<{ tripPlan?: TripAssistantPlan }>('/api/ai-trip-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -133,21 +134,15 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
         }),
       });
 
-      const contentType = response.headers.get('content-type');
-      if (response.ok && contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        if (data.tripPlan) {
-          setTripPlan((prev) => {
-            if (!prev || !customQuestion) return data.tripPlan;
-            return {
-              ...prev,
-              customAnswer: data.tripPlan.customAnswer || prev.customAnswer,
-              suggestedStops: data.tripPlan.suggestedStops?.length ? data.tripPlan.suggestedStops : prev.suggestedStops,
-            };
-          });
-        }
-      } else {
-        console.warn('AI Trip Assistant returned non-JSON or error status:', response.status);
+      if (data.tripPlan) {
+        setTripPlan((prev) => {
+          if (!prev || !customQuestion) return data.tripPlan;
+          return {
+            ...prev,
+            customAnswer: data.tripPlan.customAnswer || prev.customAnswer,
+            suggestedStops: data.tripPlan.suggestedStops?.length ? data.tripPlan.suggestedStops : prev.suggestedStops,
+          };
+        });
       }
     } catch (err) {
       console.warn('AI Trip Assistant network/parse notice:', err);

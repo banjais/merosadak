@@ -71,6 +71,7 @@ import {
   Milestone,
 } from 'lucide-react';
 import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
+import { fetchJson } from '../utils/apiConfig';
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -252,20 +253,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Fetch optional telemetry data when respective tabs are clicked
   useEffect(() => {
     if (activeModuleTab === 'weather' && weatherNodes.length === 0) {
-      fetch('/api/weather')
-        .then((res) => res.json())
+      fetchJson<Record<string, any>>('/api/weather')
         .then((data) => data.weatherNodes && setWeatherNodes(data.weatherNodes))
         .catch(() => {});
     }
     if (activeModuleTab === 'pois' && poisList.length === 0) {
-      fetch('/api/pois')
-        .then((res) => res.json())
+      fetchJson<Record<string, any>>('/api/pois')
         .then((data) => data.pois && setPoisList(data.pois))
         .catch(() => {});
     }
     if (activeModuleTab === 'traffic' && corridorsList.length === 0) {
-      fetch('/api/traffic')
-        .then((res) => res.json())
+      fetchJson<Record<string, any>>('/api/traffic')
         .then((data) => data.corridors && setTrafficCorridorsList(data.corridors))
         .catch(() => {});
     }
@@ -506,13 +504,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setAiParseMessage('Gemini AI analyzing request & corridor geometry...');
 
     try {
-      const res = await fetch('/api/ai-smart-route-query', {
+      const data = await fetchJson<Record<string, any>>('/api/ai-smart-route-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: textToParse }),
       });
 
-      const data = await res.json();
       if (data && data.destId) {
         if (data.originId) setOriginId(data.originId);
         if (data.destId) {
@@ -550,7 +547,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (!routePlan) return;
     setLoadingAiAdvisory(true);
     try {
-      const response = await fetch('/api/ai-route-advisor', {
+      const data = await fetchJson<Record<string, any>>('/api/ai-route-advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -564,7 +561,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           incidents: routePlan.incidentsOnRoute,
         }),
       });
-      const data = await response.json();
       if (data.advisory) {
         setAiCustomAdvisory(data.advisory);
       }

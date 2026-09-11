@@ -13,5 +13,21 @@ export function getApiUrl(endpoint: string): string {
     return endpoint;
   }
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${WORKER_BASE_URL}${cleanEndpoint}`;
+  return `${WORKER_BASE_URL.replace(/\/+$/, '')}${cleanEndpoint}`;
+}
+
+export async function fetchJson<T = unknown>(endpoint: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(getApiUrl(endpoint), init);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Expected JSON response from ${endpoint} (HTTP ${response.status}, ${contentType || 'unknown content type'})`);
+  }
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(`API request failed for ${endpoint} (HTTP ${response.status})`) as Error & { status?: number; data?: unknown };
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+  return data;
 }
