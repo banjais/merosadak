@@ -46,6 +46,7 @@ import {
   TRAFFIC_CORRIDORS,
   CITIES_AND_JUNCTIONS,
 } from './data/nepalHighwaysData';
+import { getNearestRoutingCity } from './utils/cityDataLoader';
 import { getRoutePointAtDistance } from './utils/routeElevationProfile';
 import {
   Compass,
@@ -340,8 +341,9 @@ function AppContent() {
   };
 
   const handleSelectCityOnMap = (city: CityNode, type: 'origin' | 'destination') => {
-    if (type === 'origin') setPlannerOrigin(city.id);
-    if (type === 'destination') setPlannerDest(city.id);
+    const routingCity = getNearestRoutingCity(city);
+    if (type === 'origin') setPlannerOrigin(routingCity.id);
+    if (type === 'destination') setPlannerDest(routingCity.id);
     setActiveFeature('route');
   };
 
@@ -712,7 +714,7 @@ function AppContent() {
       {!isDistanceCalculatorOpen && (
         <main className="flex-1 w-full overflow-y-auto bg-slate-950">
         {/* Route Planner as Main Content */}
-        <div className="w-full bg-slate-900">
+        <div className="relative z-10 w-full bg-slate-900">
           <RoutePlanner
             initialOriginId={plannerOrigin}
             initialDestId={plannerDest}

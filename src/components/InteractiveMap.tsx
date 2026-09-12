@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import {
   Highway,
@@ -13,13 +13,18 @@ import {
 } from '../types';
 import {
   NEPAL_HIGHWAYS,
-  CITIES_AND_JUNCTIONS,
   LIVE_ROAD_INCIDENTS,
   HIGHWAY_POIS,
   TRAFFIC_CORRIDORS,
   HIGHWAY_WEATHER_NODES,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
+import {
+  CITY_HIGHWAY_TOUCH_DISTANCE_KM,
+  filterCitiesNearHighways,
+  getCachedExpandedCities,
+  loadExpandedCities,
+} from '../utils/cityDataLoader';
 import { NEPAL_HIGHWAY_BLACKSPOTS } from '../data/accidentBlackspotsData';
 import {
   Zap,
@@ -76,6 +81,16 @@ export type ActiveMapOverlayLayer =
   | 'traffic'
   | 'pois'
   | 'alternatives';
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[character] || character));
+}
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   activeRoute,
@@ -134,7 +149,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const weatherMarkersRef = useRef<Map<string, L.Marker>>(new Map());
 
-  const showCities = false;
   const showBlackspots = false;
   const routeColorMode = 'safety' as const;
 
@@ -177,14 +191,26 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // 79 Highways state loaded from GeoJSON dataset
   const [highwaysList, setHighwaysList] = useState<Highway[]>(NEPAL_HIGHWAYS);
+  const [expandedCities, setExpandedCities] = useState<CityNode[]>(() => getCachedExpandedCities());
   const [activeHighwayInfo, setActiveHighwayInfo] = useState<Highway | null>(null);
 
-  // Load all 79 National Highways
   useEffect(() => {
     let isMounted = true;
     loadAll79Highways().then((data) => {
       if (isMounted && data && data.length > 0) {
         setHighwaysList(data);
+      }
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    loadExpandedCities().then((data) => {
+      if (isMounted && data && data.length > 0) {
+        setExpandedCities(data);
       }
     }).catch(() => {});
     return () => {
@@ -212,6 +238,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     layersRef.current.highways.addTo(map);
+    layersRef.current.cities.addTo(map);
     layersRef.current.weather.addTo(map);
     layersRef.current.incidents.addTo(map);
     layersRef.current.pois.addTo(map);
@@ -607,67 +634,54 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, livePOIs]);
 
-  // Render Cities Layer (Only cities lying on Nepal highways or chosen route)
+  const highwayTouchCities = useMemo(
+    () => filterCitiesNearHighways(expandedCities, highwaysList, CITY_HIGHWAY_TOUCH_DISTANCE_KM),
+    [expandedCities, highwaysList]
+  );
+
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const citiesGroup = layersRef.current.cities;
     citiesGroup.clearLayers();
 
-    if (!showCities) return;
+    const routeCityIds = new Set<string>();
+    const routeCoordinates = activeRoute?.pathCoordinates || [];
+    if (activeRoute) {
+      routeCityIds.add(activeRoute.origin.id);
+      routeCityIds.add(activeRoute.destination.id);
+    }
 
-    CITIES_AND_JUNCTIONS.forEach((city) => {
-      // Check if city lies on any highway segment or has connected highways
-      const liesOnHighway = NEPAL_HIGHWAYS.some((highway) =>
-        highway.segments.some(
-          (seg) =>
-            seg.from.toLowerCase().includes(city.name.toLowerCase()) ||
-            seg.to.toLowerCase().includes(city.name.toLowerCase()) ||
-            city.name.toLowerCase().includes(seg.from.toLowerCase()) ||
-            city.name.toLowerCase().includes(seg.to.toLowerCase())
-        ) ||
-        (city.connectedHighways && city.connectedHighways.length > 0)
+    highwayTouchCities.forEach((city) => {
+      const isRouteCity = routeCityIds.has(city.id) || routeCoordinates.some(
+        (coordinate) => Math.abs(coordinate[0] - city.lat) < 0.12 && Math.abs(coordinate[1] - city.lng) < 0.12
       );
-
-      const isInRoute = activeRoute && (
-        activeRoute.originCityId === city.id ||
-        activeRoute.destCityId === city.id ||
-        (activeRoute.routePath && activeRoute.routePath.some(pt => Math.abs(pt.lat - city.lat) < 0.12 && Math.abs(pt.lng - city.lng) < 0.12)) ||
-        (activeRoute.pathCoordinates && activeRoute.pathCoordinates.some(coord => Math.abs(coord[0] - city.lat) < 0.15 && Math.abs(coord[1] - city.lng) < 0.15)) ||
-        (activeRoute.steps && activeRoute.steps.some(step => 
-          (step.from && step.from.id === city.id) ||
-          (step.to && step.to.id === city.id) ||
-          (step.from && Math.abs(step.from.lat - city.lat) < 0.15 && Math.abs(step.from.lng - city.lng) < 0.15) ||
-          (step.to && Math.abs(step.to.lat - city.lat) < 0.15 && Math.abs(step.to.lng - city.lng) < 0.15)
-        ))
-      );
-
-      // Only display city if it lies on a highway network or is part of the user's chosen route
-      if (activeRoute) {
-        if (!isInRoute) return;
-      } else {
-        if (!liesOnHighway) return;
-      }
-
-      const isHub = city.isMajorHub;
+      const isHub = city.isMajorHub || isRouteCity;
       const markerHtml = `
         <div class="relative flex items-center justify-center cursor-pointer group">
           <div class="${
             isHub ? 'w-3.5 h-3.5 bg-emerald-500 ring-4 ring-emerald-500/20' : 'w-2.5 h-2.5 bg-slate-400 ring-2 ring-slate-600'
           } rounded-full shadow-md"></div>
-          <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-slate-950/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow border border-slate-800 whitespace-nowrap pointer-events-none">
-            ${city.name}
-          </div>
+          ${isHub ? `
+            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-slate-950/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow border border-slate-800 whitespace-nowrap pointer-events-none">
+              ${escapeHtml(city.name)}
+            </div>
+          ` : ''}
         </div>
       `;
 
       const icon = L.divIcon({
         className: 'custom-city-marker',
         html: markerHtml,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
       });
 
-      const marker = L.marker([city.lat, city.lng], { icon });
+      const marker = L.marker([city.lat, city.lng], { icon, riseOnHover: true });
+      const location = [city.district, city.province].filter(Boolean).join(' · ');
+      marker.bindTooltip(
+        `<div class="p-1.5 text-xs font-sans"><div class="font-bold text-white">${escapeHtml(city.name)}</div>${location ? `<div class="text-slate-300">${escapeHtml(location)}</div>` : ''}</div>`,
+        { className: 'custom-dark-tooltip', direction: 'top', offset: [0, -10] }
+      );
 
       marker.on('click', () => {
         if (onSelectCity) onSelectCity(city, 'origin');
@@ -675,7 +689,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       citiesGroup.addLayer(marker);
     });
-  }, [showCities, activeRoute, onSelectCity]);
+  }, [highwayTouchCities, activeRoute, onSelectCity]);
 
   // Render Weather Nodes Layer (Mountain Passes & Highway Met Nodes - shows everywhere across Nepal when selected)
   useEffect(() => {
