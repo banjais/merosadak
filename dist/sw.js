@@ -1,10 +1,10 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
-// Version 1.2.0 - Mountain Offline Caching & Map Tile Engine
+// Version 1.3.0 - Mountain Offline Caching & Map Tile Engine
 
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v2',
-  TILES: 'mero-sadak-tiles-v2',
-  DATA: 'mero-sadak-data-v2',
+  STATIC: 'mero-sadak-static-v3',
+  TILES: 'mero-sadak-tiles-v3',
+  DATA: 'mero-sadak-data-v3',
 };
 
 const PRECACHE_ASSETS = [

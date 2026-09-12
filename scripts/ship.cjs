@@ -22,15 +22,15 @@ function run(name, cmd, options = {}) {
 }
 
 try {
-  run('sync data', 'npm run sync:data');
-  run('deploy worker', 'npm run worker:deploy');
-  run('build', 'npm run build');
-
   console.log('\n[ship] git fetch...');
   run('git fetch', 'git fetch origin', { allowFailure: true });
 
   console.log('\n[ship] git rebase onto origin/main (if needed)...');
   run('git rebase', 'git rebase --autostash origin/main', { allowFailure: true });
+
+  run('sync data', 'npm run sync:data');
+  run('deploy worker', 'npm run worker:deploy');
+  run('build', 'npm run build');
 
   console.log('\n[ship] git add...');
   try {
@@ -47,7 +47,7 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'npx firebase-tools@13.11.2 deploy --only hosting');
+  run('firebase deploy', 'npx firebase-tools@13.11.2 deploy --only hosting --project sadak-sathi-3ab73');
   console.log('\n[ship] ✅ all steps completed');
 } catch {
   console.error('\n[ship] ❌ ship aborted');

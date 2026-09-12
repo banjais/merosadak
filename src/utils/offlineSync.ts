@@ -141,11 +141,11 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
-      const tileCache = await caches.open('mero-sadak-tiles-v1.5');
+      const tileCache = await caches.open('mero-sadak-tiles-v3');
       const tileKeys = await tileCache.keys();
       tilesCount = tileKeys.length;
 
-      const dataCache = await caches.open('mero-sadak-data-v1.5');
+      const dataCache = await caches.open('mero-sadak-data-v3');
       const dataKeys = await dataCache.keys();
       dataEndpointsCount = dataKeys.length;
     } catch (e) {
@@ -225,7 +225,7 @@ export async function downloadMountainOfflinePack(
             }
           }
           if ('caches' in window) {
-            const dataCache = await caches.open('mero-sadak-data-v1.5');
+            const dataCache = await caches.open('mero-sadak-data-v3');
             await dataCache.put(endpoint, cloned);
           }
         }
@@ -263,7 +263,7 @@ export async function downloadMountainOfflinePack(
           try {
             const res = await fetch(tileUrl, { mode: 'no-cors' });
             if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v1.5');
+              const tileCache = await caches.open('mero-sadak-tiles-v3');
               await tileCache.put(tileUrl, res);
             }
           } catch (e) {
@@ -378,7 +378,7 @@ export async function removeCachedSegments(segmentIds: string[]): Promise<void> 
     }
     localStorage.setItem(LOCAL_STORAGE_CACHED_SEGMENTS_KEY, JSON.stringify(cached));
     if ('caches' in window) {
-      const dataCache = await caches.open('mero-sadak-data-v1.5');
+      const dataCache = await caches.open('mero-sadak-data-v3');
       await dataCache.put(
         '/api/cached-segments',
         new Response(JSON.stringify(cached), {
@@ -515,7 +515,7 @@ export async function cacheSelectedSegments(
 
     if ('caches' in window) {
       try {
-        const dataCache = await caches.open('mero-sadak-data-v1.5');
+        const dataCache = await caches.open('mero-sadak-data-v3');
         await dataCache.put(
           '/api/cached-segments',
           new Response(JSON.stringify(cachedSegmentsMap), {
@@ -550,7 +550,7 @@ export async function cacheSelectedSegments(
           try {
             const res = await fetch(tileUrl, { mode: 'no-cors' });
             if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v1.5');
+              const tileCache = await caches.open('mero-sadak-tiles-v3');
               await tileCache.put(tileUrl, res);
             }
           } catch {
@@ -601,7 +601,7 @@ export async function cacheSelectedSegments(
         const url = getApiUrl(endpoint);
         const res = await fetch(url);
         if (res.ok && 'caches' in window) {
-          const dataCache = await caches.open('mero-sadak-data-v1.5');
+          const dataCache = await caches.open('mero-sadak-data-v3');
           await dataCache.put(endpoint, res.clone());
         }
       } catch {
