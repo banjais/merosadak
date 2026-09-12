@@ -262,6 +262,8 @@ function AppContent() {
 
   const handleRouteCalculated = (route: RoutePlanResult) => {
     setActiveRoute(route);
+    setSimulationProgressKm(0);
+    setIsSimulationPlaying(false);
     if (route?.destination) {
       setFocusedTarget({
         lat: route.destination.lat,
@@ -270,6 +272,71 @@ function AppContent() {
         zoom: 11,
       });
     }
+  };
+
+  useEffect(() => {
+    setSimulationProgressKm(0);
+    setIsSimulationPlaying(false);
+  }, [activeRoute?.id]);
+
+  useEffect(() => {
+    if (!isSimulationPlaying || !activeRoute) return;
+
+    const totalDistanceKm = activeRoute.totalDistanceKm || 0;
+    const interval = window.setInterval(() => {
+      setSimulationProgressKm((previous) => {
+        const next = Math.min(
+          totalDistanceKm,
+          Math.round((previous + (0.3 * simulationSpeed)) * 10) / 10
+        );
+        if (next >= totalDistanceKm) {
+          setIsSimulationPlaying(false);
+        }
+        return next;
+      });
+    }, 80);
+
+    return () => window.clearInterval(interval);
+  }, [isSimulationPlaying, simulationSpeed, activeRoute?.id, activeRoute?.totalDistanceKm]);
+
+  useEffect(() => {
+    if (!followOnMap || !activeRoute) return;
+
+    const now = Date.now();
+    if (now - lastMapSyncRef.current < 900) return;
+    lastMapSyncRef.current = now;
+
+    const position = getRoutePointAtDistance(activeRoute, simulationProgressKm);
+    setFocusedTarget({
+      lat: position.lat,
+      lng: position.lng,
+      title: `Navigation Progress: KM ${position.distance.toFixed(1)}`,
+      zoom: 13,
+    });
+  }, [activeRoute, followOnMap, simulationProgressKm]);
+
+  const simulationControls: RouteSimulationControls = {
+    progressKm: simulationProgressKm,
+    isPlaying: isSimulationPlaying,
+    speed: simulationSpeed,
+    followOnMap,
+    onToggle: () => {
+      if (!activeRoute) return;
+      if (simulationProgressKm >= (activeRoute.totalDistanceKm || 0)) {
+        setSimulationProgressKm(0);
+      }
+      setIsSimulationPlaying((previous) => !previous);
+    },
+    onReset: () => {
+      setIsSimulationPlaying(false);
+      setSimulationProgressKm(0);
+    },
+    onSeek: (progressKm: number) => {
+      const maximum = activeRoute?.totalDistanceKm || 0;
+      setSimulationProgressKm(Math.max(0, Math.min(progressKm, maximum)));
+    },
+    onSetSpeed: (speed: number) => setSimulationSpeed(speed),
+    onToggleFollowOnMap: () => setFollowOnMap((previous) => !previous),
   };
 
   const handleSelectCityOnMap = (city: CityNode, type: 'origin' | 'destination') => {
@@ -652,6 +719,7 @@ function AppContent() {
             initialVehicle={plannerVehicle}
             initialPreference={plannerPref}
             onRouteCalculated={handleRouteCalculated}
+            simulationControls={simulationControls}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);
@@ -688,6 +756,7 @@ function AppContent() {
         {activeRoute && (
           <ActiveRouteElevationCard
             activeRoute={activeRoute}
+            simulationControls={simulationControls}
             onOpenPlanner={() => {}}
             onClearRoute={() => setActiveRoute(null)}
             onViewOnMap={(target) => setFocusedTarget(target)}

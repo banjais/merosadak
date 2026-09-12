@@ -8,6 +8,7 @@ import {
   HighwayWeatherNode,
   HighwayPOI,
   TrafficCorridor,
+  RouteSimulationControls,
 } from '../types';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute } from '../utils/routeOptimizer';
@@ -80,6 +81,7 @@ interface RoutePlannerProps {
   initialPreference?: RoutePreference;
   onRouteCalculated: (route: RoutePlanResult) => void;
   onViewOnMap?: (target?: { lat: number; lng: number; title: string; zoom?: number }) => void;
+  simulationControls: RouteSimulationControls;
   onToggleMapFull?: () => void;
   isMapFull?: boolean;
 }
@@ -114,6 +116,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialPreference = 'fastest',
   onRouteCalculated,
   onViewOnMap,
+  simulationControls,
   onToggleMapFull,
   isMapFull = false,
 }) => {
@@ -1130,6 +1133,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 activeRoute={routePlan}
                 routePlan={routePlan}
                 vehicle={vehicle}
+                simulationControls={simulationControls}
                 onViewOnMap={onViewOnMap}
               />
             </div>
