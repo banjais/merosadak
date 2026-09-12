@@ -606,15 +606,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
-        {/* Destination Instruction */}
-        {!hasCalculated && !userPickedDestination && (
-          <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 text-center animate-fadeIn">
-            Tap the map or use the search below to select your destination
-          </div>
-        )}
-
         {/* 1. MY LOCATION CARD / PICKER */}
-        {userPickedDestination && !hasCalculated && (
+        {!hasCalculated && (
         <div className="relative" ref={locationMenuRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
