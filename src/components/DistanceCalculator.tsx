@@ -127,6 +127,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                       </div>
                     )}
                   </div>
+                </div>
               )}
             </div>
           </div>

@@ -47,7 +47,7 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'npx firebase deploy --only hosting');
+  run('firebase deploy', 'npx firebase-tools@13.11.2 deploy --only hosting');
   console.log('\n[ship] ✅ all steps completed');
 } catch {
   console.error('\n[ship] ❌ ship aborted');
