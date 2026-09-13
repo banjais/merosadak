@@ -19,6 +19,7 @@ import { TollCalculatorModal } from './components/TollCalculatorModal';
 import { PreTripModal } from './components/PreTripModal';
 import { ShareTripModal } from './components/ShareTripModal';
 import { AppDrawer } from './components/AppDrawer';
+import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard';
@@ -73,7 +74,10 @@ import {
   ArrowRight,
   Sparkles,
   X,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'traffic' | 'highways' | 'dialects';
 export type ActiveFeatureType = SubViewTab | 'steps' | null;
@@ -114,9 +118,11 @@ function AppContent() {
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
+  const { user, logout } = useAuth();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
@@ -467,6 +473,7 @@ function AppContent() {
         onOpenReportModal={() => setIsReportModalOpen(true)}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenOfflineManager={() => setIsOfflineManagerOpen(true)}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
         incidentsCount={incidents.length}
       />
 
@@ -649,51 +656,32 @@ function AppContent() {
               )}
             </div>
 
-            {/* Maximize / Fullscreen Option */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 rounded-xl text-xs font-semibold transition"
-              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Maximize'}
-              id="btn-header-maximize"
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </button>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-xl border text-xs font-semibold transition ${
-                theme === 'dark'
-                  ? 'bg-slate-800/90 hover:bg-slate-700 text-amber-300 border-slate-700/80'
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-              }`}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              id="btn-header-theme"
-            >
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </button>
 
-            {/* Text Scale Toggle */}
+
+
+
+
+
+
             <button
               onClick={() => {
-                hapticLight();
-                setTextScale(prev => prev === 'small' ? 'medium' : prev === 'medium' ? 'large' : prev === 'large' ? 'xlarge' : 'small');
+                if (user) {
+                  logout();
+                } else {
+                  setIsLoginModalOpen(true);
+                }
               }}
-              className="p-2 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 rounded-xl text-xs font-black transition"
-              title={`Text Size: ${textScale}`}
-              id="btn-header-textscale"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black border transition ${
+                user
+                  ? 'bg-slate-800/90 hover:bg-slate-700 text-emerald-300 border-slate-700/80'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/40'
+              }`}
+              title={user ? 'Sign out' : 'Sign in with Google'}
+              id="btn-header-auth"
             >
-              Aa
-            </button>
-
-            {/* Language Toggle */}
-            <button
-              onClick={() => setLanguage(language === 'EN' ? 'NE' : 'EN')}
-              className="px-2.5 py-1.5 bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-slate-700/80 rounded-xl text-xs font-black transition"
-              title="Toggle Language (English / नेपाली)"
-              id="btn-header-language"
-            >
-              {language}
+              {user ? <LogOut className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+              <span className="hidden sm:inline">{user ? 'Sign out' : 'Sign in'}</span>
             </button>
           </div>
         </div>
@@ -721,6 +709,7 @@ function AppContent() {
             initialVehicle={plannerVehicle}
             initialPreference={plannerPref}
             onRouteCalculated={handleRouteCalculated}
+            onRouteClear={() => setActiveRoute(null)}
             simulationControls={simulationControls}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
@@ -754,16 +743,7 @@ function AppContent() {
           />
         </div>
 
-        {/* Floating Active Route Elevation Profile Card */}
-        {activeRoute && (
-          <ActiveRouteElevationCard
-            activeRoute={activeRoute}
-            simulationControls={simulationControls}
-            onOpenPlanner={() => {}}
-            onClearRoute={() => setActiveRoute(null)}
-            onViewOnMap={(target) => setFocusedTarget(target)}
-          />
-        )}
+
 
         {/* Right-Bottom Round +FAB Speed Dial Navigation Menu */}
         <SpeedDialFab
@@ -819,7 +799,7 @@ function AppContent() {
                         {activeFeature === 'weather' && 'High-altitude passes, fog and rain'}
                         {activeFeature === 'traffic' && 'Real-time speed variance and bottlenecks'}
                         {activeFeature === 'pois' && 'Fuel, EV charging and medical facilities'}
-                        {activeFeature === 'highways' && 'Nepal road network inventory'}
+                        {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
                         {activeFeature === 'dialects' && 'Transit driving phrases in local tongues'}
                       </p>
                     </div>
@@ -985,6 +965,12 @@ function AppContent() {
         />
       )}
 
+      {isLoginModalOpen && (
+        <LoginScreen
+          onClose={() => setIsLoginModalOpen(false)}
+        />
+      )}
+
       {/* Road Hazard Report Modal */}
       <RoadReportModal
         isOpen={isReportModalOpen}
@@ -1016,8 +1002,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <OfflineProvider>
-      <AppContent />
-    </OfflineProvider>
+    <AuthProvider>
+      <OfflineProvider>
+        <AppContent />
+      </OfflineProvider>
+    </AuthProvider>
   );
 }

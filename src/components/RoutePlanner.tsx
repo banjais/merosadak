@@ -80,6 +80,7 @@ interface RoutePlannerProps {
   initialVehicle?: VehicleType;
   initialPreference?: RoutePreference;
   onRouteCalculated: (route: RoutePlanResult) => void;
+  onRouteClear?: () => void;
   onViewOnMap?: (target?: { lat: number; lng: number; title: string; zoom?: number }) => void;
   simulationControls: RouteSimulationControls;
   onToggleMapFull?: () => void;
@@ -115,6 +116,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialVehicle = 'car',
   initialPreference = 'fastest',
   onRouteCalculated,
+  onRouteClear,
   onViewOnMap,
   simulationControls,
   onToggleMapFull,
@@ -219,6 +221,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [travelPlanView, setTravelPlanView] = useState<'timeline' | 'steps'>('timeline');
   // Calculation animation key for smooth CSS fade-in transitions
   const [calcKey, setCalcKey] = useState<number>(0);
+
+  // Toggle for advanced fuel/efficiency settings
+  const [showAdvancedFuel, setShowAdvancedFuel] = useState<boolean>(false);
 
   // AI Custom Advisory states
   const [loadingAiAdvisory, setLoadingAiAdvisory] = useState<boolean>(false);
@@ -950,11 +955,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowSearchPanel(!showSearchPanel)}
+                  onClick={() => {
+                    // Reset all route state to return to the initial screen
+                    setRoutePlan(null);
+                    setHasCalculated(false);
+                    setUserPickedDestination(false);
+                    setNeedsRecalculation(false);
+                    setSingleSearchQuery('');
+                    setDestSearchQuery('');
+                    setShowSearchPanel(false);
+                    setShowVehicleOptions(false);
+                    setActiveModuleTab('none');
+                    onRouteClear?.();
+                  }}
                   className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-[10px] font-bold transition shrink-0"
                 >
-                  <span>{showSearchPanel ? 'Hide' : 'Change Location'}</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showSearchPanel ? 'rotate-180' : ''}`} />
+                  <span>Change Location</span>
+                  <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
             </div>
@@ -1056,13 +1073,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <span className="text-sm sm:text-base font-black text-white font-display truncate">{routePlan.origin.name}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="text-sm sm:text-base font-black text-white font-display truncate">{routePlan.destination.name}</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold shrink-0">
-                  {routePlan.totalDistanceKm} km
-                </span>
               </div>
               <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                 {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} •{' '}
-                <span className="capitalize">{preference.replace('_', ' ')}</span> priority • {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m drive
+                <span className="capitalize">{preference.replace('_', ' ')}</span> priority
               </p>
             </div>
 
@@ -1087,24 +1101,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 )}
               </button>
 
-              {/* Primary View Mode Switcher */}
-              <div className="flex items-center space-x-1 bg-slate-950 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResultsViewMode('comparison');
-      setIsReportExpanded(false);
-                  }}
-                  className={`px-2 sm:px-3 py-1 rounded-lg font-bold transition flex items-center space-x-1 text-[11px] ${
-                    resultsViewMode === 'comparison'
-                      ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-emerald-300'
-                  }`}
-                >
-                  <Scale className="w-3 h-3 text-emerald-400" />
-                  <span>Compare</span>
-                </button>
-              </div>
+
             </div>
 
               <button
@@ -1135,27 +1132,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           {!isReportExpanded && (
             <div className="bg-slate-950/90 rounded-xl p-3 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs animate-fadeIn">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-300 font-mono text-[11px]">
-                <span className="flex items-center space-x-1 text-white font-bold">
+                <span className="flex items-center space-x-1 text-white font-bold" title="Distance">
                   <Compass className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>{routePlan.totalDistanceKm} km</span>
                 </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-cyan-400 font-bold">
-                  {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+                <span className="flex items-center space-x-1 text-cyan-400 font-bold" title="Time">
+                  <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>{Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m</span>
                 </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-amber-300 font-bold">
-                  NPR {(() => {
+                <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
+                  <Fuel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Rs {(() => {
                     const isEV = vehicle === 'electric_vehicle';
                     const effKmL = Math.max(1.0, customMileageKmL);
                     const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
                     const price = isEV ? 15 : (vehicle === 'suv_4wd' || vehicle === 'bus_truck') ? 158 : 175;
                     return (Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0)).toLocaleString();
-                  })()}
+                  })()}</span>
                 </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-emerald-400 font-bold">
-                  {routePlan.roadConditionScore}/100 Safe
+                <span className="flex items-center space-x-1 text-emerald-400 font-bold" title="Safety">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>{routePlan.roadConditionScore}</span>
                 </span>
               </div>
               <button
@@ -1405,25 +1402,33 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
                 return (
                   <div className="bg-slate-900/60 border border-slate-800/90 rounded-xl p-3.5 sm:p-4 space-y-3.5">
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800/70">
-                      <div className="flex items-center space-x-2">
+                    {/* Header - Interactive Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedFuel(!showAdvancedFuel)}
+                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800/70 hover:bg-slate-800/30 transition p-2 rounded-lg -m-2"
+                    >
+                      <div className="flex items-center space-x-2 text-left">
                         <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
                           <Fuel className="w-4 h-4" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                            Detailed Fuel &amp; Transit Cost Breakdown ({VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label})
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <span>Detailed Fuel &amp; Transit Cost Breakdown</span>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedFuel ? 'rotate-180' : ''}`} />
                           </h4>
                           <p className="text-[10px] text-slate-400">
-                            Calculated for {routePlan.totalDistanceKm} km journey factoring vehicle efficiency &amp; elevation climb (+{routePlan.elevationGainM}m)
+                            Calculated for {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
                           </p>
                         </div>
                       </div>
                       <div className="text-xs font-bold text-emerald-400 self-start sm:self-auto font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                         Total Transit Outlay: NPR {dynamicTotalCost.toLocaleString()}
                       </div>
-                    </div>
+                    </button>
+
+                    {showAdvancedFuel && (
+                      <div className="pt-2 space-y-3.5 animate-fadeIn">
 
                     {/* INTERACTIVE FUEL EFFICIENCY SLIDER CONTROLLER */}
                     <div className="bg-slate-950/90 rounded-xl p-3 sm:p-3.5 border border-slate-800 space-y-2.5">
@@ -1612,199 +1617,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         <span>🌿 Est. CO₂ Footprint: <span className="font-semibold text-slate-300">{co2Kg}</span></span>
                       </div>
                     </div>
+                    </div>
+                    )}
                   </div>
                 );
               })()}
 
-            {/* Quick Vehicle Compare Matrix (Click to switch) */}
-            <div className="space-y-2 pt-1">
-              <div className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-                <span>Compare Fuel &amp; Energy Cost Across All Vehicles:</span>
-                <span className="text-[10px] text-emerald-400 font-normal">Click any card to switch active profile</span>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-                {/* 1. Car / Sedan */}
-                {(() => {
-                  const liters = Math.round((routePlan.totalDistanceKm / 14.0) * 10) / 10;
-                  const cost = Math.round(liters * 175);
-                  const isCurrent = vehicle === 'car';
-                  return (
-                    <div
-                      onClick={() => handleQuickVehicleSwitch('car')}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isCurrent
-                          ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/30'
-                          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
-                          <Car className={`w-3.5 h-3.5 ${isCurrent ? 'text-emerald-400' : 'text-slate-400'}`} />
-                          <span>Car / Sedan</span>
-                        </div>
-                        {isCurrent && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-base font-black text-amber-300 font-display">
-                        NPR {cost.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                        <span>{liters} L Petrol</span>
-                        <span>~Rs {(cost / routePlan.totalDistanceKm).toFixed(1)}/km</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 2. SUV / 4WD */}
-                {(() => {
-                  const liters = Math.round((routePlan.totalDistanceKm / 10.0) * 10) / 10;
-                  const cost = Math.round(liters * 158);
-                  const isCurrent = vehicle === 'suv_4wd';
-                  return (
-                    <div
-                      onClick={() => handleQuickVehicleSwitch('suv_4wd')}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isCurrent
-                          ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/30'
-                          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
-                          <Mountain className={`w-3.5 h-3.5 ${isCurrent ? 'text-emerald-400' : 'text-slate-400'}`} />
-                          <span>SUV / 4WD</span>
-                        </div>
-                        {isCurrent && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-base font-black text-amber-300 font-display">
-                        NPR {cost.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                        <span>{liters} L Diesel</span>
-                        <span>~Rs {(cost / routePlan.totalDistanceKm).toFixed(1)}/km</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 3. Motorcycle */}
-                {(() => {
-                  const liters = Math.round((routePlan.totalDistanceKm / 35.0) * 10) / 10;
-                  const cost = Math.round(liters * 175);
-                  const isCurrent = vehicle === 'motorbike';
-                  return (
-                    <div
-                      onClick={() => handleQuickVehicleSwitch('motorbike')}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isCurrent
-                          ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/30'
-                          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
-                          <Bike className={`w-3.5 h-3.5 ${isCurrent ? 'text-emerald-400' : 'text-slate-400'}`} />
-                          <span>Motorcycle</span>
-                        </div>
-                        {isCurrent && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-base font-black text-amber-300 font-display">
-                        NPR {cost.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                        <span>{liters} L Petrol</span>
-                        <span>~Rs {(cost / routePlan.totalDistanceKm).toFixed(1)}/km</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 4. Bus / Heavy Truck */}
-                {(() => {
-                  const liters = Math.round((routePlan.totalDistanceKm / 4.5) * 10) / 10;
-                  const cost = Math.round(liters * 158);
-                  const isCurrent = vehicle === 'bus_truck';
-                  return (
-                    <div
-                      onClick={() => handleQuickVehicleSwitch('bus_truck')}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isCurrent
-                          ? 'bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/30'
-                          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
-                          <Truck className={`w-3.5 h-3.5 ${isCurrent ? 'text-emerald-400' : 'text-slate-400'}`} />
-                          <span>Bus / Truck</span>
-                        </div>
-                        {isCurrent && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-base font-black text-amber-300 font-display">
-                        NPR {cost.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                        <span>{liters} L Diesel</span>
-                        <span>~Rs {(cost / routePlan.totalDistanceKm).toFixed(1)}/km</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* 5. Electric Vehicle */}
-                {(() => {
-                  const kwh = Math.round((routePlan.totalDistanceKm / 6.2) * 10) / 10;
-                  const cost = Math.round(kwh * 15);
-                  const isCurrent = vehicle === 'electric_vehicle';
-                  return (
-                    <div
-                      onClick={() => handleQuickVehicleSwitch('electric_vehicle')}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${
-                        isCurrent
-                          ? 'bg-cyan-500/10 border-cyan-500/50 shadow-md shadow-cyan-500/5 ring-1 ring-cyan-500/30'
-                          : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/80 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
-                          <Zap className={`w-3.5 h-3.5 ${isCurrent ? 'text-cyan-400' : 'text-slate-400'}`} />
-                          <span>Electric (EV)</span>
-                        </div>
-                        {isCurrent && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-base font-black text-cyan-300 font-display">
-                        NPR {cost.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                        <span>{kwh} kWh (NEA)</span>
-                        <span className="text-emerald-400 font-semibold">~80% saved</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
           </div>
 
           {/* Multi-Route Alternatives (If available) */}
@@ -1832,24 +1651,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             {/* Option Buttons Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-              {/* Option: Route Comparison View */}
-              <button
-                onClick={() => {
-                  if (resultsViewMode === 'comparison') {
-                    setResultsViewMode('overview');
-                  } else {
-                    setResultsViewMode('comparison');
-                  }
-                }}
-                className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                  resultsViewMode === 'comparison' || activeModuleTab === 'comparison'
-                    ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/60 shadow-md shadow-emerald-500/10'
-                    : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                }`}
-              >
-                <Scale className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="truncate">Compare Routes</span>
-              </button>
 
               {/* Option: Junction Timeline & ETAs */}
               <button

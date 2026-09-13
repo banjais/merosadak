@@ -8,6 +8,7 @@ import {
   CloudFog,
   Route,
   Menu,
+  Activity,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useHaptic } from '../hooks/useHaptic';
@@ -163,6 +164,22 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
               title="Weather"
             >
               <CloudFog className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleAction(() =>
+                  onSelectFeature(activeFeature === 'traffic' ? null : 'traffic')
+                )
+              }
+              className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ${
+                activeFeature === 'traffic'
+                  ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow-amber-500/40'
+                  : 'bg-slate-900/95 text-amber-400 border-slate-700 hover:bg-slate-800'
+              }`}
+              title="Traffic & Speed"
+            >
+              <Activity className="w-5 h-5" />
             </button>
             <button
               type="button"
