@@ -83,10 +83,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-black text-base tracking-tight text-white font-display">Distance Calculator</span>
-              </div>
-              <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                Nepal Inter-City Distance & Elevation
+              <span className="font-black text-base tracking-tight text-white font-display">Merosadak</span>
               </div>
             </div>
           </div>
@@ -226,7 +223,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     <Calculator className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">Distance Calculator</span>
+                    <span className="block font-bold">62-City Distance Matrix</span>
                     <span className="text-[10px] text-slate-400 font-normal">Exact inter-city highway km</span>
                   </div>
                 </div>
