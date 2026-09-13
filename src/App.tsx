@@ -120,6 +120,10 @@ function AppContent() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [accentColor, setAccentColor] = useState<string>(() => {
+    try { return localStorage.getItem('mero-sadak-accent') || 'emerald'; } catch { return 'emerald'; }
+  });
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
@@ -145,6 +149,12 @@ function AppContent() {
   const toggleTheme = () => {
     hapticLight();
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleAccentColor = (color: string) => {
+    setAccentColor(color);
+    try { localStorage.setItem('mero-sadak-accent', color); } catch {}
+    document.documentElement.setAttribute('data-accent', color);
   };
 
   // Offline context
@@ -665,25 +675,144 @@ function AppContent() {
 
 
 
-            <button
-              onClick={() => {
-                if (user) {
-                  logout();
-                } else {
-                  setIsLoginModalOpen(true);
-                }
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black border transition ${
-                user
-                  ? 'bg-slate-800/90 hover:bg-slate-700 text-emerald-300 border-slate-700/80'
-                  : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/40'
-              }`}
-              title={user ? 'Sign out' : 'Sign in with Google'}
-              id="btn-header-auth"
-            >
-              {user ? <LogOut className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-              <span className="hidden sm:inline">{user ? 'Sign out' : 'Sign in'}</span>
-            </button>
+            {/* If user is signed in — show avatar chip */}
+            {user && (
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-black text-slate-950">
+                  {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                </div>
+                <span className="hidden sm:inline text-[10px] font-bold text-emerald-300 max-w-[80px] truncate">
+                  {user.displayName || user.email?.split('@')[0]}
+                </span>
+              </div>
+            )}
+
+            {/* Three-dot Settings Menu */}
+            <div className="relative">
+              <button
+                onClick={() => { setIsSettingsMenuOpen(p => !p); setIsNotificationsOpen(false); }}
+                className={`p-2 rounded-xl border text-xs font-semibold transition ${
+                  isSettingsMenuOpen
+                    ? 'bg-slate-700 text-white border-slate-600'
+                    : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
+                }`}
+                title="Settings & Display"
+                id="btn-settings-menu"
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none" />
+                  <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+                  <circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+
+              {isSettingsMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-[199]" onClick={() => setIsSettingsMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl shadow-black/60 z-[200] overflow-hidden animate-fadeIn">
+                    <div className="px-3.5 py-2.5 border-b border-slate-800">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Display &amp; Settings</p>
+                    </div>
+
+                    {/* Fullscreen */}
+                    <button
+                      onClick={() => {
+                        if (!document.fullscreenElement) {
+                          document.documentElement.requestFullscreen().catch(() => {});
+                          setIsFullscreen(true);
+                        } else {
+                          document.exitFullscreen().catch(() => {});
+                          setIsFullscreen(false);
+                        }
+                        setIsSettingsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800 text-slate-200 hover:text-white transition text-xs font-semibold"
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        {isFullscreen
+                          ? <Minimize className="w-4 h-4 text-cyan-400" />
+                          : <Maximize className="w-4 h-4 text-cyan-400" />
+                        }
+                        <span>{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono">F11</span>
+                    </button>
+
+                    {/* Dark / Light Theme */}
+                    <button
+                      onClick={() => { toggleTheme(); setIsSettingsMenuOpen(false); }}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800 text-slate-200 hover:text-white transition text-xs font-semibold"
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-base">{theme === 'dark' ? '☀️' : '🌙'}</span>
+                        <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+                      </div>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        theme === 'dark' ? 'bg-slate-700 text-slate-300' : 'bg-amber-500/20 text-amber-300'
+                      }`}>{theme === 'dark' ? 'DARK' : 'LIGHT'}</span>
+                    </button>
+
+                    {/* Text Size */}
+                    <div className="px-3.5 py-2.5 border-t border-slate-800/60 space-y-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Text Size</p>
+                      <div className="flex items-center gap-1.5">
+                        {([0.9, 1.0, 1.1, 1.2] as const).map((scale) => (
+                          <button
+                            key={scale}
+                            onClick={() => setTextScale(scale)}
+                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition border ${
+                              textScale === scale
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
+                            }`}
+                          >
+                            {scale === 0.9 ? 'S' : scale === 1.0 ? 'M' : scale === 1.1 ? 'L' : 'XL'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Accent Color */}
+                    <div className="px-3.5 py-2.5 border-t border-slate-800/60 space-y-1.5">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accent Color</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {[
+                          { name: 'emerald', color: '#10b981' },
+                          { name: 'cyan', color: '#06b6d4' },
+                          { name: 'amber', color: '#f59e0b' },
+                          { name: 'violet', color: '#8b5cf6' },
+                          { name: 'rose', color: '#f43f5e' },
+                          { name: 'sky', color: '#0ea5e9' },
+                        ].map(({ name, color }) => (
+                          <button
+                            key={name}
+                            onClick={() => handleAccentColor(name)}
+                            title={name}
+                            className={`w-7 h-7 rounded-full border-2 transition ${
+                              accentColor === name ? 'border-white scale-110 shadow-md' : 'border-transparent hover:scale-105'
+                            }`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sign-out (only if signed in) */}
+                    {user && (
+                      <div className="border-t border-slate-800 px-3.5 py-2.5">
+                        <button
+                          onClick={() => { logout(); setIsSettingsMenuOpen(false); }}
+                          className="w-full flex items-center space-x-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 transition"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign out ({user.displayName || user.email?.split('@')[0]})</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
