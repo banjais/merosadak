@@ -226,7 +226,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     <Calculator className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">62-City Distance Matrix</span>
+                    <span className="block font-bold">Distance Calculator</span>
                     <span className="text-[10px] text-slate-400 font-normal">Exact inter-city highway km</span>
                   </div>
                 </div>
