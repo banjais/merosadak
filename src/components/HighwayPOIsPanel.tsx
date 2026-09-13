@@ -6,14 +6,16 @@ interface HighwayPOIsPanelProps {
   pois: HighwayPOI[];
   onSelectPOI: (poi: HighwayPOI) => void;
   selectedPOIId?: string | null;
+  initialCategory?: string;
 }
 
 export const HighwayPOIsPanel: React.FC<HighwayPOIsPanelProps> = ({
   pois,
   onSelectPOI,
   selectedPOIId,
+  initialCategory = 'all',
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [evFilterMode, setEvFilterMode] = useState<'all' | 'fast' | 'available'>('all');
   const [isRefreshingAPI, setIsRefreshingAPI] = useState<boolean>(false);

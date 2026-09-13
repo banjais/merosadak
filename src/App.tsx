@@ -76,10 +76,11 @@ import {
   X,
   LogIn,
   LogOut,
+  Zap,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'traffic' | 'highways' | 'dialects';
+export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'ev_charging' | 'traffic' | 'highways' | 'dialects';
 export type ActiveFeatureType = SubViewTab | 'steps' | null;
 
 interface LiveFeedResponse {
@@ -780,6 +781,7 @@ function AppContent() {
                     {activeFeature === 'weather' && <CloudFog className="w-4 h-4" />}
                     {activeFeature === 'traffic' && <Activity className="w-4 h-4" />}
                     {activeFeature === 'pois' && <MapPin className="w-4 h-4" />}
+                    {activeFeature === 'ev_charging' && <Zap className="w-4 h-4" />}
                     {activeFeature === 'highways' && <Route className="w-4 h-4" />}
                     {activeFeature === 'dialects' && <Languages className="w-4 h-4" />}
                   </div>
@@ -789,7 +791,8 @@ function AppContent() {
                         {activeFeature === 'incidents' && `Live Road Alerts (${incidents.length})`}
                         {activeFeature === 'weather' && 'Passes & Weather Telemetry'}
                         {activeFeature === 'traffic' && 'Traffic Corridors & Speed'}
-                        {activeFeature === 'pois' && 'POIs & EV Fast Charging'}
+                        {activeFeature === 'pois' && 'POIs & Fuel Stations'}
+                        {activeFeature === 'ev_charging' && 'EV Charging Centers'}
                         {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
                         {activeFeature === 'dialects' && 'Transit Regional Dialects'}
                       </h3>
@@ -798,7 +801,8 @@ function AppContent() {
                         {activeFeature === 'incidents' && 'Landslides, roadworks and DoR notices'}
                         {activeFeature === 'weather' && 'High-altitude passes, fog and rain'}
                         {activeFeature === 'traffic' && 'Real-time speed variance and bottlenecks'}
-                        {activeFeature === 'pois' && 'Fuel, EV charging and medical facilities'}
+                        {activeFeature === 'pois' && 'Fuel pumps, food and medical facilities'}
+                        {activeFeature === 'ev_charging' && 'Nepal fast-charge EV stations on highways'}
                         {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
                         {activeFeature === 'dialects' && 'Transit driving phrases in local tongues'}
                       </p>
@@ -878,6 +882,20 @@ function AppContent() {
                 {activeFeature === 'pois' && (
                   <HighwayPOIsPanel
                     pois={pois}
+                    onSelectPOI={(poi) => {
+                      handleSelectPOI(poi);
+                      if (window.innerWidth < 640) {
+                        setActiveFeature(null);
+                      }
+                    }}
+                    selectedPOIId={selectedPOIId}
+                  />
+                )}
+
+                {activeFeature === 'ev_charging' && (
+                  <HighwayPOIsPanel
+                    pois={pois}
+                    initialCategory="ev_charger"
                     onSelectPOI={(poi) => {
                       handleSelectPOI(poi);
                       if (window.innerWidth < 640) {

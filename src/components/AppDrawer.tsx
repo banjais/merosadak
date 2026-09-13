@@ -20,6 +20,7 @@ import {
   Sparkles,
   LogIn,
   LogOut,
+  Zap,
 } from 'lucide-react';
 import { SubViewTab } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -134,7 +135,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             <div className="space-y-1">
 
 
-              {/* Highway POIs & EV Stations */}
+              {/* Highway POIs & Fuel Stations */}
               <button
                 onClick={() => {
                   onNavigateTab('pois');
@@ -151,11 +152,35 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">POIs, Fuel &amp; EV Fast Charging</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Fast-chargers, petrol &amp; motels</span>
+                    <span className="block font-bold">POIs &amp; Fuel Stations</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Dhabas, petrol pumps &amp; DOR rescue</span>
                   </div>
                 </div>
                 <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'pois' ? 'text-cyan-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+              </button>
+
+              {/* EV Charging Centers */}
+              <button
+                onClick={() => {
+                  onNavigateTab('ev_charging');
+                  onClose();
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
+                  activeTab === 'ev_charging'
+                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-1.5 rounded-lg ${activeTab === 'ev_charging' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-emerald-400 group-hover:bg-slate-800'}`}>
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block font-bold">EV Charging Centers</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Nepal highway fast-charge stations</span>
+                  </div>
+                </div>
+                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'ev_charging' ? 'text-emerald-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
               </button>
 
               {/* 80 National Highways */}
@@ -226,7 +251,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     <Calculator className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">62-City Distance Matrix</span>
+                    <span className="block font-bold">Distance Calculator</span>
                     <span className="text-[10px] text-slate-400 font-normal">Exact inter-city highway km</span>
                   </div>
                 </div>
