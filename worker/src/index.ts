@@ -350,7 +350,7 @@ async function handleOfflineBundle(env: Env): Promise<Response> {
     offlineSupport: {
       routingEngine: "Client-side topological Dijkstra running locally in memory",
       tileStrategy: "Service Worker Cache-First with Stale-While-Revalidate",
-      cachedCorridors: ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H13", "H14", "H15", "H16", "H17", "H18", "H19", "H20", "H21", "H22"],
+      cachedCorridors: ["NH01", "NH02", "NH03", "NH04", "NH05", "NH06", "NH07", "NH08", "NH09", "NH10", "NH11", "NH12", "NH13", "NH14", "NH15", "NH16", "NH17", "NH18", "NH19", "NH20", "NH21", "NH22"],
     },
   });
 }
@@ -393,7 +393,7 @@ async function handleSubmitReport(request: Request, env: Env): Promise<Response>
   const existing = await readJsonData<any[]>(env, "user-reports.json", []);
   const report = {
     id: `usr-rep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    highwayCode: typeof body.highwayCode === "string" && body.highwayCode ? body.highwayCode : "H04",
+    highwayCode: typeof body.highwayCode === "string" && body.highwayCode ? body.highwayCode : "NH04",
     location,
     incidentType: typeof body.incidentType === "string" ? body.incidentType : "pothole",
     severity: typeof body.severity === "string" ? body.severity : "minor",
@@ -541,15 +541,15 @@ function fallbackTripPlan(body: Record<string, unknown>): Record<string, unknown
   const isSindhuli = destinationLower.includes("sindhuli") || destinationLower.includes("bardibas") || destinationLower.includes("janakpur");
   const stops = isSindhuli
     ? [
-        { id: "stop-sdh-1", name: "Dhulikhel Himalayan Sunrise Ridge Cafe", category: "cafe_dining", approxKmFromOrigin: 30, approxTravelTime: "55 min mark", locationName: "Dhulikhel, Kavrepalanchok", highwayCode: "H03", highlights: "Himalayan views, bakery, and coffee.", proTip: "Keep the breakfast light before the BP Highway curves.", bestFor: "Mountain view coffee", rating: 4.8 },
-        { id: "stop-sdh-2", name: "Khurkot Sun Koshi River Suspension Bridge", category: "scenic_viewpoint", approxKmFromOrigin: 85, approxTravelTime: "2 hr 30 min mark", locationName: "Khurkot, Sindhuli", highwayCode: "H13", highlights: "River sands, suspension bridge, and valley views.", proTip: "Use lower gears on the Nepalthok descent.", bestFor: "River walk and photography", rating: 4.9 },
-        { id: "stop-sdh-3", name: "Sindhuli Gadhi Fort and Orange Groves", category: "cultural_heritage", approxKmFromOrigin: 130, approxTravelTime: "3 hr 45 min mark", locationName: "Sindhuli Gadhi Ridge", highwayCode: "H13", highlights: "Historic fort and seasonal orange orchards.", proTip: "Buy fresh Junar juice from local co-ops.", bestFor: "History and local fruit", rating: 4.9 },
+        { id: "stop-sdh-1", name: "Dhulikhel Himalayan Sunrise Ridge Cafe", category: "cafe_dining", approxKmFromOrigin: 30, approxTravelTime: "55 min mark", locationName: "Dhulikhel, Kavrepalanchok", highwayCode: "NH03", highlights: "Himalayan views, bakery, and coffee.", proTip: "Keep the breakfast light before the BP Highway curves.", bestFor: "Mountain view coffee", rating: 4.8 },
+        { id: "stop-sdh-2", name: "Khurkot Sun Koshi River Suspension Bridge", category: "scenic_viewpoint", approxKmFromOrigin: 85, approxTravelTime: "2 hr 30 min mark", locationName: "Khurkot, Sindhuli", highwayCode: "NH13", highlights: "River sands, suspension bridge, and valley views.", proTip: "Use lower gears on the Nepalthok descent.", bestFor: "River walk and photography", rating: 4.9 },
+        { id: "stop-sdh-3", name: "Sindhuli Gadhi Fort and Orange Groves", category: "cultural_heritage", approxKmFromOrigin: 130, approxTravelTime: "3 hr 45 min mark", locationName: "Sindhuli Gadhi Ridge", highwayCode: "NH13", highlights: "Historic fort and seasonal orange orchards.", proTip: "Buy fresh Junar juice from local co-ops.", bestFor: "History and local fruit", rating: 4.9 },
       ]
     : [
-        { id: "stop-1", name: "Malekhu Riverfront Local Dhaba", category: "cafe_dining", approxKmFromOrigin: Math.round(distanceKm * 0.35), approxTravelTime: "1 hr 45 min mark", locationName: "Malekhu, Dhading (Prithvi Highway H04)", highwayCode: "H04", highlights: "Fresh river fish, local pickles, and tea.", proTip: "Choose the quieter riverside restaurants for cleaner restrooms.", bestFor: "Breakfast and local food", rating: 4.8 },
-        { id: "stop-2", name: "Kurintar Trishuli River Gorge Overlook", category: "scenic_viewpoint", approxKmFromOrigin: Math.round(distanceKm * 0.52), approxTravelTime: "2 hr 40 min mark", locationName: "Kurintar, Chitwan / Gorkha border", highwayCode: "H04", highlights: "Turquoise river canyon and cafe views.", proTip: "Let brakes and engine cool before the climb.", bestFor: "Scenic photography", rating: 4.9 },
-        { id: "stop-3", name: "Mugling Junction Rest Hub", category: "rest_stop", approxKmFromOrigin: Math.round(distanceKm * 0.58), approxTravelTime: "3 hr 10 min mark", locationName: "Mugling Bazar, H04/H05", highwayCode: "H04", highlights: "Mechanics, charging, tea lounges, and ATM.", proTip: "Check tire pressure and buy bottled water.", bestFor: "Vehicle health and refreshment", rating: 4.6 },
-        { id: "stop-4", name: "Bandipur Dumre Ridge Viewpoint", category: "cultural_heritage", approxKmFromOrigin: Math.round(distanceKm * 0.72), approxTravelTime: "3 hr 55 min mark", locationName: "Dumre, Tanahun", highwayCode: "H04", highlights: "Marshyangdi valley views and local curd.", proTip: "Allow extra time for the Bandipur spur road.", bestFor: "Ridge views and local dairy", rating: 4.9 },
+        { id: "stop-1", name: "Malekhu Riverfront Local Dhaba", category: "cafe_dining", approxKmFromOrigin: Math.round(distanceKm * 0.35), approxTravelTime: "1 hr 45 min mark", locationName: "Malekhu, Dhading (Prithvi Highway NH04)", highwayCode: "NH04", highlights: "Fresh river fish, local pickles, and tea.", proTip: "Choose the quieter riverside restaurants for cleaner restrooms.", bestFor: "Breakfast and local food", rating: 4.8 },
+        { id: "stop-2", name: "Kurintar Trishuli River Gorge Overlook", category: "scenic_viewpoint", approxKmFromOrigin: Math.round(distanceKm * 0.52), approxTravelTime: "2 hr 40 min mark", locationName: "Kurintar, Chitwan / Gorkha border", highwayCode: "NH04", highlights: "Turquoise river canyon and cafe views.", proTip: "Let brakes and engine cool before the climb.", bestFor: "Scenic photography", rating: 4.9 },
+        { id: "stop-3", name: "Mugling Junction Rest Hub", category: "rest_stop", approxKmFromOrigin: Math.round(distanceKm * 0.58), approxTravelTime: "3 hr 10 min mark", locationName: "Mugling Bazar, NH04/NH05", highwayCode: "NH04", highlights: "Mechanics, charging, tea lounges, and ATM.", proTip: "Check tire pressure and buy bottled water.", bestFor: "Vehicle health and refreshment", rating: 4.6 },
+        { id: "stop-4", name: "Bandipur Dumre Ridge Viewpoint", category: "cultural_heritage", approxKmFromOrigin: Math.round(distanceKm * 0.72), approxTravelTime: "3 hr 55 min mark", locationName: "Dumre, Tanahun", highwayCode: "NH04", highlights: "Marshyangdi valley views and local curd.", proTip: "Allow extra time for the Bandipur spur road.", bestFor: "Ridge views and local dairy", rating: 4.9 },
       ];
   return {
     tripPlan: {

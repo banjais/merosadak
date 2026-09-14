@@ -363,7 +363,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters);
       setRoutePlan(plan);
       setHasCalculated(true);
-      setIsReportExpanded(true);
+      setIsReportExpanded(false);
       setCalcKey((k) => k + 1);
       setAiCustomAdvisory(null);
       setIsCalculating(false);
@@ -651,9 +651,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
-        {/* 1. MY LOCATION CARD / PICKER */}
-        {!hasCalculated && (
-        <div className="relative" ref={locationMenuRef}>
+{/* 1. MY LOCATION CARD / PICKER - Always visible */}
+      <div className="relative" ref={locationMenuRef}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
             <div
@@ -711,30 +710,34 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           {/* Location Dropdown Options Menu (When user clicks My Location) */}
           {isLocationMenuOpen && (
             <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2.5 z-50 space-y-1.5 animate-fadeIn">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                Choose Location Preference:
-              </div>
+              {!detectedLocation && (
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+                  Choose Location Preference:
+                </div>
+              )}
 
-              {/* Option 1: Current GPS / Device Location */}
-              <button
-                onClick={() => {
-                  handleDetectDeviceLocation();
-                  setLocationMode('my_location');
-                }}
-                className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 transition flex items-start space-x-2.5 group"
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <LocateFixed className="w-4 h-4 group-hover:scale-110 transition" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-emerald-300">
-                    Use GPS
+              {/* Option 1: Current GPS / Device Location - only when not detected */}
+              {!detectedLocation && (
+                <button
+                  onClick={() => {
+                    handleDetectDeviceLocation();
+                    setLocationMode('my_location');
+                  }}
+                  className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 transition flex items-start space-x-2.5 group"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <LocateFixed className="w-4 h-4 group-hover:scale-110 transition" />
                   </div>
-                  <div className="text-[11px] text-slate-400">
-                    Auto-detects via device sensors
+                  <div>
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-300">
+                      Use GPS
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Auto-detects via device sensors
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              )}
 
               {/* Option 2: Change Location (Custom From / To) */}
               <button
@@ -749,7 +752,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white group-hover:text-amber-300">
-                    From &amp; To
+                    Change Origin
                   </div>
                   <div className="text-[11px] text-slate-400">
                     Specify origin &amp; destination
@@ -759,7 +762,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           )}
         </div>
-        )}
 
         {/* Speech / Live Notice - simple text under the My Location box */}
         {speechTranscriptNotice && (
@@ -769,10 +771,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 2. SEARCH INPUT BARS */}
-        {(!hasCalculated || showSearchPanel) && (
-          <>
-            {locationMode === 'my_location' ? (
+        {/* 2. SEARCH INPUT BARS - Always visible */}
+        {locationMode === 'my_location' ? (
           /* SINGLE SEARCH BAR with functional Mic and AI icons */
           <div className="space-y-2 relative" ref={singleSearchRef}>
             <div className="relative flex items-center">
@@ -1046,8 +1046,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON */}
-        {userPickedDestination && (!hasCalculated || needsRecalculation) && (
+        {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON - Always visible when destination is picked */}
+        {userPickedDestination && (
         <div className="pt-2">
           <button
             onClick={() => handleCalculateRoute()}
@@ -1073,10 +1073,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </button>
         </div>
         )}
-          </>
-        )}
 
-         {hasCalculated && (
+        {hasCalculated && (
           <>
             {/* From/To Summary with Change Location */}
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3">

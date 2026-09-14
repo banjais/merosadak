@@ -395,7 +395,7 @@ const KNOWN_INTERMEDIATE_LANDMARKS: IntermediateLandmark[] = [
     name: 'Pathlaiya 4-Way Interchange',
     nepaliName: 'पथलैया चोक',
     category: 'interchange',
-    categoryLabel: 'Cross-Highway Interchange (H01 x H02)',
+    categoryLabel: 'Cross-Highway Interchange (NH01 x NH02)',
     district: 'Bara',
     province: 'Madhesh',
     lat: 27.1800,
@@ -403,7 +403,7 @@ const KNOWN_INTERMEDIATE_LANDMARKS: IntermediateLandmark[] = [
     elevationM: 120,
     fractionAlongSegment: 0.52,
     amenities: ['fuel', 'ev', 'food', 'police'],
-    note: 'Major national nexus connecting East-West Highway (H01) to Tribhuvan Highway (H02).',
+    note: 'Major national nexus connecting East-West Highway (NH01) to Tribhuvan Highway (NH02).',
   },
   // Kathmandu to Dhulikhel
   {
@@ -448,7 +448,7 @@ const KNOWN_INTERMEDIATE_LANDMARKS: IntermediateLandmark[] = [
     name: 'Khurkot Sunkoshi & Mid-Hill Junction',
     nepaliName: 'खुरकोट चोक',
     category: 'interchange',
-    categoryLabel: 'Mid-Hill Highway Confluence (H13 x H17)',
+    categoryLabel: 'Mid-Hill Highway Confluence (NH13 x NH17)',
     district: 'Sindhuli',
     province: 'Bagmati',
     lat: 27.3300,

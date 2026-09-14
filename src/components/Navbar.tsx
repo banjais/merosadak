@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
           <span className="font-semibold text-red-400 uppercase tracking-wider shrink-0 text-[10px]">DOR Live Advisory:</span>
           <div className="truncate text-slate-300 font-medium">
-            <span className="text-amber-300">Jogimara curve (Prithvi H04)</span> single-lane clearance • <span className="text-amber-300">Daunne Pass (H01)</span> 4-lane widening with delays • <span className="text-emerald-400">BP Highway (H13)</span> open for light vehicles
+            <span className="text-amber-300">Jogimara curve (Prithvi NH04)</span> single-lane clearance • <span className="text-amber-300">Daunne Pass (NH01)</span> 4-lane widening with delays • <span className="text-emerald-400">BP Highway (NH13)</span> open for light vehicles
           </div>
         </div>
         <div className="hidden sm:flex items-center space-x-4 shrink-0 text-slate-400">

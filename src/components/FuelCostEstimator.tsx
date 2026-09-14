@@ -149,7 +149,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     {
       id: 'nagdhunga_tunnel',
       name: 'Nagdhunga Tunnel Bypass Toll',
-      location: 'Sisne Khola - Nagdhunga (H02)',
+      location: 'Sisne Khola - Nagdhunga (NH02)',
       baseCostNpr: 60,
       enabled: true,
       notes: 'Active RFID FASTag & Cash Toll',
@@ -165,7 +165,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     {
       id: 'terai_corridor_toll',
       name: 'East-West Highway Entry Toll',
-      location: 'H01 Hetauda / Pathlaiya Junction',
+      location: 'NH01 Hetauda / Pathlaiya Junction',
       baseCostNpr: 40,
       enabled: distanceKm > 150,
       notes: 'National Highway Road User Fee',

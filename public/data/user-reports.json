@@ -1,7 +1,7 @@
 [
   {
     "id": "usr-1",
-    "highwayCode": "H04",
+    "highwayCode": "NH04",
     "location": "Near Benighat Trishuli riverside",
     "incidentType": "fallen_rocks",
     "severity": "minor",
@@ -13,7 +13,7 @@
   },
   {
     "id": "usr-2",
-    "highwayCode": "H01",
+    "highwayCode": "NH01",
     "location": "Hetauda Bypass Ratomate",
     "incidentType": "pothole",
     "severity": "minor",
@@ -25,7 +25,7 @@
   },
   {
     "id": "usr-3",
-    "highwayCode": "H10",
+    "highwayCode": "NH10",
     "location": "Near Ramdi Bridge, Palpa",
     "incidentType": "traffic_jam",
     "severity": "minor",

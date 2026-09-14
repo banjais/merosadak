@@ -323,7 +323,7 @@ async function startServer() {
       offlineSupport: {
         routingEngine: 'Client-side topological Dijkstra running locally in memory',
         tileStrategy: 'Service Worker Cache-First with Stale-While-Revalidate',
-        cachedCorridors: ['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22'],
+        cachedCorridors: ['NH01', 'NH02', 'NH03', 'NH04', 'NH05', 'NH06', 'NH07', 'NH08', 'NH09', 'NH10', 'NH11', 'NH12', 'NH13', 'NH14', 'NH15', 'NH16', 'NH17', 'NH18', 'NH19', 'NH20', 'NH21', 'NH22'],
       },
     });
   });
@@ -344,7 +344,7 @@ async function startServer() {
 
     const newReport: UserRoadReport = {
       id: `usr-rep-${Date.now()}`,
-      highwayCode: highwayCode || 'H04',
+      highwayCode: highwayCode || 'NH04',
       location,
       incidentType: incidentType || 'pothole',
       severity: severity || 'minor',
@@ -572,8 +572,8 @@ Return a valid JSON object with the following fields:
           category: 'cafe_dining' as const,
           approxKmFromOrigin: Math.round(distanceKm * 0.35),
           approxTravelTime: '1 hr 45 min mark',
-          locationName: 'Malekhu, Dhading (Prithvi Highway H04)',
-          highwayCode: 'H04',
+          locationName: 'Malekhu, Dhading (Prithvi Highway NH04)',
+          highwayCode: 'NH04',
           highlights: 'Famous crisp golden fried river fish, home-ground yellow mustard pickle (raayo ko achar), and fresh lemon masala tea with outdoor river view.',
           proTip: 'Stop at the quieter riverside family restaurants on the western exit side for cleaner restrooms and less bus congestion.',
           bestFor: 'Breakfast & Local Culinary Specialty',
@@ -588,7 +588,7 @@ Return a valid JSON object with the following fields:
           approxKmFromOrigin: Math.round(distanceKm * 0.52),
           approxTravelTime: '2 hr 40 min mark',
           locationName: 'Kurintar, Chitwan / Gorkha border',
-          highwayCode: 'H04',
+          highwayCode: 'NH04',
           highlights: 'Breathtaking canyon panorama of turquoise Trishuli river rafters, Manakamana Cable Car terminal view, and cold brew coffee & bakery.',
           proTip: 'Great spot to let vehicle brakes and engine cool down before continuing towards Mugling junction.',
           bestFor: 'Scenic Photography & Espresso Coffee',
@@ -602,8 +602,8 @@ Return a valid JSON object with the following fields:
           category: 'rest_stop' as const,
           approxKmFromOrigin: Math.round(distanceKm * 0.58),
           approxTravelTime: '3 hr 10 min mark',
-          locationName: 'Mugling Bazar, Highway Convergence H04/H05',
-          highwayCode: 'H04',
+          locationName: 'Mugling Bazar, Highway Convergence NH04/NH05',
+          highwayCode: 'NH04',
           highlights: 'Major highway intersection with NEA EV Fast Charging station, 24-hour mechanic workshops, clean tea lounges, and ATM services.',
           proTip: 'Top up tire pressure here and grab fresh bottled mineral water before the winding climb or Narayanghat descent.',
           bestFor: 'EV Quick Top-up & Vehicle Health Check',
@@ -618,7 +618,7 @@ Return a valid JSON object with the following fields:
           approxKmFromOrigin: Math.round(distanceKm * 0.72),
           approxTravelTime: '3 hr 55 min mark',
           locationName: 'Dumre, Tanahun',
-          highwayCode: 'H04',
+          highwayCode: 'NH04',
           highlights: 'Panoramic vista of Marshyangdi River valley, traditional Newari stone gateway, and freshly made organic curd (Dahi) from local buffalo dairies.',
           proTip: 'If you have an extra 45 minutes, drive up the 8km spur road to Bandipur hilltop village for a world-class Annapurna mountain panorama.',
           bestFor: 'Himalayan Ridge Views & Authentic Dahi',
@@ -637,7 +637,7 @@ Return a valid JSON object with the following fields:
             approxKmFromOrigin: 30,
             approxTravelTime: '55 min mark',
             locationName: 'Dhulikhel, Kavrepalanchok',
-            highwayCode: 'H03',
+            highwayCode: 'NH03',
             highlights: 'Artisan bakery and hillside coffee terrace overlooking the eastern Langtang to Gaurishankar Himalayan range.',
             proTip: 'Order fresh masala tea and local sel roti; avoid heavy breakfast as BP Highway has tight twisting curves ahead.',
             bestFor: 'Mountain View Coffee & Light Breakfast',
@@ -649,8 +649,8 @@ Return a valid JSON object with the following fields:
             category: 'scenic_viewpoint' as const,
             approxKmFromOrigin: 85,
             approxTravelTime: '2 hr 30 min mark',
-            locationName: 'Khurkot, Sindhuli (BP Highway H13)',
-            highwayCode: 'H13',
+            locationName: 'Khurkot, Sindhuli (BP Highway NH13)',
+            highwayCode: 'NH13',
             highlights: 'Spectacular golden sands along Sun Koshi river, pedestrian suspension bridge stroll, and sweet river water breeze.',
             proTip: 'Use lower gears descending the Nepalthok-Khurkot mountain switchbacks to save your brake pads.',
             bestFor: 'River Walking & Stunning Photo Op',
@@ -663,7 +663,7 @@ Return a valid JSON object with the following fields:
             approxKmFromOrigin: 130,
             approxTravelTime: '3 hr 45 min mark',
             locationName: 'Sindhuli Gadhi Ridge',
-            highwayCode: 'H13',
+            highwayCode: 'NH13',
             highlights: '18th-century stone battlefield fortress where Gorkhali troops defeated Captain Kinloch, flanked by juicy organic Junar (sweet orange) orchards.',
             proTip: 'Buy fresh Junar juice concentrate from local village co-ops along the roadside.',
             bestFor: 'Historic Exploration & Mountain Breeze',
@@ -731,7 +731,7 @@ A traveler is taking a trip with the following route parameters:
 - Total Route Distance: ${distanceKm} km
 - Estimated Travel Time: ${timeHours} hours
 - Elevation Climb: +${elevationGainM || 0}m
-- Highway Corridors Traversed: ${JSON.stringify(highwaysTraversed || ['Prithvi Highway H04'])}
+- Highway Corridors Traversed: ${JSON.stringify(highwaysTraversed || ['Prithvi Highway NH04'])}
 - Traveler Focus / Filter Preference: ${focusFilter || 'all'}
 ${customQuestion ? `- Specific Traveler Question / Request: "${customQuestion}"` : ''}
 
@@ -755,7 +755,7 @@ Return a valid JSON object matching this exact schema:
       "approxKmFromOrigin": 65,
       "approxTravelTime": "1 hr 45 min mark",
       "locationName": "Precise town/milepost and highway name",
-      "highwayCode": "H04",
+      "highwayCode": "NH04",
       "highlights": "Specific highlights",
       "proTip": "Insider local tip",
       "bestFor": "Scenic Photo & Snack",

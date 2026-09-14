@@ -1,7 +1,7 @@
 [
   {
     "id": "inc-1",
-    "highwayCode": "H04",
+    "highwayCode": "NH04",
     "highwayName": "Prithvi Highway",
     "locationName": "Jogimara Curve, Dhading (Km 68)",
     "chainageKm": "Ch 68+400",
@@ -20,7 +20,7 @@
   },
   {
     "id": "inc-2",
-    "highwayCode": "H05",
+    "highwayCode": "NH05",
     "highwayName": "Narayanghat–Mugling Road",
     "locationName": "Chorkilo & Kalikhola (Km 12)",
     "chainageKm": "Ch 12+100",
@@ -38,7 +38,7 @@
   },
   {
     "id": "inc-3",
-    "highwayCode": "H01",
+    "highwayCode": "NH01",
     "highwayName": "Mahendra Highway",
     "locationName": "Daunne Hill Pass (Nawalparasi West)",
     "chainageKm": "Ch 384+000",
@@ -57,7 +57,7 @@
   },
   {
     "id": "inc-4",
-    "highwayCode": "H13",
+    "highwayCode": "NH13",
     "highwayName": "B.P. Highway",
     "locationName": "Nepalthok–Mamti Khola, Kavre/Sindhuli",
     "chainageKm": "Ch 48+200",
@@ -74,7 +74,7 @@
   },
   {
     "id": "inc-5",
-    "highwayCode": "H06",
+    "highwayCode": "NH06",
     "highwayName": "Karnali Highway",
     "locationName": "Gaganekhola, Kalikot",
     "chainageKm": "Ch 112+000",

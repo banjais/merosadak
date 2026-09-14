@@ -60,8 +60,8 @@ function generate24HourProfile(
 export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
   'tr-daunne': {
     corridorId: 'tr-daunne',
-    corridorName: 'Daunne Hill Chokepoint (H01)',
-    highwayCode: 'H01',
+    corridorName: 'Daunne Hill Chokepoint (NH01)',
+    highwayCode: 'NH01',
     section: 'Daunne East (Bardaghat) to Dumkibas (14 km)',
     distanceKm: 14,
     freeFlowTimeMinutes: 20,
@@ -103,8 +103,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-mugling-abukhaireni': {
     corridorId: 'tr-mugling-abukhaireni',
-    corridorName: 'Mugling – Abukhaireni Widening (H04)',
-    highwayCode: 'H04',
+    corridorName: 'Mugling – Abukhaireni Widening (NH04)',
+    highwayCode: 'NH04',
     section: 'Marshyangdi Bridge to Abukhaireni Bazar (12 km)',
     distanceKm: 12,
     freeFlowTimeMinutes: 15,
@@ -144,8 +144,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-nagdhunga': {
     corridorId: 'tr-nagdhunga',
-    corridorName: 'Nagdhunga Inbound/Outbound Valley Pass (H02 / H04)',
-    highwayCode: 'H02 / H04',
+    corridorName: 'Nagdhunga Inbound/Outbound Valley Pass (NH02 / NH04)',
+    highwayCode: 'NH02 / NH04',
     section: 'Khanikhola / Naubise to Nagdhunga Tunnel Portal (8 km)',
     distanceKm: 8,
     freeFlowTimeMinutes: 12,
@@ -183,8 +183,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-siddhababa': {
     corridorId: 'tr-siddhababa',
-    corridorName: 'Siddhababa Rock Shed Zone (H10)',
-    highwayCode: 'H10',
+    corridorName: 'Siddhababa Rock Shed Zone (NH10)',
+    highwayCode: 'NH10',
     section: 'Chidiya Khola (Butwal) to Dobhan (Palpa) (6 km)',
     distanceKm: 6,
     freeFlowTimeMinutes: 10,
@@ -221,8 +221,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-narayanghat-mugling': {
     corridorId: 'tr-narayanghat-mugling',
-    corridorName: 'Narayanghat – Mugling Trishuli Gorge (H05)',
-    highwayCode: 'H05',
+    corridorName: 'Narayanghat – Mugling Trishuli Gorge (NH05)',
+    highwayCode: 'NH05',
     section: 'Aaptari (Bharatpur) to Mugling Bridge (36 km)',
     distanceKm: 36,
     freeFlowTimeMinutes: 45,
@@ -260,8 +260,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-sindhuli-bp': {
     corridorId: 'tr-sindhuli-bp',
-    corridorName: 'Sindhuli Gadhi Serpentine Ridge (H13 - BP Highway)',
-    highwayCode: 'H13',
+    corridorName: 'Sindhuli Gadhi Serpentine Ridge (NH13 - BP Highway)',
+    highwayCode: 'NH13',
     section: 'Nepalthok to Sindhuli Madi (42 km)',
     distanceKm: 42,
     freeFlowTimeMinutes: 60,
@@ -297,8 +297,8 @@ export const HISTORICAL_CORRIDOR_TRENDS: Record<string, CorridorTrendData> = {
 
   'tr-chitwan-express': {
     corridorId: 'tr-chitwan-express',
-    corridorName: 'Narayanghat – Butwal Plains (H01)',
-    highwayCode: 'H01',
+    corridorName: 'Narayanghat – Butwal Plains (NH01)',
+    highwayCode: 'NH01',
     section: 'Kawasoti to Bardaghat (32 km)',
     distanceKm: 32,
     freeFlowTimeMinutes: 28,

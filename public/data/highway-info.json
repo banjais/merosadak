@@ -1,7 +1,7 @@
 [
   {
-    "id": "h04",
-    "code": "H04",
+    "id": "NH04",
+    "code": "NH04",
     "name": "Prithvi Highway",
     "nepaliName": "पृथ्वी राजमार्ग",
     "totalLengthKm": 174,
@@ -36,8 +36,8 @@
     ]
   },
   {
-    "id": "h05",
-    "code": "H05",
+    "id": "NH05",
+    "code": "NH05",
     "name": "Narayanghat–Mugling Highway",
     "nepaliName": "नारायणगढ–मुग्लिन सडक",
     "totalLengthKm": 36,
@@ -66,8 +66,8 @@
     ]
   },
   {
-    "id": "h01",
-    "code": "H01",
+    "id": "NH01",
+    "code": "NH01",
     "name": "Mahendra Highway (East–West Highway)",
     "nepaliName": "महेन्द्र राजमार्ग (पूर्व–पश्चिम राजमार्ग)",
     "totalLengthKm": 1027,
@@ -105,8 +105,8 @@
     ]
   },
   {
-    "id": "h13",
-    "code": "H13",
+    "id": "NH13",
+    "code": "NH13",
     "name": "B.P. Koirala Highway (Banepa–Bardibas)",
     "nepaliName": "बिपी राजमार्ग (बनेपा–बर्दिबास)",
     "totalLengthKm": 160,
@@ -135,8 +135,8 @@
     "tollPlazas": []
   },
   {
-    "id": "h10",
-    "code": "H10",
+    "id": "NH10",
+    "code": "NH10",
     "name": "Siddhartha Highway",
     "nepaliName": "सिद्धार्थ राजमार्ग",
     "totalLengthKm": 181,
@@ -165,8 +165,8 @@
     "tollPlazas": []
   },
   {
-    "id": "h02",
-    "code": "H02",
+    "id": "NH02",
+    "code": "NH02",
     "name": "Tribhuvan Highway (Byroad)",
     "nepaliName": "त्रिभुवन राजपथ",
     "totalLengthKm": 160,
@@ -195,8 +195,8 @@
     "tollPlazas": []
   },
   {
-    "id": "h06",
-    "code": "H06",
+    "id": "NH06",
+    "code": "NH06",
     "name": "Karnali Highway",
     "nepaliName": "कर्णाली राजमार्ग",
     "totalLengthKm": 232,
@@ -222,8 +222,8 @@
     "tollPlazas": []
   },
   {
-    "id": "h03",
-    "code": "H03",
+    "id": "NH03",
+    "code": "NH03",
     "name": "Araniko Highway",
     "nepaliName": "अरनिको राजमार्ग",
     "totalLengthKm": 113,
@@ -251,8 +251,8 @@
     "tollPlazas": []
   },
   {
-    "id": "h15",
-    "code": "H15",
+    "id": "NH15",
+    "code": "NH15",
     "name": "Mid-Hill Highway (Pushpalal Rajmarga)",
     "nepaliName": "मध्यपहाडी लोकमार्ग (पुष्पलाल राजमार्ग)",
     "totalLengthKm": 1879,

@@ -81,20 +81,20 @@ export function generateNepalHighwayTileUrls(): string[] {
   const highwayKeyPoints = [
     { lat: 27.7172, lng: 85.324 }, // Kathmandu Valley
     { lat: 28.2096, lng: 83.9856 }, // Pokhara
-    { lat: 27.8617, lng: 84.5542 }, // Mugling junction (Prithvi H04 / Narayanghat H05)
+    { lat: 27.8617, lng: 84.5542 }, // Mugling junction (Prithvi NH04 / Narayanghat NH05)
     { lat: 27.6805, lng: 84.4333 }, // Narayanghat / Chitwan
     { lat: 27.7006, lng: 83.4484 }, // Butwal / Bhairahawa
-    { lat: 27.4284, lng: 85.0322 }, // Hetauda (Tribhuvan H02 / East-West H01)
-    { lat: 27.2417, lng: 85.9234 }, // Sindhuli (BP Highway H13)
+    { lat: 27.4284, lng: 85.0322 }, // Hetauda (Tribhuvan NH02 / East-West NH01)
+    { lat: 27.2417, lng: 85.9234 }, // Sindhuli (BP Highway NH13)
     { lat: 26.8167, lng: 85.9 }, // Bardibas / Janakpur
     { lat: 26.4525, lng: 87.2718 }, // Biratnagar / Itahari
-    { lat: 26.8124, lng: 87.2834 }, // Dharan / Koshi Highway H08
+    { lat: 26.8124, lng: 87.2834 }, // Dharan / Koshi Highway NH08
     { lat: 28.05, lng: 81.6167 }, // Nepalgunj / Kohalpur
-    { lat: 28.6833, lng: 81.6333 }, // Surkhet (Karnali Highway H10 entry)
+    { lat: 28.6833, lng: 81.6333 }, // Surkhet (Karnali Highway NH10 entry)
     { lat: 28.9667, lng: 80.1833 }, // Dhangadhi / Mahendranagar (Far West)
     { lat: 27.8732, lng: 84.6054 }, // Kurintar (Trishuli gorge)
     { lat: 27.9622, lng: 84.4125 }, // Dumre / Bandipur
-    { lat: 27.6167, lng: 85.55 }, // Dhulikhel (Araniko H03 / BP Hwy H13)
+    { lat: 27.6167, lng: 85.55 }, // Dhulikhel (Araniko NH03 / BP Hwy NH13)
   ];
 
   for (const pt of highwayKeyPoints) {

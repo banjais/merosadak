@@ -1,8 +1,8 @@
 [
   {
     "id": "tr-daunne",
-    "name": "Daunne Hill Chokepoint (H01)",
-    "highwayCode": "H01",
+    "name": "Daunne Hill Chokepoint (NH01)",
+    "highwayCode": "NNH01",
     "section": "Daunne East - Daunne West (14 km)",
     "level": "standstill",
     "avgSpeedKmh": 12,
@@ -15,8 +15,8 @@
   },
   {
     "id": "tr-mugling-abukhaireni",
-    "name": "Mugling - Abukhaireni Widening (H04)",
-    "highwayCode": "H04",
+    "name": "Mugling - Abukhaireni Widening (NH04)",
+    "highwayCode": "NNH04",
     "section": "Marshyangdi Bridge to Abukhaireni Bazar (12 km)",
     "level": "heavy",
     "avgSpeedKmh": 20,
@@ -29,8 +29,8 @@
   },
   {
     "id": "tr-nagdhunga",
-    "name": "Nagdhunga Inbound Checkpost (H02 / H04)",
-    "highwayCode": "H02",
+    "name": "Nagdhunga Inbound Checkpost (NH02 / NH04)",
+    "highwayCode": "NNH02",
     "section": "Khanikhola - Nagdhunga Summit (8 km)",
     "level": "moderate",
     "avgSpeedKmh": 25,
@@ -43,8 +43,8 @@
   },
   {
     "id": "tr-narayanghat-mugling",
-    "name": "Narayanghat - Mugling Trishuli Gorge (H05)",
-    "highwayCode": "H05",
+    "name": "Narayanghat - Mugling Trishuli Gorge (NH05)",
+    "highwayCode": "NNH05",
     "section": "Aaptari (Bharatpur) to Mugling Bridge (36 km)",
     "level": "heavy",
     "avgSpeedKmh": 28,
@@ -57,8 +57,8 @@
   },
   {
     "id": "tr-siddhababa",
-    "name": "Siddhababa Rock Shed Zone (H10)",
-    "highwayCode": "H10",
+    "name": "Siddhababa Rock Shed Zone (NH10)",
+    "highwayCode": "NNH10",
     "section": "Chidiya Khola - Dobhan (6 km)",
     "level": "moderate",
     "avgSpeedKmh": 22,
@@ -71,8 +71,8 @@
   },
   {
     "id": "tr-sindhuli-bp",
-    "name": "Sindhuli Gadhi Serpentine Ridge (H13)",
-    "highwayCode": "H13",
+    "name": "Sindhuli Gadhi Serpentine Ridge (NH13)",
+    "highwayCode": "NNH13",
     "section": "Nepalthok to Sindhuli Madi (42 km)",
     "level": "moderate",
     "avgSpeedKmh": 32,
@@ -85,8 +85,8 @@
   },
   {
     "id": "tr-chitwan-express",
-    "name": "Narayanghat - Butwal Plains (H01)",
-    "highwayCode": "H01",
+    "name": "Narayanghat - Butwal Plains (NH01)",
+    "highwayCode": "NNH01",
     "section": "Kawasoti to Bardaghat (32 km)",
     "level": "smooth",
     "avgSpeedKmh": 68,

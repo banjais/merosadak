@@ -160,7 +160,7 @@ export interface TollPlaza {
 
 export interface Highway {
   id: string;
-  code: string; // e.g. "NH01", "NH17", "H04"
+  code: string; // e.g. "NNH01", "NNH17", "NH04"
   name: string; // e.g. "Prithvi Highway"
   nepaliName: string; // e.g. "पृथ्वी राजमार्ग"
   totalLengthKm: number;

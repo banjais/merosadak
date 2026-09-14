@@ -98,7 +98,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
     featuredHeadline: 'For EV: Check charging station spacing on Prithvi Highway',
     featuredDescription:
       'NEA 30kW/60kW DC fast chargers are spaced at Kurintar, Mugling, Malekhu, and Dumre. Maintain at least a 25% battery buffer before beginning steep climbs toward Nagdhunga or Pokhara.',
-    featuredCorridor: 'Prithvi Highway (H04)',
+    featuredCorridor: 'Prithvi Highway (NH04)',
     tips: [
       {
         id: 'ev-1',
@@ -106,7 +106,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         title: 'For EV: Check charging station spacing on Prithvi Highway',
         description:
           'NEA 30kW/60kW DC fast chargers are spaced at Kurintar, Mugling, Malekhu, and Dumre. Maintain at least a 25% battery buffer before beginning steep climbs toward Nagdhunga or Pokhara.',
-        highwayCorridor: 'Prithvi Highway (H04)',
+        highwayCorridor: 'Prithvi Highway (NH04)',
         isPriority: true,
         actionText: 'Find EV Charging Stations',
         actionTab: 'pois',
@@ -153,7 +153,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
     featuredHeadline: 'For Car: Mind low ground clearance through unpaved Mugling-Pokhara widening ruts',
     featuredDescription:
       'Standard sedans (150-170mm clearance) risk scraping oil sumps on unpaved detour gravel. Straddle ruts carefully and maintain low, steady momentum.',
-    featuredCorridor: 'Prithvi Highway (H04)',
+    featuredCorridor: 'Prithvi Highway (NH04)',
     tips: [
       {
         id: 'car-1',
@@ -161,7 +161,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         title: 'For Car: Mind low ground clearance through unpaved Mugling-Pokhara widening ruts',
         description:
           'Standard sedans (150-170mm clearance) risk scraping oil sumps on unpaved detour gravel. Straddle ruts carefully and maintain low, steady momentum.',
-        highwayCorridor: 'Prithvi Highway (H04)',
+        highwayCorridor: 'Prithvi Highway (NH04)',
         isPriority: true,
         actionText: 'View Road Alerts',
         actionTab: 'incidents',
@@ -172,7 +172,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         title: 'Downshift and Monitor Coolant on BP Highway Hairpin Climbs',
         description:
           'BP Highway’s 160+ continuous switchbacks put heavy thermal load on small displacement engines. Shift to 2nd gear and turn off A/C if temperature gauge rises above mid-point.',
-        highwayCorridor: 'BP Highway (H08)',
+        highwayCorridor: 'BP Highway (NH08)',
         actionText: 'View Corridor Traffic',
         actionTab: 'traffic',
       },

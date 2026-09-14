@@ -67,11 +67,11 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
   // Set of selected segment IDs for targeted caching
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<Set<string>>(() => {
-    // Default to Prithvi Highway segments (H04) as popular mountain corridor
+    // Default to Prithvi Highway segments (NH04) as popular mountain corridor
     const initial = new Set<string>();
-    const h04 = NEPAL_HIGHWAYS.find((h) => h.code === 'H04');
-    if (h04) {
-      h04.segments.forEach((s) => initial.add(s.id));
+    const NH04 = NEPAL_HIGHWAYS.find((h) => h.code === 'NH04');
+    if (NH04) {
+      NH04.segments.forEach((s) => initial.add(s.id));
     }
     return initial;
   });
@@ -467,46 +467,46 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
                 <div className="flex flex-wrap gap-1.5">
                   <button
-                    onClick={() => selectOnlyHighway('H04')}
+                    onClick={() => selectOnlyHighway('NH04')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H04 Prithvi</span>
+                    <span>NH04 Prithvi</span>
                     <span className="text-[9px] text-slate-400">(Kathmandu–Pokhara)</span>
                   </button>
 
                   <button
-                    onClick={() => selectOnlyHighway('H05')}
+                    onClick={() => selectOnlyHighway('NH05')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H05 Narayanghat-Mugling</span>
+                    <span>NH05 Narayanghat-Mugling</span>
                   </button>
 
                   <button
-                    onClick={() => selectOnlyHighway('H13')}
+                    onClick={() => selectOnlyHighway('NH13')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H13 BP Highway</span>
+                    <span>NH13 BP Highway</span>
                   </button>
 
                   <button
-                    onClick={() => selectOnlyHighway('H02')}
+                    onClick={() => selectOnlyHighway('NH02')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H02 Tribhuvan</span>
+                    <span>NH02 Tribhuvan</span>
                   </button>
 
                   <button
-                    onClick={() => selectOnlyHighway('H10')}
+                    onClick={() => selectOnlyHighway('NH10')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H10 Karnali</span>
+                    <span>NH10 Karnali</span>
                   </button>
 
                   <button
-                    onClick={() => selectOnlyHighway('H01')}
+                    onClick={() => selectOnlyHighway('NH01')}
                     className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
-                    <span>H01 East-West</span>
+                    <span>NH01 East-West</span>
                   </button>
                 </div>
               </div>
@@ -540,14 +540,14 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                   className="bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 >
                   <option value="ALL">All Highways ({allSegmentsWithHighway.length} segments)</option>
-                  <option value="H04">H04 Prithvi Highway</option>
-                  <option value="H05">H05 Narayanghat-Mugling</option>
-                  <option value="H13">H13 BP Highway</option>
-                  <option value="H02">H02 Tribhuvan Highway</option>
-                  <option value="H01">H01 Mahendra / East-West</option>
-                  <option value="H10">H10 Karnali Highway</option>
-                  <option value="H03">H03 Araniko Highway</option>
-                  <option value="H06">H06 Mechi Highway</option>
+                  <option value="NH04">NH04 Prithvi Highway</option>
+                  <option value="NH05">NH05 Narayanghat-Mugling</option>
+                  <option value="NH13">NH13 BP Highway</option>
+                  <option value="NH02">NH02 Tribhuvan Highway</option>
+                  <option value="NH01">NH01 Mahendra / East-West</option>
+                  <option value="NH10">NH10 Karnali Highway</option>
+                  <option value="NH03">NH03 Araniko Highway</option>
+                  <option value="NH06">NH06 Mechi Highway</option>
                 </select>
               </div>
 

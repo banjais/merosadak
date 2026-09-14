@@ -10,10 +10,10 @@
     "elevationM": 1400,
     "isMajorHub": true,
     "connectedHighways": [
-      "H02",
-      "H03",
-      "H04",
-      "H13"
+      "NH02",
+      "NH03",
+      "NH04",
+      "NH13"
     ]
   },
   {
@@ -27,9 +27,9 @@
     "elevationM": 822,
     "isMajorHub": true,
     "connectedHighways": [
-      "H04",
-      "H10",
-      "H15"
+      "NH04",
+      "NH10",
+      "NH15"
     ]
   },
   {
@@ -43,8 +43,8 @@
     "elevationM": 208,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H05"
+      "NH01",
+      "NH05"
     ]
   },
   {
@@ -58,8 +58,8 @@
     "elevationM": 275,
     "isMajorHub": true,
     "connectedHighways": [
-      "H04",
-      "H05"
+      "NH04",
+      "NH05"
     ]
   },
   {
@@ -73,8 +73,8 @@
     "elevationM": 220,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H10"
+      "NH01",
+      "NH10"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "elevationM": 105,
     "isMajorHub": true,
     "connectedHighways": [
-      "H10"
+      "NH10"
     ]
   },
   {
@@ -102,9 +102,9 @@
     "elevationM": 460,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H02",
-      "H17"
+      "NH01",
+      "NH02",
+      "NH17"
     ]
   },
   {
@@ -118,8 +118,8 @@
     "elevationM": 90,
     "isMajorHub": true,
     "connectedHighways": [
-      "H02",
-      "H16"
+      "NH02",
+      "NH16"
     ]
   },
   {
@@ -133,8 +133,8 @@
     "elevationM": 74,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H16"
+      "NH01",
+      "NH16"
     ]
   },
   {
@@ -148,8 +148,8 @@
     "elevationM": 150,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H13"
+      "NH01",
+      "NH13"
     ]
   },
   {
@@ -163,8 +163,8 @@
     "elevationM": 72,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H16"
+      "NH01",
+      "NH16"
     ]
   },
   {
@@ -178,9 +178,9 @@
     "elevationM": 349,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H08",
-      "H17"
+      "NH01",
+      "NH08",
+      "NH17"
     ]
   },
   {
@@ -194,8 +194,8 @@
     "elevationM": 145,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H09"
+      "NH01",
+      "NH09"
     ]
   },
   {
@@ -209,8 +209,8 @@
     "elevationM": 150,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H12"
+      "NH01",
+      "NH12"
     ]
   },
   {
@@ -224,9 +224,9 @@
     "elevationM": 660,
     "isMajorHub": true,
     "connectedHighways": [
-      "H06",
-      "H12",
-      "H17"
+      "NH06",
+      "NH12",
+      "NH17"
     ]
   },
   {
@@ -240,8 +240,8 @@
     "elevationM": 109,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01",
-      "H14"
+      "NH01",
+      "NH14"
     ]
   },
   {
@@ -255,7 +255,7 @@
     "elevationM": 198,
     "isMajorHub": true,
     "connectedHighways": [
-      "H01"
+      "NH01"
     ]
   },
   {
@@ -269,8 +269,8 @@
     "elevationM": 1550,
     "isMajorHub": false,
     "connectedHighways": [
-      "H03",
-      "H13"
+      "NH03",
+      "NH13"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "elevationM": 1100,
     "isMajorHub": false,
     "connectedHighways": [
-      "H13"
+      "NH13"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "elevationM": 450,
     "isMajorHub": false,
     "connectedHighways": [
-      "H04"
+      "NH04"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "elevationM": 1350,
     "isMajorHub": false,
     "connectedHighways": [
-      "H10"
+      "NH10"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "elevationM": 1208,
     "isMajorHub": false,
     "connectedHighways": [
-      "H09"
+      "NH09"
     ]
   },
   {
@@ -340,7 +340,7 @@
     "elevationM": 1020,
     "isMajorHub": false,
     "connectedHighways": [
-      "H15"
+      "NH15"
     ]
   },
   {
@@ -354,7 +354,7 @@
     "elevationM": 2514,
     "isMajorHub": false,
     "connectedHighways": [
-      "H06"
+      "NH06"
     ]
   },
   {
@@ -368,8 +368,8 @@
     "elevationM": 920,
     "isMajorHub": false,
     "connectedHighways": [
-      "H02",
-      "H04"
+      "NH02",
+      "NH04"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "elevationM": 1640,
     "isMajorHub": false,
     "connectedHighways": [
-      "H03"
+      "NH03"
     ]
   }
 ]

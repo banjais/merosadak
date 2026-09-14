@@ -15,7 +15,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
   onClose,
   onReportSubmitted,
 }) => {
-  const [highwayCode, setHighwayCode] = useState('H04');
+  const [highwayCode, setHighwayCode] = useState('NH04');
   const [location, setLocation] = useState('');
   const [incidentType, setIncidentType] = useState<IncidentType>('pothole');
   const [severity, setSeverity] = useState<'minor' | 'moderate' | 'severe'>('minor');

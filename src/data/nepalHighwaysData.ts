@@ -1,75 +1,75 @@
 import { Highway, CityNode, RoadIncident, UserRoadReport, HighwayWeatherNode, HighwayPOI, TrafficCorridor } from '../types';
 
 export const CITIES_AND_JUNCTIONS: CityNode[] = [
-  { id: 'ktm', name: 'Kathmandu', nepaliName: 'काठमाडौं', district: 'Kathmandu', province: 'Bagmati', lat: 27.7172, lng: 85.3240, elevationM: 1400, isMajorHub: true, connectedHighways: ['H02', 'H03', 'H04', 'H13'] },
-  { id: 'pkr', name: 'Pokhara', nepaliName: 'पोखरा', district: 'Kaski', province: 'Gandaki', lat: 28.2096, lng: 83.9856, elevationM: 822, isMajorHub: true, connectedHighways: ['H04', 'H10', 'H15'] },
-  { id: 'cht', name: 'Narayanghat / Bharatpur', nepaliName: 'नारायणगढ / भरतपुर', district: 'Chitwan', province: 'Bagmati', lat: 27.6833, lng: 84.4333, elevationM: 208, isMajorHub: true, connectedHighways: ['H01', 'H05'] },
-  { id: 'mgl', name: 'Mugling', nepaliName: 'मुग्लिन', district: 'Chitwan', province: 'Bagmati', lat: 27.8617, lng: 84.5542, elevationM: 275, isMajorHub: true, connectedHighways: ['H04', 'H05'] },
-  { id: 'btl', name: 'Butwal', nepaliName: 'बुटवल', district: 'Rupandehi', province: 'Lumbini', lat: 27.7006, lng: 83.4484, elevationM: 220, isMajorHub: true, connectedHighways: ['H01', 'H10'] },
-  { id: 'bhr', name: 'Bhairahawa / Sunauli', nepaliName: 'भैरहवा / सुनौली', district: 'Rupandehi', province: 'Lumbini', lat: 27.5045, lng: 83.4503, elevationM: 105, isMajorHub: true, connectedHighways: ['H10'] },
-  { id: 'htd', name: 'Hetauda', nepaliName: 'हेटौंडा', district: 'Makwanpur', province: 'Bagmati', lat: 27.4285, lng: 85.0331, elevationM: 460, isMajorHub: true, connectedHighways: ['H01', 'H02', 'H17'] },
-  { id: 'brg', name: 'Birgunj', nepaliName: 'वीरगन्ज', district: 'Parsa', province: 'Madhesh', lat: 27.0128, lng: 84.8774, elevationM: 90, isMajorHub: true, connectedHighways: ['H02', 'H16'] },
-  { id: 'jnk', name: 'Janakpurdham', nepaliName: 'जनकपुरधाम', district: 'Dhanusha', province: 'Madhesh', lat: 26.7271, lng: 85.9408, elevationM: 74, isMajorHub: true, connectedHighways: ['H01', 'H16'] },
-  { id: 'brd', name: 'Bardibas', nepaliName: 'बर्दिबास', district: 'Mahottari', province: 'Madhesh', lat: 26.9740, lng: 85.9024, elevationM: 150, isMajorHub: true, connectedHighways: ['H01', 'H13'] },
-  { id: 'brt', name: 'Biratnagar', nepaliName: 'विराटनगर', district: 'Morang', province: 'Koshi', lat: 26.4525, lng: 87.2718, elevationM: 72, isMajorHub: true, connectedHighways: ['H01', 'H16'] },
-  { id: 'dhr', name: 'Dharan', nepaliName: 'धरान', district: 'Sunsari', province: 'Koshi', lat: 26.8124, lng: 87.2834, elevationM: 349, isMajorHub: true, connectedHighways: ['H01', 'H08', 'H17'] },
-  { id: 'kkr', name: 'Kakarbhitta', nepaliName: 'काँकडभिट्टा', district: 'Jhapa', province: 'Koshi', lat: 26.6508, lng: 88.1565, elevationM: 145, isMajorHub: true, connectedHighways: ['H01', 'H09'] },
-  { id: 'npg', name: 'Nepalgunj', nepaliName: 'नेपालगन्ज', district: 'Banke', province: 'Lumbini', lat: 28.0500, lng: 81.6167, elevationM: 150, isMajorHub: true, connectedHighways: ['H01', 'H12'] },
-  { id: 'srk', name: 'Surkhet (Birendranagar)', nepaliName: 'सुर्खेत (वीरेन्द्रनगर)', district: 'Surkhet', province: 'Karnali', lat: 28.5997, lng: 81.6334, elevationM: 660, isMajorHub: true, connectedHighways: ['H06', 'H12', 'H17'] },
-  { id: 'dhg', name: 'Dhangadhi', nepaliName: 'धनगढी', district: 'Kailali', province: 'Sudurpashchim', lat: 28.6946, lng: 80.5977, elevationM: 109, isMajorHub: true, connectedHighways: ['H01', 'H14'] },
-  { id: 'mhn', name: 'Mahendranagar / Gaddachauki', nepaliName: 'महेन्द्रनगर', district: 'Kanchanpur', province: 'Sudurpashchim', lat: 28.9667, lng: 80.1833, elevationM: 198, isMajorHub: true, connectedHighways: ['H01'] },
-  { id: 'dhk', name: 'Dhulikhel', nepaliName: 'धुलिखेल', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.6221, lng: 85.5428, elevationM: 1550, isMajorHub: false, connectedHighways: ['H03', 'H13'] },
-  { id: 'sdh', name: 'Sindhuli Gadhi', nepaliName: 'सिन्धुलीगढी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2486, lng: 85.9186, elevationM: 1100, isMajorHub: false, connectedHighways: ['H13'] },
-  { id: 'dml', name: 'Damauli', nepaliName: 'दमौली', district: 'Tanahun', province: 'Gandaki', lat: 27.9733, lng: 84.2833, elevationM: 450, isMajorHub: false, connectedHighways: ['H04'] },
-  { id: 'plp', name: 'Tansen (Palpa)', nepaliName: 'तानसेन (पाल्पा)', district: 'Palpa', province: 'Lumbini', lat: 27.8683, lng: 83.5489, elevationM: 1350, isMajorHub: false, connectedHighways: ['H10'] },
-  { id: 'ilm', name: 'Ilam', nepaliName: 'इलाम', district: 'Ilam', province: 'Koshi', lat: 26.9117, lng: 87.9275, elevationM: 1208, isMajorHub: false, connectedHighways: ['H09'] },
-  { id: 'bgl', name: 'Baglung', nepaliName: 'बागलुङ', district: 'Baglung', province: 'Gandaki', lat: 28.2725, lng: 83.6006, elevationM: 1020, isMajorHub: false, connectedHighways: ['H15'] },
-  { id: 'jml', name: 'Jumla', nepaliName: 'जुम्ला', district: 'Jumla', province: 'Karnali', lat: 29.2747, lng: 82.1838, elevationM: 2514, isMajorHub: false, connectedHighways: ['H06'] },
-  { id: 'nbz', name: 'Naubise / Khanikhola', nepaliName: 'नौबिसे', district: 'Dhading', province: 'Bagmati', lat: 27.7214, lng: 85.1764, elevationM: 920, isMajorHub: false, connectedHighways: ['H02', 'H04'] },
-  { id: 'kdr', name: 'Tatopani / Kodari (China Border)', nepaliName: 'तातोपानी / कोदारी', district: 'Sindhupalchok', province: 'Bagmati', lat: 27.9497, lng: 85.9452, elevationM: 1640, isMajorHub: false, connectedHighways: ['H03'] },
-  { id: 'dht', name: 'Dhankuta', nepaliName: 'धनकुटा', district: 'Dhankuta', province: 'Koshi', lat: 26.9833, lng: 87.3500, elevationM: 1150, isMajorHub: false, connectedHighways: ['H08', 'H09'] },
-  { id: 'jnp', name: 'Janakpur', nepaliName: 'जनकपुर', district: 'Dhanusha', province: 'Madhesh', lat: 26.7200, lng: 85.9200, elevationM: 74, isMajorHub: false, connectedHighways: ['H22', 'H30'] },
-  { id: 'rbj', name: 'Rajbiraj', nepaliName: 'राजविराज', district: 'Saptari', province: 'Madhesh', lat: 26.5333, lng: 86.7333, elevationM: 70, isMajorHub: false, connectedHighways: ['H14'] },
-  { id: 'ctr', name: 'Chautara', nepaliName: 'चौतारा', district: 'Sindhupalchok', province: 'Bagmati', lat: 27.8667, lng: 85.7000, elevationM: 1500, isMajorHub: false, connectedHighways: ['H31'] },
-  { id: 'bid', name: 'Bidur', nepaliName: 'बिदुर', district: 'Nuwakot', province: 'Bagmati', lat: 27.8833, lng: 85.3167, elevationM: 1100, isMajorHub: false, connectedHighways: ['H40'] },
-  { id: 'pyt', name: 'Pyuthan', nepaliName: 'प्युठान', district: 'Pyuthan', province: 'Lumbini', lat: 28.0833, lng: 82.8500, elevationM: 1300, isMajorHub: false, connectedHighways: ['H19'] },
-  { id: 'bsl', name: 'Besisahar', nepaliName: 'बेसिसहार', district: 'Lamjung', province: 'Gandaki', lat: 28.2333, lng: 84.3667, elevationM: 760, isMajorHub: false, connectedHighways: ['H25'] },
-  { id: 'chm', name: 'Chame', nepaliName: 'चामे', district: 'Manang', province: 'Gandaki', lat: 28.5833, lng: 84.2167, elevationM: 2700, isMajorHub: false, connectedHighways: ['H25'] },
-  { id: 'btm', name: 'Birtamod', nepaliName: 'विर्तामोड', district: 'Jhapa', province: 'Koshi', lat: 26.4833, lng: 88.0833, elevationM: 100, isMajorHub: false, connectedHighways: ['H04'] },
-  { id: 'bhp', name: 'Bhadrapur', nepaliName: 'भद्रपुर', district: 'Jhapa', province: 'Koshi', lat: 26.5333, lng: 88.0833, elevationM: 101, isMajorHub: false, connectedHighways: ['H04'] },
-  { id: 'khn', name: 'Khunuwa', nepaliName: 'खुनेउवा', district: 'Kapilvastu', province: 'Lumbini', lat: 27.4167, lng: 82.8667, elevationM: 180, isMajorHub: false, connectedHighways: ['H50'] },
-  { id: 'sdk', name: 'Sandhikharka', nepaliName: 'सन्धिखर्क', district: 'Arghakhanchi', province: 'Lumbini', lat: 28.0000, lng: 83.0333, elevationM: 1600, isMajorHub: false, connectedHighways: ['H51'] },
-  { id: 'ghr', name: 'Ghorahi', nepaliName: 'घोराही', district: 'Dang', province: 'Lumbini', lat: 28.2500, lng: 82.4833, elevationM: 700, isMajorHub: false, connectedHighways: ['H55'] },
-  { id: 'jjk', name: 'Jajarkot', nepaliName: 'जाजरकोट', district: 'Jajarkot', province: 'Karnali', lat: 28.7000, lng: 82.2000, elevationM: 1400, isMajorHub: false, connectedHighways: ['H56'] },
-  { id: 'dun', name: 'Dunai', nepaliName: 'दुनै', district: 'Dolpa', province: 'Karnali', lat: 29.2500, lng: 82.4000, elevationM: 2000, isMajorHub: false, connectedHighways: ['H57'] },
-  { id: 'gly', name: 'Gulariya', nepaliName: 'गुलारिया', district: 'Bardiya', province: 'Lumbini', lat: 28.2167, lng: 81.3333, elevationM: 150, isMajorHub: false, connectedHighways: ['H59'] },
-  { id: 'lmk', name: 'Lamki', nepaliName: 'लामकी', district: 'Kailali', province: 'Sudurpashchim', lat: 28.8833, lng: 81.6167, elevationM: 190, isMajorHub: false, connectedHighways: ['H62'] },
-  { id: 'lgt', name: 'Lodeghat', nepaliName: 'लोडेघाट', district: 'Achham', province: 'Sudurpashchim', lat: 29.0500, lng: 81.3833, elevationM: 800, isMajorHub: false, connectedHighways: ['H62'] },
-  { id: 'dpl', name: 'Dipayal', nepaliName: 'दिपायल', district: 'Doti', province: 'Sudurpashchim', lat: 28.7167, lng: 80.9167, elevationM: 180, isMajorHub: false, connectedHighways: ['H65'] },
-  { id: 'ark', name: 'Arungkhola', nepaliName: 'अरुङखोला', district: 'Bara', province: 'Madhesh', lat: 27.7167, lng: 84.1167, elevationM: 200, isMajorHub: false, connectedHighways: ['H68'] },
-  { id: 'ith', name: 'Itahari', nepaliName: 'इटहरी', district: 'Sunsari', province: 'Koshi', lat: 26.6583, lng: 87.2833, elevationM: 110, isMajorHub: false, connectedHighways: ['H01'] },
-  { id: 'dmk', name: 'Damak', nepaliName: 'दमक', district: 'Jhapa', province: 'Koshi', lat: 26.8667, lng: 87.7000, elevationM: 110, isMajorHub: false, connectedHighways: ['H01'] },
-  { id: 'ptl', name: 'Pathlaiya', nepaliName: 'पाथलैया', district: 'Bara', province: 'Madhesh', lat: 27.0167, lng: 84.9500, elevationM: 100, isMajorHub: false, connectedHighways: ['H01', 'H02'] },
-  { id: 'lhn', name: 'Lahan', nepaliName: 'लहान', district: 'Siraha', province: 'Madhesh', lat: 26.7333, lng: 86.4833, elevationM: 110, isMajorHub: false, connectedHighways: ['H01'] },
-  { id: 'atr', name: 'Attariya', nepaliName: 'अटरिया', district: 'Kailali', province: 'Sudurpashchim', lat: 28.8833, lng: 80.1500, elevationM: 190, isMajorHub: false, connectedHighways: ['H01'] },
-  { id: 'gch', name: 'Galchhi', nepaliName: 'गल्छी', district: 'Dhading', province: 'Bagmati', lat: 27.8100, lng: 84.9750, elevationM: 580, isMajorHub: false, connectedHighways: ['H04'] },
-  { id: 'mlk', name: 'Malekhu', nepaliName: 'मलेखु', district: 'Dhading', province: 'Bagmati', lat: 27.8200, lng: 84.8150, elevationM: 450, isMajorHub: false, connectedHighways: ['H04'] },
-  { id: 'ngd', name: 'Nagdhunga', nepaliName: 'नागढुंगा', district: 'Kathmandu', province: 'Bagmati', lat: 27.7000, lng: 85.2000, elevationM: 1510, isMajorHub: false, connectedHighways: ['H02', 'H04'] },
-  { id: 'tst', name: 'Tistung', nepaliName: 'तिस्टुङ', district: 'Makwanpur', province: 'Bagmati', lat: 27.8167, lng: 85.0667, elevationM: 1800, isMajorHub: false, connectedHighways: ['H02'] },
-  { id: 'dmn', name: 'Daman', nepaliName: 'दामान', district: 'Makwanpur', province: 'Bagmati', lat: 27.6000, lng: 85.0500, elevationM: 2322, isMajorHub: false, connectedHighways: ['H02'] },
-  { id: 'amg', name: 'Amlekhgunj', nepaliName: 'अमलेखगंज', district: 'Bara', province: 'Madhesh', lat: 27.4167, lng: 84.9833, elevationM: 200, isMajorHub: false, connectedHighways: ['H02'] },
-  { id: 'jlb', name: 'Jalbire', nepaliName: 'जलविरे', district: 'Chitwan', province: 'Bagmati', lat: 27.7700, lng: 84.4800, elevationM: 235, isMajorHub: false, connectedHighways: ['H05'] },
-  { id: 'apt', name: 'Aaptari', nepaliName: 'आप्तारी', district: 'Chitwan', province: 'Bagmati', lat: 27.7000, lng: 84.4400, elevationM: 208, isMajorHub: false, connectedHighways: ['H05'] },
-  { id: 'bkb', name: 'Bhakundebesi', nepaliName: 'भकुण्डेबेसी', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.5000, lng: 85.6700, elevationM: 520, isMajorHub: false, connectedHighways: ['H13'] },
-  { id: 'npt', name: 'Nepalthok', nepaliName: 'नेपालथोक', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.4200, lng: 85.8700, elevationM: 520, isMajorHub: false, connectedHighways: ['H13'] },
-  { id: 'khk', name: 'Khurkot', nepaliName: 'खुर्कोट', district: 'Sindhuli', province: 'Bagmati', lat: 27.3333, lng: 86.0167, elevationM: 470, isMajorHub: false, connectedHighways: ['H13'] },
-  { id: 'smd', name: 'Sindhuli Madi', nepaliName: 'सिन्धुली माडी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2800, lng: 85.9100, elevationM: 500, isMajorHub: false, connectedHighways: ['H13'] }
+  { id: 'ktm', name: 'Kathmandu', nepaliName: 'काठमाडौं', district: 'Kathmandu', province: 'Bagmati', lat: 27.7172, lng: 85.3240, elevationM: 1400, isMajorHub: true, connectedHighways: ['NH02', 'NH03', 'NH04', 'NH13'] },
+  { id: 'pkr', name: 'Pokhara', nepaliName: 'पोखरा', district: 'Kaski', province: 'Gandaki', lat: 28.2096, lng: 83.9856, elevationM: 822, isMajorHub: true, connectedHighways: ['NH04', 'NH10', 'NH15'] },
+  { id: 'cht', name: 'Narayanghat / Bharatpur', nepaliName: 'नारायणगढ / भरतपुर', district: 'Chitwan', province: 'Bagmati', lat: 27.6833, lng: 84.4333, elevationM: 208, isMajorHub: true, connectedHighways: ['NH01', 'NH05'] },
+  { id: 'mgl', name: 'Mugling', nepaliName: 'मुग्लिन', district: 'Chitwan', province: 'Bagmati', lat: 27.8617, lng: 84.5542, elevationM: 275, isMajorHub: true, connectedHighways: ['NH04', 'NH05'] },
+  { id: 'btl', name: 'Butwal', nepaliName: 'बुटवल', district: 'Rupandehi', province: 'Lumbini', lat: 27.7006, lng: 83.4484, elevationM: 220, isMajorHub: true, connectedHighways: ['NH01', 'NH10'] },
+  { id: 'bhr', name: 'Bhairahawa / Sunauli', nepaliName: 'भैरहवा / सुनौली', district: 'Rupandehi', province: 'Lumbini', lat: 27.5045, lng: 83.4503, elevationM: 105, isMajorHub: true, connectedHighways: ['NH10'] },
+  { id: 'htd', name: 'Hetauda', nepaliName: 'हेटौंडा', district: 'Makwanpur', province: 'Bagmati', lat: 27.4285, lng: 85.0331, elevationM: 460, isMajorHub: true, connectedHighways: ['NH01', 'NH02', 'NH17'] },
+  { id: 'brg', name: 'Birgunj', nepaliName: 'वीरगन्ज', district: 'Parsa', province: 'Madhesh', lat: 27.0128, lng: 84.8774, elevationM: 90, isMajorHub: true, connectedHighways: ['NH02', 'NH16'] },
+  { id: 'jnk', name: 'Janakpurdham', nepaliName: 'जनकपुरधाम', district: 'Dhanusha', province: 'Madhesh', lat: 26.7271, lng: 85.9408, elevationM: 74, isMajorHub: true, connectedHighways: ['NH01', 'NH16'] },
+  { id: 'brd', name: 'Bardibas', nepaliName: 'बर्दिबास', district: 'Mahottari', province: 'Madhesh', lat: 26.9740, lng: 85.9024, elevationM: 150, isMajorHub: true, connectedHighways: ['NH01', 'NH13'] },
+  { id: 'brt', name: 'Biratnagar', nepaliName: 'विराटनगर', district: 'Morang', province: 'Koshi', lat: 26.4525, lng: 87.2718, elevationM: 72, isMajorHub: true, connectedHighways: ['NH01', 'NH16'] },
+  { id: 'dhr', name: 'Dharan', nepaliName: 'धरान', district: 'Sunsari', province: 'Koshi', lat: 26.8124, lng: 87.2834, elevationM: 349, isMajorHub: true, connectedHighways: ['NH01', 'NH08', 'NH17'] },
+  { id: 'kkr', name: 'Kakarbhitta', nepaliName: 'काँकडभिट्टा', district: 'Jhapa', province: 'Koshi', lat: 26.6508, lng: 88.1565, elevationM: 145, isMajorHub: true, connectedHighways: ['NH01', 'NH09'] },
+  { id: 'npg', name: 'Nepalgunj', nepaliName: 'नेपालगन्ज', district: 'Banke', province: 'Lumbini', lat: 28.0500, lng: 81.6167, elevationM: 150, isMajorHub: true, connectedHighways: ['NH01', 'NH12'] },
+  { id: 'srk', name: 'Surkhet (Birendranagar)', nepaliName: 'सुर्खेत (वीरेन्द्रनगर)', district: 'Surkhet', province: 'Karnali', lat: 28.5997, lng: 81.6334, elevationM: 660, isMajorHub: true, connectedHighways: ['NH06', 'NH12', 'NH17'] },
+  { id: 'dhg', name: 'Dhangadhi', nepaliName: 'धनगढी', district: 'Kailali', province: 'Sudurpashchim', lat: 28.6946, lng: 80.5977, elevationM: 109, isMajorHub: true, connectedHighways: ['NH01', 'NH14'] },
+  { id: 'mhn', name: 'Mahendranagar / Gaddachauki', nepaliName: 'महेन्द्रनगर', district: 'Kanchanpur', province: 'Sudurpashchim', lat: 28.9667, lng: 80.1833, elevationM: 198, isMajorHub: true, connectedHighways: ['NH01'] },
+  { id: 'dhk', name: 'Dhulikhel', nepaliName: 'धुलिखेल', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.6221, lng: 85.5428, elevationM: 1550, isMajorHub: false, connectedHighways: ['NH03', 'NH13'] },
+  { id: 'sdh', name: 'Sindhuli Gadhi', nepaliName: 'सिन्धुलीगढी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2486, lng: 85.9186, elevationM: 1100, isMajorHub: false, connectedHighways: ['NH13'] },
+  { id: 'dml', name: 'Damauli', nepaliName: 'दमौली', district: 'Tanahun', province: 'Gandaki', lat: 27.9733, lng: 84.2833, elevationM: 450, isMajorHub: false, connectedHighways: ['NH04'] },
+  { id: 'plp', name: 'Tansen (Palpa)', nepaliName: 'तानसेन (पाल्पा)', district: 'Palpa', province: 'Lumbini', lat: 27.8683, lng: 83.5489, elevationM: 1350, isMajorHub: false, connectedHighways: ['NH10'] },
+  { id: 'ilm', name: 'Ilam', nepaliName: 'इलाम', district: 'Ilam', province: 'Koshi', lat: 26.9117, lng: 87.9275, elevationM: 1208, isMajorHub: false, connectedHighways: ['NH09'] },
+  { id: 'bgl', name: 'Baglung', nepaliName: 'बागलुङ', district: 'Baglung', province: 'Gandaki', lat: 28.2725, lng: 83.6006, elevationM: 1020, isMajorHub: false, connectedHighways: ['NH15'] },
+  { id: 'jml', name: 'Jumla', nepaliName: 'जुम्ला', district: 'Jumla', province: 'Karnali', lat: 29.2747, lng: 82.1838, elevationM: 2514, isMajorHub: false, connectedHighways: ['NH06'] },
+  { id: 'nbz', name: 'Naubise / Khanikhola', nepaliName: 'नौबिसे', district: 'Dhading', province: 'Bagmati', lat: 27.7214, lng: 85.1764, elevationM: 920, isMajorHub: false, connectedHighways: ['NH02', 'NH04'] },
+  { id: 'kdr', name: 'Tatopani / Kodari (China Border)', nepaliName: 'तातोपानी / कोदारी', district: 'Sindhupalchok', province: 'Bagmati', lat: 27.9497, lng: 85.9452, elevationM: 1640, isMajorHub: false, connectedHighways: ['NH03'] },
+  { id: 'dht', name: 'Dhankuta', nepaliName: 'धनकुटा', district: 'Dhankuta', province: 'Koshi', lat: 26.9833, lng: 87.3500, elevationM: 1150, isMajorHub: false, connectedHighways: ['NH08', 'NH09'] },
+  { id: 'jnp', name: 'Janakpur', nepaliName: 'जनकपुर', district: 'Dhanusha', province: 'Madhesh', lat: 26.7200, lng: 85.9200, elevationM: 74, isMajorHub: false, connectedHighways: ['NH22', 'NH30'] },
+  { id: 'rbj', name: 'Rajbiraj', nepaliName: 'राजविराज', district: 'Saptari', province: 'Madhesh', lat: 26.5333, lng: 86.7333, elevationM: 70, isMajorHub: false, connectedHighways: ['NH14'] },
+  { id: 'ctr', name: 'Chautara', nepaliName: 'चौतारा', district: 'Sindhupalchok', province: 'Bagmati', lat: 27.8667, lng: 85.7000, elevationM: 1500, isMajorHub: false, connectedHighways: ['NH31'] },
+  { id: 'bid', name: 'Bidur', nepaliName: 'बिदुर', district: 'Nuwakot', province: 'Bagmati', lat: 27.8833, lng: 85.3167, elevationM: 1100, isMajorHub: false, connectedHighways: ['NH40'] },
+  { id: 'pyt', name: 'Pyuthan', nepaliName: 'प्युठान', district: 'Pyuthan', province: 'Lumbini', lat: 28.0833, lng: 82.8500, elevationM: 1300, isMajorHub: false, connectedHighways: ['NH19'] },
+  { id: 'bsl', name: 'Besisahar', nepaliName: 'बेसिसहार', district: 'Lamjung', province: 'Gandaki', lat: 28.2333, lng: 84.3667, elevationM: 760, isMajorHub: false, connectedHighways: ['NH25'] },
+  { id: 'chm', name: 'Chame', nepaliName: 'चामे', district: 'Manang', province: 'Gandaki', lat: 28.5833, lng: 84.2167, elevationM: 2700, isMajorHub: false, connectedHighways: ['NH25'] },
+  { id: 'btm', name: 'Birtamod', nepaliName: 'विर्तामोड', district: 'Jhapa', province: 'Koshi', lat: 26.4833, lng: 88.0833, elevationM: 100, isMajorHub: false, connectedHighways: ['NH04'] },
+  { id: 'bhp', name: 'Bhadrapur', nepaliName: 'भद्रपुर', district: 'Jhapa', province: 'Koshi', lat: 26.5333, lng: 88.0833, elevationM: 101, isMajorHub: false, connectedHighways: ['NH04'] },
+  { id: 'khn', name: 'Khunuwa', nepaliName: 'खुनेउवा', district: 'Kapilvastu', province: 'Lumbini', lat: 27.4167, lng: 82.8667, elevationM: 180, isMajorHub: false, connectedHighways: ['NH50'] },
+  { id: 'sdk', name: 'Sandhikharka', nepaliName: 'सन्धिखर्क', district: 'Arghakhanchi', province: 'Lumbini', lat: 28.0000, lng: 83.0333, elevationM: 1600, isMajorHub: false, connectedHighways: ['NH51'] },
+  { id: 'ghr', name: 'Ghorahi', nepaliName: 'घोराही', district: 'Dang', province: 'Lumbini', lat: 28.2500, lng: 82.4833, elevationM: 700, isMajorHub: false, connectedHighways: ['NH55'] },
+  { id: 'jjk', name: 'Jajarkot', nepaliName: 'जाजरकोट', district: 'Jajarkot', province: 'Karnali', lat: 28.7000, lng: 82.2000, elevationM: 1400, isMajorHub: false, connectedHighways: ['NH56'] },
+  { id: 'dun', name: 'Dunai', nepaliName: 'दुनै', district: 'Dolpa', province: 'Karnali', lat: 29.2500, lng: 82.4000, elevationM: 2000, isMajorHub: false, connectedHighways: ['NH57'] },
+  { id: 'gly', name: 'Gulariya', nepaliName: 'गुलारिया', district: 'Bardiya', province: 'Lumbini', lat: 28.2167, lng: 81.3333, elevationM: 150, isMajorHub: false, connectedHighways: ['NH59'] },
+  { id: 'lmk', name: 'Lamki', nepaliName: 'लामकी', district: 'Kailali', province: 'Sudurpashchim', lat: 28.8833, lng: 81.6167, elevationM: 190, isMajorHub: false, connectedHighways: ['NH62'] },
+  { id: 'lgt', name: 'Lodeghat', nepaliName: 'लोडेघाट', district: 'Achham', province: 'Sudurpashchim', lat: 29.0500, lng: 81.3833, elevationM: 800, isMajorHub: false, connectedHighways: ['NH62'] },
+  { id: 'dpl', name: 'Dipayal', nepaliName: 'दिपायल', district: 'Doti', province: 'Sudurpashchim', lat: 28.7167, lng: 80.9167, elevationM: 180, isMajorHub: false, connectedHighways: ['NH65'] },
+  { id: 'ark', name: 'Arungkhola', nepaliName: 'अरुङखोला', district: 'Bara', province: 'Madhesh', lat: 27.7167, lng: 84.1167, elevationM: 200, isMajorHub: false, connectedHighways: ['NH68'] },
+  { id: 'ith', name: 'Itahari', nepaliName: 'इटहरी', district: 'Sunsari', province: 'Koshi', lat: 26.6583, lng: 87.2833, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
+  { id: 'dmk', name: 'Damak', nepaliName: 'दमक', district: 'Jhapa', province: 'Koshi', lat: 26.8667, lng: 87.7000, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
+  { id: 'ptl', name: 'Pathlaiya', nepaliName: 'पाथलैया', district: 'Bara', province: 'Madhesh', lat: 27.0167, lng: 84.9500, elevationM: 100, isMajorHub: false, connectedHighways: ['NH01', 'NH02'] },
+  { id: 'lhn', name: 'Lahan', nepaliName: 'लहान', district: 'Siraha', province: 'Madhesh', lat: 26.7333, lng: 86.4833, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
+  { id: 'atr', name: 'Attariya', nepaliName: 'अटरिया', district: 'Kailali', province: 'Sudurpashchim', lat: 28.8833, lng: 80.1500, elevationM: 190, isMajorHub: false, connectedHighways: ['NH01'] },
+  { id: 'gch', name: 'Galchhi', nepaliName: 'गल्छी', district: 'Dhading', province: 'Bagmati', lat: 27.8100, lng: 84.9750, elevationM: 580, isMajorHub: false, connectedHighways: ['NH04'] },
+  { id: 'mlk', name: 'Malekhu', nepaliName: 'मलेखु', district: 'Dhading', province: 'Bagmati', lat: 27.8200, lng: 84.8150, elevationM: 450, isMajorHub: false, connectedHighways: ['NH04'] },
+  { id: 'ngd', name: 'Nagdhunga', nepaliName: 'नागढुंगा', district: 'Kathmandu', province: 'Bagmati', lat: 27.7000, lng: 85.2000, elevationM: 1510, isMajorHub: false, connectedHighways: ['NH02', 'NH04'] },
+  { id: 'tst', name: 'Tistung', nepaliName: 'तिस्टुङ', district: 'Makwanpur', province: 'Bagmati', lat: 27.8167, lng: 85.0667, elevationM: 1800, isMajorHub: false, connectedHighways: ['NH02'] },
+  { id: 'dmn', name: 'Daman', nepaliName: 'दामान', district: 'Makwanpur', province: 'Bagmati', lat: 27.6000, lng: 85.0500, elevationM: 2322, isMajorHub: false, connectedHighways: ['NH02'] },
+  { id: 'amg', name: 'Amlekhgunj', nepaliName: 'अमलेखगंज', district: 'Bara', province: 'Madhesh', lat: 27.4167, lng: 84.9833, elevationM: 200, isMajorHub: false, connectedHighways: ['NH02'] },
+  { id: 'jlb', name: 'Jalbire', nepaliName: 'जलविरे', district: 'Chitwan', province: 'Bagmati', lat: 27.7700, lng: 84.4800, elevationM: 235, isMajorHub: false, connectedHighways: ['NH05'] },
+  { id: 'apt', name: 'Aaptari', nepaliName: 'आप्तारी', district: 'Chitwan', province: 'Bagmati', lat: 27.7000, lng: 84.4400, elevationM: 208, isMajorHub: false, connectedHighways: ['NH05'] },
+  { id: 'bkb', name: 'Bhakundebesi', nepaliName: 'भकुण्डेबेसी', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.5000, lng: 85.6700, elevationM: 520, isMajorHub: false, connectedHighways: ['NH13'] },
+  { id: 'npt', name: 'Nepalthok', nepaliName: 'नेपालथोक', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.4200, lng: 85.8700, elevationM: 520, isMajorHub: false, connectedHighways: ['NH13'] },
+  { id: 'khk', name: 'Khurkot', nepaliName: 'खुर्कोट', district: 'Sindhuli', province: 'Bagmati', lat: 27.3333, lng: 86.0167, elevationM: 470, isMajorHub: false, connectedHighways: ['NH13'] },
+  { id: 'smd', name: 'Sindhuli Madi', nepaliName: 'सिन्धुली माडी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2800, lng: 85.9100, elevationM: 500, isMajorHub: false, connectedHighways: ['NH13'] }
 ];
 
 export const NEPAL_HIGHWAYS: Highway[] = [
   {
-    id: 'h04',
-    code: 'H04',
+    id: 'NH04',
+    code: 'NH04',
     name: 'Prithvi Highway',
     nepaliName: 'पृथ्वी राजमार्ग',
     totalLengthKm: 174,
@@ -87,7 +87,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 2,
     segments: [
       {
-        id: 'h04-seg-1',
+        id: 'NH04-seg-1',
         from: 'Naubise',
         to: 'Galchhi',
         distanceKm: 26,
@@ -100,7 +100,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7214, 85.1764], [27.7533, 85.0872], [27.8105, 84.9754]]
       },
       {
-        id: 'h04-seg-2',
+        id: 'NH04-seg-2',
         from: 'Galchhi',
         to: 'Malekhu',
         distanceKm: 22,
@@ -113,7 +113,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.8105, 84.9754], [27.8286, 84.8912], [27.8228, 84.8155]]
       },
       {
-        id: 'h04-seg-3',
+        id: 'NH04-seg-3',
         from: 'Malekhu',
         to: 'Mugling',
         distanceKm: 40,
@@ -128,7 +128,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.8228, 84.8155], [27.8423, 84.7155], [27.8617, 84.5542]]
       },
       {
-        id: 'h04-seg-4',
+        id: 'NH04-seg-4',
         from: 'Mugling',
         to: 'Damauli',
         distanceKm: 44,
@@ -143,7 +143,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.8617, 84.5542], [27.9142, 84.4223], [27.9733, 84.2833]]
       },
       {
-        id: 'h04-seg-5',
+        id: 'NH04-seg-5',
         from: 'Damauli',
         to: 'Pokhara',
         distanceKm: 42,
@@ -168,8 +168,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     ]
   },
   {
-    id: 'h05',
-    code: 'H05',
+    id: 'NH05',
+    code: 'NH05',
     name: 'Narayanghat–Mugling Highway',
     nepaliName: 'नारायणगढ–मुग्लिन सडक',
     totalLengthKm: 36,
@@ -187,7 +187,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 1,
     segments: [
       {
-        id: 'h05-seg-1',
+        id: 'NH05-seg-1',
         from: 'Mugling',
         to: 'Jalbire',
         distanceKm: 18,
@@ -202,7 +202,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.8617, 84.5542], [27.8102, 84.5020], [27.7650, 84.4750]]
       },
       {
-        id: 'h05-seg-2',
+        id: 'NH05-seg-2',
         from: 'Jalbire',
         to: 'Aaptari Narayanghat',
         distanceKm: 18,
@@ -224,8 +224,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     ]
   },
   {
-    id: 'h01',
-    code: 'H01',
+    id: 'NH01',
+    code: 'NH01',
     name: 'Mahendra Highway (East–West Highway)',
     nepaliName: 'महेन्द्र राजमार्ग (पूर्व–पश्चिम राजमार्ग)',
     totalLengthKm: 1027,
@@ -243,7 +243,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 2,
     segments: [
       {
-        id: 'h01-seg-1',
+        id: 'NH01-seg-1',
         from: 'Kakarbhitta',
         to: 'Itahari',
         distanceKm: 85,
@@ -256,7 +256,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[26.6508, 88.1565], [26.6620, 87.8920], [26.6650, 87.2780]]
       },
       {
-        id: 'h01-seg-2',
+        id: 'NH01-seg-2',
         from: 'Itahari',
         to: 'Bardibas',
         distanceKm: 165,
@@ -269,7 +269,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[26.6650, 87.2780], [26.5210, 86.9320], [26.9740, 85.9024]]
       },
       {
-        id: 'h01-seg-3',
+        id: 'NH01-seg-3',
         from: 'Bardibas',
         to: 'Hetauda',
         distanceKm: 130,
@@ -282,7 +282,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[26.9740, 85.9024], [27.0500, 85.3500], [27.4285, 85.0331]]
       },
       {
-        id: 'h01-seg-4',
+        id: 'NH01-seg-4',
         from: 'Hetauda',
         to: 'Narayanghat',
         distanceKm: 76,
@@ -295,7 +295,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.4285, 85.0331], [27.5700, 84.7500], [27.6833, 84.4333]]
       },
       {
-        id: 'h01-seg-5',
+        id: 'NH01-seg-5',
         from: 'Narayanghat',
         to: 'Butwal (via Daunne Pass)',
         distanceKm: 114,
@@ -310,7 +310,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.6833, 84.4333], [27.5300, 83.8900], [27.7006, 83.4484]]
       },
       {
-        id: 'h01-seg-6',
+        id: 'NH01-seg-6',
         from: 'Butwal',
         to: 'Kohalpur (Nepalgunj)',
         distanceKm: 240,
@@ -323,7 +323,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7006, 83.4484], [27.7200, 82.8500], [28.1900, 81.6900]]
       },
       {
-        id: 'h01-seg-7',
+        id: 'NH01-seg-7',
         from: 'Kohalpur',
         to: 'Dhangadhi / Mahendranagar',
         distanceKm: 217,
@@ -349,8 +349,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     ]
   },
   {
-    id: 'h13',
-    code: 'H13',
+    id: 'NH13',
+    code: 'NH13',
     name: 'B.P. Koirala Highway (Banepa–Bardibas)',
     nepaliName: 'बिपी राजमार्ग (बनेपा–बर्दिबास)',
     totalLengthKm: 160,
@@ -368,7 +368,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 1,
     segments: [
       {
-        id: 'h13-seg-1',
+        id: 'NH13-seg-1',
         from: 'Dhulikhel',
         to: 'Nepalthok',
         distanceKm: 50,
@@ -383,7 +383,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.6221, 85.5428], [27.5020, 85.6700], [27.4200, 85.8700]]
       },
       {
-        id: 'h13-seg-2',
+        id: 'NH13-seg-2',
         from: 'Nepalthok',
         to: 'Khurkot',
         distanceKm: 37,
@@ -396,7 +396,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.4200, 85.8700], [27.3500, 85.9600], [27.3333, 86.0167]]
       },
       {
-        id: 'h13-seg-3',
+        id: 'NH13-seg-3',
         from: 'Khurkot',
         to: 'Sindhuli Gadhi Pass',
         distanceKm: 33,
@@ -409,7 +409,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.3333, 86.0167], [27.2800, 85.9400], [27.2486, 85.9186]]
       },
       {
-        id: 'h13-seg-4',
+        id: 'NH13-seg-4',
         from: 'Sindhuli Gadhi',
         to: 'Bardibas',
         distanceKm: 40,
@@ -429,8 +429,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     tollPlazas: []
   },
   {
-    id: 'h10',
-    code: 'H10',
+    id: 'NH10',
+    code: 'NH10',
     name: 'Siddhartha Highway',
     nepaliName: 'सिद्धार्थ राजमार्ग',
     totalLengthKm: 181,
@@ -448,7 +448,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 1,
     segments: [
       {
-        id: 'h10-seg-1',
+        id: 'NH10-seg-1',
         from: 'Sunauli/Bhairahawa',
         to: 'Butwal',
         distanceKm: 22,
@@ -461,7 +461,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.5045, 83.4503], [27.6000, 83.4500], [27.7006, 83.4484]]
       },
       {
-        id: 'h10-seg-2',
+        id: 'NH10-seg-2',
         from: 'Butwal',
         to: 'Tansen (Palpa)',
         distanceKm: 39,
@@ -476,7 +476,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7006, 83.4484], [27.7800, 83.4900], [27.8683, 83.5489]]
       },
       {
-        id: 'h10-seg-3',
+        id: 'NH10-seg-3',
         from: 'Tansen (Palpa)',
         to: 'Waling (Syangja)',
         distanceKm: 55,
@@ -489,7 +489,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.8683, 83.5489], [27.9100, 83.6200], [27.9800, 83.7700]]
       },
       {
-        id: 'h10-seg-4',
+        id: 'NH10-seg-4',
         from: 'Waling',
         to: 'Pokhara',
         distanceKm: 65,
@@ -509,8 +509,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     tollPlazas: []
   },
   {
-    id: 'h02',
-    code: 'H02',
+    id: 'NH02',
+    code: 'NH02',
     name: 'Tribhuvan Highway (Byroad)',
     nepaliName: 'त्रिभुवन राजपथ',
     totalLengthKm: 160,
@@ -528,7 +528,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 0,
     segments: [
       {
-        id: 'h02-seg-1',
+        id: 'NH02-seg-1',
         from: 'Kathmandu',
         to: 'Naubise',
         distanceKm: 26,
@@ -541,7 +541,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7172, 85.3240], [27.7020, 85.2010], [27.7214, 85.1764]]
       },
       {
-        id: 'h02-seg-2',
+        id: 'NH02-seg-2',
         from: 'Naubise',
         to: 'Daman Pass',
         distanceKm: 55,
@@ -554,7 +554,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7214, 85.1764], [27.6500, 85.1000], [27.6000, 85.0500]]
       },
       {
-        id: 'h02-seg-3',
+        id: 'NH02-seg-3',
         from: 'Daman Pass',
         to: 'Hetauda',
         distanceKm: 51,
@@ -567,7 +567,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.6000, 85.0500], [27.5100, 85.0300], [27.4285, 85.0331]]
       },
       {
-        id: 'h02-seg-4',
+        id: 'NH02-seg-4',
         from: 'Hetauda',
         to: 'Birgunj Border',
         distanceKm: 54,
@@ -587,8 +587,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     tollPlazas: []
   },
   {
-    id: 'h06',
-    code: 'H06',
+    id: 'NH06',
+    code: 'NH06',
     name: 'Karnali Highway',
     nepaliName: 'कर्णाली राजमार्ग',
     totalLengthKm: 232,
@@ -606,7 +606,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 1,
     segments: [
       {
-        id: 'h06-seg-1',
+        id: 'NH06-seg-1',
         from: 'Surkhet',
         to: 'Kalikot (Manma)',
         distanceKm: 130,
@@ -621,7 +621,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[28.5997, 81.6334], [28.8500, 81.6500], [29.1400, 81.6000]]
       },
       {
-        id: 'h06-seg-2',
+        id: 'NH06-seg-2',
         from: 'Kalikot',
         to: 'Jumla',
         distanceKm: 102,
@@ -640,8 +640,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     tollPlazas: []
   },
   {
-    id: 'h03',
-    code: 'H03',
+    id: 'NH03',
+    code: 'NH03',
     name: 'Araniko Highway',
     nepaliName: 'अरनिको राजमार्ग',
     totalLengthKm: 113,
@@ -659,7 +659,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 1,
     segments: [
       {
-        id: 'h03-seg-1',
+        id: 'NH03-seg-1',
         from: 'Kathmandu',
         to: 'Dhulikhel',
         distanceKm: 30,
@@ -672,7 +672,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.7172, 85.3240], [27.6710, 85.4298], [27.6221, 85.5428]]
       },
       {
-        id: 'h03-seg-2',
+        id: 'NH03-seg-2',
         from: 'Dhulikhel',
         to: 'Dolalghat',
         distanceKm: 27,
@@ -685,7 +685,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
         coordinates: [[27.6221, 85.5428], [27.6700, 85.6500], [27.6333, 85.7000]]
       },
       {
-        id: 'h03-seg-3',
+        id: 'NH03-seg-3',
         from: 'Dolalghat',
         to: 'Tatopani / Kodari',
         distanceKm: 56,
@@ -707,8 +707,8 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     tollPlazas: []
   },
   {
-    id: 'h15',
-    code: 'H15',
+    id: 'NH15',
+    code: 'NH15',
     name: 'Mid-Hill Highway (Pushpalal Rajmarga)',
     nepaliName: 'मध्यपहाडी लोकमार्ग (पुष्पलाल राजमार्ग)',
     totalLengthKm: 1879,
@@ -726,7 +726,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
     activeAlertCount: 2,
     segments: [
       {
-        id: 'h15-seg-1',
+        id: 'NH15-seg-1',
         from: 'Pokhara',
         to: 'Baglung',
         distanceKm: 72,
@@ -749,7 +749,7 @@ export const NEPAL_HIGHWAYS: Highway[] = [
 export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
   {
     id: 'inc-1',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     highwayName: 'Prithvi Highway',
     locationName: 'Jogimara Curve, Dhading (Km 68)',
     chainageKm: 'Ch 68+400',
@@ -768,7 +768,7 @@ export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
   },
   {
     id: 'inc-2',
-    highwayCode: 'H05',
+    highwayCode: 'NH05',
     highwayName: 'Narayanghat–Mugling Road',
     locationName: 'Chorkilo & Kalikhola (Km 12)',
     chainageKm: 'Ch 12+100',
@@ -786,7 +786,7 @@ export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
   },
   {
     id: 'inc-3',
-    highwayCode: 'H01',
+    highwayCode: 'NH01',
     highwayName: 'Mahendra Highway',
     locationName: 'Daunne Hill Pass (Nawalparasi West)',
     chainageKm: 'Ch 384+000',
@@ -805,7 +805,7 @@ export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
   },
   {
     id: 'inc-4',
-    highwayCode: 'H13',
+    highwayCode: 'NH13',
     highwayName: 'B.P. Highway',
     locationName: 'Nepalthok–Mamti Khola, Kavre/Sindhuli',
     chainageKm: 'Ch 48+200',
@@ -822,7 +822,7 @@ export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
   },
   {
     id: 'inc-5',
-    highwayCode: 'H06',
+    highwayCode: 'NH06',
     highwayName: 'Karnali Highway',
     locationName: 'Gaganekhola, Kalikot',
     chainageKm: 'Ch 112+000',
@@ -843,7 +843,7 @@ export const LIVE_ROAD_INCIDENTS: RoadIncident[] = [
 export const INITIAL_USER_REPORTS: UserRoadReport[] = [
   {
     id: 'usr-1',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     location: 'Near Benighat Trishuli riverside',
     incidentType: 'fallen_rocks',
     severity: 'minor',
@@ -855,7 +855,7 @@ export const INITIAL_USER_REPORTS: UserRoadReport[] = [
   },
   {
     id: 'usr-2',
-    highwayCode: 'H01',
+    highwayCode: 'NH01',
     location: 'Hetauda Bypass Ratomate',
     incidentType: 'pothole',
     severity: 'minor',
@@ -867,7 +867,7 @@ export const INITIAL_USER_REPORTS: UserRoadReport[] = [
   },
   {
     id: 'usr-3',
-    highwayCode: 'H10',
+    highwayCode: 'NH10',
     location: 'Near Ramdi Bridge, Palpa',
     incidentType: 'traffic_jam',
     severity: 'minor',
@@ -884,7 +884,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-nagdhunga',
     name: 'Nagdhunga Pass / Sisne Khola',
     nepaliName: 'नागढुंगा भञ्ज्याङ',
-    highwayCode: 'H02 / H04',
+    highwayCode: 'NH02 / NH04',
     elevationM: 1510,
     lat: 27.6980,
     lng: 85.2010,
@@ -903,7 +903,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-mugling',
     name: 'Mugling Trishuli Gorge',
     nepaliName: 'मुग्लिन त्रिशूली खोंच',
-    highwayCode: 'H04 / H05',
+    highwayCode: 'NH04 / NH05',
     elevationM: 275,
     lat: 27.8617,
     lng: 84.5542,
@@ -922,7 +922,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-daunne',
     name: 'Daunne Hill Pass',
     nepaliName: 'दाउन्ने डाँडा',
-    highwayCode: 'H01',
+    highwayCode: 'NH01',
     elevationM: 650,
     lat: 27.5600,
     lng: 83.8200,
@@ -941,7 +941,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-sindhuli',
     name: 'Sindhuli Gadhi Mountain Pass',
     nepaliName: 'सिन्धुलीगढी भञ्ज्याङ',
-    highwayCode: 'H13',
+    highwayCode: 'NH13',
     elevationM: 1100,
     lat: 27.2486,
     lng: 85.9186,
@@ -960,7 +960,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-damauli',
     name: 'Damauli - Tanahun Valley',
     nepaliName: 'दमौली उपत्यका',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     elevationM: 450,
     lat: 27.9733,
     lng: 84.2833,
@@ -979,7 +979,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-siddhababa',
     name: 'Siddhababa Rock Face (Palpa)',
     nepaliName: 'सिद्धबाबा क्षेत्र',
-    highwayCode: 'H10',
+    highwayCode: 'NH10',
     elevationM: 520,
     lat: 27.7600,
     lng: 83.4700,
@@ -998,7 +998,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-pokhara',
     name: 'Pokhara Valley Entry',
     nepaliName: 'पोखरा उपत्यका',
-    highwayCode: 'H04 / H10',
+    highwayCode: 'NH04 / NH10',
     elevationM: 822,
     lat: 28.2096,
     lng: 83.9856,
@@ -1017,7 +1017,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-narayanghat',
     name: 'Narayanghat / Chitwan Plains',
     nepaliName: 'नारायणगढ / भरतपुर',
-    highwayCode: 'H01 / H05',
+    highwayCode: 'NH01 / NH05',
     elevationM: 208,
     lat: 27.6833,
     lng: 84.4333,
@@ -1036,7 +1036,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-daman',
     name: 'Daman Pass / Simbhanjyang Summit',
     nepaliName: 'दामन / सिमभञ्ज्याङ लेक',
-    highwayCode: 'H02 (Tribhuvan Byroad)',
+    highwayCode: 'NH02 (Tribhuvan Byroad)',
     elevationM: 2322,
     lat: 27.6000,
     lng: 85.0500,
@@ -1055,7 +1055,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-kande',
     name: 'Kande Pass / Naudanda Ridge',
     nepaliName: 'काँडे भञ्ज्याङ / नौडाँडा',
-    highwayCode: 'H10 / Mid-Hill Highway',
+    highwayCode: 'NH10 / Mid-Hill Highway',
     elevationM: 1770,
     lat: 28.2720,
     lng: 83.8200,
@@ -1074,7 +1074,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-khurkot',
     name: 'Khurkot Sun Koshi Pass',
     nepaliName: 'खुर्कोट सुनकोशी',
-    highwayCode: 'H13 (B.P. Highway)',
+    highwayCode: 'NH13 (B.P. Highway)',
     elevationM: 480,
     lat: 27.3400,
     lng: 85.9900,
@@ -1093,7 +1093,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-dhunche',
     name: 'Dhunche High Mountain Pass',
     nepaliName: 'धुन्चे उच्च पहाडी खण्ड',
-    highwayCode: 'NH03 (Pasang Lhamu)',
+    highwayCode: 'NNH03 (Pasang Lhamu)',
     elevationM: 1960,
     lat: 28.1100,
     lng: 85.3000,
@@ -1112,7 +1112,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-kalikot',
     name: 'Kalikot Shubhakalika Gorge Pass',
     nepaliName: 'कालिकोट शुभकालिका खण्ड',
-    highwayCode: 'H06 (Karnali Highway)',
+    highwayCode: 'NH06 (Karnali Highway)',
     elevationM: 1450,
     lat: 29.1400,
     lng: 81.6000,
@@ -1131,7 +1131,7 @@ export const HIGHWAY_WEATHER_NODES: HighwayWeatherNode[] = [
     id: 'wx-jumla',
     name: 'Chandannath Jumla Alpine Pass',
     nepaliName: 'चन्दननाथ जुम्ला उच्च उपत्यका',
-    highwayCode: 'H06 (Karnali Highway)',
+    highwayCode: 'NH06 (Karnali Highway)',
     elevationM: 2514,
     lat: 29.2747,
     lng: 82.1838,
@@ -1154,7 +1154,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'NEA DC Fast Charging Hub Mugling',
     nepaliName: 'विद्युत प्राधिकरण फास्ट चार्जिङ मुग्लिन',
     category: 'ev_charger',
-    highwayCode: 'H04 / H05',
+    highwayCode: 'NH04 / NH05',
     locationName: 'Mugling Junction Bus Park',
     lat: 27.8625,
     lng: 84.5550,
@@ -1174,7 +1174,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     id: 'poi-ev-kurintar',
     name: 'Tata Power / BYD Supercharger Kurintar',
     category: 'ev_charger',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     locationName: 'Kurintar Manakamana Cable Car Station',
     lat: 27.8760,
     lng: 84.5820,
@@ -1194,7 +1194,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     id: 'poi-ev-itahari',
     name: 'NEA DC Fast Charging Station Itahari',
     category: 'ev_charger',
-    highwayCode: 'H01',
+    highwayCode: 'NH01',
     locationName: 'Itahari Chowk East-West Highway',
     lat: 26.6645,
     lng: 87.2718,
@@ -1214,7 +1214,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     id: 'poi-ev-butwal',
     name: 'NEA / BYD Fast Charging Hub Butwal',
     category: 'ev_charger',
-    highwayCode: 'H03 / H08',
+    highwayCode: 'NH03 / NH08',
     locationName: 'Traffic Chowk Butwal',
     lat: 27.7005,
     lng: 83.4485,
@@ -1235,7 +1235,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'Malekhu Riverside Fish Dhabas',
     nepaliName: 'मलेखु ताजा माछा होटल',
     category: 'food_rest',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     locationName: 'Malekhu Bridge (Dhading)',
     lat: 27.8228,
     lng: 84.8155,
@@ -1249,7 +1249,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'Mugling Highway Nepali Thakali Thali',
     nepaliName: 'मुग्लिन थकाली भान्सा घर',
     category: 'food_rest',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     locationName: 'Mugling Highway Center',
     lat: 27.8610,
     lng: 84.5535,
@@ -1262,7 +1262,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'NOC Smart Petrol Pump & Service Naubise',
     nepaliName: 'नेपाल आयल निगम नौबिसे',
     category: 'fuel_station',
-    highwayCode: 'H02 / H04',
+    highwayCode: 'NH02 / NH04',
     locationName: 'Naubise Highway Entry',
     lat: 27.7210,
     lng: 85.1770,
@@ -1281,7 +1281,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'Sindhuli Gadhi Historic Ridge Viewpoint',
     nepaliName: 'सिन्धुलीगढी ऐतिहासिक भ्यू प्वाइन्ट',
     category: 'scenic_pass',
-    highwayCode: 'H13',
+    highwayCode: 'NH13',
     locationName: 'Sindhuli Gadhi Crest (1,100m)',
     lat: 27.2486,
     lng: 85.9186,
@@ -1294,7 +1294,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'Nagdhunga Sisne Khola Valley Overlook',
     nepaliName: 'नागढुंगा उपत्यका दृश्य',
     category: 'scenic_pass',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     locationName: 'Nagdhunga Tunnel Exit Point',
     lat: 27.7010,
     lng: 85.1950,
@@ -1307,7 +1307,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'DOR Heavy Equipment & Emergency Rescue Depot',
     nepaliName: 'सडक डिभिजन भरतपुर आपत्कालीन शाखा',
     category: 'emergency_dor',
-    highwayCode: 'H04 / H05 / H01',
+    highwayCode: 'NH04 / NH05 / NH01',
     locationName: 'Dasdhunga, Chitwan',
     lat: 27.7500,
     lng: 84.4800,
@@ -1321,7 +1321,7 @@ export const HIGHWAY_POIS: HighwayPOI[] = [
     name: 'Nagdhunga Tunnel Expressway Toll Plaza',
     nepaliName: 'नागढुंगा सुरुङमार्ग टोल प्लाजा',
     category: 'toll_plaza',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     locationName: 'Sisne Khola Portal (Dhading side)',
     lat: 27.7050,
     lng: 85.1880,
@@ -1341,8 +1341,8 @@ import { HISTORICAL_CORRIDOR_TRENDS } from './travelTimeTrendsData';
 export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   {
     id: 'tr-daunne',
-    name: 'Daunne Hill Chokepoint (H01)',
-    highwayCode: 'H01',
+    name: 'Daunne Hill Chokepoint (NH01)',
+    highwayCode: 'NH01',
     section: 'Daunne East - Daunne West (14 km)',
     level: 'standstill',
     avgSpeedKmh: 12,
@@ -1356,8 +1356,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-mugling-abukhaireni',
-    name: 'Mugling - Abukhaireni Widening (H04)',
-    highwayCode: 'H04',
+    name: 'Mugling - Abukhaireni Widening (NH04)',
+    highwayCode: 'NH04',
     section: 'Marshyangdi Bridge to Abukhaireni Bazar (12 km)',
     level: 'heavy',
     avgSpeedKmh: 20,
@@ -1371,8 +1371,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-nagdhunga',
-    name: 'Nagdhunga Inbound Checkpost (H02 / H04)',
-    highwayCode: 'H02',
+    name: 'Nagdhunga Inbound Checkpost (NH02 / NH04)',
+    highwayCode: 'NH02',
     section: 'Khanikhola - Nagdhunga Summit (8 km)',
     level: 'moderate',
     avgSpeedKmh: 25,
@@ -1386,8 +1386,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-narayanghat-mugling',
-    name: 'Narayanghat - Mugling Trishuli Gorge (H05)',
-    highwayCode: 'H05',
+    name: 'Narayanghat - Mugling Trishuli Gorge (NH05)',
+    highwayCode: 'NH05',
     section: 'Aaptari (Bharatpur) to Mugling Bridge (36 km)',
     level: 'heavy',
     avgSpeedKmh: 28,
@@ -1401,8 +1401,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-siddhababa',
-    name: 'Siddhababa Rock Shed Zone (H10)',
-    highwayCode: 'H10',
+    name: 'Siddhababa Rock Shed Zone (NH10)',
+    highwayCode: 'NH10',
     section: 'Chidiya Khola - Dobhan (6 km)',
     level: 'moderate',
     avgSpeedKmh: 22,
@@ -1416,8 +1416,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-sindhuli-bp',
-    name: 'Sindhuli Gadhi Serpentine Ridge (H13)',
-    highwayCode: 'H13',
+    name: 'Sindhuli Gadhi Serpentine Ridge (NH13)',
+    highwayCode: 'NH13',
     section: 'Nepalthok to Sindhuli Madi (42 km)',
     level: 'moderate',
     avgSpeedKmh: 32,
@@ -1431,8 +1431,8 @@ export const TRAFFIC_CORRIDORS: TrafficCorridor[] = [
   },
   {
     id: 'tr-chitwan-express',
-    name: 'Narayanghat - Butwal Plains (H01)',
-    highwayCode: 'H01',
+    name: 'Narayanghat - Butwal Plains (NH01)',
+    highwayCode: 'NH01',
     section: 'Kawasoti to Bardaghat (32 km)',
     level: 'smooth',
     avgSpeedKmh: 68,

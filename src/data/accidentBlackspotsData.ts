@@ -4,7 +4,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-nagdhunga-descent',
     name: 'Nagdhunga - Khani Khola Descent',
-    highwayCode: 'H02/H04',
+    highwayCode: 'NH02/NH04',
     chainageOrLocation: 'Ch. 12+500 (Dhading / Kathmandu border)',
     riskLevel: 'high',
     primaryCause: 'Steep continuous downhill gradient (-480m descent), heavy multi-axle freight brake overheating/fade, acute hairpin curves',
@@ -15,7 +15,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-jogimara-curves',
     name: 'Jogimara & Benighat Trishuli S-Bends',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     chainageOrLocation: 'Ch. 64+200 (Dhading)',
     riskLevel: 'high',
     primaryCause: 'Narrow Trishuli river canyon cliffside curves, reduced skid resistance on wet asphalt, speeding microbuses overtaking on blind corners',
@@ -26,7 +26,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-charkilo-jalbire',
     name: 'Charkilo & Jalbire Gorge Chutes',
-    highwayCode: 'H05',
+    highwayCode: 'NH05',
     chainageOrLocation: 'Narayanghat-Mugling Ch. 18+400 to 22+100',
     riskLevel: 'critical',
     primaryCause: 'Active overhead unstable rock slopes, sudden rockfalls, blind river bend at Jalbire bridge, heavy overnight commercial vehicle flow',
@@ -37,7 +37,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-siddhababa-cliff',
     name: 'Siddhababa Rockfall Zone (Butwal-Palpa)',
-    highwayCode: 'H10',
+    highwayCode: 'NH10',
     chainageOrLocation: 'Siddhartha Highway Ch. 4+000 (Dobhan)',
     riskLevel: 'critical',
     primaryCause: 'Vertical fragile shale cliffs prone to continuous rock-slide debris, acute switchback gorge without guardrails in older sections',
@@ -48,7 +48,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-daunne-hill-pass',
     name: 'Daunne Hill Hairpin Pass',
-    highwayCode: 'H01',
+    highwayCode: 'NH01',
     chainageOrLocation: 'Mahendra Highway Ch. 210 (Bardaghat-Dumkibas)',
     riskLevel: 'high',
     primaryCause: 'Steep hill ascent with 18 consecutive blind switchbacks, frequent breakdown of heavy trailers causing sudden lane obstructions',
@@ -59,7 +59,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-byas-tanahun-widening',
     name: 'Byas - Ghansikuwa Widening Detours',
-    highwayCode: 'H04',
+    highwayCode: 'NH04',
     chainageOrLocation: 'Prithvi Highway Ch. 112+000 (Damauli section)',
     riskLevel: 'moderate',
     primaryCause: 'Active 4-lane Asian Development Bank roadbed expansion, loose crushed stone gravel, sudden elevation steps between old & new asphalt',
@@ -70,7 +70,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-sindhuli-hairpins',
     name: 'Sindhuli Gadhi Switchbacks (BP Highway)',
-    highwayCode: 'H13',
+    highwayCode: 'NH13',
     chainageOrLocation: 'BP Highway Ch. 78+000 (Khurkot-Sindhuli)',
     riskLevel: 'high',
     primaryCause: 'Extremely tight radius turns designed for light vehicles, blind mountain crests, severe consequences of lane drifting on cliff edge',
@@ -81,7 +81,7 @@ export const NEPAL_HIGHWAY_BLACKSPOTS: KnownBlackspot[] = [
   {
     id: 'bs-koteshwor-express-merge',
     name: 'Koteshwor - Jadibuti Urban Fast Corridor',
-    highwayCode: 'H03',
+    highwayCode: 'NH03',
     chainageOrLocation: 'Araniko Highway Ch. 3+200 (Kathmandu entry)',
     riskLevel: 'moderate',
     primaryCause: 'High speed differentials between 6-lane express traffic and local service lane cross traffic, frequent pedestrian crossing conflicts',
