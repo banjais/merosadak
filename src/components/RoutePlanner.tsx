@@ -774,8 +774,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 2. SEARCH INPUT BARS - Always visible */}
-        {locationMode === 'my_location' ? (
+        {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
+        {!hasCalculated && (
+          <>
+            {locationMode === 'my_location' ? (
           /* SINGLE SEARCH BAR with functional Mic and AI icons */
           <div className="space-y-2 relative" ref={singleSearchRef}>
             <div className="relative flex items-center">
@@ -1004,9 +1006,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           </div>
         )}
+      </>)}
 
-        {/* AI Prompt Input Bar (If user clicks AI icon) */}
-        {isAiPromptOpen && (
+        {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
+        {!hasCalculated && isAiPromptOpen && (
           <div className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
@@ -1049,8 +1052,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON - Always visible when destination is picked */}
-        {userPickedDestination && (
+        {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON - Visible when destination picked, hidden after calculation */}
+        {userPickedDestination && !hasCalculated && (
         <div className="pt-2">
           <button
             onClick={() => handleCalculateRoute()}
