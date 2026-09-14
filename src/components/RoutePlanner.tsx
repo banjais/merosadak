@@ -743,6 +743,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <button
                 onClick={() => {
                   setLocationMode('custom_from_to');
+                  setOriginSearchQuery('');
+                  setDestSearchQuery('');
+                  setSingleSearchQuery('');
                   setIsLocationMenuOpen(false);
                 }}
                 className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
