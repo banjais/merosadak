@@ -625,14 +625,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Speech / Live Notice Banner */}
-      {speechTranscriptNotice && (
-        <div className="bg-emerald-950/90 border border-emerald-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-emerald-200 animate-fadeIn shadow-lg">
-          <Mic className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
-          <span className="font-medium">{speechTranscriptNotice}</span>
-        </div>
-      )}
-
       {/* AI Parsing Message Banner */}
       {aiParseMessage && (
         <div className="bg-cyan-950/90 border border-cyan-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-cyan-200 animate-fadeIn shadow-lg">
@@ -736,11 +728,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               </button>
             </div>
-           )}
-         </div>
-         )}
+          )}
+        </div>
+        )}
 
-         {/* 2. SEARCH INPUT BARS */}
+        {/* Speech / Live Notice Banner - appears under the My Location box */}
+        {speechTranscriptNotice && (
+          <div className="bg-emerald-950/90 border border-emerald-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-emerald-200 animate-fadeIn shadow-lg">
+            <Mic className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+            <span className="font-medium">{speechTranscriptNotice}</span>
+          </div>
+        )}
+
+        {/* 2. SEARCH INPUT BARS */}
         {(!hasCalculated || showSearchPanel) && (
           <>
             {locationMode === 'my_location' ? (
