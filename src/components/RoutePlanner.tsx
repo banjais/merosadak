@@ -116,8 +116,8 @@ type DetailModuleTab =
   | 'checklist';
 
 export const RoutePlanner: React.FC<RoutePlannerProps> = ({
-  initialOriginId = 'ktm',
-  initialDestId = 'pkr',
+  initialOriginId = '',
+  initialDestId = '',
   initialVehicle = 'car',
   initialPreference = 'fastest',
   onRouteCalculated,
@@ -250,8 +250,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const locationMenuRef = useRef<HTMLDivElement>(null);
 
   // Get current city objects
-  const originCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === originId) || CITIES_AND_JUNCTIONS[0], [originId]);
-  const destCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === destId) || CITIES_AND_JUNCTIONS[1], [destId]);
+  const originCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === originId), [originId]);
+  const destCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === destId), [destId]);
 
   // Sync destination search box with selected city name
   useEffect(() => {
@@ -293,11 +293,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       }
       if (originSearchRef.current && !originSearchRef.current.contains(e.target as Node)) {
         setIsOriginDropdownOpen(false);
-        setOriginSearchQuery(originCity.name);
+        setOriginSearchQuery(originCity?.name ?? '');
       }
       if (destSearchRef.current && !destSearchRef.current.contains(e.target as Node)) {
         setIsDestDropdownOpen(false);
-        setDestSearchQuery(destCity.name);
+        setDestSearchQuery(destCity?.name ?? '');
       }
       if (locationMenuRef.current && !locationMenuRef.current.contains(e.target as Node)) {
         setIsLocationMenuOpen(false);
@@ -305,7 +305,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [originCity.name, destCity.name]);
+  }, [originCity?.name, destCity?.name]);
 
   // Filter cities for search dropdowns
   const filteredOriginCities = filterCities(CITIES_AND_JUNCTIONS, originSearchQuery);
@@ -612,9 +612,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     const temp = originId;
     setOriginId(destId);
     setDestId(temp);
-    setOriginSearchQuery(destCity.name);
-    setDestSearchQuery(originCity.name);
-    setSingleSearchQuery(destCity.name);
+    setOriginSearchQuery(destCity?.name ?? '');
+    setDestSearchQuery(originCity?.name ?? '');
+    setSingleSearchQuery(destCity?.name ?? '');
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
@@ -675,7 +675,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
                 </div>
                 <div className="text-sm font-black text-white truncate font-display">
-                  {originCity.name} {originSelected && <span className="text-[10px] font-normal text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">GPS</span>} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                   {originCity ? (
+                     <>
+                       {originCity.name} {originSelected && <span className="text-[10px] font-normal text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">GPS</span>} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                     </>
+                   ) : (
+                     <span className="text-slate-500">Select a location</span>
+                   )}
                 </div>
               </div>
             </div>
@@ -1054,11 +1060,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    // Reset all route state to return to the initial screen
                     setRoutePlan(null);
                     setHasCalculated(false);
                     setUserPickedDestination(false);
                     setNeedsRecalculation(false);
+                    setOriginId('');
+                    setDestId('');
                     setSingleSearchQuery('');
                     setDestSearchQuery('');
                     setShowSearchPanel(false);

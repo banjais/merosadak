@@ -100,8 +100,8 @@ function AppContent() {
   const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
   const [followOnMap, setFollowOnMap] = useState<boolean>(true);
   const lastMapSyncRef = useRef<number>(0);
-  const [plannerOrigin, setPlannerOrigin] = useState<string>('ktm');
-  const [plannerDest, setPlannerDest] = useState<string>('pkr');
+  const [plannerOrigin, setPlannerOrigin] = useState<string>('');
+  const [plannerDest, setPlannerDest] = useState<string>('');
   const [plannerVehicle, setPlannerVehicle] = useState<VehicleType>('car');
   const [plannerPref, setPlannerPref] = useState<RoutePreference>('fastest');
 
