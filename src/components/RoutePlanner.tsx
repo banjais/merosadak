@@ -426,17 +426,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Device Geolocation Auto-Detection
   const handleDetectDeviceLocation = () => {
     if (!navigator.geolocation) {
-      setSpeechTranscriptNotice('GPS geolocation is not supported in this browser.');
-      setTimeout(() => setSpeechTranscriptNotice(null), 3000);
+      setOriginSelected(false);
+      setOriginId('');
+      setDetectedLocation(null);
+      setIsLocationMenuOpen(false);
       return;
     }
 
-         setSpeechTranscriptNotice('Detecting your GPS location in Nepal...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         setDetectedLocation({ lat: latitude, lng: longitude });
-        // Find nearest city in allCities
         let closestCity = allCities[0];
         let minDist = Infinity;
 
@@ -450,16 +450,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         setOriginId(closestCity.id);
         setOriginSelected(true);
-        setSpeechTranscriptNotice(`Detected location: ${closestCity.name} (${closestCity.district})`);
         setIsLocationMenuOpen(false);
-        setTimeout(() => setSpeechTranscriptNotice(null), 3500);
       },
-      (err) => {
-        setSpeechTranscriptNotice('GPS access denied. Defaulting to Kathmandu.');
-        setOriginId('ktm');
-        setDetectedLocation({ lat: 27.7172, lng: 85.324 });
+      () => {
+        setOriginSelected(false);
+        setOriginId('');
+        setDetectedLocation(null);
         setIsLocationMenuOpen(false);
-        setTimeout(() => setSpeechTranscriptNotice(null), 3000);
       },
       { timeout: 8000 }
     );
@@ -676,15 +673,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               }`}
               aria-disabled={isCustomLocationMode}
               title={isCustomLocationMode ? 'Click to return to My Location' : 'Click to view My Location or Change Origin'}
-            >
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                  <span>My Location</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
-                </div>
+             >
+               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition ${
+                 detectedLocation
+                   ? 'bg-emerald-500/30 text-emerald-400 border-emerald-400/50'
+                   : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+               }`}>
+                 {detectedLocation ? <LocateFixed className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+               </div>
+               <div className="min-w-0">
+                 <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                   <span>My Location</span>
+                   <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
+                 </div>
                  <div className="text-sm font-black text-white truncate font-display">
                    {originCity ? (
                      originSelected ? (
@@ -702,7 +703,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                    ) : (
                      <span className="text-slate-500">Select a location</span>
                    )}
-                 </div>
+                </div>
               </div>
             </div>
           </div>
