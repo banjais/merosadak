@@ -826,23 +826,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
             {/* FROM (Origin) */}
             <div className="md:col-span-5 space-y-1 relative" ref={originSearchRef}>
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>From (Origin)</span>
-                </span>
-                <button
-                  onClick={() => startVoiceRecognition('origin')}
-                  className={`p-1 rounded-md text-[10px] font-bold flex items-center space-x-1 transition ${
-                    listeningTarget === 'origin' ? 'bg-rose-500 text-white' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
-                  }`}
-                  title="Voice input for Origin"
-                >
-                  <Mic className="w-3 h-3" />
-                  <span>Voice</span>
-                </button>
-              </label>
-
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none">
                   <Search className="w-4 h-4" />
@@ -859,10 +842,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setOriginSearchQuery('');
                     setIsOriginDropdownOpen(true);
                   }}
-                  placeholder="Search origin..."
+                  placeholder="From where?"
                   autoComplete="off"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                 />
+                <button
+                  onClick={() => startVoiceRecognition('origin')}
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition ${
+                    listeningTarget === 'origin'
+                      ? 'bg-rose-500 text-white animate-pulse'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                  }`}
+                  title="Voice input for Origin"
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {isOriginDropdownOpen && (
@@ -908,23 +902,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             {/* TO (Destination) */}
             <div className="md:col-span-5 space-y-1 relative" ref={destSearchRef}>
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                  <span>To (Destination)</span>
-                </span>
-                <button
-                  onClick={() => startVoiceRecognition('dest')}
-                  className={`p-1 rounded-md text-[10px] font-bold flex items-center space-x-1 transition ${
-                    listeningTarget === 'dest' ? 'bg-rose-500 text-white' : 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'
-                  }`}
-                  title="Voice input for Destination"
-                >
-                  <Mic className="w-3 h-3" />
-                  <span>Voice</span>
-                </button>
-              </label>
-
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 pointer-events-none">
                   <Search className="w-4 h-4" />
@@ -941,10 +918,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setDestSearchQuery('');
                     setIsDestDropdownOpen(true);
                   }}
-                  placeholder="Search destination..."
+                  placeholder="Where to?"
                   autoComplete="off"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                 />
+                <button
+                  onClick={() => startVoiceRecognition('dest')}
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition ${
+                    listeningTarget === 'dest'
+                      ? 'bg-rose-500 text-white animate-pulse'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                  }`}
+                  title="Voice input for Destination"
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               {isDestDropdownOpen && (
