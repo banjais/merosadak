@@ -595,7 +595,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
                   >
                     {CITIES_AND_JUNCTIONS.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.nepaliName}) - {c.district}, {c.province}
+                        {c.name} - {c.district}, {c.province}
                       </option>
                     ))}
                   </select>

@@ -1,10 +1,10 @@
 import { CityNode } from '../types';
 
-export const filterCities = (cities: CityNode[], query: string, limit = 10) => {
+export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!normalizedQuery) {
-    return cities.slice(0, limit);
+    return [];
   }
 
   return cities

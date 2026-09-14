@@ -10,8 +10,8 @@ interface DistanceCalculatorProps {
 }
 
 export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFullRoute }) => {
-  const [originId, setOriginId] = useState<string>('ktm');
-  const [destId, setDestId] = useState<string>('pkr');
+  const [originId, setOriginId] = useState<string>('');
+  const [destId, setDestId] = useState<string>('');
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
@@ -24,7 +24,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
   }, []);
 
   const origin = allCities.find((c) => c.id === originId) || allCities[0];
-  const destination = allCities.find((c) => c.id === destId) || allCities[1];
+  const destination = allCities.find((c) => c.id === destId) || allCities[0];
 
   const normalizedOriginSearch = originSearch.trim().toLowerCase();
   const normalizedDestSearch = destSearch.trim().toLowerCase();
@@ -33,15 +33,15 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
         city.name.toLowerCase().includes(normalizedOriginSearch) ||
         city.district.toLowerCase().includes(normalizedOriginSearch) ||
         city.nepaliName.includes(originSearch.trim())
-      )
-    : allCities;
+      ).slice(0, 20)
+    : [];
   const filteredDestCities = normalizedDestSearch
     ? allCities.filter((city) =>
         city.name.toLowerCase().includes(normalizedDestSearch) ||
         city.district.toLowerCase().includes(normalizedDestSearch) ||
         city.nepaliName.includes(destSearch.trim())
-      )
-    : allCities;
+      ).slice(0, 20)
+    : [];
 
   const snapToNearestRoutingNode = (city: CityNode): CityNode => {
     if (CITIES_AND_JUNCTIONS.some((c) => c.id === city.id)) return city;

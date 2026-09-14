@@ -12,13 +12,13 @@ interface DistanceCalculatorPageProps {
 }
 
 export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack, onPlanFullRoute }) => {
-  const [originId, setOriginId] = useState<string>('ktm');
-  const [destId, setDestId] = useState<string>('pkr');
+  const [originId, setOriginId] = useState<string>('');
+  const [destId, setDestId] = useState<string>('');
   const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
-  const [originSearch, setOriginSearch] = useState<string>(CITIES_AND_JUNCTIONS.find((city) => city.id === 'ktm')?.name || '');
-  const [destSearch, setDestSearch] = useState<string>(CITIES_AND_JUNCTIONS.find((city) => city.id === 'pkr')?.name || '');
+  const [originSearch, setOriginSearch] = useState<string>('');
+  const [destSearch, setDestSearch] = useState<string>('');
   const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
@@ -30,7 +30,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   }, []);
 
   const origin = allCities.find((c) => c.id === originId) || allCities[0];
-  const destination = allCities.find((c) => c.id === destId) || allCities[1];
+  const destination = allCities.find((c) => c.id === destId) || allCities[0];
 
   useEffect(() => {
     function handleCloseOnOutsideClick(event: MouseEvent) {
@@ -161,9 +161,9 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
                         >
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
-                              {city.name}{city.nepaliName ? <span className="text-[11px] font-normal text-slate-400"> ({city.nepaliName})</span> : ''}
-                            </div>
+                           <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
+                             {city.name}
+                           </div>
                             <div className="text-[10px] text-slate-400 truncate">
                               {city.district} District • {city.province} Province
                             </div>

@@ -11,6 +11,7 @@ import {
   RouteSimulationControls,
 } from '../types';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
+import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute } from '../utils/routeOptimizer';
 import { FuelCostEstimator } from './FuelCostEstimator';
 import { ShareTripModal } from './ShareTripModal';
@@ -170,13 +171,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     };
   });
 
-  // UI Modes & Location Options
+   // UI Modes & Location Options
   // mode: 'my_location' (single destination search bar) vs 'custom_from_to' (From & To inputs)
   const [locationMode, setLocationMode] = useState<'my_location' | 'custom_from_to'>('my_location');
   const isCustomLocationMode = locationMode === 'custom_from_to';
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
+
+  useEffect(() => {
+    loadExpandedCities().then(setAllCities);
+  }, []);
 
   // Search queries & Autocompletions
   const [singleSearchQuery, setSingleSearchQuery] = useState<string>('');
@@ -261,8 +267,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const locationMenuRef = useRef<HTMLDivElement>(null);
 
   // Get current city objects
-  const originCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === originId), [originId]);
-  const destCity = useMemo(() => CITIES_AND_JUNCTIONS.find((c) => c.id === destId), [destId]);
+  const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
+  const destCity = useMemo(() => allCities.find((c) => c.id === destId), [destId, allCities]);
 
   // Sync destination search box with selected city name
   useEffect(() => {
@@ -319,8 +325,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   }, [originCity?.name, destCity?.name]);
 
   // Filter cities for search dropdowns
-  const filteredOriginCities = filterCities(CITIES_AND_JUNCTIONS, originSearchQuery);
-  const filteredDestCities = filterCities(CITIES_AND_JUNCTIONS, destSearchQuery);
+  const filteredOriginCities = filterCities(allCities, originSearchQuery);
+  const filteredDestCities = filterCities(allCities, destSearchQuery);
 
   const handleSelectOrigin = (city: CityNode) => {
     setOriginId(city.id);
@@ -425,16 +431,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       return;
     }
 
-    setSpeechTranscriptNotice('Detecting your GPS location in Nepal...');
+         setSpeechTranscriptNotice('Detecting your GPS location in Nepal...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         setDetectedLocation({ lat: latitude, lng: longitude });
-        // Find nearest city in CITIES_AND_JUNCTIONS
-        let closestCity = CITIES_AND_JUNCTIONS[0];
+        // Find nearest city in allCities
+        let closestCity = allCities[0];
         let minDist = Infinity;
 
-        CITIES_AND_JUNCTIONS.forEach((city) => {
+        allCities.forEach((city) => {
           const d = Math.hypot(city.lat - latitude, city.lng - longitude);
           if (d < minDist) {
             minDist = d;
@@ -491,7 +497,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         }
 
         // Match city
-        const matched = CITIES_AND_JUNCTIONS.find(
+        const matched = allCities.find(
           (c) =>
             c.name.toLowerCase().includes(spokenText) ||
             spokenText.includes(c.name.toLowerCase()) ||
@@ -569,7 +575,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         if (data.vehicle) setVehicle(data.vehicle);
         if (data.preference) setPreference(data.preference);
 
-        const destCityObj = CITIES_AND_JUNCTIONS.find((c) => c.id === data.destId);
+        const destCityObj = allCities.find((c) => c.id === data.destId);
         if (destCityObj) {
           setSingleSearchQuery(destCityObj.name);
           setDestSearchQuery(destCityObj.name);
@@ -820,7 +826,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             {/* Destination Autocomplete Suggestions Dropdown */}
             {isSingleDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
-                {filterCities(CITIES_AND_JUNCTIONS, singleSearchQuery).map((c) => (
+                {filterCities(allCities, singleSearchQuery).map((c) => (
                   <button
                     key={c.id}
                     onClick={() => {
@@ -835,7 +841,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   >
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-emerald-300">
-                        {c.name} {c.nepaliName ? <span className="text-[11px] font-normal text-slate-400">({c.nepaliName})</span> : ''}
+                        {c.name}
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {c.district} District • {c.province} Province
@@ -899,7 +905,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       >
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
-                            {c.name} {c.nepaliName ? <span className="text-[11px] font-normal text-slate-400">({c.nepaliName})</span> : ''}
+                            {c.name}
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province
@@ -975,7 +981,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       >
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
-                            {c.name} {c.nepaliName ? <span className="text-[11px] font-normal text-slate-400">({c.nepaliName})</span> : ''}
+                            {c.name}
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province
