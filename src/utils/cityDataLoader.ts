@@ -5,6 +5,44 @@ let cachedExpandedCities: CityNode[] | null = null;
 
 export const CITY_HIGHWAY_TOUCH_DISTANCE_KM = 5;
 
+const DISTRICT_PROVINCE_MAP: Record<string, string> = {
+  // Koshi Province
+  Taplejung: 'Koshi', Panchthar: 'Koshi', Morang: 'Koshi', Sunsari: 'Koshi',
+  Dhankuta: 'Koshi', Sankhuwasabha: 'Koshi', Solukhumbu: 'Koshi',
+  Okhaldhunga: 'Koshi', Khotang: 'Koshi', Bhojpur: 'Koshi', Terhathum: 'Koshi', Udayapur: 'Koshi',
+
+  // Madhesh Province
+  Bara: 'Madhesh', Parsa: 'Madhesh', Rautahat: 'Madhesh', Saptari: 'Madhesh',
+  Siraha: 'Madhesh', Dhanusha: 'Madhesh', Mahottari: 'Madhesh', Sarlahi: 'Madhesh',
+
+  // Bagmati Province
+  Bhaktapur: 'Bagmati', Chitwan: 'Bagmati', Dhading: 'Bagmati', Dolakha: 'Bagmati',
+  Kathmandu: 'Bagmati', Kavrepalanchok: 'Bagmati', Lalitpur: 'Bagmati',
+  Makawanpur: 'Bagmati', Nuwakot: 'Bagmati', Ramechhap: 'Bagmati',
+  Rasuwa: 'Bagmati', Sindhuli: 'Bagmati', Sindhupalchok: 'Bagmati',
+
+  // Gandaki Province
+  Baglung: 'Gandaki', Gorkha: 'Gandaki', Kaski: 'Gandaki', Lamjung: 'Gandaki',
+  Manang: 'Gandaki', Mustang: 'Gandaki', Myagdi: 'Gandaki',
+  Nawalparasi_E: 'Gandaki', Nawalpur: 'Gandaki', Parbat: 'Gandaki',
+  Syangja: 'Gandaki', Tanahu: 'Gandaki',
+
+  // Lumbini Province
+  Arghakhanchi: 'Lumbini', Banke: 'Lumbini', Bardiya: 'Lumbini', Dang: 'Lumbini',
+  Gulmi: 'Lumbini', Kapilvastu: 'Lumbini', Nawalparasi_W: 'Lumbini',
+  Palpa: 'Lumbini', Pyuthan: 'Lumbini', Rolpa: 'Lumbini', Rupandehi: 'Lumbini',
+
+  // Karnali Province
+  Dailekh: 'Karnali', Dolpa: 'Karnali', Humla: 'Karnali', Jajarkot: 'Karnali',
+  Jumla: 'Karnali', Kalikot: 'Karnali', Mugu: 'Karnali',
+  Rukum_E: 'Karnali', Rukum_W: 'Lumbini', Salyan: 'Karnali', Surkhet: 'Karnali',
+
+  // Sudurpashchim Province
+  Achham: 'Sudurpashchim', Baitadi: 'Sudurpashchim', Bajhang: 'Sudurpashchim',
+  Bajura: 'Sudurpashchim', Dadeldhura: 'Sudurpashchim', Darchula: 'Sudurpashchim',
+  Doti: 'Sudurpashchim', Kailali: 'Sudurpashchim', Kanchanpur: 'Sudurpashchim',
+};
+
 function stringValue(item: Record<string, unknown>, keys: string[]): string {
   for (const key of keys) {
     const value = item[key];
@@ -21,8 +59,13 @@ function numberValue(item: Record<string, unknown>, keys: string[]): number {
   return 0;
 }
 
+function normalizeName(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+}
+
 function toCityNode(item: Record<string, unknown>, index: number, source: string): CityNode {
-  const name = stringValue(item, ['name', 'Palika', 'palika', 'hqCity']) || 'Unknown';
+  const rawName = stringValue(item, ['name', 'Palika', 'palika', 'hqCity']) || 'Unknown';
+  const name = normalizeName(rawName);
   const lat = numberValue(item, ['lat', 'latitude']);
   const lng = numberValue(item, ['lng', 'longitude']);
   const connectedHighwaysValue = item.connectedHighways;
@@ -30,12 +73,16 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
     ? connectedHighwaysValue.filter((value): value is string => typeof value === 'string')
     : [];
 
+  const district = stringValue(item, ['district', 'District']);
+  const provinceFromData = stringValue(item, ['province', 'Province']);
+  const province = DISTRICT_PROVINCE_MAP[district] || provinceFromData || 'Bagmati';
+
   return {
     id: stringValue(item, ['id']) || `${source}-${index}`,
     name,
     nepaliName: stringValue(item, ['nepaliName', 'nepali_name']),
-    district: stringValue(item, ['district', 'District']),
-    province: stringValue(item, ['province', 'Province']),
+    district,
+    province,
     lat,
     lng,
     elevationM: numberValue(item, ['elevationM', 'elevation']),
@@ -64,7 +111,7 @@ function isValidCity(city: CityNode): boolean {
 }
 
 function cityKey(city: CityNode): string {
-  return `${city.name.trim().toLowerCase()}|${city.district.trim().toLowerCase()}|${city.lat.toFixed(5)}|${city.lng.toFixed(5)}`;
+  return `${normalizeName(city.name).trim().toLowerCase()}|${city.district.trim().toLowerCase()}`;
 }
 
 function toRadians(value: number): number {
@@ -213,7 +260,7 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
 
   const existingIds = new Set(CITIES_AND_JUNCTIONS.map((city) => city.id));
   const existingKeys = new Set(CITIES_AND_JUNCTIONS.map(cityKey));
-  const merged: CityNode[] = [...CITIES_AND_JUNCTIONS];
+  const merged: CityNode[] = CITIES_AND_JUNCTIONS.map((city) => ({ ...city, name: normalizeName(city.name) }));
   const sources = [
     { url: '/data/cities.json', grouped: true, key: 'cities' },
     { url: '/data/palika-coords.json', grouped: false, key: 'palika' },
