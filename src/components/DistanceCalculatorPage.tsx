@@ -3,6 +3,7 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
 import { loadExpandedCities, getNearestRoutingCity } from '../utils/cityDataLoader';
+import { filterCities } from '../utils/citySearch';
 import { Calculator, ArrowRight, ArrowUpDown, Search, ArrowLeft } from 'lucide-react';
 
 interface DistanceCalculatorPageProps {
@@ -47,20 +48,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return () => document.removeEventListener('mousedown', handleCloseOnOutsideClick);
   }, [origin.name, destination.name]);
 
-  const filterCities = (query: string) => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return allCities
-      .filter((city) =>
-        city.name.toLowerCase().includes(normalizedQuery) ||
-        city.district.toLowerCase().includes(normalizedQuery) ||
-        city.province.toLowerCase().includes(normalizedQuery) ||
-        (city.nepaliName && city.nepaliName.toLowerCase().includes(normalizedQuery))
-      )
-      .slice(0, 10);
-  };
-
-  const filteredOriginCities = filterCities(originSearch);
-  const filteredDestCities = filterCities(destSearch);
+  const filteredOriginCities = filterCities(allCities, originSearch);
+  const filteredDestCities = filterCities(allCities, destSearch);
 
   const swapCities = () => {
     const temp = originId;

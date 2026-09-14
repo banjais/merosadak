@@ -73,6 +73,7 @@ import {
 } from 'lucide-react';
 import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
+import { filterCities } from '../utils/citySearch';
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -158,6 +159,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // UI Modes & Location Options
   // mode: 'my_location' (single destination search bar) vs 'custom_from_to' (From & To inputs)
   const [locationMode, setLocationMode] = useState<'my_location' | 'custom_from_to'>('my_location');
+  const isCustomLocationMode = locationMode === 'custom_from_to';
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
 
@@ -239,6 +241,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [corridorsList, setTrafficCorridorsList] = useState<TrafficCorridor[]>([]);
 
   const singleSearchRef = useRef<HTMLDivElement>(null);
+  const originSearchRef = useRef<HTMLDivElement>(null);
+  const destSearchRef = useRef<HTMLDivElement>(null);
   const locationMenuRef = useRef<HTMLDivElement>(null);
 
   // Get current city objects
@@ -283,25 +287,41 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       if (singleSearchRef.current && !singleSearchRef.current.contains(e.target as Node)) {
         setIsSingleDropdownOpen(false);
       }
+      if (originSearchRef.current && !originSearchRef.current.contains(e.target as Node)) {
+        setIsOriginDropdownOpen(false);
+        setOriginSearchQuery(originCity.name);
+      }
+      if (destSearchRef.current && !destSearchRef.current.contains(e.target as Node)) {
+        setIsDestDropdownOpen(false);
+        setDestSearchQuery(destCity.name);
+      }
       if (locationMenuRef.current && !locationMenuRef.current.contains(e.target as Node)) {
         setIsLocationMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [originCity.name, destCity.name]);
 
   // Filter cities for search dropdowns
-  const filterCities = (query: string) => {
-    if (!query) return CITIES_AND_JUNCTIONS.slice(0, 8);
-    const q = query.toLowerCase().trim();
-    return CITIES_AND_JUNCTIONS.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.district.toLowerCase().includes(q) ||
-        c.province.toLowerCase().includes(q) ||
-        (c.nepaliName && c.nepaliName.includes(q))
-    ).slice(0, 10);
+  const filteredOriginCities = filterCities(CITIES_AND_JUNCTIONS, originSearchQuery);
+  const filteredDestCities = filterCities(CITIES_AND_JUNCTIONS, destSearchQuery);
+
+  const handleSelectOrigin = (city: CityNode) => {
+    setOriginId(city.id);
+    setOriginSearchQuery(city.name);
+    setOriginSelected(false);
+    setIsOriginDropdownOpen(false);
+    if (hasCalculated) setNeedsRecalculation(true);
+  };
+
+  const handleSelectDestination = (city: CityNode) => {
+    setDestId(city.id);
+    setDestSearchQuery(city.name);
+    setSingleSearchQuery(city.name);
+    setUserPickedDestination(true);
+    setIsDestDropdownOpen(false);
+    if (hasCalculated) setNeedsRecalculation(true);
   };
 
   // Perform Route Calculation
@@ -467,10 +487,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setSingleSearchQuery(matched.name);
             setDestSearchQuery(matched.name);
             setUserPickedDestination(true);
+            setIsSingleDropdownOpen(false);
+            setIsDestDropdownOpen(false);
             if (hasCalculated) setNeedsRecalculation(true);
           } else if (target === 'origin') {
             setOriginId(matched.id);
             setOriginSearchQuery(matched.name);
+            setOriginSelected(false);
+            setIsOriginDropdownOpen(false);
           }
           setSpeechTranscriptNotice(`Selected: ${matched.name} (${matched.district})`);
         } else {
@@ -584,6 +608,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     const temp = originId;
     setOriginId(destId);
     setDestId(temp);
+    setOriginSearchQuery(destCity.name);
+    setDestSearchQuery(originCity.name);
+    setSingleSearchQuery(destCity.name);
+    if (hasCalculated) setNeedsRecalculation(true);
   };
 
   // Toggle detail module tabs
@@ -617,10 +645,22 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
             <div
-              onClick={() => setIsLocationMenuOpen(!isLocationMenuOpen)}
+              onClick={() => {
+                if (isCustomLocationMode) {
+                  setLocationMode('my_location');
+                  setIsLocationMenuOpen(false);
+                  return;
+                }
+                setIsLocationMenuOpen(!isLocationMenuOpen);
+              }}
               id="btn-my-location-toggle"
-              className="flex items-center space-x-3 cursor-pointer group select-none bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-emerald-500/50 px-3.5 py-2 rounded-xl transition"
-              title="Click to view My Location or Change Origin"
+              className={`flex items-center space-x-3 group select-none rounded-xl px-3.5 py-2 border transition ${
+                isCustomLocationMode
+                  ? 'cursor-pointer bg-slate-900/60 border-slate-800 opacity-40'
+                  : 'cursor-pointer bg-slate-950/80 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50'
+              }`}
+              aria-disabled={isCustomLocationMode}
+              title={isCustomLocationMode ? 'Click to return to My Location' : 'Click to view My Location or Change Origin'}
             >
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition">
                 <MapPin className="w-4 h-4" />
@@ -657,7 +697,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white group-hover:text-emerald-300">
-                    Use Current GPS Location
+                    Use GPS
                   </div>
                   <div className="text-[11px] text-slate-400">
                     Auto-detects nearest Nepal junction via device sensors
@@ -678,7 +718,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white group-hover:text-amber-300">
-                    Change Location (From &amp; To)
+                    From &amp; To
                   </div>
                   <div className="text-[11px] text-slate-400">
                     Manually specify different origin and destination junctions
@@ -748,7 +788,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             {/* Destination Autocomplete Suggestions Dropdown */}
             {isSingleDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
-                {filterCities(singleSearchQuery).map((c) => (
+                {filterCities(CITIES_AND_JUNCTIONS, singleSearchQuery).map((c) => (
                   <button
                     key={c.id}
                     onClick={() => {
@@ -781,7 +821,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           /* DUAL FROM & TO SEARCH BARS */
           <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
             {/* FROM (Origin) */}
-            <div className="md:col-span-5 space-y-1">
+            <div className="md:col-span-5 space-y-1 relative" ref={originSearchRef}>
               <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                 <span className="flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -799,20 +839,56 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </button>
               </label>
 
-              <select
-                id="select-from-origin"
-                value={originId}
-                onChange={(e) => {
-                  setOriginId(e.target.value);
-                }}
-                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-500 transition"
-              >
-                {CITIES_AND_JUNCTIONS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.district} • {c.elevationM}m)
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none">
+                  <Search className="w-4 h-4" />
+                </div>
+                <input
+                  id="input-from-origin"
+                  type="text"
+                  value={originSearchQuery}
+                  onChange={(e) => {
+                    setOriginSearchQuery(e.target.value);
+                    setIsOriginDropdownOpen(true);
+                  }}
+                  onFocus={() => {
+                    setOriginSearchQuery('');
+                    setIsOriginDropdownOpen(true);
+                  }}
+                  placeholder="Search origin..."
+                  autoComplete="off"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                />
+              </div>
+
+              {isOriginDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
+                  {filteredOriginCities.length > 0 ? (
+                    filteredOriginCities.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => handleSelectOrigin(c)}
+                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
+                            {c.name} {c.nepaliName ? <span className="text-[11px] font-normal text-slate-400">({c.nepaliName})</span> : ''}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">
+                            {c.district} District • {c.province} Province
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
+                          {c.elevationM}m ASL
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* SWAP BUTTON */}
@@ -827,7 +903,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
 
             {/* TO (Destination) */}
-            <div className="md:col-span-5 space-y-1">
+            <div className="md:col-span-5 space-y-1 relative" ref={destSearchRef}>
               <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                 <span className="flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
@@ -845,26 +921,56 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </button>
               </label>
 
-              <select
-                id="select-to-dest"
-                value={destId}
-                onChange={(e) => {
-                  setDestId(e.target.value);
-                  const selectedCity = CITIES_AND_JUNCTIONS.find((c) => c.id === e.target.value);
-                  if (selectedCity) {
-                    setSingleSearchQuery(selectedCity.name);
-                    setUserPickedDestination(true);
-                    if (hasCalculated) setNeedsRecalculation(true);
-                  }
-                }}
-                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-cyan-500 transition"
-              >
-                {CITIES_AND_JUNCTIONS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.district} • {c.elevationM}m)
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 pointer-events-none">
+                  <Search className="w-4 h-4" />
+                </div>
+                <input
+                  id="input-to-dest"
+                  type="text"
+                  value={destSearchQuery}
+                  onChange={(e) => {
+                    setDestSearchQuery(e.target.value);
+                    setIsDestDropdownOpen(true);
+                  }}
+                  onFocus={() => {
+                    setDestSearchQuery('');
+                    setIsDestDropdownOpen(true);
+                  }}
+                  placeholder="Search destination..."
+                  autoComplete="off"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                />
+              </div>
+
+              {isDestDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
+                  {filteredDestCities.length > 0 ? (
+                    filteredDestCities.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => handleSelectDestination(c)}
+                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
+                            {c.name} {c.nepaliName ? <span className="text-[11px] font-normal text-slate-400">({c.nepaliName})</span> : ''}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">
+                            {c.district} District • {c.province} Province
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
+                          {c.elevationM}m ASL
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
