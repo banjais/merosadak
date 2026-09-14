@@ -99,6 +99,16 @@ const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: string; 
 const formatPreference = (pref: RoutePreference) =>
   PREFERENCE_CONFIGS.find((option) => option.pref === pref)?.label || pref.replace('_', ' ');
 
+const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
+const SUB_METRO_CITY_NAME_FRAGMENTS = ['hetauda', 'butwal', 'dhangadhi', 'nepalgunj', 'birendranagar', 'dharan', 'janakpur', 'gauraha', 'birgunj'];
+
+const getCityType = (city: CityNode): string => {
+  const lower = city.name.toLowerCase();
+  if (METRO_CITY_NAME_FRAGMENTS.some((m) => lower.includes(m))) return 'Metropolitan City';
+  if (SUB_METRO_CITY_NAME_FRAGMENTS.some((m) => lower.includes(m))) return 'Sub-metropolitan City';
+  return city.isMajorHub ? 'Municipality' : 'Rural Municipality';
+};
+
 type DetailModuleTab =
   | 'none'
   | 'timeline'
@@ -166,6 +176,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const isCustomLocationMode = locationMode === 'custom_from_to';
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
+  const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   // Search queries & Autocompletions
   const [singleSearchQuery, setSingleSearchQuery] = useState<string>('');
@@ -418,6 +429,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        setDetectedLocation({ lat: latitude, lng: longitude });
         // Find nearest city in CITIES_AND_JUNCTIONS
         let closestCity = CITIES_AND_JUNCTIONS[0];
         let minDist = Infinity;
@@ -439,6 +451,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       (err) => {
         setSpeechTranscriptNotice('GPS access denied. Defaulting to Kathmandu.');
         setOriginId('ktm');
+        setDetectedLocation({ lat: 27.7172, lng: 85.324 });
         setIsLocationMenuOpen(false);
         setTimeout(() => setSpeechTranscriptNotice(null), 3000);
       },
@@ -666,15 +679,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <span>My Location</span>
                   <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
                 </div>
-                <div className="text-sm font-black text-white truncate font-display">
+                 <div className="text-sm font-black text-white truncate font-display">
                    {originCity ? (
-                     <>
-                       {originCity.name} {originSelected && <span className="text-[10px] font-normal text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">GPS</span>} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
-                     </>
+                     originSelected ? (
+                       <>
+                         <span className="block">{originCity.name} / {getCityType(originCity)}</span>
+                         {detectedLocation && (
+                           <span className="text-xs font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                         )}
+                       </>
+                     ) : (
+                       <>
+                         {originCity.name} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                       </>
+                     )
                    ) : (
                      <span className="text-slate-500">Select a location</span>
                    )}
-                </div>
+                 </div>
               </div>
             </div>
           </div>
@@ -732,10 +754,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
         )}
 
-        {/* Speech / Live Notice Banner - appears under the My Location box */}
+        {/* Speech / Live Notice - simple text under the My Location box */}
         {speechTranscriptNotice && (
-          <div className="bg-emerald-950/90 border border-emerald-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-emerald-200 animate-fadeIn shadow-lg">
-            <Mic className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+          <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn">
+            <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
             <span className="font-medium">{speechTranscriptNotice}</span>
           </div>
         )}
@@ -1066,6 +1088,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setNeedsRecalculation(false);
                     setOriginId('');
                     setDestId('');
+                    setOriginSelected(false);
+                    setDetectedLocation(null);
                     setSingleSearchQuery('');
                     setDestSearchQuery('');
                     setShowSearchPanel(false);
