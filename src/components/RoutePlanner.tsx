@@ -710,7 +710,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     Use GPS
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    Auto-detects nearest Nepal junction via device sensors
+                    Auto-detects via device sensors
                   </div>
                 </div>
               </button>
@@ -731,7 +731,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     From &amp; To
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    Manually specify different origin and destination junctions
+                    Specify origin &amp; destination
                   </div>
                 </div>
               </button>
