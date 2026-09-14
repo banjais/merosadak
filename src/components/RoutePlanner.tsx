@@ -90,10 +90,14 @@ interface RoutePlannerProps {
 
 const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: string; desc: string }[] = [
   { pref: 'fastest', icon: '⚡', label: 'Fastest', desc: 'Shortest travel time' },
-  { pref: 'safest', icon: '🛡️', label: 'Safest', desc: 'Maximum road score & fewer bottlenecks' },
-  { pref: 'scenic', icon: '🏔️', label: 'Scenic', desc: 'Mountain vistas & river valleys' },
-  { pref: 'ev_optimized', icon: '🔋', label: 'EV Eco', desc: 'EV charging corridors & low consumption' },
+  { pref: 'shortest', icon: '🛣️', label: 'Shortest', desc: 'Shortest distance' },
+  { pref: 'safest', icon: '🛡️', label: 'Safest', desc: 'Best road score' },
+  { pref: 'scenic', icon: '🏔️', label: 'Scenic', desc: 'Mountain views' },
+  { pref: 'ev_optimized', icon: '🔋', label: 'EV optimized', desc: 'Charging & efficiency' },
 ];
+
+const formatPreference = (pref: RoutePreference) =>
+  PREFERENCE_CONFIGS.find((option) => option.pref === pref)?.label || pref.replace('_', ' ');
 
 type DetailModuleTab =
   | 'none'
