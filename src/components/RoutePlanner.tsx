@@ -793,14 +793,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     )}
                   </div>
 
-                  {/* Short From → To report inside My Location box */}
+                  {/* Trip label + From → To summary inside My Location box */}
                   {originCity && destCity && originId !== destId && (
-                    <div className="mt-1 flex items-center space-x-1.5 text-[10px] text-slate-400 truncate">
-                      <span className="font-medium text-slate-500">{originCity.district}</span>
-                      <ArrowRight className="w-3 h-3 text-emerald-500/40 shrink-0" />
-                      <span className="font-medium text-slate-500">{destCity.district}</span>
-                      <ArrowRight className="w-3 h-3 text-emerald-500/40 shrink-0" />
-                      <span className="text-emerald-400 font-medium truncate">{destCity.name}</span>
+                    <div className="mt-1 flex items-center space-x-1 truncate">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${detectedLocation ? 'text-sky-400' : 'text-slate-500'}`}>
+                        Trip
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium truncate">
+                        {originCity.name}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-emerald-500/30 shrink-0" />
+                      <span className="text-[10px] text-slate-500 font-medium truncate">
+                        {destCity.name}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -1163,51 +1168,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         {hasCalculated && (
           <>
-            {/* From/To Summary with Change Location */}
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 min-w-0">
-                  <span className="text-sm font-bold text-white truncate">{originCity.name}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-sm font-bold text-white truncate">{destCity.name}</span>
-                </div>
-                <button
-                  type="button"
-                   onClick={() => {
-                     setRoutePlan(null);
-                     setHasCalculated(false);
-                     setUserPickedDestination(false);
-                     setNeedsRecalculation(false);
-                     setDestId('');
-                     setSingleSearchQuery('');
-                     setDestSearchQuery('');
-                     setShowSearchPanel(false);
-                     setShowVehicleOptions(false);
-                     setActiveModuleTab('none');
-                     // GPS-detected location is a permanent "fact" — restore origin from it
-                     if (detectedLocation) {
-                       const closestCity = findClosestCityFromCoords(
-                         detectedLocation.lat,
-                         detectedLocation.lng,
-                         allCitiesRef.current
-                       );
-                       setOriginId(closestCity.id);
-                       setOriginSelected(true);
-                       setLocationMode('my_location');
-                     } else {
-                       setOriginId('');
-                       setOriginSelected(false);
-                     }
-                     onRouteClear?.();
-                   }}
-                  className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-[10px] font-bold transition shrink-0"
-                >
-                  <span>Change Location</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-            
+            {/* Vehicle Profile & Routing Priority */}
             <div className="pt-1 border-t border-slate-800/60">
           <button
             type="button"
@@ -1710,8 +1671,50 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                               }`}
                             >
                               L/100km
-                            </button>
-                          </div>
+               </button>
+
+               {/* Option 3: Change Location (Reset origin/destination) — only when GPS detected */}
+               {detectedLocation && (
+                 <button
+                   onClick={() => {
+                     setRoutePlan(null);
+                     setHasCalculated(false);
+                     setUserPickedDestination(false);
+                     setNeedsRecalculation(false);
+                     setDestId('');
+                     setSingleSearchQuery('');
+                     setDestSearchQuery('');
+                     setShowSearchPanel(false);
+                     setShowVehicleOptions(false);
+                     setActiveModuleTab('none');
+                     // GPS-detected location is a permanent "fact" — restore origin from it
+                     const closestCity = findClosestCityFromCoords(
+                       detectedLocation.lat,
+                       detectedLocation.lng,
+                       allCitiesRef.current
+                     );
+                     setOriginId(closestCity.id);
+                     setOriginSelected(true);
+                     setLocationMode('my_location');
+                     setIsLocationMenuOpen(false);
+                     onRouteClear?.();
+                   }}
+                   className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
+                 >
+                   <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                     <RefreshCw className="w-4 h-4 group-hover:scale-110 transition" />
+                   </div>
+                   <div>
+                     <div className="text-xs font-bold text-white group-hover:text-amber-300">
+                       Change Location
+                     </div>
+                     <div className="text-[11px] text-slate-400">
+                       Reset origin &amp; destination
+                     </div>
+                   </div>
+                 </button>
+               )}
+             </div>
                         ) : (
                           <span className="text-[10px] text-cyan-400 font-mono">
                             ⚡ EV Metric: km per kWh
