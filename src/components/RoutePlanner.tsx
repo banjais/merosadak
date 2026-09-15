@@ -769,30 +769,41 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                }`}>
                  {detectedLocation ? <LocateFixed className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
                </div>
-               <div className="min-w-0">
-                 <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                   <span>My Location</span>
-                   <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
-                 </div>
-                 <div className="text-sm font-black text-white truncate font-display">
-                   {originCity ? (
-                     originSelected ? (
-                       <>
-                         <span className="block">{originCity.name} / {getCityType(originCity)}</span>
-                         {detectedLocation && (
-                            <span className="text-[10px] font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                         )}
-                       </>
-                     ) : (
-                       <>
-                         {originCity.name} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
-                       </>
-                     )
-                   ) : (
-                     <span className="text-slate-500">Select a location</span>
-                   )}
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                    <span>My Location</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <div className="text-sm font-black text-white truncate font-display">
+                    {originCity ? (
+                      originSelected ? (
+                        <>
+                          <span className="block">{originCity.name} / {getCityType(originCity)}</span>
+                          {detectedLocation && (
+                             <span className="text-[10px] font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {originCity.name} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                        </>
+                      )
+                    ) : (
+                      <span className="text-slate-500">Select a location</span>
+                    )}
+                  </div>
+
+                  {/* Short From → To report inside My Location box */}
+                  {originCity && destCity && originId !== destId && (
+                    <div className="mt-1 flex items-center space-x-1.5 text-[10px] text-slate-400 truncate">
+                      <span className="font-medium text-slate-500">{originCity.district}</span>
+                      <ArrowRight className="w-3 h-3 text-emerald-500/40 shrink-0" />
+                      <span className="font-medium text-slate-500">{destCity.district}</span>
+                      <ArrowRight className="w-3 h-3 text-emerald-500/40 shrink-0" />
+                      <span className="text-emerald-400 font-medium truncate">{destCity.name}</span>
+                    </div>
+                  )}
                 </div>
-              </div>
             </div>
           </div>
 
