@@ -110,8 +110,34 @@ const getCityType = (city: CityNode): string => {
   return city.isMajorHub ? 'Municipality' : 'Rural Municipality';
 };
 
+const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[]): CityNode => {
+  if (!cities || cities.length === 0) {
+    return {
+      id: '',
+      name: 'Unknown',
+      nepaliName: '',
+      district: '',
+      province: '',
+      lat,
+      lng,
+      elevationM: 0,
+      isMajorHub: false,
+      connectedHighways: [],
+    };
+  }
+  let closestCity = cities[0];
+  let minDist = Infinity;
+  cities.forEach((city) => {
+    const d = Math.hypot(city.lat - lat, city.lng - lng);
+    if (d < minDist) {
+      minDist = d;
+      closestCity = city;
+    }
+  });
+  return closestCity;
+};
+
 type DetailModuleTab =
-  | 'none'
   | 'timeline'
   | 'comparison'
   | 'travel_plan'
@@ -442,19 +468,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        const cities = allCitiesRef.current;
         setDetectedLocation({ lat: latitude, lng: longitude });
-        let closestCity = cities[0];
-        let minDist = Infinity;
-
-        cities.forEach((city) => {
-          const d = Math.hypot(city.lat - latitude, city.lng - longitude);
-          if (d < minDist) {
-            minDist = d;
-            closestCity = city;
-          }
-        });
-
+        const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
         setOriginId(closestCity.id);
         setOriginSelected(true);
         setIsLocationMenuOpen(false);
@@ -467,7 +482,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       },
       { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
     );
-  }, [allCitiesRef]);
+  }, []);
 
   // Auto-detect GPS on mount: ask permission if not yet decided.
   // Once detected, the GPS location is a permanent "fact" — it is not
@@ -483,19 +498,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          const cities = allCitiesRef.current;
           setDetectedLocation({ lat: latitude, lng: longitude });
-          let closestCity = cities[0];
-          let minDist = Infinity;
-
-          cities.forEach((city) => {
-            const d = Math.hypot(city.lat - latitude, city.lng - longitude);
-            if (d < minDist) {
-              minDist = d;
-              closestCity = city;
-            }
-          });
-
+          const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
           setOriginId(closestCity.id);
           setOriginSelected(true);
           setIsLocationMenuOpen(false);
@@ -706,10 +710,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
-  // Toggle detail module tabs
+   // Toggle detail module tabs
   const handleToggleModuleTab = (tab: DetailModuleTab) => {
-    setActiveModuleTab((prev) => (prev === tab ? 'none' : tab));
+    setActiveModuleTab((prev) => (prev === tab ? 'none' : prev));
   };
+
+  // Auto-calculate route when both origin and destination are selected
+  // (removes the need to manually click "Calculate Route & Reports")
+  useEffect(() => {
+    if (isCalculating) return;
+    if (!originId || !destId || originId === destId) return;
+    if (hasCalculated) return;
+    if (!userPickedDestination) return;
+
+    handleCalculateRoute();
+  }, [originId, destId, userPickedDestination, hasCalculated, isCalculating]);
 
   return (
     <div className="space-y-4">
@@ -1124,32 +1139,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 3. THE PROMINENT "CALCULATE ROUTE & REPORTS" BUTTON - Visible when destination picked, hidden after calculation */}
-        {userPickedDestination && !hasCalculated && (
-        <div className="pt-2">
-          <button
-            onClick={() => handleCalculateRoute()}
-            disabled={isCalculating}
-            id="btn-calculate-route-main"
-            className={`w-full py-3.5 rounded-xl text-sm font-black tracking-wide transition shadow-xl flex items-center justify-center space-x-2 border ${
-              destId
-                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:via-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white shadow-emerald-950/50 border-emerald-400/30'
-                : 'bg-slate-800 text-slate-400 cursor-not-allowed border-slate-700'
-            }`}
-          >
-            {isCalculating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Optimizing Highway Geometry &amp; Telemetry...</span>
-              </>
-            ) : (
-              <>
-                <Navigation className="w-4 h-4" />
-                <span>Calculate Route &amp; Reports</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* 3. Route auto-calculates when origin + destination are selected.
+            Show a subtle loading indicator while calculating. */}
+        {userPickedDestination && isCalculating && !hasCalculated && (
+          <div className="pt-2 flex items-center justify-center space-x-2 text-xs text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+            <span>Optimizing Highway Geometry &amp; Telemetry...</span>
+          </div>
         )}
 
         {hasCalculated && (
@@ -1164,21 +1160,33 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
+                   onClick={() => {
                      setRoutePlan(null);
-                    setHasCalculated(false);
-                    setUserPickedDestination(false);
-                    setNeedsRecalculation(false);
-                    setOriginId('');
-                    setDestId('');
-                    setOriginSelected(false);
-                    setSingleSearchQuery('');
-                    setDestSearchQuery('');
-                    setShowSearchPanel(false);
-                    setShowVehicleOptions(false);
-                    setActiveModuleTab('none');
-                    onRouteClear?.();
-                  }}
+                     setHasCalculated(false);
+                     setUserPickedDestination(false);
+                     setNeedsRecalculation(false);
+                     setDestId('');
+                     setSingleSearchQuery('');
+                     setDestSearchQuery('');
+                     setShowSearchPanel(false);
+                     setShowVehicleOptions(false);
+                     setActiveModuleTab('none');
+                     // GPS-detected location is a permanent "fact" — restore origin from it
+                     if (detectedLocation) {
+                       const closestCity = findClosestCityFromCoords(
+                         detectedLocation.lat,
+                         detectedLocation.lng,
+                         allCitiesRef.current
+                       );
+                       setOriginId(closestCity.id);
+                       setOriginSelected(true);
+                       setLocationMode('my_location');
+                     } else {
+                       setOriginId('');
+                       setOriginSelected(false);
+                     }
+                     onRouteClear?.();
+                   }}
                   className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-[10px] font-bold transition shrink-0"
                 >
                   <span>Change Location</span>
