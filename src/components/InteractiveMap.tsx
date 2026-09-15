@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import {
   Highway,
@@ -48,6 +48,7 @@ import {
   Map as MapIcon,
   Globe,
   Locate,
+  LocateFixed,
   X,
   Info,
   CloudRain,
@@ -156,6 +157,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const mapStyleContainerRef = useRef<HTMLDivElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
 
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsDetected, setGpsDetected] = useState(false);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const locationButtonRef = useRef<HTMLDivElement>(null);
+  const changeDropdownRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
   const showBlackspots = false;
   const routeColorMode = 'safety' as const;
 
@@ -224,6 +232,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isToolbarOpen, showLegend, showMapStyle]);
 
+  useEffect(() => {
+    if (!isLocationDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        locationButtonRef.current?.contains(target) ||
+        changeDropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsLocationDropdownOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isLocationDropdownOpen]);
+
   // 79 Highways state loaded from GeoJSON dataset
   const [highwaysList, setHighwaysList] = useState<Highway[]>(NEPAL_HIGHWAYS);
   const [expandedCities, setExpandedCities] = useState<CityNode[]>(() => getCachedExpandedCities());
@@ -289,8 +315,78 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return () => {
       map.remove();
       mapInstanceRef.current = null;
+      markerRef.current = null;
     };
   }, []);
+
+  const placeGpsMarker = useCallback((latLng: L.LatLngExpression) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (markerRef.current) {
+      map.removeLayer(markerRef.current);
+      markerRef.current = null;
+    }
+
+    markerRef.current = L.circleMarker(latLng, {
+      radius: 8,
+      fillColor: '#3b82f6',
+      color: '#ffffff',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.9,
+    }).addTo(map);
+  }, []);
+
+  const detectGpsPosition = useCallback(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsCoords(null);
+      setGpsDetected(false);
+      return;
+    }
+
+    const handleSuccess = (position: GeolocationPosition) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        setGpsCoords(null);
+        setGpsDetected(false);
+        return;
+      }
+
+      setGpsCoords({ lat: latitude, lng: longitude });
+      setGpsDetected(true);
+      placeGpsMarker([latitude, longitude]);
+      mapInstanceRef.current?.flyTo([latitude, longitude], 14, { duration: 1.5 });
+    };
+
+    const handleError = () => {
+      setGpsCoords(null);
+      setGpsDetected(false);
+      if (markerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+
+    try {
+      navigator.geolocation.getCurrentPosition(
+        handleSuccess,
+        handleError,
+        {
+          timeout: 8000,
+          maximumAge: 60000,
+          enableHighAccuracy: true,
+        }
+      );
+    } catch {
+      handleError();
+    }
+  }, [placeGpsMarker]);
+
+  useEffect(() => {
+    detectGpsPosition();
+  }, [detectGpsPosition]);
 
   // Update tile layer based on mapStyle
   useEffect(() => {
@@ -1199,23 +1295,20 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
   const handleMyLocation = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const marker = L.circleMarker([latitude, longitude], {
-          radius: 8,
-          fillColor: '#3b82f6',
-          color: '#ffffff',
-          weight: 3,
-          opacity: 1,
-          fillOpacity: 0.9,
-         }).addTo(mapInstanceRef.current!);
-        mapInstanceRef.current!.flyTo([latitude, longitude], 14, { duration: 1.5 });
-      },
-      () => {},
-      { timeout: 8000 }
-    );
+    detectGpsPosition();
+    if (gpsDetected) {
+      setIsLocationDropdownOpen((open) => !open);
+    }
+  };
+
+  const handleChangeLocation = () => {
+    setIsLocationDropdownOpen(false);
+    setGpsDetected(false);
+    setGpsCoords(null);
+    if (markerRef.current && mapInstanceRef.current) {
+      mapInstanceRef.current.removeLayer(markerRef.current);
+      markerRef.current = null;
+    }
   };
 
   return (
@@ -1229,15 +1322,43 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       )}
 
       {/* My Location GPS Button */}
-      <button
-        type="button"
-        onClick={handleMyLocation}
-        className="absolute top-3 right-3 z-[1000] w-9 h-9 rounded-full bg-slate-950/90 hover:bg-slate-900 text-sky-300 border border-sky-500/40 shadow-2xl shadow-black/50 flex items-center justify-center backdrop-blur-xl transition"
-        title="My Location"
-        id="btn-my-location-gps"
+      <div
+        ref={locationButtonRef}
+        className="absolute top-3 right-3 z-[1000] flex flex-col items-end"
+        onMouseDown={(event) => event.stopPropagation()}
       >
-        <Locate className="w-4 h-4" />
-      </button>
+        <button
+          type="button"
+          onClick={handleMyLocation}
+          className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-xl border shadow-2xl shadow-black/50 transition ${
+            gpsDetected
+              ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/20 hover:bg-emerald-900/90'
+              : 'bg-slate-950/90 hover:bg-slate-900 text-sky-300 border-sky-500/40'
+          }`}
+          title={gpsDetected ? 'My Location detected' : 'My Location'}
+          aria-label={gpsDetected ? 'My Location detected' : 'Detect My Location'}
+          aria-expanded={gpsDetected && isLocationDropdownOpen}
+          id="btn-my-location-gps"
+        >
+          {gpsDetected ? <LocateFixed className="w-4 h-4" /> : <Locate className="w-4 h-4" />}
+        </button>
+
+        {gpsDetected && isLocationDropdownOpen && (
+          <div
+            ref={changeDropdownRef}
+            className="absolute top-full right-0 mt-2 w-32 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-1.5 animate-fadeIn"
+          >
+            <button
+              type="button"
+              onClick={handleChangeLocation}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-xs font-bold text-amber-300 hover:bg-slate-800 border border-transparent hover:border-amber-500/50 transition"
+            >
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>Change</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Map Style Selector */}
       {showMapStyle && (
