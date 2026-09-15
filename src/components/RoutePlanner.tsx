@@ -780,7 +780,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                        <>
                          <span className="block">{originCity.name} / {getCityType(originCity)}</span>
                          {detectedLocation && (
-                           <span className="text-xs font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                            <span className="text-[10px] font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                          )}
                        </>
                      ) : (
