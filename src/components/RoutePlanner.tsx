@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   CityNode,
   RoutePlanResult,
@@ -424,7 +424,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   };
 
   // Device Geolocation Auto-Detection
-  const handleDetectDeviceLocation = () => {
+  const handleDetectDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setOriginSelected(false);
       setOriginId('');
@@ -460,7 +460,69 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       },
       { timeout: 8000 }
     );
-  };
+  }, [allCities]);
+
+  // Auto-detect GPS on mount: ask permission if not yet decided.
+  // If user allows, the browser shows the prompt on first load and
+  // getCurrentPosition auto-detects without further clicks.
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    // Only auto-detect if we don't already have a detected location
+    if (detectedLocation) return;
+
+    const tryAutoDetect = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setDetectedLocation({ lat: latitude, lng: longitude });
+          let closestCity = allCities[0];
+          let minDist = Infinity;
+
+          allCities.forEach((city) => {
+            const d = Math.hypot(city.lat - latitude, city.lng - longitude);
+            if (d < minDist) {
+              minDist = d;
+              closestCity = city;
+            }
+          });
+
+          setOriginId(closestCity.id);
+          setOriginSelected(true);
+          setIsLocationMenuOpen(false);
+        },
+        () => {
+          // Permission denied or error — user can still pick manually
+        },
+        { timeout: 8000 }
+      );
+    };
+
+    // Check existing permission state before prompting
+    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === 'granted') {
+            tryAutoDetect();
+          } else if (permissionStatus.state === 'prompt') {
+            tryAutoDetect();
+          }
+          // 'denied' — skip silent detection
+
+          permissionStatus.onchange = () => {
+            if (permissionStatus.state === 'granted') {
+              tryAutoDetect();
+            }
+          };
+        })
+        .catch(() => {
+          tryAutoDetect();
+        });
+    } else {
+      // No Permissions API — direct call triggers browser prompt
+      tryAutoDetect();
+    }
+  }, [detectedLocation, allCities]);
 
   // Voice Speech Recognition Handler
   const startVoiceRecognition = (target: 'single' | 'origin' | 'dest' | 'ai') => {
