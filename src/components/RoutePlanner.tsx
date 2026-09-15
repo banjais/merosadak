@@ -179,6 +179,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
+  const gpsAutoDetectAttemptedRef = useRef(false);
 
   useEffect(() => {
     loadExpandedCities().then(setAllCities);
@@ -463,12 +464,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   }, [allCities]);
 
   // Auto-detect GPS on mount: ask permission if not yet decided.
-  // If user allows, the browser shows the prompt on first load and
-  // getCurrentPosition auto-detects without further clicks.
+  // Once detected, the GPS location is a permanent "fact" — it is not
+  // cleared or overridden when the user picks a different "from" city.
   useEffect(() => {
     if (!navigator.geolocation) return;
+    if (gpsAutoDetectAttemptedRef.current) return;
     // Only auto-detect if we don't already have a detected location
     if (detectedLocation) return;
+
+    gpsAutoDetectAttemptedRef.current = true;
 
     const tryAutoDetect = () => {
       navigator.geolocation.getCurrentPosition(
@@ -522,7 +526,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       // No Permissions API — direct call triggers browser prompt
       tryAutoDetect();
     }
-  }, [detectedLocation, allCities]);
+  }, []);
 
   // Voice Speech Recognition Handler
   const startVoiceRecognition = (target: 'single' | 'origin' | 'dest' | 'ai') => {
@@ -1155,14 +1159,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setRoutePlan(null);
+                     setRoutePlan(null);
                     setHasCalculated(false);
                     setUserPickedDestination(false);
                     setNeedsRecalculation(false);
                     setOriginId('');
                     setDestId('');
                     setOriginSelected(false);
-                    setDetectedLocation(null);
                     setSingleSearchQuery('');
                     setDestSearchQuery('');
                     setShowSearchPanel(false);
