@@ -302,18 +302,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
   const destCity = useMemo(() => allCities.find((c) => c.id === destId), [destId, allCities]);
 
-  // Sync destination search box with selected city name
+  // Sync search boxes with selected city name — only when the city NAME
+  // changes, not when the allCities array refreshes (which would overwrite
+  // user-typed text).
   useEffect(() => {
     if (destCity) {
       setDestSearchQuery(destCity.name);
     }
-  }, [destCity]);
+  }, [destCity?.name]);
 
   useEffect(() => {
     if (originCity) {
       setOriginSearchQuery(originCity.name);
     }
-  }, [originCity]);
+  }, [originCity?.name]);
 
   // Fetch optional telemetry data when respective tabs are clicked
   useEffect(() => {
