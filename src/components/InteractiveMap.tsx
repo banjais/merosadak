@@ -369,18 +369,41 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       }
     };
 
-    try {
-      navigator.geolocation.getCurrentPosition(
-        handleSuccess,
-        handleError,
-        {
-          timeout: 8000,
-          maximumAge: 60000,
-          enableHighAccuracy: true,
-        }
-      );
-    } catch {
-      handleError();
+    const geoOptions: PositionOptions = {
+      timeout: 8000,
+      maximumAge: 60000,
+      enableHighAccuracy: true,
+    };
+
+    // Check permission status explicitly.
+    // If "granted" — auto-detect silently.
+    // If "prompt" — getCurrentPosition shows the browser permission dialog.
+    // If "denied" — skip to avoid redundant error.
+    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === 'granted') {
+            navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+          } else if (permissionStatus.state === 'prompt') {
+            navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+          }
+          // 'denied': no action — user previously denied.
+
+          permissionStatus.onchange = () => {
+            if (permissionStatus.state === 'granted') {
+              navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+            }
+          };
+        })
+        .catch(() => {
+          // Permissions API not supported — fall back to direct call which will
+          // trigger the browser prompt on first use.
+          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+        });
+    } else {
+      // No Permissions API — direct call triggers browser prompt.
+      navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
     }
   }, [placeGpsMarker]);
 
@@ -1295,9 +1318,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
   const handleMyLocation = () => {
-    detectGpsPosition();
     if (gpsDetected) {
       setIsLocationDropdownOpen((open) => !open);
+    } else {
+      detectGpsPosition();
     }
   };
 
