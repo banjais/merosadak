@@ -146,8 +146,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('none');
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
+  const [showMapStyle, setShowMapStyle] = useState(false);
 
   const weatherMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+
+  const toolbarToggleRef = useRef<HTMLButtonElement>(null);
+  const toolbarContainerRef = useRef<HTMLDivElement>(null);
+  const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
+  const mapStyleContainerRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
 
   const showBlackspots = false;
   const routeColorMode = 'safety' as const;
@@ -188,6 +195,34 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setShowMapStyle(true);
     closeLayerToolbar();
   };
+
+  // Close all floating map controls (toolbar, layers, legend, map style selector)
+  const closeAllMapControls = () => {
+    closeLayerToolbar();
+    setShowMapStyle(false);
+  };
+
+  // Click-outside: close all floating map controls when clicking the map, header, or anywhere outside the controls
+  useEffect(() => {
+    if (!isToolbarOpen && !showLegend && !showMapStyle) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        toolbarToggleRef.current?.contains(target) ||
+        toolbarContainerRef.current?.contains(target) ||
+        mapStyleToggleRef.current?.contains(target) ||
+        mapStyleContainerRef.current?.contains(target) ||
+        legendRef.current?.contains(target)
+      ) {
+        return;
+      }
+      closeAllMapControls();
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isToolbarOpen, showLegend, showMapStyle]);
 
   // 79 Highways state loaded from GeoJSON dataset
   const [highwaysList, setHighwaysList] = useState<Highway[]>(NEPAL_HIGHWAYS);
@@ -1163,8 +1198,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
-  const [showMapStyle, setShowMapStyle] = useState(false);
-
   const handleMyLocation = () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -1208,7 +1241,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Map Style Selector */}
       {showMapStyle && (
-        <div className="absolute top-3 right-28 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
+        <div ref={mapStyleContainerRef} className="absolute top-3 right-28 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
           <button
             type="button"
             onClick={() => { setMapStyle('standard'); setShowMapStyle(false); }}
@@ -1245,6 +1278,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       )}
       <button
         type="button"
+        ref={mapStyleToggleRef}
         onClick={handleToggleMapStyle}
         className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
         title="Map Style"
@@ -1255,7 +1289,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
       {isToolbarOpen && (
-        <div className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
+        <div ref={toolbarContainerRef} className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
           <button
             type="button"
             onClick={() => handleToggleLayer('highways')}
@@ -1362,6 +1396,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       {/* Toolbar toggle button */}
       <button
         type="button"
+        ref={toolbarToggleRef}
         onClick={handleToggleToolbar}
         className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
           isToolbarOpen
@@ -1376,6 +1411,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Map Legend Overlay Component with Smooth Slide-in Fade Animation */}
       <div
+        ref={legendRef}
         id="map-legend-card"
         className={`absolute bottom-6 left-6 z-[1000] max-w-xs sm:w-80 bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out transform ${
           showLegend
