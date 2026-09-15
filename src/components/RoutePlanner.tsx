@@ -70,8 +70,9 @@ import {
   LocateFixed,
   Receipt,
   Scale,
-  Milestone,
-} from 'lucide-react';
+   Milestone,
+   Route,
+ } from 'lucide-react';
 import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
@@ -204,6 +205,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsOriginCityId, setGpsOriginCityId] = useState<string>('');
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
   const allCitiesRef = useRef(allCities);
   const gpsAutoDetectAttemptedRef = useRef(false);
@@ -297,10 +299,22 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
   const locationMenuRef = useRef<HTMLDivElement>(null);
+  const aiPromptRef = useRef<HTMLDivElement>(null);
+
+  // Close all dropdown menus, optionally keeping one open
+  const closeAllMenus = useCallback((keepOpen: 'location' | 'single' | 'origin' | 'dest' | 'ai' | 'vehicle' | null = null) => {
+    if (keepOpen !== 'location') setIsLocationMenuOpen(false);
+    if (keepOpen !== 'single') setIsSingleDropdownOpen(false);
+    if (keepOpen !== 'origin') setIsOriginDropdownOpen(false);
+    if (keepOpen !== 'dest') setIsDestDropdownOpen(false);
+    if (keepOpen !== 'ai') setIsAiPromptOpen(false);
+    if (keepOpen !== 'vehicle') setShowVehicleOptions(false);
+  }, []);
 
   // Get current city objects
   const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
   const destCity = useMemo(() => allCities.find((c) => c.id === destId), [destId, allCities]);
+  const gpsOriginCity = useMemo(() => allCities.find((c) => c.id === gpsOriginCityId), [gpsOriginCityId, allCities]);
 
   // Sync search boxes with selected city name — only when the city NAME
   // changes, not when the allCities array refreshes (which would overwrite
@@ -350,9 +364,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         setIsDestDropdownOpen(false);
         setDestSearchQuery(destCity?.name ?? '');
       }
-      if (locationMenuRef.current && !locationMenuRef.current.contains(e.target as Node)) {
-        setIsLocationMenuOpen(false);
-      }
+       if (locationMenuRef.current && !locationMenuRef.current.contains(e.target as Node)) {
+         setIsLocationMenuOpen(false);
+       }
+       if (aiPromptRef.current && !aiPromptRef.current.contains(e.target as Node)) {
+         setIsAiPromptOpen(false);
+       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -468,17 +485,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+       (pos) => {
         const { latitude, longitude } = pos.coords;
         setDetectedLocation({ lat: latitude, lng: longitude });
         const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
         setOriginId(closestCity.id);
+        setGpsOriginCityId(closestCity.id);
         setOriginSelected(true);
         setIsLocationMenuOpen(false);
       },
       () => {
         setOriginSelected(false);
         setOriginId('');
+        setGpsOriginCityId('');
         setDetectedLocation(null);
         setIsLocationMenuOpen(false);
       },
@@ -503,6 +522,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           setDetectedLocation({ lat: latitude, lng: longitude });
           const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
           setOriginId(closestCity.id);
+          setGpsOriginCityId(closestCity.id);
           setOriginSelected(true);
           setIsLocationMenuOpen(false);
         },
@@ -745,14 +765,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
             {/* Clickable My Location Widget */}
             <div
-              onClick={() => {
-                if (isCustomLocationMode) {
-                  setLocationMode('my_location');
-                  setIsLocationMenuOpen(false);
-                  return;
-                }
-                setIsLocationMenuOpen(!isLocationMenuOpen);
-              }}
+                onClick={() => {
+                 if (isCustomLocationMode) {
+                   setLocationMode('my_location');
+                   closeAllMenus(null);
+                   return;
+                 }
+                 closeAllMenus('location');
+                 setIsLocationMenuOpen(!isLocationMenuOpen);
+               }}
               id="btn-my-location-toggle"
               className={`flex items-center space-x-3 group select-none rounded-xl px-3.5 py-2 border transition ${
                 isCustomLocationMode
@@ -774,40 +795,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <span>My Location</span>
                     <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <div className="text-sm font-black text-white truncate font-display">
-                    {originCity ? (
-                      originSelected ? (
+                  <div className="text-[10px] font-normal text-slate-400 truncate space-y-0.5">
+                    {detectedLocation ? (
+                      gpsOriginCity ? (
                         <>
-                          <span className="block">{originCity.name} / {getCityType(originCity)}</span>
-                          {detectedLocation && (
-                             <span className="text-[10px] font-normal text-slate-400">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                          )}
+                          <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
+                          <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
+                          <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                         </>
                       ) : (
                         <>
-                          {originCity.name} <span className="text-xs font-normal text-slate-400">({originCity.district} • {originCity.elevationM}m)</span>
+                          <span className="block">Detected Location</span>
+                          <span className="block text-[9px] text-slate-500">Coordinates below</span>
+                          <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                         </>
                       )
+                    ) : isCustomLocationMode ? (
+                      <span className="text-slate-500">Custom origin mode</span>
                     ) : (
                       <span className="text-slate-500">Select a location</span>
                     )}
                   </div>
-
-                  {/* Trip label + From → To summary inside My Location box */}
-                  {originCity && destCity && originId !== destId && (
-                    <div className="mt-1 flex items-center space-x-1 truncate">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${detectedLocation ? 'text-sky-400' : 'text-slate-500'}`}>
-                        Trip
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium truncate">
-                        {originCity.name}
-                      </span>
-                      <ArrowRight className="w-3 h-3 text-emerald-500/30 shrink-0" />
-                      <span className="text-[10px] text-slate-500 font-medium truncate">
-                        {destCity.name}
-                      </span>
-                    </div>
-                  )}
                 </div>
             </div>
           </div>
@@ -827,6 +835,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onClick={() => {
                     handleDetectDeviceLocation();
                     setLocationMode('my_location');
+                    closeAllMenus(null);
                   }}
                   className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 transition flex items-start space-x-2.5 group"
                 >
@@ -844,29 +853,29 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </button>
               )}
 
-              {/* Option 2: Change Location (Custom From / To) */}
-              <button
-                onClick={() => {
-                  setLocationMode('custom_from_to');
-                  setOriginSearchQuery('');
-                  setDestSearchQuery('');
-                  setSingleSearchQuery('');
-                  setIsLocationMenuOpen(false);
-                }}
-                className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
-              >
-                <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <ArrowUpDown className="w-4 h-4 group-hover:scale-110 transition" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-amber-300">
-                    Change Origin
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    Specify origin &amp; destination
-                  </div>
-                </div>
-              </button>
+                {/* Option 2: Change Location (Custom From / To) - keeps GPS-origin permanent */}
+                <button
+                  onClick={() => {
+                    setLocationMode('custom_from_to');
+                    setOriginSearchQuery('');
+                    setDestSearchQuery('');
+                    setSingleSearchQuery('');
+                    closeAllMenus(null);
+                  }}
+                  className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
+               >
+                 <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                   <ArrowUpDown className="w-4 h-4 group-hover:scale-110 transition" />
+                 </div>
+                 <div>
+                   <div className="text-xs font-bold text-white group-hover:text-amber-300">
+                     Change Origin
+                   </div>
+                   <div className="text-[11px] text-slate-400">
+                     Specify origin &amp; destination
+                   </div>
+                 </div>
+               </button>
             </div>
           )}
         </div>
@@ -876,6 +885,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn">
             <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
             <span className="font-medium">{speechTranscriptNotice}</span>
+          </div>
+        )}
+
+        {/* Trip Plan Box - shows From → To when both are selected */}
+        {originCity && destCity && originId !== destId && (
+          <div className="relative bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 space-y-1.5">
+            <div className="flex items-center space-x-1.5 text-[10px] text-sky-400 font-bold uppercase tracking-wider">
+              <Route className="w-3 h-3 text-sky-400" />
+              <span>Trip Plan</span>
+            </div>
+            <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 truncate">
+              <span className="truncate">{originCity.name}</span>
+              <ArrowRight className="w-3 h-3 text-emerald-500/30 shrink-0" />
+              <span className="truncate">{destCity.name}</span>
+            </div>
+            <div className="text-[10px] text-slate-500">
+              {originCity.district} • {originCity.province} → {destCity.district} • {destCity.province}
+            </div>
           </div>
         )}
 
@@ -895,9 +922,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 value={singleSearchQuery}
                 onChange={(e) => {
                   setSingleSearchQuery(e.target.value);
+                  closeAllMenus('single');
                   setIsSingleDropdownOpen(true);
                 }}
-                onFocus={() => setIsSingleDropdownOpen(true)}
+                onFocus={() => {
+                  closeAllMenus('single');
+                  setIsSingleDropdownOpen(true);
+                }}
                 placeholder="Where to?"
                 className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
               />
@@ -920,7 +951,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
                 {/* AI Assistant Button */}
                 <button
-                  onClick={() => setIsAiPromptOpen(!isAiPromptOpen)}
+                  onClick={() => {
+                   closeAllMenus('ai');
+                   setIsAiPromptOpen(!isAiPromptOpen);
+                 }}
                   className={`p-1.5 rounded-lg border text-xs transition ${
                     isAiPromptOpen
                       ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-md shadow-cyan-500/10'
@@ -979,14 +1013,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   id="input-from-origin"
                   type="text"
                   value={originSearchQuery}
-                  onChange={(e) => {
-                    setOriginSearchQuery(e.target.value);
-                    setIsOriginDropdownOpen(true);
-                  }}
-                  onFocus={() => {
-                    setOriginSearchQuery('');
-                    setIsOriginDropdownOpen(true);
-                  }}
+                   onChange={(e) => {
+                     setOriginSearchQuery(e.target.value);
+                     closeAllMenus('origin');
+                     setIsOriginDropdownOpen(true);
+                   }}
+                   onFocus={() => {
+                     setOriginSearchQuery('');
+                     closeAllMenus('origin');
+                     setIsOriginDropdownOpen(true);
+                   }}
                   placeholder="From where?"
                   autoComplete="off"
                   className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
@@ -1055,14 +1091,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   id="input-to-dest"
                   type="text"
                   value={destSearchQuery}
-                  onChange={(e) => {
-                    setDestSearchQuery(e.target.value);
-                    setIsDestDropdownOpen(true);
-                  }}
-                  onFocus={() => {
-                    setDestSearchQuery('');
-                    setIsDestDropdownOpen(true);
-                  }}
+                   onChange={(e) => {
+                     setDestSearchQuery(e.target.value);
+                     closeAllMenus('dest');
+                     setIsDestDropdownOpen(true);
+                   }}
+                   onFocus={() => {
+                     setDestSearchQuery('');
+                     closeAllMenus('dest');
+                     setIsDestDropdownOpen(true);
+                   }}
                   placeholder="Where to?"
                   autoComplete="off"
                   className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
@@ -1115,14 +1153,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
         {!hasCalculated && isAiPromptOpen && (
-          <div className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
+          <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                 <span>AI Smart Route Planner (Natural Language)</span>
               </div>
               <button
-                onClick={() => setIsAiPromptOpen(false)}
+                onClick={() => closeAllMenus(null)}
                 className="p-1 rounded hover:bg-cyan-900/50 text-cyan-400"
               >
                 <X className="w-3.5 h-3.5" />
@@ -1172,7 +1210,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <div className="pt-1 border-t border-slate-800/60">
           <button
             type="button"
-            onClick={() => setShowVehicleOptions(!showVehicleOptions)}
+            onClick={() => { closeAllMenus('vehicle'); setShowVehicleOptions(!showVehicleOptions); }}
             className="w-full py-2 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-between transition group shadow-sm"
           >
             <div className="flex items-center space-x-2 min-w-0">
@@ -1693,8 +1731,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                        detectedLocation.lng,
                        allCitiesRef.current
                      );
-                     setOriginId(closestCity.id);
-                     setOriginSelected(true);
+                      setOriginId(closestCity.id);
+                      setGpsOriginCityId(closestCity.id);
+                      setOriginSelected(true);
                      setLocationMode('my_location');
                      setIsLocationMenuOpen(false);
                      onRouteClear?.();

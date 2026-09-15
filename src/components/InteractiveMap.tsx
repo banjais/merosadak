@@ -184,7 +184,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.alternatives.clearLayers();
   };
 
-  const handleToggleToolbar = () => {
+   const handleToggleToolbar = () => {
     if (isToolbarOpen) {
       closeLayerToolbar();
       return;
@@ -192,9 +192,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     setIsToolbarOpen(true);
     setShowMapStyle(false);
+    setIsLocationDropdownOpen(false);
   };
 
-  const handleToggleMapStyle = () => {
+   const handleToggleMapStyle = () => {
     if (showMapStyle) {
       setShowMapStyle(false);
       return;
@@ -202,12 +203,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     setShowMapStyle(true);
     closeLayerToolbar();
+    setIsLocationDropdownOpen(false);
   };
 
-  // Close all floating map controls (toolbar, layers, legend, map style selector)
+  // Close all floating map controls (toolbar, layers, legend, map style selector, location dropdown)
   const closeAllMapControls = () => {
     closeLayerToolbar();
     setShowMapStyle(false);
+    setIsLocationDropdownOpen(false);
   };
 
   // Click-outside: close all floating map controls when clicking the map, header, or anywhere outside the controls
@@ -1317,9 +1320,21 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
-  const handleMyLocation = () => {
+   const handleMyLocation = () => {
     if (gpsDetected) {
       setIsLocationDropdownOpen((open) => !open);
+      if (!isLocationDropdownOpen) {
+        setIsToolbarOpen(false);
+        setActiveLayer('none');
+        setShowLegend(false);
+        setShowMapStyle(false);
+        layersRef.current.highways.clearLayers();
+        layersRef.current.weather.clearLayers();
+        layersRef.current.incidents.clearLayers();
+        layersRef.current.pois.clearLayers();
+        layersRef.current.traffic.clearLayers();
+        layersRef.current.alternatives.clearLayers();
+      }
     } else {
       detectGpsPosition();
     }
