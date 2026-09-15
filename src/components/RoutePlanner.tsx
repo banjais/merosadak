@@ -179,7 +179,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
+  const allCitiesRef = useRef(allCities);
   const gpsAutoDetectAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    allCitiesRef.current = allCities;
+  }, [allCities]);
 
   useEffect(() => {
     loadExpandedCities().then(setAllCities);
@@ -437,11 +442,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        const cities = allCitiesRef.current;
         setDetectedLocation({ lat: latitude, lng: longitude });
-        let closestCity = allCities[0];
+        let closestCity = cities[0];
         let minDist = Infinity;
 
-        allCities.forEach((city) => {
+        cities.forEach((city) => {
           const d = Math.hypot(city.lat - latitude, city.lng - longitude);
           if (d < minDist) {
             minDist = d;
@@ -459,9 +465,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         setDetectedLocation(null);
         setIsLocationMenuOpen(false);
       },
-      { timeout: 8000 }
+      { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
     );
-  }, [allCities]);
+  }, [allCitiesRef]);
 
   // Auto-detect GPS on mount: ask permission if not yet decided.
   // Once detected, the GPS location is a permanent "fact" — it is not
@@ -469,7 +475,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   useEffect(() => {
     if (!navigator.geolocation) return;
     if (gpsAutoDetectAttemptedRef.current) return;
-    // Only auto-detect if we don't already have a detected location
     if (detectedLocation) return;
 
     gpsAutoDetectAttemptedRef.current = true;
@@ -478,11 +483,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
+          const cities = allCitiesRef.current;
           setDetectedLocation({ lat: latitude, lng: longitude });
-          let closestCity = allCities[0];
+          let closestCity = cities[0];
           let minDist = Infinity;
 
-          allCities.forEach((city) => {
+          cities.forEach((city) => {
             const d = Math.hypot(city.lat - latitude, city.lng - longitude);
             if (d < minDist) {
               minDist = d;
@@ -497,7 +503,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         () => {
           // Permission denied or error — user can still pick manually
         },
-        { timeout: 8000 }
+        { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
       );
     };
 
