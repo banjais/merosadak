@@ -1749,6 +1749,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
             </div>
 
+            {/* Official Data Provenance Footer */}
+            <DataAttribution
+              source="DoR Nepal Highway GIS (NH01–NH80)"
+              updatedAt="2026-03"
+              note="Official statutory road distances certified along surveyed national highway centerlines."
+              href="https://dor.gov.np"
+              compact
+            />
+
               {/* STRUCTURED FUEL COST BREAKDOWN FOR SELECTED VEHICLE */}
               {(() => {
                 const isEV = vehicle === 'electric_vehicle';

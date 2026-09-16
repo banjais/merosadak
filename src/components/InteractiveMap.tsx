@@ -1235,6 +1235,23 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       routeGroup.addLayer(animatedFlow);
     }
 
+    // Subtle aerial direct line connecting origin to destination
+    if (activeRoute.origin && activeRoute.destination) {
+      const aerialLine = L.polyline(
+        [[activeRoute.origin.lat, activeRoute.origin.lng], [activeRoute.destination.lat, activeRoute.destination.lng]],
+        {
+          color: '#94a3b8',
+          weight: 2,
+          opacity: 0.45,
+          dashArray: '6, 10',
+          lineCap: 'round',
+          lineJoin: 'round',
+          interactive: false,
+        }
+      );
+      routeGroup.addLayer(aerialLine);
+    }
+
     // 3. Render Active Route Blackspot Danger Badges along the corridor
     if (activeRoute.safetyIndex?.activeBlackspots) {
       activeRoute.safetyIndex.activeBlackspots.forEach((spot) => {
