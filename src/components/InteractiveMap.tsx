@@ -552,13 +552,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
 
-  // Render Nepal Border (always visible) — uses official district boundary data covering all corners
+  // Render Nepal Border (always visible) — uses official province boundary data covering all corners including Lipulekh/Limpiyadhura
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const borderGroup = layersRef.current.nepalBorder;
     borderGroup.clearLayers();
 
-    fetch('/data/nepal_boundary.geojson')
+    fetch('/data/nepal-provinces.geojson')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -578,8 +578,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               fillOpacity: 0.12,
             },
             onEachFeature: (feature, layer) => {
-              if (feature.properties?.ADM0_EN || feature.properties?.name) {
-                layer.bindTooltip('Nepal', {
+              const pname = feature.properties?.name || feature.properties?.PROVINCE || feature.properties?.PROV_NM;
+              if (pname) {
+                layer.bindTooltip(pname, {
                   sticky: true,
                   className: 'custom-dark-tooltip',
                 });
