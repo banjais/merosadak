@@ -301,6 +301,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+    // Leaflet's own "Leaflet" branding link isn't required (BSD license) —
+    // hide just that prefix. The tile provider's own attribution (OSM/Esri/
+    // CARTO/OpenTopoMap depending on style) stays, since those are required
+    // by the tile providers' usage terms.
+    map.attributionControl.setPrefix(false);
+
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);
     layersRef.current.weather.addTo(map);
