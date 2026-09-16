@@ -151,6 +151,7 @@ function main() {
   let totalSimplifiedPoints = 0;
   let totalFeatures = 0;
   let totalChainKm = 0;
+  let totalOfficialKm = 0;
 
   for (const file of files) {
     const full = path.join(HIGHWAY_DIR, file);
@@ -173,16 +174,31 @@ function main() {
         highwayList.push(code);
       }
       const hwyIdx = highwayIndex.get(code);
+      const officialLinkLenKm = typeof feat.properties?.link_len === 'number' && feat.properties.link_len > 0
+        ? feat.properties.link_len
+        : null;
 
       let chains = [];
       if (geom.type === 'LineString') chains = [geom.coordinates];
       else if (geom.type === 'MultiLineString') chains = geom.coordinates;
       else continue;
 
-      for (const chain of chains) {
-        if (!chain || chain.length < 2) continue;
-        // GeoJSON is [lng, lat] -> convert to [lat, lng]
-        const pts = chain.map((c) => [c[1], c[0]]);
+      // Convert once, and get this feature's total *geometric* length across
+      // all its chains, so we can scale to DoR's official chainage length
+      // (link_len) — the government-surveyed distance for this exact link —
+      // while keeping the real coordinate shape for rendering untouched.
+      const chainPtsList = chains
+        .filter((c) => c && c.length >= 2)
+        .map((chain) => chain.map((c) => [c[1], c[0]])); // [lng,lat] -> [lat,lng]
+
+      let featureGeomKm = 0;
+      for (const pts of chainPtsList) {
+        for (let i = 0; i < pts.length - 1; i++) featureGeomKm += haversineKm(pts[i], pts[i + 1]);
+      }
+      const officialScale = officialLinkLenKm && featureGeomKm > 0 ? officialLinkLenKm / featureGeomKm : 1;
+      totalOfficialKm += officialLinkLenKm ?? featureGeomKm;
+
+      for (const pts of chainPtsList) {
         totalRawPoints += pts.length;
 
         const keepIdx = simplifyIndices(pts, SIMPLIFY_TOLERANCE_KM);
@@ -194,9 +210,13 @@ function main() {
         for (let k = 0; k < keepIdx.length - 1; k++) {
           const segStart = keepIdx[k];
           const segEnd = keepIdx[k + 1];
-          // real distance = sum over the ORIGINAL points in this sub-range (keeps km accurate post-simplification)
+          // geometric distance from the ORIGINAL points in this sub-range,
+          // then rescaled so the link's total matches DoR's official
+          // chainage length (link_len) rather than just our own GIS math —
+          // that's what makes the number traceable back to DoR's own record.
           let d = 0;
           for (let i = segStart; i < segEnd; i++) d += haversineKm(pts[i], pts[i + 1]);
+          d *= officialScale;
           totalChainKm += d;
           addEdge(nodeIds[k], nodeIds[k + 1], d, hwyIdx);
         }
@@ -207,7 +227,8 @@ function main() {
   console.log(`Features: ${totalFeatures}`);
   console.log(`Raw points: ${totalRawPoints} -> simplified: ${totalSimplifiedPoints}`);
   console.log(`Graph nodes (post-snap): ${snapper.nodes.length}`);
-  console.log(`Total network length (sum of edges, double-counted both directions/2): ${(totalChainKm).toFixed(0)} km`);
+  console.log(`Total network length — DoR official chainage (link_len) basis: ${totalOfficialKm.toFixed(0)} km`);
+  console.log(`Total network length — as stored in graph edges (should match, scaled): ${totalChainKm.toFixed(0)} km`);
 
   // ---- snap cities ----
   const cities = loadCityNodes();
@@ -288,6 +309,8 @@ function main() {
       citiesTotal: cities.length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
+      distanceBasis: 'DoR official chainage (link_len) per survey link, Department of Roads, Government of Nepal',
+      totalOfficialChainageKm: Math.round(totalOfficialKm),
     },
   };
 
