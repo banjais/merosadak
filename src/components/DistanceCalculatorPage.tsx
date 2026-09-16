@@ -30,24 +30,24 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       .catch(() => setAllCities(CITIES_AND_JUNCTIONS));
   }, []);
 
-  const origin = allCities.find((c) => c.id === originId) || allCities[0];
-  const destination = allCities.find((c) => c.id === destId) || allCities[0];
+  const origin = originId ? allCities.find((c) => c.id === originId) : undefined;
+  const destination = destId ? allCities.find((c) => c.id === destId) : undefined;
 
   useEffect(() => {
     function handleCloseOnOutsideClick(event: MouseEvent) {
       if (originSearchRef.current && !originSearchRef.current.contains(event.target as Node)) {
         setOriginDropdownOpen(false);
-        setOriginSearch(origin.name);
+        setOriginSearch(origin?.name ?? '');
       }
       if (destSearchRef.current && !destSearchRef.current.contains(event.target as Node)) {
         setDestDropdownOpen(false);
-        setDestSearch(destination.name);
+        setDestSearch(destination?.name ?? '');
       }
     }
 
     document.addEventListener('mousedown', handleCloseOnOutsideClick);
     return () => document.removeEventListener('mousedown', handleCloseOnOutsideClick);
-  }, [origin.name, destination.name]);
+  }, [origin?.name, destination?.name]);
 
   const filteredOriginCities = filterCities(allCities, originSearch);
   const filteredDestCities = filterCities(allCities, destSearch);
@@ -56,15 +56,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     const temp = originId;
     setOriginId(destId);
     setDestId(temp);
-    setOriginSearch(destination.name);
-    setDestSearch(origin.name);
+    setOriginSearch(destination?.name ?? '');
+    setDestSearch(origin?.name ?? '');
   };
 
-  const originRouting = getNearestRoutingCity(origin);
-  const destRouting = getNearestRoutingCity(destination);
-
-  const routeResult = originId !== destId ? findOptimizedRoute(originRouting.id, destRouting.id, 'fastest', 'car') : null;
-  const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+  const routeResult = originId && destId && originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
+  const aerialDistance = origin && destination ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) : 0;
 
   const handleSelectOrigin = (cityId: string) => {
     const city = allCities.find((candidate) => candidate.id === cityId);
@@ -137,7 +134,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   </div>
                   <input
                     type="text"
-                    value={originSearch || origin.name}
+                    value={originSearch || (origin?.name ?? '')}
                     onChange={(event) => {
                       setOriginSearch(event.target.value);
                       setOriginDropdownOpen(true);
@@ -204,7 +201,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   </div>
                   <input
                     type="text"
-                    value={destSearch || destination.name}
+                    value={destSearch || (destination?.name ?? '')}
                     onChange={(event) => {
                       setDestSearch(event.target.value);
                       setDestDropdownOpen(true);
@@ -256,14 +253,14 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-lg font-bold text-white">{origin.name}</span>
+                    <span className="text-lg font-bold text-white">{origin?.name ?? 'Select origin'}</span>
                     <ArrowRight className="w-5 h-5 text-emerald-400" />
-                    <span className="text-lg font-bold text-white">{destination.name}</span>
+                    <span className="text-lg font-bold text-white">{destination?.name ?? 'Select destination'}</span>
                   </div>
                   {onPlanFullRoute && (
                     <button
                       type="button"
-                      onClick={() => onPlanFullRoute(originRouting.id, destRouting.id)}
+                      onClick={() => onPlanFullRoute(originId, destId)}
                       className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 self-start sm:self-auto"
                     >
                       <Route className="w-3.5 h-3.5" />

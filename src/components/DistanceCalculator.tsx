@@ -24,8 +24,8 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     loadExpandedCities().then(setAllCities);
   }, []);
 
-  const origin = allCities.find((c) => c.id === originId) || allCities[0];
-  const destination = allCities.find((c) => c.id === destId) || allCities[0];
+  const origin = originId ? allCities.find((c) => c.id === originId) : undefined;
+  const destination = destId ? allCities.find((c) => c.id === destId) : undefined;
 
   const normalizedOriginSearch = originSearch.trim().toLowerCase();
   const normalizedDestSearch = destSearch.trim().toLowerCase();
@@ -64,11 +64,8 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     setDestId(temp);
   };
 
-  const originRouting = snapToNearestRoutingNode(origin);
-  const destRouting = snapToNearestRoutingNode(destination);
-
-  const routeResult = originId !== destId ? findOptimizedRoute(originRouting.id, destRouting.id, 'fastest', 'car') : null;
-  const aerialDistance = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+  const routeResult = originId && destId && originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
+  const aerialDistance = origin && destination ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) : 0;
 
   const keyHubs = CITIES_AND_JUNCTIONS.filter((c) => c.isMajorHub);
 
@@ -92,7 +89,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                 className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition flex items-center justify-between"
                 aria-expanded={originDropdownOpen}
               >
-                <span>{origin.name} <span className="text-slate-500 font-normal">({origin.district} - {origin.elevationM}m)</span></span>
+                <span>{origin ? `${origin.name} (${origin.district} - ${origin.elevationM}m)` : 'Select origin...'}</span>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${originDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {originDropdownOpen && (
@@ -159,7 +156,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                 className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition flex items-center justify-between"
                 aria-expanded={destDropdownOpen}
               >
-                <span>{destination.name} <span className="text-slate-500 font-normal">({destination.district} - {destination.elevationM}m)</span></span>
+                <span>{destination ? `${destination.name} (${destination.district} - ${destination.elevationM}m)` : 'Select destination...'}</span>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${destDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {destDropdownOpen && (
@@ -213,7 +210,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               {onPlanFullRoute && (
                 <button
                   type="button"
-                  onClick={() => onPlanFullRoute(originRouting.id, destRouting.id)}
+                  onClick={() => onPlanFullRoute(originId, destId)}
                   className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 self-start sm:self-auto"
                 >
                   <Route className="w-3.5 h-3.5" />
