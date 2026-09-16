@@ -95,6 +95,48 @@ function escapeHtml(value: string): string {
 
 const NEPAL_BOUNDS: L.LatLngBoundsExpression = [[26.34, 80.0], [30.5, 88.3]];
 
+function createNepalTileLayer(
+  url: string,
+  attribution: string,
+  maxZoom: number,
+  subdomains: string = 'abc',
+) {
+  const LayerClass = L.GridLayer.extend({
+    options: { url, attribution, maxZoom, subdomains },
+
+    createTile(coords: L.Coords) {
+      const tileSize = this.getTileSize();
+      const tile = document.createElement('div');
+      tile.style.width = tileSize.x + 'px';
+      tile.style.height = tileSize.y + 'px';
+      tile.style.backgroundColor = '#ffffff';
+
+      const tileBounds = this._tileCoordsToBounds(coords);
+      const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
+      if (tileBounds.intersects(nepalBounds)) {
+        const s = this._getSubdomain(coords);
+        let tileUrl = this.options.url.replace('{s}', s);
+        tileUrl = L.Util.template(tileUrl, {
+          x: coords.x,
+          y: coords.y,
+          z: coords.z,
+          r: '',
+        });
+        const img = document.createElement('img');
+        img.src = tileUrl;
+        img.alt = '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        tile.appendChild(img);
+      }
+
+      return tile;
+    },
+  });
+
+  return new LayerClass();
+}
+
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   activeRoute,
   onSelectAlternativeRoute,
@@ -285,7 +327,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // Map Style: Standard, Satellite, Terrain
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial'>('standard');
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const tileLayerRef = useRef<L.GridLayer | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -454,13 +496,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       maxZoom = 19;
     }
 
-    const newLayer = L.tileLayer(url, {
-      attribution,
-      subdomains: 'abc',
-      maxZoom,
-    });
+    const newLayer = createNepalTileLayer(url, attribution, maxZoom, 'abc');
 
     newLayer.addTo(map);
+    map.attributionControl.addAttribution(attribution);
     tileLayerRef.current = newLayer;
   }, [mapStyle]);
 
