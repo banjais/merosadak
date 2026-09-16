@@ -185,6 +185,22 @@ function AppContent() {
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
+        // Clear all saved search, cache, and session data on every load
+        const meroKeys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('mero') || key.startsWith('merosadak'))) {
+            meroKeys.push(key);
+          }
+        }
+        meroKeys.forEach(key => localStorage.removeItem(key));
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key && (key.startsWith('mero') || key.startsWith('merosadak'))) {
+            sessionStorage.removeItem(key);
+          }
+        }
+
         const searchParams = new URLSearchParams(window.location.search);
         const urlOrigin = searchParams.get('origin');
         const urlDest = searchParams.get('dest');
