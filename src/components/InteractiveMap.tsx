@@ -93,6 +93,8 @@ function escapeHtml(value: string): string {
   }[character] || character));
 }
 
+const NEPAL_BOUNDS: L.LatLngBoundsExpression = [[26.34, 80.0], [30.5, 88.3]];
+
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   activeRoute,
   onSelectAlternativeRoute,
@@ -294,10 +296,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       zoom: 7,
       minZoom: 6,
       maxZoom: 17,
+      maxBounds: NEPAL_BOUNDS,
+      maxBoundsViscosity: 1.0,
       zoomControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
 
     // Leaflet's own "Leaflet" branding link isn't required (BSD license) —
     // hide just that prefix. The tile provider's own attribution (OSM/Esri/
@@ -364,6 +370,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setGpsDetected(true);
       placeGpsMarker([latitude, longitude]);
       mapInstanceRef.current?.flyTo([latitude, longitude], 14, { duration: 1.5 });
+      setTimeout(() => {
+        mapInstanceRef.current?.fitBounds(NEPAL_BOUNDS, { padding: [20, 20], maxZoom: 8 });
+      }, 2000);
     };
 
     const handleError = () => {
