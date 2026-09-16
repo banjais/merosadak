@@ -18,27 +18,39 @@ jobs:
       - name: Sync data files to KV
         run: |
           cd worker
-          npx wrangler kv key put --binding DATA --remote "airports.json" --path "../public/data/airports.json"
-          npx wrangler kv key put --binding DATA --remote "bus-stations.json" --path "../public/data/bus-stations.json"
-          npx wrangler kv key put --binding DATA --remote "temples.json" --path "../public/data/temples.json"
-          npx wrangler kv key put --binding DATA --remote "tourist-places.json" --path "../public/data/tourist-places.json"
-          npx wrangler kv key put --binding DATA --remote "landmarks.json" --path "../public/data/landmarks.json"
-          npx wrangler kv key put --binding DATA --remote "district-hqs.json" --path "../public/data/district-hqs.json"
-          npx wrangler kv key put --binding DATA --remote "cities.json" --path "../public/data/cities.json"
-          npx wrangler kv key put --binding DATA --remote "places.json" --path "../public/data/places.json"
-          npx wrangler kv key put --binding DATA --remote "palika-names.json" --path "../public/data/palika-names.json"
-          npx wrangler kv key put --binding DATA --remote "highway/index.json" --path "../public/data/highway/index.json"
-          npx wrangler kv key put --binding DATA --remote "nepal_boundary.geojson" --path "../public/data/nepal_boundary.geojson"
-          npx wrangler kv key put --binding DATA --remote "distance-matrix.json" --path "../public/data/distance-matrix.json"
-          npx wrangler kv key put --binding DATA --remote "highway-info.json" --path "../public/data/highway-info.json"
-          npx wrangler kv key put --binding DATA --remote "blackspots.json" --path "../public/data/blackspots.json"
-          npx wrangler kv key put --binding DATA --remote "mountain-weather.json" --path "../public/data/mountain-weather.json"
-          npx wrangler kv key put --binding DATA --remote "traffic-corridors.json" --path "../public/data/traffic-corridors.json"
-          npx wrangler kv key put --binding DATA --remote "travel-time.json" --path "../public/data/travel-time.json"
-          npx wrangler kv key put --binding DATA --remote "incidents.json" --path "../public/data/incidents.json"
-          npx wrangler kv key put --binding DATA --remote "pois.json" --path "../public/data/pois.json"
-          npx wrangler kv key put --binding DATA --remote "user-reports.json" --path "../public/data/user-reports.json"
-           npx wrangler kv key put --binding DATA --remote "cities-and-junctions.json" --path "../public/data/cities-and-junctions.json"
+          set +e
+          for f in \
+            airports.json \
+            bus-stations.json \
+            temples.json \
+            tourist-places.json \
+            landmarks.json \
+            district-hqs.json \
+            cities.json \
+            places.json \
+            palika-names.json \
+            highway/index.json \
+            nepal_boundary.geojson \
+            distance-matrix.json \
+            highway-info.json \
+            blackspots.json \
+            mountain-weather.json \
+            traffic-corridors.json \
+            travel-time.json \
+            incidents.json \
+            pois.json \
+            user-reports.json \
+            cities-and-junctions.json
+          do
+            path="../public/data/$f"
+            if [ -f "$path" ]; then
+              echo "PUT $f"
+              npx wrangler kv key put --binding DATA --remote "$f" --path "$path" || echo "WARN: failed $f"
+            else
+              echo "SKIP missing $f"
+            fi
+          done
+          set -e
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
