@@ -437,27 +437,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setLocationMode('my_location');
       setShowSearchPanel(false);
       setNeedsRecalculation(false);
-
-      // Update URL silently
-      if (typeof window !== 'undefined' && window.history?.replaceState) {
-        const params = new URLSearchParams(window.location.search);
-        params.set('origin', fromId);
-        params.set('dest', toId);
-        params.set('vehicle', veh);
-        params.set('pref', pref);
-        if (terrainFilters.avoidHighPasses) params.set('avoidPasses', '1');
-        else params.delete('avoidPasses');
-        if (terrainFilters.requirePavedOnly) params.set('pavedOnly', '1');
-        else params.delete('pavedOnly');
-        if (terrainFilters.avoidSteepGrades) params.set('avoidSteep', '1');
-        else params.delete('avoidSteep');
-        if (terrainFilters.avoidActiveLandslideZones) params.set('avoidHazards', '1');
-        else params.delete('avoidHazards');
-        if (terrainFilters.maxElevationM) params.set('maxElev', String(terrainFilters.maxElevationM));
-        else params.delete('maxElev');
-        params.set('tab', 'route');
-        window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
-      }
     }, 200);
   };
 
