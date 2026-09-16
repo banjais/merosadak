@@ -122,7 +122,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     weather: L.LayerGroup;
     route: L.LayerGroup;
     alternatives: L.LayerGroup;
-    offlineOverlay: L.LayerGroup;
     nepalBorder: L.LayerGroup;
     provinces: L.LayerGroup;
   }>({
@@ -135,7 +134,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     weather: L.layerGroup(),
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
-    offlineOverlay: L.layerGroup(),
     nepalBorder: L.layerGroup(),
     provinces: L.layerGroup(),
   });
@@ -315,7 +313,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.traffic.addTo(map);
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
-    layersRef.current.offlineOverlay.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
 
@@ -555,41 +552,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
 
-  // Render Cached Offline Geographical Bounds Overlay
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const offlineGroup = layersRef.current.offlineOverlay;
-    offlineGroup.clearLayers();
-
-    // Nepal Bounding Box covered by cached offline pack (Lat: 26.3 to 30.5, Lng: 80.0 to 88.3)
-    // Plus key mountain corridor buffers
-    const nepalOfflineBounds: [number, number][] = [
-      [26.3, 80.0],
-      [26.3, 88.3],
-      [30.5, 88.3],
-      [30.5, 80.0],
-    ];
-
-    // Semi-transparent emerald offline availability polygon
-    const offlinePolygon = L.polygon(nepalOfflineBounds, {
-      color: '#10b981',
-      weight: 2,
-      opacity: 0.6,
-      fillColor: '#10b981',
-      fillOpacity: 0.12,
-      dashArray: '6, 6',
-    });
-
-    offlineGroup.addLayer(offlinePolygon);
-  }, []);
-
-  // Render Nepal International Border (always visible)
+  // Render Nepal Border (always visible) — uses official district boundary data covering all corners
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const borderGroup = layersRef.current.nepalBorder;
     borderGroup.clearLayers();
 
-    fetch('/data/nepal-international-border.geojson')
+    fetch('/data/nepal_boundary.geojson')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -602,14 +571,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         try {
           const geoJsonLayer = L.geoJSON(data, {
             style: {
-              color: '#dc2626',
-              weight: 3,
-              opacity: 0.9,
-              fill: false,
+              color: '#b91c1c',
+              weight: 2,
+              opacity: 0.85,
+              fillColor: '#7f1d1d',
+              fillOpacity: 0.12,
             },
             onEachFeature: (feature, layer) => {
-              if (feature.properties?.name) {
-                layer.bindTooltip(feature.properties.name, {
+              if (feature.properties?.ADM0_EN || feature.properties?.name) {
+                layer.bindTooltip('Nepal', {
                   sticky: true,
                   className: 'custom-dark-tooltip',
                 });
@@ -1233,6 +1203,23 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       routeGroup.addLayer(routeGlow);
       routeGroup.addLayer(routePolyline);
       routeGroup.addLayer(animatedFlow);
+    }
+
+    // Subtle aerial direct line connecting origin to destination
+    if (activeRoute.origin && activeRoute.destination) {
+      const aerialLine = L.polyline(
+        [[activeRoute.origin.lat, activeRoute.origin.lng], [activeRoute.destination.lat, activeRoute.destination.lng]],
+        {
+          color: '#94a3b8',
+          weight: 2,
+          opacity: 0.45,
+          dashArray: '6, 10',
+          lineCap: 'round',
+          lineJoin: 'round',
+          interactive: false,
+        }
+      );
+      routeGroup.addLayer(aerialLine);
     }
 
     // 3. Render Active Route Blackspot Danger Badges along the corridor
