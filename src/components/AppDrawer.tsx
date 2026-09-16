@@ -41,6 +41,8 @@ interface AppDrawerProps {
   onOpenLogin: () => void;
   onCycleMapStyle?: () => void;
   incidentsCount?: number;
+  hasActiveRoute?: boolean;
+  routeLabel?: string | null;
 }
 
 export const AppDrawer: React.FC<AppDrawerProps> = ({
@@ -59,6 +61,8 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenLogin,
   onCycleMapStyle,
   incidentsCount = 0,
+  hasActiveRoute = false,
+  routeLabel = null,
 }) => {
   const { user, loading, logout } = useAuth();
 
@@ -66,15 +70,12 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
 
   return (
     <>
-      {/* Drawer Overlay */}
       <div
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1100] transition-opacity animate-fadeIn"
         onClick={onClose}
       />
 
-      {/* Drawer Panel */}
       <aside className="fixed top-0 left-0 bottom-0 w-84 max-w-[88vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
-        {/* Drawer Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10">
@@ -98,9 +99,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </button>
         </div>
 
-        {/* Drawer Navigation Sections */}
         <div className="flex-1 overflow-y-auto p-3.5 space-y-5 custom-scrollbar">
-          {/* Main Navigation (Home) */}
           <div className="mb-2">
             <button
               onClick={() => {
@@ -126,21 +125,20 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </button>
           </div>
 
-          {/* Section 1: Highways, Corridors & Transit GIS */}
+          {hasActiveRoute ? (
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2.5 flex items-center justify-between">
-              <span>Highways &amp; Corridors</span>
+              <span>Along your route</span>
             </div>
+            {routeLabel && (
+              <p className="text-[10px] text-emerald-400/90 px-2.5 mb-2 font-medium truncate" title={routeLabel || undefined}>
+                {routeLabel}
+              </p>
+            )}
 
             <div className="space-y-1">
-
-
-              {/* Highway POIs & Fuel Stations */}
               <button
-                onClick={() => {
-                  onNavigateTab('pois');
-                  onClose();
-                }}
+                onClick={() => { onNavigateTab('pois'); onClose(); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
                   activeTab === 'pois'
                     ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm'
@@ -152,91 +150,115 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">POIs &amp; Fuel Stations</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Dhabas, petrol pumps &amp; DOR rescue</span>
+                    <span className="block font-bold">POIs & Landmarks</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Near this corridor only</span>
                   </div>
                 </div>
                 <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'pois' ? 'text-cyan-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
               </button>
 
-              {/* EV Charging Centers */}
               <button
-                onClick={() => {
-                  onNavigateTab('ev_charging');
-                  onClose();
-                }}
+                onClick={() => { onNavigateTab('ev_charging'); onClose(); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
                   activeTab === 'ev_charging'
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                    ? 'bg-lime-500/15 text-lime-300 border border-lime-500/40 shadow-sm'
                     : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`p-1.5 rounded-lg ${activeTab === 'ev_charging' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-emerald-400 group-hover:bg-slate-800'}`}>
+                  <div className={`p-1.5 rounded-lg ${activeTab === 'ev_charging' ? 'bg-lime-500 text-slate-950' : 'bg-slate-900 text-lime-400 group-hover:bg-slate-800'}`}>
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">EV Charging Centers</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Nepal highway fast-charge stations</span>
+                    <span className="block font-bold">EV Charging</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Along your route</span>
                   </div>
                 </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'ev_charging' ? 'text-emerald-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'ev_charging' ? 'text-lime-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
               </button>
 
-              {/* 80 National Highways */}
               <button
-                onClick={() => {
-                  onNavigateTab('highways');
-                  onClose();
-                }}
+                onClick={() => { onNavigateTab('incidents'); onClose(); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
-                  activeTab === 'highways'
-                    ? 'bg-purple-500/15 text-purple-300 border border-purple-500/40 shadow-sm'
+                  activeTab === 'incidents'
+                    ? 'bg-rose-500/15 text-rose-300 border border-rose-500/40 shadow-sm'
                     : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`p-1.5 rounded-lg ${activeTab === 'highways' ? 'bg-purple-500 text-white' : 'bg-slate-900 text-purple-400 group-hover:bg-slate-800'}`}>
+                  <div className={`p-1.5 rounded-lg ${activeTab === 'incidents' ? 'bg-rose-500 text-white' : 'bg-slate-900 text-rose-400 group-hover:bg-slate-800'}`}>
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block font-bold">Road alerts</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      {incidentsCount > 0 ? `${incidentsCount} live` : 'Corridor hazards'}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'incidents' ? 'text-rose-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+              </button>
+
+              <button
+                onClick={() => { onNavigateTab('weather'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
+                  activeTab === 'weather'
+                    ? 'bg-sky-500/15 text-sky-300 border border-sky-500/40 shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-1.5 rounded-lg ${activeTab === 'weather' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-sky-400 group-hover:bg-slate-800'}`}>
+                    <CloudFog className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="block font-bold">Weather & passes</span>
+                    <span className="text-[10px] text-slate-400 font-normal">On this corridor</span>
+                  </div>
+                </div>
+                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'weather' ? 'text-sky-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+              </button>
+
+              <button
+                onClick={() => { onNavigateTab('highways'); onClose(); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
+                  activeTab === 'highways'
+                    ? 'bg-violet-500/15 text-violet-300 border border-violet-500/40 shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-1.5 rounded-lg ${activeTab === 'highways' ? 'bg-violet-500 text-white' : 'bg-slate-900 text-violet-400 group-hover:bg-slate-800'}`}>
                     <Route className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block font-bold">National Highways Directory</span>
-                    <span className="text-[10px] text-slate-400 font-normal">All 80 routes (NH01–NH80)</span>
+                    <span className="block font-bold">Highways on route</span>
+                    <span className="text-[10px] text-slate-400 font-normal">NH codes you will use</span>
                   </div>
                 </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'highways' ? 'text-purple-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-              </button>
-
-              {/* Transit Driving Dialects */}
-              <button
-                onClick={() => {
-                  onNavigateTab('dialects');
-                  onClose();
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left group ${
-                  activeTab === 'dialects'
-                    ? 'bg-teal-500/15 text-teal-300 border border-teal-500/40 shadow-sm'
-                    : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-1.5 rounded-lg ${activeTab === 'dialects' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-teal-400 group-hover:bg-slate-800'}`}>
-                    <Languages className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="block font-bold">Transit Driving Dialects</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Maithili, Bhojpuri, Doteli terms</span>
-                  </div>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'dialects' ? 'text-teal-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'highways' ? 'text-violet-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
               </button>
             </div>
           </div>
+          ) : (
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-3 space-y-1.5">
+            <p className="text-[11px] font-semibold text-slate-200">Plan a trip first</p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Choose origin and destination, then confirm. Weather, POIs, EV chargers, road alerts and highway info appear for <span className="text-slate-300 font-medium">that corridor only</span> — not all of Nepal.
+            </p>
+            <button
+              onClick={() => { onNavigateTab('route'); onClose(); }}
+              className="mt-1 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold hover:bg-emerald-500/25 transition"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Open route planner
+            </button>
+          </div>
+          )}
 
-          {/* Section 2: Distance & Toll Calculators */}
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2.5">
-              Calculators &amp; Toll Rates
+              Calculators & Toll Rates
             </div>
             <div className="space-y-1">
               <button
@@ -271,7 +293,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   </div>
                   <div>
                     <span className="block font-bold">Nagdhunga Tunnel Tolls</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Vehicle tariffs &amp; bypass rates</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Vehicle tariffs & bypass rates</span>
                   </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400" />
@@ -279,14 +301,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Field Tools & Offline GIS */}
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2.5">
-              Trip Tools &amp; Offline
+              Trip Tools & Offline
             </div>
             <div className="space-y-1">
-
-
               <button
                 onClick={() => {
                   onOpenReportModal();
@@ -300,13 +319,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   </div>
                   <div>
                     <span className="block font-bold">Report Road Hazard</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Crowdsource blockades &amp; slides</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Crowdsource blockades & slides</span>
                   </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400" />
               </button>
-
-
 
               <button
                 onClick={() => {
@@ -321,7 +338,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   </div>
                   <div>
                     <span className="block font-bold">Offline GIS Bundle</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Download 79 highways &amp; palikas</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Download for offline use</span>
                   </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400" />
@@ -331,12 +348,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
 
         </div>
 
-        {/* Drawer Footer */}
         <div className="p-3.5 border-t border-slate-800 bg-slate-900/60 text-xs text-slate-400">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-slate-300 truncate">Nepal DoR &amp; DHM GIS</span>
+              <span className="text-[11px] font-medium text-slate-300 truncate">Nepal DoR & DHM GIS</span>
             </div>
             {loading ? (
               <span className="text-[10px] text-slate-500 shrink-0">Authenticating...</span>
