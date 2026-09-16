@@ -16,7 +16,7 @@ export interface TerrainFilterOptions {
   maxElevationM?: number; // Optional altitude cap (e.g., 1400m, 1800m, 2200m)
 }
 
-export type POICategory = 'ev_charger' | 'fuel_station' | 'food_rest' | 'scenic_pass' | 'emergency_dor' | 'toll_plaza';
+export type POICategory = 'ev_charger' | 'fuel_station' | 'food_rest' | 'scenic_pass' | 'emergency_dor' | 'toll_plaza' | 'airport' | 'bus_station' | 'temple' | 'attraction' | 'landmark' | 'poi' | 'place';
 
 export type TrafficLevel = 'smooth' | 'moderate' | 'heavy' | 'standstill' | 'alternating_1way';
 
@@ -49,13 +49,13 @@ export interface HighwayPOI {
   name: string;
   nepaliName?: string;
   category: POICategory;
-  highwayCode: string;
-  locationName: string;
+  highwayCode?: string;
+  locationName?: string;
   lat: number;
   lng: number;
-  rating: number;
-  description: string;
-  facilities: string[];
+  rating?: number;
+  description?: string;
+  facilities?: string[];
   contactNumber?: string;
   evSpecs?: {
     powerKw: number;
@@ -445,4 +445,3 @@ export interface EmergencyDispatchData {
   passengerCount?: number;
   batteryStatus?: string;
 }
-
