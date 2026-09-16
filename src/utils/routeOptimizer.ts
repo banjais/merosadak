@@ -1,6 +1,7 @@
 import { CityNode, RoutePlanResult, VehicleType, RoutePreference, RoadIncident, RouteStep, EVCharger, SegmentSafetyData, TerrainFilterOptions } from '../types';
 import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
+import { preloadRoadGraph, findRoadGraphRoute } from './roadGraphRouter';
 
 interface GraphEdge {
   fromId: string;
@@ -383,6 +384,58 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
   }
 ];
 
+// ==========================================
+// REAL ROAD GEOMETRY OVERRIDE
+// ==========================================
+// ROAD_NETWORK_EDGES above was hand-estimated (straight-ish 3-5 point lines,
+// rounded km). Once the real DoR highway network graph (built from the actual
+// survey link geometry in public/data/highway/*.geojson by
+// scripts/build-road-graph.cjs) has loaded, replace each edge's distance and
+// path with the real on-highway distance and coordinate path, so the map
+// draws the actual road and trip planning uses real road-km instead of an
+// estimate. Road status/surface/elevation stay as curated (the raw survey
+// data doesn't carry live condition info).
+let realRoadDataApplied = false;
+function applyRealRoadDataToEdges(): void {
+  if (realRoadDataApplied) return;
+  let updated = 0;
+  let skippedAsImplausible = 0;
+  for (const edge of ROAD_NETWORK_EDGES) {
+    const real = findRoadGraphRoute(edge.fromId, edge.toId);
+    if (!real || real.pathCoordinates.length < 2) continue;
+
+    // Sanity guard: the source highway link data has real coverage gaps, which
+    // occasionally forces the pathfinder into an absurd long detour instead of
+    // the true short local road. If the real-graph distance is wildly larger
+    // than the curated estimate, that's a data-gap artifact, not a real route
+    // — keep the curated estimate for that edge rather than replace it with a
+    // broken one.
+    const oldDistanceKm = edge.distanceKm;
+    if (oldDistanceKm > 0 && real.distanceKm > oldDistanceKm * 2.5) {
+      skippedAsImplausible++;
+      continue;
+    }
+
+    edge.distanceKm = real.distanceKm;
+    edge.intermediateCoords = real.pathCoordinates;
+    if (oldDistanceKm > 0) {
+      edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real.distanceKm / oldDistanceKm));
+    }
+    updated++;
+  }
+  realRoadDataApplied = true;
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line no-console
+    console.info(`[roadGraph] Applied real highway geometry to ${updated}/${ROAD_NETWORK_EDGES.length} route edges (${skippedAsImplausible} skipped as implausible detours, kept curated estimate)`);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  preloadRoadGraph().then((g) => {
+    if (g) applyRealRoadDataToEdges();
+  });
+}
+
 // Helper to calculate cost and fuel
 const VEHICLE_CONFIGS: Record<VehicleType, { mileageKmPerL: number; fuelCostPerL: number; speedMultiplier: number; label: string }> = {
   car: { mileageKmPerL: 14, fuelCostPerL: 172, speedMultiplier: 1.0, label: 'Car / Hatchback / Sedan' },
@@ -466,6 +519,84 @@ function buildAerialRouteResult(
     pathCoordinates: [[origin.lat, origin.lng], [destination.lat, destination.lng]],
     dataSource: 'Aerial Distance Estimation',
     corridorsTraversed: 'None — no Department of Roads highway corridor covers this origin-destination pair'
+  };
+}
+
+// Builds a route result for a city pair that has no curated ROAD_NETWORK_EDGES
+// path, but IS reachable via the real DoR highway network graph. Distance and
+// the drawn path come straight from actual highway geometry; live condition
+// data (status/surface/hazards) isn't available for this pair since it falls
+// outside the curated network, so those fields stay honestly neutral.
+function buildRoadGraphRouteResult(
+  origin: CityNode,
+  destination: CityNode,
+  preference: RoutePreference,
+  vehicle: VehicleType
+): RoutePlanResult | null {
+  const real = findRoadGraphRoute(origin.id, destination.id);
+  if (!real || real.pathCoordinates.length < 2) return null;
+
+  // Same data-gap sanity guard as applyRealRoadDataToEdges: an implausible
+  // detour (vs straight-line distance) means the source link data has a gap
+  // here, not a real route — fall back to the honest aerial estimate instead.
+  const aerialKm = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+  if (real.distanceKm > aerialKm * 4) return null;
+
+  const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
+  const estimatedMinutes = Math.round((real.distanceKm / (vehicleConfig.mileageKmPerL * 0.6)) * 60);
+  const fuelLiters = Math.round((real.distanceKm / vehicleConfig.mileageKmPerL) * 10) / 10;
+  const highwaysLabel = real.highwaysUsed.filter((h) => h && h !== 'undefined').join(' → ') || 'Local road network';
+
+  return {
+    id: `roadgraph-${origin.id}-${destination.id}-${preference}-${vehicle}`,
+    origin,
+    destination,
+    preference,
+    vehicle,
+    routeName: 'Highway Route (real road distance)',
+    routeBadge: '🛣️ DoR Network',
+    routeColor: '#64748b',
+    viaHighlights: highwaysLabel,
+    totalDistanceKm: real.distanceKm,
+    estimatedTimeMinutes: estimatedMinutes,
+    roadConditionScore: 0,
+    safetyIndex: {
+      overallScore: 0,
+      safetyTier: 'moderate',
+      tierLabel: 'Unknown',
+      color: '#94a3b8',
+      roadQualityAverage: 0,
+      accidentRiskSummary: { safeKm: 0, moderateKm: 0, elevatedRiskKm: 0, highHazardKm: 0, safePercentage: 0 },
+      totalHistoricalAnnualAccidents: 0,
+      activeBlackspots: [],
+      keySafetyDirectives: ['This pair falls outside the curated highway-condition network; distance and path follow the real road, but live status/hazard data is not available for it yet.']
+    },
+    statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
+    fuelEstimate: {
+      liters: fuelLiters,
+      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerL),
+      avgMileageKmPerLiter: vehicleConfig.mileageKmPerL
+    },
+    evEstimate: {
+      kwhRequired: Math.round((real.distanceKm / 6.2) * 10) / 10,
+      recommendedChargingStops: [],
+      batteryUsagePercent: Math.round(((real.distanceKm / 6.2) / 50) * 100)
+    },
+    totalTollCostNpr: 0,
+    elevationGainM: Math.abs(destination.elevationM - origin.elevationM),
+    maxElevationM: Math.max(origin.elevationM, destination.elevationM),
+    incidentsOnRoute: [],
+    steps: [{
+      instruction: `Follow ${highwaysLabel} from ${origin.name} to ${destination.name}`,
+      highwayCode: real.highwaysUsed[0] || 'LOCAL',
+      distanceKm: real.distanceKm,
+      durationMinutes: estimatedMinutes,
+      roadStatus: 'clear',
+      surface: 'blacktopped_fair'
+    }],
+    pathCoordinates: real.pathCoordinates,
+    dataSource: 'DoR Highway Network Geometry',
+    corridorsTraversed: highwaysLabel
   };
 }
 
@@ -1025,7 +1156,8 @@ export function findOptimizedRoute(
     const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
     const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
     if (origin && destination) {
-      return buildAerialRouteResult(origin, destination, preference, vehicle);
+      return buildRoadGraphRouteResult(origin, destination, preference, vehicle)
+        || buildAerialRouteResult(origin, destination, preference, vehicle);
     }
     return null;
   }
