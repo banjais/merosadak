@@ -122,7 +122,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     weather: L.LayerGroup;
     route: L.LayerGroup;
     alternatives: L.LayerGroup;
-    offlineOverlay: L.LayerGroup;
     nepalBorder: L.LayerGroup;
     provinces: L.LayerGroup;
   }>({
@@ -135,7 +134,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     weather: L.layerGroup(),
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
-    offlineOverlay: L.layerGroup(),
     nepalBorder: L.layerGroup(),
     provinces: L.layerGroup(),
   });
@@ -315,7 +313,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.traffic.addTo(map);
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
-    layersRef.current.offlineOverlay.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
 
@@ -554,34 +551,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       }
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
-
-  // Render Cached Offline Geographical Bounds Overlay
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const offlineGroup = layersRef.current.offlineOverlay;
-    offlineGroup.clearLayers();
-
-    // Nepal Bounding Box covered by cached offline pack (Lat: 26.3 to 30.5, Lng: 80.0 to 88.3)
-    // Plus key mountain corridor buffers
-    const nepalOfflineBounds: [number, number][] = [
-      [26.3, 80.0],
-      [26.3, 88.3],
-      [30.5, 88.3],
-      [30.5, 80.0],
-    ];
-
-    // Semi-transparent emerald offline availability polygon
-    const offlinePolygon = L.polygon(nepalOfflineBounds, {
-      color: '#10b981',
-      weight: 2,
-      opacity: 0.6,
-      fillColor: '#10b981',
-      fillOpacity: 0.12,
-      dashArray: '6, 6',
-    });
-
-    offlineGroup.addLayer(offlinePolygon);
-  }, []);
 
   // Render Nepal International Border (always visible)
   useEffect(() => {
