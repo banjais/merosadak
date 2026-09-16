@@ -204,6 +204,8 @@ function AppContent() {
           setActiveFeature(urlTab as ActiveFeatureType);
         }
 
+        history.replaceState(null, '', window.location.pathname);
+
         // No active route auto-selected on initial load
       }
     } catch (e) {
