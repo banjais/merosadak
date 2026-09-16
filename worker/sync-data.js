@@ -83,6 +83,10 @@ async function main() {
   const dataDir = path.join(__dirname, '..', 'public', 'data');
   const files = [
     'airports.json',
+    'bus-stations.json',
+    'temples.json',
+    'tourist-places.json',
+    'landmarks.json',
     'district-hqs.json',
     'cities.json',
     'places.json',

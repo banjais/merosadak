@@ -19,6 +19,10 @@ jobs:
         run: |
           cd worker
           npx wrangler kv key put --binding DATA --remote "airports.json" --path "../public/data/airports.json"
+          npx wrangler kv key put --binding DATA --remote "bus-stations.json" --path "../public/data/bus-stations.json"
+          npx wrangler kv key put --binding DATA --remote "temples.json" --path "../public/data/temples.json"
+          npx wrangler kv key put --binding DATA --remote "tourist-places.json" --path "../public/data/tourist-places.json"
+          npx wrangler kv key put --binding DATA --remote "landmarks.json" --path "../public/data/landmarks.json"
           npx wrangler kv key put --binding DATA --remote "district-hqs.json" --path "../public/data/district-hqs.json"
           npx wrangler kv key put --binding DATA --remote "cities.json" --path "../public/data/cities.json"
           npx wrangler kv key put --binding DATA --remote "places.json" --path "../public/data/places.json"
