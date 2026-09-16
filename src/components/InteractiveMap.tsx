@@ -137,6 +137,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
     nepalBorder: L.layerGroup(),
+    outsideMask: L.layerGroup(),
     provinces: L.layerGroup(),
   });
 
@@ -319,6 +320,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.traffic.addTo(map);
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
+    layersRef.current.outsideMask.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
 
@@ -561,10 +563,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
 
-  // Render Nepal Border (always visible) — uses official province boundary data covering all corners including Lipulekh/Limpiyadhura
+  // Render White Mask (covers everything OUTSIDE Nepal) and Nepal Border Outline
   useEffect(() => {
     if (!mapInstanceRef.current) return;
+    const maskGroup = layersRef.current.outsideMask;
     const borderGroup = layersRef.current.nepalBorder;
+    maskGroup.clearLayers();
     borderGroup.clearLayers();
 
     fetch('/data/nepal-provinces.geojson')
@@ -578,13 +582,46 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           return;
         }
         try {
-          const geoJsonLayer = L.geoJSON(data, {
+          const worldCorners: L.LatLngExpression[] = [
+            [-180, -90], [180, -90], [180, 90], [-180, 90],
+          ];
+          const holes: L.LatLngExpression[][] = [];
+
+          data.features.forEach((feature: any) => {
+            const geom = feature.geometry;
+            if (!geom) return;
+            const collectRings = (rings: any[]) => {
+              rings.forEach((ring: any[]) => {
+                holes.push(ring.map((coord: [number, number]) => [coord[1], coord[0]] as L.LatLngExpression));
+              });
+            };
+            if (geom.type === 'Polygon') {
+              collectRings(geom.coordinates);
+            } else if (geom.type === 'MultiPolygon') {
+              geom.coordinates.forEach((polygon: any[]) => collectRings(polygon));
+            }
+          });
+
+          const mask = L.polygon(
+            [worldCorners, ...holes] as unknown as L.LatLngExpression[][],
+            {
+              fillColor: '#ffffff',
+              fillOpacity: 1.0,
+              color: 'transparent',
+              weight: 0,
+              interactive: false,
+            },
+          );
+          maskGroup.addLayer(mask);
+          mask.bringToBack();
+
+          const border = L.geoJSON(data, {
             style: {
               color: '#b91c1c',
-              weight: 2,
-              opacity: 0.85,
+              weight: 2.5,
+              opacity: 0.9,
               fillColor: '#7f1d1d',
-              fillOpacity: 0.12,
+              fillOpacity: 0.08,
             },
             onEachFeature: (feature, layer) => {
               const pname = feature.properties?.name || feature.properties?.PROVINCE || feature.properties?.PROV_NM;
@@ -596,9 +633,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               }
             },
           });
-          borderGroup.addLayer(geoJsonLayer);
+          borderGroup.addLayer(border);
+
+          mapInstanceRef.current?.invalidateSize();
         } catch (e) {
-          console.error('Failed to render Nepal border:', e);
+          console.error('Failed to render Nepal mask/border:', e);
         }
       })
       .catch(err => console.warn('Failed to load Nepal border:', err));

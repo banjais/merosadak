@@ -878,7 +878,7 @@ function AppContent() {
         </div>
 
         {/* Interactive Map After Route Planner */}
-        <div className="relative z-0 w-full h-[50vh]">
+        <div className="relative z-0 w-full h-[100dvh]">
           <InteractiveMap
             activeRoute={activeRoute}
             isDimmed={!activeRoute}
