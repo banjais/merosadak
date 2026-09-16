@@ -37,10 +37,24 @@ Called directly from the browser:
 - OSRM (routing, distance, ETA)
 - Open-Meteo (weather)
 
-Called from the Worker (proxied, see table above):
+Called from the Worker (proxied):
 - Open-Meteo (weather, primary)
 - Overpass (POIs, primary)
 - Nominatim (POIs, fallback)
+
+## Optional free / generous free-tier APIs (new)
+These improve reliability for Nepal road travel. All are optional — if the
+key is unset the Worker simply skips that source.
+
+| Service              | Variable                     | Purpose                                      | Free tier                          |
+|----------------------|------------------------------|----------------------------------------------|------------------------------------|
+| OpenRouteService     | `OPENROUTESERVICE_API_KEY`   | Routing + elevation alternative to OSRM      | Free key (openrouteservice.org)    |
+| LocationIQ           | `LOCATIONIQ_API_KEY`         | Geocoding / search fallback                  | ~5,000 req/day                     |
+| OpenCage             | `OPENCAGE_API_KEY`           | Geocoding / search fallback                  | ~2,500 req/day                     |
+| WAQI / AQICN         | `WAQI_API_KEY`               | Air quality (Kathmandu & major cities)       | Free key (aqicn.org)               |
+| OpenTopoData         | (no key)                     | Elevation for mountain highways              | Public instances                   |
+
+See `worker/.env.example` and the root `.env.example` for full details.
 
 ## Where paid keys live
 Nothing in `public/` ever holds a real API key — that folder is served
@@ -53,7 +67,7 @@ wrangler secret put <NAME>
 wrangler deploy
 ```
 
-See `worker/.env.example` for the full list of six secrets the worker
+See `worker/.env.example` for the full list of secrets the worker
 reads, what each one is a primary vs. fallback source for, and where to
 get a free key. Short version — every Worker-proxied endpoint tries a
 free/keyless source first and only falls back to a paid key if that fails:
@@ -64,6 +78,9 @@ free/keyless source first and only falls back to a paid key if that fails:
 | `/api/weather` | Open-Meteo *(free)* | OpenWeatherMap *(key)* |
 | `/api/pois` | Overpass *(free)* | Nominatim *(free)* |
 | `/api/assistant` | Gemini primary model *(key)* | Gemini secondary model *(key)* |
+| Routing (future) | OSRM / OpenRouteService | — |
+| Geocoding (future) | Photon / Nominatim | LocationIQ or OpenCage |
+| Air quality (future) | WAQI | — |
 
 If a secret is unset, that fallback tier is simply skipped — nothing
 crashes, the response just degrades gracefully to the next source (or
