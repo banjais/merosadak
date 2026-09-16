@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RoadIncident, UserRoadReport, RoutePlanResult } from '../types';
 import { AlertTriangle, ShieldCheck, ThumbsUp, Radio, MapPin, Clock, Filter, CheckCircle2, ChevronRight, ChevronDown, Navigation, Globe } from 'lucide-react';
 import { isPointNearRoute } from '../utils/geoUtils';
+import { DataAttribution, labelDataSource } from './DataAttribution';
 
 interface RoadAlertsFeedProps {
   incidents: RoadIncident[];
@@ -10,6 +11,8 @@ interface RoadAlertsFeedProps {
   onOpenReportModal: () => void;
   onUpvoteReport?: (id: string) => void;
   onSelectIncident?: (incident: RoadIncident) => void;
+  feedSource?: string | null;
+  feedSyncedAt?: string | null;
 }
 
 export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
@@ -19,14 +22,14 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
   onOpenReportModal,
   onUpvoteReport,
   onSelectIncident,
+  feedSource,
+  feedSyncedAt,
 }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'dor' | 'community'>('dor');
-  // Default to corridor-only when user has a chosen route/location so we don't show everywhere reports
   const [focusCorridorOnly, setFocusCorridorOnly] = useState<boolean>(!!activeRoute);
   const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
 
-  // Filter by corridor if selected and activeRoute exists
   const routeIncidents = incidents.filter((inc) => {
     if (!focusCorridorOnly || !activeRoute) return true;
     return isPointNearRoute(
@@ -51,7 +54,6 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
         35
       );
     }
-    // Fallback match on route origin/dest names
     const repLoc = rep.location.toLowerCase();
     const origMatch = activeRoute.origin.name.toLowerCase().includes(repLoc);
     const destMatch = activeRoute.destination.name.toLowerCase().includes(repLoc);
@@ -65,7 +67,11 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Scope Selector: Focus Chosen Location vs Show Everywhere */}
+      <DataAttribution
+        source={labelDataSource(feedSource || 'dor+waze+local')}
+        updatedAt={feedSyncedAt || undefined}
+        note="Each card shows its own source (DoR / Waze / Community). Feed merges official DoR, Waze when configured, and local reports."
+      />
       {activeRoute && (
         <div className="bg-slate-950/90 border border-slate-800 p-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center space-x-2">
@@ -103,7 +109,6 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
         </div>
       )}
 
-      {/* Header Summary & Live Metrics */}
       <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 shrink-0">
@@ -155,9 +160,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
         </div>
       </div>
 
-      {/* Main Tabs (Icon-First) & Filter Chips */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
-        {/* Segmented Icon Mode Toggle */}
         <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
           <button
             onClick={() => setActiveTab('dor')}
@@ -186,7 +189,6 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
           </button>
         </div>
 
-        {/* Filter Chips (Icon-Focused) */}
         <div className="flex items-center space-x-1 overflow-x-auto text-xs pb-1 sm:pb-0">
           {[
             { id: 'all', icon: '🌐', label: 'All' },
@@ -210,7 +212,6 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
         </div>
       </div>
 
-      {/* Incidents List */}
       {activeTab === 'dor' ? (
         <div className="space-y-3">
           {filteredIncidents.length === 0 ? (
@@ -289,7 +290,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
                     </span>
                     {incident.estimatedClearance && (
                       <span className="text-amber-400 font-medium">
-                        ⏱️ Est. Clearance: <strong>{incident.estimatedClearance}</strong>
+                        Est. Clearance: <strong>{incident.estimatedClearance}</strong>
                       </span>
                     )}
                   </div>
@@ -316,7 +317,6 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
           )}
         </div>
       ) : (
-        /* Community Reports Feed */
         <div className="space-y-3">
           {routeReports.length === 0 ? (
             <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl">
@@ -378,10 +378,10 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
                     <span className="text-[11px]">Reported by: <strong className="text-slate-200">{rep.reporterName}</strong></span>
                     <button
                       onClick={() => onUpvoteReport && onUpvoteReport(rep.id)}
-                      className="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition"
+                      className="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 rounded-lg transition"
                     >
-                      <ThumbsUp className="w-3 h-3 text-emerald-400" />
-                      <span>Confirm / Upvote ({rep.upvotes})</span>
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      <span className="font-bold">{rep.upvotes}</span>
                     </button>
                   </div>
                 </div>
