@@ -290,6 +290,12 @@ export interface RouteSafetyIndex {
   keySafetyDirectives: string[];
 }
 
+export type RoadClassificationTier =
+  | 'national_highway'
+  | 'provincial_feeder'
+  | 'local_palika'
+  | 'community_track';
+
 export interface RouteStep {
   instruction: string;
   highwayCode?: string;
@@ -300,6 +306,8 @@ export interface RouteStep {
   warning?: string;
   elevationChangeM?: number;
   safetyData?: SegmentSafetyData;
+  roadClassification?: RoadClassificationTier;
+  certificationBadge?: string;
 }
 
 export interface RouteSimulationControls {
@@ -326,6 +334,15 @@ export interface RoutePlanResult {
   viaHighlights?: string;
   scenicRating?: number; // 1 to 5
   totalDistanceKm: number;
+  aerialDistanceKm?: number;
+  circuityFactor?: number; // e.g. 1.38 (38% mountain detour)
+  roadTierBreakdown?: {
+    highwayKm: number;
+    provincialKm: number;
+    localKm: number;
+    communityKm: number;
+    certifiedPercent: number;
+  };
   estimatedTimeMinutes: number;
   roadConditionScore: number; // 0 - 100
   safetyIndex: RouteSafetyIndex;
@@ -366,7 +383,13 @@ export interface RoutePlanResult {
     bestDepartureWindow: string;
     emergencyContacts: string[];
   };
-   dataSource?: string;
+  dataSource?: string;
+  dataProvenance?: {
+    source: string;
+    version: string;
+    updatedAt: string;
+    certifiedAuthority: string;
+  };
   corridorsTraversed?: string;
 }
 

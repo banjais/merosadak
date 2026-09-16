@@ -70,9 +70,11 @@ import {
   LocateFixed,
   Receipt,
   Scale,
-   Milestone,
-   Route,
- } from 'lucide-react';
+  Milestone,
+  Route,
+  Award,
+} from 'lucide-react';
+import { DataAttribution } from './DataAttribution';
 import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
@@ -1558,6 +1560,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-white font-display">
                     {routePlan.totalDistanceKm} <span className="text-sm font-normal text-slate-400">km</span>
                   </div>
+                  {routePlan.aerialDistanceKm && (
+                    <div className="text-[11px] text-slate-400 flex items-center space-x-1.5 mt-0.5">
+                      <span>Air: <strong className="text-slate-200">{routePlan.aerialDistanceKm} km</strong></span>
+                      <span>•</span>
+                      <span className="text-amber-400 font-bold" title="Mountain terrain winding detour">
+                        +{Math.round(((routePlan.totalDistanceKm - routePlan.aerialDistanceKm) / routePlan.aerialDistanceKm) * 100)}% detour
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
                   <span className="text-emerald-400 font-medium">✓ {routePlan.statusSummary.clearKm} km clear</span>
@@ -1639,6 +1650,59 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 );
               })()}
             </div>
+
+            {/* Road Network Classification & Certification Composition */}
+            {routePlan.roadTierBreakdown && (
+              <div className="bg-slate-900/60 p-3 sm:p-3.5 rounded-xl border border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="flex items-center space-x-1.5 font-bold">
+                    <Award className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Road Classification & Provenance</span>
+                  </span>
+                  <span className="text-emerald-400 font-bold text-[11px]">
+                    {routePlan.roadTierBreakdown.certifiedPercent}% DoR Federal Certified Highway
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
+                  <div
+                    className="bg-emerald-500 h-full"
+                    style={{ width: `${routePlan.roadTierBreakdown.certifiedPercent}%` }}
+                    title={`DoR Certified: ${routePlan.roadTierBreakdown.highwayKm} km`}
+                  />
+                  {routePlan.roadTierBreakdown.certifiedPercent < 100 && (
+                    <div
+                      className="bg-cyan-500 h-full"
+                      style={{ width: `${100 - routePlan.roadTierBreakdown.certifiedPercent}%` }}
+                      title={`Provincial / Local Palika Links: ${routePlan.roadTierBreakdown.localKm + routePlan.roadTierBreakdown.provincialKm + routePlan.roadTierBreakdown.communityKm} km`}
+                    />
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex items-center space-x-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span>Federal Highway (NH01–NH80): <strong>{routePlan.roadTierBreakdown.highwayKm} km</strong></span>
+                    </span>
+                    {(routePlan.roadTierBreakdown.provincialKm > 0 || routePlan.roadTierBreakdown.localKm > 0) && (
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+                        <span>Local Palika Links: <strong>{routePlan.roadTierBreakdown.provincialKm + routePlan.roadTierBreakdown.localKm} km</strong></span>
+                      </span>
+                    )}
+                    {routePlan.roadTierBreakdown.communityKm > 0 && (
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span>Unpaved Track: <strong>{routePlan.roadTierBreakdown.communityKm} km</strong></span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-slate-500 font-mono text-[10px]">
+                    Detour: {routePlan.circuityFactor || 1.0}×
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Route Terrain & Surface Info */}
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
