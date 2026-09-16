@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RoadIncident, UserRoadReport, RoutePlanResult } from '../types';
-import { AlertTriangle, ShieldCheck, ThumbsUp, Radio, MapPin, Clock, Filter, CheckCircle2, ChevronRight, Navigation, Globe } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, ThumbsUp, Radio, MapPin, Clock, Filter, CheckCircle2, ChevronRight, ChevronDown, Navigation, Globe } from 'lucide-react';
 import { isPointNearRoute } from '../utils/geoUtils';
 
 interface RoadAlertsFeedProps {
@@ -24,6 +24,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
   const [activeTab, setActiveTab] = useState<'dor' | 'community'>('dor');
   // Default to corridor-only when user has a chosen route/location so we don't show everywhere reports
   const [focusCorridorOnly, setFocusCorridorOnly] = useState<boolean>(!!activeRoute);
+  const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
 
   // Filter by corridor if selected and activeRoute exists
   const routeIncidents = incidents.filter((inc) => {
@@ -327,40 +328,65 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
               </p>
             </div>
           ) : (
-            routeReports.map((rep) => (
-              <div
-                key={rep.id}
-                className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-white text-sm">{rep.location}</span>
-                    <span className="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-semibold">
-                      {rep.highwayCode}
-                    </span>
-                    <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px] uppercase font-bold capitalize">
-                      {rep.incidentType.replace('_', ' ')}
-                    </span>
+            routeReports.map((rep) => {
+              const isExpanded = expandedReports.has(rep.id);
+              const shortDesc = rep.description.length > 120
+                ? rep.description.slice(0, 120) + '...'
+                : rep.description;
+              const showExpand = rep.description.length > 120;
+
+              return (
+                <div
+                  key={rep.id}
+                  className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-white text-sm">{rep.location}</span>
+                      <span className="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-semibold">
+                        {rep.highwayCode}
+                      </span>
+                      <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px] uppercase font-bold capitalize">
+                        {rep.incidentType.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500">{rep.createdAt}</span>
                   </div>
-                  <span className="text-[11px] text-slate-500">{rep.createdAt}</span>
-                </div>
 
-                <p className="text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
-                  {rep.description}
-                </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+                      {isExpanded ? rep.description : shortDesc}
+                    </p>
+                    {showExpand && (
+                      <button
+                        onClick={() => setExpandedReports(prev => {
+                          const next = new Set(prev);
+                          if (next.has(rep.id)) next.delete(rep.id);
+                          else next.add(rep.id);
+                          return next;
+                        })}
+                        className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-sky-400 hover:text-sky-300 transition"
+                        aria-label={isExpanded ? 'Collapse report' : 'Expand report'}
+                      >
+                        <span>{isExpanded ? 'Show less' : 'Show more'}</span>
+                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      </button>
+                    )}
+                  </div>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                  <span className="text-[11px]">Reported by: <strong className="text-slate-200">{rep.reporterName}</strong></span>
-                  <button
-                    onClick={() => onUpvoteReport && onUpvoteReport(rep.id)}
-                    className="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition"
-                  >
-                    <ThumbsUp className="w-3 h-3 text-emerald-400" />
-                    <span>Confirm / Upvote ({rep.upvotes})</span>
-                  </button>
+                  <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                    <span className="text-[11px]">Reported by: <strong className="text-slate-200">{rep.reporterName}</strong></span>
+                    <button
+                      onClick={() => onUpvoteReport && onUpvoteReport(rep.id)}
+                      className="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition"
+                    >
+                      <ThumbsUp className="w-3 h-3 text-emerald-400" />
+                      <span>Confirm / Upvote ({rep.upvotes})</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
