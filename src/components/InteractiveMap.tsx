@@ -114,7 +114,8 @@ function createNepalTileLayer(
       const tileBounds = this._tileCoordsToBounds(coords);
       const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
       if (tileBounds.intersects(nepalBounds)) {
-        const s = this._getSubdomain(coords);
+        const sdIndex = (coords.x + coords.y) % (this.options.subdomains?.length || 3);
+        const s = (this.options.subdomains || 'abc')[sdIndex];
         let tileUrl = this.options.url.replace('{s}', s);
         tileUrl = L.Util.template(tileUrl, {
           x: coords.x,
