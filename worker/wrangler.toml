@@ -21,3 +21,9 @@ DOR_GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1gfbACf6IkjNhrC_x
 #   WAZE_FEED_URL
 #   UPSTASH_REDIS_REST_URL
 #   UPSTASH_REDIS_REST_TOKEN
+#
+# Optional free / generous free-tier APIs (see worker/.env.example):
+#   OPENROUTESERVICE_API_KEY   # routing + elevation alternative
+#   LOCATIONIQ_API_KEY         # geocoding fallback
+#   OPENCAGE_API_KEY           # geocoding fallback
+#   WAQI_API_KEY               # air quality (Kathmandu etc.)
