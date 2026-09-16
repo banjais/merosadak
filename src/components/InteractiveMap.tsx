@@ -552,13 +552,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
 
-  // Render Nepal International Border (always visible)
+  // Render Nepal Border (always visible) — uses official district boundary data covering all corners
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const borderGroup = layersRef.current.nepalBorder;
     borderGroup.clearLayers();
 
-    fetch('/data/nepal-international-border.geojson')
+    fetch('/data/nepal_boundary.geojson')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -571,14 +571,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         try {
           const geoJsonLayer = L.geoJSON(data, {
             style: {
-              color: '#dc2626',
-              weight: 3,
-              opacity: 0.9,
-              fill: false,
+              color: '#b91c1c',
+              weight: 2,
+              opacity: 0.85,
+              fillColor: '#7f1d1d',
+              fillOpacity: 0.12,
             },
             onEachFeature: (feature, layer) => {
-              if (feature.properties?.name) {
-                layer.bindTooltip(feature.properties.name, {
+              if (feature.properties?.ADM0_EN || feature.properties?.name) {
+                layer.bindTooltip('Nepal', {
                   sticky: true,
                   className: 'custom-dark-tooltip',
                 });
