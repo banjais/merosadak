@@ -230,6 +230,7 @@ export interface CityNode {
   nepaliName: string;
   district: string;
   province: string;
+  cityType?: string;
   lat: number;
   lng: number;
   elevationM: number;

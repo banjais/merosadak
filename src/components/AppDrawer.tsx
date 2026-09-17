@@ -75,7 +75,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         onClick={onClose}
       />
 
-      <aside className="fixed top-0 left-0 bottom-0 w-84 max-w-[88vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
+      <aside className="fixed top-0 left-0 bottom-0 w-80 max-w-[88vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
         <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10">

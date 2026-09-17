@@ -1114,6 +1114,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-emerald-300">
                         {c.name}
+                        {c.cityType && (
+                          <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
+                            {c.cityType}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {c.district} District • {c.province} Province
@@ -1180,6 +1185,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
                             {c.name}
+                            {c.cityType && (
+                              <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
+                                {c.cityType}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province
@@ -1258,6 +1268,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
                             {c.name}
+                            {c.cityType && (
+                              <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
+                                {c.cityType}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province

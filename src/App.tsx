@@ -575,7 +575,7 @@ function AppContent() {
                   />
                   <div
                     id="header-notifications-dropdown"
-                    className="absolute right-0 mt-2 w-84 sm:w-96 bg-slate-950/98 border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-md animate-fadeIn"
+                    className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-950/98 border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-md animate-fadeIn"
                   >
                     <div className="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
                       <div className="flex items-center space-x-2">
@@ -913,7 +913,7 @@ function AppContent() {
 
             {/* Panel Container: Mobile Bottom-Sheet (max-h-[85vh]), Desktop Left-Floating Panel */}
             <div
-              className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:top-16 sm:left-4 sm:bottom-20 z-40 w-full sm:w-[480px] lg:w-[540px] xl:w-[580px] max-h-[85vh] sm:max-h-[calc(100dvh-140px)] flex flex-col bg-slate-900/98 backdrop-blur-2xl sm:rounded-2xl rounded-t-3xl border-t sm:border border-slate-800/80 shadow-2xl overflow-hidden animate-slideUp sm:animate-fadeIn"
+              className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:top-16 sm:left-4 sm:bottom-20 z-40 w-full sm:w-[480px] lg:w-[540px] xl:w-[580px] max-h-[85vh] sm:max-h-[calc(100dvh-140px)] flex flex-col bg-slate-900/98 backdrop-blur-2xl sm:rounded-2xl rounded-t-3xl border-t sm:border border-slate-800/80 shadow-2xl overflow-hidden animate-fadeIn"
             >
               {/* Mobile Drag Indicator */}
               <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto mt-2 sm:hidden shrink-0" />

@@ -159,9 +159,14 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
                         >
                           <div className="min-w-0">
-                           <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
-                             {city.name}
-                           </div>
+                            <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
+                              {city.name}
+                              {city.cityType && (
+                                <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
+                                  {city.cityType}
+                                </span>
+                              )}
+                            </div>
                             <div className="text-[10px] text-slate-400 truncate">
                               {city.district} District • {city.province} Province
                             </div>
@@ -228,6 +233,11 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           <div className="min-w-0">
                             <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
                               {city.name}{city.nepaliName ? <span className="text-[11px] font-normal text-slate-400"> ({city.nepaliName})</span> : ''}
+                              {city.cityType && (
+                                <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
+                                  {city.cityType}
+                                </span>
+                              )}
                             </div>
                             <div className="text-[10px] text-slate-400 truncate">
                               {city.district} District • {city.province} Province

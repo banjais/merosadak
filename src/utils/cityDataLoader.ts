@@ -63,7 +63,7 @@ function normalizeName(name: string): string {
   return name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 }
 
-function toCityNode(item: Record<string, unknown>, index: number, source: string): CityNode {
+function toCityNode(item: Record<string, unknown>, index: number, source: string, cityType?: string): CityNode {
   const rawName = stringValue(item, ['name', 'Palika', 'palika', 'hqCity']) || 'Unknown';
   const name = normalizeName(rawName);
   const lat = numberValue(item, ['lat', 'latitude']);
@@ -83,6 +83,7 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
     nepaliName: stringValue(item, ['nepaliName', 'nepali_name']),
     district,
     province,
+    cityType,
     lat,
     lng,
     elevationM: numberValue(item, ['elevationM', 'elevation']),
@@ -274,20 +275,35 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
       if (!res.ok) continue;
       const data: unknown = await res.json();
       const nonGroupedItems = asObjectArray(data);
-      const datasets = Array.isArray(data)
-        ? [data]
+      const datasets: { items: Record<string, unknown>[]; cityType?: string }[] = Array.isArray(data)
+        ? [{ items: data, cityType: undefined }]
         : source.grouped
-          ? Object.values(data).flatMap((value) => {
+          ? Object.entries(data as Record<string, unknown[]>).flatMap(([key, value]) => {
               const items = asObjectArray(value);
-              return items.length > 0 ? [items] : [];
+              if (items.length === 0) return [];
+              const typeMap: Record<string, string> = {
+                metropolitan: 'Metropolitan City',
+                sub_metropolitan: 'Sub-Metropolitan',
+                municipality: 'Municipality',
+                rural_municipality: 'Rural Municipality',
+              };
+              return [{ items, cityType: typeMap[key] }];
             })
           : nonGroupedItems.length > 0
-            ? [nonGroupedItems]
+            ? [{ items: nonGroupedItems, cityType: stringValue(nonGroupedItems[0], ['type']) || undefined }]
             : [];
 
-      for (const items of datasets) {
-        for (let index = 0; index < items.length; index += 1) {
-          const city = toCityNode(items[index], index, `${source.key}-${datasets.indexOf(items)}`);
+      for (const dataset of datasets) {
+        for (let index = 0; index < dataset.items.length; index += 1) {
+          const item = dataset.items[index];
+          let cityType = dataset.cityType;
+          if (!cityType) {
+            cityType = stringValue(item, ['type']) || undefined;
+          }
+          if (!cityType && source.key === 'palika') {
+            cityType = 'Municipality';
+          }
+          const city = toCityNode(item, index, `${source.key}-${index}`, cityType);
           const key = cityKey(city);
           if (
             isValidCity(city) &&
