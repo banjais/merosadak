@@ -715,9 +715,36 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
-   // Toggle detail module tabs
+   // Toggle detail module tabs — click the active tab to close it, click a
+   // different tab to switch straight to it.
   const handleToggleModuleTab = (tab: DetailModuleTab) => {
-    setActiveModuleTab((prev) => (prev === tab ? 'none' : prev));
+    setActiveModuleTab((prev) => (prev === tab ? 'none' : tab));
+  };
+
+  // Ordered list of module tabs, used so mobile swipe-left/right can move
+  // between them in the same order they're laid out in the button grid.
+  const MODULE_TAB_ORDER: DetailModuleTab[] = [
+    'timeline', 'elevation', 'travel_plan', 'weather', 'pois',
+    'traffic', 'safety', 'fuel_tolls', 'ai_advisory', 'sos', 'eco', 'checklist',
+  ];
+  const swipeTouchStartX = useRef<number | null>(null);
+  const handleModuleSwipeStart = (e: React.TouchEvent) => {
+    swipeTouchStartX.current = e.touches[0].clientX;
+  };
+  const handleModuleSwipeEnd = (e: React.TouchEvent) => {
+    if (swipeTouchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - swipeTouchStartX.current;
+    swipeTouchStartX.current = null;
+    const SWIPE_THRESHOLD_PX = 50;
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return;
+    setActiveModuleTab((prev) => {
+      const idx = MODULE_TAB_ORDER.indexOf(prev as DetailModuleTab);
+      if (idx === -1) return prev;
+      const nextIdx = deltaX < 0
+        ? Math.min(idx + 1, MODULE_TAB_ORDER.length - 1) // swipe left -> next
+        : Math.max(idx - 1, 0); // swipe right -> previous
+      return MODULE_TAB_ORDER[nextIdx];
+    });
   };
 
   // Auto-calculate route when both origin and destination are selected
@@ -2249,12 +2276,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           </div>
 
-          {/* 7. DYNAMIC EXPANDED CONTENT AREA (Rendered ONLY when user clicks an option button!) */}
+          {/* 7. DYNAMIC EXPANDED CONTENT AREA (Rendered ONLY when user clicks an option button!)
+              Swipeable on touch devices: swipe left/right to move to the next/previous module. */}
           {activeModuleTab !== 'none' && (
-            <div className="pt-3 border-t border-slate-800 space-y-4 animate-fadeIn">
+            <div
+              className="pt-3 border-t border-slate-800 space-y-4 animate-fadeIn"
+              onTouchStart={handleModuleSwipeStart}
+              onTouchEnd={handleModuleSwipeEnd}
+            >
               {/* Module Header with Close Tab button */}
               <div className="flex items-center justify-between bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
-                <div className="flex items-center space-x-2 text-xs font-bold text-white">
+                <div className="flex items-center space-x-2 text-xs font-bold text-white min-w-0">
                   {activeModuleTab === 'timeline' && <span>🕒 Highway Junction Timeline &amp; Arrival Times</span>}
                   {activeModuleTab === 'comparison' && <span>⚖️ Primary vs Alternative Route Comparison</span>}
                   {activeModuleTab === 'travel_plan' && <span>📋 Turn-by-Turn Travel Plan &amp; Itinerary</span>}
@@ -2268,6 +2300,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {activeModuleTab === 'sos' && <span>🚨 Emergency Highway SOS Dispatch Hotline</span>}
                   {activeModuleTab === 'eco' && <span>🌱 Eco Rating &amp; Carbon Footprint Analysis</span>}
                   {activeModuleTab === 'checklist' && <span>🔧 Pre-Trip Highway Vehicle Checklist</span>}
+                  <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
                 </div>
                 <button
                   onClick={() => setActiveModuleTab('none')}

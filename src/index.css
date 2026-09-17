@@ -1,12 +1,36 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    /* Fluid base font size: scales smoothly with viewport instead of
+       jumping between fixed breakpoints, so text stays readable from a
+       small phone up to a desktop monitor without manual zoom. The
+       manual Text Scale System below (sm/md/lg/xl) still overrides this
+       when the user picks an explicit size. */
+    font-size: clamp(14px, 0.85vw + 12px, 17px);
+  }
+  html, body {
+    /* Guards against any component briefly overflowing its container on
+       narrow screens from ever creating a horizontal scrollbar/shift. */
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
   h1, h2, h3, .font-display {
     font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
   }
+}
+
+/* Hides the scrollbar on horizontally-scrollable rows (e.g. the mobile nav
+   fallback) while keeping them scrollable/swipeable by touch or drag. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom Leaflet Map styling */
