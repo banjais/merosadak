@@ -86,6 +86,7 @@ import {
   FUEL_RATE_LABELS,
   getVehicleUIConfig,
   formatPreference,
+  PREFERENCE_CONFIGS,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';

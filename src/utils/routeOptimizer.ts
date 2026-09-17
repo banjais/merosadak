@@ -533,8 +533,8 @@ function buildAerialRouteResult(
     statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
     fuelEstimate: {
       liters: fuelLiters,
-      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerL),
-      avgMileageKmPerLiter: vehicleConfig.mileageKmPerL
+      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit),
+      avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
       kwhRequired: Math.round((aerialKm / 6.2) * 10) / 10,
@@ -626,8 +626,8 @@ function buildRoadGraphRouteResult(
     statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
     fuelEstimate: {
       liters: fuelLiters,
-      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerL),
-      avgMileageKmPerLiter: vehicleConfig.mileageKmPerL
+      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit),
+      avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
       kwhRequired: Math.round((real.distanceKm / 6.2) * 10) / 10,
@@ -988,8 +988,8 @@ export function findRouteByPreference(
   const roadConditionScore = routeSafetyIndex.roadQualityAverage;
 
   // Fuel calculation
-  const fuelLiters = Math.round((totalDistanceKm / vehicleConfig.mileageKmPerL) * 10) / 10;
-  const fuelCostNpr = Math.round(fuelLiters * vehicleConfig.fuelCostPerL);
+  const fuelLiters = Math.round((totalDistanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
+  const fuelCostNpr = Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit);
 
   // EV Calculations
   const evKwhRequired = Math.round((totalDistanceKm / 6.2) * 10) / 10;
@@ -1083,7 +1083,7 @@ export function findRouteByPreference(
     fuelEstimate: {
       liters: fuelLiters,
       costNpr: fuelCostNpr,
-      avgMileageKmPerLiter: vehicleConfig.mileageKmPerL
+      avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
       kwhRequired: evKwhRequired,
