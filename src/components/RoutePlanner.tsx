@@ -182,6 +182,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [vehicle, setVehicle] = useState<VehicleType>(initialVehicle);
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
   const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
+  const [selectedDetailTab, setSelectedDetailTab] = useState<string>('');
   const [isReportExpanded, setIsReportExpanded] = useState<boolean>(false);
   const [terrainFilters, setTerrainFilters] = useState<TerrainFilterOptions>(() => {
     if (typeof window !== 'undefined') {
@@ -1481,6 +1482,150 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
             </div>
 
+            {/* Detail Selection Dropdown */}
+            {hasCalculated && (
+              <div className="space-y-3">
+                <select
+                  value={selectedDetailTab}
+                  onChange={(e) => setSelectedDetailTab(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                    paddingRight: '36px',
+                  }}
+                >
+                  <option value="">Show route detail...</option>
+                  <option value="elevation">⛰️ Route Elevation Profile &amp; Mountain Gradients</option>
+                  <option value="vehicle">🚗 Vehicle Performance Impact</option>
+                  <option value="fuel">💰 Detailed Fuel &amp; Transit Cost Breakdown</option>
+                </select>
+
+                {selectedDetailTab === 'elevation' && (
+                  <div className="animate-fadeIn">
+                    <RouteElevationProfileChart activeRoute={routePlan} routePlan={routePlan} vehicle={vehicle} />
+                  </div>
+                )}
+
+                {selectedDetailTab === 'vehicle' && (
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3 animate-fadeIn">
+                    <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                      <span>Vehicle Performance</span>
+                      <span className="text-emerald-400 text-[9px] font-mono">{VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 font-semibold">Fuel / Tariff Rate</div>
+                        <div className="text-xs font-bold text-white mt-0.5">{getFuelRateLabel(vehicle)}</div>
+                        <div className="text-[9px] text-slate-400 truncate">{getFuelName(vehicle)}</div>
+                      </div>
+                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 font-semibold">Efficiency</div>
+                        <div className="text-xs font-bold text-emerald-400 mt-0.5">
+                          {customMileageKmL.toFixed(1)} km/L
+                        </div>
+                        <div className="text-[9px] text-slate-400">
+                          {vehicle === 'electric_vehicle' ? '~160 Wh/km' : `${(customMileageKmL * 2.35215).toFixed(1)} MPG`}
+                        </div>
+                      </div>
+                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 font-semibold">Required</div>
+                        <div className="text-xs font-bold text-cyan-400 mt-0.5">
+                          {Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * 10) / 10} L
+                        </div>
+                        <div className="text-[9px] text-slate-400">For {routePlan.totalDistanceKm} km</div>
+                      </div>
+                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 font-semibold">Cost / km</div>
+                        <div className="text-xs font-bold text-amber-400 mt-0.5">
+                          Rs {(Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * getNOCFuelRate(vehicle)) / Math.max(1, routePlan.totalDistanceKm)).toFixed(2)}
+                        </div>
+                        <div className="text-[9px] text-slate-400">Direct expense</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-950/90 rounded-lg p-3 border border-slate-800/80 text-xs space-y-2 font-mono">
+                      <div className="flex items-center justify-between gap-1 text-slate-300 pt-1.5 border-t border-slate-800">
+                        <span className="font-bold flex items-center space-x-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                          <span>Elevation Impact:</span>
+                        </span>
+                        <span className="text-emerald-400 self-end sm:self-auto font-bold">+{routePlan.elevationGainM}m ascent</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-1 text-slate-300">
+                        <span className="font-bold flex items-center space-x-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                          <span>Terrain Grade Factor:</span>
+                        </span>
+                        <span>Peak {routePlan.maxElevationM}m ASL</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedDetailTab === 'fuel' && (
+                  <div className="animate-fadeIn">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedFuel(!showAdvancedFuel)}
+                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800/70 hover:bg-slate-800/30 transition p-2 rounded-lg -m-2"
+                    >
+                      <div className="flex items-center space-x-2 text-left">
+                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                          <Fuel className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                            <span>Detailed Fuel &amp; Transit Cost Breakdown</span>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedFuel ? 'rotate-180' : ''}`} />
+                          </h4>
+                          <p className="text-[10px] text-slate-400">Calculated for {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}</p>
+                        </div>
+                      </div>
+                      <div className="text-xs font-bold text-emerald-400 self-start sm:self-auto font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                        Total Transit Outlay: NPR {(() => { const effKmL = Math.max(1.0, customMileageKmL); const units = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10; return (units * getNOCFuelRate(vehicle) + (routePlan.totalTollCostNpr || 0)).toLocaleString(); })()}
+                      </div>
+                    </button>
+                    {showAdvancedFuel && (
+                      <div className="pt-2 space-y-3.5">
+                        <div className="bg-slate-950/90 rounded-xl p-3 sm:p-3.5 border border-slate-800 space-y-2.5">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center space-x-2">
+                              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                              <span className="text-xs font-bold text-slate-200">Custom Fuel Efficiency / Consumption Adjustment</span>
+                            </div>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">Interactive Slider</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[9px] text-slate-400 font-mono">Efficiency: {customMileageKmL.toFixed(1)} km/L</span>
+                            <input
+                              type="range"
+                              min={vehicle === 'electric_vehicle' ? 3.0 : vehicle === 'bus_truck' ? 2.0 : vehicle === 'motorbike' ? 15.0 : 5.0}
+                              max={vehicle === 'electric_vehicle' ? 10.0 : vehicle === 'bus_truck' ? 8.0 : vehicle === 'motorbike' ? 70.0 : 30.0}
+                              step={vehicle === 'electric_vehicle' ? 0.1 : vehicle === 'motorbike' ? 0.5 : 0.2}
+                              value={customMileageKmL}
+                              onChange={(e) => setCustomMileageKmL(Number(e.target.value))}
+                              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {vehicle !== 'electric_vehicle' && (
+                              <>
+                                <span className="text-[9px] text-slate-500 font-mono">Benchmark: {vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5} km/L</span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${customMileageKmL > (vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/20 text-amber-300 border border-amber-500/20'}`}>
+                                  {customMileageKmL > (vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5) ? 'Above benchmark' : 'Below benchmark'}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 3 Core Primary Metric Bento Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* 1. Total Trip Distance */}
@@ -2051,19 +2196,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               >
                 <Milestone className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="truncate">Junction Timeline</span>
-              </button>
-
-              {/* Option: Elevation & Steep Gradients */}
-              <button
-                onClick={() => handleToggleModuleTab('elevation')}
-                className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                  activeModuleTab === 'elevation'
-                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/60 shadow-md shadow-purple-500/10'
-                    : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                }`}
-              >
-                <Mountain className="w-4 h-4 text-purple-400 shrink-0" />
-                <span className="truncate">Elevation Profile</span>
               </button>
 
               {/* Option: Travel Plan & Itinerary */}
