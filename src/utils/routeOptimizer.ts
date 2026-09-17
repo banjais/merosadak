@@ -2,6 +2,7 @@ import { CityNode, RoutePlanResult, VehicleType, RoutePreference, RoadIncident, 
 import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
 import { preloadRoadGraph, findRoadGraphRoute } from './roadGraphRouter';
+import { getVehicleCalcConfig } from './vehicleConfigs';
 
 export function classifyRoadTier(highwayCode?: string, surface?: string): {
   tier: RoadClassificationTier;
@@ -470,14 +471,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Helper to calculate cost and fuel
-const VEHICLE_CONFIGS: Record<VehicleType, { mileageKmPerL: number; fuelCostPerL: number; speedMultiplier: number; label: string }> = {
-  car: { mileageKmPerL: 14, fuelCostPerL: 172, speedMultiplier: 1.0, label: 'Car / Hatchback / Sedan' },
-  suv_4wd: { mileageKmPerL: 10, fuelCostPerL: 160, speedMultiplier: 1.05, label: 'SUV / 4WD Jeep' },
-  motorbike: { mileageKmPerL: 35, fuelCostPerL: 172, speedMultiplier: 1.12, label: 'Motorcycle' },
-  bus_truck: { mileageKmPerL: 4.5, fuelCostPerL: 160, speedMultiplier: 0.75, label: 'Commercial Bus / Truck' },
-  electric_vehicle: { mileageKmPerL: 6.5, fuelCostPerL: 0, speedMultiplier: 1.0, label: 'Electric Vehicle (EV)' } // 6.5 km/kWh
-};
+// Helper to calculate cost and fuel - uses shared vehicleConfigs.ts
 
 // Distance matrix calculator between any two cities
 export function calculateDirectDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -498,9 +492,9 @@ function buildAerialRouteResult(
   vehicle: VehicleType
 ): RoutePlanResult {
   const aerialKm = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
-  const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
-  const estimatedMinutes = Math.round((aerialKm / (vehicleConfig.mileageKmPerL * 0.6)) * 60);
-  const fuelLiters = Math.round((aerialKm / vehicleConfig.mileageKmPerL) * 10) / 10;
+  const vehicleConfig = getVehicleCalcConfig(vehicle);
+  const estimatedMinutes = Math.round((aerialKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+  const fuelLiters = Math.round((aerialKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
 
   return {
     id: `aerial-${origin.id}-${destination.id}-${preference}-${vehicle}`,
@@ -588,9 +582,9 @@ function buildRoadGraphRouteResult(
   if (!real || real.pathCoordinates.length < 2) return null;
 
   const aerialKm = Math.round(calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) * 10) / 10;
-  const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
-  const estimatedMinutes = Math.round((real.distanceKm / (vehicleConfig.mileageKmPerL * 0.6)) * 60);
-  const fuelLiters = Math.round((real.distanceKm / vehicleConfig.mileageKmPerL) * 10) / 10;
+  const vehicleConfig = getVehicleCalcConfig(vehicle);
+  const estimatedMinutes = Math.round((real.distanceKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+  const fuelLiters = Math.round((real.distanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
   const highwaysLabel = real.highwaysUsed.filter((h) => h && h !== 'undefined').join(' → ') || 'Local road network';
 
   const circuityFactor = aerialKm > 0 ? Math.round((real.distanceKm / aerialKm) * 100) / 100 : 1.0;
@@ -900,7 +894,7 @@ export function findRouteByPreference(
   let pathCoordinates: [number, number][] = [];
   const steps: RouteStep[] = [];
 
-  const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
+  const vehicleConfig = getVehicleCalcConfig(vehicle);
 
   const segmentsSafety: SegmentSafetyData[] = [];
 

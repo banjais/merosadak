@@ -1,6 +1,7 @@
 import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CityNode, VehicleType, RoutePlanResult, EmergencyDistressType } from '../types';
 import { calculateDirectDistanceKm } from './routeOptimizer';
+import { getVehicleUIConfig } from './vehicleConfigs';
 
 export interface NearestLandmarkResult {
   city: CityNode;
@@ -79,14 +80,6 @@ export const DISTRESS_TYPE_CONFIG: Record<
     description: 'Lost route, night isolation, wildlife threat, or urgent traveler support',
     priority: 'High',
   },
-};
-
-const VEHICLE_LABELS: Record<VehicleType, string> = {
-  car: 'Car / Hatchback / Sedan',
-  suv_4wd: 'SUV / 4WD Jeep',
-  motorbike: 'Motorcycle / Scooter',
-  bus_truck: 'Bus / Heavy Truck',
-  electric_vehicle: 'Electric Vehicle (EV)',
 };
 
 /**
@@ -218,7 +211,7 @@ export function generateFullSosMessage(options: GenerateSosMessageOptions): stri
     landmark.nearestHighway ? `• Highway Corridor: ${landmark.nearestHighway}` : '',
     ``,
     `🚙 *VEHICLE & PASSENGER INFORMATION*:`,
-    `• Vehicle: ${VEHICLE_LABELS[vehicleType] || vehicleType}`,
+    `• Vehicle: ${getVehicleUIConfig(vehicleType).label}`,
     vehiclePlateNumber ? `• Plate/Reg No: ${vehiclePlateNumber.toUpperCase()}` : '',
     `• Persons Onboard: ${passengerCount} passenger${passengerCount > 1 ? 's' : ''}`,
     batteryPercent != null ? `• Device Battery: ${batteryPercent}%` : '',

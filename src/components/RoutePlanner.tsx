@@ -84,6 +84,8 @@ import {
   getFuelRateLabel,
   getFuelName,
   FUEL_RATE_LABELS,
+  getVehicleUIConfig,
+  formatPreference,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
@@ -100,17 +102,6 @@ interface RoutePlannerProps {
   onToggleMapFull?: () => void;
   isMapFull?: boolean;
 }
-
-const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: string; desc: string }[] = [
-  { pref: 'fastest', icon: '⚡', label: 'Fastest', desc: 'Shortest travel time' },
-  { pref: 'shortest', icon: '🛣️', label: 'Shortest', desc: 'Shortest distance' },
-  { pref: 'safest', icon: '🛡️', label: 'Safest', desc: 'Best road score' },
-  { pref: 'scenic', icon: '🏔️', label: 'Scenic', desc: 'Mountain views' },
-  { pref: 'ev_optimized', icon: '🔋', label: 'EV optimized', desc: 'Charging & efficiency' },
-];
-
-const formatPreference = (pref: RoutePreference) =>
-  PREFERENCE_CONFIGS.find((option) => option.pref === pref)?.label || pref.replace('_', ' ');
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
 const SUB_METRO_CITY_NAME_FRAGMENTS = ['hetauda', 'butwal', 'dhangadhi', 'nepalgunj', 'birendranagar', 'dharan', 'janakpur', 'gauraha', 'birgunj'];
