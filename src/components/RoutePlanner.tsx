@@ -418,7 +418,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setRoutePlan(plan);
       setHasCalculated(true);
       setIsTripPlanExpanded(true);
-      setIsReportExpanded(false);
+      setIsReportExpanded(true);
       setCalcKey((k) => k + 1);
       setAiCustomAdvisory(null);
       setIsCalculating(false);
