@@ -251,7 +251,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [isRefreshingTraffic, setIsRefreshingTraffic] = useState<boolean>(false);
   const [hasCalculated, setHasCalculated] = useState<boolean>(false);
-  const [isTripPlanExpanded, setIsTripPlanExpanded] = useState<boolean>(false);
 
   // Custom Fuel Efficiency Override States
   const [customMileageKmL, setCustomMileageKmL] = useState<number>(() => {
@@ -424,7 +423,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined);
       setRoutePlan(plan);
       setHasCalculated(true);
-      setIsTripPlanExpanded(true);
       setIsReportExpanded(true);
       setCalcKey((k) => k + 1);
       setAiCustomAdvisory(null);
@@ -906,132 +904,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* Trip Plan Box - shows From → To + summary; expandable for full details */}
-        {(originCity && destCity && originId !== destId) && (
-          <div className="relative bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 space-y-2">
-            {/* Header: Trip Plan label + expand/collapse */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-[10px] text-sky-400 font-bold uppercase tracking-wider">
-                <Route className="w-3 h-3 text-sky-400" />
-                <span>Trip Plan</span>
-              </div>
-              {routePlan && (
-                <button
-                  type="button"
-                  onClick={() => setIsTripPlanExpanded(!isTripPlanExpanded)}
-                  className="text-[10px] text-slate-400 hover:text-sky-400 transition"
-                  title={isTripPlanExpanded ? "Collapse route details" : "Expand route details"}
-                >
-                  {isTripPlanExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
-              )}
-            </div>
-
-            {/* From → To */}
-            <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 truncate">
-              <span className="truncate">{originCity.name}</span>
-              <ArrowRight className="w-3 h-3 text-emerald-500/30 shrink-0" />
-              <span className="truncate">{destCity.name}</span>
-            </div>
-
-            {/* Districts / Provinces */}
-            <div className="text-[10px] text-slate-500">
-              {originCity.district} • {originCity.province} → {destCity.district} • {destCity.province}
-            </div>
-
-            {/* Summary metrics — shown when route is calculated */}
-            {routePlan && isCalculating && (
-              <div className="flex items-center space-x-1.5 text-[10px] text-slate-400">
-                <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
-                <span>Calculating optimal route...</span>
-              </div>
-            )}
-
-            {/* Expanded route details */}
-            {routePlan && isTripPlanExpanded && (
-              <div className="pt-2 border-t border-slate-800 space-y-3 animate-fadeIn">
-                {/* DoR Advisory */}
-                {routePlan.aiAdvisory && (
-                  <div className="space-y-1">
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">DoR Advisory</div>
-                    <div className="text-[10px] text-slate-300 leading-relaxed">
-                      {routePlan.aiAdvisory.summary}
-                    </div>
-                    {routePlan.aiAdvisory.keyRecommendations && routePlan.aiAdvisory.keyRecommendations.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {routePlan.aiAdvisory.keyRecommendations.map((rec, idx) => (
-                          <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                            {rec}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Selected Route Type */}
-                <div className="flex items-center justify-between">
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Route Type</div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono capitalize">
-                    {preference.replace('_', ' ')}
-                  </span>
-                </div>
-
-                {/* Used Highways */}
-                {routePlan.corridorsTraversed && (
-                  <div className="space-y-1">
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Corridors Traversed</div>
-                    <div className="text-[10px] text-slate-300">
-                      {routePlan.corridorsTraversed}
-                    </div>
-                  </div>
-                )}
-
-                {/* All Available Route Options */}
-                {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Available Routes</div>
-                    {routePlan.allRouteOptions.map((opt, idx) => {
-                      const isPrimary = opt.id === routePlan.id;
-                      const color = opt.routeColor || (isPrimary ? '#38bdf8' : '#a855f7');
-                      return (
-                        <div
-                          key={opt.id}
-                          className={`p-2 rounded-lg border text-[10px] transition cursor-pointer ${
-                            isPrimary
-                              ? 'bg-emerald-500/10 border-emerald-500/30'
-                              : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
-                          }`}
-                          onClick={() => {
-                            if (!isPrimary) {
-                              setRoutePlan(opt);
-                              setPreference(opt.preference);
-                              onRouteCalculated(opt);
-                            }
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span
-                              className="px-1.5 py-0.5 rounded font-bold"
-                              style={{ backgroundColor: `${color}20`, color: color, border: `1px solid ${color}40` }}
-                            >
-                              {opt.routeBadge || `Option ${idx + 1}`}
-                            </span>
-                            <span className="text-slate-400">{opt.totalDistanceKm} km</span>
-                          </div>
-                          <div className="text-slate-300 mt-0.5 truncate">{opt.routeName || opt.viaHighlights || 'Verified Highway Corridor'}</div>
-                          {opt.alternateRouteSummary && (
-                            <div className="text-[9px] text-slate-500 mt-0.5">{opt.alternateRouteSummary.reason}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
         {!hasCalculated && (
@@ -1945,7 +1817,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       setShowSearchPanel(false);
                       setShowVehicleOptions(false);
                       setActiveModuleTab('none');
-                      setIsTripPlanExpanded(false);
                      // GPS-detected location is a permanent "fact" — restore origin from it
                      const closestCity = findClosestCityFromCoords(
                        detectedLocation.lat,
