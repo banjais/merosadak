@@ -414,7 +414,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
     setIsCalculating(true);
     setTimeout(() => {
-      const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters);
+      const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined);
       setRoutePlan(plan);
       setHasCalculated(true);
       setIsTripPlanExpanded(true);
@@ -1411,10 +1411,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
 
        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-      {routePlan && hasCalculated && (
-        <div
-          id="route-results-panel"
-          key={`route-results-panel-${calcKey}-${routePlan.id}`}
+       {hasCalculated && routePlan && (
+         <div
+           id="route-results-panel"
+           key={`route-results-panel-${calcKey}-${routePlan.id}`}
           className="bg-slate-900/95 border border-slate-800 p-3 sm:p-5 rounded-2xl shadow-xl space-y-3.5 sm:space-y-4 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
         >
           {/* Header Summary & Expand/Reduce + Map Actions */}

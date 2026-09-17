@@ -587,12 +587,7 @@ function buildRoadGraphRouteResult(
   const real = findRoadGraphRoute(origin.id, destination.id);
   if (!real || real.pathCoordinates.length < 2) return null;
 
-  // Same data-gap sanity guard as applyRealRoadDataToEdges: an implausible
-  // detour (vs straight-line distance) means the source link data has a gap
-  // here, not a real route — fall back to the honest aerial estimate instead.
   const aerialKm = Math.round(calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) * 10) / 10;
-  if (real.distanceKm > aerialKm * 4) return null;
-
   const vehicleConfig = VEHICLE_CONFIGS[vehicle] || VEHICLE_CONFIGS.car;
   const estimatedMinutes = Math.round((real.distanceKm / (vehicleConfig.mileageKmPerL * 0.6)) * 60);
   const fuelLiters = Math.round((real.distanceKm / vehicleConfig.mileageKmPerL) * 10) / 10;
@@ -1251,18 +1246,39 @@ export function findAllRouteOptions(
   return options;
 }
 
+export function snapToNearestRoutingCity(city: CityNode): CityNode {
+  let nearest = CITIES_AND_JUNCTIONS[0];
+  let minDist = Infinity;
+  for (const c of CITIES_AND_JUNCTIONS) {
+    const d = calculateDirectDistanceKm(city.lat, city.lng, c.lat, c.lng);
+    if (d < minDist) {
+      minDist = d;
+      nearest = c;
+    }
+  }
+  return nearest;
+}
+
 // Primary route search API with allRouteOptions bundled
 export function findOptimizedRoute(
   originId: string,
   destinationId: string,
   preference: RoutePreference = 'fastest',
   vehicle: VehicleType = 'car',
-  terrainFilters: TerrainFilterOptions = {}
+  terrainFilters: TerrainFilterOptions = {},
+  originNode?: CityNode,
+  destinationNode?: CityNode
 ): RoutePlanResult | null {
   const allOptions = findAllRouteOptions(originId, destinationId, vehicle, terrainFilters);
   if (allOptions.length === 0) {
-    const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
-    const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
+    let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
+    let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
+    if (!origin && originNode && originNode.lat && originNode.lng) {
+      origin = snapToNearestRoutingCity(originNode);
+    }
+    if (!destination && destinationNode && destinationNode.lat && destinationNode.lng) {
+      destination = snapToNearestRoutingCity(destinationNode);
+    }
     if (origin && destination) {
       return buildRoadGraphRouteResult(origin, destination, preference, vehicle)
         || buildAerialRouteResult(origin, destination, preference, vehicle);
