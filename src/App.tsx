@@ -848,9 +848,9 @@ function AppContent() {
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
       {!isDistanceCalculatorOpen && (
-        <main className="flex-1 w-full overflow-y-auto bg-slate-950">
+        <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
         {/* Route Planner as Main Content */}
-        <div className="relative z-10 w-full bg-slate-900">
+        <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
           <RoutePlanner
             initialOriginId={plannerOrigin}
             initialDestId={plannerDest}
@@ -877,8 +877,8 @@ function AppContent() {
           />
         </div>
 
-        {/* Interactive Map After Route Planner */}
-        <div className="relative z-0 w-full h-[50vh]">
+        {/* Interactive Map - fills remaining viewport */}
+        <div className="flex-1 relative z-0 w-full min-h-0">
           <InteractiveMap
             activeRoute={activeRoute}
             isDimmed={!activeRoute}

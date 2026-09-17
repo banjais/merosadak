@@ -93,6 +93,51 @@ function escapeHtml(value: string): string {
   }[character] || character));
 }
 
+const NEPAL_BOUNDS: L.LatLngBoundsExpression = [[26.34, 80.0], [30.5, 88.3]];
+
+function createNepalTileLayer(
+  url: string,
+  attribution: string,
+  maxZoom: number,
+  subdomains: string = 'abc',
+) {
+  const LayerClass = L.GridLayer.extend({
+    options: { url, attribution, maxZoom, subdomains },
+
+    createTile(coords: L.Coords) {
+      const tileSize = this.getTileSize();
+      const tile = document.createElement('div');
+      tile.style.width = tileSize.x + 'px';
+      tile.style.height = tileSize.y + 'px';
+      tile.style.backgroundColor = '#ffffff';
+
+      const tileBounds = this._tileCoordsToBounds(coords);
+      const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
+      if (tileBounds.intersects(nepalBounds)) {
+        const sdIndex = (coords.x + coords.y) % (this.options.subdomains?.length || 3);
+        const s = (this.options.subdomains || 'abc')[sdIndex];
+        let tileUrl = this.options.url.replace('{s}', s);
+        tileUrl = L.Util.template(tileUrl, {
+          x: coords.x,
+          y: coords.y,
+          z: coords.z,
+          r: '',
+        });
+        const img = document.createElement('img');
+        img.src = tileUrl;
+        img.alt = '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        tile.appendChild(img);
+      }
+
+      return tile;
+    },
+  });
+
+  return new LayerClass();
+}
+
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   activeRoute,
   onSelectAlternativeRoute,
@@ -135,6 +180,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
     nepalBorder: L.layerGroup(),
+    outsideMask: L.layerGroup(),
     provinces: L.layerGroup(),
   });
 
@@ -282,7 +328,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // Map Style: Standard, Satellite, Terrain
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial'>('standard');
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const tileLayerRef = useRef<L.GridLayer | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -294,10 +340,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       zoom: 7,
       minZoom: 6,
       maxZoom: 17,
+      maxBounds: NEPAL_BOUNDS,
+      maxBoundsViscosity: 1.0,
       zoomControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
 
     // Leaflet's own "Leaflet" branding link isn't required (BSD license) —
     // hide just that prefix. The tile provider's own attribution (OSM/Esri/
@@ -313,6 +363,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.traffic.addTo(map);
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
+    layersRef.current.outsideMask.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
 
@@ -364,6 +415,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setGpsDetected(true);
       placeGpsMarker([latitude, longitude]);
       mapInstanceRef.current?.flyTo([latitude, longitude], 14, { duration: 1.5 });
+      setTimeout(() => {
+        mapInstanceRef.current?.fitBounds(NEPAL_BOUNDS, { padding: [20, 20], maxZoom: 8 });
+      }, 2000);
     };
 
     const handleError = () => {
@@ -443,13 +497,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       maxZoom = 19;
     }
 
-    const newLayer = L.tileLayer(url, {
-      attribution,
-      subdomains: 'abc',
-      maxZoom,
-    });
+    const newLayer = createNepalTileLayer(url, attribution, maxZoom, 'abc');
 
     newLayer.addTo(map);
+    map.attributionControl.addAttribution(attribution);
     tileLayerRef.current = newLayer;
   }, [mapStyle]);
 
@@ -552,13 +603,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
 
-  // Render Nepal Border (always visible) — uses official district boundary data covering all corners
+  // Render White Mask (covers everything OUTSIDE Nepal) and Nepal Border Outline
   useEffect(() => {
     if (!mapInstanceRef.current) return;
+    const maskGroup = layersRef.current.outsideMask;
     const borderGroup = layersRef.current.nepalBorder;
+    maskGroup.clearLayers();
     borderGroup.clearLayers();
 
-    fetch('/data/nepal_boundary.geojson')
+    fetch('/data/nepal-provinces.geojson')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -569,26 +622,62 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           return;
         }
         try {
-          const geoJsonLayer = L.geoJSON(data, {
+          const worldCorners: L.LatLngExpression[] = [
+            [-180, -90], [180, -90], [180, 90], [-180, 90],
+          ];
+          const holes: L.LatLngExpression[][] = [];
+
+          data.features.forEach((feature: any) => {
+            const geom = feature.geometry;
+            if (!geom) return;
+            const collectRings = (rings: any[]) => {
+              rings.forEach((ring: any[]) => {
+                holes.push(ring.map((coord: [number, number]) => [coord[1], coord[0]] as L.LatLngExpression));
+              });
+            };
+            if (geom.type === 'Polygon') {
+              collectRings(geom.coordinates);
+            } else if (geom.type === 'MultiPolygon') {
+              geom.coordinates.forEach((polygon: any[]) => collectRings(polygon));
+            }
+          });
+
+          const mask = L.polygon(
+            [worldCorners, ...holes] as unknown as L.LatLngExpression[][],
+            {
+              fillColor: '#ffffff',
+              fillOpacity: 1.0,
+              color: 'transparent',
+              weight: 0,
+              interactive: false,
+            },
+          );
+          maskGroup.addLayer(mask);
+          mask.bringToBack();
+
+          const border = L.geoJSON(data, {
             style: {
               color: '#b91c1c',
-              weight: 2,
-              opacity: 0.85,
+              weight: 2.5,
+              opacity: 0.9,
               fillColor: '#7f1d1d',
-              fillOpacity: 0.12,
+              fillOpacity: 0.08,
             },
             onEachFeature: (feature, layer) => {
-              if (feature.properties?.ADM0_EN || feature.properties?.name) {
-                layer.bindTooltip('Nepal', {
+              const pname = feature.properties?.name || feature.properties?.PROVINCE || feature.properties?.PROV_NM;
+              if (pname) {
+                layer.bindTooltip(pname, {
                   sticky: true,
                   className: 'custom-dark-tooltip',
                 });
               }
             },
           });
-          borderGroup.addLayer(geoJsonLayer);
+          borderGroup.addLayer(border);
+
+          mapInstanceRef.current?.invalidateSize();
         } catch (e) {
-          console.error('Failed to render Nepal border:', e);
+          console.error('Failed to render Nepal mask/border:', e);
         }
       })
       .catch(err => console.warn('Failed to load Nepal border:', err));

@@ -752,11 +752,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   useEffect(() => {
     if (isCalculating) return;
     if (!originId || !destId || originId === destId) return;
-    if (hasCalculated) return;
+    if (hasCalculated && !needsRecalculation) return;
     if (!userPickedDestination) return;
+    setNeedsRecalculation(false);
 
     handleCalculateRoute();
-  }, [originId, destId, userPickedDestination, hasCalculated, isCalculating]);
+  }, [originId, destId, userPickedDestination, hasCalculated, isCalculating, needsRecalculation]);
 
   return (
     <div className="space-y-4">

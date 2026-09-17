@@ -36,7 +36,7 @@
 /* Custom Leaflet Map styling */
 .leaflet-container {
   font-family: inherit;
-  background-color: #0f172a;
+  background-color: #ffffff;
 }
 
 .custom-weather-marker {
@@ -595,10 +595,20 @@ html[data-theme='light'] .backdrop-blur-md {
   backdrop-filter: blur(12px) saturate(120%);
 }
 
-html[data-theme='light'] .custom-dark-tooltip {
-  background: #ffffff !important;
+html[data-theme='light'] .custom-dark-tooltip,
+html[data-theme='light'] .custom-dark-tooltip.leaflet-tooltip {
+  background: transparent !important;
   color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+html[data-theme='light'] .custom-dark-tooltip .leaflet-tooltip-content,
+html[data-theme='light'] .custom-dark-tooltip::before {
+  background: transparent !important;
+  border: none !important;
 }
 
 html[data-theme='light'] .leaflet-container {

@@ -2,6 +2,9 @@
   "hosting": {
     "site": "merosadak",
     "public": "dist",
+    "releases": {
+      "live": 1
+    },
     "ignore": [
       "firebase.json",
       "**/.*",
