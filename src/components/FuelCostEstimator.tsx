@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { VehicleType, CityNode } from '../types';
+import { NOC_FUEL_RATES, getNOCFuelRate } from '../utils/vehicleConfigs';
 import {
   Fuel,
   Zap,
@@ -57,7 +58,7 @@ const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
     defaultMileage: 14,
     unit: 'km/L',
     defaultFuelType: 'petrol',
-    defaultRateNpr: 172,
+    defaultRateNpr: NOC_FUEL_RATES.petrol,
     label: 'Car / Sedan / Hatchback',
     icon: Car,
     co2GramsPerKm: 142,
@@ -67,7 +68,7 @@ const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
     defaultMileage: 10,
     unit: 'km/L',
     defaultFuelType: 'diesel',
-    defaultRateNpr: 160,
+    defaultRateNpr: NOC_FUEL_RATES.diesel,
     label: 'SUV / 4WD Jeep',
     icon: Mountain,
     co2GramsPerKm: 198,
@@ -77,7 +78,7 @@ const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
     defaultMileage: 35,
     unit: 'km/L',
     defaultFuelType: 'petrol',
-    defaultRateNpr: 172,
+    defaultRateNpr: NOC_FUEL_RATES.petrol,
     label: 'Motorcycle / Scooter',
     icon: Bike,
     co2GramsPerKm: 65,
@@ -87,7 +88,7 @@ const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
     defaultMileage: 4.5,
     unit: 'km/L',
     defaultFuelType: 'diesel',
-    defaultRateNpr: 160,
+    defaultRateNpr: NOC_FUEL_RATES.diesel,
     label: 'Bus / Heavy Truck',
     icon: Truck,
     co2GramsPerKm: 580,
@@ -97,7 +98,7 @@ const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
     defaultMileage: 6.5,
     unit: 'km/kWh',
     defaultFuelType: 'electricity',
-    defaultRateNpr: 8.5,
+    defaultRateNpr: NOC_FUEL_RATES.electricity,
     label: 'Electric Vehicle (EV)',
     icon: Zap,
     co2GramsPerKm: 18,

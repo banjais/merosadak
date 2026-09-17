@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { RoutePlanResult, VehicleType } from '../types';
 import {
+  NOC_FUEL_RATES,
+  getNOCFuelRate,
+  getFuelRateLabel,
+  getFuelName,
+} from '../utils/vehicleConfigs';
+import {
   ShieldCheck,
   ShieldAlert,
   Fuel,
@@ -70,7 +76,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
   // Fuel price helper
   const isEV = vehicle === 'electric_vehicle';
   const isDiesel = vehicle === 'suv_4wd' || vehicle === 'bus_truck';
-  const unitPrice = isEV ? 15 : isDiesel ? 158 : 175;
+  const unitPrice = getNOCFuelRate(vehicle);
 
   const calculateCost = (route: RoutePlanResult) => {
     if (isEV) {
@@ -699,7 +705,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
                     </div>
                   </div>
                   <span className="text-[10px] font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">
-                    {isEV ? 'NEA EV Rate (Rs 15/kWh)' : isDiesel ? 'NOC Diesel (Rs 158/L)' : 'NOC Petrol (Rs 175/L)'}
+                    {getFuelName(vehicle)} Rate ({getFuelRateLabel(vehicle)})
                   </span>
                 </div>
 

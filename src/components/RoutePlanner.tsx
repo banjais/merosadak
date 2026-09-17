@@ -75,7 +75,14 @@ import {
   Award,
 } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
-import { VEHICLE_CONFIGS } from '../utils/vehicleConfigs';
+import {
+  VEHICLE_CONFIGS,
+  NOC_FUEL_RATES,
+  getNOCFuelRate,
+  getFuelRateLabel,
+  getFuelName,
+  FUEL_RATE_LABELS,
+} from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
 
@@ -1494,10 +1501,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
                   <Fuel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Rs {(() => {
-                    const isEV = vehicle === 'electric_vehicle';
                     const effKmL = Math.max(1.0, customMileageKmL);
                     const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
-                    const price = isEV ? 15 : (vehicle === 'suv_4wd' || vehicle === 'bus_truck') ? 158 : 175;
+                    const price = getNOCFuelRate(vehicle);
                     return (Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0)).toLocaleString();
                   })()}</span>
                 </span>
@@ -1563,11 +1569,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               </div>
               <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-400 self-start sm:self-auto font-mono">
-                <span>NOC Petrol: Rs 175/L</span>
-                <span>•</span>
-                <span>Diesel: Rs 158/L</span>
-                <span>•</span>
-                <span>NEA EV: Rs 15/kWh</span>
+                <span>Source: DoR Nepal Highway GIS</span>
               </div>
             </div>
 
@@ -1638,9 +1640,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
               {/* 3. Selected Vehicle Estimated Fuel/Energy Cost */}
               {(() => {
-                const isEV = vehicle === 'electric_vehicle';
-                const isDiesel = vehicle === 'suv_4wd' || vehicle === 'bus_truck';
-                const unitPrice = isEV ? 15 : isDiesel ? 158 : 175;
+                const unitPrice = getNOCFuelRate(vehicle);
                 const effKmL = Math.max(1.0, customMileageKmL);
                 const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
                 const cost = Math.round(unitsReq * unitPrice);
@@ -1650,15 +1650,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition">
                     <div className="flex items-center justify-between text-slate-400">
                       <span className="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5">
-                        {isEV ? (
+                        {vehicle === 'electric_vehicle' ? (
                           <Zap className="w-3.5 h-3.5 text-cyan-400" />
                         ) : (
                           <Fuel className="w-3.5 h-3.5 text-amber-400" />
                         )}
-                        <span>{isEV ? 'EV Energy Cost' : 'Est. Fuel Cost'}</span>
+                        <span>{vehicle === 'electric_vehicle' ? 'EV Energy Cost' : 'Est. Fuel Cost'}</span>
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20">
-                        {isEV ? 'NEA Fast Charger' : 'Live Calculated'}
+                        {vehicle === 'electric_vehicle' ? 'NEA Fast Charger' : 'Live Calculated'}
                       </span>
                     </div>
                     <div className="my-2">
@@ -1668,7 +1668,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     </div>
                     <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
                       <span>
-                        {unitsReq} {isEV ? 'kWh req.' : 'Liters req.'}
+                        {unitsReq} {vehicle === 'electric_vehicle' ? 'kWh req.' : 'Liters req.'}
                       </span>
                       <span className="text-slate-300 font-mono">
                         ~Rs {costPerKm}/km
@@ -1790,9 +1790,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {(() => {
                 const isEV = vehicle === 'electric_vehicle';
                 const isDiesel = vehicle === 'suv_4wd' || vehicle === 'bus_truck';
-                const fuelName = isEV ? 'Electricity (NEA Grid)' : isDiesel ? 'Auto Diesel (NOC)' : 'Petrol / Gasoline (NOC)';
-                const unitPrice = isEV ? 15 : isDiesel ? 158 : 175;
-                const unitPriceLabel = isEV ? 'Rs 15.00 / kWh' : isDiesel ? 'Rs 158.00 / L' : 'Rs 175.00 / L';
+                const fuelName = getFuelName(vehicle);
+                const unitPrice = getNOCFuelRate(vehicle);
+                const unitPriceLabel = getFuelRateLabel(vehicle);
 
                 // Effective km per Liter (or km per kWh for EV)
                 const currentEffKmL = Math.max(1.0, customMileageKmL);
@@ -1848,6 +1848,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         Total Transit Outlay: NPR {dynamicTotalCost.toLocaleString()}
                       </div>
                     </button>
+
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 font-mono pb-1 border-b border-slate-800/50">
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                        NOC Petrol: {FUEL_RATE_LABELS.petrol}/L
+                      </span>
+                      <span>•</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                        NOC Diesel: {FUEL_RATE_LABELS.diesel}/L
+                      </span>
+                      <span>•</span>
+                      <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                        NEA EV: {FUEL_RATE_LABELS.electricity}/kWh
+                      </span>
+                    </div>
 
                     {showAdvancedFuel && (
                       <div className="pt-2 space-y-3.5 animate-fadeIn">
