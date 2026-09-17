@@ -223,6 +223,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     allCitiesRef.current = allCities;
   }, [allCities]);
 
+  // Auto-focus "Where to" input after origin is selected
+  const prevOriginId = useRef<string>('');
+  useEffect(() => {
+    if (originId && prevOriginId.current === '') {
+      prevOriginId.current = originId;
+      setTimeout(() => {
+        if (locationMode === 'my_location') {
+          singleSearchInputRef.current?.focus();
+        } else {
+          destInputRef.current?.focus();
+        }
+      }, 100);
+    } else if (originId) {
+      prevOriginId.current = originId;
+    }
+  }, [originId, locationMode]);
+
   useEffect(() => {
     loadExpandedCities().then(setAllCities);
   }, []);
@@ -307,6 +324,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const singleSearchRef = useRef<HTMLDivElement>(null);
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
+  const singleSearchInputRef = useRef<HTMLInputElement>(null);
+  const destInputRef = useRef<HTMLInputElement>(null);
   const locationMenuRef = useRef<HTMLDivElement>(null);
   const aiPromptRef = useRef<HTMLDivElement>(null);
 
@@ -917,6 +936,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               <input
+                ref={singleSearchInputRef}
                 type="text"
                 value={singleSearchQuery}
                 onChange={(e) => {
@@ -1097,6 +1117,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <Search className="w-4 h-4" />
                 </div>
                 <input
+                  ref={destInputRef}
                   id="input-to-dest"
                   type="text"
                   value={destSearchQuery}

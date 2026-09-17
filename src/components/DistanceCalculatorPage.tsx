@@ -23,12 +23,26 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
+  const destInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadExpandedCities()
       .then((cities) => setAllCities(cities.length > 0 ? cities : CITIES_AND_JUNCTIONS))
       .catch(() => setAllCities(CITIES_AND_JUNCTIONS));
   }, []);
+
+  // Auto-focus destination input after origin is selected
+  const prevOriginId = useRef<string>('');
+  useEffect(() => {
+    if (originId && prevOriginId.current === '') {
+      prevOriginId.current = originId;
+      setTimeout(() => {
+        destInputRef.current?.focus();
+      }, 100);
+    } else if (originId) {
+      prevOriginId.current = originId;
+    }
+  }, [originId]);
 
   const origin = originId ? allCities.find((c) => c.id === originId) : undefined;
   const destination = destId ? allCities.find((c) => c.id === destId) : undefined;
@@ -205,6 +219,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     <Search className="w-4 h-4" />
                   </div>
                   <input
+                    ref={destInputRef}
                     type="text"
                     value={destSearch || (destination?.name ?? '')}
                     onChange={(event) => {
