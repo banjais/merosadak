@@ -3,28 +3,19 @@ import { useHaptic } from './hooks/useHaptic';
 import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
 import { InteractiveMap } from './components/InteractiveMap';
-import { HighwayDirectory } from './components/HighwayDirectory';
 import { RoadAlertsFeed } from './components/RoadAlertsFeed';
 import { RoadReportModal } from './components/RoadReportModal';
-import { DistanceMatrixModal } from './components/DistanceMatrixModal';
-import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { WeatherPassesPanel } from './components/WeatherPassesPanel';
 import { HighwayPOIsPanel } from './components/HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './components/TrafficCorridorPanel';
-import { RegionalDialectPhrasesPanel } from './components/RegionalDialectPhrasesPanel';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { SosEmergencyModal } from './components/SosEmergencyModal';
 import { TollCalculatorModal } from './components/TollCalculatorModal';
-import { PreTripModal } from './components/PreTripModal';
 import { ShareTripModal } from './components/ShareTripModal';
 import { AppDrawer } from './components/AppDrawer';
-import { LoginScreen } from './components/LoginScreen';
-import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
-import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard';
 import { SplashScreen } from './components/SplashScreen';
-import { StartTripSelector } from './components/StartTripSelector';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { getStoredOfflineBundle } from './utils/offlineSync';
 import { fetchJson } from './utils/apiConfig';
@@ -81,9 +72,8 @@ import {
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'ev_charging' | 'traffic' | 'highways' | 'dialects';
-export type ActiveFeatureType = SubViewTab | 'steps' | null;
-export type TravelerRole = 'driver' | 'passenger' | null;
+export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'traffic';
+export type ActiveFeatureType = SubViewTab | null;
 
 interface LiveFeedResponse {
   incidents?: RoadIncident[];
@@ -97,39 +87,20 @@ function AppContent() {
   const [isAppReady, setIsAppReady] = useState(false);
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
   const [activeRoute, setActiveRoute] = useState<RoutePlanResult | null>(null);
-  const [simulationProgressKm, setSimulationProgressKm] = useState<number>(0);
-  const [isSimulationPlaying, setIsSimulationPlaying] = useState<boolean>(false);
-  const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
-  const [followOnMap, setFollowOnMap] = useState<boolean>(true);
-  const lastMapSyncRef = useRef<number>(0);
   const [plannerOrigin, setPlannerOrigin] = useState<string>('');
   const [plannerDest, setPlannerDest] = useState<string>('');
   const [plannerVehicle, setPlannerVehicle] = useState<VehicleType>('car');
   const [plannerPref, setPlannerPref] = useState<RoutePreference>('fastest');
-  const [travelerRole, setTravelerRole] = useState<TravelerRole>(null);
 
   // Modals & Drawers
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
   const [isTollModalOpen, setIsTollModalOpen] = useState(false);
-  const [isPreTripModalOpen, setIsPreTripModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [isMapFull, setIsMapFull] = useState(false);
 
-  // Top header state
-  const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-  const [accentColor, setAccentColor] = useState<string>(() => {
-    try { return localStorage.getItem('mero-sadak-accent') || 'emerald'; } catch { return 'emerald'; }
-  });
-
   const { triggerLight: hapticLight } = useHaptic();
-  const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
   const { user, logout } = useAuth();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -152,12 +123,6 @@ function AppContent() {
   const toggleTheme = () => {
     hapticLight();
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  const handleAccentColor = (color: string) => {
-    setAccentColor(color);
-    try { localStorage.setItem('mero-sadak-accent', color); } catch {}
-    document.documentElement.setAttribute('data-accent', color);
   };
 
   // Offline context
@@ -476,17 +441,6 @@ function AppContent() {
       zoom: 7,
     });
   };
-
-  const handleRoleSelect = (role: TravelerRole) => {
-    setTravelerRole(role);
-  };
-
-  // Show role selector if no role chosen yet
-  if (!travelerRole) {
-    return (
-      <StartTripSelector onRoleSelect={handleRoleSelect} />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
