@@ -485,6 +485,22 @@ export function calculateDirectDistanceKm(lat1: number, lon1: number, lat2: numb
   return Math.round(R * c);
 }
 
+export function findFastestRouteDistanceKm(originId: string, destinationId: string): number | null {
+  if (originId === destinationId) return null;
+
+  const route = findRouteByPreference(originId, destinationId, 'fastest', 'car');
+  if (route) return route.totalDistanceKm;
+
+  const realRoute = findRoadGraphRoute(originId, destinationId);
+  if (realRoute) return realRoute.distanceKm;
+
+  const origin = CITIES_AND_JUNCTIONS.find((city) => city.id === originId);
+  const destination = CITIES_AND_JUNCTIONS.find((city) => city.id === destinationId);
+  if (!origin || !destination) return null;
+
+  return calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+}
+
 function buildAerialRouteResult(
   origin: CityNode,
   destination: CityNode,

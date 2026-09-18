@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
+import { findOptimizedRoute, findFastestRouteDistanceKm, calculateDirectDistanceKm } from '../utils/routeOptimizer';
+import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities, getNearestRoutingCity } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
@@ -11,6 +12,15 @@ interface DistanceCalculatorPageProps {
   onBack?: () => void;
   onPlanFullRoute?: (originId: string, destId: string) => void;
 }
+
+interface MatrixPair {
+  rowId: string;
+  colId: string;
+  directDistanceKm: number;
+}
+
+const getMatrixDistanceKey = (firstId: string, secondId: string) =>
+  firstId < secondId ? `${firstId}:${secondId}` : `${secondId}:${firstId}`;
 
 export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack, onPlanFullRoute }) => {
   const [originId, setOriginId] = useState<string>('');
@@ -63,8 +73,98 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return () => document.removeEventListener('mousedown', handleCloseOnOutsideClick);
   }, [origin?.name, destination?.name]);
 
+  const matrixData = useMemo(() => {
+    const pairs: MatrixPair[] = [];
+    const directDistances = new Map<string, number>();
+
+    for (let rowIndex = 0; rowIndex < CITIES_AND_JUNCTIONS.length; rowIndex += 1) {
+      for (let colIndex = 0; colIndex < CITIES_AND_JUNCTIONS.length; colIndex += 1) {
+        if (rowIndex === colIndex) continue;
+
+        const rowCity = CITIES_AND_JUNCTIONS[rowIndex];
+        const colCity = CITIES_AND_JUNCTIONS[colIndex];
+        const directDistanceKm = calculateDirectDistanceKm(rowCity.lat, rowCity.lng, colCity.lat, colCity.lng);
+        const key = getMatrixDistanceKey(rowCity.id, colCity.id);
+        directDistances.set(key, directDistanceKm);
+        directDistances.set(getMatrixDistanceKey(colCity.id, rowCity.id), directDistanceKm);
+
+        if (rowIndex < colIndex) {
+          pairs.push({ rowId: rowCity.id, colId: colCity.id, directDistanceKm });
+        }
+      }
+    }
+
+    return { pairs, directDistances };
+  }, []);
+
+  const routeDistancesRef = useRef(new Map<string, number>());
+  const roadGraphLoadedRef = useRef(false);
+  const [roadGraphVersion, setRoadGraphVersion] = useState(0);
+  const [routeDistanceCount, setRouteDistanceCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let nextIndex = 0;
+    let lastReportedIndex = 0;
+
+    const processBatch = () => {
+      if (cancelled) return;
+
+      const batchSize = 16;
+      const endIndex = Math.min(nextIndex + batchSize, matrixData.pairs.length);
+      let updated = 0;
+
+      while (nextIndex < endIndex) {
+        const pair = matrixData.pairs[nextIndex];
+        const key = getMatrixDistanceKey(pair.rowId, pair.colId);
+        if (!routeDistancesRef.current.has(key)) {
+          const distance = findFastestRouteDistanceKm(pair.rowId, pair.colId);
+          routeDistancesRef.current.set(key, distance ?? pair.directDistanceKm);
+          updated += 1;
+        }
+        nextIndex += 1;
+      }
+
+      if (updated > 0 && (nextIndex - lastReportedIndex >= 128 || nextIndex === matrixData.pairs.length)) {
+        setRouteDistanceCount(nextIndex);
+        lastReportedIndex = nextIndex;
+      }
+
+      if (!cancelled && nextIndex < matrixData.pairs.length) {
+        scheduleNext();
+      }
+    };
+
+    const scheduleNext = () => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(processBatch, { timeout: 1000 });
+      } else {
+        setTimeout(processBatch, 0);
+      }
+    };
+
+    preloadRoadGraph().then(() => {
+      if (cancelled) return;
+      if (!roadGraphLoadedRef.current) {
+        roadGraphLoadedRef.current = true;
+        setRoadGraphVersion((version) => version + 1);
+      }
+      scheduleNext();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [matrixData]);
+
   const filteredOriginCities = filterCities(allCities, originSearch);
   const filteredDestCities = filterCities(allCities, destSearch);
+  const filteredMatrixCities = useMemo(
+    () => CITIES_AND_JUNCTIONS.filter((city) =>
+      city.name.toLowerCase().includes(matrixFilter.trim().toLowerCase())
+    ),
+    [matrixFilter]
+  );
 
   const swapCities = () => {
     const temp = originId;
@@ -74,8 +174,18 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setDestSearch(origin?.name ?? '');
   };
 
-  const routeResult = originId && destId && originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
-  const aerialDistance = origin && destination ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) : 0;
+  const routeResult = useMemo(
+    () => originId && destId && originId !== destId
+      ? findOptimizedRoute(originId, destId, 'fastest', 'car')
+      : null,
+    [originId, destId, roadGraphVersion]
+  );
+  const aerialDistance = useMemo(
+    () => origin && destination
+      ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng)
+      : 0,
+    [origin, destination]
+  );
 
   const handleSelectOrigin = (cityId: string) => {
     const city = allCities.find((candidate) => candidate.id === cityId);
@@ -468,7 +578,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-bold text-white">Nepal Full Distance Matrix (km)</h3>
-                  <p className="text-xs text-slate-400">All {CITIES_AND_JUNCTIONS.length} cities and junctions. Click any cell to calculate that route.</p>
+                  <p className="text-xs text-slate-400">
+                    All {CITIES_AND_JUNCTIONS.length} cities and junctions. Click any cell to calculate that route.{' '}
+                    {routeDistanceCount === 0 && 'Road distances load after this page appears.'}
+                    {routeDistanceCount > 0 && routeDistanceCount < matrixData.pairs.length && `Loading road distances ${routeDistanceCount}/${matrixData.pairs.length}...`}
+                    {routeDistanceCount === matrixData.pairs.length && 'All road distances loaded.'}
+                  </p>
                 </div>
                 <input
                   type="text"
@@ -484,9 +599,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   <thead className="bg-slate-950 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                     <tr>
                       <th className="py-2.5 px-3 text-left bg-slate-900 sticky left-0 z-10 border-r border-slate-800">City</th>
-                      {CITIES_AND_JUNCTIONS
-                        .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                        .map((hub) => (
+                      {filteredMatrixCities.map((hub) => (
                           <th key={hub.id} className="py-2.5 px-3 whitespace-nowrap">
                             {hub.name.split(' ')[0]}
                           </th>
@@ -494,16 +607,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {CITIES_AND_JUNCTIONS
-                      .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                      .map((rowHub) => (
+                    {filteredMatrixCities.map((rowHub) => (
                         <tr key={rowHub.id} className="hover:bg-slate-850/40 transition">
                           <td className="py-2.5 px-3 text-left font-bold text-white bg-slate-900/95 sticky left-0 z-10 border-r border-slate-800 whitespace-nowrap">
                             {rowHub.name.split(' ')[0]} <span className="text-[10px] text-slate-500 font-normal">({rowHub.elevationM}m)</span>
                           </td>
-                          {CITIES_AND_JUNCTIONS
-                            .filter((h) => h.name.toLowerCase().includes(matrixFilter.toLowerCase()))
-                            .map((colHub) => {
+                          {filteredMatrixCities.map((colHub) => {
                               if (rowHub.id === colHub.id) {
                                 return (
                                   <td key={colHub.id} className="py-2.5 px-3 text-slate-600 bg-slate-950/40">
@@ -511,7 +620,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                                   </td>
                                 );
                               }
-                              const dist = findOptimizedRoute(rowHub.id, colHub.id, 'fastest', 'car')?.totalDistanceKm || calculateDirectDistanceKm(rowHub.lat, rowHub.lng, colHub.lat, colHub.lng);
+                              const distanceKey = getMatrixDistanceKey(rowHub.id, colHub.id);
+                              const dist = routeDistancesRef.current.get(distanceKey) ?? matrixData.directDistances.get(distanceKey) ?? 0;
                               return (
                                 <td
                                   key={colHub.id}
