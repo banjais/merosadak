@@ -1,49 +1,101 @@
-name: Deploy to Firebase Hosting
+name: CI/CD
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'server.ts'
-      - 'index.html'
-      - 'vite.config.*'
-      - 'tailwind.config.*'
-      - 'worker/**'
-      - 'firebase.json'
-      - '.firebaserc'
-      - 'scripts/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # FAST CHECKS (parallel, no build needed)
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
 
-      - name: Install dependencies
-        run: npm ci
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit -p worker/tsconfig.json
 
-      - name: Type check
-        run: npx tsc --noEmit
+  # BUILD FRONTEND (vite only)
+  build-frontend:
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build:static
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-frontend
+          path: dist
+          retention-days: 1
 
-      - name: Build
-        run: npm run build
+  # BUILD BACKEND (esbuild only, parallel with frontend)
+  build-backend:
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-backend
+          path: dist/server.cjs
+          retention-days: 1
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0.11.0
+  # DEPLOY HOSTING (only on main, after both builds)
+  deploy-hosting:
+    needs: [build-frontend, build-backend]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-frontend
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-backend
+          path: dist
+      - uses: FirebaseExtended/action-hosting-deploy@v0.11.0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}'
           channelId: live
           projectId: sadak-sathi-3ab73
           firebaseToolsVersion: '15.30.2'
+
+  # PR-specific lightweight summary
+  pr-checks:
+    if: github.event_name == 'pull_request'
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All PR checks passed ✓"

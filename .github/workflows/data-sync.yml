@@ -1,4 +1,4 @@
-name: Sync Data to Cloudflare KV
+name: Sync Data to Cloudflare KV & Deploy Worker
 
 on:
   push:
@@ -7,25 +7,25 @@ on:
       - 'public/data/**'
       - 'worker/wrangler.toml'
       - 'worker/sync-data.js'
+      - 'worker/setup-kv.js'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 
 jobs:
-  sync:
+  # Use npm cache (setup-node cache) instead of node_modules artifact
+  sync-kv:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Sync data files to KV
+      - run: npm ci
+      - working-directory: worker
         run: |
-          cd worker
+          set -euo pipefail
           npx wrangler kv key put --binding DATA "airports.json" "$(cat ../public/data/airports.json)"
           npx wrangler kv key put --binding DATA "district-hqs.json" "$(cat ../public/data/district-hqs.json)"
           npx wrangler kv key put --binding DATA "cities.json" "$(cat ../public/data/cities.json)"
@@ -38,10 +38,19 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Deploy Worker
-        run: |
-          cd worker
-          npx wrangler deploy
+  # Deploy Worker (depends on sync-kv)
+  deploy-worker:
+    needs: sync-kv
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - working-directory: worker
+        run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

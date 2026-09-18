@@ -123,7 +123,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </button>
           </div>
 
-          {hasActiveRoute ? (
+          {hasActiveRoute && (
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2.5 flex items-center justify-between">
               <span>Along your route</span>
@@ -236,22 +236,8 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </div>
                 <ChevronRight className={`w-3.5 h-3.5 ${activeTab === 'highways' ? 'text-violet-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
               </button>
+              </div>
             </div>
-          </div>
-          ) : (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-3 py-3 space-y-1.5">
-            <p className="text-[11px] font-semibold text-slate-200">Plan a trip first</p>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              Choose origin and destination, then confirm. Weather, POIs, EV chargers, road alerts and highway info appear for <span className="text-slate-300 font-medium">that corridor only</span> — not all of Nepal.
-            </p>
-            <button
-              onClick={() => { onNavigateTab('route'); onClose(); }}
-              className="mt-1 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold hover:bg-emerald-500/25 transition"
-            >
-              <Compass className="w-3.5 h-3.5" />
-              Open route planner
-            </button>
-          </div>
           )}
 
           <div>
