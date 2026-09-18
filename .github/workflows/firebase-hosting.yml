@@ -3,84 +3,125 @@ name: CI/CD
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'server.ts'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'tailwind.config.*'
+      - 'worker/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'firebase-applet-config.json'
+      - '.github/workflows/firebase-hosting.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'server.ts'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'tailwind.config.*'
+      - 'worker/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'firebase-applet-config.json'
+      - '.github/workflows/firebase-hosting.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  # FAST CHECKS (parallel, no build needed)
   typecheck:
+    name: Type check application
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
 
-  lint:
+  worker-typecheck:
+    name: Type check worker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit -p worker/tsconfig.json
 
-  # BUILD FRONTEND (vite only)
   build-frontend:
-    needs: [typecheck, lint]
+    name: Build frontend
+    needs: [typecheck, worker-typecheck]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build:static
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-frontend
           path: dist
+          if-no-files-found: error
           retention-days: 1
 
-  # BUILD BACKEND (esbuild only, parallel with frontend)
   build-backend:
-    needs: [typecheck, lint]
+    name: Build backend
+    needs: [typecheck, worker-typecheck]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
+      - run: mkdir -p dist
       - run: npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-backend
           path: dist/server.cjs
+          if-no-files-found: error
           retention-days: 1
 
-  # DEPLOY HOSTING (only on main, after both builds)
   deploy-hosting:
+    name: Deploy Firebase Hosting
     needs: [build-frontend, build-backend]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: dist-frontend
           path: dist
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist-backend
           path: dist
@@ -91,11 +132,4 @@ jobs:
           channelId: live
           projectId: sadak-sathi-3ab73
           firebaseToolsVersion: '15.30.2'
-
-  # PR-specific lightweight summary
-  pr-checks:
-    if: github.event_name == 'pull_request'
-    needs: [typecheck, lint]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "All PR checks passed ✓"
+          entryPoint: .

@@ -8,49 +8,56 @@ on:
       - 'worker/wrangler.toml'
       - 'worker/sync-data.js'
       - 'worker/setup-kv.js'
+      - 'worker/package.json'
       - 'package.json'
       - 'package-lock.json'
+      - '.github/workflows/data-sync.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  # Use npm cache (setup-node cache) instead of node_modules artifact
   sync-kv:
+    name: Sync data to Cloudflare KV
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
-      - run: npm ci
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
       - working-directory: worker
         run: |
           set -euo pipefail
-          npx wrangler kv key put --binding DATA "airports.json" "$(cat ../public/data/airports.json)"
-          npx wrangler kv key put --binding DATA "district-hqs.json" "$(cat ../public/data/district-hqs.json)"
-          npx wrangler kv key put --binding DATA "cities.json" "$(cat ../public/data/cities.json)"
-          npx wrangler kv key put --binding DATA "places.json" "$(cat ../public/data/places.json)"
-          npx wrangler kv key put --binding DATA "palika-names.json" "$(cat ../public/data/palika-names.json)"
-          npx wrangler kv key put --binding DATA "highway/index.json" "$(cat ../public/data/highway/index.json)"
-          npx wrangler kv key put --binding DATA "nepal_boundary.geojson" "$(cat ../public/data/nepal_boundary.geojson)"
-          npx wrangler kv key put --binding DATA "distance-matrix.json" "$(cat ../public/data/distance-matrix.json)"
+          npx --no-install wrangler kv key put "airports.json" --binding DATA --path ../public/data/airports.json --remote
+          npx --no-install wrangler kv key put "district-hqs.json" --binding DATA --path ../public/data/district-hqs.json --remote
+          npx --no-install wrangler kv key put "cities.json" --binding DATA --path ../public/data/cities.json --remote
+          npx --no-install wrangler kv key put "places.json" --binding DATA --path ../public/data/places.json --remote
+          npx --no-install wrangler kv key put "palika-names.json" --binding DATA --path ../public/data/palika-names.json --remote
+          npx --no-install wrangler kv key put "highway/index.json" --binding DATA --path ../public/data/highway/index.json --remote
+          npx --no-install wrangler kv key put "nepal_boundary.geojson" --binding DATA --path ../public/data/nepal_boundary.geojson --remote
+          npx --no-install wrangler kv key put "distance-matrix.json" --binding DATA --path ../public/data/distance-matrix.json --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-  # Deploy Worker (depends on sync-kv)
   deploy-worker:
+    name: Deploy Cloudflare Worker
     needs: sync-kv
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: 'npm'
-      - run: npm ci
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
       - working-directory: worker
-        run: npx wrangler deploy
+        run: npx --no-install wrangler deploy --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
