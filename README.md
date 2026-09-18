@@ -98,5 +98,5 @@ in try/catch that falls back to empty data).
 
 ## Deploy the frontend
 ```
-firebase deploy --only hosting
+npx --yes firebase-tools@15.30.2 deploy --only hosting
 ```

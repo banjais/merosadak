@@ -47,7 +47,7 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'npx firebase-tools@13.11.2 deploy --only hosting --project sadak-sathi-3ab73');
+  run('firebase deploy', 'npx --yes firebase-tools@15.30.2 deploy --only hosting --project sadak-sathi-3ab73');
   console.log('\n[ship] ✅ all steps completed');
 } catch {
   console.error('\n[ship] ❌ ship aborted');
