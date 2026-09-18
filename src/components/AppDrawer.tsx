@@ -28,7 +28,7 @@ import { useAuth } from '../context/AuthContext';
 interface AppDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  activeTab?: SubViewTab;
+  activeTab?: SubViewTab | 'steps';
   onNavigateTab: (tab: SubViewTab) => void;
   onOpenTravelSteps?: () => void;
   onOpenDistanceMatrix: () => void;
@@ -39,7 +39,6 @@ interface AppDrawerProps {
   onOpenShareModal: () => void;
   onOpenOfflineManager: () => void;
   onOpenLogin: () => void;
-  onCycleMapStyle?: () => void;
   incidentsCount?: number;
   hasActiveRoute?: boolean;
   routeLabel?: string | null;
@@ -59,7 +58,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenShareModal,
   onOpenOfflineManager,
   onOpenLogin,
-  onCycleMapStyle,
   incidentsCount = 0,
   hasActiveRoute = false,
   routeLabel = null,
@@ -71,7 +69,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1100] transition-opacity animate-fadeIn"
+        className="fixed inset-0 bg-black/70 z-[1100] animate-fade-in-smooth"
         onClick={onClose}
       />
 
