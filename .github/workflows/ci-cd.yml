@@ -116,29 +116,3 @@ jobs:
           projectId: sadak-sathi-3ab73
           firebaseToolsVersion: '15.30.2'
           entryPoint: .
-
-  # ── Backend ──────────────────────────────────────────────────────────────────
-
-  deploy-backend:
-    name: Deploy backend to Cloud Run
-    needs: [typecheck]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}'
-      - uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: sadak-sathi-3ab73
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy merosadak-backend \
-            --source . \
-            --region us-central1 \
-            --project sadak-sathi-3ab73 \
-            --allow-unauthenticated \
-            --set-env-vars=NODE_ENV=production,VITE_API_BASE_URL=https://merosadak-worker.banjays.workers.dev \
-            --quiet
