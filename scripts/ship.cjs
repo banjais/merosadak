@@ -30,7 +30,7 @@ try {
 
   run('sync data', 'npm run sync:data');
   run('deploy worker', 'npm run worker:deploy');
-  run('build', 'npm run build');
+  run('build', 'npm run build:static');
 
   console.log('\n[ship] git add...');
   try {
@@ -47,8 +47,11 @@ try {
   }
 
   run('git push', 'git push origin main');
-  run('firebase deploy', 'npx --yes firebase-tools@15.30.2 deploy --only hosting --project sadak-sathi-3ab73');
-  console.log('\n[ship] ✅ all steps completed');
+  run('firebase deploy', 'npx --yes firebase-tools@15.30.2 deploy --only hosting --project sadak-sathi-3ab73', { allowFailure: false });
+  console.log('\n[ship] ✅ frontend hosted | backend deploys via GitHub Actions (CI/CD)');
+  console.log('[ship]    - Frontend: Firebase Hosting (dist/)');
+  console.log('[ship]    - Backend:  Cloud Run via Dockerfile (CI/CD workflow)');
+  console.log('[ship]    - Worker:  Cloudflare (separate workflow)');
 } catch {
   console.error('\n[ship] ❌ ship aborted');
   process.exit(1);

@@ -18,6 +18,7 @@ on:
       - 'package-lock.json'
       - 'tsconfig.json'
       - 'firebase-applet-config.json'
+      - 'Dockerfile'
       - '.github/workflows/firebase-hosting.yml'
   pull_request:
     branches: [main]
@@ -36,6 +37,7 @@ on:
       - 'package-lock.json'
       - 'tsconfig.json'
       - 'firebase-applet-config.json'
+      - 'Dockerfile'
       - '.github/workflows/firebase-hosting.yml'
   workflow_dispatch:
 
@@ -47,10 +49,10 @@ jobs:
     name: Type check application
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
@@ -60,70 +62,47 @@ jobs:
     name: Type check worker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit -p worker/tsconfig.json
 
+  # Build frontend artifact (independent of backend)
   build-frontend:
     name: Build frontend
     needs: [typecheck, worker-typecheck]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build:static
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         with:
           name: dist-frontend
           path: dist
           if-no-files-found: error
           retention-days: 1
 
-  build-backend:
-    name: Build backend
-    needs: [typecheck, worker-typecheck]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci
-      - run: mkdir -p dist
-      - run: npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
-      - uses: actions/upload-artifact@v7
-        with:
-          name: dist-backend
-          path: dist/server.cjs
-          if-no-files-found: error
-          retention-days: 1
-
-  deploy-hosting:
-    name: Deploy Firebase Hosting
-    needs: [build-frontend, build-backend]
+  # Deploy frontend to Firebase Hosting (only needs frontend artifact)
+  deploy-frontend:
+    name: Deploy frontend to Firebase Hosting
+    needs: build-frontend
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dist-frontend
-          path: dist
-      - uses: actions/download-artifact@v8
-        with:
-          name: dist-backend
           path: dist
       - uses: FirebaseExtended/action-hosting-deploy@v0.11.0
         with:
@@ -133,3 +112,25 @@ jobs:
           projectId: sadak-sathi-3ab73
           firebaseToolsVersion: '15.30.2'
           entryPoint: .
+
+  # Deploy backend to Google Cloud Run via Dockerfile (independent of frontend)
+  deploy-backend:
+    name: Deploy backend to Cloud Run
+    needs: [typecheck, worker-typecheck]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: sadak-sathi-3ab73
+      - run: |
+          gcloud run deploy merosadak-backend \
+            --source . \
+            --region us-central1 \
+            --project sadak-sathi-3ab73 \
+            --allow-unauthenticated \
+            --set-env-vars=NODE_ENV=production,VITE_API_BASE_URL=https://merosadak-worker.banjays.workers.dev
