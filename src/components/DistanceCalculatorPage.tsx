@@ -96,10 +96,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   };
 
   const routeResult = useMemo(
-    () => originId && destId && originId !== destId
-      ? findOptimizedRoute(originId, destId, 'fastest', 'car')
+    () => originId && destId && originId !== destId && origin && destination
+      ? findOptimizedRoute(originId, destId, 'fastest', 'car', {}, origin, destination)
       : null,
-    [originId, destId, roadGraphVersion]
+    [originId, destId, roadGraphVersion, origin, destination]
   );
   const aerialDistance = useMemo(
     () => origin && destination
