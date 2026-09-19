@@ -10,11 +10,17 @@ import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator } 
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 
+import { TextScale } from '../hooks/useTextScale';
+
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
+  textScale?: TextScale;
+  onTextScaleChange?: (scale: TextScale) => void;
+  accentColor?: string;
+  onAccentColorChange?: (color: string) => void;
 }
 
-export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack }) => {
+export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack, textScale, onTextScaleChange, accentColor, onAccentColorChange }) => {
   const [originId, setOriginId] = useState<string>('');
   const [destId, setDestId] = useState<string>('');
   const [showSearchBars, setShowSearchBars] = useState(true);
@@ -160,6 +166,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               isOpen={isSettingsOpen}
               onClose={() => setIsSettingsOpen(false)}
               onOpenChange={setIsSettingsOpen}
+              showTextSize={true}
+              showAccentColor={true}
+              textScale={textScale}
+              onTextScaleChange={onTextScaleChange}
+              accentColor={accentColor}
+              onAccentColorChange={onAccentColorChange}
             />
           </div>
         </div>

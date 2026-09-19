@@ -685,6 +685,234 @@ html[data-theme='light'] *:focus-visible {
   outline: 2px solid rgba(79, 70, 229, 0.4);
 }
 
+/* Accent Color Themes - applied via data-accent attribute on <html> */
+html[data-accent='emerald'] {
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-bg: rgba(16, 185, 129, 0.15);
+  --accent-border: rgba(16, 185, 129, 0.4);
+  --accent-text: #34d399;
+  --accent-text-dim: #10b981;
+}
+html[data-accent='cyan'] {
+  --accent: #06b6d4;
+  --accent-hover: #0891b2;
+  --accent-bg: rgba(6, 182, 212, 0.15);
+  --accent-border: rgba(6, 182, 212, 0.4);
+  --accent-text: #22d3ee;
+  --accent-text-dim: #06b6d4;
+}
+html[data-accent='amber'] {
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-bg: rgba(245, 158, 11, 0.15);
+  --accent-border: rgba(245, 158, 11, 0.4);
+  --accent-text: #fbbf24;
+  --accent-text-dim: #f59e0b;
+}
+html[data-accent='violet'] {
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-bg: rgba(139, 92, 246, 0.15);
+  --accent-border: rgba(139, 92, 246, 0.4);
+  --accent-text: #a78bfa;
+  --accent-text-dim: #8b5cf6;
+}
+html[data-accent='rose'] {
+  --accent: #f43f5e;
+  --accent-hover: #e11d48;
+  --accent-bg: rgba(244, 63, 94, 0.15);
+  --accent-border: rgba(244, 63, 94, 0.4);
+  --accent-text: #fb7185;
+  --accent-text-dim: #f43f5e;
+}
+html[data-accent='sky'] {
+  --accent: #0ea5e9;
+  --accent-hover: #0284c7;
+  --accent-bg: rgba(14, 165, 233, 0.15);
+  --accent-border: rgba(14, 165, 233, 0.4);
+  --accent-text: #38bdf8;
+  --accent-text-dim: #0ea5e9;
+}
+
+:root {
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-bg: rgba(16, 185, 129, 0.15);
+  --accent-border: rgba(16, 185, 129, 0.4);
+  --accent-text: #34d399;
+  --accent-text-dim: #10b981;
+}
+
+/* Apply accent theme to common UI elements */
+html[data-accent] .accent-bg { background-color: var(--accent-bg) !important; }
+html[data-accent] .accent-border { border-color: var(--accent-border) !important; }
+html[data-accent] .accent-text { color: var(--accent-text) !important; }
+
+/* Accent Color Remap - remaps hardcoded emerald colors to selected accent */
+html[data-accent='emerald'] .text-emerald-400,
+html[data-accent='emerald'] .text-emerald-300,
+html[data-accent='emerald'] .text-emerald-500 { color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .bg-emerald-500 { background-color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .bg-emerald-500\/10,
+html[data-accent='emerald'] .bg-emerald-500\/15,
+html[data-accent='emerald'] .bg-emerald-500\/20,
+html[data-accent='emerald'] .bg-emerald-500\/30 { background-color: var(--accent-bg) !important; }
+html[data-accent='emerald'] .bg-emerald-950\/40 { background-color: var(--accent-bg) !important; }
+html[data-accent='emerald'] .border-emerald-500,
+html[data-accent='emerald'] .border-emerald-500\/20,
+html[data-accent='emerald'] .border-emerald-500\/30,
+html[data-accent='emerald'] .border-emerald-500\/40 { border-color: var(--accent-border) !important; }
+html[data-accent='emerald'] .focus\:border-emerald-500:focus { border-color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .focus\:ring-emerald-500:focus { ring-color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.1) !important; }
+html[data-accent='emerald'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2) !important; }
+
+html[data-accent='cyan'] .text-emerald-400,
+html[data-accent='cyan'] .text-emerald-300,
+html[data-accent='cyan'] .text-emerald-500 { color: #22d3ee !important; }
+html[data-accent='cyan'] .bg-emerald-500 { background-color: #06b6d4 !important; }
+html[data-accent='cyan'] .bg-emerald-500\/10,
+html[data-accent='cyan'] .bg-emerald-500\/15,
+html[data-accent='cyan'] .bg-emerald-500\/20,
+html[data-accent='cyan'] .bg-emerald-500\/30 { background-color: rgba(6, 182, 212, 0.15) !important; }
+html[data-accent='cyan'] .bg-emerald-950\/40 { background-color: rgba(6, 182, 212, 0.1) !important; }
+html[data-accent='cyan'] .border-emerald-500,
+html[data-accent='cyan'] .border-emerald-500\/20,
+html[data-accent='cyan'] .border-emerald-500\/30,
+html[data-accent='cyan'] .border-emerald-500\/40 { border-color: rgba(6, 182, 212, 0.4) !important; }
+html[data-accent='cyan'] .focus\:border-emerald-500:focus { border-color: #06b6d4 !important; }
+html[data-accent='cyan'] .focus\:ring-emerald-500:focus { ring-color: #06b6d4 !important; }
+html[data-accent='cyan'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.1), 0 2px 4px -1px rgba(6, 182, 212, 0.1) !important; }
+html[data-accent='cyan'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2) !important; }
+
+html[data-accent='amber'] .text-emerald-400,
+html[data-accent='amber'] .text-emerald-300,
+html[data-accent='amber'] .text-emerald-500 { color: #fbbf24 !important; }
+html[data-accent='amber'] .bg-emerald-500 { background-color: #f59e0b !important; }
+html[data-accent='amber'] .bg-emerald-500\/10,
+html[data-accent='amber'] .bg-emerald-500\/15,
+html[data-accent='amber'] .bg-emerald-500\/20,
+html[data-accent='amber'] .bg-emerald-500\/30 { background-color: rgba(245, 158, 11, 0.15) !important; }
+html[data-accent='amber'] .bg-emerald-950\/40 { background-color: rgba(245, 158, 11, 0.1) !important; }
+html[data-accent='amber'] .border-emerald-500,
+html[data-accent='amber'] .border-emerald-500\/20,
+html[data-accent='amber'] .border-emerald-500\/30,
+html[data-accent='amber'] .border-emerald-500\/40 { border-color: rgba(245, 158, 11, 0.4) !important; }
+html[data-accent='amber'] .focus\:border-emerald-500:focus { border-color: #f59e0b !important; }
+html[data-accent='amber'] .focus\:ring-emerald-500:focus { ring-color: #f59e0b !important; }
+html[data-accent='amber'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.1) !important; }
+html[data-accent='amber'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2) !important; }
+
+html[data-accent='violet'] .text-emerald-400,
+html[data-accent='violet'] .text-emerald-300,
+html[data-accent='violet'] .text-emerald-500 { color: #a78bfa !important; }
+html[data-accent='violet'] .bg-emerald-500 { background-color: #8b5cf6 !important; }
+html[data-accent='violet'] .bg-emerald-500\/10,
+html[data-accent='violet'] .bg-emerald-500\/15,
+html[data-accent='violet'] .bg-emerald-500\/20,
+html[data-accent='violet'] .bg-emerald-500\/30 { background-color: rgba(139, 92, 246, 0.15) !important; }
+html[data-accent='violet'] .bg-emerald-950\/40 { background-color: rgba(139, 92, 246, 0.1) !important; }
+html[data-accent='violet'] .border-emerald-500,
+html[data-accent='violet'] .border-emerald-500\/20,
+html[data-accent='violet'] .border-emerald-500\/30,
+html[data-accent='violet'] .border-emerald-500\/40 { border-color: rgba(139, 92, 246, 0.4) !important; }
+html[data-accent='violet'] .focus\:border-emerald-500:focus { border-color: #8b5cf6 !important; }
+html[data-accent='violet'] .focus\:ring-emerald-500:focus { ring-color: #8b5cf6 !important; }
+html[data-accent='violet'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.1) !important; }
+html[data-accent='violet'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2) !important; }
+
+html[data-accent='rose'] .text-emerald-400,
+html[data-accent='rose'] .text-emerald-300,
+html[data-accent='rose'] .text-emerald-500 { color: #fb7185 !important; }
+html[data-accent='rose'] .bg-emerald-500 { background-color: #f43f5e !important; }
+html[data-accent='rose'] .bg-emerald-500\/10,
+html[data-accent='rose'] .bg-emerald-500\/15,
+html[data-accent='rose'] .bg-emerald-500\/20,
+html[data-accent='rose'] .bg-emerald-500\/30 { background-color: rgba(244, 63, 94, 0.15) !important; }
+html[data-accent='rose'] .bg-emerald-950\/40 { background-color: rgba(244, 63, 94, 0.1) !important; }
+html[data-accent='rose'] .border-emerald-500,
+html[data-accent='rose'] .border-emerald-500\/20,
+html[data-accent='rose'] .border-emerald-500\/30,
+html[data-accent='rose'] .border-emerald-500\/40 { border-color: rgba(244, 63, 94, 0.4) !important; }
+html[data-accent='rose'] .focus\:border-emerald-500:focus { border-color: #f43f5e !important; }
+html[data-accent='rose'] .focus\:ring-emerald-500:focus { ring-color: #f43f5e !important; }
+html[data-accent='rose'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.1), 0 2px 4px -1px rgba(244, 63, 94, 0.1) !important; }
+html[data-accent='rose'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(244, 63, 94, 0.2) !important; }
+
+html[data-accent='sky'] .text-emerald-400,
+html[data-accent='sky'] .text-emerald-300,
+html[data-accent='sky'] .text-emerald-500 { color: #38bdf8 !important; }
+html[data-accent='sky'] .bg-emerald-500 { background-color: #0ea5e9 !important; }
+html[data-accent='sky'] .bg-emerald-500\/10,
+html[data-accent='sky'] .bg-emerald-500\/15,
+html[data-accent='sky'] .bg-emerald-500\/20,
+html[data-accent='sky'] .bg-emerald-500\/30 { background-color: rgba(14, 165, 233, 0.15) !important; }
+html[data-accent='sky'] .bg-emerald-950\/40 { background-color: rgba(14, 165, 233, 0.1) !important; }
+html[data-accent='sky'] .border-emerald-500,
+html[data-accent='sky'] .border-emerald-500\/20,
+html[data-accent='sky'] .border-emerald-500\/30,
+html[data-accent='sky'] .border-emerald-500\/40 { border-color: rgba(14, 165, 233, 0.4) !important; }
+html[data-accent='sky'] .focus\:border-emerald-500:focus { border-color: #0ea5e9 !important; }
+html[data-accent='sky'] .focus\:ring-emerald-500:focus { ring-color: #0ea5e9 !important; }
+html[data-accent='sky'] .shadow-emerald-500\/10 { box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1), 0 2px 4px -1px rgba(14, 165, 233, 0.1) !important; }
+html[data-accent='sky'] .shadow-emerald-500\/20 { box-shadow: 0 0 15px rgba(14, 165, 233, 0.2) !important; }
+
+/* Accent Color Remap - remaps hardcoded cyan colors to selected accent */
+html[data-accent='emerald'] .text-cyan-400,
+html[data-accent='emerald'] .text-cyan-300 { color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .bg-cyan-500 { background-color: var(--accent-text-dim) !important; }
+html[data-accent='emerald'] .bg-cyan-500\/10,
+html[data-accent='emerald'] .bg-cyan-500\/15,
+html[data-accent='emerald'] .bg-cyan-500\/30 { background-color: var(--accent-bg) !important; }
+html[data-accent='emerald'] .border-cyan-400,
+html[data-accent='emerald'] .border-cyan-500\/30 { border-color: var(--accent-border) !important; }
+
+html[data-accent='cyan'] .text-cyan-400,
+html[data-accent='cyan'] .text-cyan-300 { color: #22d3ee !important; }
+html[data-accent='cyan'] .bg-cyan-500 { background-color: #06b6d4 !important; }
+html[data-accent='cyan'] .bg-cyan-500\/10,
+html[data-accent='cyan'] .bg-cyan-500\/15,
+html[data-accent='cyan'] .bg-cyan-500\/30 { background-color: rgba(6, 182, 212, 0.15) !important; }
+html[data-accent='cyan'] .border-cyan-400,
+html[data-accent='cyan'] .border-cyan-500\/30 { border-color: rgba(6, 182, 212, 0.3) !important; }
+
+html[data-accent='amber'] .text-cyan-400,
+html[data-accent='amber'] .text-cyan-300 { color: #fbbf24 !important; }
+html[data-accent='amber'] .bg-cyan-500 { background-color: #f59e0b !important; }
+html[data-accent='amber'] .bg-cyan-500\/10,
+html[data-accent='amber'] .bg-cyan-500\/15,
+html[data-accent='amber'] .bg-cyan-500\/30 { background-color: rgba(245, 158, 11, 0.15) !important; }
+html[data-accent='amber'] .border-cyan-400,
+html[data-accent='amber'] .border-cyan-500\/30 { border-color: rgba(245, 158, 11, 0.3) !important; }
+
+html[data-accent='violet'] .text-cyan-400,
+html[data-accent='violet'] .text-cyan-300 { color: #a78bfa !important; }
+html[data-accent='violet'] .bg-cyan-500 { background-color: #8b5cf6 !important; }
+html[data-accent='violet'] .bg-cyan-500\/10,
+html[data-accent='violet'] .bg-cyan-500\/15,
+html[data-accent='violet'] .bg-cyan-500\/30 { background-color: rgba(139, 92, 246, 0.15) !important; }
+html[data-accent='violet'] .border-cyan-400,
+html[data-accent='violet'] .border-cyan-500\/30 { border-color: rgba(139, 92, 246, 0.3) !important; }
+
+html[data-accent='rose'] .text-cyan-400,
+html[data-accent='rose'] .text-cyan-300 { color: #fb7185 !important; }
+html[data-accent='rose'] .bg-cyan-500 { background-color: #f43f5e !important; }
+html[data-accent='rose'] .bg-cyan-500\/10,
+html[data-accent='rose'] .bg-cyan-500\/15,
+html[data-accent='rose'] .bg-cyan-500\/30 { background-color: rgba(244, 63, 94, 0.15) !important; }
+html[data-accent='rose'] .border-cyan-400,
+html[data-accent='rose'] .border-cyan-500\/30 { border-color: rgba(244, 63, 94, 0.3) !important; }
+
+html[data-accent='sky'] .text-cyan-400,
+html[data-accent='sky'] .text-cyan-300 { color: #38bdf8 !important; }
+html[data-accent='sky'] .bg-cyan-500 { background-color: #0ea5e9 !important; }
+html[data-accent='sky'] .bg-cyan-500\/10,
+html[data-accent='sky'] .bg-cyan-500\/15,
+html[data-accent='sky'] .bg-cyan-500\/30 { background-color: rgba(14, 165, 233, 0.15) !important; }
+html[data-accent='sky'] .border-cyan-400,
+html[data-accent='sky'] .border-cyan-500\/30 { border-color: rgba(14, 165, 233, 0.3) !important; }
+
 /* High Contrast Mode */
 html.high-contrast {
   font-weight: 500 !important;

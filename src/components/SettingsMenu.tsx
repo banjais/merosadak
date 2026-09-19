@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Minimize, Maximize } from 'lucide-react';
+import { TextScale } from '../hooks/useTextScale';
 
 interface SettingsMenuProps {
   isOpen: boolean;
@@ -10,8 +11,8 @@ interface SettingsMenuProps {
   showSignOut?: boolean;
   user?: { displayName?: string; email?: string } | null;
   onSignOut?: () => void;
-  textScale?: number;
-  onTextScaleChange?: (scale: number) => void;
+  textScale?: TextScale;
+  onTextScaleChange?: (scale: TextScale) => void;
   accentColor?: string;
   onAccentColorChange?: (color: string) => void;
 }
@@ -96,7 +97,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             <div className="px-3 py-2 border-t border-slate-800/60">
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Text Size</p>
               <div className="flex items-center gap-1">
-                {([0.9, 1.0, 1.1, 1.2] as const).map((scale) => (
+                {(['small', 'medium', 'large', 'xlarge'] as const).map((scale) => (
                   <button
                     key={scale}
                     onClick={() => onTextScaleChange(scale)}
@@ -106,7 +107,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
                     }`}
                   >
-                    {scale === 0.9 ? 'S' : scale === 1.0 ? 'M' : scale === 1.1 ? 'L' : 'XL'}
+                    {scale === 'small' ? 'S' : scale === 'medium' ? 'M' : scale === 'large' ? 'L' : 'XL'}
                   </button>
                 ))}
               </div>

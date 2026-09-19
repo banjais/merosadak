@@ -134,6 +134,10 @@ function AppContent() {
     document.documentElement.setAttribute('data-accent', color);
   };
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-accent', accentColor);
+  }, [accentColor]);
+
   // Offline context
   const { isOnline, cacheStats, setIsOfflineManagerOpen } = useOffline();
 
@@ -707,6 +711,10 @@ function AppContent() {
       {isDistanceCalculatorOpen && (
         <DistanceCalculatorPage
           onBack={() => setIsDistanceCalculatorOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
         />
       )}
 
