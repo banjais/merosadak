@@ -845,10 +845,6 @@ function AppContent() {
       {isDistanceCalculatorOpen && (
         <DistanceCalculatorPage
           onBack={() => setIsDistanceCalculatorOpen(false)}
-          onPlanFullRoute={(originId, destId) => {
-            setIsDistanceCalculatorOpen(false);
-            handleDistanceMatrixSelect(originId, destId);
-          }}
         />
       )}
 
