@@ -6,7 +6,7 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, MapPin, Edit3 } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, MapPin, Edit3, Calculator } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 
 interface DistanceCalculatorPageProps {
@@ -125,30 +125,26 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       {/* Page Header */}
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
-          <div className="flex items-center space-x-3">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition"
-                title="Back to Main App"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            )}
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10">
-                <svg viewBox="0 0 24 24" width="22" height="22">
-                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#f59e0b" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-400 tracking-wider">
-                  mero sadak
-                </p>
-                <h1 className="text-2xl font-black tracking-tight text-white font-display">
-                  DISTANCE CALCULATOR
-                </h1>
-              </div>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition"
+              title="Back to Main App"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-emerald-500/10">
+              <Calculator className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">
+                mero sadak
+              </h1>
+              <p className="text-xl font-black tracking-tight text-white font-display">
+                Distance Calculator
+              </p>
             </div>
           </div>
         </div>

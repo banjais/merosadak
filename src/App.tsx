@@ -512,7 +512,8 @@ function AppContent() {
         routeLabel={activeRoute ? `${activeRoute.origin.name} → ${activeRoute.destination.name}` : null}
       />
 
-      {/* Top Header Matching Reference UI */}
+      {/* Top Header Matching Reference UI - Hidden when on Distance Calculator or Distance Matrix pages */}
+      {!isDistanceCalculatorOpen && !isDistanceMatrixReferenceOpen && (
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
@@ -840,6 +841,7 @@ function AppContent() {
           </div>
         </div>
       </header>
+      )}
 
       {/* Distance Calculator Page - Full Page View */}
       {isDistanceCalculatorOpen && (
