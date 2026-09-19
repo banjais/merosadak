@@ -6,8 +6,9 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, MapPin, Edit3, Calculator } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
+import { SettingsMenu, SettingsButton } from './SettingsMenu';
 
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
@@ -18,15 +19,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [destId, setDestId] = useState<string>('');
   const [showSearchBars, setShowSearchBars] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('mero-sadak-theme');
-        if (saved === 'light' || saved === 'dark') return saved;
-      } catch {}
-    }
-    return 'dark';
-  });
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
   const [originSearch, setOriginSearch] = useState<string>('');
@@ -35,13 +27,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', theme);
-      try { localStorage.setItem('mero-sadak-theme', theme); } catch {}
-    }
-  }, [theme]);
 
   useEffect(() => {
     loadExpandedCities()
@@ -166,69 +151,16 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
           </div>
           {/* Three-dot Settings Menu (no bell notification) */}
           <div className="relative ml-auto">
-            <button
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className={`p-2 rounded-xl border text-xs font-semibold transition ${
-                isSettingsOpen
-                  ? 'bg-slate-700 text-white border-slate-600'
-                  : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
-              }`}
-              title="Settings"
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="5" r="1.2" fill="currentColor" stroke="none" />
-                <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
-                <circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none" />
-              </svg>
-            </button>
+            <SettingsButton
+              isOpen={isSettingsOpen}
+              onOpenChange={setIsSettingsOpen}
+            />
 
-            {isSettingsOpen && (
-              <>
-                <div className="fixed inset-0 z-[199]" onClick={() => setIsSettingsOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl shadow-black/60 z-[200] overflow-hidden animate-fadeIn">
-                  <div className="px-3.5 py-2.5 border-b border-slate-800">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Settings</p>
-                  </div>
-
-                  {/* Dark / Light Theme */}
-                  <button
-                    onClick={() => { setTheme(t => t === 'dark' ? 'light' : 'dark'); setIsSettingsOpen(false); }}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800 text-slate-200 hover:text-white transition text-xs font-semibold"
-                  >
-                    <div className="flex items-center space-x-2.5">
-                      <span className="text-base">{theme === 'dark' ? '☀️' : '🌙'}</span>
-                      <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
-                    </div>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                      theme === 'dark' ? 'bg-slate-700 text-slate-300' : 'bg-amber-500/20 text-amber-300'
-                    }`}>{theme === 'dark' ? 'DARK' : 'LIGHT'}</span>
-                  </button>
-
-                  {/* Fullscreen */}
-                  <button
-                    onClick={() => {
-                      if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                      } else {
-                        document.exitFullscreen().catch(() => {});
-                      }
-                      setIsSettingsOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-slate-800 text-slate-200 hover:text-white transition text-xs font-semibold"
-                  >
-                    <div className="flex items-center space-x-2.5">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M8 3a5 5 0 0 0 0 10" />
-                        <path d="M3 8h5v5" />
-                        <path d="M16 16h5v5" />
-                        <path d="M21 16a5 5 0 0 0-5-5v5z" />
-                      </svg>
-                      <span>Toggle Fullscreen</span>
-                    </div>
-                  </button>
-                </div>
-              </>
-            )}
+            <SettingsMenu
+              isOpen={isSettingsOpen}
+              onClose={() => setIsSettingsOpen(false)}
+              onOpenChange={setIsSettingsOpen}
+            />
           </div>
         </div>
       </header>
