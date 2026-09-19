@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+worker/node_modules/
+
+# Build output
+dist/
+
+# Local dev / env
+.env
+.env.*
+.dev.vars*
+
+# Firebase
+.firebase/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# CI
+.github/
