@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, findFastestRouteDistanceKm, calculateDirectDistanceKm } from '../utils/routeOptimizer';
+import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities, getNearestRoutingCity } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
+import { formatDistanceKm } from '../utils/formatDistance';
 import { Calculator, ArrowRight, ArrowUpDown, Search, ArrowLeft, Route, Award } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 
@@ -13,19 +14,9 @@ interface DistanceCalculatorPageProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
 }
 
-interface MatrixPair {
-  rowId: string;
-  colId: string;
-  directDistanceKm: number;
-}
-
-const getMatrixDistanceKey = (firstId: string, secondId: string) =>
-  firstId < secondId ? `${firstId}:${secondId}` : `${secondId}:${firstId}`;
-
 export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ onBack, onPlanFullRoute }) => {
   const [originId, setOriginId] = useState<string>('');
   const [destId, setDestId] = useState<string>('');
-  const [matrixFilter, setMatrixFilter] = useState<string>('');
   const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
   const [originSearch, setOriginSearch] = useState<string>('');
@@ -73,98 +64,28 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return () => document.removeEventListener('mousedown', handleCloseOnOutsideClick);
   }, [origin?.name, destination?.name]);
 
-  const matrixData = useMemo(() => {
-    const pairs: MatrixPair[] = [];
-    const directDistances = new Map<string, number>();
-
-    for (let rowIndex = 0; rowIndex < CITIES_AND_JUNCTIONS.length; rowIndex += 1) {
-      for (let colIndex = 0; colIndex < CITIES_AND_JUNCTIONS.length; colIndex += 1) {
-        if (rowIndex === colIndex) continue;
-
-        const rowCity = CITIES_AND_JUNCTIONS[rowIndex];
-        const colCity = CITIES_AND_JUNCTIONS[colIndex];
-        const directDistanceKm = calculateDirectDistanceKm(rowCity.lat, rowCity.lng, colCity.lat, colCity.lng);
-        const key = getMatrixDistanceKey(rowCity.id, colCity.id);
-        directDistances.set(key, directDistanceKm);
-        directDistances.set(getMatrixDistanceKey(colCity.id, rowCity.id), directDistanceKm);
-
-        if (rowIndex < colIndex) {
-          pairs.push({ rowId: rowCity.id, colId: colCity.id, directDistanceKm });
-        }
-      }
-    }
-
-    return { pairs, directDistances };
-  }, []);
-
-  const routeDistancesRef = useRef(new Map<string, number>());
+  // Preload the road graph so the route optimizer can resolve real road distances.
+  // The full distance matrix reference lives on its own screen (DistanceMatrixReference)
+  // and is intentionally kept separate from this From/To calculator.
   const roadGraphLoadedRef = useRef(false);
   const [roadGraphVersion, setRoadGraphVersion] = useState(0);
-  const [routeDistanceCount, setRouteDistanceCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    let nextIndex = 0;
-    let lastReportedIndex = 0;
-
-    const processBatch = () => {
-      if (cancelled) return;
-
-      const batchSize = 16;
-      const endIndex = Math.min(nextIndex + batchSize, matrixData.pairs.length);
-      let updated = 0;
-
-      while (nextIndex < endIndex) {
-        const pair = matrixData.pairs[nextIndex];
-        const key = getMatrixDistanceKey(pair.rowId, pair.colId);
-        if (!routeDistancesRef.current.has(key)) {
-          const distance = findFastestRouteDistanceKm(pair.rowId, pair.colId);
-          routeDistancesRef.current.set(key, distance ?? pair.directDistanceKm);
-          updated += 1;
-        }
-        nextIndex += 1;
-      }
-
-      if (updated > 0 && (nextIndex - lastReportedIndex >= 128 || nextIndex === matrixData.pairs.length)) {
-        setRouteDistanceCount(nextIndex);
-        lastReportedIndex = nextIndex;
-      }
-
-      if (!cancelled && nextIndex < matrixData.pairs.length) {
-        scheduleNext();
-      }
-    };
-
-    const scheduleNext = () => {
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(processBatch, { timeout: 1000 });
-      } else {
-        setTimeout(processBatch, 0);
-      }
-    };
-
     preloadRoadGraph().then(() => {
       if (cancelled) return;
       if (!roadGraphLoadedRef.current) {
         roadGraphLoadedRef.current = true;
         setRoadGraphVersion((version) => version + 1);
       }
-      scheduleNext();
     });
-
     return () => {
       cancelled = true;
     };
-  }, [matrixData]);
+  }, []);
 
   const filteredOriginCities = filterCities(allCities, originSearch);
   const filteredDestCities = filterCities(allCities, destSearch);
-  const filteredMatrixCities = useMemo(
-    () => CITIES_AND_JUNCTIONS.filter((city) =>
-      city.name.toLowerCase().includes(matrixFilter.trim().toLowerCase())
-    ),
-    [matrixFilter]
-  );
 
   const swapCities = () => {
     const temp = originId;
@@ -199,15 +120,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setDestId(cityId);
     setDestSearch(city?.name || '');
     setDestDropdownOpen(false);
-  };
-
-  const handleMatrixCellClick = (rowId: string, colId: string) => {
-    const rowCity = allCities.find((city) => city.id === rowId);
-    const colCity = allCities.find((city) => city.id === colId);
-    setOriginId(rowId);
-    setDestId(colId);
-    setOriginSearch(rowCity?.name || '');
-    setDestSearch(colCity?.name || '');
   };
 
   return (
@@ -424,7 +336,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
                         </div>
                         <div className="text-2xl font-black text-emerald-400 mt-1 font-display">
-                          {routeResult.totalDistanceKm} <span className="text-sm font-normal text-slate-400">km</span>
+                          {formatDistanceKm(routeResult.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span>
                         </div>
                         <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
                           <span>⏱️ ~{Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m driving</span>
@@ -438,7 +350,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">Line-of-Sight</span>
                         </div>
                         <div className="text-2xl font-black text-cyan-400 mt-1 font-display">
-                          {aerialDistance} <span className="text-sm font-normal text-slate-400">km</span>
+                          {formatDistanceKm(aerialDistance)} <span className="text-sm font-normal text-slate-400">km</span>
                         </div>
                         <div className="text-[11px] text-slate-500 mt-1">
                           As the crow flies (geodesic)
@@ -495,13 +407,13 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                       <div
                         className="bg-emerald-500 h-full transition-all"
                         style={{ width: `${routeResult.roadTierBreakdown.certifiedPercent}%` }}
-                        title={`DoR Certified: ${routeResult.roadTierBreakdown.highwayKm} km`}
+                        title={`DoR Certified: ${formatDistanceKm(routeResult.roadTierBreakdown.highwayKm)} km`}
                       />
                       {routeResult.roadTierBreakdown.certifiedPercent < 100 && (
                         <div
                           className="bg-cyan-500 h-full transition-all"
                           style={{ width: `${100 - routeResult.roadTierBreakdown.certifiedPercent}%` }}
-                          title={`Provincial / Palika / Link Roads: ${routeResult.roadTierBreakdown.localKm + routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.communityKm} km`}
+                          title={`Provincial / Palika / Link Roads: ${formatDistanceKm(routeResult.roadTierBreakdown.localKm + routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.communityKm)} km`}
                         />
                       )}
                     </div>
@@ -509,18 +421,18 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 pt-0.5">
                       <span className="flex items-center space-x-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                        <span>Federal Highway: <strong>{routeResult.roadTierBreakdown.highwayKm} km</strong></span>
+                        <span>Federal Highway: <strong>{formatDistanceKm(routeResult.roadTierBreakdown.highwayKm)} km</strong></span>
                       </span>
                       {(routeResult.roadTierBreakdown.provincialKm > 0 || routeResult.roadTierBreakdown.localKm > 0) && (
                         <span className="flex items-center space-x-1">
                           <span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span>
-                          <span>Local / Palika Links: <strong>{routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.localKm} km</strong></span>
+                          <span>Local / Palika Links: <strong>{formatDistanceKm(routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.localKm)} km</strong></span>
                         </span>
                       )}
                       {routeResult.roadTierBreakdown.communityKm > 0 && (
                         <span className="flex items-center space-x-1">
                           <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                          <span>Unpaved Track: <strong>{routeResult.roadTierBreakdown.communityKm} km</strong></span>
+                          <span>Unpaved Track: <strong>{formatDistanceKm(routeResult.roadTierBreakdown.communityKm)} km</strong></span>
                         </span>
                       )}
                     </div>
@@ -539,7 +451,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           {i + 1}
                         </span>
                         <span className="text-slate-200 font-medium">{st.instruction}</span>
-                        <span className="text-slate-500 font-semibold">({st.distanceKm} km)</span>
+                        <span className="text-slate-500 font-semibold">({formatDistanceKm(st.distanceKm)} km)</span>
                         {st.certificationBadge && (
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                             st.roadClassification === 'national_highway'
@@ -572,73 +484,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               </div>
             )}
           </div>
-
-          {/* Full Distance Matrix Table */}
-          <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-bold text-white">Nepal Full Distance Matrix (km)</h3>
-                  <p className="text-xs text-slate-400">
-                    All {CITIES_AND_JUNCTIONS.length} cities and junctions. Click any cell to calculate that route.{' '}
-                    {routeDistanceCount === 0 && 'Road distances load after this page appears.'}
-                    {routeDistanceCount > 0 && routeDistanceCount < matrixData.pairs.length && `Loading road distances ${routeDistanceCount}/${matrixData.pairs.length}...`}
-                    {routeDistanceCount === matrixData.pairs.length && 'All road distances loaded.'}
-                  </p>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Filter cities..."
-                  value={matrixFilter}
-                  onChange={(e) => setMatrixFilter(e.target.value)}
-                  className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-800">
-                <table className="w-full text-center text-xs text-slate-300">
-                  <thead className="bg-slate-950 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    <tr>
-                      <th className="py-2.5 px-3 text-left bg-slate-900 sticky left-0 z-10 border-r border-slate-800">City</th>
-                      {filteredMatrixCities.map((hub) => (
-                          <th key={hub.id} className="py-2.5 px-3 whitespace-nowrap">
-                            {hub.name.split(' ')[0]}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {filteredMatrixCities.map((rowHub) => (
-                        <tr key={rowHub.id} className="hover:bg-slate-850/40 transition">
-                          <td className="py-2.5 px-3 text-left font-bold text-white bg-slate-900/95 sticky left-0 z-10 border-r border-slate-800 whitespace-nowrap">
-                            {rowHub.name.split(' ')[0]} <span className="text-[10px] text-slate-500 font-normal">({rowHub.elevationM}m)</span>
-                          </td>
-                          {filteredMatrixCities.map((colHub) => {
-                              if (rowHub.id === colHub.id) {
-                                return (
-                                  <td key={colHub.id} className="py-2.5 px-3 text-slate-600 bg-slate-950/40">
-                                    -
-                                  </td>
-                                );
-                              }
-                              const distanceKey = getMatrixDistanceKey(rowHub.id, colHub.id);
-                              const dist = routeDistancesRef.current.get(distanceKey) ?? matrixData.directDistances.get(distanceKey) ?? 0;
-                              return (
-                                <td
-                                  key={colHub.id}
-                                  onClick={() => handleMatrixCellClick(rowHub.id, colHub.id)}
-                                  className="py-2.5 px-3 font-semibold text-slate-200 hover:bg-emerald-500/20 hover:text-emerald-300 cursor-pointer transition"
-                                  title={`${rowHub.name} to ${colHub.name}`}
-                                >
-                                  {dist}
-                                </td>
-                              );
-                            })}
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
         </div>
       </main>
     </div>
