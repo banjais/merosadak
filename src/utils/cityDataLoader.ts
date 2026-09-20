@@ -267,6 +267,10 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
     { url: '/data/palika-coords.json', grouped: false, key: 'palika' },
     { url: '/data/district-hqs.json', grouped: false, key: 'district-hqs' },
     { url: '/data/district-centroids.json', grouped: false, key: 'district-centroids' },
+    { url: '/data/airports.json', grouped: false, key: 'airports', cityType: 'Airport' },
+    { url: '/data/temples.json', grouped: false, key: 'temples', cityType: 'Temple' },
+    { url: '/data/tourist-places.json', grouped: false, key: 'tourist', cityType: 'Tourist Place' },
+    { url: '/data/bus-stations.json', grouped: false, key: 'bus-stations', cityType: 'Bus Station' },
   ];
 
   for (const source of sources) {
@@ -276,7 +280,7 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
       const data: unknown = await res.json();
       const nonGroupedItems = asObjectArray(data);
       const datasets: { items: Record<string, unknown>[]; cityType?: string }[] = Array.isArray(data)
-        ? [{ items: data, cityType: undefined }]
+        ? [{ items: data, cityType: source.cityType }]
         : source.grouped
           ? Object.entries(data as Record<string, unknown[]>).flatMap(([key, value]) => {
               const items = asObjectArray(value);
@@ -287,10 +291,10 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
                 municipality: 'Municipality',
                 rural_municipality: 'Rural Municipality',
               };
-              return [{ items, cityType: typeMap[key] }];
+              return [{ items, cityType: source.cityType ?? typeMap[key] }];
             })
           : nonGroupedItems.length > 0
-            ? [{ items: nonGroupedItems, cityType: stringValue(nonGroupedItems[0], ['type']) || undefined }]
+            ? [{ items: nonGroupedItems, cityType: source.cityType ?? stringValue(nonGroupedItems[0], ['type']) ?? undefined }]
             : [];
 
       for (const dataset of datasets) {

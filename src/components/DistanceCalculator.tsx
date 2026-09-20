@@ -3,7 +3,7 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
-import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Compass, ShieldCheck, Mountain, Activity, Award, Route, Database, Clock, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Award, Route, Database, Clock, ExternalLink } from 'lucide-react';
 
 interface DistanceCalculatorProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
@@ -63,7 +63,22 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     setDestId(temp);
   };
 
-  const routeResult = originId && destId && originId !== destId ? findOptimizedRoute(originId, destId, 'fastest', 'car') : null;
+  const routeResult = originId && destId && originId !== destId ? (() => {
+    const originCity = allCities.find((c) => c.id === originId);
+    const destCity = allCities.find((c) => c.id === destId);
+    if (!originCity || !destCity) return null;
+    const routingOrigin = snapToNearestRoutingNode(originCity);
+    const routingDest = snapToNearestRoutingNode(destCity);
+    return findOptimizedRoute(
+      routingOrigin.id,
+      routingDest.id,
+      'fastest',
+      'car',
+      {},
+      originCity,
+      destCity
+    );
+  })() : null;
   const aerialDistance = origin && destination ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) : 0;
 
   const keyHubs = CITIES_AND_JUNCTIONS.filter((c) => c.isMajorHub);
@@ -106,17 +121,27 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                   <div className="max-h-52 overflow-y-auto">
                     {filteredOriginCities.length > 0 ? (
                       filteredOriginCities.map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => { setOriginId(city.id); setOriginSearch(''); setOriginDropdownOpen(false); }}
-                          className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
-                            originId === city.id
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : 'text-slate-100 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
-                        </button>
+                            <button
+                            key={city.id}
+                            onClick={() => { setOriginId(city.id); setOriginSearch(''); setOriginDropdownOpen(false); }}
+                            className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition flex items-center justify-between ${
+                              originId === city.id
+                                ? 'bg-emerald-500/20 text-emerald-300'
+                                : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="truncate">{city.name}</span>
+                              {city.cityType && (
+                                <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 align-middle">
+                                  {city.cityType}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-slate-500 font-normal text-xs whitespace-nowrap">
+                              ({city.district} - {city.elevationM}m)
+                            </span>
+                          </button>
                       ))
                     ) : (
                       <div className="px-4 py-6 text-center text-xs text-slate-500">
@@ -173,17 +198,27 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                   <div className="max-h-52 overflow-y-auto">
                     {filteredDestCities.length > 0 ? (
                       filteredDestCities.map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => { setDestId(city.id); setDestSearch(''); setDestDropdownOpen(false); }}
-                          className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition ${
-                            destId === city.id
-                              ? 'bg-cyan-500/20 text-cyan-300'
-                              : 'text-slate-100 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          {city.name} <span className="text-slate-500 font-normal">({city.district} - {city.elevationM}m)</span>
-                        </button>
+                            <button
+                            key={city.id}
+                            onClick={() => { setDestId(city.id); setDestSearch(''); setDestDropdownOpen(false); }}
+                            className={`w-full px-3.5 py-2.5 text-left text-sm font-medium transition flex items-center justify-between ${
+                              destId === city.id
+                                ? 'bg-cyan-500/20 text-cyan-300'
+                                : 'text-slate-100 hover:bg-slate-800 hover:text-white'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="truncate">{city.name}</span>
+                              {city.cityType && (
+                                <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 align-middle">
+                                  {city.cityType}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-slate-500 font-normal text-xs whitespace-nowrap">
+                              ({city.district} - {city.elevationM}m)
+                            </span>
+                          </button>
                       ))
                     ) : (
                       <div className="px-4 py-6 text-center text-xs text-slate-500">
