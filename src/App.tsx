@@ -474,6 +474,7 @@ function AppContent() {
         incidentsCount={incidents.length}
         hasActiveRoute={!!activeRoute}
         routeLabel={activeRoute ? `${activeRoute.origin.name} → ${activeRoute.destination.name}` : null}
+        activeRoute={activeRoute}
       />
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator or Distance Matrix pages */}
