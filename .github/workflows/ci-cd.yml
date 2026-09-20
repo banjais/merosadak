@@ -118,7 +118,7 @@ jobs:
         with:
           name: dist-frontend
           path: dist
-      - uses: FirebaseExtended/action-hosting-deploy@v0.12.0
+      - uses: FirebaseExtended/action-hosting-deploy@v0.11.0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}'
