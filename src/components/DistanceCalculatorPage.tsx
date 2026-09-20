@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
@@ -6,9 +6,11 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
+import { DistanceMatrixData } from '../types';
+import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
 import { TextScale } from '../hooks/useTextScale';
 
@@ -32,7 +34,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
+  const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
+  const [matrixData, setMatrixData] = useState<DistanceMatrixData | null>(null);
+  const [isMatrixLoading, setIsMatrixLoading] = useState(false);
 
   useEffect(() => {
     loadExpandedCities()
@@ -128,6 +133,41 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setShowSearchBars(false);
   };
 
+  const handleChangeLocation = () => {
+    setOriginId('');
+    setDestId('');
+    setOriginSearch('');
+    setDestSearch('');
+    setOriginDropdownOpen(false);
+    setDestDropdownOpen(false);
+    setShowSearchBars(true);
+    setTimeout(() => originInputRef.current?.focus(), 100);
+  };
+
+  const loadMatrixData = useCallback(async () => {
+    if (matrixData) return matrixData;
+    setIsMatrixLoading(true);
+    try {
+      const res = await fetch('/data/distance-matrix.json');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (isDistanceMatrixData(json)) {
+        setMatrixData(json);
+        return json;
+      }
+    } catch (e) {
+      console.error('Failed to load distance matrix:', e);
+    } finally {
+      setIsMatrixLoading(false);
+    }
+    return null;
+  }, [matrixData]);
+
+  const handleExportPdf = async () => {
+    const data = await loadMatrixData();
+    if (data) exportDistanceMatrixPdf(data);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header */}
@@ -183,6 +223,23 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
           {/* Search Bar Card - Hidden when report is shown */}
           {showSearchBars && (
             <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-bold text-white">Distance Calculator</h2>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={isMatrixLoading}
+                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 transition text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-50"
+                  title="Download Nepal Full Distance Matrix (A4 PDF, multi-page)"
+                >
+                  {isMatrixLoading ? (
+                    <Loader className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  <span>Full Matrix PDF</span>
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                 <div className="md:col-span-5 space-y-1.5 relative" ref={originSearchRef}>
                   <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
@@ -195,6 +252,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     </div>
                     <input
                       type="text"
+                      ref={originInputRef}
                       value={originSearch || (origin?.name ?? '')}
                       onChange={(event) => {
                         setOriginSearch(event.target.value);
@@ -331,12 +389,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   <ArrowRight className="w-5 h-5 text-emerald-400" />
                   <span className="text-lg font-bold text-white">{destination?.name ?? 'Select destination'}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowSearchBars(true)}
-                  title="Change location"
-                  className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center space-x-1.5 text-xs font-medium"
-                >
+                  <button
+                    type="button"
+                    onClick={handleChangeLocation}
+                    title="Change location"
+                    className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center space-x-1.5 text-xs font-medium"
+                  >
                   <Edit3 className="w-4 h-4" />
                   <span>Change Location</span>
                 </button>

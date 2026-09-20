@@ -8,7 +8,6 @@ import { RoadAlertsFeed } from './components/RoadAlertsFeed';
 import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
-import { DistanceMatrixReference } from './components/DistanceMatrixReference';
 import { WeatherPassesPanel } from './components/WeatherPassesPanel';
 import { HighwayPOIsPanel } from './components/HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './components/TrafficCorridorPanel';
@@ -108,7 +107,6 @@ function AppContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
-  const [isDistanceMatrixReferenceOpen, setIsDistanceMatrixReferenceOpen] = useState(false);
   const [isTollModalOpen, setIsTollModalOpen] = useState(false);
   const [isPreTripModalOpen, setIsPreTripModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -466,7 +464,6 @@ function AppContent() {
           setIsDrawerOpen(false);
         }}
         onOpenDistanceMatrix={() => setIsDistanceCalculatorOpen(true)}
-        onOpenDistanceMatrixReference={() => setIsDistanceMatrixReferenceOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
         onOpenSosModal={() => setIsSosModalOpen(true)}
         onOpenPreTripModal={() => setIsPreTripModalOpen(true)}
@@ -480,7 +477,7 @@ function AppContent() {
       />
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator or Distance Matrix pages */}
-      {!isDistanceCalculatorOpen && !isDistanceMatrixReferenceOpen && (
+      {!isDistanceCalculatorOpen && (
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
@@ -713,17 +710,13 @@ function AppContent() {
           onBack={() => setIsDistanceCalculatorOpen(false)}
           textScale={textScale}
           onTextScaleChange={setTextScale}
-          accentColor={accentColor}
+        accentColor={accentColor}
           onAccentColorChange={handleAccentColor}
         />
       )}
 
-      {isDistanceMatrixReferenceOpen && (
-        <DistanceMatrixReference onBack={() => setIsDistanceMatrixReferenceOpen(false)} />
-      )}
-
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      {!isDistanceCalculatorOpen && !isDistanceMatrixReferenceOpen && (
+      {!isDistanceCalculatorOpen && (
         <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
