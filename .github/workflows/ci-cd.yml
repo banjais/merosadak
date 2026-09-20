@@ -19,6 +19,10 @@ on:
       - 'server.ts'
       - 'Dockerfile'
       - '.github/workflows/ci-cd.yml'
+      - 'worker/wrangler.toml'
+      - 'worker/sync-data.js'
+      - 'worker/setup-kv.js'
+      - 'worker/package.json'
   pull_request:
     branches: [main]
     paths:
@@ -37,6 +41,10 @@ on:
       - 'server.ts'
       - 'Dockerfile'
       - '.github/workflows/ci-cd.yml'
+      - 'worker/wrangler.toml'
+      - 'worker/sync-data.js'
+      - 'worker/setup-kv.js'
+      - 'worker/package.json'
   workflow_dispatch:
 
 permissions:
@@ -53,10 +61,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund --loglevel=error
       - run: npx tsc --noEmit
 
   worker-typecheck:
@@ -67,10 +75,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund --loglevel=error
       - run: npx tsc --noEmit -p worker/tsconfig.json
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
@@ -84,10 +92,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund --loglevel=error
       - run: npm run build:static
       - uses: actions/upload-artifact@v4
         with:
@@ -102,17 +110,68 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      npm_config_loglevel: error
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: dist-frontend
           path: dist
-      - uses: FirebaseExtended/action-hosting-deploy@v0.11.0
+      - uses: FirebaseExtended/action-hosting-deploy@v0.12.0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}'
           channelId: live
           projectId: sadak-sathi-3ab73
-          firebaseToolsVersion: '15.30.2'
           entryPoint: .
+
+  # ── Data Sync & Worker Deploy ────────────────────────────────────────────────
+
+  sync-kv:
+    name: Sync data to Cloudflare KV
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund --loglevel=error
+      - working-directory: worker
+        run: |
+          set -euo pipefail
+          npx --no-install wrangler kv key put "airports.json" --binding DATA --path ../public/data/airports.json --remote
+          npx --no-install wrangler kv key put "district-hqs.json" --binding DATA --path ../public/data/district-hqs.json --remote
+          npx --no-install wrangler kv key put "cities.json" --binding DATA --path ../public/data/cities.json --remote
+          npx --no-install wrangler kv key put "places.json" --binding DATA --path ../public/data/places.json --remote
+          npx --no-install wrangler kv key put "palika-names.json" --binding DATA --path ../public/data/palika-names.json --remote
+          npx --no-install wrangler kv key put "highway/index.json" --binding DATA --path ../public/data/highway/index.json --remote
+          npx --no-install wrangler kv key put "nepal_boundary.geojson" --binding DATA --path ../public/data/nepal_boundary.geojson --remote
+          npx --no-install wrangler kv key put "distance-matrix.json" --binding DATA --path ../public/data/distance-matrix.json --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-worker:
+    name: Deploy Cloudflare Worker
+    needs: sync-kv
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund --loglevel=error
+      - working-directory: worker
+        run: npx --no-install wrangler deploy --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
