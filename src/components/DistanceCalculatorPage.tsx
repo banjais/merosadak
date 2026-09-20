@@ -6,7 +6,9 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader } from 'lucide-react';
+import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
+import { generateProofSheet } from '../utils/proofSheet';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { DistanceMatrixData } from '../types';
@@ -38,11 +40,17 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const destInputRef = useRef<HTMLInputElement>(null);
   const [matrixData, setMatrixData] = useState<DistanceMatrixData | null>(null);
   const [isMatrixLoading, setIsMatrixLoading] = useState(false);
+  const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
+  const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
 
   useEffect(() => {
     loadExpandedCities()
       .then((cities) => setAllCities(cities.length > 0 ? cities : CITIES_AND_JUNCTIONS))
       .catch(() => setAllCities(CITIES_AND_JUNCTIONS));
+  }, []);
+
+  useEffect(() => {
+    loadSNHReference().then(setSnhReference);
   }, []);
 
   // Auto-focus destination input after origin is selected
@@ -118,6 +126,15 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     [origin, destination]
   );
 
+  useEffect(() => {
+    if (origin && destination && snhReference) {
+      const lookup = lookupSNHDistance(origin.name, destination.name, snhReference);
+      setSnhLookupResult(lookup);
+    } else if (!origin || !destination) {
+      setSnhLookupResult(null);
+    }
+  }, [origin, destination, snhReference]);
+
   const handleSelectOrigin = (cityId: string) => {
     const city = allCities.find((candidate) => candidate.id === cityId);
     setOriginId(cityId);
@@ -167,6 +184,30 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     const data = await loadMatrixData();
     if (data) exportDistanceMatrixPdf(data);
   };
+
+  const handleExportProofSheet = useCallback(async () => {
+    if (!origin || !destination || !snhLookupResult) return;
+    let dataHash = 'snh-reference.json';
+    if (snhReference) {
+      let hash = 0;
+      const text = JSON.stringify(snhReference);
+      for (let i = 0; i < text.length; i++) {
+        const char = text.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash;
+      }
+      dataHash = Math.abs(hash).toString(36);
+    }
+    generateProofSheet({
+      from: origin.name,
+      to: destination.name,
+      fromDistrict: origin.district,
+      toDistrict: destination.district,
+      lookupResult: snhLookupResult,
+      generatedAt: new Date().toISOString(),
+      dataHash,
+    });
+  }, [origin, destination, snhLookupResult, snhReference]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -411,35 +452,59 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   ? (routeResult!.totalDistanceKm / aerialDistance).toFixed(2)
                   : '1.00';
 
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {/* Card 1: Road Driving Distance (Primary Hero) */}
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/30 shadow-sm relative overflow-hidden">
-                      <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                        <span>Road Driving Distance</span>
-                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
-                      </div>
-                      <div className="text-2xl font-black text-emerald-400 mt-1 font-display">
-                        {formatDistanceKm(routeResult!.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
-                        <span>⏱️ ~{Math.floor(routeResult!.estimatedTimeMinutes / 60)}h {routeResult!.estimatedTimeMinutes % 60}m driving</span>
-                      </div>
-                    </div>
+                 return (
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                     {/* Card 1: Road Driving Distance (Primary Hero) */}
+                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/30 shadow-sm relative overflow-hidden">
+                       <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                         <span>Road Driving Distance</span>
+                         <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
+                       </div>
+                       <div className="text-2xl font-black text-emerald-400 mt-1 font-display flex items-baseline gap-2">
+                         {snhLookupResult ? (
+                           <span>{formatDistanceKm(snhLookupResult.distanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
+                         ) : (
+                           <span>{formatDistanceKm(routeResult!.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
+                         )}
+                         {snhLookupResult && (
+                           <span
+                             className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                             style={{
+                               backgroundColor: `rgba(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')}, 0.15)`,
+                               borderColor: `rgba(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')}, 0.3)`,
+                               color: `rgb(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')})`,
+                             }}
+                           >
+                             {getEvidenceLevelLabel(snhLookupResult.evidenceLevel)}
+                           </span>
+                         )}
+                       </div>
+                       <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
+                         <span>⏱️ ~{Math.floor(routeResult!.estimatedTimeMinutes / 60)}h {routeResult!.estimatedTimeMinutes % 60}m driving</span>
+                       </div>
+                       {snhLookupResult && snhLookupResult.citation && (
+                         <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
+                           <div>SNH 2022/23, {snhLookupResult.citation.table}{snhLookupResult.citation.row ? ` row ${snhLookupResult.citation.row}` : ''}, p.{snhLookupResult.citation.printedPage} (PDF p.{snhLookupResult.citation.pdfPage})</div>
+                           {snhLookupResult.isUncertain && (
+                             <div className="text-amber-400">⚠ Has unreconciled component</div>
+                           )}
+                         </div>
+                       )}
+                     </div>
 
-                    {/* Card 2: Direct Aerial Distance */}
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                      <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                        <span>Direct (Aerial) Line</span>
-                        <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">Line-of-Sight</span>
-                      </div>
-                      <div className="text-2xl font-black text-cyan-400 mt-1 font-display">
-                        {formatDistanceKm(aerialDistance)} <span className="text-sm font-normal text-slate-400">km</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1">
-                        As the crow flies (geodesic)
-                      </div>
-                    </div>
+                     {/* Card 2: Direct Aerial Distance */}
+                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
+                       <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                         <span>Direct (Aerial) Line</span>
+                         <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">Line-of-Sight</span>
+                       </div>
+                       <div className="text-2xl font-black text-cyan-400 mt-1 font-display">
+                         {formatDistanceKm(aerialDistance)} <span className="text-sm font-normal text-slate-400">km</span>
+                       </div>
+                       <div className="text-[11px] text-slate-500 mt-1">
+                         As the crow flies (geodesic)
+                       </div>
+                     </div>
 
                     {/* Card 3: Mountain Circuity / Detour Factor */}
                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
@@ -561,6 +626,27 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                 note="Official statutory road distances certified along surveyed national highway centerlines (NH01-NH80). Direct aerial distance computed via Geodesic Great Circle."
                 href="https://dor.gov.np"
               />
+
+              {/* SNH Evidence & Proof Sheet */}
+              {snhLookupResult && snhLookupResult.evidenceLevel === 'published' && (
+                <div className="pt-2 border-t border-slate-800/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Verified against SNH 2022/23 — {snhLookupResult.citation?.table}, row {snhLookupResult.citation?.row}, p.{snhLookupResult.citation?.printedPage} (PDF p.{snhLookupResult.citation?.pdfPage})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleExportProofSheet}
+                      title="Generate printable proof sheet for bank / official use"
+                      className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 transition text-xs font-semibold flex items-center space-x-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Proof Sheet (PDF)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

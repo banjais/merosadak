@@ -1,0 +1,145 @@
+{
+  "data_version": "SNH 2022/23",
+  "snapshot_date": "2024-06",
+  "document": "Statistics of National Highway (SNH) 2022/23",
+  "publisher": "Department of Roads (DoR), Nepal - HMIS-ICT Unit",
+  "publication_date": "2024-06",
+  "tiers": {
+    "A. DoR published": {
+      "meaning": "Copied verbatim from SNH 2022/23 (link names, chainage, lengths, surface)",
+      "measured_links": 710,
+      "total_links": 717,
+      "measured_km": 14484,
+      "total_km": 14601,
+      "coverage_percent": 99.2
+    },
+    "B. DoR published, reconciled": {
+      "meaning": "PDF contradicts its own chainage or geometry, so repo GeoJSON was used",
+      "measured_links": 8,
+      "measured_km": 117,
+      "items": [
+        "NH18 (7 links, shifted labels)",
+        "NH52-004 (5.5 km in PDF vs 8.5 km)"
+      ]
+    },
+    "C. Derived from DoR data": {
+      "meaning": "Computed by us and not printed by DoR (shortest-path distance matrix, junction nodes, coordinates)",
+      "note": "Percentage generated at build time"
+    },
+    "D. Not DoR": {
+      "meaning": "Weather, incidents, user reports, POIs, temples, tourist places, ROAD_NETWORK_EDGES, cities.json/palika coordinates",
+      "measured": false
+    }
+  },
+  "road_network": {
+    "total_links": 508,
+    "total_km": 8332.24,
+    "unique_highway_codes": [
+      "NH01",
+      "NH02",
+      "NH03",
+      "NH04",
+      "NH05",
+      "NH06",
+      "NH07",
+      "NH08",
+      "NH09",
+      "NH10",
+      "NH11",
+      "NH12",
+      "NH13",
+      "NH14",
+      "NH15",
+      "NH16",
+      "NH17",
+      "NH18",
+      "NH19",
+      "NH20",
+      "NH21",
+      "NH22",
+      "NH23",
+      "NH24",
+      "NH25",
+      "NH26",
+      "NH28",
+      "NH29",
+      "NH30",
+      "NH31",
+      "NH32",
+      "NH33",
+      "NH34",
+      "NH35",
+      "NH36",
+      "NH37",
+      "NH38"
+    ],
+    "unique_highway_count": 37,
+    "paved_links": 325,
+    "paved_km": 5336.3,
+    "pavement_types": {
+      "BT": 325,
+      "GR": 59,
+      "ER": 71,
+      "UC": 8,
+      "PL": 45
+    }
+  },
+  "table_coverage": {
+    "Table 4 (NH01 place-to-place)": {
+      "places": 143,
+      "non_null": 132
+    },
+    "Table 5 (Mugling-Narayanghat)": {
+      "entries": 77
+    },
+    "Table 6 (District HQ from Kathmandu)": {
+      "entries": 77
+    }
+  },
+  "corrections": [
+    {
+      "item": "NH18",
+      "issue": "PDF link codes shifted by one row",
+      "resolution": "Used repo GeoJSON; total 108.02 km agrees",
+      "corrected_km": 108.02
+    },
+    {
+      "item": "NH52-004",
+      "issue": "PDF says 5.5 km, chainage gap gives 8.5 km",
+      "resolution": "Used 8.5 km",
+      "corrected_km": 8.5
+    },
+    {
+      "item": "NH13-001",
+      "issue": "In PDF but no geometry in repo",
+      "resolution": "Added as 12.5 km explicit link",
+      "corrected_km": 12.5
+    },
+    {
+      "item": "Blank link names",
+      "issue": "5 names blank in PDF extraction",
+      "resolution": "Filled from repo GeoJSON",
+      "corrected_km": null
+    }
+  ],
+  "planned_and_under_construction_km": {
+    "planned": 2443,
+    "under_construction": 388,
+    "note": "These are not drivable; excluded from routing"
+  },
+  "file_hashes": {
+    "SNH-2022-23/annex2_links.json": "94235959d38160c0",
+    "SNH-2022-23/table4_nh01_distances.json": "8281ba2cc60be55f",
+    "SNH-2022-23/table5_mugling_narayanghat.json": "eb56b2a68e56002c",
+    "SNH-2022-23/table6_kathmandu_district_hq.json": "eb56b2a68e56002c",
+    "snh-reference.json": "2d6c3eebb4e0cd15"
+  },
+  "methodology": "Numbers computed at build time. The same script that builds the network writes provenance.json, with counts, km, corrections and file hashes. Nothing is typed by hand, so the printed percentages cannot drift from the data.",
+  "caveats": [
+    "This is a 2022/23 snapshot. Valid as of June 2024 publication date; does not reflect live conditions.",
+    "The 99.2% figure is a share of road-link length, not of the app.",
+    "Table 5 and Table 6 appear identical in the extracted data; both reference district HQ distances from Kathmandu via NH17.",
+    "DoR publishes only ~66 hub pairs (Table 4), 77 HQ distances (Table 5/6), and NH01 place-to-place distances. Everything else is a link-sum or estimate.",
+    "The PDF carries copyright (c) 2023 Department of Roads. Redistribution under DoR name requires written approval."
+  ]
+}

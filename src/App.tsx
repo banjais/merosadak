@@ -8,6 +8,7 @@ import { RoadAlertsFeed } from './components/RoadAlertsFeed';
 import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
+import { DataSourcesPage } from './components/DataSourcesPage';
 import { WeatherPassesPanel } from './components/WeatherPassesPanel';
 import { HighwayPOIsPanel } from './components/HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './components/TrafficCorridorPanel';
@@ -107,6 +108,7 @@ function AppContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
+  const [isDataSourcesOpen, setIsDataSourcesOpen] = useState(false);
   const [isTollModalOpen, setIsTollModalOpen] = useState(false);
   const [isPreTripModalOpen, setIsPreTripModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -464,6 +466,7 @@ function AppContent() {
           setIsDrawerOpen(false);
         }}
         onOpenDistanceMatrix={() => setIsDistanceCalculatorOpen(true)}
+        onOpenDataSources={() => setIsDataSourcesOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
         onOpenSosModal={() => setIsSosModalOpen(true)}
         onOpenPreTripModal={() => setIsPreTripModalOpen(true)}
@@ -711,13 +714,20 @@ function AppContent() {
           onBack={() => setIsDistanceCalculatorOpen(false)}
           textScale={textScale}
           onTextScaleChange={setTextScale}
-        accentColor={accentColor}
+          accentColor={accentColor}
           onAccentColorChange={handleAccentColor}
         />
       )}
 
+      {/* Data Sources Page - Full Page View */}
+      {isDataSourcesOpen && (
+        <DataSourcesPage
+          onBack={() => setIsDataSourcesOpen(false)}
+        />
+      )}
+
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      {!isDistanceCalculatorOpen && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && (
         <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
