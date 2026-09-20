@@ -239,9 +239,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           )}
 
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
-              Calculators & Toll Rates
-            </div>
             <div className="space-y-0.75">
               <button
                 onClick={() => {
@@ -284,9 +281,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
 
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
-              Trip Tools & Offline
-            </div>
             <div className="space-y-0.75">
               <button
                 onClick={() => {
