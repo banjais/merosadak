@@ -66,18 +66,44 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -480,
     intermediateCoords: [[27.7172, 85.3240], [27.7020, 85.2010], [27.7214, 85.1764]]
   },
-  // Naubise to Mugling (NH04 Prithvi Highway)
+  // Naubise to Galchhi (NH04 Prithvi Highway)
   {
     fromId: 'nbz',
-    toId: 'mgl',
-    distanceKm: 88,
-    baseTimeMinutes: 135,
+    toId: 'gch',
+    distanceKm: 26,
+    baseTimeMinutes: 45,
     highwayCode: 'NH04',
-    highwayName: 'Prithvi Highway',
+    highwayName: 'Prithvi Highway (Naubise-Galchhi)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -340,
+    intermediateCoords: [[27.7214, 85.1764], [27.7533, 85.0872], [27.8105, 84.9754]]
+  },
+  // Galchhi to Malekhu (NH04)
+  {
+    fromId: 'gch',
+    toId: 'mlk',
+    distanceKm: 22,
+    baseTimeMinutes: 33,
+    highwayCode: 'NH04',
+    highwayName: 'Prithvi Highway (Galchhi-Malekhu)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: -130,
+    intermediateCoords: [[27.8105, 84.9754], [27.8286, 84.8912], [27.8228, 84.8155]]
+  },
+  // Malekhu to Mugling (NH04)
+  {
+    fromId: 'mlk',
+    toId: 'mgl',
+    distanceKm: 40,
+    baseTimeMinutes: 69,
+    highwayCode: 'NH04',
+    highwayName: 'Prithvi Highway (Malekhu-Mugling)',
     surface: 'blacktopped_fair',
     status: 'caution',
-    elevationGain: -645,
-    intermediateCoords: [[27.7214, 85.1764], [27.8105, 84.9754], [27.8228, 84.8155], [27.8423, 84.7155], [27.8617, 84.5542]]
+    elevationGain: -175,
+    intermediateCoords: [[27.8228, 84.8155], [27.8423, 84.7155], [27.8617, 84.5542]]
   },
   // Mugling to Damauli (NH04)
   {
@@ -118,6 +144,32 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -67,
     intermediateCoords: [[27.8617, 84.5542], [27.8102, 84.5020], [27.7650, 84.4750], [27.6833, 84.4333]]
   },
+  // Mugling to Jalbire (NH05)
+  {
+    fromId: 'mgl',
+    toId: 'jlb',
+    distanceKm: 18,
+    baseTimeMinutes: 26,
+    highwayCode: 'NH05',
+    highwayName: 'Narayanghat-Mugling Road',
+    surface: 'asphalt_excellent',
+    status: 'caution',
+    elevationGain: -40,
+    intermediateCoords: [[27.8617, 84.5542], [27.8102, 84.502], [27.765, 84.475]]
+  },
+  // Jalbire to Aaptari (NH05)
+  {
+    fromId: 'jlb',
+    toId: 'apt',
+    distanceKm: 18,
+    baseTimeMinutes: 20,
+    highwayCode: 'NH05',
+    highwayName: 'Narayanghat-Mugling Road',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -27,
+    intermediateCoords: [[27.765, 84.475], [27.712, 84.451], [27.6833, 84.4333]]
+  },
   // Narayanghat to Hetauda (NH01 Mahendra Highway)
   {
     fromId: 'cht',
@@ -144,18 +196,57 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -370,
     intermediateCoords: [[27.4285, 85.0331], [27.1800, 84.9900], [27.0128, 84.8774]]
   },
-  // Naubise to Hetauda via Daman (NH02 Mountain Byroad)
+  // Naubise to Nagdhunga (NH02/NH04)
   {
     fromId: 'nbz',
-    toId: 'htd',
-    distanceKm: 132,
-    baseTimeMinutes: 240,
+    toId: 'ngd',
+    distanceKm: 5,
+    baseTimeMinutes: 10,
+    highwayCode: 'NH02/NH04',
+    highwayName: 'Tribhuvan/Prithvi Highway Junction',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 590,
+    intermediateCoords: [[27.7214, 85.1764], [27.7000, 85.2000]]
+  },
+  // Nagdhunga to Tistung (NH02)
+  {
+    fromId: 'ngd',
+    toId: 'tst',
+    distanceKm: 25,
+    baseTimeMinutes: 45,
     highwayCode: 'NH02',
-    highwayName: 'Tribhuvan Highway (Daman Pass)',
+    highwayName: 'Tribhuvan Highway (Nagdhunga-Tistung)',
     surface: 'blacktopped_fair',
     status: 'clear',
-    elevationGain: 1402,
-    intermediateCoords: [[27.7214, 85.1764], [27.6000, 85.0500], [27.4285, 85.0331]]
+    elevationGain: 290,
+    intermediateCoords: [[27.7000, 85.2000], [27.6800, 85.1500], [27.8167, 85.0667]]
+  },
+  // Tistung to Daman (NH02)
+  {
+    fromId: 'tst',
+    toId: 'dmn',
+    distanceKm: 30,
+    baseTimeMinutes: 60,
+    highwayCode: 'NH02',
+    highwayName: 'Tribhuvan Highway (Tistung-Daman Pass)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: 522,
+    intermediateCoords: [[27.8167, 85.0667], [27.7200, 85.0700], [27.6000, 85.0500]]
+  },
+  // Daman to Hetauda (NH02)
+  {
+    fromId: 'dmn',
+    toId: 'htd',
+    distanceKm: 51,
+    baseTimeMinutes: 90,
+    highwayCode: 'NH02',
+    highwayName: 'Tribhuvan Highway (Daman-Hetauda)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: -1862,
+    intermediateCoords: [[27.6000, 85.0500], [27.5100, 85.0300], [27.4285, 85.0331]]
   },
   // Narayanghat to Butwal via Daunne Pass (NH01)
   {
@@ -209,6 +300,32 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -528,
     intermediateCoords: [[27.8683, 83.5489], [27.9800, 83.7700], [28.2096, 83.9856]]
   },
+  // Pokhara to Besisahar (NH25)
+  {
+    fromId: 'pkr',
+    toId: 'bsl',
+    distanceKm: 105,
+    baseTimeMinutes: 180,
+    highwayCode: 'NH25',
+    highwayName: 'Mid-Hill Highway (Pokhara-Besisahar)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -62,
+    intermediateCoords: [[28.2096, 83.9856], [28.150, 84.050], [28.2333, 84.3667]]
+  },
+  // Besisahar to Chame (NH25)
+  {
+    fromId: 'bsl',
+    toId: 'chm',
+    distanceKm: 70,
+    baseTimeMinutes: 150,
+    highwayCode: 'NH25',
+    highwayName: 'Mid-Hill Highway (Besisahar-Chame/Manang)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: 1940,
+    intermediateCoords: [[28.2333, 84.3667], [28.400, 84.250], [28.5833, 84.2167]]
+  },
   // Pokhara to Baglung (NH15 Mid-Hill Highway)
   {
     fromId: 'pkr',
@@ -248,31 +365,83 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: 90,
     intermediateCoords: [[27.6221, 85.5428], [27.6333, 85.7000], [27.9497, 85.9452]]
   },
-  // Dhulikhel to Sindhuli Gadhi (NH13 BP Highway)
+  // Dhulikhel to Nepalthok (NH13 BP Highway)
   {
     fromId: 'dhk',
-    toId: 'sdh',
-    distanceKm: 120,
-    baseTimeMinutes: 190,
+    toId: 'npt',
+    distanceKm: 50,
+    baseTimeMinutes: 71,
     highwayCode: 'NH13',
     highwayName: 'B.P. Koirala Highway (Kavre-Sindhuli)',
     surface: 'asphalt_excellent',
     status: 'caution',
-    elevationGain: -450,
-    intermediateCoords: [[27.6221, 85.5428], [27.4200, 85.8700], [27.3333, 86.0167], [27.2486, 85.9186]]
+    elevationGain: -1030,
+    intermediateCoords: [[27.6221, 85.5428], [27.502, 85.67], [27.42, 85.87]]
   },
-  // Sindhuli Gadhi to Bardibas (NH13)
+  // Nepalthok to Bhakundebesi (NH13)
   {
-    fromId: 'sdh',
-    toId: 'brd',
-    distanceKm: 40,
-    baseTimeMinutes: 50,
+    fromId: 'npt',
+    toId: 'bkb',
+    distanceKm: 15,
+    baseTimeMinutes: 20,
     highwayCode: 'NH13',
-    highwayName: 'B.P. Koirala Highway (Sindhuli-Bardibas)',
+    highwayName: 'B.P. Koirala Highway (Nepalthok-Bhakundebesi)',
     surface: 'asphalt_excellent',
     status: 'clear',
-    elevationGain: -950,
-    intermediateCoords: [[27.2486, 85.9186], [27.1500, 85.9100], [26.9740, 85.9024]]
+    elevationGain: 0,
+    intermediateCoords: [[27.42, 85.87], [27.450, 85.780], [27.5000, 85.6700]]
+  },
+  // Bhakundebesi to Khurkot (NH13)
+  {
+    fromId: 'bkb',
+    toId: 'khk',
+    distanceKm: 22,
+    baseTimeMinutes: 30,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Bhakundebesi-Khurkot)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -50,
+    intermediateCoords: [[27.5000, 85.6700], [27.420, 85.820], [27.3333, 86.0167]]
+  },
+  // Khurkot to Sindhuli Gadhi (NH13)
+  {
+    fromId: 'khk',
+    toId: 'sdh',
+    distanceKm: 33,
+    baseTimeMinutes: 57,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Kavre-Sindhuli)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 630,
+    intermediateCoords: [[27.3333, 86.0167], [27.28, 85.94], [27.2486, 85.9186]]
+  },
+  // Sindhuli Gadhi to Sindhuli Madi (NH13)
+  {
+    fromId: 'sdh',
+    toId: 'smd',
+    distanceKm: 15,
+    baseTimeMinutes: 25,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Sindhuli Gadhi-Sindhuli Madi)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -600,
+    intermediateCoords: [[27.2486, 85.9186], [27.260, 85.910], [27.2800, 85.9100]]
+  },
+  // Sindhuli Madi to Bardibas (NH13)
+  {
+    fromId: 'smd',
+    toId: 'brd',
+    distanceKm: 25,
+    baseTimeMinutes: 35,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Sindhuli Madi-Bardibas)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -350,
+    intermediateCoords: [[27.2800, 85.9100], [27.200, 85.905], [26.9740, 85.9024]]
   },
   // Bardibas to Janakpur (NH01 / Link)
   {
@@ -338,6 +507,240 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     status: 'clear',
     elevationGain: 73,
     intermediateCoords: [[26.4525, 87.2718], [26.6620, 87.8920], [26.6508, 88.1565]]
+  },
+  // Kakarbhitta to Birtamod (NH01 Mahendra Highway - Eastern Terminus)
+  {
+    fromId: 'kkr',
+    toId: 'btm',
+    distanceKm: 22,
+    baseTimeMinutes: 30,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Kakarbhitta-Birtamod)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -45,
+    intermediateCoords: [[26.6508, 88.1565], [26.5800, 88.1200], [26.4833, 88.0833]]
+  },
+  // Kakarbhitta to Itahari (NH01)
+  {
+    fromId: 'kkr',
+    toId: 'ith',
+    distanceKm: 85,
+    baseTimeMinutes: 78,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Eastern Terai)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -35,
+    intermediateCoords: [[26.6508, 88.1565], [26.662, 87.892], [26.665, 87.278]]
+  },
+  // Itahari to Bardibas (NH01)
+  {
+    fromId: 'ith',
+    toId: 'brd',
+    distanceKm: 165,
+    baseTimeMinutes: 171,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Central Terai)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: 40,
+    intermediateCoords: [[26.665, 87.278], [26.521, 86.932], [26.974, 85.9024]]
+  },
+  // Birtamod to Biratnagar (NH01)
+  {
+    fromId: 'btm',
+    toId: 'brt',
+    distanceKm: 108,
+    baseTimeMinutes: 120,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Jhapa-Morang 4-lane)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -28,
+    intermediateCoords: [[26.4833, 88.0833], [26.4700, 87.6500], [26.4525, 87.2718]]
+  },
+  // Kakarbhitta to Bhadrapur (NH01)
+  {
+    fromId: 'kkr',
+    toId: 'bhp',
+    distanceKm: 35,
+    baseTimeMinutes: 40,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Kakarbhitta-Bhadrapur)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -44,
+    intermediateCoords: [[26.6508, 88.1565], [26.6000, 88.1000], [26.5333, 88.0833]]
+  },
+  // Bhadrapur to Birtamod (NH01)
+  {
+    fromId: 'bhp',
+    toId: 'btm',
+    distanceKm: 25,
+    baseTimeMinutes: 30,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Bhadrapur-Birtamod)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -1,
+    intermediateCoords: [[26.5333, 88.0833], [26.5000, 88.0833], [26.4833, 88.0833]]
+  },
+  // Kakarbhitta to Damak (NH01)
+  {
+    fromId: 'kkr',
+    toId: 'dmk',
+    distanceKm: 42,
+    baseTimeMinutes: 45,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Kakarbhitta-Damak)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -35,
+    intermediateCoords: [[26.6508, 88.1565], [26.6600, 87.9500], [26.8667, 87.7000]]
+  },
+  // Damak to Itahari (NH01)
+  {
+    fromId: 'dmk',
+    toId: 'ith',
+    distanceKm: 43,
+    baseTimeMinutes: 50,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Damak-Itahari)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 0,
+    intermediateCoords: [[26.8667, 87.7000], [26.7800, 87.4500], [26.665, 87.278]]
+  },
+  // Itahari to Lahan (NH01)
+  {
+    fromId: 'ith',
+    toId: 'lhn',
+    distanceKm: 75,
+    baseTimeMinutes: 85,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Itahari-Lahan)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 0,
+    intermediateCoords: [[26.665, 87.278], [26.620, 86.850], [26.7333, 86.4833]]
+  },
+  // Lahan to Bardibas (NH01)
+  {
+    fromId: 'lhn',
+    toId: 'brd',
+    distanceKm: 90,
+    baseTimeMinutes: 100,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Lahan-Bardibas)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 40,
+    intermediateCoords: [[26.7333, 86.4833], [26.850, 86.100], [26.974, 85.9024]]
+  },
+  // Bardibas to Pathlaiya (NH01)
+  {
+    fromId: 'brd',
+    toId: 'ptl',
+    distanceKm: 120,
+    baseTimeMinutes: 130,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Bardibas-Pathlaiya)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -60,
+    intermediateCoords: [[26.974, 85.9024], [27.050, 85.350], [27.0167, 84.9500]]
+  },
+  // Pathlaiya to Hetauda (NH01 / NH02 link)
+  {
+    fromId: 'ptl',
+    toId: 'htd',
+    distanceKm: 55,
+    baseTimeMinutes: 60,
+    highwayCode: 'NH01/NH02',
+    highwayName: 'Pathlaiya-Hetauda Link',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 410,
+    intermediateCoords: [[27.0167, 84.9500], [27.200, 85.000], [27.4285, 85.0331]]
+  },
+  // Hetauda to Amlekhgunj (NH02)
+  {
+    fromId: 'htd',
+    toId: 'amg',
+    distanceKm: 35,
+    baseTimeMinutes: 40,
+    highwayCode: 'NH02',
+    highwayName: 'Tribhuvan Highway (Hetauda-Amlekhgunj)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -260,
+    intermediateCoords: [[27.4285, 85.0331], [27.300, 84.950], [27.4167, 84.9833]]
+  },
+  // Amlekhgunj to Pathlaiya (NH02)
+  {
+    fromId: 'amg',
+    toId: 'ptl',
+    distanceKm: 20,
+    baseTimeMinutes: 25,
+    highwayCode: 'NH02',
+    highwayName: 'Tribhuvan Highway (Amlekhgunj-Pathlaiya)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 10,
+    intermediateCoords: [[27.4167, 84.9833], [27.300, 84.950], [27.0167, 84.9500]]
+  },
+  // Pathlaiya to Birgunj (NH02)
+  {
+    fromId: 'ptl',
+    toId: 'brg',
+    distanceKm: 30,
+    baseTimeMinutes: 35,
+    highwayCode: 'NH02',
+    highwayName: 'Tribhuvan Highway (Pathlaiya-Birgunj)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -10,
+    intermediateCoords: [[27.0167, 84.9500], [27.050, 84.920], [27.0128, 84.8774]]
+  },
+  // Kohalpur to Attariya (NH01)
+  {
+    fromId: 'npg',
+    toId: 'atr',
+    distanceKm: 150,
+    baseTimeMinutes: 140,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Kohalpur-Attariya)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 40,
+    intermediateCoords: [[28.1900, 81.6900], [28.500, 81.000], [28.8833, 80.1500]]
+  },
+  // Attariya to Dhangadhi (NH01)
+  {
+    fromId: 'atr',
+    toId: 'dhg',
+    distanceKm: 67,
+    baseTimeMinutes: 70,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Attariya-Dhangadhi)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -41,
+    intermediateCoords: [[28.8833, 80.1500], [28.800, 80.300], [28.6946, 80.5977]]
+  },
+  // Attariya to Mahendranagar (NH01)
+  {
+    fromId: 'atr',
+    toId: 'mhn',
+    distanceKm: 150,
+    baseTimeMinutes: 140,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Attariya-Mahendranagar)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 8,
+    intermediateCoords: [[28.8833, 80.1500], [28.900, 80.000], [28.9667, 80.1833]]
   },
   // Kakarbhitta to Ilam (NH09 Mechi Highway)
   {
@@ -416,6 +819,266 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     status: 'clear',
     elevationGain: 89,
     intermediateCoords: [[28.6946, 80.5977], [28.8500, 80.3500], [28.9667, 80.1833]]
+  },
+  // Ilam to Dhankuta (NH08)
+  {
+    fromId: 'ilm',
+    toId: 'dht',
+    distanceKm: 120,
+    baseTimeMinutes: 200,
+    highwayCode: 'NH08',
+    highwayName: 'Koshi Highway (Ilam-Dhankuta)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -59,
+    intermediateCoords: [[26.9117, 87.9275], [26.850, 87.650], [26.9833, 87.3500]]
+  },
+  // Dhankuta to Dharan (NH08)
+  {
+    fromId: 'dht',
+    toId: 'dhr',
+    distanceKm: 45,
+    baseTimeMinutes: 60,
+    highwayCode: 'NH08',
+    highwayName: 'Koshi Highway (Dhankuta-Dharan)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -801,
+    intermediateCoords: [[26.9833, 87.3500], [26.900, 87.300], [26.8124, 87.2834]]
+  },
+  // Biratnagar to Dhankuta (NH08 link)
+  {
+    fromId: 'brt',
+    toId: 'dht',
+    distanceKm: 95,
+    baseTimeMinutes: 120,
+    highwayCode: 'NH08',
+    highwayName: 'Koshi Highway (Biratnagar-Dhankuta)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: 878,
+    intermediateCoords: [[26.4525, 87.2718], [26.700, 87.300], [26.9833, 87.3500]]
+  },
+  // Surkhet to Jajarkot (NH06) - intermediate
+  {
+    fromId: 'srk',
+    toId: 'jjk',
+    distanceKm: 130,
+    baseTimeMinutes: 260,
+    highwayCode: 'NH06',
+    highwayName: 'Karnali Highway (Surkhet-Jajarkot)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: 740,
+    intermediateCoords: [[28.5997, 81.6334], [28.900, 81.600], [28.7000, 82.2000]]
+  },
+  // Jajarkot to Jumla (NH06)
+  {
+    fromId: 'jjk',
+    toId: 'jml',
+    distanceKm: 102,
+    baseTimeMinutes: 200,
+    highwayCode: 'NH06',
+    highwayName: 'Karnali Highway (Jajarkot-Jumla)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: 1114,
+    intermediateCoords: [[28.7000, 82.2000], [29.000, 81.800], [29.2747, 82.1838]]
+  },
+  // Baglung to Jajarkot (NH15 Mid-Hill)
+  {
+    fromId: 'bgl',
+    toId: 'jjk',
+    distanceKm: 150,
+    baseTimeMinutes: 300,
+    highwayCode: 'NH15',
+    highwayName: 'Mid-Hill Highway (Baglung-Jajarkot)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: 380,
+    intermediateCoords: [[28.2725, 83.6006], [28.400, 83.000], [28.7000, 82.2000]]
+  },
+  // Nepalgunj to Gulariya (NH59)
+  {
+    fromId: 'npg',
+    toId: 'gly',
+    distanceKm: 45,
+    baseTimeMinutes: 50,
+    highwayCode: 'NH59',
+    highwayName: 'Bardiya Highway (Nepalgunj-Gulariya)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 0,
+    intermediateCoords: [[28.0500, 81.6167], [28.150, 81.400], [28.2167, 81.3333]]
+  },
+  // Gulariya to Lamki (NH62)
+  {
+    fromId: 'gly',
+    toId: 'lmk',
+    distanceKm: 70,
+    baseTimeMinutes: 80,
+    highwayCode: 'NH62',
+    highwayName: 'Karnali Corridor (Gulariya-Lamki)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 40,
+    intermediateCoords: [[28.2167, 81.3333], [28.500, 81.400], [28.8833, 81.6167]]
+  },
+  // Lamki to Lodeghat (NH62)
+  {
+    fromId: 'lmk',
+    toId: 'lgt',
+    distanceKm: 50,
+    baseTimeMinutes: 70,
+    highwayCode: 'NH62',
+    highwayName: 'Karnali Corridor (Lamki-Lodeghat)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: 613,
+    intermediateCoords: [[28.8833, 81.6167], [28.950, 81.500], [29.0500, 81.3833]]
+  },
+  // Lodeghat to Dipayal (NH65)
+  {
+    fromId: 'lgt',
+    toId: 'dpl',
+    distanceKm: 80,
+    baseTimeMinutes: 120,
+    highwayCode: 'NH65',
+    highwayName: 'Seti Highway (Lodeghat-Dipayal)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: -620,
+    intermediateCoords: [[29.0500, 81.3833], [28.900, 81.100], [28.7167, 80.9167]]
+  },
+  // Ghorahi to Pyuthan (NH19/NH55)
+  {
+    fromId: 'ghr',
+    toId: 'pyt',
+    distanceKm: 45,
+    baseTimeMinutes: 70,
+    highwayCode: 'NH19',
+    highwayName: 'Rapti Highway (Ghorahi-Pyuthan)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: 600,
+    intermediateCoords: [[28.2500, 82.4833], [28.180, 82.650], [28.0833, 82.8500]]
+  },
+  // Pyuthan to Sandhikharka (NH51)
+  {
+    fromId: 'pyt',
+    toId: 'sdk',
+    distanceKm: 60,
+    baseTimeMinutes: 100,
+    highwayCode: 'NH51',
+    highwayName: 'Arghakhanchi Highway (Pyuthan-Sandhikharka)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: 300,
+    intermediateCoords: [[28.0833, 82.8500], [28.050, 83.000], [28.0000, 83.0333]]
+  },
+  // Butwal to Ghorahi (NH55)
+  {
+    fromId: 'btl',
+    toId: 'ghr',
+    distanceKm: 120,
+    baseTimeMinutes: 180,
+    highwayCode: 'NH55',
+    highwayName: 'Rapti Highway (Butwal-Ghorahi)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 480,
+    intermediateCoords: [[27.7006, 83.4484], [27.900, 83.000], [28.2500, 82.4833]]
+  },
+  // Butwal to Khunuwa (NH50)
+  {
+    fromId: 'btl',
+    toId: 'khn',
+    distanceKm: 85,
+    baseTimeMinutes: 120,
+    highwayCode: 'NH50',
+    highwayName: 'Kapilvastu Highway (Butwal-Khunuwa)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -40,
+    intermediateCoords: [[27.7006, 83.4484], [27.600, 83.100], [27.4167, 82.8667]]
+  },
+  // Hetauda to Janakpur (NH01/NH30 link) - Janakpur
+  {
+    fromId: 'htd',
+    toId: 'jnp',
+    distanceKm: 110,
+    baseTimeMinutes: 130,
+    highwayCode: 'NH30',
+    highwayName: 'Fast Track / BP Link (Hetauda-Janakpur)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -386,
+    intermediateCoords: [[27.4285, 85.0331], [27.000, 85.500], [26.7200, 85.9200]]
+  },
+  // Janakpur to Rajbiraj (NH14/NH22)
+  {
+    fromId: 'jnp',
+    toId: 'rbj',
+    distanceKm: 60,
+    baseTimeMinutes: 80,
+    highwayCode: 'NH14',
+    highwayName: 'Sagarmatha Highway (Janakpur-Rajbiraj)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 4,
+    intermediateCoords: [[26.7200, 85.9200], [26.650, 86.300], [26.5333, 86.7333]]
+  },
+  // Dhulikhel to Chautara (NH31)
+  {
+    fromId: 'dhk',
+    toId: 'ctr',
+    distanceKm: 35,
+    baseTimeMinutes: 60,
+    highwayCode: 'NH31',
+    highwayName: 'Indrawati Corridor (Dhulikhel-Chautara)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -50,
+    intermediateCoords: [[27.6221, 85.5428], [27.750, 85.600], [27.8667, 85.7000]]
+  },
+  // Dhulikhel to Bidur (NH40)
+  {
+    fromId: 'dhk',
+    toId: 'bid',
+    distanceKm: 30,
+    baseTimeMinutes: 50,
+    highwayCode: 'NH40',
+    highwayName: 'Trishuli Corridor (Dhulikhel-Bidur/Nuwakot)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -450,
+    intermediateCoords: [[27.6221, 85.5428], [27.750, 85.400], [27.8833, 85.3167]]
+  },
+  // Dunai to Jumla (NH57)
+  {
+    fromId: 'dun',
+    toId: 'jml',
+    distanceKm: 120,
+    baseTimeMinutes: 240,
+    highwayCode: 'NH57',
+    highwayName: 'Dolpa Highway (Dunai-Jumla)',
+    surface: 'gravel',
+    status: 'caution',
+    elevationGain: -514,
+    intermediateCoords: [[29.2500, 82.4000], [29.200, 82.300], [29.2747, 82.1838]]
+  },
+  // Arungkhola to Pathlaiya (NH68)
+  {
+    fromId: 'ark',
+    toId: 'ptl',
+    distanceKm: 35,
+    baseTimeMinutes: 45,
+    highwayCode: 'NH68',
+    highwayName: 'Bara Corridor (Arungkhola-Pathlaiya)',
+    surface: 'blacktopped_fair',
+    status: 'clear',
+    elevationGain: -100,
+    intermediateCoords: [[27.7167, 84.1167], [27.500, 84.500], [27.0167, 84.9500]]
   }
 ];
 

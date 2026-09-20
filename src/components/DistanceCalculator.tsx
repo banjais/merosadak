@@ -3,8 +3,7 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
-import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Compass, ShieldCheck, Mountain, Activity, Award, Route } from 'lucide-react';
-import { DataAttribution } from './DataAttribution';
+import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Compass, ShieldCheck, Mountain, Activity, Award, Route, Database, Clock, ExternalLink } from 'lucide-react';
 
 interface DistanceCalculatorProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
@@ -373,13 +372,107 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               </div>
             </div>
 
-            {/* Official Source of Truth & Provenance Footer */}
-            <DataAttribution
-              source={routeResult.dataProvenance?.source || 'Department of Roads (DoR Nepal) GIS Network'}
-              updatedAt={routeResult.dataProvenance?.updatedAt || '2026-03-01'}
-              note="Official statutory road distances certified along surveyed national highway centerlines (NH01–NH80). Direct aerial distance computed via Geodesic Great Circle."
-              href="https://dor.gov.np"
-            />
+            {/* Unified Data Source & Road Network Certification Footer */}
+            <div className="rounded-xl border border-slate-800/80 bg-slate-950/60 px-3 py-3 space-y-2">
+              {/* Road Network Certification Composition */}
+              {routeResult.roadTierBreakdown && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                    <span className="flex items-center space-x-1.5">
+                      <Award className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Road Network Certification Composition</span>
+                    </span>
+                    <span className="text-emerald-400 font-bold text-[11px]">
+                      {routeResult.roadTierBreakdown.certifiedPercent}% DoR Certified Highway
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                    <div
+                      className="bg-emerald-500 h-full transition-all"
+                      style={{ width: `${routeResult.roadTierBreakdown.certifiedPercent}%` }}
+                      title={`DoR Certified: ${routeResult.roadTierBreakdown.highwayKm} km`}
+                    />
+                    {routeResult.roadTierBreakdown.certifiedPercent < 100 && (
+                      <div
+                        className="bg-cyan-500 h-full transition-all"
+                        style={{ width: `${100 - routeResult.roadTierBreakdown.certifiedPercent}%` }}
+                        title={`Provincial / Palika / Link Roads: ${routeResult.roadTierBreakdown.localKm + routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.communityKm} km`}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 pt-0.5">
+                    <span className="flex items-center space-x-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                      <span>Federal Highway: <strong>{routeResult.roadTierBreakdown.highwayKm} km</strong></span>
+                    </span>
+                    {(routeResult.roadTierBreakdown.provincialKm > 0 || routeResult.roadTierBreakdown.localKm > 0) && (
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span>
+                        <span>Local / Palika Links: <strong>{routeResult.roadTierBreakdown.provincialKm + routeResult.roadTierBreakdown.localKm} km</strong></span>
+                      </span>
+                    )}
+                    {routeResult.roadTierBreakdown.communityKm > 0 && (
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                        <span>Unpaved Track: <strong>{routeResult.roadTierBreakdown.communityKm} km</strong></span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Data Source & Provenance */}
+              <div className="pt-2 border-t border-slate-800/50">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span className="inline-flex items-center gap-1.5 text-slate-300">
+                    <Database className="w-3.5 h-3.5 text-cyan-500/80 shrink-0" />
+                    <span className="text-slate-500">Data source</span>
+                    <span className="font-bold text-slate-200">{routeResult.dataProvenance?.source || 'Department of Roads (DoR Nepal) GIS Network'}</span>
+                  </span>
+                  {(() => {
+                    const raw = routeResult.dataProvenance?.updatedAt || '2026-03-01';
+                    const t = Date.parse(raw);
+                    if (!Number.isNaN(t)) {
+                      try {
+                        return (
+                          <span className="inline-flex items-center gap-1 text-slate-500 font-mono text-[10px]">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            Updated {new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                          </span>
+                        );
+                      } catch {
+                        return (
+                          <span className="inline-flex items-center gap-1 text-slate-500 font-mono text-[10px]">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            Updated {raw}
+                          </span>
+                        );
+                      }
+                    }
+                    return (
+                      <span className="inline-flex items-center gap-1 text-slate-500 font-mono text-[10px]">
+                        <Clock className="w-3 h-3 shrink-0" />
+                        Updated {raw}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 mt-1">
+                  <span>Official statutory road distances certified along surveyed national highway centerlines (NH01–NH80). Direct aerial distance computed via Geodesic Great Circle.</span>
+                  <a
+                    href="https://dor.gov.np"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-0.5 text-cyan-500/90 hover:text-cyan-400 font-medium"
+                  >
+                    View official source <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="text-center py-6 text-slate-400 text-xs italic">
