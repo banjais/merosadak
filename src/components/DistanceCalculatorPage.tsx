@@ -188,7 +188,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
             </div>
             <div>
               <h1 className="text-sm font-semibold text-slate-400 tracking-wider">
-                mero sadak
+                MERO SADAK
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">
                 Distance Calculator
@@ -352,7 +352,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                           >
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
-                                {city.name}{city.nepaliName ? <span className="text-[11px] font-normal text-slate-400"> ({city.nepaliName})</span> : ''}
+                                {city.name}
                                 {city.cityType && (
                                   <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
                                     {city.cityType}

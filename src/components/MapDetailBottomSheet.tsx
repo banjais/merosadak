@@ -45,11 +45,8 @@ export const MapDetailBottomSheet: React.FC<MapDetailBottomSheetProps> = ({
   const content = selectedCity ? (
     <div className="space-y-3">
       <div className="flex items-start justify-between">
-        <div>
+         <div>
           <h3 className="text-base font-black text-white font-display">{selectedCity.name}</h3>
-          {selectedCity.nepaliName && (
-            <p className="text-xs text-slate-400">{selectedCity.nepaliName}</p>
-          )}
         </div>
         <button
           onClick={onClose}
@@ -100,9 +97,6 @@ export const MapDetailBottomSheet: React.FC<MapDetailBottomSheetProps> = ({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-base font-black text-white font-display">{selectedWeatherNode.name}</h3>
-          {selectedWeatherNode.nepaliName && (
-            <p className="text-xs text-slate-400">{selectedWeatherNode.nepaliName}</p>
-          )}
         </div>
         <button
           onClick={onClose}

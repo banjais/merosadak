@@ -1033,7 +1033,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <span class="text-sm font-black">${node.name}</span>
             <span class="text-[10px] text-cyan-300 font-mono font-bold px-1.5 py-0.5 bg-slate-900 rounded border border-slate-700">⛰️ ${node.elevationM}m ASL</span>
           </div>
-          <div class="text-slate-300 text-[11px] mt-0.5">${node.nepaliName} &bull; <span class="text-emerald-400 font-semibold">${node.highwayCode}</span></div>
+           <div class="text-slate-300 text-[11px] mt-0.5"><span class="text-emerald-400 font-semibold">${node.highwayCode}</span></div>
           <div class="mt-2 flex items-center gap-2 text-[10px] flex-wrap">
             <span class="text-amber-300 font-bold px-1.5 py-0.5 bg-amber-500/10 rounded">${conditionEmoji} ${node.tempC}°C (${conditionName})</span>
             <span class="text-sky-300 font-medium px-1.5 py-0.5 bg-sky-500/10 rounded">💧 ${node.rainProbabilityPercent}% Rain</span>
@@ -1770,12 +1770,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <span className="text-sm font-black text-emerald-400 font-display">{activeHighwayInfo.code}</span>
               </div>
               <div>
-                <div className="flex items-center space-x-2 flex-wrap">
-                  <h4 className="font-bold text-white text-sm">{activeHighwayInfo.name}</h4>
-                  {activeHighwayInfo.nepaliName && (
-                    <span className="text-xs text-slate-400">({activeHighwayInfo.nepaliName})</span>
-                  )}
-                  <span
+                 <div className="flex items-center space-x-2 flex-wrap">
+                   <h4 className="font-bold text-white text-sm">{activeHighwayInfo.name}</h4>
+                   <span
                     className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
                       activeHighwayInfo.overallStatus === 'clear'
                         ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'

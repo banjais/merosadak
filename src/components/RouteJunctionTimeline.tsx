@@ -755,7 +755,7 @@ export const RouteJunctionTimeline: React.FC<RouteJunctionTimelineProps> = ({
       .map((j, idx) => {
         const breakTag = j.plannedStopMinutes > 0 ? ` [☕ Break: +${j.plannedStopMinutes}m]` : '';
         const dayTag = j.dayOffset > 0 ? ` (+${j.dayOffset}d)` : '';
-        return `${idx + 1}. [${j.etaFormatted}${dayTag}] ${j.name}${j.nepaliName ? ` (${j.nepaliName})` : ''} • Elev: ${j.elevationM}m • +${j.distanceFromStartKm} km${breakTag}`;
+         return `${idx + 1}. [${j.etaFormatted}${dayTag}] ${j.name} • Elev: ${j.elevationM}m • +${j.distanceFromStartKm} km${breakTag}`;
       })
       .join('\n');
 
@@ -1109,11 +1109,6 @@ export const RouteJunctionTimeline: React.FC<RouteJunctionTimelineProps> = ({
                   <div>
                     <h4 className="text-sm sm:text-base font-bold text-white flex items-center space-x-1.5">
                       <span>{junction.name}</span>
-                      {junction.nepaliName && (
-                        <span className="text-xs text-slate-400 font-normal">
-                          ({junction.nepaliName})
-                        </span>
-                      )}
                     </h4>
 
                     <div className="text-xs text-slate-400 mt-0.5 flex items-center space-x-2 flex-wrap">

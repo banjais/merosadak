@@ -297,13 +297,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
                     <div className="flex-1 min-w-0">
                       {/* Name & Real-time Status Indicator Pill */}
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <h3 className="text-lg font-bold text-white tracking-tight">{highway.name}</h3>
-                        {highway.nepaliName && (
-                          <span className="text-xs text-slate-400 font-medium">({highway.nepaliName})</span>
-                        )}
+                       <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                         <h3 className="text-lg font-bold text-white tracking-tight">{highway.name}</h3>
 
-                        {/* Real-time Status Indicator Badge */}
+                         {/* Real-time Status Indicator Badge */}
                         <div
                           className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wide border shadow-sm ${analysis.theme.badgeBg} ${analysis.theme.badgeBorder}`}
                         >
