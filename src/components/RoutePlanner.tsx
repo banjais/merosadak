@@ -72,10 +72,11 @@ import {
   Scale,
   Milestone,
   Route,
-  Award,
-  Users,
-  User,
-} from 'lucide-react';
+   Award,
+   Users,
+   User,
+   Activity,
+ } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import {
   VEHICLE_CONFIGS,
@@ -176,8 +177,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [vehicle, setVehicle] = useState<VehicleType>(initialVehicle);
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
   const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
-  const [selectedDetailTab, setSelectedDetailTab] = useState<string>('');
   const [isReportExpanded, setIsReportExpanded] = useState<boolean>(false);
+  const [showElevationDetails, setShowElevationDetails] = useState<boolean>(false);
+  const [showVehiclePerformance, setShowVehiclePerformance] = useState<boolean>(false);
   const [terrainFilters, setTerrainFilters] = useState<TerrainFilterOptions>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -1487,19 +1489,37 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           </div>
 
-            {/* ELEVATION PROFILE VISUALIZATION (RECHARTS) - DIRECTLY BENEATH ROUTE DETAILS */}
+            {/* ELEVATION PROFILE - Expandable (Hidden by default) */}
             <div
               id="route-elevation-profile-card"
               key={`route-elevation-profile-${calcKey}`}
               className="pt-1 animate-fade-in-smooth transition-all duration-500 ease-out"
             >
-              <RouteElevationProfileChart
-                activeRoute={routePlan}
-                routePlan={routePlan}
-                vehicle={vehicle}
-                simulationControls={simulationControls}
-                onViewOnMap={onViewOnMap}
-              />
+              <button
+                type="button"
+                onClick={() => setShowElevationDetails(!showElevationDetails)}
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/60 border border-slate-800 transition text-left"
+              >
+                <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
+                  <Mountain className="w-3.5 h-3.5 text-amber-400" />
+                  <span>⛰️ Route Elevation Profile &amp; Mountain Gradients</span>
+                </div>
+                <div className="flex items-center space-x-3 text-[11px] text-slate-400">
+                  <span>+{routePlan.elevationGainM}m climb • Peak {routePlan.maxElevationM}m</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showElevationDetails ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+              {showElevationDetails && (
+                <div className="animate-fadeIn">
+                  <RouteElevationProfileChart
+                    activeRoute={routePlan}
+                    routePlan={routePlan}
+                    vehicle={vehicle}
+                    simulationControls={simulationControls}
+                    onViewOnMap={onViewOnMap}
+                  />
+                </div>
+              )}
             </div>
 
           {/* REDUCED REPORT SUMMARY (When user clicks Reduce Report) */}
@@ -1588,150 +1608,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <span>Source: DoR Nepal Highway GIS</span>
               </div>
             </div>
-
-            {/* Detail Selection Dropdown */}
-            {hasCalculated && (
-              <div className="space-y-3">
-                <select
-                  value={selectedDetailTab}
-                  onChange={(e) => setSelectedDetailTab(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 12px center',
-                    paddingRight: '36px',
-                  }}
-                >
-                  <option value="">Show route detail...</option>
-                  <option value="elevation">⛰️ Route Elevation Profile &amp; Mountain Gradients</option>
-                  <option value="vehicle">🚗 Vehicle Performance Impact</option>
-                  <option value="fuel">💰 Detailed Fuel &amp; Transit Cost Breakdown</option>
-                </select>
-
-                {selectedDetailTab === 'elevation' && (
-                  <div className="animate-fadeIn">
-                    <RouteElevationProfileChart activeRoute={routePlan} routePlan={routePlan} vehicle={vehicle} />
-                  </div>
-                )}
-
-                {selectedDetailTab === 'vehicle' && (
-                  <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3 animate-fadeIn">
-                    <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                      <span>Vehicle Performance</span>
-                      <span className="text-emerald-400 text-[9px] font-mono">{VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Fuel / Tariff Rate</div>
-                        <div className="text-xs font-bold text-white mt-0.5">{getFuelRateLabel(vehicle)}</div>
-                        <div className="text-[9px] text-slate-400 truncate">{getFuelName(vehicle)}</div>
-                      </div>
-                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Efficiency</div>
-                        <div className="text-xs font-bold text-emerald-400 mt-0.5">
-                          {customMileageKmL.toFixed(1)} km/L
-                        </div>
-                        <div className="text-[9px] text-slate-400">
-                          {vehicle === 'electric_vehicle' ? '~160 Wh/km' : `${(customMileageKmL * 2.35215).toFixed(1)} MPG`}
-                        </div>
-                      </div>
-                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Required</div>
-                        <div className="text-xs font-bold text-cyan-400 mt-0.5">
-                          {Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * 10) / 10} L
-                        </div>
-                        <div className="text-[9px] text-slate-400">For {routePlan.totalDistanceKm} km</div>
-                      </div>
-                      <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Cost / km</div>
-                        <div className="text-xs font-bold text-amber-400 mt-0.5">
-                          Rs {(Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * getNOCFuelRate(vehicle)) / Math.max(1, routePlan.totalDistanceKm)).toFixed(2)}
-                        </div>
-                        <div className="text-[9px] text-slate-400">Direct expense</div>
-                      </div>
-                    </div>
-                    <div className="bg-slate-950/90 rounded-lg p-3 border border-slate-800/80 text-xs space-y-2 font-mono">
-                      <div className="flex items-center justify-between gap-1 text-slate-300 pt-1.5 border-t border-slate-800">
-                        <span className="font-bold flex items-center space-x-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                          <span>Elevation Impact:</span>
-                        </span>
-                        <span className="text-emerald-400 self-end sm:self-auto font-bold">+{routePlan.elevationGainM}m ascent</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-1 text-slate-300">
-                        <span className="font-bold flex items-center space-x-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
-                          <span>Terrain Grade Factor:</span>
-                        </span>
-                        <span>Peak {routePlan.maxElevationM}m ASL</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {selectedDetailTab === 'fuel' && (
-                  <div className="animate-fadeIn">
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedFuel(!showAdvancedFuel)}
-                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800/70 hover:bg-slate-800/30 transition p-2 rounded-lg -m-2"
-                    >
-                      <div className="flex items-center space-x-2 text-left">
-                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-                          <Fuel className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <span>Detailed Fuel &amp; Transit Cost Breakdown</span>
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedFuel ? 'rotate-180' : ''}`} />
-                          </h4>
-                          <p className="text-[10px] text-slate-400">Calculated for {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}</p>
-                        </div>
-                      </div>
-                      <div className="text-xs font-bold text-emerald-400 self-start sm:self-auto font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                        Total Transit Outlay: NPR {(() => { const effKmL = Math.max(1.0, customMileageKmL); const units = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10; return (units * getNOCFuelRate(vehicle) + (routePlan.totalTollCostNpr || 0)).toLocaleString(); })()}
-                      </div>
-                    </button>
-                    {showAdvancedFuel && (
-                      <div className="pt-2 space-y-3.5">
-                        <div className="bg-slate-950/90 rounded-xl p-3 sm:p-3.5 border border-slate-800 space-y-2.5">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div className="flex items-center space-x-2">
-                              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-                              <span className="text-xs font-bold text-slate-200">Custom Fuel Efficiency / Consumption Adjustment</span>
-                            </div>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">Interactive Slider</span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] text-slate-400 font-mono">Efficiency: {customMileageKmL.toFixed(1)} km/L</span>
-                            <input
-                              type="range"
-                              min={vehicle === 'electric_vehicle' ? 3.0 : vehicle === 'bus_truck' ? 2.0 : vehicle === 'motorbike' ? 15.0 : 5.0}
-                              max={vehicle === 'electric_vehicle' ? 10.0 : vehicle === 'bus_truck' ? 8.0 : vehicle === 'motorbike' ? 70.0 : 30.0}
-                              step={vehicle === 'electric_vehicle' ? 0.1 : vehicle === 'motorbike' ? 0.5 : 0.2}
-                              value={customMileageKmL}
-                              onChange={(e) => setCustomMileageKmL(Number(e.target.value))}
-                              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                            />
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {vehicle !== 'electric_vehicle' && (
-                              <>
-                                <span className="text-[9px] text-slate-500 font-mono">Benchmark: {vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5} km/L</span>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${customMileageKmL > (vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/20 text-amber-300 border border-amber-500/20'}`}>
-                                  {customMileageKmL > (vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5) ? 'Above benchmark' : 'Below benchmark'}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* 3 Core Primary Metric Bento Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1943,324 +1819,69 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               updatedAt="2026-03"
               note="Official statutory road distances certified along surveyed national highway centerlines."
               href="https://dor.gov.np"
-              compact
+            compact
             />
 
-              {/* STRUCTURED FUEL COST BREAKDOWN FOR SELECTED VEHICLE */}
-              {(() => {
-                const isEV = vehicle === 'electric_vehicle';
-                const isDiesel = vehicle === 'suv_4wd' || vehicle === 'bus_truck';
-                const fuelName = getFuelName(vehicle);
-                const unitPrice = getNOCFuelRate(vehicle);
-                const unitPriceLabel = getFuelRateLabel(vehicle);
-
-                // Effective km per Liter (or km per kWh for EV)
-                const currentEffKmL = Math.max(1.0, customMileageKmL);
-
-                // Calculations
-                // Total liters or kWh
-                const totalUnitsRequired = Math.round((routePlan.totalDistanceKm / currentEffKmL) * 10) / 10;
-                const dynamicFuelCost = Math.round(totalUnitsRequired * unitPrice);
-                const dynamicTotalCost = dynamicFuelCost + (routePlan.totalTollCostNpr || 0);
-                const dynamicCostPerKm = (dynamicFuelCost / Math.max(1, routePlan.totalDistanceKm)).toFixed(2);
-
-                // Conversion representations
-                // MPG US: 1 km/L ≈ 2.35215 MPG
-                const currentMpg = (currentEffKmL * 2.35215).toFixed(1);
-                // L/100km: 100 / (km/L)
-                const currentL100km = (100 / currentEffKmL).toFixed(1);
-
-                // Carbon footprint
-                const co2Kg = isEV
-                  ? '0 kg (Tailpipe)'
-                  : (totalUnitsRequired * (isDiesel ? 2.68 : 2.31)).toFixed(1) + ' kg';
-
-                // Slider configuration based on vehicle type
-                const minEff = isEV ? 3.0 : vehicle === 'bus_truck' ? 2.0 : vehicle === 'motorbike' ? 15.0 : 5.0;
-                const maxEff = isEV ? 10.0 : vehicle === 'bus_truck' ? 8.0 : vehicle === 'motorbike' ? 70.0 : 30.0;
-                const stepEff = isEV ? 0.1 : vehicle === 'motorbike' ? 0.5 : 0.2;
-
-                const defaultBenchmarkEff = isEV ? 6.2 : vehicle === 'car' ? 14.0 : vehicle === 'suv_4wd' ? 10.0 : vehicle === 'motorbike' ? 35.0 : 4.5;
-
-                return (
-                  <div className="bg-slate-900/60 border border-slate-800/90 rounded-xl p-3.5 sm:p-4 space-y-3.5">
-                    {/* Header - Interactive Toggle */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedFuel(!showAdvancedFuel)}
-                      className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-slate-800/70 hover:bg-slate-800/30 transition p-2 rounded-lg -m-2"
-                    >
-                      <div className="flex items-center space-x-2 text-left">
-                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-                          <Fuel className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <span>Detailed Fuel &amp; Transit Cost Breakdown</span>
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedFuel ? 'rotate-180' : ''}`} />
-                          </h4>
-                          <p className="text-[10px] text-slate-400">
-                            Calculated for {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-xs font-bold text-emerald-400 self-start sm:self-auto font-mono bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                        Total Transit Outlay: NPR {dynamicTotalCost.toLocaleString()}
-                      </div>
-                    </button>
-
-                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 font-mono pb-1 border-b border-slate-800/50">
-                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                        NOC Petrol: {FUEL_RATE_LABELS.petrol}/L
-                      </span>
-                      <span>•</span>
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                        NOC Diesel: {FUEL_RATE_LABELS.diesel}/L
-                      </span>
-                      <span>•</span>
-                      <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                        NEA EV: {FUEL_RATE_LABELS.electricity}/kWh
-                      </span>
+              {/* Vehicle Performance Impact - Expandable (Hidden by default) */}
+              <div className="mt-4 bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowVehiclePerformance(!showVehiclePerformance)}
+                  className="w-full flex items-center justify-between gap-2 p-3 rounded-xl text-left font-bold text-white uppercase text-xs tracking-wider hover:bg-slate-800/60 transition"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Vehicle Performance Impact</span>
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showVehiclePerformance ? 'rotate-180' : ''}`} />
+                </button>
+                {showVehiclePerformance && (
+                  <div className="p-4 space-y-3 animate-fadeIn border-t border-slate-800">
+                    <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                      <span>Vehicle Performance</span>
+                      <span className="text-emerald-400 text-[9px] font-mono">{VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}</span>
                     </div>
-
-                    {showAdvancedFuel && (
-                      <div className="pt-2 space-y-3.5 animate-fadeIn">
-
-                    {/* INTERACTIVE FUEL EFFICIENCY SLIDER CONTROLLER */}
-                    <div className="bg-slate-950/90 rounded-xl p-3 sm:p-3.5 border border-slate-800 space-y-2.5">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center space-x-2">
-                          <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-                          <span className="text-xs font-bold text-slate-200">
-                            Custom Fuel Efficiency / Consumption Adjustment
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-                            Interactive Slider
-                          </span>
-                        </div>
-
-                        {/* Unit Switcher Pills (km/L, MPG, L/100km) */}
-                        {!isEV ? (
-                          <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px]">
-                            <button
-                              type="button"
-                              onClick={() => setEfficiencyUnit('km_l')}
-                              className={`px-2 py-0.5 rounded-md font-semibold transition ${
-                                efficiencyUnit === 'km_l'
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              km/L
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEfficiencyUnit('mpg')}
-                              className={`px-2 py-0.5 rounded-md font-semibold transition ${
-                                efficiencyUnit === 'mpg'
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              US MPG
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEfficiencyUnit('l_100km')}
-                              className={`px-2 py-0.5 rounded-md font-semibold transition ${
-                                efficiencyUnit === 'l_100km'
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              L/100km
-               </button>
-
-               {/* Option 3: Change Location (Reset origin/destination) — only when GPS detected */}
-               {detectedLocation && (
-                 <button
-                   onClick={() => {
-                      setRoutePlan(null);
-                      setHasCalculated(false);
-                      setUserPickedDestination(false);
-                      setNeedsRecalculation(false);
-                      setDestId('');
-                      setSingleSearchQuery('');
-                      setDestSearchQuery('');
-                      setShowSearchPanel(false);
-                      setShowVehicleOptions(false);
-                      setActiveModuleTab('none');
-                     // GPS-detected location is a permanent "fact" — restore origin from it
-                     const closestCity = findClosestCityFromCoords(
-                       detectedLocation.lat,
-                       detectedLocation.lng,
-                       allCitiesRef.current
-                     );
-                      setOriginId(closestCity.id);
-                      setGpsOriginCityId(closestCity.id);
-                      setOriginSelected(true);
-                     setLocationMode('my_location');
-                     setIsLocationMenuOpen(false);
-                     onRouteClear?.();
-                   }}
-                   className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
-                 >
-                   <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                     <RefreshCw className="w-4 h-4 group-hover:scale-110 transition" />
-                   </div>
-                   <div>
-                     <div className="text-xs font-bold text-white group-hover:text-amber-300">
-                       Change Location
-                     </div>
-                     <div className="text-[11px] text-slate-400">
-                       Reset origin &amp; destination
-                     </div>
-                   </div>
-                 </button>
-               )}
-             </div>
-                        ) : (
-                          <span className="text-[10px] text-cyan-400 font-mono">
-                            ⚡ EV Metric: km per kWh
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Slider Input Row */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <span className="text-slate-400 text-[11px] font-sans">
-                            {isEV ? 'Adjust EV Economy (km/kWh):' : 'Adjust Real-World Mileage:'}
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-black text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                              {isEV
-                                ? `${currentEffKmL.toFixed(1)} km/kWh`
-                                : efficiencyUnit === 'km_l'
-                                ? `${currentEffKmL.toFixed(1)} km/L`
-                                : efficiencyUnit === 'mpg'
-                                ? `${currentMpg} MPG (${currentEffKmL.toFixed(1)} km/L)`
-                                : `${currentL100km} L/100km (${currentEffKmL.toFixed(1)} km/L)`}
-                            </span>
-                            {currentEffKmL !== defaultBenchmarkEff && (
-                              <button
-                                type="button"
-                                onClick={() => setCustomMileageKmL(defaultBenchmarkEff)}
-                                className="text-[10px] text-slate-400 hover:text-emerald-400 underline"
-                              >
-                                Reset ({defaultBenchmarkEff})
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        <input
-                          type="range"
-                          min={minEff}
-                          max={maxEff}
-                          step={stepEff}
-                          value={customMileageKmL}
-                          onChange={(e) => setCustomMileageKmL(parseFloat(e.target.value))}
-                          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
-                        />
-
-                        <div className="flex justify-between text-[10px] text-slate-500 font-mono pt-0.5">
-                          <span>
-                            {isEV ? `${minEff} km/kWh (Heavy)` : `${minEff} km/L (Heavy traffic/Climb)`}
-                          </span>
-                          <span className="text-slate-400">
-                            Standard benchmark: {defaultBenchmarkEff} {isEV ? 'km/kWh' : 'km/L'}
-                          </span>
-                          <span>
-                            {isEV ? `${maxEff} km/kWh (Eco)` : `${maxEff} km/L (Highway Eco)`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 4-Column Itemized Specs for the Selected Vehicle */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
                         <div className="text-[10px] text-slate-400 font-semibold">Fuel / Tariff Rate</div>
-                        <div className="text-xs font-bold text-white mt-0.5">{unitPriceLabel}</div>
-                        <div className="text-[9px] text-slate-400 truncate">{fuelName}</div>
+                        <div className="text-xs font-bold text-white mt-0.5">{getFuelRateLabel(vehicle)}</div>
+                        <div className="text-[9px] text-slate-400 truncate">{getFuelName(vehicle)}</div>
                       </div>
-
                       <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Current Efficiency</div>
-                        <div className="text-xs font-bold text-emerald-400 mt-0.5">
-                          {isEV
-                            ? `${currentEffKmL.toFixed(1)} km/kWh`
-                            : `${currentEffKmL.toFixed(1)} km/L`}
-                        </div>
-                        <div className="text-[9px] text-slate-400">
-                          {isEV ? '~160 Wh/km' : `${currentMpg} MPG • ${currentL100km} L/100km`}
-                        </div>
+                        <div className="text-[10px] text-slate-400 font-semibold">Efficiency</div>
+                        <div className="text-xs font-bold text-emerald-400 mt-0.5">{customMileageKmL.toFixed(1)} km/L</div>
+                        <div className="text-[9px] text-slate-400">{vehicle === 'electric_vehicle' ? '~160 Wh/km' : `${(customMileageKmL * 2.35215).toFixed(1)} MPG`}</div>
                       </div>
-
                       <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Required Quantity</div>
-                        <div className="text-xs font-bold text-cyan-400 mt-0.5">
-                          {totalUnitsRequired} {isEV ? 'kWh' : 'Liters'}
-                        </div>
-                        <div className="text-[9px] text-slate-400">For {routePlan.totalDistanceKm} km trip</div>
+                        <div className="text-[10px] text-slate-400 font-semibold">Required</div>
+                        <div className="text-xs font-bold text-cyan-400 mt-0.5">{Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * 10) / 10} L</div>
+                        <div className="text-[9px] text-slate-400">For {routePlan.totalDistanceKm} km</div>
                       </div>
-
                       <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-semibold">Running Cost / km</div>
-                        <div className="text-xs font-bold text-amber-400 mt-0.5">Rs {dynamicCostPerKm} / km</div>
-                        <div className="text-[9px] text-slate-400">Direct fuel expense</div>
+                        <div className="text-[10px] text-slate-400 font-semibold">Cost / km</div>
+                        <div className="text-xs font-bold text-amber-400 mt-0.5">Rs {(Math.round((routePlan.totalDistanceKm / Math.max(1.0, customMileageKmL)) * getNOCFuelRate(vehicle)) / Math.max(1, routePlan.totalDistanceKm)).toFixed(2)}</div>
+                        <div className="text-[9px] text-slate-400">Direct expense</div>
                       </div>
                     </div>
-
-                    {/* Cost Ledger Table & Mountain Grade Factor */}
                     <div className="bg-slate-950/90 rounded-lg p-3 border border-slate-800/80 text-xs space-y-2 font-mono">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-300">
-                        <span className="flex items-center space-x-1.5">
+                      <div className="flex items-center justify-between gap-1 text-slate-300 pt-1.5 border-t border-slate-800">
+                        <span className="font-bold flex items-center space-x-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                          <span>Elevation Impact:</span>
+                        </span>
+                        <span className="text-emerald-400 self-end sm:self-auto font-bold">+{routePlan.elevationGainM}m ascent</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-1 text-slate-300">
+                        <span className="font-bold flex items-center space-x-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
-                          <span>Base Fuel &amp; Energy ({totalUnitsRequired} {isEV ? 'kWh' : 'L'} @ {unitPriceLabel}):</span>
+                          <span>Terrain Grade Factor:</span>
                         </span>
-                        <span className="font-bold text-white self-end sm:self-auto">NPR {dynamicFuelCost.toLocaleString()}</span>
-                      </div>
-
-                      {routePlan.totalTollCostNpr > 0 ? (
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-300">
-                          <span className="flex items-center space-x-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                            <span>Highway Tolls &amp; Tunnel Pass:</span>
-                          </span>
-                          <span className="font-bold text-emerald-400 self-end sm:self-auto">NPR {routePlan.totalTollCostNpr.toLocaleString()}</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-400">
-                          <span className="flex items-center space-x-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0"></span>
-                            <span>Highway Tolls / Tunnel Pass:</span>
-                          </span>
-                          <span className="text-slate-400 font-normal self-end sm:self-auto">NPR 0 (Toll-Free Route)</span>
-                        </div>
-                      )}
-
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-300 pt-1.5 border-t border-slate-800">
-                        <span className="font-bold text-white flex items-center space-x-1.5">
-                          <Receipt className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          <span>Total Estimated Transit Outlay:</span>
-                        </span>
-                        <span className="text-sm font-black text-emerald-300 self-end sm:self-auto">
-                          NPR {dynamicTotalCost.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="pt-1 text-[10px] text-slate-400 font-sans flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/50">
-                        <span>🏔️ Terrain Grade Factor: Factored +{routePlan.elevationGainM}m mountain ascent (Peak {routePlan.maxElevationM}m ASL)</span>
-                        <span>🌿 Est. CO₂ Footprint: <span className="font-semibold text-slate-300">{co2Kg}</span></span>
+                        <span>Peak {routePlan.maxElevationM}m ASL</span>
                       </div>
                     </div>
-                    </div>
-                    )}
                   </div>
-                );
-              })()}
+                )}
+              </div>
 
 
           </div>
