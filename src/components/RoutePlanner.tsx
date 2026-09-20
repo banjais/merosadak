@@ -2234,6 +2234,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <div className="space-y-3">
                   <WeatherPassesPanel
                     weatherNodes={weatherNodes}
+                    routeHighways={routePlan?.steps.map((s) => s.highwayCode).filter(Boolean) as string[] | undefined}
                     onSelectNode={(node) => {
                       if (onViewOnMap) {
                         onViewOnMap({ lat: node.lat, lng: node.lng, title: `${node.name} (${node.elevationM}m)`, zoom: 12 });

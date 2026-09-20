@@ -29,6 +29,7 @@ interface WeatherPassesPanelProps {
   selectedNodeId?: string | null;
   onRefreshWeather?: () => void;
   isRefreshing?: boolean;
+  routeHighways?: string[];
 }
 
 interface SevereWeatherAlertItem {
@@ -49,16 +50,26 @@ export const WeatherPassesPanel: React.FC<WeatherPassesPanelProps> = ({
   selectedNodeId,
   onRefreshWeather,
   isRefreshing = false,
+  routeHighways,
 }) => {
   const [filterCondition, setFilterCondition] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSevereAdvisoryExpanded, setIsSevereAdvisoryExpanded] = useState<boolean>(true);
 
+  const routeAwareWeatherNodes = useMemo(() => {
+    if (!routeHighways || routeHighways.length === 0) return weatherNodes;
+    return weatherNodes.filter((node) =>
+      node.highwayCode.split('/').some((code) =>
+        routeHighways.includes(code.trim())
+      )
+    );
+  }, [weatherNodes, routeHighways]);
+
   // Compute Active Severe Weather Hazards & DoR Advisories across all mountain passes
   const severeWeatherAlerts: SevereWeatherAlertItem[] = useMemo(() => {
     const alerts: SevereWeatherAlertItem[] = [];
 
-    weatherNodes.forEach((wx) => {
+    routeAwareWeatherNodes.forEach((wx) => {
       const isCritical =
         wx.landslideRisk === 'severe' ||
         wx.condition === 'thunderstorm' ||
@@ -216,7 +227,7 @@ export const WeatherPassesPanel: React.FC<WeatherPassesPanelProps> = ({
     }
   };
 
-  const filteredNodes = weatherNodes.filter((node) => {
+  const filteredNodes = routeAwareWeatherNodes.filter((node) => {
     const matchesSearch =
       node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       node.highwayCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,7 +276,7 @@ export const WeatherPassesPanel: React.FC<WeatherPassesPanelProps> = ({
               </button>
             )}
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium border border-slate-700">
-              {weatherNodes.length} Stations Active
+              {routeAwareWeatherNodes.length} Stations Active
             </span>
           </div>
         </div>
