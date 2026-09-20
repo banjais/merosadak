@@ -64,7 +64,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - run: npx tsc --noEmit
 
   worker-typecheck:
@@ -78,7 +78,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - run: npx tsc --noEmit -p worker/tsconfig.json
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - run: npm run build:static
       - uses: actions/upload-artifact@v4
         with:
@@ -113,7 +113,6 @@ jobs:
     env:
       npm_config_loglevel: error
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: dist-frontend
@@ -140,7 +139,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - working-directory: worker
         run: |
           set -euo pipefail
@@ -169,7 +168,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - working-directory: worker
         run: npx --no-install wrangler deploy
         env:
