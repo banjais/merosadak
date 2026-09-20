@@ -325,6 +325,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const originSearchRef = useRef<HTMLDivElement>(null);
   const destSearchRef = useRef<HTMLDivElement>(null);
   const singleSearchInputRef = useRef<HTMLInputElement>(null);
+  const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   const locationMenuRef = useRef<HTMLDivElement>(null);
   const aiPromptRef = useRef<HTMLDivElement>(null);
@@ -413,6 +414,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setOriginSelected(false);
     setIsOriginDropdownOpen(false);
     if (hasCalculated) setNeedsRecalculation(true);
+    setTimeout(() => destInputRef.current?.focus(), 100);
   };
 
   const handleSelectDestination = (city: CityNode) => {
@@ -481,8 +483,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
   };
 
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
+
   // Device Geolocation Auto-Detection
-  const handleDetectDeviceLocation = useCallback(() => {
+  const handleDetectDeviceLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       setOriginSelected(false);
       setOriginId('');
@@ -491,26 +495,67 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       return;
     }
 
+    let permissionState: string | null = null;
+    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        permissionState = permissionStatus.state;
+
+        if (permissionStatus.state === 'granted') {
+          setLocationPermissionDenied(false);
+        } else if (permissionStatus.state === 'prompt') {
+          setLocationPermissionDenied(false);
+        } else if (permissionStatus.state === 'denied') {
+          setLocationPermissionDenied(true);
+          alert(
+            'GPS location access is blocked. Please enable location permissions in your browser settings, then tap "Use GPS" again.\n\n' +
+            'On Chrome: Settings → Privacy → Site Settings → Location → Allow\n' +
+            'On Safari: Settings → Safari → Location → merosadak.com → While Using\n' +
+            'On Firefox: Options → Privacy → Permissions → Settings → Location → Allow'
+          );
+          return;
+        }
+
+        permissionStatus.onchange = () => {
+          if (permissionStatus.state === 'granted' && locationPermissionDenied) {
+            setLocationPermissionDenied(false);
+          }
+        };
+      } catch {
+        // Permissions API not supported
+      }
+    }
+
     navigator.geolocation.getCurrentPosition(
        (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setDetectedLocation({ lat: latitude, lng: longitude });
-        const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-        setOriginId(closestCity.id);
-        setGpsOriginCityId(closestCity.id);
-        setOriginSelected(true);
-        setIsLocationMenuOpen(false);
-      },
-      () => {
-        setOriginSelected(false);
-        setOriginId('');
-        setGpsOriginCityId('');
-        setDetectedLocation(null);
-        setIsLocationMenuOpen(false);
-      },
-      { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
+         const { latitude, longitude } = pos.coords;
+         setDetectedLocation({ lat: latitude, lng: longitude });
+         const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
+         setOriginId(closestCity.id);
+         setGpsOriginCityId(closestCity.id);
+         setOriginSelected(true);
+         setIsLocationMenuOpen(false);
+         setLocationPermissionDenied(false);
+       },
+       (err) => {
+         setOriginSelected(false);
+         setOriginId('');
+         setGpsOriginCityId('');
+         setDetectedLocation(null);
+         setLocationPermissionDenied(true);
+         if (err.code === err.PERMISSION_DENIED && permissionState === 'denied') {
+           alert(
+            'GPS location access is blocked. Please enable location permissions in your browser settings, then tap "Use GPS" again.\n\n' +
+            'On Chrome: Settings → Privacy → Site Settings → Location → Allow\n' +
+            'On Safari: Settings → Safari → Location → merosadak.com → While Using\n' +
+            'On Firefox: Options → Privacy → Permissions → Settings → Location → Allow'
+          );
+         }
+         setIsLocationMenuOpen(false);
+       },
+       { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
     );
-  }, []);
+  }, [locationPermissionDenied]);
 
   // Auto-detect GPS on mount: ask permission if not yet decided.
   // Once detected, the GPS location is a permanent "fact" — it is not
@@ -864,39 +909,55 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               )}
 
-              {/* Option 1: Current GPS / Device Location - only when not detected */}
-              {!detectedLocation && (
-                <button
-                  onClick={() => {
-                    handleDetectDeviceLocation();
-                    setLocationMode('my_location');
-                    closeAllMenus(null);
-                  }}
-                  className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 transition flex items-start space-x-2.5 group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <LocateFixed className="w-4 h-4 group-hover:scale-110 transition" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-300">
-                      Use GPS
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      Auto-detects via device sensors
-                    </div>
-                  </div>
-                </button>
-              )}
+               {/* Option 1: Current GPS / Device Location - only when not detected */}
+               {!detectedLocation && (
+                 <button
+                   onClick={() => {
+                     handleDetectDeviceLocation();
+                     setLocationMode('my_location');
+                     closeAllMenus(null);
+                   }}
+                   className={`w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border transition flex items-start space-x-2.5 group ${
+                     locationPermissionDenied
+                       ? 'border-rose-500/50 hover:border-rose-500/60'
+                       : 'border-slate-800 hover:border-emerald-500/50'
+                   }`}
+                 >
+                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                     locationPermissionDenied
+                       ? 'bg-rose-500/20 text-rose-400'
+                       : 'bg-emerald-500/20 text-emerald-400'
+                   }`}>
+                     <LocateFixed className="w-4 h-4 group-hover:scale-110 transition" />
+                   </div>
+                   <div>
+                     <div className={`text-xs font-bold group-hover:font-bold ${
+                       locationPermissionDenied ? 'text-rose-200 group-hover:text-rose-300' : 'text-white group-hover:text-emerald-300'
+                     }`}>
+                       Use GPS{locationPermissionDenied && ' (blocked)'}
+                     </div>
+                     <div className="text-[11px] text-slate-400">
+                       {locationPermissionDenied
+                         ? 'Tap to re-enable location access'
+                         : 'Auto-detects via device sensors'}
+                     </div>
+                   </div>
+                 </button>
+               )}
 
                 {/* Option 2: Change Location (Custom From / To) - keeps GPS-origin permanent */}
-                <button
-                  onClick={() => {
-                    setLocationMode('custom_from_to');
-                    setOriginSearchQuery('');
-                    setDestSearchQuery('');
-                    setSingleSearchQuery('');
-                    closeAllMenus(null);
-                  }}
+                 <button
+                   onClick={() => {
+                     setLocationMode('custom_from_to');
+                     setOriginSearchQuery('');
+                     setDestSearchQuery('');
+                     setSingleSearchQuery('');
+                     closeAllMenus(null);
+                     setTimeout(() => {
+                       originInputRef.current?.focus();
+                       setIsOriginDropdownOpen(true);
+                     }, 100);
+                   }}
                   className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
                >
                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -1033,10 +1094,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none">
                   <Search className="w-4 h-4" />
                 </div>
-                <input
-                  id="input-from-origin"
-                  type="text"
-                  value={originSearchQuery}
+                 <input
+                   id="input-from-origin"
+                   type="text"
+                   ref={originInputRef}
+                   value={originSearchQuery}
                    onChange={(e) => {
                      setOriginSearchQuery(e.target.value);
                      closeAllMenus('origin');
