@@ -490,7 +490,7 @@ function AppContent() {
                     मेरो सडक
                   </span>
                 </div>
-                <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider hidden sm:block">
+                <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider truncate">
                   Nepal National Highway Network &amp; GIS
                 </div>
               </div>
