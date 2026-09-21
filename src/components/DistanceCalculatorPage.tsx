@@ -8,6 +8,7 @@ import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
+import { sha256Hex } from '../utils/proofLinks';
 import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2 } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
@@ -362,17 +363,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const handleExportProofSheet = useCallback(async () => {
     if (!origin || !destination || !distanceWithSource) return;
-    let dataHash = 'snh-reference.json';
-    if (snhReference) {
-      let hash = 0;
-      const text = JSON.stringify(snhReference);
-      for (let i = 0; i < text.length; i++) {
-        const char = text.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash = hash & hash;
-      }
-      dataHash = Math.abs(hash).toString(36);
-    }
+    // SHA-256 fingerprint of the reference dataset the figure was read from (first 12 hex)
+    const dataHash = snhReference ? (await sha256Hex(JSON.stringify(snhReference))).slice(0, 12) : 'unavailable';
     await generateProofSheet({
       from: origin.name,
       to: destination.name,

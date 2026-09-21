@@ -9,6 +9,8 @@ import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { DataSourcesPage } from './components/DataSourcesPage';
+import { ProofVerifyPage } from './components/ProofVerifyPage';
+import { parseProofFromSearch, ProofClaim } from './utils/proofLinks';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { SosEmergencyModal } from './components/SosEmergencyModal';
@@ -88,6 +90,10 @@ function AppContent() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
   const [isDataSourcesOpen, setIsDataSourcesOpen] = useState(false);
+  // A scanned proof-sheet QR opens ?proof=1&...; read it before the init effect strips the query string
+  const [proofClaim, setProofClaim] = useState<ProofClaim | null>(() =>
+    typeof window !== 'undefined' ? parseProofFromSearch(window.location.search) : null
+  );
   const [isTollModalOpen, setIsTollModalOpen] = useState(false);
   const [isPreTripModalOpen, setIsPreTripModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -465,7 +471,7 @@ function AppContent() {
       />
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
@@ -704,6 +710,8 @@ function AppContent() {
       )}
 
       {/* Data Sources Page - Full Page View */}
+      {proofClaim && <ProofVerifyPage claim={proofClaim} onClose={() => setProofClaim(null)} />}
+
       {isDataSourcesOpen && (
         <DataSourcesPage
           onBack={() => setIsDataSourcesOpen(false)}
@@ -722,7 +730,7 @@ function AppContent() {
       )}
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
         <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
