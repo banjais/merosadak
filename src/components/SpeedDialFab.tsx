@@ -13,6 +13,7 @@ interface SpeedDialFabProps {
   onSelectFeature: (feature: 'highways' | null) => void;
   onOpenSos: () => void;
   onOpenDrawer: () => void;
+  onOpenHighwayInfo?: () => void;
 }
 
 export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
@@ -20,6 +21,7 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
   onSelectFeature,
   onOpenSos,
   onOpenDrawer,
+  onOpenHighwayInfo,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
@@ -107,8 +109,10 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
             <button
               type="button"
               onClick={() =>
-                handleAction(() =>
-                  onSelectFeature(activeFeature === 'highways' ? null : 'highways')
+                handleAction(
+                  onOpenHighwayInfo
+                    ? onOpenHighwayInfo()
+                    : onSelectFeature(activeFeature === 'highways' ? null : 'highways')
                 )
               }
               className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ${

@@ -4,6 +4,7 @@ import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
 import { InteractiveMap } from './components/InteractiveMap';
 import { HighwayDirectory } from './components/HighwayDirectory';
+import { HighwayDirectoryPage } from './components/HighwayDirectoryPage';
 import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
@@ -92,6 +93,7 @@ function AppContent() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [isMapFull, setIsMapFull] = useState(false);
+  const [isHighwayInfoOpen, setIsHighwayInfoOpen] = useState(false);
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
@@ -349,7 +351,7 @@ function AppContent() {
 
   const handleSelectIncident = (inc: RoadIncident | UserRoadReport) => {
     setSelectedIncidentId(inc.id);
-    setActiveFeature('highways');
+    setIsHighwayInfoOpen(true);
     const locName = 'locationName' in inc ? inc.locationName : inc.location;
     const title = 'title' in inc ? inc.title : `${inc.incidentType} at ${inc.location}`;
     const matchedCity = CITIES_AND_JUNCTIONS.find(
@@ -443,6 +445,10 @@ function AppContent() {
           setActiveFeature('steps');
           setIsDrawerOpen(false);
         }}
+        onOpenHighwayInfo={() => {
+          setIsHighwayInfoOpen(true);
+          setIsDrawerOpen(false);
+        }}
         onOpenDistanceMatrix={() => setIsDistanceCalculatorOpen(true)}
         onOpenDataSources={() => setIsDataSourcesOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
@@ -458,8 +464,8 @@ function AppContent() {
         activeRoute={activeRoute}
       />
 
-      {/* Top Header Matching Reference UI - Hidden when on Distance Calculator or Distance Matrix pages */}
-      {!isDistanceCalculatorOpen && (
+      {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && (
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
@@ -624,7 +630,7 @@ function AppContent() {
                     <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
                       <button
                         onClick={() => {
-                          setActiveFeature('highways');
+                          setIsHighwayInfoOpen(true);
                           setIsNotificationsOpen(false);
                         }}
                         className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
@@ -704,8 +710,19 @@ function AppContent() {
         />
       )}
 
+      {/* Highway Directory Page - Full Page View */}
+      {isHighwayInfoOpen && (
+        <HighwayDirectoryPage
+          onBack={() => setIsHighwayInfoOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
+        />
+      )}
+
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && (
         <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
@@ -734,7 +751,7 @@ function AppContent() {
                 setActiveFeature(null);
               }
             }}
-            onOpenHighwayDirectory={() => setActiveFeature('highways')}
+            onOpenHighwayDirectory={() => setIsHighwayInfoOpen(true)}
             onViewHighwayOnMap={(highway) => {
               if (highway.center) {
                 setFocusedTarget({
@@ -744,7 +761,7 @@ function AppContent() {
                   zoom: 9,
                 });
               }
-              setActiveFeature('highways');
+              setIsHighwayInfoOpen(true);
             }}
           />
         </div>
@@ -771,6 +788,7 @@ function AppContent() {
           onSelectFeature={(feat) => setActiveFeature(feat)}
           onOpenSos={() => setIsSosModalOpen(true)}
           onOpenDrawer={() => setIsDrawerOpen(true)}
+          onOpenHighwayInfo={() => setIsHighwayInfoOpen(true)}
         />
 
         {/* Feature Sliding Panel / Bottom Sheet (Progressive Disclosure - Only Shown When Clicked) */}

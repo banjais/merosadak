@@ -32,6 +32,7 @@ interface AppDrawerProps {
   onOpenShareModal?: () => void;
   onOpenOfflineManager: () => void;
   onOpenLogin: () => void;
+  onOpenHighwayInfo?: () => void;
   incidentsCount?: number;
   hasActiveRoute?: boolean;
   routeLabel?: string | null;
@@ -55,6 +56,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenShareModal,
   onOpenOfflineManager,
   onOpenLogin,
+  onOpenHighwayInfo,
   incidentsCount = 0,
   hasActiveRoute = false,
   routeLabel = null,
@@ -87,7 +89,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeColor: 'bg-violet-500 text-white',
       activeBg: 'bg-violet-500/15 text-violet-300 border border-violet-500/40',
       activeIcon: 'bg-violet-500 text-white',
-      onClick: () => { onNavigateTab('highways'); onClose(); },
+      onClick: () => { onOpenHighwayInfo ? onOpenHighwayInfo() : onNavigateTab('highways'); onClose(); },
     },
     {
       id: 'distance',
