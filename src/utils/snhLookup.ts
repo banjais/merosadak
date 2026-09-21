@@ -274,6 +274,128 @@ export function traceKathmanduToGulariya(ref?: SNHReferenceData | null): Distanc
     linkChain: chain,
     note: `Kathmandu → Kohalpur is verifiable via Table 4 (${totalFromTable4.toFixed(2)} km across 4 published segments). Kohalpur → Gulariya is implied as ${impliedKohalpurToGulariya.toFixed(2)} km (543.4 − ${totalFromTable4.toFixed(2)}). NH59 junction with NH01 near Kohalpur is not explicitly documented in Annex 2; the junction was inferred from geometry.`,
     unreconciledGapKm: Math.abs(impliedKohalpurToGulariya - 48.35),
-    isUncertain: false,
+     isUncertain: false,
+   };
+}
+
+export function estimateDistance(
+  originLat: number,
+  originLng: number,
+  destLat: number,
+  destLng: number
+): DistanceLookupResult {
+  const R = 6371;
+  const dLat = ((destLat - originLat) * Math.PI) / 180;
+  const dLon = ((destLng - originLng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((originLat * Math.PI) / 180) *
+      Math.cos((destLat * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const km = Math.round(R * c * 100) / 100;
+
+  return {
+    distanceKm: km,
+    evidenceLevel: 'estimate',
+    citation: {
+      document: 'Geodesic Great Circle Calculation',
+      table: 'Aerial Line-of-Sight',
+    },
+    publishedDistanceKm: km,
+    isUncertain: true,
+    note: 'Aerial distance only. No published DoR corridor data available for this city pair. Use for rough reference only — road distance will be longer, especially in mountain terrain.',
   };
+}
+
+export type DataSourceType = 'snh_published' | 'dor_geojson_linksum' | 'estimate_aerial';
+
+export interface DistanceWithSource {
+  distanceKm: number;
+  evidenceLevel: EvidenceLevel;
+  source: DataSourceType;
+  citation?: SNHCitation;
+  linkChain?: LinkChainEntry[];
+  note?: string;
+  isUncertain?: boolean;
+  publishedDistanceKm?: number;
+}
+
+export function getSourceLabel(source: DataSourceType): string {
+  switch (source) {
+    case 'snh_published':
+      return 'SNH 2022-23 (DoR Published)';
+    case 'dor_geojson_linksum':
+      return 'DoR Archives (GeoJSON Link-Sum)';
+    case 'estimate_aerial':
+      return 'Estimate (Aerial Line-of-Sight)';
+    default:
+      return source;
+  }
+}
+
+export function getSourceDescription(source: DataSourceType): string {
+  switch (source) {
+    case 'snh_published':
+      return 'Official Department of Roads published distance from Statistics of National Highway 2022/23';
+    case 'dor_geojson_linksum':
+      return 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON files';
+    case 'estimate_aerial':
+      return 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.';
+    default:
+      return '';
+  }
+}
+
+export function lookupDistanceWithFallback(
+  originName: string,
+  destinationName: string,
+  originLat?: number,
+  originLng?: number,
+  destLat?: number,
+  destLng?: number,
+  referenceData?: SNHReferenceData | null
+): DistanceWithSource | null {
+  const ref = referenceData || cachedReferenceData;
+
+  const published = lookupSNHDistance(originName, destinationName, ref);
+  if (published && published.distanceKm > 0) {
+    return {
+      distanceKm: published.distanceKm,
+      evidenceLevel: 'published',
+      source: 'snh_published',
+      citation: published.citation,
+      linkChain: published.linkChain,
+      publishedDistanceKm: published.publishedDistanceKm,
+    };
+  }
+
+  const linkSum = computeLinkSumDistance(originName, destinationName, ref);
+  if (linkSum && linkSum.distanceKm > 0) {
+    return {
+      distanceKm: linkSum.distanceKm,
+      evidenceLevel: 'link_sum',
+      source: 'dor_geojson_linksum',
+      citation: linkSum.citation,
+      linkChain: linkSum.linkChain,
+      isUncertain: linkSum.isUncertain,
+      note: linkSum.note,
+      publishedDistanceKm: linkSum.publishedDistanceKm,
+    };
+  }
+
+  if (originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined) {
+    const estimated = estimateDistance(originLat, originLng, destLat, destLng);
+    return {
+      distanceKm: estimated.distanceKm,
+      evidenceLevel: 'estimate',
+      source: 'estimate_aerial',
+      citation: estimated.citation,
+      isUncertain: estimated.isUncertain,
+      note: estimated.note,
+    };
+  }
+
+  return null;
 }

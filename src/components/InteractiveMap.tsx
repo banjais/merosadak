@@ -19,6 +19,7 @@ import {
   HIGHWAY_WEATHER_NODES,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
+import { getHighwayEnrichment } from '../utils/geoUtils';
 import {
   CITY_HIGHWAY_TOUCH_DISTANCE_KM,
   filterCitiesNearHighways,
@@ -136,6 +137,28 @@ function createNepalTileLayer(
   });
 
   return new LayerClass();
+}
+
+interface PavementBadgeProps {
+  label: string;
+  value: number;
+  color: 'emerald' | 'amber' | 'red' | 'orange' | 'blue';
+}
+
+function PavementBadge({ label, value, color }: PavementBadgeProps): React.ReactElement {
+  const colorClasses = {
+    emerald: 'bg-emerald-900/30 text-emerald-300 border-emerald-700/50',
+    amber: 'bg-amber-900/30 text-amber-300 border-amber-700/50',
+    red: 'bg-red-900/30 text-red-300 border-red-700/50',
+    orange: 'bg-orange-900/30 text-orange-300 border-orange-700/50',
+    blue: 'bg-blue-900/30 text-blue-300 border-blue-700/50',
+  };
+  return (
+    <div className={`px-1.5 py-1 rounded-lg border text-center ${colorClasses[color]}`}>
+      <div className="text-[7px] uppercase font-bold">{label}</div>
+      <div className="text-xs font-black">{value}</div>
+    </div>
+  );
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
@@ -1807,7 +1830,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <span>Division: <strong className="text-slate-200">{activeHighwayInfo.dorDivision || 'DoR Nepal'}</strong></span>
               )}
             </div>
-
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => {
@@ -1820,6 +1842,40 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Pavement Breakdown */}
+          {(() => {
+            const enrichment = highwaysList ? getHighwayEnrichment(activeHighwayInfo.code, null, highwaysList) : null;
+            const pavement = enrichment?.pavement;
+            if (!pavement || pavement.totalKm === 0) return null;
+            return (
+              <div className="mt-2 pt-2 border-t border-slate-800/50">
+                <div className="text-[9px] text-slate-500 uppercase font-semibold mb-1.5">Pavement Breakdown</div>
+                <div className="grid grid-cols-5 gap-1 text-center">
+                  {pavement.BT > 0 && <PavementBadge label="BT" value={pavement.BT} color="emerald" />}
+                  {pavement.GR > 0 && <PavementBadge label="GR" value={pavement.GR} color="amber" />}
+                  {pavement.ER > 0 && <PavementBadge label="ER" value={pavement.ER} color="red" />}
+                  {pavement.UC > 0 && <PavementBadge label="UC" value={pavement.UC} color="orange" />}
+                  {pavement.PL > 0 && <PavementBadge label="PL" value={pavement.PL} color="blue" />}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1">Total: {pavement.totalKm} km</div>
+              </div>
+            );
+          })()}
+
+          {/* Key Passes & Junctions */}
+          {activeHighwayInfo.keyPassesAndJunctions && activeHighwayInfo.keyPassesAndJunctions.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-slate-800/50">
+              <div className="text-[9px] text-slate-500 uppercase font-semibold mb-1.5">Key Passes & Junctions ({activeHighwayInfo.keyPassesAndJunctions.length})</div>
+              <div className="flex flex-wrap gap-1">
+                {activeHighwayInfo.keyPassesAndJunctions.map((pass, i) => (
+                  <span key={i} className="text-[10px] text-slate-300 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                    {pass}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -957,15 +957,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      {detectedLocation ? (
                        gpsOriginCity ? (
                          <>
-                           <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
-                           <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
-                           {gpsOriginDistanceKm != null && (
-                             <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km away from {gpsOriginCity.name}</span>
-                           )}
-                           {gpsNearestHighway && (
-                             <span className="block text-[9px] text-slate-500">Nearest: {gpsNearestHighway.code} ({gpsNearestHighway.name}) — {gpsNearestHighway.distanceKm.toFixed(1)} km</span>
-                           )}
-                           <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                            <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
+                            <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
+                            {gpsOriginDistanceKm != null && (
+                              <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km away from {gpsOriginCity.name}</span>
+                            )}
+                            {gpsNearestHighway && (
+                              <span className="block text-[9px] text-slate-500">Nearest: {gpsNearestHighway.code} ({gpsNearestHighway.name}) — {gpsNearestHighway.distanceKm.toFixed(1)} km</span>
+                            )}
+                            <span className="block text-[9px] text-slate-500">Data source: GPS triangulation (DoR GeoJSON network)</span>
+                            <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                          </>
                        ) : (
                          <>

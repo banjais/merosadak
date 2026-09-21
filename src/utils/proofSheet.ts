@@ -1,18 +1,15 @@
 import { jsPDF } from 'jspdf';
-import { DistanceLookupResult, getEvidenceLevelLabel, getEvidenceLevelColor } from './snhLookup';
+import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
 
 export interface ProofSheetData {
   from: string;
   to: string;
   fromDistrict?: string;
   toDistrict?: string;
-  lookupResult: DistanceLookupResult;
+  lookupResult: DistanceWithSource;
   generatedAt: string;
   dataHash: string;
 }
-
-const DOCUMENT_CITATION =
-  'Statistics of National Highway (SNH) 2022/23 | Department of Roads, Nepal (HMIS-ICT Unit) | Published June 2024 | 322 pages';
 
 export function generateProofSheet(data: ProofSheetData): void {
   const doc = new jsPDF({
@@ -86,16 +83,17 @@ export function generateProofSheet(data: ProofSheetData): void {
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(203, 213, 225);
+   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(153, 161, 179);
   doc.text('SOURCE CITATION', margin, y);
   y += 4;
 
   doc.setFontSize(7.5);
   doc.setTextColor(153, 161, 179);
   const lines: string[] = [
-    `Document: ${data.lookupResult.citation?.document || 'SNH 2022/23'}`,
+    `Data source: ${getSourceLabel(data.lookupResult.source)}`,
+    `Document: ${data.lookupResult.citation?.document || 'DoR Archives GeoJSON'}`,
     `Table: ${data.lookupResult.citation?.table || 'N/A'}`,
   ];
   if (data.lookupResult.citation?.row) lines.push(`Row: ${data.lookupResult.citation.row}`);
@@ -202,8 +200,7 @@ export function generateProofSheet(data: ProofSheetData): void {
   doc.text('DATA INTEGRITY', margin, y);
   y += 3.5;
   doc.setFontSize(6.5);
-  doc.text(`Document: ${DOCUMENT_CITATION}`, margin, y);
-  y += 3;
+  doc.setTextColor(153, 161, 179);
   doc.text(`Data hash: ${data.dataHash}`, margin, y);
   y += 3;
   doc.text(`Generated: ${data.generatedAt}`, margin, y);
@@ -214,46 +211,56 @@ export function generateProofSheet(data: ProofSheetData): void {
   doc.line(margin, y, pageWidth - margin, y);
   y += 6;
 
-  doc.setFontSize(7);
-  doc.setTextColor(153, 161, 179);
-  doc.setFont('helvetica', 'normal');
-  doc.text('OFFICIAL CERTIFICATION', margin, y);
-  y += 3.5;
-  doc.setFontSize(6);
-  doc.setTextColor(153, 161, 179);
-  doc.text(
-    'This sheet is generated from published DoR data (SNH 2022/23). For a DoR-certified',
-    margin,
-    y
-  );
-  y += 3;
-  doc.text('certificate, the figure must be countersigned by an authorised DoR officer.',
-    margin, y);
-  y += 3;
-  doc.text('Submit this sheet + the SNH 2022/23 reference to HMIS-ICT Unit, DoR for sign-off.',
-    margin, y);
-  y += 10;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(203, 213, 225);
-  doc.text('Department of Roads Authorised Signatory', margin, y);
-  y += 1.5;
-  doc.setDrawColor(153, 161, 179);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, margin + 60, y);
-  y += 2.5;
-  doc.setFontSize(6.5);
-  doc.setTextColor(153, 161, 179);
-  doc.text('Name: _____________________  Title: _____________________', margin, y);
-  y += 3;
-  doc.text('Date: _____________________  Seal: [ ]', margin, y);
-  y += 2.5;
-  doc.text('This document is valid as of the SNH 2022/23 publication date (June 2024).', margin, y + 2);
-  y += 3;
-  doc.text('It represents a 2022/23 snapshot and does not reflect live road conditions.', margin, y + 2);
-  y += 3;
-  doc.text('It represents a 2022/23 snapshot and does not reflect live road conditions.', margin, y + 2);
+  if (data.lookupResult.evidenceLevel === 'published') {
+    doc.setFontSize(7);
+    doc.setTextColor(153, 161, 179);
+    doc.setFont('helvetica', 'normal');
+    doc.text('OFFICIAL CERTIFICATION', margin, y);
+    y += 3.5;
+    doc.setFontSize(6);
+    doc.setTextColor(153, 161, 179);
+    doc.text(
+      'This sheet is generated from published DoR data (SNH 2022/23). For a DoR-certified',
+      margin,
+      y
+    );
+    y += 3;
+    doc.text('certificate, the figure must be countersigned by an authorised DoR officer.',
+      margin, y);
+    y += 3;
+    doc.text('Submit this sheet + the SNH 2022/23 reference to HMIS-ICT Unit, DoR for sign-off.',
+      margin, y);
+    y += 3;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(203, 213, 225);
+    doc.text('Department of Roads Authorised Signatory', margin, y);
+    y += 1.5;
+    doc.setDrawColor(153, 161, 179);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + 60, y);
+    y += 2.5;
+    doc.setFontSize(6.5);
+    doc.setTextColor(153, 161, 179);
+    doc.text('Name: _____________________  Title: _____________________', margin, y);
+    y += 3;
+    doc.text('Date: _____________________  Seal: [ ]', margin, y);
+    y += 2.5;
+    doc.text('This document is valid as of the SNH 2022/23 publication date (June 2024).', margin, y + 2);
+    y += 3;
+    doc.text('It represents a 2022/23 snapshot and does not reflect live road conditions.', margin, y + 2);
+  } else {
+    doc.setFontSize(7);
+    doc.setTextColor(245, 152, 61);
+    doc.setFont('helvetica', 'italic');
+    doc.text('⚠ This distance uses non-published data source — not valid for official certification.', margin, y);
+    y += 3;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(153, 161, 179);
+    doc.text(`Source: ${getSourceLabel(data.lookupResult.source)}.`, margin, y);
+    y += 3;
+    doc.text('For DoR certification, use distances from SNH 2022/23 published tables only.', margin, y);
+  }
 
   doc.save(`merosadak-proof-${data.from.replace(/\s+/g, '-')}-${data.to.replace(/\s+/g, '-')}.pdf`);
 }

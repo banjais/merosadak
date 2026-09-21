@@ -127,3 +127,233 @@ export function findNearestHighwayFromCoords(lat: number, lng: number): {
 
   return nearest;
 }
+
+export interface HighwayDistanceInfo {
+  totalDistanceKm: number;
+  source: 'road_graph' | 'snh_links' | 'highway_data';
+  linkSumKm?: number;
+  snhPublishedKm?: number;
+  note?: string;
+}
+
+export function getHighwayTotalDistance(
+  highwayCode: string,
+  roadGraph?: { highways: string[]; adjacency: [number, number, number][][]; nodes: [number, number][] } | null,
+  snhLinks?: any[] | null
+): HighwayDistanceInfo | null {
+  const code = highwayCode.trim().toUpperCase();
+
+  let roadGraphKm = 0;
+  if (roadGraph && roadGraph.highways) {
+    for (let i = 0; i < roadGraph.highways.length; i++) {
+      if (roadGraph.highways[i].toUpperCase() === code) {
+        for (const node of roadGraph.adjacency) {
+          for (const [to, dist, hwyIdx] of node) {
+            if (hwyIdx === i) {
+              roadGraphKm += dist;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  let snhLinkSumKm = 0;
+  if (snhLinks && snhLinks.length > 0) {
+    for (const link of snhLinks) {
+      if ((link.highway || '').toUpperCase() === code || (link.code || '').toUpperCase().startsWith(code)) {
+        snhLinkSumKm += link.length_km || 0;
+      }
+    }
+  }
+
+  const highway = NEPAL_HIGHWAYS.find(
+    (h) => h.code.toLowerCase() === code.toLowerCase() || h.id.toLowerCase() === code.toLowerCase()
+  );
+
+  if (roadGraphKm > 0) {
+    return {
+      totalDistanceKm: Math.round(roadGraphKm * 100) / 100,
+      source: 'road_graph',
+      linkSumKm: snhLinkSumKm > 0 ? Math.round(snhLinkSumKm * 100) / 100 : undefined,
+      note: highway ? `${highway.name} — DoR official chainage from road-graph edges` : undefined,
+    };
+  }
+
+  if (snhLinkSumKm > 0) {
+    return {
+      totalDistanceKm: Math.round(snhLinkSumKm * 100) / 100,
+      source: 'snh_links',
+      linkSumKm: Math.round(snhLinkSumKm * 100) / 100,
+      note: 'Summed from SNH 2022/23 published survey links',
+    };
+  }
+
+  if (highway && highway.totalLengthKm > 0) {
+    return {
+      totalDistanceKm: highway.totalLengthKm,
+      source: 'highway_data',
+      note: `${highway.name} — length from curated NEPAL_HIGHWAYS data (no survey links available)`,
+    };
+  }
+
+  return null;
+}
+
+export function estimateAerialDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  return Math.round(getDistanceKm(lat1, lon1, lat2, lon2) * 100) / 100;
+}
+
+export interface PavementBreakdown {
+  BT: number;
+  GR: number;
+  ER: number;
+  UC: number;
+  PL: number;
+  totalKm: number;
+}
+
+export interface HighwayEnrichment {
+  code: string;
+  name: string;
+  nepaliName: string;
+  totalLengthKm: number;
+  lengthSource: 'road_graph' | 'snh_links' | 'highway_data' | 'all-highways-79';
+  startPoint: string;
+  endPoint: string;
+  provinces?: string[];
+  districts?: string[];
+  pavement: PavementBreakdown;
+  citiesAlongRoute: Array<{ name: string; district: string; lat: number; lng: number; isMajorHub?: boolean }>;
+  segmentLinksCount?: number;
+  status?: 'verified' | 'partial' | 'missing' | 'unverified';
+  note?: string;
+}
+
+const PAVE_TYPE_MAP: Record<string, keyof PavementBreakdown> = {
+  BT: 'BT',
+  GR: 'GR',
+  ER: 'ER',
+  UC: 'UC',
+  PL: 'PL',
+  BLACKTOPPED: 'BT',
+  BLACKTOOTED: 'BT',
+  GRAVEL: 'GR',
+  EARTH: 'ER',
+  UNCATALBED: 'UC',
+  PIPED: 'PL',
+  PIPED_LABOUR: 'PL',
+};
+
+export function getPavementBreakdown(segmentLinks?: Array<{ paveType?: string; pave_type?: string; linkLenKm?: number; link_len_km?: number }>): PavementBreakdown {
+  const result: PavementBreakdown = { BT: 0, GR: 0, ER: 0, UC: 0, PL: 0, totalKm: 0 };
+  if (!segmentLinks || segmentLinks.length === 0) return result;
+  for (const link of segmentLinks) {
+    const km = link.linkLenKm || link.link_len_km || 0;
+    const paveType = (link.paveType || link.pave_type || '').toUpperCase();
+    const mapped = PAVE_TYPE_MAP[paveType];
+    if (mapped) {
+      result[mapped] += km;
+    }
+    result.totalKm += km;
+  }
+  result.BT = Math.round(result.BT * 100) / 100;
+  result.GR = Math.round(result.GR * 100) / 100;
+  result.ER = Math.round(result.ER * 100) / 100;
+  result.UC = Math.round(result.UC * 100) / 100;
+  result.PL = Math.round(result.PL * 100) / 100;
+  result.totalKm = Math.round(result.totalKm * 100) / 100;
+  return result;
+}
+
+export function getHighwayEnrichment(
+  highwayCode: string,
+  roadGraph?: { highways: string[]; adjacency: [number, number, number][][]; nodes: [number, number][] } | null,
+  all79Data?: any[] | null
+): HighwayEnrichment | null {
+  const code = highwayCode.trim().toUpperCase();
+  const highway = NEPAL_HIGHWAYS.find(
+    (h) => h.code.toLowerCase() === code.toLowerCase() || h.id.toLowerCase() === code.toLowerCase()
+  );
+
+  const hw79 = all79Data
+    ? all79Data.find((h) => (h.code || '').toUpperCase() === code || (h.id || '').toUpperCase() === code)
+    : null;
+
+  let totalLengthKm = 0;
+  let lengthSource: HighwayEnrichment['lengthSource'] = 'highway_data';
+
+  if (roadGraph && roadGraph.highways) {
+    for (let i = 0; i < roadGraph.highways.length; i++) {
+      if (roadGraph.highways[i].toUpperCase() === code) {
+        let sumKm = 0;
+        for (const node of roadGraph.adjacency) {
+          for (const [to, dist, hwyIdx] of node) {
+            if (hwyIdx === i) {
+              sumKm += dist;
+            }
+          }
+        }
+        if (sumKm > 0) {
+          totalLengthKm = Math.round(sumKm * 100) / 100;
+          lengthSource = 'road_graph';
+        }
+      }
+    }
+  }
+
+  if (totalLengthKm === 0 && hw79 && hw79.segmentLinks && hw79.segmentLinks.length > 0) {
+    const sumKm = hw79.segmentLinks.reduce((s: number, l: any) => s + (l.linkLenKm || 0), 0);
+    if (sumKm > 0) {
+      totalLengthKm = Math.round(sumKm * 100) / 100;
+      lengthSource = 'all-highways-79';
+    }
+  }
+
+  if (totalLengthKm === 0 && highway && highway.totalLengthKm > 0) {
+    totalLengthKm = highway.totalLengthKm;
+    lengthSource = 'highway_data';
+  }
+
+  const segmentLinks = hw79?.segmentLinks || highway?.segmentLinks || [];
+  const pavement = getPavementBreakdown(segmentLinks);
+
+  const citiesAlongRoute = CITIES_AND_JUNCTIONS.filter((city) =>
+    city.connectedHighways.some((ch) => ch.toUpperCase() === code)
+  ).map((city) => ({
+    name: city.name,
+    district: city.district,
+    lat: city.lat,
+    lng: city.lng,
+    isMajorHub: city.isMajorHub,
+  }));
+
+  let status: HighwayEnrichment['status'] = 'unverified';
+  if (highway) status = 'verified';
+  else if (hw79) status = 'partial';
+  else if (totalLengthKm > 0) status = 'verified';
+  else status = 'missing';
+
+  const note = status === 'missing'
+    ? `Highway ${code} is referenced by cities but has no geometry in NEPAL_HIGHWAYS or road-graph — needs DoR GeoJSON import`
+    : status === 'partial'
+    ? `Highway ${code} has DoR GeoJSON data but is not in curated NEPAL_HIGHWAYS`
+    : undefined;
+
+  return {
+    code,
+    name: highway?.name || hw79?.name || `Highway ${code}`,
+    nepaliName: highway?.nepaliName || hw79?.nepaliName || '',
+    totalLengthKm,
+    lengthSource,
+    startPoint: highway?.startPoint || hw79?.startPoint || '',
+    endPoint: highway?.endPoint || hw79?.endPoint || '',
+    provinces: highway?.provinces || hw79?.provinces || [],
+    districts: hw79?.districts || highway?.districts || [],
+    pavement,
+    citiesAlongRoute,
+    segmentLinksCount: segmentLinks.length,
+    status,
+    note,
+  };
+}

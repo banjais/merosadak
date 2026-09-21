@@ -6,9 +6,9 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
+import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { DistanceMatrixData } from '../types';
@@ -42,6 +42,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [isMatrixLoading, setIsMatrixLoading] = useState(false);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
+  const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
+  const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('snh_published');
 
   useEffect(() => {
     loadExpandedCities()
@@ -126,12 +128,75 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     [origin, destination]
   );
 
+  const displayedDistance = useMemo(() => {
+    if (!origin || !destination) return routeResult?.totalDistanceKm || 0;
+    if (!distanceWithSource) return routeResult?.totalDistanceKm || 0;
+    return distanceWithSource.distanceKm;
+  }, [origin, destination, distanceWithSource, routeResult]);
+
+  const displayedSource = useMemo(() => {
+    if (distanceWithSource) return distanceWithSource.source;
+    return 'snh_published' as DataSourceType;
+  }, [distanceWithSource]);
+
+  const handleDataSourceChange = (source: DataSourceType) => {
+    setSelectedDataSource(source);
+    if (!origin || !destination || !snhReference || !distanceWithSource) return;
+
+    if (source === 'snh_published') {
+      const pub = lookupSNHDistance(origin.name, destination.name, snhReference);
+      if (pub) {
+        setDistanceWithSource({
+          distanceKm: pub.distanceKm,
+          evidenceLevel: 'published',
+          source: 'snh_published',
+          citation: pub.citation,
+          linkChain: pub.linkChain,
+          publishedDistanceKm: pub.publishedDistanceKm,
+        });
+      }
+    } else if (source === 'estimate_aerial') {
+      if (origin.lat && destination.lat) {
+        const est = lookupDistanceWithFallback(
+          origin.name,
+          destination.name,
+          origin.lat,
+          origin.lng,
+          destination.lat,
+          destination.lng,
+          snhReference
+        );
+        if (est) {
+          setDistanceWithSource({ distanceKm: est.distanceKm, evidenceLevel: 'estimate', source: 'estimate_aerial', citation: est.citation, isUncertain: est.isUncertain });
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (origin && destination && snhReference) {
       const lookup = lookupSNHDistance(origin.name, destination.name, snhReference);
       setSnhLookupResult(lookup);
+
+      const result = lookupDistanceWithFallback(
+        origin.name,
+        destination.name,
+        origin.lat,
+        origin.lng,
+        destination.lat,
+        destination.lng,
+        snhReference
+      );
+      setDistanceWithSource(result);
+
+      if (result) {
+        setSelectedDataSource(result.source);
+      } else {
+        setSelectedDataSource('snh_published');
+      }
     } else if (!origin || !destination) {
       setSnhLookupResult(null);
+      setDistanceWithSource(null);
     }
   }, [origin, destination, snhReference]);
 
@@ -186,7 +251,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   };
 
   const handleExportProofSheet = useCallback(async () => {
-    if (!origin || !destination || !snhLookupResult) return;
+    if (!origin || !destination || !distanceWithSource) return;
     let dataHash = 'snh-reference.json';
     if (snhReference) {
       let hash = 0;
@@ -203,11 +268,11 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       to: destination.name,
       fromDistrict: origin.district,
       toDistrict: destination.district,
-      lookupResult: snhLookupResult,
+      lookupResult: distanceWithSource,
       generatedAt: new Date().toISOString(),
       dataHash,
     });
-  }, [origin, destination, snhLookupResult, snhReference]);
+  }, [origin, destination, distanceWithSource, snhReference]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -430,15 +495,41 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                   <ArrowRight className="w-5 h-5 text-emerald-400" />
                   <span className="text-lg font-bold text-white">{destination?.name ?? 'Select destination'}</span>
                 </div>
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={handleChangeLocation}
                     title="Change location"
                     className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center space-x-1.5 text-xs font-medium"
                   >
-                  <Edit3 className="w-4 h-4" />
-                  <span>Change Location</span>
-                </button>
+                    <Edit3 className="w-4 h-4" />
+                    <span>Change Location</span>
+                  </button>
+                  <div className="relative">
+                    <select
+                      value={selectedDataSource}
+                      onChange={(e) => handleDataSourceChange(e.target.value as DataSourceType)}
+                      className="appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition pr-7"
+                    >
+                      <option value="snh_published">DoR Published (SNH 2022/23)</option>
+                      <option value="dor_geojson_linksum">DoR Archives GeoJSON (Link-Sum)</option>
+                      <option value="estimate_aerial">Estimate (Aerial Line-of-Sight)</option>
+                    </select>
+                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                  </div>
+                  {distanceWithSource && (
+                    <span
+                      className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                      style={{
+                        backgroundColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.15)`,
+                        borderColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.3)`,
+                        color: `rgb(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')})`,
+                      }}
+                    >
+                      {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* 4-Card Multi-Metric Grid (International Standard) */}
@@ -460,36 +551,44 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                          <span>Road Driving Distance</span>
                          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
                        </div>
-                       <div className="text-2xl font-black text-emerald-400 mt-1 font-display flex items-baseline gap-2">
-                         {snhLookupResult ? (
-                           <span>{formatDistanceKm(snhLookupResult.distanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
-                         ) : (
-                           <span>{formatDistanceKm(routeResult!.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
-                         )}
-                         {snhLookupResult && (
-                           <span
-                             className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
-                             style={{
-                               backgroundColor: `rgba(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')}, 0.15)`,
-                               borderColor: `rgba(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')}, 0.3)`,
-                               color: `rgb(${getEvidenceLevelColor(snhLookupResult.evidenceLevel).join(',')})`,
-                             }}
-                           >
-                             {getEvidenceLevelLabel(snhLookupResult.evidenceLevel)}
-                           </span>
-                         )}
-                       </div>
-                       <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
-                         <span>⏱️ ~{Math.floor(routeResult!.estimatedTimeMinutes / 60)}h {routeResult!.estimatedTimeMinutes % 60}m driving</span>
-                       </div>
-                       {snhLookupResult && snhLookupResult.citation && (
-                         <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
-                           <div>SNH 2022/23, {snhLookupResult.citation.table}{snhLookupResult.citation.row ? ` row ${snhLookupResult.citation.row}` : ''}, p.{snhLookupResult.citation.printedPage} (PDF p.{snhLookupResult.citation.pdfPage})</div>
-                           {snhLookupResult.isUncertain && (
-                             <div className="text-amber-400">⚠ Has unreconciled component</div>
-                           )}
-                         </div>
-                       )}
+                        <div className="text-2xl font-black text-emerald-400 mt-1 font-display flex items-baseline gap-2">
+                          {distanceWithSource ? (
+                            <span>{formatDistanceKm(distanceWithSource.distanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
+                          ) : (
+                            <span>{formatDistanceKm(routeResult!.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
+                          )}
+                          {distanceWithSource && (
+                            <span
+                              className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
+                              style={{
+                                backgroundColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.15)`,
+                                borderColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.3)`,
+                                color: `rgb(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')})`,
+                              }}
+                            >
+                              {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
+                          <span>⏱️ ~{Math.floor(routeResult!.estimatedTimeMinutes / 60)}h {routeResult!.estimatedTimeMinutes % 60}m driving</span>
+                        </div>
+                        {distanceWithSource && distanceWithSource.citation && (
+                          <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
+                            <div>{getSourceLabel(distanceWithSource.source)} — {distanceWithSource.citation.table || 'N/A'}{distanceWithSource.citation.row ? ` row ${distanceWithSource.citation.row}` : ''}{distanceWithSource.citation.printedPage ? `, p.${distanceWithSource.citation.printedPage}` : ''}</div>
+                            {distanceWithSource.isUncertain && (
+                              <div className="text-amber-400">⚠ Aerial estimate only — road distance will be longer</div>
+                            )}
+                          </div>
+                        )}
+                        {!distanceWithSource && snhLookupResult && snhLookupResult.citation && (
+                          <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
+                            <div>SNH 2022/23, {snhLookupResult.citation.table}{snhLookupResult.citation.row ? ` row ${snhLookupResult.citation.row}` : ''}, p.{snhLookupResult.citation.printedPage} (PDF p.{snhLookupResult.citation.pdfPage})</div>
+                            {snhLookupResult.isUncertain && (
+                              <div className="text-amber-400">⚠ Has unreconciled component</div>
+                            )}
+                          </div>
+                        )}
                      </div>
 
                      {/* Card 2: Direct Aerial Distance */}
@@ -628,12 +727,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
               />
 
               {/* SNH Evidence & Proof Sheet */}
-              {snhLookupResult && snhLookupResult.evidenceLevel === 'published' && (
+              {distanceWithSource && (
                 <div className="pt-2 border-t border-slate-800/50 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Verified against SNH 2022/23 — {snhLookupResult.citation?.table}, row {snhLookupResult.citation?.row}, p.{snhLookupResult.citation?.printedPage} (PDF p.{snhLookupResult.citation?.pdfPage})</span>
+                      <span>Verified against {getSourceLabel(distanceWithSource.source)} — {getSourceDescription(distanceWithSource.source)}</span>
                     </div>
                     <button
                       type="button"
