@@ -438,7 +438,7 @@ function AppContent() {
         onClose={() => setIsDrawerOpen(false)}
         activeTab={activeFeature ?? 'route'}
         onNavigateTab={(tab) => {
-          setActiveFeature(tab);
+          setActiveFeature(tab === 'route' ? null : tab);
           setIsDrawerOpen(false);
         }}
         onOpenTravelSteps={() => {

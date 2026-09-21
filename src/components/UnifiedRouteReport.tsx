@@ -294,16 +294,16 @@ export function UnifiedRouteReport({
         />
         <MetricCard
           icon={Mountain}
-          label="Elevation"
-          value={`${elevationDelta >= 0 ? '+' : ''}${elevationDelta} m`}
-          detail={`peak ${route.maxElevationM} m · +${route.elevationGainM} m climb`}
+          label="Peak elev."
+          value={`${route.maxElevationM} m`}
+          detail={`+${route.elevationGainM} m climb`}
           tone="purple"
         />
         <MetricCard
           icon={Route}
-          label="Mountain detour"
+          label="Detour"
           value={`+${detourPercent}%`}
-          detail={`${formatNumber(aerialDistance, 1)} km aerial`}
+          detail={`${formatNumber(aerialDistance, 1)} km vs direct`}
           tone="slate"
         />
       </div>
@@ -374,17 +374,13 @@ export function UnifiedRouteReport({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
-              <div className="mb-2 text-xs font-semibold text-slate-300">Terrain & surface</div>
-              <div className="space-y-2 text-[11px] text-slate-400">
-                <div className="flex justify-between gap-2"><span>Peak elevation</span><strong className="text-slate-200">{route.maxElevationM} m</strong></div>
-                <div className="flex justify-between gap-2"><span>Total climb</span><strong className="text-slate-200">+{route.elevationGainM} m</strong></div>
-                <div className="flex flex-wrap gap-1.5">
-                  {surfaces.map((surface) => (
-                    <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">
-                      {surfaceLabels[surface] || surface}
-                    </span>
-                  ))}
-                </div>
+              <div className="mb-2 text-xs font-semibold text-slate-300">Surface</div>
+              <div className="flex flex-wrap gap-1.5">
+                {surfaces.map((surface) => (
+                  <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">
+                    {surfaceLabels[surface] || surface}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -408,7 +404,7 @@ export function UnifiedRouteReport({
               >
                 <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
                   <Mountain className="w-3.5 h-3.5 text-amber-400" />
-                  <span>⛰️ Route Elevation Profile &amp; Mountain Gradients</span>
+                  <span>Elevation profile</span>
                 </div>
                 <div className="flex items-center space-x-3 text-[11px] text-slate-400">
                   <span>+{route.elevationGainM}m climb • Peak {route.maxElevationM}m</span>

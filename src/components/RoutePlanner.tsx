@@ -1168,9 +1168,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         {c.district} District • {c.province} Province
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                      {c.elevationM}m ASL
-                    </span>
                   </button>
                 ))}
               </div>
@@ -1238,21 +1235,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
-                          {c.elevationM}m ASL
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
-                  )}
-                </div>
-              )}
-            </div>
+                           </div>
+                         </div>
+                       </button>
+                     ))
+                   ) : (
+                     <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
+                   )}
+                 </div>
+               )}
+             </div>
 
-            {/* SWAP BUTTON */}
+             {/* SWAP BUTTON */}
             <div className="md:col-span-2 flex justify-center pt-1 md:pt-4">
               <button
                 onClick={handleSwapLocations}
@@ -1322,30 +1316,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {c.district} District • {c.province} Province
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
-                          {c.elevationM}m ASL
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </>)}
+                           </div>
+                         </div>
+                       </button>
+                     ))
+                   ) : (
+                     <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
+                   )}
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
+       </>)}
 
-        {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
+         {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
         {!hasCalculated && isAiPromptOpen && (
           <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span>AI Smart Route Planner (Natural Language)</span>
+                <span>AI Route Planner</span>
               </div>
               <button
                 onClick={() => closeAllMenus(null)}
@@ -1391,92 +1382,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <span>Optimizing Highway Geometry &amp; Telemetry...</span>
           </div>
         )}
-
-        {hasCalculated && (
-          <>
-            {/* Vehicle Profile & Routing Priority */}
-            <div className="pt-1 border-t border-slate-800/60">
-          <button
-            type="button"
-            onClick={() => { closeAllMenus('vehicle'); setShowVehicleOptions(!showVehicleOptions); }}
-            className="w-full py-2 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-between transition group shadow-sm"
-          >
-            <div className="flex items-center space-x-2 min-w-0">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="font-bold text-slate-200 truncate">Vehicle Profile &amp; Routing Priority</span>
-              <span className="text-[10px] text-emerald-400 font-mono hidden sm:inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} • {preference.replace('_', ' ')}
-              </span>
-            </div>
-            <div className="flex items-center space-x-1.5 text-slate-400 group-hover:text-white shrink-0 ml-2">
-              <span className="text-[10px] font-medium">{showVehicleOptions ? 'Hide Options' : 'Customize Options'}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showVehicleOptions ? 'rotate-180 text-emerald-400' : ''}`} />
-            </div>
-          </button>
-
-          {showVehicleOptions && (
-            <div className="mt-2.5 p-2.5 sm:p-3 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-2.5 animate-fadeIn">
-              {/* Vehicle Profile grid with reduced box size and font sizes for mobile fit */}
-              <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span>Vehicle Profile</span>
-                  <span className="text-emerald-400 text-[9px] font-mono">
-                    {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
-                  </span>
-                </div>
-                <div className="grid grid-cols-5 gap-1">
-                  {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => handleQuickVehicleSwitch(type)}
-                      title={`${shortName} - ${desc}`}
-                      className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
-                        vehicle === type
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 font-bold shadow-sm'
-                          : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
-                      }`}
-                    >
-                      <Icon className={`w-3.5 h-3.5 ${vehicle === type ? 'text-emerald-400' : 'text-slate-400'}`} />
-                      <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{shortName}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Routing Priority grid with reduced box size and font sizes */}
-              <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span>Routing Priority</span>
-                  <span className="text-cyan-400 text-[9px] font-mono capitalize">
-                    {preference.replace('_', ' ')}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
-                    <button
-                      key={pref}
-                      type="button"
-                      onClick={() => handleQuickPrefSwitch(pref)}
-                      title={`${label} - ${desc}`}
-                      className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
-                        preference === pref
-                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 font-bold shadow-sm'
-                          : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
-                      }`}
-                    >
-                      <span className="text-[11px] leading-none">{icon}</span>
-                      <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{label}</span>
-                    </button>
-                  ))}
-                </div>
-               </div>
-             </div>
-            )}
-          </div>
-          </>
-          )}
-        </div>
 
        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
        {hasCalculated && routePlan && (
@@ -1567,7 +1472,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               id="btn-start-trip"
             >
               <Navigation className="w-4 h-4" />
-              <span>Start Trip</span>
+              <span>Go</span>
             </button>
 
             <div className="inline-flex items-center self-start sm:self-auto rounded-xl border border-slate-800 bg-slate-950 p-1 text-[11px] font-bold">
@@ -1595,7 +1500,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 }`}
               >
                 <Users className="w-3.5 h-3.5" />
-                <span>Riding along</span>
+                <span>Passenger</span>
               </button>
             </div>
           </div>
@@ -1706,11 +1611,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             <div className="flex flex-wrap gap-2" id="route-detail-actions">
               {([
-                { tab: 'travel_plan', label: 'Timeline & steps', Icon: Milestone, show: true, tone: 'emerald' },
-                { tab: 'highway_info', label: 'Highway details (DoR)', Icon: Route, show: true, tone: 'cyan' },
-                { tab: 'fuel_tolls', label: 'Trip cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
-                { tab: 'checklist', label: 'Vehicle check', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
-                { tab: 'ai_advisory', label: 'Ask AI', Icon: Sparkles, show: true, tone: 'cyan' },
+                { tab: 'travel_plan', label: 'Timeline', Icon: Milestone, show: true, tone: 'emerald' },
+                { tab: 'highway_info', label: 'Highways', Icon: Route, show: true, tone: 'cyan' },
+                { tab: 'fuel_tolls', label: 'Cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
+                { tab: 'checklist', label: 'Checklist', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
+                { tab: 'ai_advisory', label: 'AI', Icon: Sparkles, show: true, tone: 'cyan' },
                 { tab: 'sos', label: 'SOS', Icon: PhoneCall, show: true, tone: 'red' },
               ] as Array<{ tab: DetailModuleTab; label: string; Icon: React.ComponentType<{ className?: string }>; show: boolean; tone: string }>)
                 .filter((a) => a.show)
@@ -1748,20 +1653,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {/* Module Header with Close Tab button */}
               <div className="flex items-center justify-between bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
                 <div className="flex items-center space-x-2 text-xs font-bold text-white min-w-0">
-                  {activeModuleTab === 'timeline' && <span>🕒 Highway Junction Timeline &amp; Arrival Times</span>}
-                  {activeModuleTab === 'comparison' && <span>⚖️ Primary vs Alternative Route Comparison</span>}
-                  {activeModuleTab === 'travel_plan' && <span>📋 Turn-by-Turn Travel Plan &amp; Itinerary</span>}
-                  {activeModuleTab === 'elevation' && <span>⛰️ Route Elevation Profile &amp; Steep Gradients</span>}
-                  {activeModuleTab === 'weather' && <span>🌤️ Live Mountain Passes &amp; Weather Conditions</span>}
-                  {activeModuleTab === 'pois' && <span>⛽ Highway POIs, Fuel Pumps &amp; EV Charging</span>}
-                  {activeModuleTab === 'traffic' && <span>🚦 Real-Time Traffic Speeds &amp; Terrain Analysis</span>}
-                  {activeModuleTab === 'safety' && <span>🛡️ Highway Safety Score &amp; Incident Advisories</span>}
-                  {activeModuleTab === 'fuel_tolls' && <span>💰 Fuel &amp; Nagdhunga Toll Calculator</span>}
-                  {activeModuleTab === 'ai_advisory' && <span>🤖 Gemini AI Highway Safety &amp; Departure Advisory</span>}
-                  {activeModuleTab === 'sos' && <span>🚨 Emergency Highway SOS Dispatch Hotline</span>}
-                  {activeModuleTab === 'eco' && <span>🌱 Eco Rating &amp; Carbon Footprint Analysis</span>}
-                  {activeModuleTab === 'checklist' && <span>🔧 Pre-Trip Highway Vehicle Checklist</span>}
-                  {activeModuleTab === 'highway_info' && <span>🛣️ Active Route Highway Details & Alerts</span>}
+                  {activeModuleTab === 'timeline' && <span>🕒 Timeline</span>}
+                  {activeModuleTab === 'comparison' && <span>⚖️ Compare routes</span>}
+                  {activeModuleTab === 'travel_plan' && <span>📋 Trip plan</span>}
+                  {activeModuleTab === 'elevation' && <span>⛰️ Elevation</span>}
+                  {activeModuleTab === 'weather' && <span>🌤️ Mountain weather</span>}
+                  {activeModuleTab === 'pois' && <span>⛽ POIs &amp; charging</span>}
+                  {activeModuleTab === 'traffic' && <span>🚦 Traffic &amp; terrain</span>}
+                  {activeModuleTab === 'safety' && <span>🛡️ Safety score</span>}
+                  {activeModuleTab === 'fuel_tolls' && <span>💰 Fuel &amp; tolls</span>}
+                  {activeModuleTab === 'ai_advisory' && <span>🤖 AI advisory</span>}
+                  {activeModuleTab === 'sos' && <span>🚨 Emergency SOS</span>}
+                  {activeModuleTab === 'eco' && <span>🌱 Eco &amp; carbon</span>}
+                  {activeModuleTab === 'checklist' && <span>🔧 Vehicle checklist</span>}
+                  {activeModuleTab === 'highway_info' && <span>🛣️ Route highways</span>}
                   <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
                 </div>
                 <button
@@ -2153,7 +2058,85 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   </div>
 )}
 
-      {/* Share Trip Modal */}
+        {hasCalculated && (
+          <div className="mt-3 border-t border-slate-800/60 pt-3">
+            <button
+              type="button"
+              onClick={() => { closeAllMenus('vehicle'); setShowVehicleOptions(!showVehicleOptions); }}
+              className="w-full py-2 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-between transition group shadow-sm"
+            >
+              <div className="flex items-center space-x-2 min-w-0">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="font-bold text-slate-200 truncate">Vehicle &amp; Route</span>
+                <span className="text-[10px] text-emerald-400 font-mono hidden sm:inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                  {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} • {preference.replace('_', ' ')}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1.5 text-slate-400 group-hover:text-white shrink-0 ml-2">
+                <span className="text-[10px] font-medium">{showVehicleOptions ? 'Hide' : 'Show'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showVehicleOptions ? 'rotate-180 text-emerald-400' : ''}`} />
+              </div>
+            </button>
+
+            {showVehicleOptions && (
+              <div className="mt-2.5 p-2.5 sm:p-3 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-2.5 animate-fadeIn">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Vehicle</span>
+                    <span className="text-emerald-400 text-[9px] font-mono">
+                      {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => handleQuickVehicleSwitch(type)}
+                        title={`${shortName} - ${desc}`}
+                        className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
+                          vehicle === type
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 font-bold shadow-sm'
+                            : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${vehicle === type ? 'text-emerald-400' : 'text-slate-400'}`} />
+                        <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{shortName}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Route type</span>
+                    <span className="text-cyan-400 text-[9px] font-mono capitalize">
+                      {preference.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
+                      <button
+                        key={pref}
+                        type="button"
+                        onClick={() => handleQuickPrefSwitch(pref)}
+                        title={`${label} - ${desc}`}
+                        className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
+                          preference === pref
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 font-bold shadow-sm'
+                            : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                        }`}
+                      >
+                        <span className="text-[11px] leading-none">{icon}</span>
+                        <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                 </div>
+                </div>
+              )}
+            </div>
+          )}
       {routePlan && (
         <ShareTripModal
           isOpen={isShareModalOpen}
@@ -2163,6 +2146,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           preference={preference}
         />
       )}
+    </div>
     </div>
   );
 };

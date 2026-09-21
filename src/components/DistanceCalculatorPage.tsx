@@ -40,23 +40,30 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
   const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
     {
       value: 'snh_published',
-      label: 'DoR Published SNH 2022/23',
+      label: 'SNH Published',
       url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'Official Department of Roads published distances from Statistics of National Highway 2022/23',
+      description: 'Official DoR published distances from Statistics of National Highway 2022/23',
     },
     {
       value: 'dor_geojson_linksum',
-      label: 'DoR Archives GeoJSON (Link-Sum)',
+      label: 'GeoJSON Link-Sum',
       url: 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement',
-      description: 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON files',
+      description: 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON',
     },
     {
       value: 'estimate_aerial',
-      label: 'Estimate (Aerial Line-of-Sight)',
+      label: 'Aerial Estimate',
       url: '',
       description: 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.',
     },
   ];
+
+  const openExternalLink = (url: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const selected = sources.find((s) => s.value === selectedSource) || sources[0];
 
@@ -69,41 +76,39 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="truncate max-w-[180px]">{selected.label}</span>
+        <span className="truncate max-w-[140px]">{selected.label}</span>
         <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 overflow-hidden">
           {sources.map((src) => (
-            <button
+            <div
               key={src.value}
-              type="button"
+              role="option"
+              aria-selected={src.value === selectedSource}
               onClick={() => {
                 onChange(src.value);
                 setIsOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left text-xs transition ${
+              className={`w-full px-3 py-2 text-left text-xs transition cursor-pointer ${
                 src.value === selectedSource
                   ? 'bg-cyan-500/10 text-cyan-300'
                   : 'text-slate-300 hover:bg-slate-900 hover:text-white'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <a
-                  href={src.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 font-medium hover:underline"
+                <span
+                  onClick={(e) => openExternalLink(src.url, e)}
+                  className={`flex items-center gap-1 font-medium ${src.url ? 'hover:underline cursor-pointer' : ''}`}
                 >
                   {src.label}
                   {src.url && (
                     <ExternalLink className="w-2.5 h-2.5 text-slate-400 hover:text-white" />
                   )}
-                </a>
+                </span>
                 {src.value === selectedSource && evidenceLevel && (
-                  <span className="text-[8px] font-bold px-1 py-0.5 rounded border" style={{
+                  <span className="text-[8px] font-bold px-1 py-0.5 rounded border shrink-0" style={{
                     backgroundColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.15)`,
                     borderColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.3)`,
                     color: `rgb(${getEvidenceLevelColor(evidenceLevel).join(',')})`,
@@ -113,7 +118,7 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
                 )}
               </div>
               <div className="text-[9px] text-slate-500 mt-0.5">{src.description}</div>
-            </button>
+            </div>
           ))}
         </div>
       )}
