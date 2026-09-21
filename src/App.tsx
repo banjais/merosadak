@@ -778,7 +778,7 @@ function AppContent() {
         <div className="flex-1 relative z-0 w-full min-h-0">
           <InteractiveMap
             activeRoute={activeRoute}
-            isDimmed={!activeRoute}
+            isDimmed={false}
             onSelectAlternativeRoute={(altRoute) => setActiveRoute(altRoute)}
             onSelectCity={handleSelectCityOnMap}
             focusedTarget={focusedTarget}
