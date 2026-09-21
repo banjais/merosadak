@@ -3,6 +3,7 @@ import { Highway, RoadIncident, UserRoadReport } from '../types';
 import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, INITIAL_USER_REPORTS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
+import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
 import {
   Search,
   Route,
@@ -21,9 +22,10 @@ import {
   Clock,
   Gauge,
   Layers,
-  ArrowRight,
-  Info
-} from 'lucide-react';
+   ArrowRight,
+   Info,
+   FileText
+ } from 'lucide-react';
 
 interface HighwayDirectoryProps {
   onSelectHighwayOnMap?: (highway: Highway) => void;
@@ -48,9 +50,11 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | HighwayRealtimeStatusType>('all');
   const [terrainFilter, setTerrainFilter] = useState<'all' | 'Hilly' | 'High Mountain' | 'Plains'>('all');
-  const [filterToRouteOnly, setFilterToRouteOnly] = useState<boolean>(false);
   const [expandedHighwayId, setExpandedHighwayId] = useState<string | null>(null);
   const [activeSegmentTooltip, setActiveSegmentTooltip] = useState<{ highwayId: string; segmentIndex: number } | null>(null);
+
+  const [filterToRouteOnly, setFilterToRouteOnly] = useState<boolean>(filterToRouteOnlyProp);
+  const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -65,6 +69,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
         setIncidents(incData);
       }
     }).catch(() => {});
+
+    loadSNHReference().then((refData) => {
+      if (isMounted) setSnhReference(refData);
+    });
 
     return () => {
       isMounted = false;
@@ -308,6 +316,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             const isExpanded = (expandedHighwayId || '').toLowerCase() === highwayKey;
             const analysis = highwayAnalyses.get(highwayKey) || analyzeHighwayRealtimeStatus(highway, incidents, reports);
             const segments = analysis.segments;
+            const snhLookup = snhReference ? lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference) : null;
 
             return (
               <div
@@ -449,13 +458,41 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 {/* Expanded Details Section */}
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5">
-                    {/* Highway Description & Route Context */}
-                    <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
-                      {highway.description || `National Highway ${highway.code} connecting ${highway.route || `${highway.startPoint} to ${highway.endPoint}`}, maintained by Department of Roads, Nepal.`}
-                    </p>
+                     {/* Highway Description & Route Context */}
+                     <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
+                       {highway.description || `National Highway ${highway.code} connecting ${highway.route || `${highway.startPoint} to ${highway.endPoint}`}, maintained by Department of Roads, Nepal.`}
+                     </p>
 
-                    {/* Real-time Status Breakdown Card */}
-                    <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-3">
+                     {/* SNH 2022/23 Verified Distance Reference */}
+                     {snhLookup && snhLookup.citation && (
+                       <div className="flex items-center space-x-3 text-xs">
+                         <span className="flex items-center space-x-1">
+                           <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                           <span className="font-semibold text-slate-200">
+                             DoR SNH 2022/23:
+                           </span>
+                         </span>
+                         <span className="font-black text-cyan-400">{snhLookup.distanceKm.toFixed(1)} km</span>
+                         {snhLookup.evidenceLevel === 'published' && (
+                           <span className="px-1.5 py-0.25 bg-emerald-950/40 text-emerald-300 border border-emerald-700/40 rounded text-[9px] font-black uppercase">
+                             DoR Published
+                           </span>
+                         )}
+                         <span className="text-[10px] text-slate-500">
+                           {snhLookup.citation.table}
+                           {snhLookup.citation.row && `, row ${snhLookup.citation.row}`}
+                           {snhLookup.citation.printedPage && `, p.${snhLookup.citation.printedPage}`}
+                         </span>
+                         {snhLookup.linkChain && snhLookup.linkChain.length > 0 && (
+                           <span className="text-[10px] text-amber-400" title="DoR surveyed link chain available">
+                             {snhLookup.linkChain.length} DoR survey links
+                           </span>
+                         )}
+                       </div>
+                     )}
+
+                     {/* Real-time Status Breakdown Card */}
+                     <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-0.5 rounded text-xs font-black uppercase ${analysis.theme.badgeBg} ${analysis.theme.badgeBorder}`}>

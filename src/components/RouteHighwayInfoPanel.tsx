@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Highway, RoadIncident } from '../types';
-import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
+import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
+import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
 import {
   Route,
   ChevronRight,
@@ -14,6 +15,7 @@ import {
   HardHat,
   Layers,
   ExternalLink,
+  FileText,
 } from 'lucide-react';
 
 interface RouteHighwayInfoPanelProps {
@@ -26,6 +28,7 @@ interface RouteHighwayInfoPanelProps {
 interface HighwayStatusInfo {
   highway: Highway;
   incidents: RoadIncident[];
+  snhLookup: DistanceLookupResult | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -46,6 +49,12 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
   onViewHighwayOnMap,
   onOpenHighwayDirectory,
 }) => {
+  const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
+
+  useEffect(() => {
+    loadSNHReference().then(setSnhReference);
+  }, []);
+
   const highwayInfos = useMemo<HighwayStatusInfo[]>(() => {
     const codes = routeHighwayCodes.filter(Boolean);
     if (codes.length === 0) return [];
@@ -72,7 +81,9 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
           highway.code.split(' ').some((c) => inc.highwayCode.includes(c))
       );
 
-      infos.push({ highway, incidents: hwIncidents });
+      const snhLookup = lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference);
+
+      infos.push({ highway, incidents: hwIncidents, snhLookup });
     });
 
     return infos;
@@ -118,7 +129,7 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
         )}
       </div>
 
-      {highwayInfos.map(({ highway, incidents: hwIncidents }) => {
+      {highwayInfos.map(({ highway, incidents: hwIncidents, snhLookup }) => {
         const statusKey = highway.overallStatus || 'clear';
         const statusClass = STATUS_COLORS[statusKey] || STATUS_COLORS.caution;
         const statusIcon = STATUS_ICONS[statusKey] || STATUS_ICONS.caution;
@@ -267,6 +278,49 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
                         </span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+                             {/* SNH Reference — Verified DoR Distance */}
+               {snhLookup && snhLookup.citation && (
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+                    <FileText className="w-3 h-3 text-cyan-400" />
+                    <span>SNH 2022/23 Verified Distance</span>
+                  </div>
+                  <div className="p-3 bg-slate-950/40 border border-slate-800/60 rounded-lg">
+                    <div className="flex items-baseline space-x-2 mb-1">
+                      <span className="text-sm font-black text-white">{snhLookup.distanceKm.toFixed(1)} km</span>
+                      <span className="text-[10px] text-slate-500">published road distance</span>
+                    </div>
+                    {snhLookup.evidenceLevel === 'published' && (
+                      <span className="inline-flex items-center space-x-1 px-1.5 py-0.25 rounded text-[9px] font-black uppercase bg-emerald-950/40 text-emerald-300 border border-emerald-700/40">
+                        <span>DoR Published</span>
+                      </span>
+                    )}
+                    {snhLookup.citation.table && (
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        Source: {snhLookup.citation.table}
+                        {snhLookup.citation.row && `, row ${snhLookup.citation.row}`}
+                        {snhLookup.citation.printedPage && `, p.${snhLookup.citation.printedPage}`}
+                        (PDF p.{snhLookup.citation.pdfPage})
+                        {snhLookup.citation.via && <span> via {snhLookup.citation.via}</span>}
+                      </div>
+                    )}
+                    {snhLookup.linkChain && snhLookup.linkChain.length > 0 && (
+                      <details className="mt-1.5">
+                        <summary className="text-[10px] text-cyan-400 cursor-pointer font-medium">Show link chain breakdown</summary>
+                        <div className="mt-1 space-y-0.5">
+                          {snhLookup.linkChain.map((link, i) => (
+                            <div key={`${link.code}-${i}`} className="text-[9px] text-slate-400 flex justify-between">
+                              <span>{link.code} — {link.name}</span>
+                              <span>{link.lengthKm} km ({link.fromKm}→{link.toKm})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
               )}
