@@ -511,7 +511,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                       onChange={(e) => handleDataSourceChange(e.target.value as DataSourceType)}
                       className="appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition pr-7"
                     >
-                      <option value="snh_published">DoR Published (SNH 2022/23)</option>
+                      <option value="snh_published">DoR Published SNH 2022/23</option>
                       <option value="dor_geojson_linksum">DoR Archives GeoJSON (Link-Sum)</option>
                       <option value="estimate_aerial">Estimate (Aerial Line-of-Sight)</option>
                     </select>

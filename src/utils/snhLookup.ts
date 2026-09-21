@@ -338,7 +338,7 @@ export interface DistanceWithSource {
 export function getSourceLabel(source: DataSourceType): string {
   switch (source) {
     case 'snh_published':
-      return 'SNH 2022-23 (DoR Published)';
+      return 'DoR Published SNH 2022/23';
     case 'dor_geojson_linksum':
       return 'DoR Archives (GeoJSON Link-Sum)';
     case 'estimate_aerial':
