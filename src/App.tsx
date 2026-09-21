@@ -338,18 +338,18 @@ function AppContent() {
     const routingCity = getNearestRoutingCity(city);
     if (type === 'origin') setPlannerOrigin(routingCity.id);
     if (type === 'destination') setPlannerDest(routingCity.id);
-    setActiveFeature('route');
+    setActiveFeature(null);
   };
 
   const handleDistanceMatrixSelect = (originId: string, destId: string) => {
     setPlannerOrigin(originId);
     setPlannerDest(destId);
-    setActiveFeature('route');
+    setActiveFeature(null);
   };
 
   const handleSelectIncident = (inc: RoadIncident | UserRoadReport) => {
     setSelectedIncidentId(inc.id);
-    setActiveFeature('incidents');
+    setActiveFeature('highways');
     const locName = 'locationName' in inc ? inc.locationName : inc.location;
     const title = 'title' in inc ? inc.title : `${inc.incidentType} at ${inc.location}`;
     const matchedCity = CITIES_AND_JUNCTIONS.find(
@@ -624,7 +624,7 @@ function AppContent() {
                     <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
                       <button
                         onClick={() => {
-                          setActiveFeature('incidents');
+                          setActiveFeature('highways');
                           setIsNotificationsOpen(false);
                         }}
                         className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
@@ -717,6 +717,8 @@ function AppContent() {
             onRouteCalculated={handleRouteCalculated}
             onRouteClear={() => setActiveRoute(null)}
             simulationControls={simulationControls}
+            onToggleMapFull={() => setIsMapFull((prev) => !prev)}
+            isMapFull={isMapFull}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);
@@ -769,11 +771,10 @@ function AppContent() {
           onSelectFeature={(feat) => setActiveFeature(feat)}
           onOpenSos={() => setIsSosModalOpen(true)}
           onOpenDrawer={() => setIsDrawerOpen(true)}
-          incidentsCount={incidents.length}
         />
 
         {/* Feature Sliding Panel / Bottom Sheet (Progressive Disclosure - Only Shown When Clicked) */}
-        {activeFeature && activeFeature !== 'route' && (
+        {activeFeature && (
           <>
             {/* Backdrop click to dismiss on mobile */}
             <div
@@ -864,7 +865,7 @@ function AppContent() {
                     onPlanTripForHighway={(start, end) => {
                       setPlannerOrigin('ktm');
                       setPlannerDest('pkr');
-                      setActiveFeature('route');
+                      setActiveFeature(null);
                     }}
                     routeHighwayCodes={activeRoute ? activeRoute.steps.map((s) => s.highwayCode).filter(Boolean) : []}
                     filterToRouteOnly={!!activeRoute}

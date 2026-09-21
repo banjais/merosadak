@@ -1440,6 +1440,28 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 )}
               </button>
 
+                {/* View/Full Map Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onToggleMapFull) {
+                      onToggleMapFull();
+                    } else if (onViewOnMap) {
+                      onViewOnMap();
+                    }
+                    const mapElem = document.getElementById('nepal-gis-canvas');
+                    if (mapElem) {
+                      mapElem.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+                  title={isMapFull ? "Reduce Map View" : "Full Map View"}
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
+                </button>
+
+
 
             </div>
 
