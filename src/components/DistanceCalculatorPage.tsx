@@ -8,9 +8,10 @@ import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2 } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
+import { UnifiedRouteReport } from './UnifiedRouteReport';
 import { DistanceMatrixData } from '../types';
 import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
@@ -378,6 +379,46 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     });
   }, [origin, destination, distanceWithSource, snhReference]);
 
+  const handleShareReport = useCallback(async () => {
+    if (!origin || !destination || !routeResult) return;
+
+    const durationFormatted = `${Math.floor(routeResult.estimatedTimeMinutes / 60)}h ${routeResult.estimatedTimeMinutes % 60}m`;
+    const sourceLabel = distanceWithSource ? getSourceLabel(distanceWithSource.source) : 'DoR Nepal Highway GIS';
+    const evidenceLabel = distanceWithSource?.evidenceLevel ? getEvidenceLevelLabel(distanceWithSource.evidenceLevel) : '';
+
+    const shareText = `🛣️ NEPAL HIGHWAY TRIP PLAN: ${origin.name} ➔ ${destination.name}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 From: ${origin.name} (${origin.district} - ${origin.elevationM}m)
+🏁 To: ${destination.name} (${destination.district} - ${destination.elevationM}m)
+📏 Distance: ${displayedDistance.toFixed(2)} km
+⏱️ Duration: ~${durationFormatted}
+📊 Source: ${sourceLabel}
+${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🇳🇵 Generated via Mero Sadak Nepal Highway GIS`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Distance: ${origin.name} to ${destination.name}`,
+          text: shareText,
+        });
+        return;
+      } catch {
+        // fallback to clipboard
+      }
+    }
+
+    await navigator.clipboard.writeText(shareText);
+  }, [origin, destination, routeResult, displayedDistance, distanceWithSource]);
+
+  const handlePrintReport = useCallback(async () => {
+    await handleExportProofSheet();
+    if (!distanceWithSource) {
+      window.print();
+    }
+  }, [distanceWithSource, handleExportProofSheet]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header */}
@@ -591,259 +632,25 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
           )}
 
           {/* Calculation Result Display - Shown only when route is found */}
-          {!showSearchBars && (
-            <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg font-bold text-white">{origin?.name ?? 'Select origin'}</span>
-                  <ArrowRight className="w-5 h-5 text-emerald-400" />
-                  <span className="text-lg font-bold text-white">{destination?.name ?? 'Select destination'}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleChangeLocation}
-                    title="Change location"
-                    className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition flex items-center space-x-1.5 text-xs font-medium"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    <span>Change Location</span>
-                  </button>
-                  <DataSourceSelector
-                    selectedSource={selectedDataSource}
-                    onChange={handleDataSourceChange}
-                    evidenceLevel={distanceWithSource?.evidenceLevel}
-                  />
-                  {distanceWithSource && (
-                    <span
-                      className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
-                      style={{
-                        backgroundColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.15)`,
-                        borderColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.3)`,
-                        color: `rgb(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')})`,
-                      }}
-                    >
-                      {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* 4-Card Multi-Metric Grid (International Standard) */}
-              {(() => {
-                const detourPercent = aerialDistance > 0
-                  ? Math.round(((routeResult!.totalDistanceKm - aerialDistance) / aerialDistance) * 100)
-                  : 0;
-                const circuityRatio = routeResult!.circuityFactor
-                  ? routeResult!.circuityFactor.toFixed(2)
-                  : aerialDistance > 0
-                  ? (routeResult!.totalDistanceKm / aerialDistance).toFixed(2)
-                  : '1.00';
-
-                 return (
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                     {/* Card 1: Road Driving Distance (Primary Hero) */}
-                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/30 shadow-sm relative overflow-hidden">
-                       <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                         <span>Road Driving Distance</span>
-                         <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
-                       </div>
-                        <div className="text-2xl font-black text-emerald-400 mt-1 font-display flex items-baseline gap-2">
-                          {distanceWithSource ? (
-                            <span>{formatDistanceKm(distanceWithSource.distanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
-                          ) : (
-                            <span>{formatDistanceKm(routeResult!.totalDistanceKm)} <span className="text-sm font-normal text-slate-400">km</span></span>
-                          )}
-                          {distanceWithSource && (
-                            <span
-                              className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
-                              style={{
-                                backgroundColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.15)`,
-                                borderColor: `rgba(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')}, 0.3)`,
-                                color: `rgb(${getEvidenceLevelColor(distanceWithSource.evidenceLevel).join(',')})`,
-                              }}
-                            >
-                              {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
-                          <span>⏱️ ~{Math.floor(routeResult!.estimatedTimeMinutes / 60)}h {routeResult!.estimatedTimeMinutes % 60}m driving</span>
-                        </div>
-                        {distanceWithSource && distanceWithSource.citation && (
-                          <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
-                            <div>{getSourceLabel(distanceWithSource.source)} — {distanceWithSource.citation.table || 'N/A'}{distanceWithSource.citation.row ? ` row ${distanceWithSource.citation.row}` : ''}{distanceWithSource.citation.printedPage ? `, p.${distanceWithSource.citation.printedPage}` : ''}</div>
-                            {distanceWithSource.isUncertain && (
-                              <div className="text-amber-400">⚠ Aerial estimate only — road distance will be longer</div>
-                            )}
-                          </div>
-                        )}
-                        {!distanceWithSource && snhLookupResult && snhLookupResult.citation && (
-                          <div className="text-[9px] text-slate-500 mt-1 space-y-0.5">
-                            <div>SNH 2022/23, {snhLookupResult.citation.table}{snhLookupResult.citation.row ? ` row ${snhLookupResult.citation.row}` : ''}, p.{snhLookupResult.citation.printedPage} (PDF p.{snhLookupResult.citation.pdfPage})</div>
-                            {snhLookupResult.isUncertain && (
-                              <div className="text-amber-400">⚠ Has unreconciled component</div>
-                            )}
-                          </div>
-                        )}
-                     </div>
-
-                     {/* Card 2: Direct Aerial Distance */}
-                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                       <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                         <span>Direct (Aerial) Line</span>
-                         <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">Line-of-Sight</span>
-                       </div>
-                       <div className="text-2xl font-black text-cyan-400 mt-1 font-display">
-                         {formatDistanceKm(aerialDistance)} <span className="text-sm font-normal text-slate-400">km</span>
-                       </div>
-                       <div className="text-[11px] text-slate-500 mt-1">
-                         As the crow flies (geodesic)
-                       </div>
-                     </div>
-
-                    {/* Card 3: Mountain Circuity / Detour Factor */}
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                      <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                        <span>Mountain Detour Ratio</span>
-                        <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Circuity</span>
-                      </div>
-                      <div className="text-2xl font-black text-amber-400 mt-1 font-display">
-                        +{detourPercent}%
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-1">
-                        {circuityRatio}× terrain winding index
-                      </div>
-                    </div>
-
-                    {/* Card 4: Elevation Delta */}
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                      <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                        <span>Elevation Delta</span>
-                        <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">ASL</span>
-                      </div>
-                      <div className="text-2xl font-black text-purple-400 mt-1 font-display flex items-baseline space-x-1">
-                        <span>{destination!.elevationM - origin!.elevationM > 0 ? `+${destination!.elevationM - origin!.elevationM}` : destination!.elevationM - origin!.elevationM}</span>
-                        <span className="text-sm font-normal text-slate-400">m</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1">
-                        {origin!.elevationM}m ➔ {destination!.elevationM}m
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Road Network Composition & Multi-Tier Classification */}
-              {routeResult!.roadTierBreakdown && (
-                <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-                    <span className="flex items-center space-x-1.5">
-                      <Award className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Road Network Certification Composition</span>
-                    </span>
-                    <span className="text-emerald-400 font-bold text-[11px]">
-                      {routeResult!.roadTierBreakdown.certifiedPercent}% DoR Certified Highway
-                    </span>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                    <div
-                      className="bg-emerald-500 h-full transition-all"
-                      style={{ width: `${routeResult!.roadTierBreakdown.certifiedPercent}%` }}
-                      title={`DoR Certified: ${formatDistanceKm(routeResult!.roadTierBreakdown.highwayKm)} km`}
-                    />
-                    {routeResult!.roadTierBreakdown.certifiedPercent < 100 && (
-                      <div
-                        className="bg-cyan-500 h-full transition-all"
-                        style={{ width: `${100 - routeResult!.roadTierBreakdown.certifiedPercent}%` }}
-                        title={`Provincial / Palika / Link Roads: ${formatDistanceKm(routeResult!.roadTierBreakdown.localKm + routeResult!.roadTierBreakdown.provincialKm + routeResult!.roadTierBreakdown.communityKm)} km`}
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 pt-0.5">
-                    <span className="flex items-center space-x-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                      <span>Federal Highway: <strong>{formatDistanceKm(routeResult!.roadTierBreakdown.highwayKm)} km</strong></span>
-                    </span>
-                    {(routeResult!.roadTierBreakdown.provincialKm > 0 || routeResult!.roadTierBreakdown.localKm > 0) && (
-                      <span className="flex items-center space-x-1">
-                        <span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span>
-                        <span>Local / Palika Links: <strong>{formatDistanceKm(routeResult!.roadTierBreakdown.provincialKm + routeResult!.roadTierBreakdown.localKm)} km</strong></span>
-                      </span>
-                    )}
-                    {routeResult!.roadTierBreakdown.communityKm > 0 && (
-                      <span className="flex items-center space-x-1">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                        <span>Unpaved Track: <strong>{formatDistanceKm(routeResult!.roadTierBreakdown.communityKm)} km</strong></span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Step summary of highways traversed with Certification Badges */}
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Corridors Traversed & Road Tiers:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {routeResult!.steps.map((st, i) => (
-                    <div key={i} className="flex items-center space-x-2 bg-slate-900 p-2 rounded-xl border border-slate-800 text-xs">
-                      <span className="w-5 h-5 rounded-full bg-slate-800 text-emerald-400 font-bold flex items-center justify-center text-[10px]">
-                        {i + 1}
-                      </span>
-                      <span className="text-slate-200 font-medium">{st.instruction}</span>
-                      <span className="text-slate-500 font-semibold">({formatDistanceKm(st.distanceKm)} km)</span>
-                      {st.certificationBadge && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                          st.roadClassification === 'national_highway'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : st.roadClassification === 'provincial_feeder'
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                            : st.roadClassification === 'community_track'
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                        }`}>
-                          {st.certificationBadge}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Official Source of Truth & Provenance Footer */}
-              <DataAttribution
-                source={routeResult!.dataProvenance?.source || 'Department of Roads (DoR Nepal) GIS Network'}
-                updatedAt={routeResult!.dataProvenance?.updatedAt || '2026-03-01'}
-                note="Official statutory road distances certified along surveyed national highway centerlines (NH01-NH80). Direct aerial distance computed via Geodesic Great Circle."
-                href="https://dor.gov.np"
-              />
-
-              {/* SNH Evidence & Proof Sheet */}
-              {distanceWithSource && (
-                <div className="pt-2 border-t border-slate-800/50 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Verified against {getSourceLabel(distanceWithSource.source)} — {getSourceDescription(distanceWithSource.source)}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleExportProofSheet}
-                      title="Generate printable proof sheet for bank / official use"
-                      className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 transition text-xs font-semibold flex items-center space-x-1.5"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>Proof Sheet (PDF)</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {!showSearchBars && routeResult && (
+            <UnifiedRouteReport
+              route={routeResult}
+              distanceKm={displayedDistance}
+              distanceSource={displayedSource}
+              distanceEvidence={distanceWithSource?.evidenceLevel || 'route_graph'}
+              distanceCitation={distanceWithSource?.citation || null}
+              distanceNote={distanceWithSource?.note || null}
+              sourceControl={
+                <DataSourceSelector
+                  selectedSource={selectedDataSource}
+                  onChange={handleDataSourceChange}
+                  evidenceLevel={distanceWithSource?.evidenceLevel}
+                />
+              }
+              onChangeLocation={handleChangeLocation}
+              onPrint={handlePrintReport}
+              onShare={handleShareReport}
+            />
           )}
         </div>
       </main>
