@@ -95,7 +95,7 @@ import {
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
-import { getDistanceKm } from '../utils/geoUtils';
+import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -213,6 +213,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsOriginCityId, setGpsOriginCityId] = useState<string>('');
   const [gpsOriginDistanceKm, setGpsOriginDistanceKm] = useState<number | null>(null);
+  const [gpsNearestJunction, setGpsNearestJunction] = useState<{
+    name: string;
+    distanceKm: number;
+    connectedHighways: string[];
+  } | null>(null);
+  const [gpsNearestHighway, setGpsNearestHighway] = useState<{
+    code: string;
+    name: string;
+    from: string;
+    to: string;
+    distanceKm: number;
+  } | null>(null);
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
   const allCitiesRef = useRef(allCities);
   const gpsAutoDetectAttemptedRef = useRef(false);
@@ -525,8 +537,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       }
     }
 
-    navigator.geolocation.getCurrentPosition(
-       (pos) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
           const { latitude, longitude } = pos.coords;
           setDetectedLocation({ lat: latitude, lng: longitude });
           const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
@@ -534,6 +546,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setOriginId(result.city.id);
             setGpsOriginCityId(result.city.id);
             setGpsOriginDistanceKm(result.distanceKm);
+
+            const nearestJunction = findNearestHighwayJunction(latitude, longitude);
+            if (nearestJunction.city && nearestJunction.distanceKm != null) {
+              setGpsNearestJunction({
+                name: nearestJunction.city.name,
+                distanceKm: nearestJunction.distanceKm,
+                connectedHighways: nearestJunction.city.connectedHighways,
+              });
+            }
+
+            const nearestHighway = findNearestHighwayFromCoords(latitude, longitude);
+            if (nearestHighway) {
+              setGpsNearestHighway({
+                code: nearestHighway.highway!.code,
+                name: nearestHighway.highway!.name,
+                from: nearestHighway.segment!.from,
+                to: nearestHighway.segment!.to,
+                distanceKm: nearestHighway.distanceKm!,
+              });
+            }
           } else {
             setOriginId('');
             setGpsOriginCityId('');
@@ -542,12 +574,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           setOriginSelected(true);
           setIsLocationMenuOpen(false);
           setLocationPermissionDenied(false);
-       },
+        },
        (err) => {
-         setOriginSelected(false);
-         setOriginId('');
-         setGpsOriginCityId('');
-         setDetectedLocation(null);
+          setOriginSelected(false);
+          setOriginId('');
+          setGpsOriginCityId('');
+          setGpsOriginDistanceKm(null);
+          setGpsNearestJunction(null);
+          setGpsNearestHighway(null);
+          setDetectedLocation(null);
          setLocationPermissionDenied(true);
          if (err.code === err.PERMISSION_DENIED && permissionState === 'denied') {
            alert(
@@ -583,6 +618,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setOriginId(result.city.id);
             setGpsOriginCityId(result.city.id);
             setGpsOriginDistanceKm(result.distanceKm);
+
+            const nearestJunction = findNearestHighwayJunction(latitude, longitude);
+            if (nearestJunction.city && nearestJunction.distanceKm != null) {
+              setGpsNearestJunction({
+                name: nearestJunction.city.name,
+                distanceKm: nearestJunction.distanceKm,
+                connectedHighways: nearestJunction.city.connectedHighways,
+              });
+            }
+
+            const nearestHighway = findNearestHighwayFromCoords(latitude, longitude);
+            if (nearestHighway) {
+              setGpsNearestHighway({
+                code: nearestHighway.highway!.code,
+                name: nearestHighway.highway!.name,
+                from: nearestHighway.segment!.from,
+                to: nearestHighway.segment!.to,
+                distanceKm: nearestHighway.distanceKm!,
+              });
+            }
           } else {
             setOriginId('');
             setGpsOriginCityId('');
@@ -904,8 +959,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                          <>
                            <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
                            <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
-                           {gpsOriginDistanceKm != null && gpsOriginDistanceKm > 1 && (
-                             <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km from {gpsOriginCity.name}</span>
+                           {gpsOriginDistanceKm != null && (
+                             <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km away from {gpsOriginCity.name}</span>
+                           )}
+                           {gpsNearestHighway && (
+                             <span className="block text-[9px] text-slate-500">Nearest: {gpsNearestHighway.code} ({gpsNearestHighway.name}) — {gpsNearestHighway.distanceKm.toFixed(1)} km</span>
                            )}
                            <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                          </>
