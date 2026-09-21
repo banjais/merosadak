@@ -155,7 +155,8 @@ type DetailModuleTab =
   | 'eco'
   | 'sos'
   | 'checklist'
-  | 'highway_info';
+  | 'highway_info'
+  | 'ahead';
 
 export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialOriginId = '',
@@ -872,7 +873,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Ordered list of module tabs, used so mobile swipe-left/right can move
   // between them in the same order they're laid out in the button grid.
   const MODULE_TAB_ORDER: DetailModuleTab[] = [
-    'travel_plan', 'highway_info', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos',
+    'travel_plan', 'highway_info', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos', 'ahead',
   ];
   useEffect(() => {
     if (travelerMode === 'passenger') {
@@ -1461,49 +1462,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
           {/* PRIMARY ACTION ROW: the one thing most people want right after a route is found,
               plus who-is-traveling so the tools below can be tailored instead of dumped flat. */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setTravelPlanView('steps');
-                setActiveModuleTab('travel_plan');
-              }}
-              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/20 transition"
-              id="btn-start-trip"
-            >
-              <Navigation className="w-4 h-4" />
-              <span>Go</span>
-            </button>
-
-            <div className="inline-flex items-center self-start sm:self-auto rounded-xl border border-slate-800 bg-slate-950 p-1 text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => setTravelerMode('driver')}
-                aria-pressed={travelerMode === 'driver'}
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
-                  travelerMode === 'driver'
-                    ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Driving</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTravelerMode('passenger')}
-                aria-pressed={travelerMode === 'passenger'}
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
-                  travelerMode === 'passenger'
-                    ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Passenger</span>
-              </button>
-            </div>
-          </div>
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+             <button
+               type="button"
+               onClick={() => {
+                 setTravelPlanView('steps');
+                 setActiveModuleTab('travel_plan');
+               }}
+               className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/20 transition"
+               id="btn-start-trip"
+             >
+               <Navigation className="w-4 h-4" />
+               <span>Go</span>
+             </button>
+           </div>
 
           {/* REDUCED REPORT SUMMARY (When user clicks Reduce Report) */}
           {!isReportExpanded && (
@@ -1600,15 +1572,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           {/* 6. ALONG YOUR ROUTE: information first, scoped to THIS route (not the whole
               country), split by who is asking. Detail views stay behind a few buttons. */}
           <div className="pt-2 border-t border-slate-800 space-y-3">
-            <ErrorBoundary fallback={<div className="text-xs text-slate-500 px-1">Route information is temporarily unavailable.</div>}>
-              <RouteAheadFeed
-                routePlan={routePlan}
-                mode={travelerMode}
-                extraIncidents={LIVE_ROAD_INCIDENTS}
-                onViewOnMap={onViewOnMap}
-              />
-            </ErrorBoundary>
-
             <div className="flex flex-wrap gap-2" id="route-detail-actions">
               {([
                 { tab: 'travel_plan', label: 'Timeline', Icon: Milestone, show: true, tone: 'emerald' },
@@ -1617,6 +1580,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 { tab: 'checklist', label: 'Checklist', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
                 { tab: 'ai_advisory', label: 'AI', Icon: Sparkles, show: true, tone: 'cyan' },
                 { tab: 'sos', label: 'SOS', Icon: PhoneCall, show: true, tone: 'red' },
+                { tab: 'ahead', label: 'Ahead', Icon: Navigation, show: true, tone: 'emerald' },
               ] as Array<{ tab: DetailModuleTab; label: string; Icon: React.ComponentType<{ className?: string }>; show: boolean; tone: string }>)
                 .filter((a) => a.show)
                 .map(({ tab, label, Icon, tone }) => (
@@ -2049,6 +2013,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   />
                 </div>
               )}
+
+              {/* MODULE CONTENT: 12. Ahead on Route */}
+              {activeModuleTab === 'ahead' && (
+                <div className="space-y-3">
+                  <ErrorBoundary fallback={<div className="text-xs text-slate-500 px-1">Route information is temporarily unavailable.</div>}>
+                    <RouteAheadFeed
+                      routePlan={routePlan}
+                      mode={travelerMode}
+                      extraIncidents={LIVE_ROAD_INCIDENTS}
+                      onViewOnMap={onViewOnMap}
+                    />
+                  </ErrorBoundary>
+                </div>
+              )}
               </div>
             )}
           </>
@@ -2056,7 +2034,38 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       </>
     )}
   </div>
-)}
+   )}
+
+  {hasCalculated && (
+    <div className="inline-flex items-center self-start sm:self-auto rounded-xl border border-slate-800 bg-slate-950 p-1 text-[11px] font-bold">
+      <button
+        type="button"
+        onClick={() => setTravelerMode('driver')}
+        aria-pressed={travelerMode === 'driver'}
+        className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
+          travelerMode === 'driver'
+            ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
+            : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <User className="w-3.5 h-3.5" />
+        <span>Driving</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setTravelerMode('passenger')}
+        aria-pressed={travelerMode === 'passenger'}
+        className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
+          travelerMode === 'passenger'
+            ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
+            : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <Users className="w-3.5 h-3.5" />
+        <span>Passenger</span>
+      </button>
+    </div>
+  )}
 
         {hasCalculated && (
           <div className="mt-3 border-t border-slate-800/60 pt-3">
