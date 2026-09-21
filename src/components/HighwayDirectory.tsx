@@ -30,6 +30,8 @@ interface HighwayDirectoryProps {
   onPlanTripForHighway?: (startPoint: string, endPoint: string) => void;
   liveIncidents?: RoadIncident[];
   userReports?: UserRoadReport[];
+  routeHighwayCodes?: string[];
+  filterToRouteOnly?: boolean;
 }
 
 export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
@@ -37,6 +39,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   onPlanTripForHighway,
   liveIncidents = LIVE_ROAD_INCIDENTS,
   userReports = INITIAL_USER_REPORTS,
+  routeHighwayCodes = [],
+  filterToRouteOnlyProp = false,
 }) => {
   const [highways, setHighways] = useState<Highway[]>(NEPAL_HIGHWAYS);
   const [incidents, setIncidents] = useState<RoadIncident[]>(liveIncidents);
@@ -44,7 +48,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | HighwayRealtimeStatusType>('all');
   const [terrainFilter, setTerrainFilter] = useState<'all' | 'Hilly' | 'High Mountain' | 'Plains'>('all');
-  const [expandedHighwayId, setExpandedHighwayId] = useState<string | null>('nNH17'); // default Prithvi Highway
+  const [filterToRouteOnly, setFilterToRouteOnly] = useState<boolean>(false);
+  const [expandedHighwayId, setExpandedHighwayId] = useState<string | null>(null);
   const [activeSegmentTooltip, setActiveSegmentTooltip] = useState<{ highwayId: string; segmentIndex: number } | null>(null);
 
   useEffect(() => {
@@ -78,6 +83,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
       setReports(userReports);
     }
   }, [userReports]);
+
+  useEffect(() => {
+    setFilterToRouteOnly(filterToRouteOnlyProp);
+  }, [filterToRouteOnlyProp]);
 
   // Compute real-time status analysis for each highway using segments data & incidents
   const highwayAnalyses = useMemo(() => {
@@ -134,7 +143,14 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
     const matchesTerrain = terrainFilter === 'all' || hw.terrainType === terrainFilter;
 
-    return matchesSearch && matchesStatus && matchesTerrain;
+    const matchesRoute =
+      !filterToRouteOnly ||
+      routeHighwayCodes.length === 0 ||
+      routeHighwayCodes.some(
+        (code) => code && code.split('/').some((c) => c.trim().toLowerCase() === (hw.code || hw.id).toLowerCase())
+      );
+
+    return matchesSearch && matchesStatus && matchesTerrain && matchesRoute;
   });
 
   return (
@@ -201,12 +217,28 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
               Clear
             </button>
           )}
-        </div>
+                 </div>
+
+        {/* Route Filter Toggle */}
+        {routeHighwayCodes.length > 0 && (
+          <div className="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0 text-xs">
+            <input
+              id="checkbox-route-filter"
+              type="checkbox"
+              checked={filterToRouteOnly}
+              onChange={(e) => setFilterToRouteOnly(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500/30"
+            />
+            <label htmlFor="checkbox-route-filter" className="text-slate-300">
+              Show only route highways ({routeHighwayCodes.filter(Boolean).length})
+            </label>
+          </div>
+        )}
 
         {/* Real-time Status Filter Tabs */}
         <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 shrink-0 text-xs overflow-x-auto">
           {[
-            { id: 'all', label: `All (${highways.length})`, icon: '🌐' },
+            { id: 'all', label: `All (${filteredHighways.length})`, icon: '🌐' },
             { id: 'open', label: `Open (${statusCounts.open})`, icon: '🟢' },
             { id: 'roadwork', label: `Roadwork (${statusCounts.roadwork})`, icon: '🚧' },
             { id: 'obstruction', label: `Obstruction (${statusCounts.obstruction})`, icon: '⛔' },

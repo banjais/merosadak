@@ -754,6 +754,18 @@ function AppContent() {
                 setActiveFeature(null);
               }
             }}
+            onOpenHighwayDirectory={() => setActiveFeature('highways')}
+            onViewHighwayOnMap={(highway) => {
+              if (highway.center) {
+                setFocusedTarget({
+                  lat: highway.center[0],
+                  lng: highway.center[1],
+                  title: `${highway.code} - ${highway.name}`,
+                  zoom: 9,
+                });
+              }
+              setActiveFeature('highways');
+            }}
           />
         </div>
 
@@ -963,11 +975,13 @@ function AppContent() {
                         setActiveFeature(null);
                       }
                     }}
-                    onPlanTripForHighway={(start, end) => {
+                     onPlanTripForHighway={(start, end) => {
                       setPlannerOrigin('ktm');
                       setPlannerDest('pkr');
                       setActiveFeature('route');
                     }}
+                    routeHighwayCodes={activeRoute ? activeRoute.steps.map((s) => s.highwayCode).filter(Boolean) : []}
+                    filterToRouteOnly={!!activeRoute}
                   />
                 )}
 

@@ -9,7 +9,10 @@ import {
   HighwayPOI,
   TrafficCorridor,
   RouteSimulationControls,
+  Highway,
+  RoadIncident,
 } from '../types';
+import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute } from '../utils/routeOptimizer';
@@ -27,6 +30,7 @@ import { HighwayPOIsPanel } from './HighwayPOIsPanel';
 import { TrafficCorridorPanel } from './TrafficCorridorPanel';
 import { RouteComparisonView } from './RouteComparisonView';
 import { RouteJunctionTimeline } from './RouteJunctionTimeline';
+import { RouteHighwayInfoPanel } from './RouteHighwayInfoPanel';
 import {
   Compass,
   ArrowRight,
@@ -103,6 +107,8 @@ interface RoutePlannerProps {
   simulationControls: RouteSimulationControls;
   onToggleMapFull?: () => void;
   isMapFull?: boolean;
+  onOpenHighwayDirectory?: () => void;
+  onViewHighwayOnMap?: (highway: Highway) => void;
 }
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
@@ -155,7 +161,8 @@ type DetailModuleTab =
   | 'ai_advisory'
   | 'eco'
   | 'sos'
-  | 'checklist';
+  | 'checklist'
+  | 'highway_info';
 
 export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialOriginId = '',
@@ -168,6 +175,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   simulationControls,
   onToggleMapFull,
   isMapFull = false,
+  onOpenHighwayDirectory,
+  onViewHighwayOnMap,
 }) => {
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
@@ -796,7 +805,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // between them in the same order they're laid out in the button grid.
   const MODULE_TAB_ORDER: DetailModuleTab[] = [
     'timeline', 'elevation', 'travel_plan', 'weather', 'pois',
-    'traffic', 'safety', 'fuel_tolls', 'ai_advisory', 'sos', 'eco', 'checklist',
+    'traffic',      'safety', 'fuel_tolls', 'ai_advisory', 'sos', 'eco', 'checklist', 'highway_info',
   ];
   const swipeTouchStartX = useRef<number | null>(null);
   const handleModuleSwipeStart = (e: React.TouchEvent) => {
@@ -2070,6 +2079,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <Wrench className="w-4 h-4 text-purple-400 shrink-0" />
                     <span className="truncate">Vehicle Checklist</span>
                   </button>
+
+                  {/* Option: Highway Info */}
+                  <button
+                    onClick={() => handleToggleModuleTab('highway_info')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
+                      activeModuleTab === 'highway_info'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-md shadow-emerald-500/10'
+                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="truncate">Highway Info</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -2099,6 +2121,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {activeModuleTab === 'sos' && <span>🚨 Emergency Highway SOS Dispatch Hotline</span>}
                   {activeModuleTab === 'eco' && <span>🌱 Eco Rating &amp; Carbon Footprint Analysis</span>}
                   {activeModuleTab === 'checklist' && <span>🔧 Pre-Trip Highway Vehicle Checklist</span>}
+                  {activeModuleTab === 'highway_info' && <span>🛣️ Active Route Highway Details & Alerts</span>}
                   <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
                 </div>
                 <button
@@ -2461,6 +2484,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {activeModuleTab === 'checklist' && (
                 <div className="space-y-3">
                   <PreTripChecklist routePlan={routePlan} vehicle={vehicle} />
+                </div>
+              )}
+
+              {/* MODULE CONTENT: 11. Highway Info */}
+              {activeModuleTab === 'highway_info' && (
+                <div className="space-y-3">
+                  <RouteHighwayInfoPanel
+                    routeHighwayCodes={routePlan.steps.map((s) => s.highwayCode).filter(Boolean)}
+                    incidents={[...routePlan.incidentsOnRoute, ...LIVE_ROAD_INCIDENTS]}
+                    onViewHighwayOnMap={onViewHighwayOnMap}
+                    onOpenHighwayDirectory={onOpenHighwayDirectory}
+                  />
                 </div>
               )}
               </div>
