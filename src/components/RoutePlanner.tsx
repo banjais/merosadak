@@ -95,6 +95,7 @@ import {
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { filterCities } from '../utils/citySearch';
+import { getDistanceKm } from '../utils/geoUtils';
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -115,6 +116,7 @@ const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratna
 const SUB_METRO_CITY_NAME_FRAGMENTS = ['hetauda', 'butwal', 'dhangadhi', 'nepalgunj', 'birendranagar', 'dharan', 'janakpur', 'gauraha', 'birgunj'];
 
 const getCityType = (city: CityNode): string => {
+  if (city.cityType) return city.cityType;
   const lower = city.name.toLowerCase();
   if (METRO_CITY_NAME_FRAGMENTS.some((m) => lower.includes(m))) return 'Metropolitan City';
   if (SUB_METRO_CITY_NAME_FRAGMENTS.some((m) => lower.includes(m))) return 'Sub-metropolitan City';
@@ -137,11 +139,11 @@ const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[])
     };
   }
   let closestCity = cities[0];
-  let minDist = Infinity;
+  let minDistKm = Infinity;
   cities.forEach((city) => {
-    const d = Math.hypot(city.lat - lat, city.lng - lng);
-    if (d < minDist) {
-      minDist = d;
+    const d = getDistanceKm(city.lat, city.lng, lat, lng);
+    if (d < minDistKm) {
+      minDistKm = d;
       closestCity = city;
     }
   });
@@ -564,7 +566,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
          }
          setIsLocationMenuOpen(false);
        },
-       { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
+       { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
     );
   }, [locationPermissionDenied]);
 
@@ -592,7 +594,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         () => {
           // Permission denied or error — user can still pick manually
         },
-        { timeout: 8000, maximumAge: 300000, enableHighAccuracy: false }
+        { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
       );
     };
 
