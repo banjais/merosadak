@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
+import QRCode from 'qrcode';
 
 export interface ProofSheetData {
   from: string;
@@ -11,7 +12,18 @@ export interface ProofSheetData {
   dataHash: string;
 }
 
-export function generateProofSheet(data: ProofSheetData): void {
+function buildVerificationUrl(data: ProofSheetData): string {
+  const params = new URLSearchParams({
+    from: data.from,
+    to: data.to,
+    source: data.lookupResult.source,
+    distance: data.lookupResult.distanceKm.toFixed(2),
+    hash: data.dataHash,
+  });
+  return `https://dor.gov.np/verification?${params.toString()}`;
+}
+
+export async function generateProofSheet(data: ProofSheetData): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -261,6 +273,43 @@ export function generateProofSheet(data: ProofSheetData): void {
     y += 3;
     doc.text('For DoR certification, use distances from SNH 2022/23 published tables only.', margin, y);
   }
+
+  doc.setDrawColor(71, 85, 105);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 6;
+
+  const verificationUrl = buildVerificationUrl(data);
+  try {
+    const qrDataUrl = await QRCode.toDataURL(verificationUrl, {
+      width: 80,
+      margin: 1,
+      color: { dark: '#0f172a', light: '#ffffff' },
+    });
+    doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - 32, y, 32, 32);
+    doc.setFontSize(6);
+    doc.setTextColor(153, 161, 179);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Scan to verify at dor.gov.np', pageWidth - margin - 32, y + 36);
+    y += 3;
+  } catch (err) {
+    doc.setFontSize(6);
+    doc.setTextColor(245, 152, 61);
+    doc.setFont('helvetica', 'italic');
+    doc.text('QR code generation failed', margin, y);
+    y += 3;
+  }
+
+  y += 38;
+
+  doc.setFontSize(6);
+  doc.setTextColor(153, 161, 179);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Data source: ' + getSourceLabel(data.lookupResult.source), margin, y);
+  doc.setFontSize(5.5);
+  doc.setTextColor(153, 161, 179);
+  const urlLines = doc.splitTextToSize('Verify: ' + verificationUrl, pageWidth - margin * 2);
+  doc.text(urlLines, margin, y + 3);
 
   doc.save(`merosadak-proof-${data.from.replace(/\s+/g, '-')}-${data.to.replace(/\s+/g, '-')}.pdf`);
 }

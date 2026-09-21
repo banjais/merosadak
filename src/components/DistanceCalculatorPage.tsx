@@ -263,7 +263,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       }
       dataHash = Math.abs(hash).toString(36);
     }
-    generateProofSheet({
+    await generateProofSheet({
       from: origin.name,
       to: destination.name,
       fromDistrict: origin.district,
