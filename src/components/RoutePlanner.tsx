@@ -123,20 +123,9 @@ const getCityType = (city: CityNode): string => {
   return city.isMajorHub ? 'Municipality' : 'Rural Municipality';
 };
 
-const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[]): CityNode => {
+const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[]): { city: CityNode; distanceKm: number } | null => {
   if (!cities || cities.length === 0) {
-    return {
-      id: '',
-      name: 'Unknown',
-      nepaliName: '',
-      district: '',
-      province: '',
-      lat,
-      lng,
-      elevationM: 0,
-      isMajorHub: false,
-      connectedHighways: [],
-    };
+    return null;
   }
   let closestCity = cities[0];
   let minDistKm = Infinity;
@@ -147,7 +136,7 @@ const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[])
       closestCity = city;
     }
   });
-  return closestCity;
+  return { city: closestCity, distanceKm: minDistKm };
 };
 
 type DetailModuleTab =
@@ -223,6 +212,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsOriginCityId, setGpsOriginCityId] = useState<string>('');
+  const [gpsOriginDistanceKm, setGpsOriginDistanceKm] = useState<number | null>(null);
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
   const allCitiesRef = useRef(allCities);
   const gpsAutoDetectAttemptedRef = useRef(false);
@@ -247,10 +237,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       prevOriginId.current = originId;
     }
   }, [originId, locationMode]);
-
-  useEffect(() => {
-    loadExpandedCities().then(setAllCities);
-  }, []);
 
   // Search queries & Autocompletions
   const [singleSearchQuery, setSingleSearchQuery] = useState<string>('');
@@ -541,14 +527,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
     navigator.geolocation.getCurrentPosition(
        (pos) => {
-         const { latitude, longitude } = pos.coords;
-         setDetectedLocation({ lat: latitude, lng: longitude });
-         const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-         setOriginId(closestCity.id);
-         setGpsOriginCityId(closestCity.id);
-         setOriginSelected(true);
-         setIsLocationMenuOpen(false);
-         setLocationPermissionDenied(false);
+          const { latitude, longitude } = pos.coords;
+          setDetectedLocation({ lat: latitude, lng: longitude });
+          const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
+          if (result) {
+            setOriginId(result.city.id);
+            setGpsOriginCityId(result.city.id);
+            setGpsOriginDistanceKm(result.distanceKm);
+          } else {
+            setOriginId('');
+            setGpsOriginCityId('');
+            setGpsOriginDistanceKm(null);
+          }
+          setOriginSelected(true);
+          setIsLocationMenuOpen(false);
+          setLocationPermissionDenied(false);
        },
        (err) => {
          setOriginSelected(false);
@@ -585,9 +578,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         (pos) => {
           const { latitude, longitude } = pos.coords;
           setDetectedLocation({ lat: latitude, lng: longitude });
-          const closestCity = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-          setOriginId(closestCity.id);
-          setGpsOriginCityId(closestCity.id);
+          const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
+          if (result) {
+            setOriginId(result.city.id);
+            setGpsOriginCityId(result.city.id);
+            setGpsOriginDistanceKm(result.distanceKm);
+          } else {
+            setOriginId('');
+            setGpsOriginCityId('');
+            setGpsOriginDistanceKm(null);
+          }
           setOriginSelected(true);
           setIsLocationMenuOpen(false);
         },
@@ -598,31 +598,41 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       );
     };
 
-    // Check existing permission state before prompting
-    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === 'granted') {
-            tryAutoDetect();
-          } else if (permissionStatus.state === 'prompt') {
-            tryAutoDetect();
-          }
-          // 'denied' — skip silent detection
+    // Wait for expanded cities (palikas, POIs, etc.) to load before GPS detection
+    // so we match against the full dataset for better accuracy.
+    loadExpandedCities()
+      .then((cities) => {
+        allCitiesRef.current = cities;
+        setAllCities(cities);
+      })
+      .catch(() => {
+        // Fallback to cached cities
+      })
+      .finally(() => {
+        // Check existing permission state before prompting
+        if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
+          navigator.permissions
+            .query({ name: 'geolocation' })
+            .then((permissionStatus) => {
+              if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
+                tryAutoDetect();
+              }
+              // 'denied' — skip silent detection
 
-          permissionStatus.onchange = () => {
-            if (permissionStatus.state === 'granted') {
+              permissionStatus.onchange = () => {
+                if (permissionStatus.state === 'granted') {
+                  tryAutoDetect();
+                }
+              };
+            })
+            .catch(() => {
               tryAutoDetect();
-            }
-          };
-        })
-        .catch(() => {
+            });
+        } else {
+          // No Permissions API — direct call triggers browser prompt
           tryAutoDetect();
-        });
-    } else {
-      // No Permissions API — direct call triggers browser prompt
-      tryAutoDetect();
-    }
+        }
+      });
   }, []);
 
   // Voice Speech Recognition Handler
@@ -888,26 +898,28 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <span>My Location</span>
                     <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <div className="text-[10px] font-normal text-slate-400 truncate space-y-0.5">
-                    {detectedLocation ? (
-                      gpsOriginCity ? (
-                        <>
-                          <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
-                          <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
-                          <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="block">Detected Location</span>
-                          <span className="block text-[9px] text-slate-500">Coordinates below</span>
-                          <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                        </>
-                      )
-                    ) : isCustomLocationMode ? (
-                      <span className="text-slate-500">Custom origin mode</span>
-                    ) : (
-                      <span className="text-slate-500">Select a location</span>
-                    )}
+                   <div className="text-[10px] font-normal text-slate-400 truncate space-y-0.5">
+                     {detectedLocation ? (
+                       gpsOriginCity ? (
+                         <>
+                           <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
+                           <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
+                           {gpsOriginDistanceKm != null && gpsOriginDistanceKm > 1 && (
+                             <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km from {gpsOriginCity.name}</span>
+                           )}
+                           <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                         </>
+                       ) : (
+                         <>
+                           <span className="block">Near {detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
+                           <span className="block text-[9px] text-slate-500">Coordinates: {detectedLocation.lat.toFixed(6)}, {detectedLocation.lng.toFixed(6)}</span>
+                         </>
+                       )
+                     ) : isCustomLocationMode ? (
+                       <span className="text-slate-500">Custom origin mode</span>
+                     ) : (
+                       <span className="text-slate-500">Select a location</span>
+                     )}
                   </div>
                 </div>
             </div>
