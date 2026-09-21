@@ -1,24 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus,
-  X,
   ShieldAlert,
   Sparkles,
-  AlertTriangle,
-  CloudFog,
   Route,
   Menu,
-  Activity,
 } from 'lucide-react';
-import { ActiveFeatureType } from '../App';
 import { useHaptic } from '../hooks/useHaptic';
 
 interface SpeedDialFabProps {
-  activeFeature: ActiveFeatureType;
-  onSelectFeature: (feature: ActiveFeatureType) => void;
+  activeFeature: 'highways' | null;
+  onSelectFeature: (feature: 'highways' | null) => void;
   onOpenSos: () => void;
   onOpenDrawer: () => void;
-  incidentsCount?: number;
 }
 
 export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
@@ -26,7 +20,6 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
   onSelectFeature,
   onOpenSos,
   onOpenDrawer,
-  incidentsCount = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const fabRef = useRef<HTMLDivElement>(null);
@@ -110,76 +103,6 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
               title="Emergency SOS"
             >
               <ShieldAlert className="w-5 h-5 animate-pulse" />
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleAction(() =>
-                  onSelectFeature(activeFeature === 'steps' ? null : 'steps')
-                )
-              }
-              className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ${
-                activeFeature === 'steps'
-                  ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow-amber-500/40'
-                  : 'bg-slate-900/95 text-amber-300 border-amber-500/40 hover:bg-slate-800'
-              }`}
-              title="Travel Flow"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                handleAction(() =>
-                  onSelectFeature(activeFeature === 'incidents' ? null : 'incidents')
-                )
-              }
-              className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border relative ${
-                activeFeature === 'incidents'
-                  ? 'bg-rose-500 text-white border-rose-300 font-black shadow-rose-500/40'
-                  : 'bg-slate-900/95 text-rose-400 border-slate-700 hover:bg-slate-800'
-              }`}
-              title="Road Alerts"
-            >
-              <AlertTriangle className="w-5 h-5" />
-              {incidentsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white font-black flex items-center justify-center ring-2 ring-slate-950 animate-pulse">
-                  {incidentsCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleAction(() =>
-                  onSelectFeature(activeFeature === 'weather' ? null : 'weather')
-                )
-              }
-              className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ${
-                activeFeature === 'weather'
-                  ? 'bg-sky-500 text-slate-950 border-sky-300 font-black shadow-sky-500/40'
-                  : 'bg-slate-900/95 text-sky-400 border-slate-700 hover:bg-slate-800'
-              }`}
-              title="Weather"
-            >
-              <CloudFog className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleAction(() =>
-                  onSelectFeature(activeFeature === 'traffic' ? null : 'traffic')
-                )
-              }
-              className={`w-11 h-11 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border ${
-                activeFeature === 'traffic'
-                  ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow-amber-500/40'
-                  : 'bg-slate-900/95 text-amber-400 border-slate-700 hover:bg-slate-800'
-              }`}
-              title="Traffic & Speed"
-            >
-              <Activity className="w-5 h-5" />
             </button>
             <button
               type="button"

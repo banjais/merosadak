@@ -7,42 +7,29 @@ import {
   Activity,
   MapPin,
   Route,
-  Languages,
   Calculator,
   Coins,
-  ShieldAlert,
-  ClipboardCheck,
-  PlusCircle,
-  Share2,
   HardDriveDownload,
-  Layers,
   ChevronRight,
-  Sparkles,
-  LogIn,
-  LogOut,
-  Zap,
-  Map,
-   MinusCircle,
-   FileText,
- } from 'lucide-react';
-import { SubViewTab } from '../App';
+  FileText,
+} from 'lucide-react';
+import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { RoutePlanResult } from '../types';
-import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 
 interface AppDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  activeTab?: SubViewTab | 'steps';
-  onNavigateTab: (tab: SubViewTab) => void;
+   activeTab?: ActiveFeatureType;
+   onNavigateTab: (tab: ActiveFeatureType) => void;
   onOpenTravelSteps?: () => void;
   onOpenDistanceMatrix: () => void;
-  onOpenDataSources: () => void;
+  onOpenDataSources?: () => void;
   onOpenTollModal: () => void;
   onOpenSosModal: () => void;
   onOpenPreTripModal: () => void;
   onOpenReportModal: () => void;
-  onOpenShareModal: () => void;
+  onOpenShareModal?: () => void;
   onOpenOfflineManager: () => void;
   onOpenLogin: () => void;
   incidentsCount?: number;
@@ -77,30 +64,76 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
 }) => {
   const { user, loading, logout } = useAuth();
 
-  // Extract unique highways from active route
-  const routeHighways = useMemo(() => {
-    if (!activeRoute?.steps || activeRoute.steps.length === 0) return [];
-    const highwayCodes = new Set<string>();
-    activeRoute.steps.forEach((step) => {
-      if (step.highwayCode) {
-        step.highwayCode.split('/').forEach((code) => {
-          const trimmed = code.trim();
-          if (trimmed) highwayCodes.add(trimmed);
-        });
-      }
-    });
-    return Array.from(highwayCodes)
-      .map((code) => NEPAL_HIGHWAYS.find((h) => h.code === code || h.code === `NNH${code.replace('NH', '')}`))
-      .filter(Boolean) as Array<{ code: string; name: string; route: string; districts: string[]; totalLengthKm: number; terrainType?: string }>;
-  }, [activeRoute]);
-
-  // Extract highways from distance calculator selection
-  const distanceCalcHighways = useMemo(() => {
-    if (!distanceCalcOrigin || !distanceCalcDest) return [];
-    return [];
-  }, [distanceCalcOrigin, distanceCalcDest]);
-
   if (!isOpen) return null;
+
+  const drawerMenuItems = [
+    {
+      id: 'route',
+      label: 'Route Planner',
+      subtitle: 'Plan your next trip',
+      icon: Compass,
+      color: 'text-emerald-400',
+      activeColor: 'bg-emerald-500 text-slate-950',
+      activeBg: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40',
+      activeIcon: 'bg-emerald-500 text-slate-950',
+      onClick: () => { onNavigateTab('route'); onClose(); },
+    },
+    {
+      id: 'highways',
+      label: hasActiveRoute ? 'Highway Info' : 'Highway Info',
+      subtitle: hasActiveRoute ? 'On your route' : 'Highway directory',
+      icon: Route,
+      color: 'text-violet-400',
+      activeColor: 'bg-violet-500 text-white',
+      activeBg: 'bg-violet-500/15 text-violet-300 border border-violet-500/40',
+      activeIcon: 'bg-violet-500 text-white',
+      onClick: () => { onNavigateTab('highways'); onClose(); },
+    },
+    {
+      id: 'distance',
+      label: 'Distance Calculator',
+      subtitle: 'Exact inter-city highway km',
+      icon: Calculator,
+      color: 'text-cyan-400',
+      activeColor: 'bg-cyan-500 text-slate-950',
+      activeBg: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
+      activeIcon: 'bg-cyan-500 text-slate-950',
+      onClick: () => { onOpenDistanceMatrix(); onClose(); },
+    },
+    {
+      id: 'tolls',
+      label: 'Nagdhunga Tunnel Tolls',
+      subtitle: 'Vehicle tariffs & bypass rates',
+      icon: Coins,
+      color: 'text-amber-400',
+      activeColor: 'bg-amber-500 text-slate-950',
+      activeBg: 'bg-amber-500/15 text-amber-300 border border-amber-500/40',
+      activeIcon: 'bg-amber-500 text-slate-950',
+      onClick: () => { onOpenTollModal(); onClose(); },
+    },
+    {
+      id: 'reports',
+      label: 'Reports & Hazards',
+      subtitle: hasActiveRoute ? 'Route-specific alerts' : 'Road hazard reporting',
+      icon: AlertTriangle,
+      color: 'text-rose-400',
+      activeColor: 'bg-rose-500 text-white',
+      activeBg: 'bg-rose-500/15 text-rose-300 border border-rose-500/40',
+      activeIcon: 'bg-rose-500 text-white',
+      onClick: () => { onOpenReportModal(); onClose(); },
+    },
+    {
+      id: 'offline',
+      label: 'Offline GIS Bundle',
+      subtitle: 'Download for offline use',
+      icon: HardDriveDownload,
+      color: 'text-cyan-400',
+      activeColor: 'bg-cyan-500 text-slate-950',
+      activeBg: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
+      activeIcon: 'bg-cyan-500 text-slate-950',
+      onClick: () => { onOpenOfflineManager(); onClose(); },
+    },
+  ];
 
   return (
     <>
@@ -131,308 +164,41 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-          <div>
-            <button
-              onClick={() => {
-                onNavigateTab('route');
-                onClose();
-              }}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                activeTab === 'route'
-                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-              }`}
-            >
-              <div className="flex items-center space-x-2.5">
-                <div className={`p-1 rounded-lg ${activeTab === 'route' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-emerald-400 group-hover:bg-slate-800'}`}>
-                  <Compass className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="block font-bold">Route Planner</span>
-                  <span className="text-[9px] text-slate-400 font-normal">Plan your next trip</span>
-                </div>
-              </div>
-              <ChevronRight className={`w-3 h-3 ${activeTab === 'route' ? 'text-emerald-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-            </button>
-          </div>
-
-          {hasActiveRoute && (
-            <div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
-                Along your route
-              </div>
-              {routeLabel && (
-                <p className="text-[10px] text-emerald-400/90 px-2 mb-1.5 font-medium truncate" title={routeLabel || undefined}>
-                  {routeLabel}
-                </p>
-              )}
-
-              <div className="space-y-0.75">
-                <button
-                  onClick={() => { onNavigateTab('pois'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                    activeTab === 'pois'
-                      ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div className={`p-1 rounded-lg ${activeTab === 'pois' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-cyan-400 group-hover:bg-slate-800'}`}>
-                      <MapPin className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="block font-bold">POIs & Landmarks</span>
-                      <span className="text-[9px] text-slate-400 font-normal">Near this corridor only</span>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-3 h-3 ${activeTab === 'pois' ? 'text-cyan-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                </button>
-
-                <button
-                  onClick={() => { onNavigateTab('ev_charging'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                    activeTab === 'ev_charging'
-                      ? 'bg-lime-500/15 text-lime-300 border border-lime-500/40 shadow-sm'
-                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div className={`p-1 rounded-lg ${activeTab === 'ev_charging' ? 'bg-lime-500 text-slate-950' : 'bg-slate-900 text-lime-400 group-hover:bg-slate-800'}`}>
-                      <Zap className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="block font-bold">EV Charging</span>
-                      <span className="text-[9px] text-slate-400 font-normal">Along your route</span>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-3 h-3 ${activeTab === 'ev_charging' ? 'text-lime-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                </button>
-
-                <button
-                  onClick={() => { onNavigateTab('incidents'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                    activeTab === 'incidents'
-                      ? 'bg-rose-500/15 text-rose-300 border border-rose-500/40 shadow-sm'
-                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div className={`p-1 rounded-lg ${activeTab === 'incidents' ? 'bg-rose-500 text-white' : 'bg-slate-900 text-rose-400 group-hover:bg-slate-800'}`}>
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="block font-bold">Road alerts</span>
-                      <span className="text-[9px] text-slate-400 font-normal">
-                        {incidentsCount > 0 ? `${incidentsCount} live` : 'Corridor hazards'}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-3 h-3 ${activeTab === 'incidents' ? 'text-rose-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                </button>
-
-                <button
-                  onClick={() => { onNavigateTab('weather'); onClose(); }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                    activeTab === 'weather'
-                      ? 'bg-sky-500/15 text-sky-300 border border-sky-500/40 shadow-sm'
-                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <div className={`p-1 rounded-lg ${activeTab === 'weather' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-sky-400 group-hover:bg-slate-800'}`}>
-                      <CloudFog className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="block font-bold">Weather & passes</span>
-                      <span className="text-[9px] text-slate-400 font-normal">On this corridor</span>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-3 h-3 ${activeTab === 'weather' ? 'text-sky-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                </button>
-
-                {/* Highways Section - Always visible, context-aware */}
-                <div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-2">
-                    {hasActiveRoute ? 'Highways on your route' : 'Highways'}
-                  </div>
-                  {hasActiveRoute && routeLabel && (
-                    <p className="text-[10px] text-emerald-400/90 px-2 mb-1.5 font-medium truncate" title={routeLabel || undefined}>
-                      {routeLabel}
-                    </p>
-                  )}
-
-                  <div className="space-y-0.75">
-                    <button
-                      onClick={() => { onNavigateTab('highways'); onClose(); }}
-                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
-                        activeTab === 'highways'
-                          ? 'bg-violet-500/15 text-violet-300 border border-violet-500/40 shadow-sm'
-                          : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2.5">
-                        <div className={`p-1 rounded-lg ${activeTab === 'highways' ? 'bg-violet-500 text-white' : 'bg-slate-900 text-violet-400 group-hover:bg-slate-800'}`}>
-                          <Route className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <span className="block font-bold">
-                            {hasActiveRoute ? 'Highways on route' : 'Highway Directory'}
-                          </span>
-                          <span className="text-[9px] text-slate-400 font-normal">
-                            {hasActiveRoute && routeHighways.length > 0
-                              ? `${routeHighways.length} NH${routeHighways.length > 1 ? 's' : ''} used`
-                              : hasActiveRoute
-                              ? 'Calculating...'
-                              : 'All 80 national highways'}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight className={`w-3 h-3 ${activeTab === 'highways' ? 'text-violet-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                    </button>
-
-                    {/* Inline Highway Cards for Active Route */}
-                    {hasActiveRoute && routeHighways.length > 0 && activeTab === 'highways' && (
-                      <div className="space-y-2 mt-1 pl-1 border-l border-slate-800/50">
-                        {routeHighways.slice(0, 5).map((hw) => (
-                          <div
-                            key={hw.code}
-                            className="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 hover:border-violet-500/40 transition"
-                          >
-                            <div className="flex items-start space-x-2.5">
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-900/40 to-violet-950/60 border border-violet-800 flex flex-col items-center justify-center shrink-0">
-                                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">NEPAL</span>
-                                <span className="text-sm font-black text-violet-300 font-display">{hw.code}</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold text-white truncate">{hw.name}</h4>
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-slate-400 mt-0.5">
-                                  <span className="font-semibold text-slate-300">{hw.totalLengthKm} km</span>
-                                  <span className="text-slate-600">•</span>
-                                  <span>{hw.terrainType || 'Hilly'}</span>
-                                  {hw.districts && hw.districts.length > 0 && (
-                                    <span className="truncate max-w-[60%]">{hw.districts.slice(0, 2).join(', ')}{hw.districts.length > 2 ? ` +${hw.districts.length - 2}` : ''}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {routeHighways.length > 5 && (
-                          <button
-                            onClick={() => { onNavigateTab('highways'); onClose(); }}
-                            className="w-full text-center text-[10px] text-violet-400 hover:text-violet-300 py-1.5 bg-slate-900/40 border border-slate-800 rounded-xl font-medium transition"
-                          >
-                            +{routeHighways.length - 5} more highways →
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+          {routeLabel && (
+            <p className="text-[10px] text-emerald-400/90 px-2 font-medium truncate" title={routeLabel || undefined}>
+              {routeLabel}
+            </p>
           )}
 
-          <div>
-            <div className="space-y-0.75">
-              <button
-                onClick={() => {
-                  onOpenDistanceMatrix();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition text-left group"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1 rounded-lg bg-slate-900 text-cyan-400 group-hover:bg-slate-800">
-                    <Calculator className="w-3.5 h-3.5" />
+          <div className="space-y-1">
+            {drawerMenuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={item.onClick}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
+                    isActive
+                      ? item.activeBg
+                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <div className={`p-1 rounded-lg ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="block font-bold">{item.label}</span>
+                      <span className="text-[9px] text-slate-400 font-normal">{item.subtitle}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block font-bold">Distance Calculator</span>
-                    <span className="text-[9px] text-slate-400 font-normal">Exact inter-city highway km</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400" />
-              </button>
-
-              <button
-                onClick={() => {
-                  onOpenDataSources();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition text-left group"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1 rounded-lg bg-slate-900 text-amber-400 group-hover:bg-slate-800">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block font-bold">Data Sources & Certification</span>
-                    <span className="text-[9px] text-slate-400 font-normal">SNH 2022/23 provenance report</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400" />
-              </button>
-
-              <button
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition text-left group"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1 rounded-lg bg-slate-900 text-amber-400 group-hover:bg-slate-800">
-                    <Coins className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block font-bold">Nagdhunga Tunnel Tolls</span>
-                    <span className="text-[9px] text-slate-400 font-normal">Vehicle tariffs & bypass rates</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400" />
-              </button>
-            </div>
+                  <ChevronRight className={`w-3 h-3 ${isActive ? 'text-violet-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                </button>
+              );
+            })}
           </div>
-
-          <div>
-            <div className="space-y-0.75">
-              <button
-                onClick={() => {
-                  onOpenReportModal();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition text-left group"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1 rounded-lg bg-slate-900 text-rose-400 group-hover:bg-slate-800">
-                    <PlusCircle className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block font-bold">Report Road Hazard</span>
-                    <span className="text-[9px] text-slate-400 font-normal">Crowdsource blockades & slides</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400" />
-              </button>
-
-              <button
-                onClick={() => {
-                  onOpenOfflineManager();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition text-left group"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div className="p-1 rounded-lg bg-slate-900 text-cyan-400 group-hover:bg-slate-800">
-                    <HardDriveDownload className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <span className="block font-bold">Offline GIS Bundle</span>
-                    <span className="text-[9px] text-slate-400 font-normal">Download for offline use</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-slate-400" />
-              </button>
-            </div>
-          </div>
-
         </div>
 
         <div className="p-3 border-t border-slate-800 bg-slate-900/60 text-xs text-slate-400">
@@ -449,7 +215,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition shrink-0"
                 title="Sign out"
               >
-                <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline text-[10px] font-semibold">Sign out</span>
               </button>
             ) : (
@@ -458,7 +223,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 transition shrink-0"
                 title="Sign in"
               >
-                <LogIn className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline text-[10px] font-semibold">Sign in</span>
               </button>
             )}

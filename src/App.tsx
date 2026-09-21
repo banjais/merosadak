@@ -4,15 +4,10 @@ import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
 import { InteractiveMap } from './components/InteractiveMap';
 import { HighwayDirectory } from './components/HighwayDirectory';
-import { RoadAlertsFeed } from './components/RoadAlertsFeed';
 import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { DataSourcesPage } from './components/DataSourcesPage';
-import { WeatherPassesPanel } from './components/WeatherPassesPanel';
-import { HighwayPOIsPanel } from './components/HighwayPOIsPanel';
-import { TrafficCorridorPanel } from './components/TrafficCorridorPanel';
-import { RegionalDialectPhrasesPanel } from './components/RegionalDialectPhrasesPanel';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { SosEmergencyModal } from './components/SosEmergencyModal';
@@ -23,10 +18,10 @@ import { AppDrawer } from './components/AppDrawer';
 import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
+import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
-import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { getStoredOfflineBundle } from './utils/offlineSync';
 import { fetchJson } from './utils/apiConfig';
 import {
@@ -34,7 +29,6 @@ import {
   CityNode,
   RoadIncident,
   UserRoadReport,
-  HighwayWeatherNode,
   HighwayPOI,
   TrafficCorridor,
   VehicleType,
@@ -52,40 +46,24 @@ import {
 import { getNearestRoutingCity } from './utils/cityDataLoader';
 import { getRoutePointAtDistance } from './utils/routeElevationProfile';
 import {
-  Compass,
-  AlertTriangle,
-  CloudFog,
-  MapPin,
-  Activity,
-  Route,
-  Navigation,
-  Calculator,
-  PhoneCall,
-  PlusCircle,
-  ShieldAlert,
-  CloudDownload,
-  Languages,
   Menu,
-  Layers,
-  Share2,
   Bell,
+  AlertTriangle,
   CheckCheck,
   Locate,
   ArrowRight,
   Sparkles,
+  Route,
   X,
-  LogIn,
-  Zap,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-export type SubViewTab = 'route' | 'incidents' | 'weather' | 'pois' | 'ev_charging' | 'traffic' | 'highways' | 'dialects';
-export type ActiveFeatureType = SubViewTab | 'steps' | null;
+export type ActiveFeatureType = 'steps' | 'highways' | null;
 
 interface LiveFeedResponse {
   incidents?: RoadIncident[];
   userReports?: UserRoadReport[];
-  weatherNodes?: HighwayWeatherNode[];
+  weatherNodes?: any[];
   pois?: HighwayPOI[];
   corridors?: TrafficCorridor[];
 }
@@ -144,7 +122,7 @@ function AppContent() {
   // Data states
   const [incidents, setIncidents] = useState<RoadIncident[]>(LIVE_ROAD_INCIDENTS);
   const [userReports, setUserReports] = useState<UserRoadReport[]>(INITIAL_USER_REPORTS);
-  const [weatherNodes, setWeatherNodes] = useState<HighwayWeatherNode[]>(HIGHWAY_WEATHER_NODES);
+  const [weatherNodes, setWeatherNodes] = useState<any[]>(HIGHWAY_WEATHER_NODES);
   const [pois, setPois] = useState<HighwayPOI[]>(HIGHWAY_POIS);
   const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>(TRAFFIC_CORRIDORS);
 
@@ -187,7 +165,7 @@ function AppContent() {
         const urlDest = searchParams.get('dest');
         const urlVehicle = (searchParams.get('vehicle') as VehicleType) || 'car';
         const urlPref = (searchParams.get('pref') as RoutePreference) || 'fastest';
-        const urlTab = searchParams.get('tab') as SubViewTab;
+        const urlTab = searchParams.get('tab') as ActiveFeatureType;
 
         const origin = urlOrigin || 'ktm';
         const dest = urlDest || 'pkr';
@@ -197,8 +175,8 @@ function AppContent() {
         if (urlVehicle) setPlannerVehicle(urlVehicle);
         if (urlPref) setPlannerPref(urlPref);
 
-        if (urlTab && ['incidents', 'weather', 'pois', 'traffic', 'highways', 'dialects', 'steps'].includes(urlTab)) {
-          setActiveFeature(urlTab as ActiveFeatureType);
+        if (urlTab && ['highways', 'steps'].includes(urlTab)) {
+          setActiveFeature(urlTab === 'highways' ? 'highways' : null);
         }
 
         history.replaceState(null, '', window.location.pathname);
@@ -396,7 +374,7 @@ function AppContent() {
     }
   };
 
-  const handleSelectWeatherNode = (node: HighwayWeatherNode) => {
+  const handleSelectWeatherNode = (node: any) => {
     setSelectedWeatherId(node.id);
     setFocusedTarget({
       lat: node.lat,
@@ -815,35 +793,16 @@ function AppContent() {
                 <div className="flex items-center space-x-2.5">
                   <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
                     {activeFeature === 'steps' && <Sparkles className="w-4 h-4" />}
-                    {activeFeature === 'route' && <Compass className="w-4 h-4" />}
-                    {activeFeature === 'incidents' && <AlertTriangle className="w-4 h-4" />}
-                    {activeFeature === 'weather' && <CloudFog className="w-4 h-4" />}
-                    {activeFeature === 'traffic' && <Activity className="w-4 h-4" />}
-                    {activeFeature === 'pois' && <MapPin className="w-4 h-4" />}
-                    {activeFeature === 'ev_charging' && <Zap className="w-4 h-4" />}
                     {activeFeature === 'highways' && <Route className="w-4 h-4" />}
-                    {activeFeature === 'dialects' && <Languages className="w-4 h-4" />}
                   </div>
                     <div>
                       <h3 className="text-sm font-black text-white leading-none">
                         {activeFeature === 'steps' && 'Travel Sequence & Tips'}
-                        {activeFeature === 'incidents' && `Live Road Alerts (${incidents.length})`}
-                        {activeFeature === 'weather' && 'Passes & Weather Telemetry'}
-                        {activeFeature === 'traffic' && 'Traffic Corridors & Speed'}
-                        {activeFeature === 'pois' && 'POIs & Fuel Stations'}
-                        {activeFeature === 'ev_charging' && 'EV Charging Centers'}
-                        {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
-                        {activeFeature === 'dialects' && 'Transit Regional Dialects'}
+                        {activeFeature === 'highways' && (activeRoute ? 'Highways on Your Route' : 'Highway Directory')}
                       </h3>
                       <p className="text-[11px] text-slate-400 mt-0.5 leading-none">
                         {activeFeature === 'steps' && 'Step-by-step journey prep & vehicle tips'}
-                        {activeFeature === 'incidents' && 'Landslides, roadworks and DoR notices'}
-                        {activeFeature === 'weather' && 'High-altitude passes, fog and rain'}
-                        {activeFeature === 'traffic' && 'Real-time speed variance and bottlenecks'}
-                        {activeFeature === 'pois' && 'Fuel pumps, food and medical facilities'}
-                        {activeFeature === 'ev_charging' && 'Nepal fast-charge EV stations on highways'}
-                        {activeFeature === 'highways' && 'National Highways (NH01–NH80)'}
-                        {activeFeature === 'dialects' && 'Transit driving phrases in local tongues'}
+                        {activeFeature === 'highways' && (activeRoute ? 'Route-corridor highway info & alerts' : 'Search all national highways')}
                       </p>
                     </div>
                 </div>
@@ -885,79 +844,6 @@ function AppContent() {
                   />
                 )}
 
-
-
-                {activeFeature === 'incidents' && (
-                  <RoadAlertsFeed
-                    incidents={incidents}
-                    userReports={userReports}
-                    activeRoute={activeRoute}
-                    onOpenReportModal={() => setIsReportModalOpen(true)}
-                    onUpvoteReport={handleUpvote}
-                    onSelectIncident={(inc) => {
-                      handleSelectIncident(inc);
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                  />
-                )}
-
-                {activeFeature === 'weather' && (
-                  <WeatherPassesPanel
-                    weatherNodes={weatherNodes}
-                    onSelectNode={(node) => {
-                      handleSelectWeatherNode(node);
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                    selectedNodeId={selectedWeatherId}
-                    onRefreshWeather={fetchLiveFeeds}
-                    isRefreshing={isRefreshingWeather}
-                  />
-                )}
-
-                {activeFeature === 'pois' && (
-                  <HighwayPOIsPanel
-                    pois={pois}
-                    onSelectPOI={(poi) => {
-                      handleSelectPOI(poi);
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                    selectedPOIId={selectedPOIId}
-                  />
-                )}
-
-                {activeFeature === 'ev_charging' && (
-                  <HighwayPOIsPanel
-                    pois={pois}
-                    initialCategory="ev_charger"
-                    onSelectPOI={(poi) => {
-                      handleSelectPOI(poi);
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                    selectedPOIId={selectedPOIId}
-                  />
-                )}
-
-                {activeFeature === 'traffic' && (
-                  <TrafficCorridorPanel
-                    corridors={trafficCorridors}
-                    onSelectCorridor={(corridor) => {
-                      handleSelectTraffic(corridor);
-                      if (window.innerWidth < 640) {
-                        setActiveFeature(null);
-                      }
-                    }}
-                    selectedCorridorId={selectedTrafficId}
-                  />
-                )}
-
                 {activeFeature === 'highways' && (
                   <HighwayDirectory
                     liveIncidents={incidents}
@@ -975,19 +861,13 @@ function AppContent() {
                         setActiveFeature(null);
                       }
                     }}
-                     onPlanTripForHighway={(start, end) => {
+                    onPlanTripForHighway={(start, end) => {
                       setPlannerOrigin('ktm');
                       setPlannerDest('pkr');
                       setActiveFeature('route');
                     }}
                     routeHighwayCodes={activeRoute ? activeRoute.steps.map((s) => s.highwayCode).filter(Boolean) : []}
                     filterToRouteOnly={!!activeRoute}
-                  />
-                )}
-
-                {activeFeature === 'dialects' && (
-                  <RegionalDialectPhrasesPanel
-                    onNavigateToRoute={() => setActiveFeature('route')}
                   />
                 )}
               </div>

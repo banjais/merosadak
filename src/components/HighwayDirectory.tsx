@@ -3,7 +3,7 @@ import { Highway, RoadIncident, UserRoadReport } from '../types';
 import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, INITIAL_USER_REPORTS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
-import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
+import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
 import {
   Search,
   Route,

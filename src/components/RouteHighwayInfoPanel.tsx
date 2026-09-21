@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Highway, RoadIncident } from '../types';
-import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { loadSNHReference, lookupSNHDistance, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
+import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
+import { loadSNHReference, lookupSNHDistance, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
 import {
   Route,
-  ChevronRight,
   MapPin,
   Mountain,
   PhoneCall,

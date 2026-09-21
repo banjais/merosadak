@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Compass,
   AlertTriangle,
-  CloudFog,
   Activity,
   ShieldAlert,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
   ChevronRight,
-  MapPin,
   Car,
-  Download,
-  PhoneCall,
   Check,
   X,
   Zap,
@@ -20,20 +16,17 @@ import {
   Bike,
   Truck,
   ShieldCheck,
-  AlertCircle,
-  Sparkles,
-  BatteryCharging,
-  Gauge,
-  Lightbulb,
-  ExternalLink,
+  CloudFog,
   Layers,
+  Lightbulb,
+  Gauge,
 } from 'lucide-react';
-import { SubViewTab } from '../App';
+import { ActiveFeatureType } from '../App';
 import { VehicleType } from '../types';
 
 export interface TravelStepsGuideProps {
   currentStep?: number;
-  onSelectTab: (tab: SubViewTab) => void;
+  onSelectTab: (tab: ActiveFeatureType) => void;
   onOpenSos: () => void;
   onOpenPreTrip: () => void;
   onOpenOffline: () => void;
@@ -54,7 +47,7 @@ export interface TravelStepsGuideProps {
 
 interface TravelStep {
   step: number;
-  id: SubViewTab | 'prep';
+  id: ActiveFeatureType | 'prep';
   title: string;
   subtitle: string;
   icon: React.ElementType;
@@ -71,7 +64,7 @@ export interface VehicleTravelTip {
   highwayCorridor?: string;
   isPriority?: boolean;
   actionText?: string;
-  actionTab?: SubViewTab | 'pre-trip' | 'offline';
+  actionTab?: ActiveFeatureType | 'pre-trip' | 'offline';
 }
 
 export interface VehicleTipsConfig {
@@ -109,7 +102,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         highwayCorridor: 'Prithvi Highway (NH04)',
         isPriority: true,
         actionText: 'Find EV Charging Stations',
-        actionTab: 'pois',
+        actionTab: 'highways'
       },
       {
         id: 'ev-2',
@@ -119,7 +112,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Steep downhill descents can regenerate 8–15% battery pack capacity. Set regen mode to Level 2/High, but ensure the battery is not 100% full before descent or regen braking will be throttled.',
         highwayCorridor: 'Nagdhunga & Daunne Passes',
         actionText: 'Inspect Pass Elevations',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'ev-3',
@@ -129,7 +122,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'High-altitude mountain climbs (+1,000m gain) and cold temperatures at Simbhanjyang or Nagdhunga increase consumption by 30-40%. Plan stops assuming 70% of flat-terrain range.',
         highwayCorridor: 'Tribhuvan & Prithvi Highways',
         actionText: 'Check Pass Weather',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'ev-4',
@@ -164,7 +157,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         highwayCorridor: 'Prithvi Highway (NH04)',
         isPriority: true,
         actionText: 'View Road Alerts',
-        actionTab: 'incidents',
+        actionTab: 'highways'
       },
       {
         id: 'car-2',
@@ -174,7 +167,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'BP Highway’s 160+ continuous switchbacks put heavy thermal load on small displacement engines. Shift to 2nd gear and turn off A/C if temperature gauge rises above mid-point.',
         highwayCorridor: 'BP Highway (NH08)',
         actionText: 'View Corridor Traffic',
-        actionTab: 'traffic',
+        actionTab: 'highways'
       },
       {
         id: 'car-3',
@@ -184,7 +177,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Trishuli river gorge visibility is severely limited around bluffs. Wait for wide sightlines or driver hand-signals before attempting passes.',
         highwayCorridor: 'Prithvi Highway Corridor',
         actionText: 'Check Road Incidents',
-        actionTab: 'incidents',
+        actionTab: 'highways'
       },
       {
         id: 'car-4',
@@ -219,7 +212,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         highwayCorridor: 'BP & Karnali Corridors',
         isPriority: true,
         actionText: 'Check River Alerts',
-        actionTab: 'incidents',
+        actionTab: 'highways'
       },
       {
         id: 'suv-2',
@@ -239,7 +232,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Disengage differential lock immediately when returning to dry paved tarmac to avoid driveline binding on tight hairpin switchbacks.',
         highwayCorridor: 'Hill Switchback Corridors',
         actionText: 'Inspect Passes',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'suv-4',
@@ -274,7 +267,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         highwayCorridor: 'Prithvi & BP Highways',
         isPriority: true,
         actionText: 'Review Active Alerts',
-        actionTab: 'incidents',
+        actionTab: 'highways'
       },
       {
         id: 'bike-2',
@@ -284,7 +277,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Passing Nagdhunga (1,500m) or Simbhanjyang (2,488m) brings rapid fog and 10°C temperature drops. Pack thermal windproof layers and clear visor backups.',
         highwayCorridor: 'Nagdhunga & Simbhanjyang',
         actionText: 'Check Pass Weather',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'bike-3',
@@ -294,7 +287,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Prolonged downhill braking down Naubise or Daunne Pass causes brake fluid boil and pad glazing. Use 2nd gear compression braking to regulate descent speed.',
         highwayCorridor: 'Naubise & Daunne Passes',
         actionText: 'Pass Elevation Profile',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'bike-4',
@@ -329,7 +322,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
         highwayCorridor: 'East-West & Prithvi Highways',
         isPriority: true,
         actionText: 'Pass Slope Analysis',
-        actionTab: 'weather',
+        actionTab: 'highways'
       },
       {
         id: 'truck-2',
@@ -339,7 +332,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Use horn warnings 30m before blind rock outcroppings. Allow uphill heavy cargo vehicles the right of way to prevent hill-stall rollbacks.',
         highwayCorridor: 'Prithvi Highway Corridor',
         actionText: 'Traffic Chokepoints',
-        actionTab: 'traffic',
+        actionTab: 'highways'
       },
       {
         id: 'truck-3',
@@ -349,7 +342,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Older single-lane steel bridges on feeder roads and Mid-Hill Highway have 15-20 ton gross weight limits. Verify permit clearances before transit.',
         highwayCorridor: 'Mid-Hill & Feeder Bridges',
         actionText: 'Check Road Incidents',
-        actionTab: 'incidents',
+        actionTab: 'highways'
       },
       {
         id: 'truck-4',
@@ -368,7 +361,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
 const TRAVEL_STEPS: TravelStep[] = [
   {
     step: 1,
-    id: 'route',
+    id: 'highways',
     title: 'Select Destination & Route',
     subtitle: 'Choose start, end, vehicle type, and preferred road profile.',
     icon: Compass,
@@ -382,7 +375,7 @@ const TRAVEL_STEPS: TravelStep[] = [
   },
   {
     step: 2,
-    id: 'incidents',
+    id: 'highways',
     title: 'Check Road Alerts & Safety',
     subtitle: 'Verify active landslides, rockfall hazards, and highway blockages.',
     icon: AlertTriangle,
@@ -396,7 +389,7 @@ const TRAVEL_STEPS: TravelStep[] = [
   },
   {
     step: 3,
-    id: 'weather',
+    id: 'highways',
     title: 'Inspect Passes & Weather',
     subtitle: 'Check fog, rainfall, and freezing conditions at mountain ridges.',
     icon: CloudFog,
@@ -410,7 +403,7 @@ const TRAVEL_STEPS: TravelStep[] = [
   },
   {
     step: 4,
-    id: 'traffic',
+    id: 'highways',
     title: 'Live Traffic & Speed Telemetry',
     subtitle: 'Monitor real-time bottlenecks, speed variances, and transit delays.',
     icon: Activity,
@@ -476,7 +469,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
     if (currentStep.id === 'prep') {
       onOpenPreTrip();
     } else {
-      onSelectTab(currentStep.id as SubViewTab);
+      onSelectTab(currentStep.id as ActiveFeatureType);
     }
   };
 
@@ -865,7 +858,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
               {selectedVehicle === 'electric_vehicle' && (
                 <button
-                  onClick={() => onSelectTab('pois')}
+                  onClick={() => onSelectTab('highways')}
                   className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] flex items-center space-x-1 transition shadow-sm"
                 >
                   <Zap className="w-3 h-3 fill-current" />
@@ -875,7 +868,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
               {selectedVehicle === 'car' && (
                 <button
-                  onClick={() => onSelectTab('incidents')}
+                  onClick={() => onSelectTab('highways')}
                   className="px-2.5 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-[10px] flex items-center space-x-1 transition shadow-sm"
                 >
                   <AlertTriangle className="w-3 h-3" />
@@ -895,7 +888,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
               {selectedVehicle === 'motorbike' && (
                 <button
-                  onClick={() => onSelectTab('weather')}
+                  onClick={() => onSelectTab('highways')}
                   className="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-[10px] flex items-center space-x-1 transition shadow-sm"
                 >
                   <CloudFog className="w-3 h-3" />
@@ -905,7 +898,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
               {selectedVehicle === 'bus_truck' && (
                 <button
-                  onClick={() => onSelectTab('traffic')}
+                  onClick={() => onSelectTab('highways')}
                   className="px-2.5 py-1 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-[10px] flex items-center space-x-1 transition shadow-sm"
                 >
                   <Truck className="w-3 h-3" />
