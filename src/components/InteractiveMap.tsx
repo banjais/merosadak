@@ -56,6 +56,7 @@ import {
   Route,
   Repeat,
 } from 'lucide-react';
+import { normalizeLatLng } from '../utils/routeCorridor';
 
 interface InteractiveMapProps {
   activeRoute: RoutePlanResult | null;
@@ -770,7 +771,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           ? '#f97316'
           : '#ef4444';
 
-      const polyline = L.polyline([corridor.startCoord, corridor.endCoord], {
+      // The corridor JSON served by the API stores [lng, lat]; bundled data is [lat, lng].
+      const from = normalizeLatLng(corridor.startCoord?.[0], corridor.startCoord?.[1]);
+      const to = normalizeLatLng(corridor.endCoord?.[0], corridor.endCoord?.[1]);
+      if (!from || !to) return;
+
+      const polyline = L.polyline([from, to], {
         color,
         weight: 8,
         opacity: 0.6,

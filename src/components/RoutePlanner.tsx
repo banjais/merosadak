@@ -31,6 +31,8 @@ import { TrafficCorridorPanel } from './TrafficCorridorPanel';
 import { RouteComparisonView } from './RouteComparisonView';
 import { RouteJunctionTimeline } from './RouteJunctionTimeline';
 import { RouteHighwayInfoPanel } from './RouteHighwayInfoPanel';
+import { RouteAheadFeed } from './RouteAheadFeed';
+import { ErrorBoundary } from './ErrorBoundary';
 import {
   Compass,
   ArrowRight,
@@ -871,9 +873,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Ordered list of module tabs, used so mobile swipe-left/right can move
   // between them in the same order they're laid out in the button grid.
   const MODULE_TAB_ORDER: DetailModuleTab[] = [
-    'timeline', 'elevation', 'travel_plan', 'weather', 'pois',
-    'traffic',      'safety', 'fuel_tolls', 'ai_advisory', 'sos', 'eco', 'checklist', 'highway_info',
+    'travel_plan', 'highway_info', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos',
   ];
+  useEffect(() => {
+    if (travelerMode === 'passenger') {
+      setActiveModuleTab((prev) => (prev === 'fuel_tolls' || prev === 'checklist' ? 'none' : prev));
+    }
+  }, [travelerMode]);
   const swipeTouchStartX = useRef<number | null>(null);
   const handleModuleSwipeStart = (e: React.TouchEvent) => {
     swipeTouchStartX.current = e.touches[0].clientX;
@@ -884,13 +890,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     swipeTouchStartX.current = null;
     const SWIPE_THRESHOLD_PX = 50;
     if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return;
+    // passengers have no vehicle tools, so swiping must not land on them
+    const order = MODULE_TAB_ORDER.filter((t) => travelerMode === 'driver' || (t !== 'fuel_tolls' && t !== 'checklist'));
     setActiveModuleTab((prev) => {
-      const idx = MODULE_TAB_ORDER.indexOf(prev as DetailModuleTab);
+      const idx = order.indexOf(prev as DetailModuleTab);
       if (idx === -1) return prev;
       const nextIdx = deltaX < 0
-        ? Math.min(idx + 1, MODULE_TAB_ORDER.length - 1) // swipe left -> next
+        ? Math.min(idx + 1, order.length - 1) // swipe left -> next
         : Math.max(idx - 1, 0); // swipe right -> previous
-      return MODULE_TAB_ORDER[nextIdx];
+      return order[nextIdx];
     });
   };
 
@@ -2006,190 +2014,49 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             />
           )}
 
-          {/* 6. OPTION BUTTONS (Travel Plan, Weather, POIs, SOS, Traffic, etc.)
-              Split by who needs them: everyone gets trip info & safety; only
-              "Driving" mode gets vehicle-operating tools (fuel/toll cost, eco
-              footprint, pre-trip vehicle checklist). Don't show contents if
-              user doesn't click them! */}
-          <div className="pt-2 border-t border-slate-800 space-y-4">
+          {/* 6. ALONG YOUR ROUTE: information first, scoped to THIS route (not the whole
+              country), split by who is asking. Detail views stay behind a few buttons. */}
+          <div className="pt-2 border-t border-slate-800 space-y-3">
+            <ErrorBoundary fallback={<div className="text-xs text-slate-500 px-1">Route information is temporarily unavailable.</div>}>
+              <RouteAheadFeed
+                routePlan={routePlan}
+                mode={travelerMode}
+                extraIncidents={LIVE_ROAD_INCIDENTS}
+                onViewOnMap={onViewOnMap}
+              />
+            </ErrorBoundary>
 
-            {/* ---- FOR YOUR TRIP: relevant whether you're driving or riding along ---- */}
-            <div>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                For Your Trip (Click to view):
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-
-                {/* Option: Junction Timeline & ETAs */}
-                <button
-                  onClick={() => handleToggleModuleTab('timeline')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'timeline'
-                      ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-300 border-emerald-500/60 shadow-md shadow-emerald-500/10 ring-1 ring-emerald-500/40'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                  id="btn-junction-timeline-tab"
-                >
-                  <Milestone className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="truncate">Junction Timeline</span>
-                </button>
-
-                {/* Option: Travel Plan & Itinerary */}
-                <button
-                  onClick={() => handleToggleModuleTab('travel_plan')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'travel_plan'
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-md shadow-emerald-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="truncate">Travel Plan</span>
-                </button>
-
-                {/* Option: Weather & Passes */}
-                <button
-                  onClick={() => handleToggleModuleTab('weather')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'weather'
-                      ? 'bg-sky-500/20 text-sky-300 border-sky-500/60 shadow-md shadow-sky-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <CloudSun className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="truncate">Weather &amp; Passes</span>
-                </button>
-
-                {/* Option: POIs (fuel/EV are labeled for drivers, but rest stops/food are for everyone) */}
-                <button
-                  onClick={() => handleToggleModuleTab('pois')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'pois'
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-md shadow-amber-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <Fuel className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="truncate">Rest Stops &amp; POIs</span>
-                </button>
-
-                {/* Option: Traffic & Terrain */}
-                <button
-                  onClick={() => handleToggleModuleTab('traffic')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'traffic'
-                      ? 'bg-teal-500/20 text-teal-300 border-teal-500/60 shadow-md shadow-teal-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <Radio className="w-4 h-4 text-teal-400 shrink-0" />
-                  <span className="truncate">Live Traffic</span>
-                </button>
-
-                {/* Option: Safety & Hazards */}
-                <button
-                  onClick={() => handleToggleModuleTab('safety')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'safety'
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/60 shadow-md shadow-rose-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="truncate">Safety &amp; Hazards</span>
-                </button>
-
-                {/* Option: AI Advisory */}
-                <button
-                  onClick={() => handleToggleModuleTab('ai_advisory')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'ai_advisory'
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 shadow-md shadow-cyan-500/10'
-                      : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span className="truncate">AI Advisory</span>
-                </button>
-
-                {/* Option: SOS Rescue */}
-                <button
-                  onClick={() => handleToggleModuleTab('sos')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                    activeModuleTab === 'sos'
-                      ? 'bg-red-600/30 text-red-300 border-red-500 shadow-md shadow-red-600/20'
-                      : 'bg-slate-950 hover:bg-slate-900 text-red-400 border-slate-800'
-                  }`}
-                >
-                  <PhoneCall className="w-4 h-4 text-red-400 shrink-0" />
-                  <span className="truncate font-black">SOS Rescue</span>
-                </button>
-              </div>
+            <div className="flex flex-wrap gap-2" id="route-detail-actions">
+              {([
+                { tab: 'travel_plan', label: 'Timeline & steps', Icon: Milestone, show: true, tone: 'emerald' },
+                { tab: 'highway_info', label: 'Highway details (DoR)', Icon: Route, show: true, tone: 'cyan' },
+                { tab: 'fuel_tolls', label: 'Trip cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
+                { tab: 'checklist', label: 'Vehicle check', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
+                { tab: 'ai_advisory', label: 'Ask AI', Icon: Sparkles, show: true, tone: 'cyan' },
+                { tab: 'sos', label: 'SOS', Icon: PhoneCall, show: true, tone: 'red' },
+              ] as Array<{ tab: DetailModuleTab; label: string; Icon: React.ComponentType<{ className?: string }>; show: boolean; tone: string }>)
+                .filter((a) => a.show)
+                .map(({ tab, label, Icon, tone }) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => handleToggleModuleTab(tab)}
+                    aria-pressed={activeModuleTab === tab}
+                    className={`px-3 py-2 rounded-xl border text-xs font-bold transition inline-flex items-center gap-1.5 ${
+                      activeModuleTab === tab
+                        ? tone === 'red'
+                          ? 'bg-red-600/30 text-red-300 border-red-500'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60'
+                        : tone === 'red'
+                        ? 'bg-slate-950 hover:bg-slate-900 text-red-400 border-slate-800'
+                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{label}</span>
+                  </button>
+                ))}
             </div>
-
-            {/* ---- DRIVER TOOLS: only relevant to whoever is actually operating the vehicle ---- */}
-            {travelerMode === 'driver' && (
-              <div>
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                  <Car className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Driver Tools:</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-
-                  {/* Option: Fuel & Toll Calculator */}
-                  <button
-                    onClick={() => handleToggleModuleTab('fuel_tolls')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                      activeModuleTab === 'fuel_tolls'
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-md shadow-amber-500/10'
-                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    <Flame className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="truncate">Fuel &amp; Tolls</span>
-                  </button>
-
-                  {/* Option: Eco Footprint */}
-                  <button
-                    onClick={() => handleToggleModuleTab('eco')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                      activeModuleTab === 'eco'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60'
-                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    <Leaf className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="truncate">Eco Footprint</span>
-                  </button>
-
-                  {/* Option: Pre-Trip Checklist */}
-                  <button
-                    onClick={() => handleToggleModuleTab('checklist')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                      activeModuleTab === 'checklist'
-                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/60'
-                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    <Wrench className="w-4 h-4 text-purple-400 shrink-0" />
-                    <span className="truncate">Vehicle Checklist</span>
-                  </button>
-
-                  {/* Option: Highway Info */}
-                  <button
-                    onClick={() => handleToggleModuleTab('highway_info')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-2 text-left ${
-                      activeModuleTab === 'highway_info'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-md shadow-emerald-500/10'
-                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="truncate">Highway Info</span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* 7. DYNAMIC EXPANDED CONTENT AREA (Rendered ONLY when user clicks an option button!)
@@ -2462,6 +2329,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     destination={routePlan.destination}
                     defaultTollCost={routePlan.totalTollCostNpr}
                     onVehicleChange={(newV) => setVehicle(newV)}
+                  />
+                  <CarbonFootprintCard
+                    distanceKm={routePlan.totalDistanceKm}
+                    vehicleType={vehicle}
+                    elevationGainM={routePlan.elevationGainM}
+                    onVehicleChange={(v) => setVehicle(v)}
                   />
                 </div>
               )}

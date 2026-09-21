@@ -273,8 +273,10 @@ export function traceKathmanduToGulariya(ref?: SNHReferenceData | null): Distanc
     publishedDistanceKm: 543.4,
     linkChain: chain,
     note: `Kathmandu → Kohalpur is verifiable via Table 4 (${totalFromTable4.toFixed(2)} km across 4 published segments). Kohalpur → Gulariya is implied as ${impliedKohalpurToGulariya.toFixed(2)} km (543.4 − ${totalFromTable4.toFixed(2)}). NH59 junction with NH01 near Kohalpur is not explicitly documented in Annex 2; the junction was inferred from geometry.`,
-    unreconciledGapKm: Math.abs(impliedKohalpurToGulariya - 48.35),
-     isUncertain: false,
+    // The Annex 2 link table does not state where NH59 meets NH01, so the Kohalpur -> Gulariya
+    // part of the published figure cannot be reproduced link by link. Report that part as unreconciled.
+    unreconciledGapKm: impliedKohalpurToGulariya,
+    isUncertain: true,
    };
 }
 
