@@ -58,6 +58,7 @@ export interface RouteElevationProfileChartProps {
   simulationControls: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title: string; zoom?: number }) => void;
   steepThreshold?: number; // Incline gradient % threshold, default 8.0
+  disableVehicleSwitch?: boolean;
 }
 
 // Vehicle metadata for quick selection
@@ -80,6 +81,7 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
   simulationControls,
   onViewOnMap,
   steepThreshold = 8.0,
+  disableVehicleSwitch,
 }) => {
   const route = activeRoute;
 
@@ -1444,48 +1446,56 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
         {activeTab === 'performance' && (
           <div className="space-y-4 animate-fadeIn">
             {/* Vehicle Selector Pills */}
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-                <span>Select Vehicle to Evaluate Mountain Gradient Strain:</span>
-                <span className="text-[10px] text-purple-400">
-                  Active Profile: {activeVehicle.toUpperCase()}
-                </span>
-              </div>
+            {!disableVehicleSwitch && (
+              <div className="space-y-1.5">
+                <div className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
+                  <span>Select Vehicle to Evaluate Mountain Gradient Strain:</span>
+                  <span className="text-[10px] text-purple-400">
+                    Active Profile: {activeVehicle.toUpperCase()}
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {VEHICLE_OPTIONS.map((opt) => {
-                  const Icon = opt.icon;
-                  const isSelected = activeVehicle === opt.type;
-                  return (
-                    <button
-                      key={opt.type}
-                      type="button"
-                      onClick={() => setActiveVehicle(opt.type)}
-                      className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
-                        isSelected
-                          ? 'bg-purple-950/40 border-purple-500/60 shadow-md shadow-purple-950/40 ring-1 ring-purple-500/30'
-                          : 'bg-slate-900/70 hover:bg-slate-900 border-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-purple-300' : 'text-slate-400'}`} />
-                        {isSelected && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
-                        )}
-                      </div>
-                      <div className="mt-1.5">
-                        <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
-                          {opt.label}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {VEHICLE_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isSelected = activeVehicle === opt.type;
+                    return (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        onClick={() => setActiveVehicle(opt.type)}
+                        className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-purple-950/40 border-purple-500/60 shadow-md shadow-purple-950/40 ring-1 ring-purple-500/30'
+                            : 'bg-slate-900/70 hover:bg-slate-900 border-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-purple-300' : 'text-slate-400'}`} />
+                          {isSelected && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+                          )}
                         </div>
-                        <div className="text-[9px] text-slate-400 line-clamp-1 mt-0.5">
-                          {opt.shortDesc}
+                        <div className="mt-1.5">
+                          <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                            {opt.label}
+                          </div>
+                          <div className="text-[9px] text-slate-400 line-clamp-1 mt-0.5">
+                            {opt.shortDesc}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {disableVehicleSwitch && (
+              <div className="text-[11px] font-bold text-slate-400">
+                Active Profile: <span className="text-purple-400">{activeVehicle.toUpperCase()}</span>
+              </div>
+            )}
 
             {/* Vehicle Suitability & Powertrain Stress Card */}
             <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-3">

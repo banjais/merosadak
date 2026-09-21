@@ -23,7 +23,6 @@ import { RouteTerrainAndTrafficAnalysis } from './RouteTerrainAndTrafficAnalysis
 import { PreTripChecklist } from './PreTripChecklist';
 import { RouteOptionsSelector } from './RouteOptionsSelector';
 import { HighwaySafetyIndexCard } from './HighwaySafetyIndexCard';
-import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 import { CarbonFootprintCard } from './CarbonFootprintCard';
 import { WeatherPassesPanel } from './WeatherPassesPanel';
 import { HighwayPOIsPanel } from './HighwayPOIsPanel';
@@ -181,7 +180,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
   const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
   const [isReportExpanded, setIsReportExpanded] = useState<boolean>(false);
-  const [showElevationDetails, setShowElevationDetails] = useState<boolean>(false);
   const [showVehiclePerformance, setShowVehiclePerformance] = useState<boolean>(false);
   const [terrainFilters, setTerrainFilters] = useState<TerrainFilterOptions>(() => {
     if (typeof window !== 'undefined') {
@@ -1602,39 +1600,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           </div>
 
-            {/* ELEVATION PROFILE - Expandable (Hidden by default) */}
-            <div
-              id="route-elevation-profile-card"
-              key={`route-elevation-profile-${calcKey}`}
-              className="pt-1 animate-fade-in-smooth transition-all duration-500 ease-out"
-            >
-              <button
-                type="button"
-                onClick={() => setShowElevationDetails(!showElevationDetails)}
-                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/60 border border-slate-800 transition text-left"
-              >
-                <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
-                  <Mountain className="w-3.5 h-3.5 text-amber-400" />
-                  <span>⛰️ Route Elevation Profile &amp; Mountain Gradients</span>
-                </div>
-                <div className="flex items-center space-x-3 text-[11px] text-slate-400">
-                  <span>+{routePlan.elevationGainM}m climb • Peak {routePlan.maxElevationM}m</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showElevationDetails ? 'rotate-180' : ''}`} />
-                </div>
-              </button>
-              {showElevationDetails && (
-                <div className="animate-fadeIn">
-                  <RouteElevationProfileChart
-                    activeRoute={routePlan}
-                    routePlan={routePlan}
-                    vehicle={vehicle}
-                    simulationControls={simulationControls}
-                    onViewOnMap={onViewOnMap}
-                  />
-                </div>
-              )}
-            </div>
-
           {/* REDUCED REPORT SUMMARY (When user clicks Reduce Report) */}
           {!isReportExpanded && (
             <div className="bg-slate-950/90 rounded-xl p-3 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs animate-fadeIn">
@@ -1696,17 +1661,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <>
                {/* ROUTE CALCULATION SUMMARY & STRUCTURED VEHICLE FUEL COST BREAKDOWN */}
                <UnifiedRouteReport
-                 route={routePlan}
-                 distanceKm={routePlan.totalDistanceKm}
-                 distanceSource="dor_gis_route"
-                 distanceEvidence="route_graph"
-                 distanceSourceUrl="https://dor.gov.np"
-                 distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
-                 vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
-                 preferenceLabel={preference.replace('_', ' ')}
-                 onPrint={() => window.print()}
-                 onShare={() => setIsShareModalOpen(true)}
-               />
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => setIsShareModalOpen(true)}
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
 
            {/* Multi-Route Alternatives (If available) */}
           {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (

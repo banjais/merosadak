@@ -21,8 +21,9 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
-import { RoutePlanResult } from '../types';
+import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
+import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
 
@@ -42,6 +43,9 @@ export interface UnifiedRouteReportProps {
   onPrint: () => void;
   onShare: () => void;
   onChangeLocation?: () => void;
+  showElevationProfile?: boolean;
+  simulationControls?: RouteSimulationControls;
+  onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
 }
 
 const evidenceLabels: Record<ReportEvidenceLevel, string> = {
@@ -166,8 +170,12 @@ export function UnifiedRouteReport({
   onPrint,
   onShare,
   onChangeLocation,
+  showElevationProfile,
+  simulationControls,
+  onViewOnMap,
 }: UnifiedRouteReportProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showElevation, setShowElevation] = useState(false);
   const routeDistance = route.totalDistanceKm;
   const aerialDistance = route.aerialDistanceKm || 0;
   const detourPercent = aerialDistance > 0
@@ -390,6 +398,37 @@ export function UnifiedRouteReport({
               </div>
             </div>
           </div>
+
+          {showElevationProfile && (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50">
+              <button
+                type="button"
+                onClick={() => setShowElevation((value) => !value)}
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 text-left"
+              >
+                <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
+                  <Mountain className="w-3.5 h-3.5 text-amber-400" />
+                  <span>⛰️ Route Elevation Profile &amp; Mountain Gradients</span>
+                </div>
+                <div className="flex items-center space-x-3 text-[11px] text-slate-400">
+                  <span>+{route.elevationGainM}m climb • Peak {route.maxElevationM}m</span>
+                  {showElevation ? <ChevronUp className="w-3.5 h-3.5 text-emerald-400" /> : <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />}
+                </div>
+              </button>
+              {showElevation && simulationControls && (
+                <div className="px-3.5 pb-3.5 animate-fadeIn">
+                  <RouteElevationProfileChart
+                    activeRoute={route}
+                    routePlan={route}
+                    vehicle={route.vehicle}
+                    simulationControls={simulationControls}
+                    onViewOnMap={onViewOnMap}
+                    disableVehicleSwitch
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
             <div className="flex flex-wrap items-start justify-between gap-2">
