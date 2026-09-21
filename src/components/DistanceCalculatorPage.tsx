@@ -6,15 +6,119 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource } from '../utils/snhLookup';
+import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { DistanceMatrixData } from '../types';
 import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
 import { TextScale } from '../hooks/useTextScale';
+
+interface DataSourceSelectorProps {
+  selectedSource: DataSourceType;
+  onChange: (source: DataSourceType) => void;
+  evidenceLevel?: EvidenceLevel;
+}
+
+function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSourceSelectorProps): React.ReactElement {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
+    {
+      value: 'snh_published',
+      label: 'DoR Published SNH 2022/23',
+      url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
+      description: 'Official Department of Roads published distances from Statistics of National Highway 2022/23',
+    },
+    {
+      value: 'dor_geojson_linksum',
+      label: 'DoR Archives GeoJSON (Link-Sum)',
+      url: 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement',
+      description: 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON files',
+    },
+    {
+      value: 'estimate_aerial',
+      label: 'Estimate (Aerial Line-of-Sight)',
+      url: '',
+      description: 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.',
+    },
+  ];
+
+  const selected = sources.find((s) => s.value === selectedSource) || sources[0];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white hover:border-cyan-500 transition"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="truncate max-w-[180px]">{selected.label}</span>
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 overflow-hidden">
+          {sources.map((src) => (
+            <button
+              key={src.value}
+              type="button"
+              onClick={() => {
+                onChange(src.value);
+                setIsOpen(false);
+              }}
+              className={`w-full px-3 py-2 text-left text-xs transition ${
+                src.value === selectedSource
+                  ? 'bg-cyan-500/10 text-cyan-300'
+                  : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <a
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 font-medium hover:underline"
+                >
+                  {src.label}
+                  {src.url && (
+                    <ExternalLink className="w-2.5 h-2.5 text-slate-400 hover:text-white" />
+                  )}
+                </a>
+                {src.value === selectedSource && evidenceLevel && (
+                  <span className="text-[8px] font-bold px-1 py-0.5 rounded border" style={{
+                    backgroundColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.15)`,
+                    borderColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.3)`,
+                    color: `rgb(${getEvidenceLevelColor(evidenceLevel).join(',')})`,
+                  }}>
+                    {getEvidenceLevelLabel(evidenceLevel)}
+                  </span>
+                )}
+              </div>
+              <div className="text-[9px] text-slate-500 mt-0.5">{src.description}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
@@ -505,18 +609,11 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
                     <Edit3 className="w-4 h-4" />
                     <span>Change Location</span>
                   </button>
-                  <div className="relative">
-                    <select
-                      value={selectedDataSource}
-                      onChange={(e) => handleDataSourceChange(e.target.value as DataSourceType)}
-                      className="appearance-none bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition pr-7"
-                    >
-                      <option value="snh_published">DoR Published SNH 2022/23</option>
-                      <option value="dor_geojson_linksum">DoR Archives GeoJSON (Link-Sum)</option>
-                      <option value="estimate_aerial">Estimate (Aerial Line-of-Sight)</option>
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
-                  </div>
+                  <DataSourceSelector
+                    selectedSource={selectedDataSource}
+                    onChange={handleDataSourceChange}
+                    evidenceLevel={distanceWithSource?.evidenceLevel}
+                  />
                   {distanceWithSource && (
                     <span
                       className="text-[9px] font-bold px-1.5 py-0.5 rounded border"
