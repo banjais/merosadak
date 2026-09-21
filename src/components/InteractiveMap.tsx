@@ -393,7 +393,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     mapInstanceRef.current = map;
 
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 500);
+
     return () => {
+      window.clearTimeout(timer);
       map.remove();
       mapInstanceRef.current = null;
       markerRef.current = null;

@@ -430,6 +430,14 @@ function AppContent() {
   };
 
 
+  useEffect(() => {
+    if (!isAppReady) return;
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [isAppReady]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       {/* Animated Flash / Splash Screen */}
