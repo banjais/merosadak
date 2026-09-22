@@ -1009,4 +1009,9 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   border: 2px solid #000000 !important;
 }
 
-
+/* Pull-to-refresh: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ptr-progress-ring {
+    transition: none !important;
+  }
+}

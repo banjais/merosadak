@@ -11,6 +11,7 @@ import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { DataSourcesPage } from './components/DataSourcesPage';
 import { ProofVerifyPage } from './components/ProofVerifyPage';
 import { parseProofFromSearch, ProofClaim } from './utils/proofLinks';
+import { PullToRefresh } from './components/PullToRefresh';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { SosEmergencyModal } from './components/SosEmergencyModal';
@@ -439,7 +440,10 @@ function AppContent() {
   }, [isAppReady]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+    <PullToRefresh
+      onRefresh={fetchLiveFeeds}
+      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950"
+    >
       {/* Animated Flash / Splash Screen */}
       <SplashScreen isReady={isAppReady} onFinished={() => setIsAppReady(true)} />
 
@@ -971,7 +975,7 @@ function AppContent() {
           });
         }}
       />
-    </div>
+    </PullToRefresh>
   );
 }
 
