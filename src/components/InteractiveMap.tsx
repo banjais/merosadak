@@ -42,6 +42,7 @@ import {
   Fuel,
   Utensils,
   Mountain,
+  Box,
   Ticket,
   ShieldAlert,
   Gauge,
@@ -355,7 +356,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, []);
 
   // Map Style: Standard, Satellite, Terrain
-  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial' | '3d'>('standard');
   const tileLayerRef = useRef<L.GridLayer | null>(null);
 
   // Initialize map
@@ -556,6 +557,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       url =
         'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
       maxZoom = 16;
+    } else if (mapStyle === '3d') {
+      url =
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}';
+      maxZoom = 14;
     }
 
     const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains);
@@ -1578,6 +1583,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Territorial"
           >
             <Landmark className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMapStyle('3d'); setShowMapStyle(false); }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === '3d' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            title="3D Terrain"
+          >
+            <Box className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
