@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
               <span className="hidden md:inline font-medium">
                 {!isOnline
-                  ? 'Mountain Offline'
+                  ? 'Offline'
                   : cacheStats.isReadyForOffline
                   ? `Offline Ready (${cacheStats.tilesCount})`
                   : 'Offline Pack'}

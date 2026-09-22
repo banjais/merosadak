@@ -12,6 +12,7 @@ import { DataSourcesPage } from './components/DataSourcesPage';
 import { ProofVerifyPage } from './components/ProofVerifyPage';
 import { parseProofFromSearch, ProofClaim } from './utils/proofLinks';
 import { PullToRefresh } from './components/PullToRefresh';
+import { TripStatusBar } from './components/TripStatusBar';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { SosEmergencyModal } from './components/SosEmergencyModal';
@@ -491,7 +492,7 @@ function AppContent() {
             <button
               onClick={() => setIsDrawerOpen(true)}
               className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-sm"
-              title="Open Navigation Menu"
+              title="Menu"
               id="btn-header-menu"
             >
               <Menu className="w-5 h-5" />
@@ -500,7 +501,7 @@ function AppContent() {
             <div
               className="flex items-center space-x-2.5 cursor-pointer group select-none"
               onClick={resetMapView}
-              title="Reset Nepal Map View"
+              title="Reset map"
             >
               <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10 group-hover:border-amber-500/50 transition">
                 <svg viewBox="0 0 24 24" width="22" height="22">
@@ -515,7 +516,7 @@ function AppContent() {
                   </span>
                 </div>
                 <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider truncate">
-                  Nepal National Highway Network &amp; GIS
+                  Routes · alerts · weather
                 </div>
               </div>
             </div>
@@ -785,6 +786,14 @@ function AppContent() {
             }}
           />
         </div>
+
+        {/* Driver / passenger trip strip — only when a route is active */}
+        {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
+          <TripStatusBar
+            route={activeRoute}
+            alertCount={activeRoute?.incidentsOnRoute?.length ?? incidents.length}
+          />
+        )}
 
         {/* Interactive Map - fills remaining viewport */}
         <div className="flex-1 relative z-0 w-full min-h-0">
