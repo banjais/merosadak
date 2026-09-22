@@ -101,7 +101,7 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
           <div className="flex items-center space-x-3">
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition"
+              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
               title="Back"
               type="button"
             >
@@ -120,7 +120,7 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
           <button
             onClick={loadLocation}
             disabled={loading}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 accent-text border border-slate-700 transition"
             title="Refresh location"
             type="button"
           >

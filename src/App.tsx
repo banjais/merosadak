@@ -494,7 +494,7 @@ function AppContent() {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-sm"
+              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition shadow-sm"
               title="Menu"
               id="btn-header-menu"
             >
@@ -533,8 +533,8 @@ function AppContent() {
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className={`p-2 rounded-xl border text-xs font-semibold transition relative ${
                   isNotificationsOpen
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/10'
-                    : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
+                    ? 'bg-accent-bg accent-text accent-border shadow-md shadow-black/10'
+                    : 'bg-slate-800/90 hover:bg-slate-700 accent-text border-slate-700/80'
                 }`}
                 title="Road Alerts & Notifications"
                 id="btn-header-notifications"

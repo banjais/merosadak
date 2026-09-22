@@ -61,7 +61,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col" id="proof-verify-page">
       <header className="bg-slate-900/95 border-b border-slate-800 px-4 py-3 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <button onClick={onClose} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80" title="Back to app">
+          <button onClick={onClose} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80" title="Back to app">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>

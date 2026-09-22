@@ -184,8 +184,8 @@ export const SettingsButton: React.FC<SettingsButtonProps> = ({ isOpen, onOpenCh
       onClick={handleClick}
       className={`p-1.5 rounded-lg border text-xs font-semibold transition ${
         isOpen
-          ? 'bg-slate-700 text-white border-slate-600'
-          : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/80'
+          ? 'bg-accent-bg accent-text accent-border'
+          : 'bg-slate-800/90 hover:bg-slate-700 accent-text hover:text-white border-slate-700/80'
       }`}
       title="Settings"
     >

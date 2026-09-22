@@ -234,6 +234,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const toolbarContainerRef = useRef<HTMLDivElement>(null);
   const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
   const mapStyleContainerRef = useRef<HTMLDivElement>(null);
+  const map3DToggleRef = useRef<HTMLButtonElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
 
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -285,6 +286,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setIsLocationDropdownOpen(false);
   };
 
+  const handleToggle3D = () => {
+    setMapStyle('3d');
+    setShowMapStyle(false);
+    closeLayerToolbar();
+    setIsLocationDropdownOpen(false);
+  };
+
   // Close all floating map controls (toolbar, layers, legend, map style selector, location dropdown)
   const closeAllMapControls = () => {
     closeLayerToolbar();
@@ -303,6 +311,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         toolbarContainerRef.current?.contains(target) ||
         mapStyleToggleRef.current?.contains(target) ||
         mapStyleContainerRef.current?.contains(target) ||
+        map3DToggleRef.current?.contains(target) ||
         legendRef.current?.contains(target)
       ) {
         return;
@@ -381,8 +390,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       // Hide bottom-right “© OpenStreetMap contributors” label on the map
       attributionControl: false,
     });
-
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
 
@@ -1605,6 +1612,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       >
         <Globe className="w-4 h-4" />
       </button>
+      <button
+        type="button"
+        ref={map3DToggleRef}
+        onClick={handleToggle3D}
+        className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${mapStyle === '3d' ? 'bg-slate-950/90 accent-text accent-border' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+        title="3D"
+        id="btn-3d-toggle"
+      >
+        <Box className="w-4 h-4" />
+      </button>
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
       {isToolbarOpen && (
@@ -1732,7 +1749,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <div
         ref={legendRef}
         id="map-legend-card"
-        className={`absolute bottom-6 left-6 z-[1000] max-w-xs sm:w-80 bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out transform ${
+        className={`absolute bottom-6 left-6 z-[1400] max-w-xs sm:w-80 bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ease-out transform ${
           showLegend
             ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
@@ -1839,7 +1856,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Active Highway GIS Info Card */}
       {activeHighwayInfo && (
-        <div className="absolute bottom-6 left-6 z-[1000] max-w-md w-[calc(100%-3rem)] bg-slate-950/95 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl p-4 text-white animate-fadeIn">
+        <div className="absolute bottom-6 left-6 z-[1400] max-w-md w-[calc(100%-3rem)] bg-slate-950/95 backdrop-blur-md border border-slate-700/80 rounded-2xl shadow-2xl p-4 text-white animate-fadeIn">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start space-x-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-600/40 flex flex-col items-center justify-center shrink-0">
@@ -1932,6 +1949,29 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           )}
         </div>
       )}
+
+      {/* Custom Zoom Controls — bottom-right, horizontal, right-to-left */}
+      <div className="absolute bottom-4 right-4 z-[1000] flex items-center rounded-lg border border-slate-700/60 bg-slate-950/80 overflow-hidden shadow-lg shadow-black/30">
+        <button
+          type="button"
+          onClick={() => mapInstanceRef.current?.zoomIn()}
+          className="px-3 py-1.5 text-xs text-white hover:bg-slate-700/80 transition-colors"
+          title="Zoom In"
+          aria-label="Zoom In"
+        >
+          +
+        </button>
+        <div className="w-px h-5 bg-slate-700/60" />
+        <button
+          type="button"
+          onClick={() => mapInstanceRef.current?.zoomOut()}
+          className="px-3 py-1.5 text-xs text-white hover:bg-slate-700/80 transition-colors"
+          title="Zoom Out"
+          aria-label="Zoom Out"
+        >
+          −
+        </button>
+      </div>
 
     </div>
   );

@@ -77,10 +77,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'Route Planner',
       subtitle: 'Plan your next trip',
       icon: Compass,
-      color: 'text-emerald-400',
-      activeColor: 'bg-emerald-500 text-slate-950',
-      activeBg: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40',
-      activeIcon: 'bg-emerald-500 text-slate-950',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onNavigateTab('route'); onClose(); },
     },
     {
@@ -88,10 +88,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'My Location',
       subtitle: 'GPS & nearby roads',
       icon: LocateFixed,
-      color: 'text-sky-400',
-      activeColor: 'bg-sky-500 text-slate-950',
-      activeBg: 'bg-sky-500/15 text-sky-300 border border-sky-500/40',
-      activeIcon: 'bg-sky-500 text-slate-950',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenMyLocation(); onClose(); },
     },
     {
@@ -99,10 +99,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: hasActiveRoute ? 'Highway Info' : 'Highway Info',
       subtitle: hasActiveRoute ? 'On your route' : 'Highway directory',
       icon: Route,
-      color: 'text-violet-400',
-      activeColor: 'bg-violet-500 text-white',
-      activeBg: 'bg-violet-500/15 text-violet-300 border border-violet-500/40',
-      activeIcon: 'bg-violet-500 text-white',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenHighwayInfo ? onOpenHighwayInfo() : onNavigateTab('highways'); onClose(); },
     },
     {
@@ -110,10 +110,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'Distance',
       subtitle: 'Exact inter-city highway km',
       icon: Calculator,
-      color: 'text-cyan-400',
-      activeColor: 'bg-cyan-500 text-slate-950',
-      activeBg: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
-      activeIcon: 'bg-cyan-500 text-slate-950',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenDistanceMatrix(); onClose(); },
     },
     {
@@ -121,10 +121,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'Nagdhunga Tunnel Tolls',
       subtitle: 'Vehicle tariffs & bypass rates',
       icon: Coins,
-      color: 'text-amber-400',
-      activeColor: 'bg-amber-500 text-slate-950',
-      activeBg: 'bg-amber-500/15 text-amber-300 border border-amber-500/40',
-      activeIcon: 'bg-amber-500 text-slate-950',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenTollModal(); onClose(); },
     },
     {
@@ -132,10 +132,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'Reports & Hazards',
       subtitle: hasActiveRoute ? 'Route-specific alerts' : 'Road hazard reporting',
       icon: AlertTriangle,
-      color: 'text-rose-400',
-      activeColor: 'bg-rose-500 text-white',
-      activeBg: 'bg-rose-500/15 text-rose-300 border border-rose-500/40',
-      activeIcon: 'bg-rose-500 text-white',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenReportModal(); onClose(); },
     },
     {
@@ -143,10 +143,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       label: 'Offline GIS Bundle',
       subtitle: 'Download for offline use',
       icon: HardDriveDownload,
-      color: 'text-cyan-400',
-      activeColor: 'bg-cyan-500 text-slate-950',
-      activeBg: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/40',
-      activeIcon: 'bg-cyan-500 text-slate-950',
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenOfflineManager(); onClose(); },
     },
   ];
@@ -210,7 +210,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       <span className="text-[9px] text-slate-400 font-normal">{item.subtitle}</span>
                     </div>
                   </div>
-                  <ChevronRight className={`w-3 h-3 ${isActive ? 'text-violet-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                  <ChevronRight className={`w-3 h-3 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
                 </button>
               );
             })}

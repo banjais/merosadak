@@ -29,7 +29,7 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition"
+              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
               title="Back to Main App"
             >
               <ArrowLeft className="w-4 h-4" />

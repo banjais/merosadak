@@ -48,7 +48,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
         <header className="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             {onBack && (
-              <button onClick={onBack} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
+              <button onClick={onBack} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition">
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
@@ -73,7 +73,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition"
+                className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
                 title="Back to Main App"
               >
                 <ArrowLeft className="w-4 h-4" />

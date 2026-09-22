@@ -102,6 +102,15 @@
   border: 1px solid #334155 !important;
   box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.55) !important;
   padding: 2px !important;
+  z-index: 1400 !important;
+}
+
+.leaflet-popup {
+  z-index: 1400 !important;
+}
+
+.leaflet-marker-icon {
+  z-index: 1400 !important;
 }
 
 .leaflet-popup-tip {
