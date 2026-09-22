@@ -27,6 +27,9 @@ const SIMPLIFY_TOLERANCE_KM = 0.05; // ~50m — Douglas-Peucker tolerance for re
 const SNAP_GRID_KM = 0.06;          // ~60m — grid cell used to merge nearby vertices into shared graph nodes
 const CITY_SNAP_MAX_KM = 25;        // snap cities within this distance of a highway node
 const CITY_INJECT_MAX_KM = 80;      // beyond that, inject city node + access edge to nearest highway
+const ENDPOINT_JOIN_MAX_KM = 0.25;   // merge nearby polyline endpoints (~250m) across gaps
+const COMPONENT_JOIN_MAX_KM = 2.0;   // bridge small components to nearest other component
+const JOIN_HWY_IDX = -1;             // synthetic join edges (not a real NH code)
 
 function haversineKm(a, b) {
   const R = 6371;
@@ -266,6 +269,148 @@ function main() {
   }
   console.log(`Cities: ${snappedNear} near-snap, ${injected} injected, ${unsnapped} still missing / ${cities.length}`);
 
+  // ---- automatic endpoint joins (close geometry gaps between surveyed links) ----
+  function nodeDegree(id) {
+    return (adjMap.get(id) || []).length;
+  }
+
+  function collectEndpoints(maxDegree = 1) {
+    const eps = [];
+    for (let id = 0; id < snapper.nodes.length; id++) {
+      if (nodeDegree(id) <= maxDegree) eps.push(id);
+    }
+    return eps;
+  }
+
+  function componentsMap() {
+    const compOf = new Int32Array(snapper.nodes.length).fill(-1);
+    let compCount = 0;
+    for (let start = 0; start < snapper.nodes.length; start++) {
+      if (compOf[start] !== -1) continue;
+      const queue = [start];
+      compOf[start] = compCount;
+      while (queue.length) {
+        const cur = queue.pop();
+        for (const e of adjMap.get(cur) || []) {
+          if (compOf[e.to] === -1) {
+            compOf[e.to] = compCount;
+            queue.push(e.to);
+          }
+        }
+      }
+      compCount++;
+    }
+    const sizes = new Array(compCount).fill(0);
+    for (let id = 0; id < snapper.nodes.length; id++) sizes[compOf[id]]++;
+    return { compOf, compCount, sizes };
+  }
+
+  // Pass 1: join nearby endpoints (degree <= 1) within ENDPOINT_JOIN_MAX_KM
+  let endpointJoins = 0;
+  {
+    const eps = collectEndpoints(1);
+    // spatial grid ~ endpoint join radius
+    const cellKm = Math.max(ENDPOINT_JOIN_MAX_KM, 0.05);
+    const grid = new Map();
+    function cellKey(lat, lng) {
+      return `${Math.round(lat / (cellKm / 110.57))}|${Math.round(lng / (cellKm / (111.32 * Math.cos((lat * Math.PI) / 180))))}`;
+    }
+    for (const id of eps) {
+      const [lat, lng] = snapper.nodes[id];
+      const key = cellKey(lat, lng);
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(id);
+    }
+    const paired = new Set();
+    for (const id of eps) {
+      if (paired.has(id)) continue;
+      const [lat, lng] = snapper.nodes[id];
+      let bestJ = -1;
+      let bestD = Infinity;
+      const gx = Math.round(lat / (cellKm / 110.57));
+      const gy = Math.round(lng / (cellKm / (111.32 * Math.cos((lat * Math.PI) / 180))));
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const bucket = grid.get(`${gx + dx}|${gy + dy}`);
+          if (!bucket) continue;
+          for (const j of bucket) {
+            if (j <= id || paired.has(j)) continue;
+            // already connected?
+            if ((adjMap.get(id) || []).some((e) => e.to === j)) continue;
+            const d = haversineKm(snapper.nodes[id], snapper.nodes[j]);
+            if (d < bestD && d > 0 && d <= ENDPOINT_JOIN_MAX_KM) {
+              bestD = d;
+              bestJ = j;
+            }
+          }
+        }
+      }
+      if (bestJ >= 0) {
+        addEdge(id, bestJ, bestD, JOIN_HWY_IDX);
+        paired.add(id);
+        paired.add(bestJ);
+        endpointJoins++;
+      }
+    }
+  }
+  console.log(`Endpoint joins (<= ${ENDPOINT_JOIN_MAX_KM} km): ${endpointJoins}`);
+
+  // Pass 2: bridge small components to nearest foreign node (grid-accelerated)
+  let componentBridges = 0;
+  {
+    const { compOf, compCount, sizes } = componentsMap();
+    let giantComp = 0;
+    for (let c = 1; c < compCount; c++) if (sizes[c] > sizes[giantComp]) giantComp = c;
+
+    const nodesByComp = Array.from({ length: compCount }, () => []);
+    for (let id = 0; id < snapper.nodes.length; id++) nodesByComp[compOf[id]].push(id);
+
+    // Spatial grid of all nodes for neighbor queries
+    const cellKm = Math.max(COMPONENT_JOIN_MAX_KM / 2, 0.25);
+    const grid = new Map();
+    function cellKey(lat, lng) {
+      return `${Math.round(lat / (cellKm / 110.57))}|${Math.round(lng / (cellKm / (111.32 * Math.cos((lat * Math.PI) / 180))))}`;
+    }
+    for (let id = 0; id < snapper.nodes.length; id++) {
+      const [lat, lng] = snapper.nodes[id];
+      const key = cellKey(lat, lng);
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(id);
+    }
+    const cellSpan = Math.ceil(COMPONENT_JOIN_MAX_KM / cellKm) + 1;
+
+    for (let c = 0; c < compCount; c++) {
+      if (c === giantComp) continue;
+      if (sizes[c] < 2) continue;
+      const local = nodesByComp[c].filter((id) => nodeDegree(id) <= 2);
+      const seeds = local.length ? local : nodesByComp[c];
+      let best = null;
+      for (const id of seeds) {
+        const [lat, lng] = snapper.nodes[id];
+        const gx = Math.round(lat / (cellKm / 110.57));
+        const gy = Math.round(lng / (cellKm / (111.32 * Math.cos((lat * Math.PI) / 180))));
+        for (let dx = -cellSpan; dx <= cellSpan; dx++) {
+          for (let dy = -cellSpan; dy <= cellSpan; dy++) {
+            const bucket = grid.get(`${gx + dx}|${gy + dy}`);
+            if (!bucket) continue;
+            for (const j of bucket) {
+              if (compOf[j] === c) continue;
+              const d = haversineKm(snapper.nodes[id], snapper.nodes[j]);
+              if (d > 0 && d <= COMPONENT_JOIN_MAX_KM && (!best || d < best.d)) {
+                best = { from: id, to: j, d };
+              }
+            }
+          }
+        }
+      }
+      if (best) {
+        addEdge(best.from, best.to, best.d, JOIN_HWY_IDX);
+        componentBridges++;
+      }
+    }
+  }
+  console.log(`Component bridges (<= ${COMPONENT_JOIN_MAX_KM} km): ${componentBridges}`);
+
   // ---- connectivity check (BFS from node 0's component sizes not needed; check how many cities share the giant component) ----
   const visited = new Uint8Array(snapper.nodes.length);
   function bfsSize(start) {
@@ -324,6 +469,10 @@ function main() {
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
       distanceBasis: 'DoR official chainage (link_len) per survey link, Department of Roads, Government of Nepal',
       totalOfficialChainageKm: Math.round(totalOfficialKm),
+      endpointJoins,
+      componentBridges,
+      endpointJoinMaxKm: ENDPOINT_JOIN_MAX_KM,
+      componentJoinMaxKm: COMPONENT_JOIN_MAX_KM,
     },
   };
 
