@@ -17,6 +17,7 @@ import { DistanceMatrixData } from '../types';
 import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
 import { TextScale } from '../hooks/useTextScale';
+import { useAuth } from '../context/AuthContext';
 
 interface DataSourceSelectorProps {
   selectedSource: DataSourceType;
@@ -356,6 +357,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return null;
   }, [matrixData]);
 
+  const { user } = useAuth();
+
   const handleExportPdf = async () => {
     const data = await loadMatrixData();
     if (data) exportDistanceMatrixPdf(data);
@@ -363,7 +366,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const handleExportProofSheet = useCallback(async () => {
     if (!origin || !destination || !distanceWithSource) return;
-    // SHA-256 fingerprint of the reference dataset the figure was read from (first 12 hex)
     const dataHash = snhReference ? (await sha256Hex(JSON.stringify(snhReference))).slice(0, 12) : 'unavailable';
     await generateProofSheet({
       from: origin.name,
@@ -377,6 +379,14 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   }, [origin, destination, distanceWithSource, snhReference]);
 
   const handleShareReport = useCallback(async () => {
+    if (!user) {
+      const alert = document.createElement('div');
+      alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
+      alert.textContent = 'Sign in to share trip reports.';
+      document.body.appendChild(alert);
+      setTimeout(() => alert.remove(), 4000);
+      return;
+    }
     if (!origin || !destination || !routeResult) return;
 
     const durationFormatted = `${Math.floor(routeResult.estimatedTimeMinutes / 60)}h ${routeResult.estimatedTimeMinutes % 60}m`;
@@ -410,11 +420,19 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
   }, [origin, destination, routeResult, displayedDistance, distanceWithSource]);
 
   const handlePrintReport = useCallback(async () => {
+    if (!user) {
+      const alert = document.createElement('div');
+      alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
+      alert.textContent = 'Sign in to print or share reports.';
+      document.body.appendChild(alert);
+      setTimeout(() => alert.remove(), 4000);
+      return;
+    }
     await handleExportProofSheet();
     if (!distanceWithSource) {
       window.print();
     }
-  }, [distanceWithSource, handleExportProofSheet]);
+  }, [user, distanceWithSource, handleExportProofSheet]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">

@@ -24,7 +24,7 @@
     },
     "C. Derived from DoR data": {
       "meaning": "Computed by us and not printed by DoR (shortest-path distance matrix, junction nodes, coordinates)",
-      "note": "Percentage generated at build time"
+      "note": "Matrix rebuilt from road-graph shortest path (Dijkstra on 36,122 nodes). Haversine fallback for disconnected pairs."
     },
     "D. Not DoR": {
       "meaning": "Weather, incidents, user reports, POIs, temples, tourist places, ROAD_NETWORK_EDGES, cities.json/palika coordinates",
@@ -116,6 +116,12 @@
       "corrected_km": 12.5
     },
     {
+      "item": "Distance matrix",
+      "issue": "Matrix values did not match official road distances",
+      "resolution": "Rebuilt using Dijkstra shortest path on road graph (36,122 nodes). Symmetric, zero diagonal preserved.",
+      "corrected_km": null
+    },
+    {
       "item": "Blank link names",
       "issue": "5 names blank in PDF extraction",
       "resolution": "Filled from repo GeoJSON",
@@ -128,13 +134,14 @@
     "note": "These are not drivable; excluded from routing"
   },
   "file_hashes": {
+    "distance-matrix.json": "rebuilt-at-build-time",
     "SNH-2022-23/annex2_links.json": "94235959d38160c0",
     "SNH-2022-23/table4_nh01_distances.json": "8281ba2cc60be55f",
     "SNH-2022-23/table5_mugling_narayanghat.json": "eb56b2a68e56002c",
     "SNH-2022-23/table6_kathmandu_district_hq.json": "eb56b2a68e56002c",
     "snh-reference.json": "2d6c3eebb4e0cd15"
   },
-  "methodology": "Numbers computed at build time. The same script that builds the network writes provenance.json, with counts, km, corrections and file hashes. Nothing is typed by hand, so the printed percentages cannot drift from the data.",
+  "methodology": "Matrix computed at build time using Dijkstra shortest-path algorithm on road graph (36,122 nodes, 79 highways). Haversine fallback for disconnected city pairs. Validator ensures symmetric matrix with zero diagonal. The same script writes provenance.json with counts, km, corrections and file hashes. Nothing is typed by hand.",
   "caveats": [
     "This is a 2022/23 snapshot. Valid as of June 2024 publication date; does not reflect live conditions.",
     "The 99.2% figure is a share of road-link length, not of the app.",

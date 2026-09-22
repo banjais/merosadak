@@ -168,5 +168,10 @@ export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
     }
   }
 
-  doc.save('merosadak-distance-matrix-a4.pdf');
+  try {
+    doc.save('merosadak-distance-matrix-a4.pdf');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[Mero Sadak] Matrix PDF export failed:', message);
+  }
 }

@@ -363,7 +363,17 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
 }
 
 export async function generateProofSheet(data: ProofSheetData): Promise<void> {
-  const { doc, claim } = await buildProofSheet(data);
-  const safe = (s: string) => s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  doc.save(`merosadak-proof-${safe(data.from)}-${safe(data.to)}-${proofId(claim)}.pdf`);
+  try {
+    const { doc, claim } = await buildProofSheet(data);
+    const safe = (s: string) => s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    doc.save(`merosadak-proof-${safe(data.from)}-${safe(data.to)}-${proofId(claim)}.pdf`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[Mero Sadak] Proof sheet PDF export failed:', message);
+    const alert = document.createElement('div');
+    alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-red-900/95 text-red-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
+    alert.textContent = 'PDF export failed. Try Print instead, or check your browser download settings.';
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+  }
 }
