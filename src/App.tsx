@@ -787,6 +787,7 @@ function AppContent() {
           <InteractiveMap
             activeRoute={activeRoute}
             isDimmed={false}
+          isAppReady={isAppReady}
             onSelectAlternativeRoute={(altRoute) => setActiveRoute(altRoute)}
             onSelectCity={handleSelectCityOnMap}
             focusedTarget={focusedTarget}

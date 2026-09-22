@@ -74,6 +74,7 @@ interface InteractiveMapProps {
   livePOIs?: HighwayPOI[];
   liveTrafficCorridors?: TrafficCorridor[];
   isDimmed?: boolean;
+  isAppReady?: boolean;
 }
 
 export type ActiveMapOverlayLayer =
@@ -178,6 +179,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   livePOIs,
   liveTrafficCorridors,
   isDimmed,
+  isAppReady,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -421,6 +423,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       markerRef.current = null;
     };
   }, []);
+
+  // Re-size map immediately when splash screen dismisses
+  useEffect(() => {
+    if (!isAppReady) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.invalidateSize();
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [isAppReady]);
 
   const placeGpsMarker = useCallback((latLng: L.LatLngExpression) => {
     const map = mapInstanceRef.current;
