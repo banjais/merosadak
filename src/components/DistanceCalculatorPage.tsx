@@ -9,7 +9,7 @@ import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2 } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2, X } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
@@ -187,11 +187,9 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     function handleCloseOnOutsideClick(event: MouseEvent) {
       if (originSearchRef.current && !originSearchRef.current.contains(event.target as Node)) {
         setOriginDropdownOpen(false);
-        setOriginSearch(origin?.name ?? '');
       }
       if (destSearchRef.current && !destSearchRef.current.contains(event.target as Node)) {
         setDestDropdownOpen(false);
-        setDestSearch(destination?.name ?? '');
       }
     }
 
@@ -478,8 +476,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               onTextScaleChange={onTextScaleChange}
               accentColor={accentColor}
               onAccentColorChange={onAccentColorChange}
-            />
-          </div>
+                    />
+                    {originSearch && originId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOriginSearch(''); setOriginId(''); setOriginDropdownOpen(false); }}
+                        className="absolute right-10 top-1/2 -translate-y-1/2 p-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                        title="Clear origin"
+                        type="button"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
         </div>
       </header>
 
@@ -519,7 +527,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                     <input
                       type="text"
                       ref={originInputRef}
-                      value={originSearch || (origin?.name ?? '')}
+                      value={originSearch}
                       onChange={(event) => {
                         setOriginSearch(event.target.value);
                         setOriginDropdownOpen(true);
@@ -530,8 +538,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                       }}
                       placeholder="Search origin..."
                       autoComplete="off"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                       className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                     />
+                    {originSearch && originId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOriginSearch(''); setOriginId(''); setOriginDropdownOpen(false); }}
+                        className="absolute right-10 top-1/2 -translate-y-1/2 p-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                        title="Clear origin"
+                        type="button"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                   {originDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-64 overflow-y-auto space-y-1">
@@ -592,7 +610,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                     <input
                       ref={destInputRef}
                       type="text"
-                      value={destSearch || (destination?.name ?? '')}
+                      value={destSearch}
                       onChange={(event) => {
                         setDestSearch(event.target.value);
                         setDestDropdownOpen(true);
@@ -603,8 +621,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                       }}
                       placeholder="Search destination..."
                       autoComplete="off"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                       className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                     />
+                    {destSearch && destId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDestSearch(''); setDestId(''); setDestDropdownOpen(false); }}
+                        className="absolute right-10 top-1/2 -translate-y-1/2 p-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                        title="Clear destination"
+                        type="button"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                   {destDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-64 overflow-y-auto space-y-1">

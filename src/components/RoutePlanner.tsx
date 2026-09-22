@@ -400,11 +400,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       }
       if (originSearchRef.current && !originSearchRef.current.contains(e.target as Node)) {
         setIsOriginDropdownOpen(false);
-        setOriginSearchQuery(originCity?.name ?? '');
       }
       if (destSearchRef.current && !destSearchRef.current.contains(e.target as Node)) {
         setIsDestDropdownOpen(false);
-        setDestSearchQuery(destCity?.name ?? '');
       }
        if (locationMenuRef.current && !locationMenuRef.current.contains(e.target as Node)) {
          setIsLocationMenuOpen(false);
@@ -864,7 +862,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
-   // Toggle detail module tabs — click the active tab to close it, click a
+  const handleClearOrigin = () => {
+    setOriginId('');
+    setOriginSearchQuery('');
+    setOriginSelected(false);
+    setIsOriginDropdownOpen(false);
+    if (hasCalculated) setNeedsRecalculation(true);
+  };
+
+  const handleClearDestination = () => {
+    setDestId('');
+    setDestSearchQuery('');
+    setSingleSearchQuery('');
+    setUserPickedDestination(false);
+    setIsDestDropdownOpen(false);
+    if (hasCalculated) setNeedsRecalculation(true);
+  };
+
+  // Toggle detail module tabs — click the active tab to close it, click a
    // different tab to switch straight to it.
   const handleToggleModuleTab = (tab: DetailModuleTab) => {
     setActiveModuleTab((prev) => (prev === tab ? 'none' : tab));
@@ -1107,6 +1122,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
               {/* Functional Microphone and AI Icon Action Buttons */}
               <div className="absolute right-2 flex items-center space-x-1.5">
+                {singleSearchQuery && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSingleSearchQuery(''); }}
+                    className="p-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                    title="Clear"
+                    type="button"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {/* Microphone Button */}
                 <button
                   onClick={() => startVoiceRecognition('single')}
@@ -1213,6 +1238,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 >
                   <Mic className="w-3.5 h-3.5" />
                 </button>
+                {(originSearchQuery || originId) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleClearOrigin(); }}
+                    className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                    title="Clear origin"
+                    type="button"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
 
               {isOriginDropdownOpen && (
@@ -1294,6 +1329,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 >
                   <Mic className="w-3.5 h-3.5" />
                 </button>
+                {(destSearchQuery || destId) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleClearDestination(); }}
+                    className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                    title="Clear destination"
+                    type="button"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
 
               {isDestDropdownOpen && (
