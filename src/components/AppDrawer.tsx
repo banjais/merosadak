@@ -12,6 +12,7 @@ import {
   HardDriveDownload,
   ChevronRight,
   FileText,
+  LocateFixed,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -33,6 +34,7 @@ interface AppDrawerProps {
   onOpenOfflineManager: () => void;
   onOpenLogin: () => void;
   onOpenHighwayInfo?: () => void;
+  onOpenMyLocation: () => void;
   incidentsCount?: number;
   hasActiveRoute?: boolean;
   routeLabel?: string | null;
@@ -57,6 +59,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenOfflineManager,
   onOpenLogin,
   onOpenHighwayInfo,
+  onOpenMyLocation,
   incidentsCount = 0,
   hasActiveRoute = false,
   routeLabel = null,
@@ -79,6 +82,17 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeBg: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40',
       activeIcon: 'bg-emerald-500 text-slate-950',
       onClick: () => { onNavigateTab('route'); onClose(); },
+    },
+    {
+      id: 'myLocation',
+      label: 'My Location',
+      subtitle: 'GPS & nearby roads',
+      icon: LocateFixed,
+      color: 'text-sky-400',
+      activeColor: 'bg-sky-500 text-slate-950',
+      activeBg: 'bg-sky-500/15 text-sky-300 border border-sky-500/40',
+      activeIcon: 'bg-sky-500 text-slate-950',
+      onClick: () => { onOpenMyLocation(); onClose(); },
     },
     {
       id: 'highways',

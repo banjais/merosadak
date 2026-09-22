@@ -9,6 +9,7 @@ import { RoadReportModal } from './components/RoadReportModal';
 import { DistanceMatrixModal } from './components/DistanceMatrixModal';
 import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
 import { DataSourcesPage } from './components/DataSourcesPage';
+import { MyLocationPage } from './components/MyLocationPage';
 import { ProofVerifyPage } from './components/ProofVerifyPage';
 import { parseProofFromSearch, ProofClaim } from './utils/proofLinks';
 import { PullToRefresh } from './components/PullToRefresh';
@@ -102,6 +103,7 @@ function AppContent() {
   const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [isMapFull, setIsMapFull] = useState(false);
   const [isHighwayInfoOpen, setIsHighwayInfoOpen] = useState(false);
+  const [isMyLocationOpen, setIsMyLocationOpen] = useState(false);
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
@@ -477,6 +479,7 @@ function AppContent() {
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenOfflineManager={() => setIsOfflineManagerOpen(true)}
         onOpenLogin={() => setIsLoginModalOpen(true)}
+        onOpenMyLocation={() => setIsMyLocationOpen(true)}
         incidentsCount={incidents.length}
         hasActiveRoute={!!activeRoute}
         routeLabel={activeRoute ? `${activeRoute.origin.name} → ${activeRoute.destination.name}` : null}
@@ -725,6 +728,11 @@ function AppContent() {
       {/* Data Sources Page - Full Page View */}
       {proofClaim && <ProofVerifyPage claim={proofClaim} onClose={() => setProofClaim(null)} />}
 
+      {/* My Location Page - Full Page View */}
+      {isMyLocationOpen && (
+        <MyLocationPage onBack={() => setIsMyLocationOpen(false)} />
+      )}
+
       {isDataSourcesOpen && (
         <DataSourcesPage
           onBack={() => setIsDataSourcesOpen(false)}
@@ -803,6 +811,7 @@ function AppContent() {
           isAppReady={isAppReady}
             onSelectAlternativeRoute={(altRoute) => setActiveRoute(altRoute)}
             onSelectCity={handleSelectCityOnMap}
+            onMyLocationMoreInfo={() => setIsMyLocationOpen(true)}
             focusedTarget={focusedTarget}
             weatherNodes={weatherNodes}
             onSelectWeatherNode={handleSelectWeatherNode}

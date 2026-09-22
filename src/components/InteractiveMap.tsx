@@ -76,6 +76,7 @@ interface InteractiveMapProps {
   liveTrafficCorridors?: TrafficCorridor[];
   isDimmed?: boolean;
   isAppReady?: boolean;
+  onMyLocationMoreInfo?: () => void;
 }
 
 export type ActiveMapOverlayLayer =
@@ -187,6 +188,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   liveTrafficCorridors,
   isDimmed,
   isAppReady,
+  onMyLocationMoreInfo,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -1496,12 +1498,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const handleChangeLocation = () => {
     setIsLocationDropdownOpen(false);
-    setGpsDetected(false);
-    setGpsCoords(null);
-    if (markerRef.current && mapInstanceRef.current) {
-      mapInstanceRef.current.removeLayer(markerRef.current);
-      markerRef.current = null;
-    }
+    onMyLocationMoreInfo?.();
   };
 
   return (
@@ -1547,7 +1544,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-xs font-bold text-amber-300 hover:bg-slate-800 border border-transparent hover:border-amber-500/50 transition"
             >
               <MapPin className="w-4 h-4 shrink-0" />
-              <span>Change</span>
+              <span>More Info</span>
             </button>
           </div>
         )}
