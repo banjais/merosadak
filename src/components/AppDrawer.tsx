@@ -207,7 +207,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-slate-300 truncate">Nepal DoR GIS</span>
+              <span className="text-[11px] font-medium text-slate-300 truncate">Nepal Department of Roads GIS</span>
             </div>
             {loading ? (
               <span className="text-[10px] text-slate-500 shrink-0">Authenticating...</span>
