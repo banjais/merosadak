@@ -6,7 +6,7 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
+import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, computeLinkSumDistance, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
 import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2, X } from 'lucide-react';
@@ -42,21 +42,15 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
   const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
     {
       value: 'snh_published',
-      label: 'SNH Published',
+      label: 'SNH 2022/23',
       url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'Official DoR published distances from Statistics of National Highway 2022/23',
+      description: 'DoR Statistics of National Highway — published table distances',
     },
     {
       value: 'dor_geojson_linksum',
-      label: 'GeoJSON Link-Sum',
-      url: 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement',
-      description: 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON',
-    },
-    {
-      value: 'estimate_aerial',
-      label: 'Aerial Estimate',
+      label: 'Highway network',
       url: '',
-      description: 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.',
+      description: 'Road length on the DoR highway graph / GeoJSON network (verified nodes)',
     },
   ];
 
@@ -251,7 +245,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const handleDataSourceChange = (source: DataSourceType) => {
     setSelectedDataSource(source);
-    if (!origin || !destination || !snhReference || !distanceWithSource) return;
+    if (!origin || !destination) return;
 
     if (source === 'snh_published') {
       const pub = lookupSNHDistance(origin.name, destination.name, snhReference);
@@ -264,22 +258,48 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
           linkChain: pub.linkChain,
           publishedDistanceKm: pub.publishedDistanceKm,
         });
+      } else {
+        // Keep selection; show no published figure for this pair
+        setDistanceWithSource(null);
       }
-    } else if (source === 'estimate_aerial') {
-      if (origin.lat && destination.lat) {
-        const est = lookupDistanceWithFallback(
-          origin.name,
-          destination.name,
-          origin.lat,
-          origin.lng,
-          destination.lat,
-          destination.lng,
-          snhReference
-        );
-        if (est) {
-          setDistanceWithSource({ distanceKm: est.distanceKm, evidenceLevel: 'estimate', source: 'estimate_aerial', citation: est.citation, isUncertain: est.isUncertain });
-        }
+      return;
+    }
+
+    if (source === 'dor_geojson_linksum') {
+      // Prefer live highway graph route km, then SNH link-chain sum
+      const graphKm = routeResult?.totalDistanceKm;
+      const certified = routeResult?.roadTierBreakdown?.certifiedPercent ?? 0;
+      const isAerialRoute =
+        routeResult?.routeBadge?.includes('Approximate') ||
+        routeResult?.routeName?.toLowerCase().includes('aerial') ||
+        certified <= 0;
+
+      if (graphKm && graphKm > 0 && !isAerialRoute) {
+        setDistanceWithSource({
+          distanceKm: graphKm,
+          evidenceLevel: 'link_sum',
+          source: 'dor_geojson_linksum',
+          note: 'Distance along DoR highway network graph',
+        });
+        return;
       }
+
+      const linkSum = computeLinkSumDistance(origin.name, destination.name, snhReference);
+      if (linkSum && linkSum.distanceKm > 0) {
+        setDistanceWithSource({
+          distanceKm: linkSum.distanceKm,
+          evidenceLevel: 'link_sum',
+          source: 'dor_geojson_linksum',
+          citation: linkSum.citation,
+          linkChain: linkSum.linkChain,
+          isUncertain: linkSum.isUncertain,
+          note: linkSum.note,
+          publishedDistanceKm: linkSum.publishedDistanceKm,
+        });
+        return;
+      }
+
+      setDistanceWithSource(null);
     }
   };
 
