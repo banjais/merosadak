@@ -25,7 +25,8 @@ const OUT_FILE = path.join(__dirname, '..', 'public', 'data', 'road-graph.json')
 // ---- tunables ----
 const SIMPLIFY_TOLERANCE_KM = 0.05; // ~50m — Douglas-Peucker tolerance for rendering
 const SNAP_GRID_KM = 0.06;          // ~60m — grid cell used to merge nearby vertices into shared graph nodes
-const CITY_SNAP_MAX_KM = 8;         // don't snap a city onto a highway more than this far away
+const CITY_SNAP_MAX_KM = 25;        // snap cities within this distance of a highway node
+const CITY_INJECT_MAX_KM = 80;      // beyond that, inject city node + access edge to nearest highway
 
 function haversineKm(a, b) {
   const R = 6371;
@@ -230,9 +231,11 @@ function main() {
   console.log(`Total network length — DoR official chainage (link_len) basis: ${totalOfficialKm.toFixed(0)} km`);
   console.log(`Total network length — as stored in graph edges (should match, scaled): ${totalChainKm.toFixed(0)} km`);
 
-  // ---- snap cities ----
+  // ---- snap cities (or inject missing nodes onto nearest highway) ----
   const cities = loadCityNodes();
   const citySnap = {};
+  let snappedNear = 0;
+  let injected = 0;
   let unsnapped = 0;
   for (const city of cities) {
     let bestId = -1;
@@ -246,12 +249,22 @@ function main() {
     }
     if (bestId >= 0 && bestDist <= CITY_SNAP_MAX_KM) {
       citySnap[city.id] = bestId;
+      snappedNear++;
+    } else if (bestId >= 0 && bestDist <= CITY_INJECT_MAX_KM) {
+      // Add an explicit graph node at the city and connect to nearest highway node
+      const cityNodeId = snapper.nodes.length;
+      snapper.nodes.push([city.lat, city.lng]);
+      const accessKm = Math.round(bestDist * 1000) / 1000;
+      addEdge(cityNodeId, bestId, accessKm, 0);
+      citySnap[city.id] = cityNodeId;
+      injected++;
+      console.log(`  city ${city.id} injected @ ${accessKm}km access → node ${bestId}`);
     } else {
       unsnapped++;
-      console.warn(`  city ${city.id} unsnapped (nearest ${bestDist.toFixed(1)}km)`);
+      console.warn(`  city ${city.id} unsnapped (nearest ${bestDist === Infinity ? 'n/a' : bestDist.toFixed(1)}km)`);
     }
   }
-  console.log(`Cities snapped: ${cities.length - unsnapped}/${cities.length}`);
+  console.log(`Cities: ${snappedNear} near-snap, ${injected} injected, ${unsnapped} still missing / ${cities.length}`);
 
   // ---- connectivity check (BFS from node 0's component sizes not needed; check how many cities share the giant component) ----
   const visited = new Uint8Array(snapper.nodes.length);
@@ -305,7 +318,7 @@ function main() {
       generatedAt: new Date().toISOString(),
       files: files.length,
       nodeCount: snapper.nodes.length,
-      citiesSnapped: cities.length - unsnapped,
+      citiesSnapped: Object.keys(citySnap).length,
       citiesTotal: cities.length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
