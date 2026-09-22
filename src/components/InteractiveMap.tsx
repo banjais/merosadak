@@ -234,7 +234,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const toolbarContainerRef = useRef<HTMLDivElement>(null);
   const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
   const mapStyleContainerRef = useRef<HTMLDivElement>(null);
-  const map3DToggleRef = useRef<HTMLButtonElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
 
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -286,13 +285,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setIsLocationDropdownOpen(false);
   };
 
-  const handleToggle3D = () => {
-    setMapStyle('3d');
-    setShowMapStyle(false);
-    closeLayerToolbar();
-    setIsLocationDropdownOpen(false);
-  };
-
   // Close all floating map controls (toolbar, layers, legend, map style selector, location dropdown)
   const closeAllMapControls = () => {
     closeLayerToolbar();
@@ -311,7 +303,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         toolbarContainerRef.current?.contains(target) ||
         mapStyleToggleRef.current?.contains(target) ||
         mapStyleContainerRef.current?.contains(target) ||
-        map3DToggleRef.current?.contains(target) ||
         legendRef.current?.contains(target)
       ) {
         return;
@@ -1611,16 +1602,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         id="btn-map-style-toggle"
       >
         <Globe className="w-4 h-4" />
-      </button>
-      <button
-        type="button"
-        ref={map3DToggleRef}
-        onClick={handleToggle3D}
-        className={`absolute top-14 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${mapStyle === '3d' ? 'bg-slate-950/90 accent-text accent-border' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
-        title="3D"
-        id="btn-3d-toggle"
-      >
-        <Box className="w-4 h-4" />
       </button>
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
