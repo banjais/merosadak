@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   MapPin,
   ZoomIn,
+  ZoomOut,
   RefreshCw,
   Activity,
   Eye,
@@ -559,7 +560,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const highwaysGroup = layersRef.current.highways;
     highwaysGroup.clearLayers();
 
-    if (activeLayer === 'none') return;
+    if (activeLayer !== 'highways') return;
 
     highwaysList.forEach((highway) => {
       const isSelected = activeHighwayInfo?.code === highway.code;
@@ -1310,7 +1311,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Map Style Selector */}
       {showMapStyle && (
-        <div ref={mapStyleContainerRef} className="absolute top-3 right-28 z-[1000] flex flex-col bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl p-1 shadow-2xl shadow-black/50 animate-fadeIn">
+        <div ref={mapStyleContainerRef} className="absolute top-14 right-28 z-[1000] flex flex-col bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl p-1 shadow-2xl shadow-black/50 animate-fadeIn">
           <button
             type="button"
             onClick={() => { setMapStyle('standard'); setShowMapStyle(false); }}
@@ -1354,6 +1355,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         id="btn-map-style-toggle"
       >
         <Globe className="w-4 h-4" />
+      </button>
+
+      {/* Zoom Controls - at top, left of Map Style button */}
+      <button
+        type="button"
+        onClick={() => mapInstanceRef.current?.zoomOut()}
+        className="absolute top-3 right-[9.5rem] z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+        title="Zoom Out"
+      >
+        <ZoomOut className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => mapInstanceRef.current?.zoomIn()}
+        className="absolute top-3 right-[12rem] z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+        title="Zoom In"
+      >
+        <ZoomIn className="w-4 h-4" />
       </button>
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
