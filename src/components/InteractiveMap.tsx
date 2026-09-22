@@ -397,8 +397,25 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.invalidateSize();
     }, 500);
 
+    const splashTimer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 4500);
+
+    const resizeObs = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    resizeObs.observe(mapContainerRef.current);
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(splashTimer);
+      resizeObs.disconnect();
+      window.removeEventListener('resize', handleResize);
       map.remove();
       mapInstanceRef.current = null;
       markerRef.current = null;
