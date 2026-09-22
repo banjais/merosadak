@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
-import { loadExpandedCities } from '../utils/cityDataLoader';
 import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Award, Route, Database, Clock, ExternalLink } from 'lucide-react';
 
 interface DistanceCalculatorProps {
@@ -17,31 +16,29 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
   const [originSearch, setOriginSearch] = useState<string>('');
   const [destSearch, setDestSearch] = useState<string>('');
-  const [allCities, setAllCities] = useState<CityNode[]>(CITIES_AND_JUNCTIONS);
-
-  useEffect(() => {
-    loadExpandedCities().then(setAllCities);
-  }, []);
+  // Distance Calculator = DoR highway graph only (verified nodes).
+  // Trip planner may use expanded / mixed places; this tool does not.
+  const verifiedCities = CITIES_AND_JUNCTIONS;
+  const allCities = verifiedCities;
 
   const origin = originId ? allCities.find((c) => c.id === originId) : undefined;
   const destination = destId ? allCities.find((c) => c.id === destId) : undefined;
 
   const normalizedOriginSearch = originSearch.trim().toLowerCase();
   const normalizedDestSearch = destSearch.trim().toLowerCase();
-  const filteredOriginCities = normalizedOriginSearch
-    ? allCities.filter((city) =>
-        city.name.toLowerCase().includes(normalizedOriginSearch) ||
-        city.district.toLowerCase().includes(normalizedOriginSearch) ||
-        city.nepaliName.includes(originSearch.trim())
-      ).slice(0, 20)
-    : [];
-  const filteredDestCities = normalizedDestSearch
-    ? allCities.filter((city) =>
-        city.name.toLowerCase().includes(normalizedDestSearch) ||
-        city.district.toLowerCase().includes(normalizedDestSearch) ||
-        city.nepaliName.includes(destSearch.trim())
-      ).slice(0, 20)
-    : [];
+  const filterVerified = (q: string, raw: string) =>
+    q
+      ? allCities
+          .filter(
+            (city) =>
+              city.name.toLowerCase().includes(q) ||
+              city.district.toLowerCase().includes(q) ||
+              city.nepaliName.includes(raw)
+          )
+          .slice(0, 25)
+      : [];
+  const filteredOriginCities = filterVerified(normalizedOriginSearch, originSearch.trim());
+  const filteredDestCities = filterVerified(normalizedDestSearch, destSearch.trim());
 
   const swapCities = () => {
     const temp = originId;
@@ -53,9 +50,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     const originCity = allCities.find((c) => c.id === originId);
     const destCity = allCities.find((c) => c.id === destId);
     if (!originCity || !destCity) return null;
-    // Pass the user-selected cities; findOptimizedRoute snaps for pathfinding
-    // but keeps these names on the report.
-    return findOptimizedRoute(
+    const result = findOptimizedRoute(
       originCity.id,
       destCity.id,
       'fastest',
@@ -64,7 +59,18 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
       originCity,
       destCity
     );
+    // Verified only: reject aerial / non-network approximations
+    if (!result) return null;
+    const certified = result.roadTierBreakdown?.certifiedPercent ?? 0;
+    const isAerial =
+      result.routeBadge?.includes('Approximate') ||
+      result.routeName?.toLowerCase().includes('aerial') ||
+      certified <= 0;
+    if (isAerial) return null;
+    return result;
   })() : null;
+  const verifiedPairMissing =
+    !!(originId && destId && originId !== destId && origin && destination && !routeResult);
   const aerialDistance = origin && destination ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) : 0;
 
   const keyHubs = CITIES_AND_JUNCTIONS.filter((c) => c.isMajorHub);
@@ -73,6 +79,14 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     <div className="space-y-6">
       {/* Interactive Pair Calculator Card */}
       <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 font-bold text-emerald-300">
+            DoR verified only
+          </span>
+          <span className="text-slate-400">
+            {allCities.length} highway nodes · road length from official network graph
+          </span>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           {/* Origin Selector - Dropdown Button */}
           <div className="md:col-span-5 space-y-1.5 relative">
@@ -219,7 +233,17 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
         </div>
 
         {/* Calculation Result Display */}
-        {routeResult ? (
+        {
+        {verifiedPairMissing && (
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            <p className="font-bold">No verified highway route</p>
+            <p className="mt-1 text-xs text-amber-200/90">
+              These two points are not linked on the DoR network graph used here.
+              Use <span className="font-semibold">Trip planner</span> for mixed places, or pick another pair from the verified list.
+            </p>
+          </div>
+        )}
+routeResult ? (
           <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div className="flex items-center space-x-3">
@@ -507,7 +531,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold text-white">Nepal Major Hubs Distance Matrix (km)</h3>
-            <p className="text-xs text-slate-400">Search {allCities.length} places. Click any cell to load the calculation instantly into the calculator.</p>
+            <p className="text-xs text-slate-400">DoR nodes only. Click a cell to load into the calculator.</p>
           </div>
           <input
             type="text"
