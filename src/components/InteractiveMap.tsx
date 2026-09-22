@@ -1064,29 +1064,28 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       }
 
       const iconHtml = `
-        <div class="relative flex flex-col items-center group cursor-pointer transition-transform" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
+        <div class="relative flex flex-col items-center cursor-pointer" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));">
           ${
             isSelected
-              ? '<div class="absolute -inset-2 rounded-2xl bg-cyan-400/40 animate-ping pointer-events-none"></div>'
+              ? '<div class="absolute -inset-1 rounded-lg bg-cyan-400/35 animate-ping pointer-events-none"></div>'
               : ''
           }
           <div style="background-color: ${badgeBg}; border-color: ${badgeBorderColor};"
-            class="px-2.5 py-1 rounded-xl border-2 backdrop-blur-md flex items-center space-x-1.5 transition-transform transform group-hover:scale-110 shadow-lg ${
-              isSelected ? 'ring-2 ring-cyan-300 scale-105' : ''
+            class="px-1.5 py-0.5 rounded-lg border flex items-center gap-1 backdrop-blur-md shadow-md ${
+              isSelected ? 'ring-1 ring-cyan-300' : ''
             }">
-            <span class="text-xs leading-none">${conditionEmoji}</span>
-            <span class="text-[11px] font-black text-white leading-none">${node.tempC}°C</span>
-            <span class="text-[9px] font-mono text-cyan-300 bg-slate-900/90 px-1.5 py-0.5 rounded leading-none border border-slate-700/80 font-bold">${node.elevationM}m</span>
+            <span class="text-[10px] leading-none">${conditionEmoji}</span>
+            <span class="text-[10px] font-black text-white leading-none tabular-nums">${node.tempC}°</span>
           </div>
-          <div class="w-1.5 h-1.5 rounded-full mt-0.5 shadow-sm" style="background-color: ${badgeBorderColor};"></div>
+          <div class="w-1 h-1 rounded-full mt-0.5" style="background-color: ${badgeBorderColor};"></div>
         </div>
       `;
 
       const customIcon = L.divIcon({
         html: iconHtml,
         className: 'custom-weather-marker',
-        iconSize: [92, 38],
-        iconAnchor: [46, 38],
+        iconSize: [44, 24],
+        iconAnchor: [22, 24],
       });
 
       const marker = L.marker([node.lat, node.lng], { icon: customIcon });
@@ -1229,14 +1228,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           const badgeIcon = L.divIcon({
             className: 'route-badge-marker',
             html: `
-              <div style="background: rgba(15, 23, 42, 0.9); border: 1.5px solid ${color}; color: #ffffff; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; display: flex; items-center; gap: 4px;">
+              <div style="background: rgba(15, 23, 42, 0.92); border: 1px solid ${color}; color: #f8fafc; padding: 1px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; gap: 3px;">
                 <span>${altOpt.routeBadge || 'Alt'}</span>
-                <span style="color: #94a3b8; font-weight: 600;">•</span>
                 <span style="color: ${color};">${altOpt.totalDistanceKm} km</span>
               </div>
             `,
-            iconSize: [110, 24],
-            iconAnchor: [55, 12],
+            iconSize: [72, 18],
+            iconAnchor: [36, 9],
           });
 
           const badgeMarker = L.marker(midCoord, { icon: badgeIcon });
@@ -1422,7 +1420,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const startIcon = L.divIcon({
       className: 'route-start-marker',
       html: `
-        <div style="background: #10b981; border: 2px solid #ffffff; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 14px #10b981; display: flex; align-items: center; justify-content: center; color: #020617; font-size: 11px; font-weight: 900;">
+        <div style="background: #10b981; border: 2px solid #ffffff; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #10b981; display: flex; align-items: center; justify-content: center; color: #020617; font-size: 11px; font-weight: 900;">
           A
         </div>
       `,
@@ -1439,7 +1437,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const endIcon = L.divIcon({
       className: 'route-end-marker',
       html: `
-        <div style="background: #f43f5e; border: 2px solid #ffffff; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 14px #f43f5e; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 11px; font-weight: 900;">
+        <div style="background: #f43f5e; border: 2px solid #ffffff; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #f43f5e; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 11px; font-weight: 900;">
           B
         </div>
       `,

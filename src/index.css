@@ -37,30 +37,92 @@
 /* Custom Leaflet Map styling */
 .leaflet-container {
   font-family: inherit;
-  background-color: #ffffff;
+  background-color: #0b1220;
 }
 
-.custom-weather-marker {
+/* Transparent shells — no white Leaflet box behind markers */
+.custom-weather-marker,
+.custom-city-marker,
+.route-badge-marker,
+.route-end-marker,
+.leaflet-div-icon {
   background: transparent !important;
   border: none !important;
+  box-shadow: none !important;
+}
+
+/* Hover tooltips: dark glass, not white */
+.leaflet-tooltip,
+.custom-dark-tooltip,
+.custom-dark-tooltip.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.94) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(51, 65, 85, 0.9) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  padding: 6px 8px !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.leaflet-tooltip-top:before,
+.custom-dark-tooltip.leaflet-tooltip-top:before {
+  border-top-color: rgba(15, 23, 42, 0.94) !important;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: rgba(15, 23, 42, 0.94) !important;
+}
+
+.leaflet-tooltip-left:before {
+  border-left-color: rgba(15, 23, 42, 0.94) !important;
+}
+
+.leaflet-tooltip-right:before {
+  border-right-color: rgba(15, 23, 42, 0.94) !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #1e293b !important;
+  background: rgba(15, 23, 42, 0.96) !important;
   color: #f8fafc !important;
   border-radius: 12px !important;
   border: 1px solid #334155 !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  padding: 4px !important;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.55) !important;
+  padding: 2px !important;
 }
 
 .leaflet-popup-tip {
-  background: #1e293b !important;
+  background: rgba(15, 23, 42, 0.96) !important;
 }
 
 .leaflet-popup-content {
-  margin: 10px 14px !important;
-  line-height: 1.5 !important;
+  margin: 8px 12px !important;
+  line-height: 1.45 !important;
+}
+
+/* Zoom / attribution controls — compact modern */
+.leaflet-control-zoom a {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 14px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(30, 41, 59, 0.98) !important;
+  color: #fff !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #94a3b8 !important;
+  font-size: 9px !important;
+  max-width: 55vw;
 }
 
 /* Custom Mountain Pass Weather Popup Styling */
