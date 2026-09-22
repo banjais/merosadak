@@ -46,7 +46,6 @@ import {
   Ticket,
   ShieldAlert,
   Gauge,
-  Landmark,
   Map as MapIcon,
   Globe,
   Locate,
@@ -1580,46 +1579,38 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Map Style Selector */}
       {showMapStyle && (
-        <div ref={mapStyleContainerRef} className="absolute top-3 right-28 z-[1000] flex items-center space-x-1 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-full p-1 shadow-2xl shadow-black/50 animate-fadeIn">
+        <div ref={mapStyleContainerRef} className="absolute top-3 right-28 z-[1000] flex flex-col bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl p-1 shadow-2xl shadow-black/50 animate-fadeIn">
           <button
             type="button"
             onClick={() => { setMapStyle('standard'); setShowMapStyle(false); }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'standard' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'standard' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Standard"
           >
-            <MapIcon className="w-3.5 h-3.5" />
+            <MapIcon className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => { setMapStyle('satellite'); setShowMapStyle(false); }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'satellite' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'satellite' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Satellite"
           >
-            <Globe className="w-3.5 h-3.5" />
+            <Globe className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => { setMapStyle('terrain'); setShowMapStyle(false); }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'terrain' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'terrain' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Terrain"
           >
-            <Mountain className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMapStyle('territorial'); setShowMapStyle(false); }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === 'territorial' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
-            title="Territorial"
-          >
-            <Landmark className="w-3.5 h-3.5" />
+            <Mountain className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => { setMapStyle('3d'); setShowMapStyle(false); }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${mapStyle === '3d' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === '3d' ? 'bg-accent-bg accent-text accent-border shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="3D Terrain"
           >
-            <Box className="w-3.5 h-3.5" />
+            <Box className="w-4 h-4" />
           </button>
         </div>
       )}
