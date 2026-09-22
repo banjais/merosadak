@@ -1,6 +1,7 @@
 // Mero Sadak Nepal GIS - Offline Mountain Synchronization & Service Worker Bridge
 import { HighwaySegment } from '../types';
 import { getApiUrl } from './apiConfig';
+import { registerServiceWorkerWithAutoUpdate } from './appUpdate';
 
 export interface OfflineCacheStats {
   isServiceWorkerActive: boolean;
@@ -113,36 +114,9 @@ export function generateNepalHighwayTileUrls(): string[] {
 
 // Register Service Worker
 export async function registerServiceWorker(): Promise<boolean> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    return false;
-  }
-
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      updateViaCache: 'none',
-    });
-
-    // Activate updated SW immediately so offline pack uses latest strategies
-    if (registration.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    }
-    registration.addEventListener('updatefound', () => {
-      const worker = registration.installing;
-      if (!worker) return;
-      worker.addEventListener('statechange', () => {
-        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-          worker.postMessage({ type: 'SKIP_WAITING' });
-        }
-      });
-    });
-
-    console.log('[Mero Sadak] Mountain Offline Service Worker registered with scope:', registration.scope);
-    return true;
-  } catch (error) {
-    console.warn('[Mero Sadak] Service Worker registration failed (may run without SW in sandboxed iframe):', error);
-    return false;
-  }
+  // Automatic updates: check SW + version.json on every open/refresh, purge old
+  // caches, SKIP_WAITING, and reload once — no manual "clear cache" required.
+  return registerServiceWorkerWithAutoUpdate();
 }
 
 // Inspect current offline cache stats
@@ -157,11 +131,11 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
-      const tileCache = await caches.open('mero-sadak-tiles-v4');
+      const tileCache = await caches.open('mero-sadak-tiles-v5');
       const tileKeys = await tileCache.keys();
       tilesCount = tileKeys.length;
 
-      const dataCache = await caches.open('mero-sadak-data-v4');
+      const dataCache = await caches.open('mero-sadak-data-v5');
       const dataKeys = await dataCache.keys();
       dataEndpointsCount = dataKeys.length;
     } catch (e) {
@@ -245,7 +219,7 @@ export async function downloadMountainOfflinePack(
       try {
         const res = await fetch(dataUrl, { credentials: 'same-origin' });
         if (res.ok && 'caches' in window) {
-          const dataCache = await caches.open('mero-sadak-data-v4');
+          const dataCache = await caches.open('mero-sadak-data-v5');
           await dataCache.put(dataUrl, res.clone());
         }
       } catch (err) {
@@ -290,7 +264,7 @@ export async function downloadMountainOfflinePack(
             }
           }
           if ('caches' in window) {
-            const dataCache = await caches.open('mero-sadak-data-v4');
+            const dataCache = await caches.open('mero-sadak-data-v5');
             await dataCache.put(endpoint, cloned);
           }
         }
@@ -328,7 +302,7 @@ export async function downloadMountainOfflinePack(
           try {
             const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' as ReferrerPolicy });
             if (res && res.ok && res.type !== 'opaque' && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v4');
+              const tileCache = await caches.open('mero-sadak-tiles-v5');
               await tileCache.put(tileUrl, res);
             }
           } catch (e) {
@@ -443,7 +417,7 @@ export async function removeCachedSegments(segmentIds: string[]): Promise<void> 
     }
     localStorage.setItem(LOCAL_STORAGE_CACHED_SEGMENTS_KEY, JSON.stringify(cached));
     if ('caches' in window) {
-      const dataCache = await caches.open('mero-sadak-data-v4');
+      const dataCache = await caches.open('mero-sadak-data-v5');
       await dataCache.put(
         '/api/cached-segments',
         new Response(JSON.stringify(cached), {
@@ -580,7 +554,7 @@ export async function cacheSelectedSegments(
 
     if ('caches' in window) {
       try {
-        const dataCache = await caches.open('mero-sadak-data-v4');
+        const dataCache = await caches.open('mero-sadak-data-v5');
         await dataCache.put(
           '/api/cached-segments',
           new Response(JSON.stringify(cachedSegmentsMap), {
@@ -615,7 +589,7 @@ export async function cacheSelectedSegments(
           try {
             const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' as ReferrerPolicy });
             if (res && res.ok && res.type !== 'opaque' && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v4');
+              const tileCache = await caches.open('mero-sadak-tiles-v5');
               await tileCache.put(tileUrl, res);
             }
           } catch {
@@ -666,7 +640,7 @@ export async function cacheSelectedSegments(
         const url = getApiUrl(endpoint);
         const res = await fetch(url);
         if (res.ok && 'caches' in window) {
-          const dataCache = await caches.open('mero-sadak-data-v4');
+          const dataCache = await caches.open('mero-sadak-data-v5');
           await dataCache.put(endpoint, res.clone());
         }
       } catch {

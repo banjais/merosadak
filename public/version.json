@@ -1,0 +1,7 @@
+{
+  "version": "2.1.0",
+  "build": "20260922-pwa-auto",
+  "sw": "1.5.0",
+  "releasedAt": "2026-09-22T13:15:00+05:45",
+  "notes": "Automatic update: purge old caches on open/refresh; force new SW"
+}

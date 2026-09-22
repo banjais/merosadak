@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#070f1e">
+    <meta name="app-version" content="2.1.0">
+    <meta name="app-build" content="20260922-pwa-auto">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,6 +22,47 @@
   </head>
   <body class="bg-slate-900 text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
     <div id="root"></div>
+    <script>
+      // Auto-update bootstrap: runs before the app bundle so old SW is replaced on open/refresh
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        var RELOAD_KEY = 'merosadak_sw_reload_at';
+        function canReload() {
+          try {
+            var last = Number(sessionStorage.getItem(RELOAD_KEY) || '0');
+            if (Date.now() - last < 15000) return false;
+            sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+            return true;
+          } catch (e) { return true; }
+        }
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (canReload()) location.reload();
+        });
+        navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(function (reg) {
+          reg.update().catch(function () {});
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          reg.addEventListener('updatefound', function () {
+            var w = reg.installing;
+            if (!w) return;
+            w.addEventListener('statechange', function () {
+              if (w.state === 'installed' && navigator.serviceWorker.controller) {
+                w.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        }).catch(function () {});
+        // Drop legacy cache buckets without user action
+        if ('caches' in window) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) {
+              if (k.indexOf('mero-sadak-') === 0 && k.indexOf('-v5') === -1) {
+                caches.delete(k);
+              }
+            });
+          }).catch(function () {});
+        }
+      })();
+    </script>
     <script>
       window.addEventListener('unhandledrejection', (event) => {
         if (event?.reason && typeof event.reason === 'object' && !(event.reason instanceof Error)) {
