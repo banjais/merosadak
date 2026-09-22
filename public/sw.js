@@ -1,11 +1,12 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
-// Version 1.4.0 - Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
+// Version 1.5.0 - Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
-const SW_VERSION = '1.4.0';
+const SW_VERSION = '1.5.0';
+const APP_BUILD = '20260922-pwa-auto';
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v4',
-  TILES: 'mero-sadak-tiles-v4',
-  DATA: 'mero-sadak-data-v4',
+  STATIC: 'mero-sadak-static-v5',
+  TILES: 'mero-sadak-tiles-v5',
+  DATA: 'mero-sadak-data-v5',
 };
 
 const PRECACHE_ASSETS = [
@@ -155,9 +156,23 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keep = new Set(Object.values(CACHE_NAMES));
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k.startsWith('mero-sadak-') && !keep.has(k)).map((k) => caches.delete(k)));
+    // Drop every previous app cache automatically — user never needs to clear storage
+    await Promise.all(
+      keys
+        .filter((k) => !keep.has(k) && (k.startsWith('mero-sadak-') || k.startsWith('workbox-') || k.includes('precache')))
+        .map((k) => caches.delete(k))
+    );
     await self.clients.claim();
-    console.log('[SW] Mero Sadak', SW_VERSION, 'active');
+    const clients = await self.clients.matchAll({ type: 'window' });
+    for (const client of clients) {
+      client.postMessage({
+        type: 'SW_ACTIVATED',
+        version: SW_VERSION,
+        build: typeof APP_BUILD !== 'undefined' ? APP_BUILD : SW_VERSION,
+        action: 'reload-recommended',
+      });
+    }
+    console.log('[SW] Mero Sadak', SW_VERSION, 'active — old caches purged');
   })());
 });
 
@@ -284,6 +299,12 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (!event.data || typeof event.data !== 'object') return;
   if (event.data.type === 'SKIP_WAITING') { self.skipWaiting(); return; }
+  if (event.data.type === 'GET_VERSION') {
+    if (event.source) {
+      event.source.postMessage({ type: 'SW_VERSION', version: SW_VERSION, build: typeof APP_BUILD !== 'undefined' ? APP_BUILD : SW_VERSION });
+    }
+    return;
+  }
   if (event.data.type === 'PREFETCH_OFFLINE_PACK') { event.waitUntil(handlePrefetch(event)); return; }
   if (event.data.type === 'CLEAR_OFFLINE_CACHE') {
     event.waitUntil((async () => {
