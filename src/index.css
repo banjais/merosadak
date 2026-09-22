@@ -395,16 +395,16 @@ html[data-theme='light'] .bg-slate-950 {
   background-color: #f1f5f9 !important;
 }
 html[data-theme='light'] .bg-slate-900 {
-  background-color: #ffffff !important;
+  background-color: #efefeb !important;
 }
 html[data-theme='light'] .bg-slate-900\/95 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(239, 239, 235, 0.95) !important;
 }
 html[data-theme='light'] .bg-slate-900\/90 {
-  background-color: rgba(255, 255, 255, 0.9) !important;
+  background-color: rgba(239, 239, 235, 0.9) !important;
 }
 html[data-theme='light'] .bg-slate-900\/80 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(239, 239, 235, 0.8) !important;
 }
 html[data-theme='light'] .bg-slate-800 {
   background-color: #e2e8f0 !important;
@@ -536,49 +536,49 @@ html[data-theme='light'] .bg-slate-200\/80 {
   background-color: rgba(226, 232, 240, 0.8) !important;
 }
 html[data-theme='light'] .bg-slate-100 {
-  background-color: #f8fafc !important;
+  background-color: #e8e8e5 !important;
 }
 html[data-theme='light'] .bg-slate-100\/80 {
   background-color: rgba(248, 250, 252, 0.8) !important;
 }
 html[data-theme='light'] .bg-slate-50 {
-  background-color: #ffffff !important;
+  background-color: #efefeb !important;
 }
 html[data-theme='light'] .bg-white {
-  background-color: #ffffff !important;
+  background-color: #efefeb !important;
 }
 html[data-theme='light'] .bg-white\/80 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(239, 239, 235, 0.8) !important;
 }
 html[data-theme='light'] .bg-white\/90 {
-  background-color: rgba(255, 255, 255, 0.9) !important;
+  background-color: rgba(239, 239, 235, 0.9) !important;
 }
 html[data-theme='light'] .bg-white\/95 {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(239, 239, 235, 0.95) !important;
 }
 html[data-theme='light'] .bg-white\/70 {
-  background-color: rgba(255, 255, 255, 0.7) !important;
+  background-color: rgba(239, 239, 235, 0.7) !important;
 }
 html[data-theme='light'] .bg-white\/60 {
-  background-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: rgba(239, 239, 235, 0.6) !important;
 }
 html[data-theme='light'] .bg-white\/50 {
-  background-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: rgba(239, 239, 235, 0.5) !important;
 }
 html[data-theme='light'] .bg-white\/40 {
-  background-color: rgba(255, 255, 255, 0.4) !important;
+  background-color: rgba(239, 239, 235, 0.4) !important;
 }
 html[data-theme='light'] .bg-white\/30 {
-  background-color: rgba(255, 255, 255, 0.3) !important;
+  background-color: rgba(239, 239, 235, 0.3) !important;
 }
 html[data-theme='light'] .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(239, 239, 235, 0.2) !important;
 }
 html[data-theme='light'] .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(239, 239, 235, 0.1) !important;
 }
 html[data-theme='light'] .bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(239, 239, 235, 0.05) !important;
 }
 html[data-theme='light'] .bg-black\/40 {
   background-color: rgba(15, 23, 42, 0.4) !important;
@@ -641,12 +641,12 @@ html[data-theme='light'] .border-slate-300\/60 { border-color: rgba(203, 213, 22
 html[data-theme='light'] .border-slate-200 { border-color: #e2e8f0 !important; }
 html[data-theme='light'] .border-slate-200\/60 { border-color: rgba(226, 232, 240, 0.6) !important; }
 html[data-theme='light'] .border-slate-200\/80 { border-color: rgba(226, 232, 240, 0.8) !important; }
-html[data-theme='light'] .border-white\/10 { border-color: rgba(255, 255, 255, 0.5) !important; }
-html[data-theme='light'] .border-white\/20 { border-color: rgba(255, 255, 255, 0.6) !important; }
-html[data-theme='light'] .border-white\/40 { border-color: rgba(255, 255, 255, 0.8) !important; }
-html[data-theme='light'] .border-white\/60 { border-color: rgba(255, 255, 255, 0.9) !important; }
-html[data-theme='light'] .border-white\/80 { border-color: #ffffff !important; }
-html[data-theme='light'] .border-white { border-color: #ffffff !important; }
+html[data-theme='light'] .border-white\/10 { border-color: rgba(239, 239, 235, 0.5) !important; }
+html[data-theme='light'] .border-white\/20 { border-color: rgba(239, 239, 235, 0.6) !important; }
+html[data-theme='light'] .border-white\/40 { border-color: rgba(239, 239, 235, 0.8) !important; }
+html[data-theme='light'] .border-white\/60 { border-color: rgba(239, 239, 235, 0.9) !important; }
+html[data-theme='light'] .border-white\/80 { border-color: #efefeb !important; }
+html[data-theme='light'] .border-white { border-color: #efefeb !important; }
 html[data-theme='light'] .border-indigo-500\/50 { border-color: rgba(99, 102, 241, 0.5) !important; }
 html[data-theme='light'] .border-indigo-500\/40 { border-color: rgba(99, 102, 241, 0.4) !important; }
 html[data-theme='light'] .border-indigo-500\/30 { border-color: rgba(99, 102, 241, 0.3) !important; }
@@ -713,29 +713,29 @@ html[data-theme='light'] .custom-dark-tooltip::before {
 }
 
 html[data-theme='light'] .leaflet-container {
-  background-color: #e2e8f0 !important;
+  background-color: #d5d5d1 !important;
 }
 
 html[data-theme='light'] .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
+  background: #efefeb !important;
   color: #0f172a !important;
   border: 1px solid #cbd5e1 !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
 }
 
 html[data-theme='light'] .leaflet-popup-tip {
-  background: #ffffff !important;
+  background: #efefeb !important;
 }
 
 html[data-theme='light'] .custom-weather-popup .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
+  background: #efefeb !important;
   color: #0f172a !important;
   border: 1px solid #38bdf8 !important;
   box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.15), 0 0 20px rgba(56, 189, 248, 0.15) !important;
 }
 
 html[data-theme='light'] .custom-weather-popup .leaflet-popup-tip {
-  background: #ffffff !important;
+  background: #efefeb !important;
   border: 1px solid #38bdf8 !important;
 }
 

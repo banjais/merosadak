@@ -70,55 +70,58 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-[199] bg-black/30" onClick={handleOverlayClick} />
-      <div className="absolute right-0 top-full mt-1 w-48 max-w-[90vw] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl shadow-black/60 z-[200] overflow-hidden transition-all origin-top animate-fadeIn">
-        <div className="px-3 py-2 border-b border-slate-800">
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Settings</p>
+      <div className="fixed inset-0 z-[199] bg-black/25" onClick={handleOverlayClick} />
+      <div className="absolute right-0 top-full mt-1 w-40 max-w-[90vw] bg-slate-900/95 border border-slate-700/60 rounded-lg shadow-xl shadow-black/50 z-[200] overflow-hidden animate-fadeIn backdrop-blur-sm">
+
+        {/* Theme + Fullscreen — single row */}
+        <div className="grid grid-cols-2 gap-px bg-slate-700/40 m-2 mb-1 rounded-md overflow-hidden">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center gap-1 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white transition text-[10px] font-semibold"
+            title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+          >
+            {theme === 'dark'
+              ? <Sun className="w-3 h-3 text-amber-400 shrink-0" />
+              : <Moon className="w-3 h-3 text-cyan-400 shrink-0" />}
+            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            className="flex items-center justify-center gap-1 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white transition text-[10px] font-semibold"
+            title="Toggle Fullscreen"
+          >
+            {isFullscreen
+              ? <Minimize className="w-3 h-3 text-cyan-400 shrink-0" />
+              : <Maximize className="w-3 h-3 text-cyan-400 shrink-0" />}
+            <span>Full</span>
+          </button>
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center px-3 py-2 hover:bg-slate-800 text-slate-200 transition text-xs font-semibold"
-          title={theme === 'dark' ? 'Light' : 'Dark'}
-        >
-          {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-cyan-400" />}
-        </button>
-
-        <button
-          onClick={toggleFullscreen}
-          className="w-full flex items-center px-3 py-2 hover:bg-slate-800 text-slate-200 transition text-xs font-semibold"
-          title="Fullscreen"
-        >
-          {isFullscreen ? <Minimize className="w-3.5 h-3.5 text-cyan-400" /> : <Maximize className="w-3.5 h-3.5 text-cyan-400" />}
-        </button>
-
         {showTextSize && onTextScaleChange && (
-          <>
-            <div className="px-3 py-2 border-t border-slate-800/60">
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Text Size</p>
-              <div className="flex items-center gap-1">
-                {(['small', 'medium', 'large', 'xlarge'] as const).map((scale) => (
-                  <button
-                    key={scale}
-                    onClick={() => onTextScaleChange(scale)}
-                    className={`flex-1 py-1 rounded text-[9px] font-bold transition border ${
-                      textScale === scale
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
-                    }`}
-                  >
-                    {scale === 'small' ? 'S' : scale === 'medium' ? 'M' : scale === 'large' ? 'L' : 'XL'}
-                  </button>
-                ))}
-              </div>
+          <div className="px-2.5 py-1.5">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-0.5">Text Size</p>
+            <div className="flex items-center gap-1">
+              {(['small', 'medium', 'large', 'xlarge'] as const).map((scale) => (
+                <button
+                  key={scale}
+                  onClick={() => onTextScaleChange(scale)}
+                  className={`flex-1 py-1 rounded-md text-[9px] font-bold transition border ${
+                    textScale === scale
+                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm shadow-emerald-500/10'
+                      : 'bg-slate-800/60 text-slate-400 border-slate-700/60 hover:border-slate-600 hover:text-slate-300'
+                  }`}
+                >
+                  {scale === 'small' ? 'S' : scale === 'medium' ? 'M' : scale === 'large' ? 'L' : 'XL'}
+                </button>
+              ))}
             </div>
-          </>
+          </div>
         )}
 
         {showAccentColor && onAccentColorChange && (
-          <div className="px-3 py-2 border-t border-slate-800/60">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Accent Color</p>
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="px-2.5 py-1.5">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-0.5">Accent</p>
+            <div className="flex items-center gap-1">
               {[
                 { name: 'emerald', color: '#10b981' },
                 { name: 'cyan', color: '#06b6d4' },
@@ -131,8 +134,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                   key={name}
                   onClick={() => onAccentColorChange(name)}
                   title={name}
-                  className={`w-6 h-6 rounded-full border-2 transition ${
-                    accentColor === name ? 'border-white scale-110 shadow-md' : 'border-transparent hover:scale-105'
+                  className={`w-5 h-5 rounded-full border transition-all duration-150 ${
+                    accentColor === name
+                      ? 'border-white/90 scale-110 shadow-md shadow-black/30'
+                      : 'border-slate-600/60 hover:scale-110 hover:border-slate-400'
                   }`}
                   style={{ backgroundColor: color }}
                 />
@@ -142,10 +147,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         )}
 
         {showSignOut && user && onSignOut && (
-          <div className="border-t border-slate-800 px-3 py-2">
+          <div className="border-t border-slate-800/60 mx-2 mb-2">
             <button
               onClick={() => { onSignOut(); handleOverlayClick(); }}
-              className="w-full flex items-center gap-2 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 transition"
+              className="w-full flex items-center gap-2 py-1.5 px-1 text-[10px] font-semibold text-rose-400/90 hover:text-rose-300 hover:bg-rose-500/5 rounded transition"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 21c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-1H9z" />
@@ -153,19 +158,13 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <path d="M8.5 8.5l-1.5 1.5 1.5 1.5" />
                 <path d="M15.5 8.5l1.5 1.5-1.5 1.5" />
               </svg>
-              Sign out
+              Sign Out
             </button>
           </div>
         )}
       </div>
     </>
   );
-};
-
-interface SettingsButtonProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSettingsClose?: () => void;
 }
 
 export const SettingsButton: React.FC<SettingsButtonProps> = ({ isOpen, onOpenChange, onSettingsClose }) => {
