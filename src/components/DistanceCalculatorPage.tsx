@@ -455,7 +455,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header */}
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           {onBack && (
             <button
@@ -467,11 +467,11 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
             </button>
           )}
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-emerald-500/10">
-              <Calculator className="w-5 h-5 text-emerald-400" />
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md">
+                <Calculator className="w-5 h-5 accent-text" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">
+              <h1 className="text-sm font-semibold accent-text tracking-wider">
                 MERO SADAK
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">

@@ -63,7 +63,7 @@ export const DistanceMatrixReference: React.FC<DistanceMatrixReferenceProps> = (
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             {onBack && (
@@ -76,14 +76,14 @@ export const DistanceMatrixReference: React.FC<DistanceMatrixReferenceProps> = (
               </button>
             )}
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-emerald-500/10">
-                <Table className="w-5 h-5 text-emerald-400" />
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md">
+                <Table className="w-5 h-5 accent-text" />
               </div>
               <div>
                 <h1 className="text-base font-black tracking-tight text-white font-display">
                   Nepal Full Distance Matrix (km)
                 </h1>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                <p className="text-[10px] accent-text font-semibold uppercase tracking-wider">
                   Static reference matrix — not linked to the route planner
                 </p>
               </div>

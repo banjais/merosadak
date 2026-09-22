@@ -488,7 +488,7 @@ function AppContent() {
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
           <div className="flex items-center space-x-3">
@@ -506,7 +506,7 @@ function AppContent() {
               onClick={resetMapView}
               title="Reset map"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-slate-600 transition">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-accent-border transition">
                 <svg viewBox="0 0 24 24" width="22" height="22">
                   <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
                 </svg>
@@ -518,7 +518,7 @@ function AppContent() {
                     मेरो सडक
                   </span>
                 </div>
-                <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider truncate">
+                <div className="text-[9px] accent-text-dim font-semibold uppercase tracking-wider truncate">
                   Routes · alerts · weather
                 </div>
               </div>
@@ -572,7 +572,7 @@ function AppContent() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
                         LIVE SYNC
                       </span>
                     </div>
@@ -658,7 +658,7 @@ function AppContent() {
                         className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
                       >
                         <span>Open Road Alerts Feed</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                        <ArrowRight className="w-3.5 h-3.5 accent-text" />
                       </button>
                     </div>
                   </div>
@@ -676,11 +676,11 @@ function AppContent() {
 
             {/* If user is signed in — show avatar chip */}
             {user && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-black text-slate-950">
+              <div className="flex items-center gap-1.5 px-2 py-1 accent-bg accent-border rounded-xl">
+                <div className="w-5 h-5 rounded-full accent-bg flex items-center justify-center text-[10px] font-black text-slate-950">
                   {(user.displayName || user.email || 'U')[0].toUpperCase()}
                 </div>
-                <span className="hidden sm:inline text-[10px] font-bold text-emerald-300 max-w-[80px] truncate">
+                <span className="hidden sm:inline text-[10px] font-bold accent-text max-w-[80px] truncate">
                   {user.displayName || user.email?.split('@')[0]}
                 </span>
               </div>

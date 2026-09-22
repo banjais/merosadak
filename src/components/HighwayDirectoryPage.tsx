@@ -24,7 +24,7 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header */}
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           {onBack && (
             <button
@@ -40,7 +40,7 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
               <Route className="w-5 h-5 logo-icon" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">
+              <h1 className="text-sm font-semibold accent-text tracking-wider">
                 MERO SADAK
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">

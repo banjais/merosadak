@@ -96,7 +96,7 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 sm:px-5 py-2.5">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <button
@@ -108,12 +108,12 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <LocateFixed className="w-5 h-5 text-emerald-400" />
+              <div className="w-9 h-9 rounded-xl accent-bg flex items-center justify-center">
+                <LocateFixed className="w-5 h-5 accent-text" />
               </div>
               <div>
                 <h1 className="text-base font-black text-white font-display tracking-tight">My Location</h1>
-                <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">GPS &amp; Road Info</p>
+                <p className="text-[9px] accent-text font-semibold uppercase tracking-wider">GPS &amp; Road Info</p>
               </div>
             </div>
           </div>
