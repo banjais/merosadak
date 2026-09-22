@@ -59,9 +59,9 @@ export function generateNepalHighwayTileUrls(): string[] {
   const urls: Set<string> = new Set();
   const subdomains = ['a', 'b', 'c', 'd'];
 
-  const getTileUrl = (x: number, y: number, z: number, idx: number) => {
-    const sub = subdomains[idx % subdomains.length];
-    return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  const getTileUrl = (x: number, y: number, z: number, _idx: number) => {
+    // Single host (no a/b/c subdomain) improves Cache Storage hit rate offline
+    return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;
@@ -120,7 +120,23 @@ export async function registerServiceWorker(): Promise<boolean> {
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
+      updateViaCache: 'none',
     });
+
+    // Activate updated SW immediately so offline pack uses latest strategies
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+    registration.addEventListener('updatefound', () => {
+      const worker = registration.installing;
+      if (!worker) return;
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
+
     console.log('[Mero Sadak] Mountain Offline Service Worker registered with scope:', registration.scope);
     return true;
   } catch (error) {
@@ -141,11 +157,11 @@ export async function getOfflineCacheStats(): Promise<OfflineCacheStats> {
 
   if (typeof window !== 'undefined' && 'caches' in window) {
     try {
-      const tileCache = await caches.open('mero-sadak-tiles-v3');
+      const tileCache = await caches.open('mero-sadak-tiles-v4');
       const tileKeys = await tileCache.keys();
       tilesCount = tileKeys.length;
 
-      const dataCache = await caches.open('mero-sadak-data-v3');
+      const dataCache = await caches.open('mero-sadak-data-v4');
       const dataKeys = await dataCache.keys();
       dataEndpointsCount = dataKeys.length;
     } catch (e) {
@@ -190,20 +206,69 @@ export async function downloadMountainOfflinePack(
     '/api/pois',
     '/api/traffic',
     '/api/offline-bundle',
+    '/api/dhm-rainfall',
   ];
   const apiUrls = apiEndpoints.map((endpoint) => getApiUrl(endpoint));
 
+  // Same-origin static GIS datasets (critical offline: distance, cities, blackspots)
+  const staticDataUrls = [
+    '/data/cities-and-junctions.json',
+    '/data/cities.json',
+    '/data/distance-matrix.json',
+    '/data/highway-info.json',
+    '/data/highway-coords.json',
+    '/data/blackspots.json',
+    '/data/bus-stations.json',
+    '/data/airports.json',
+    '/data/district-hqs.json',
+    '/data/district-centroids.json',
+    '/data/district-terrain.json',
+  ];
+
   const tileUrls = generateNepalHighwayTileUrls();
-  const totalItems = apiUrls.length + tileUrls.length;
+  const totalItems = apiUrls.length + staticDataUrls.length + tileUrls.length;
   let processed = 0;
 
   try {
-    // 1. Fetch and Cache API Endpoints
+    // 0. Same-origin static GIS data (distance matrix, cities, blackspots, …)
     if (onProgress) {
       onProgress({
         processed: 0,
         total: totalItems,
         percentage: 0,
+        currentTask: 'Caching static highway & city datasets for offline use...',
+        stage: 'apis',
+      });
+    }
+
+    for (const dataUrl of staticDataUrls) {
+      try {
+        const res = await fetch(dataUrl, { credentials: 'same-origin' });
+        if (res.ok && 'caches' in window) {
+          const dataCache = await caches.open('mero-sadak-data-v4');
+          await dataCache.put(dataUrl, res.clone());
+        }
+      } catch (err) {
+        console.warn('Static data fetch warning for', dataUrl, err);
+      }
+      processed++;
+      if (onProgress) {
+        onProgress({
+          processed,
+          total: totalItems,
+          percentage: Math.round((processed / totalItems) * 100),
+          currentTask: `Cached ${dataUrl.replace('/data/', '')}`,
+          stage: 'apis',
+        });
+      }
+    }
+
+    // 1. Fetch and Cache API Endpoints
+    if (onProgress) {
+      onProgress({
+        processed,
+        total: totalItems,
+        percentage: Math.round((processed / totalItems) * 100),
         currentTask: 'Downloading live highway datasets & mountain pass weather...',
         stage: 'apis',
       });
@@ -225,7 +290,7 @@ export async function downloadMountainOfflinePack(
             }
           }
           if ('caches' in window) {
-            const dataCache = await caches.open('mero-sadak-data-v3');
+            const dataCache = await caches.open('mero-sadak-data-v4');
             await dataCache.put(endpoint, cloned);
           }
         }
@@ -261,9 +326,9 @@ export async function downloadMountainOfflinePack(
       await Promise.allSettled(
         batch.map(async (tileUrl) => {
           try {
-            const res = await fetch(tileUrl, { mode: 'no-cors' });
-            if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v3');
+            const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' as ReferrerPolicy });
+            if (res && res.ok && res.type !== 'opaque' && 'caches' in window) {
+              const tileCache = await caches.open('mero-sadak-tiles-v4');
               await tileCache.put(tileUrl, res);
             }
           } catch (e) {
@@ -378,7 +443,7 @@ export async function removeCachedSegments(segmentIds: string[]): Promise<void> 
     }
     localStorage.setItem(LOCAL_STORAGE_CACHED_SEGMENTS_KEY, JSON.stringify(cached));
     if ('caches' in window) {
-      const dataCache = await caches.open('mero-sadak-data-v3');
+      const dataCache = await caches.open('mero-sadak-data-v4');
       await dataCache.put(
         '/api/cached-segments',
         new Response(JSON.stringify(cached), {
@@ -396,9 +461,9 @@ export function generateTilesForSegments(segments: HighwaySegment[]): string[] {
   const urls: Set<string> = new Set();
   const subdomains = ['a', 'b', 'c', 'd'];
 
-  const getTileUrl = (x: number, y: number, z: number, idx: number) => {
-    const sub = subdomains[idx % subdomains.length];
-    return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  const getTileUrl = (x: number, y: number, z: number, _idx: number) => {
+    // Single host (no a/b/c subdomain) improves Cache Storage hit rate offline
+    return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;
@@ -515,7 +580,7 @@ export async function cacheSelectedSegments(
 
     if ('caches' in window) {
       try {
-        const dataCache = await caches.open('mero-sadak-data-v3');
+        const dataCache = await caches.open('mero-sadak-data-v4');
         await dataCache.put(
           '/api/cached-segments',
           new Response(JSON.stringify(cachedSegmentsMap), {
@@ -548,9 +613,9 @@ export async function cacheSelectedSegments(
       await Promise.allSettled(
         batch.map(async (tileUrl) => {
           try {
-            const res = await fetch(tileUrl, { mode: 'no-cors' });
-            if (res && 'caches' in window) {
-              const tileCache = await caches.open('mero-sadak-tiles-v3');
+            const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' as ReferrerPolicy });
+            if (res && res.ok && res.type !== 'opaque' && 'caches' in window) {
+              const tileCache = await caches.open('mero-sadak-tiles-v4');
               await tileCache.put(tileUrl, res);
             }
           } catch {
@@ -601,7 +666,7 @@ export async function cacheSelectedSegments(
         const url = getApiUrl(endpoint);
         const res = await fetch(url);
         if (res.ok && 'caches' in window) {
-          const dataCache = await caches.open('mero-sadak-data-v3');
+          const dataCache = await caches.open('mero-sadak-data-v4');
           await dataCache.put(endpoint, res.clone());
         }
       } catch {
