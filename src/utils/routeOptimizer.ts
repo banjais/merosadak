@@ -248,18 +248,31 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -1862,
     intermediateCoords: [[27.6000, 85.0500], [27.5100, 85.0300], [27.4285, 85.0331]]
   },
-  // Narayanghat to Butwal via Daunne Pass (NH01)
+  // Narayanghat to Bardaghat via Daunne Pass (NH01)
   {
     fromId: 'cht',
-    toId: 'btl',
-    distanceKm: 114,
-    baseTimeMinutes: 195,
+    toId: 'bdg',
+    distanceKm: 62,
+    baseTimeMinutes: 105,
     highwayCode: 'NH01',
-    highwayName: 'Mahendra Highway (Daunne Section)',
+    highwayName: 'Mahendra Highway (Narayanghat–Bardaghat / Daunne)',
     surface: 'under_construction',
     status: 'caution',
-    elevationGain: 12,
-    intermediateCoords: [[27.6833, 84.4333], [27.5300, 83.8900], [27.7006, 83.4484]]
+    elevationGain: 20,
+    intermediateCoords: [[27.6833, 84.4333], [27.6000, 84.1500], [27.5549, 83.7921]]
+  },
+  // Bardaghat to Butwal (NH01)
+  {
+    fromId: 'bdg',
+    toId: 'btl',
+    distanceKm: 52,
+    baseTimeMinutes: 90,
+    highwayCode: 'NH01',
+    highwayName: 'Mahendra Highway (Bardaghat–Butwal)',
+    surface: 'blacktopped_fair',
+    status: 'caution',
+    elevationGain: -8,
+    intermediateCoords: [[27.5549, 83.7921], [27.6200, 83.6000], [27.7006, 83.4484]]
   },
   // Butwal to Bhairahawa / Sunauli (NH10 Siddhartha Highway)
   {
@@ -1920,16 +1933,33 @@ export function findAllRouteOptions(
 }
 
 export function snapToNearestRoutingCity(city: CityNode): CityNode {
-  let nearest = CITIES_AND_JUNCTIONS[0];
-  let minDist = Infinity;
+  // Prefer exact id match first
+  const exact = CITIES_AND_JUNCTIONS.find((c) => c.id === city.id);
+  if (exact) return exact;
+
+  // Prefer same-name match (case-insensitive, ignore parenthetical aliases)
+  const normalize = (s: string) => s.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').trim();
+  const cityName = normalize(city.name);
+  const byName = CITIES_AND_JUNCTIONS.find((c) => normalize(c.name) === cityName);
+  if (byName) return byName;
+
+  // Score candidates: pure distance, with a bonus for shared highway codes
+  // so places on the same corridor (e.g. Bardaghat on NH01) prefer Butwal/Narayanghat
+  // over a nearby but off-corridor hub (e.g. Bhairahawa on NH10).
+  let best = CITIES_AND_JUNCTIONS[0];
+  let bestScore = Infinity;
+  const cityHighways = new Set((city.connectedHighways || []).map((h) => h.toUpperCase()));
   for (const c of CITIES_AND_JUNCTIONS) {
     const d = calculateDirectDistanceKm(city.lat, city.lng, c.lat, c.lng);
-    if (d < minDist) {
-      minDist = d;
-      nearest = c;
+    const shared = (c.connectedHighways || []).some((h) => cityHighways.has(h.toUpperCase()));
+    // Shared-corridor candidates get a 35% effective-distance discount
+    const score = shared ? d * 0.65 : d;
+    if (score < bestScore) {
+      bestScore = score;
+      best = c;
     }
   }
-  return nearest;
+  return best;
 }
 
 // Primary route search API with allRouteOptions bundled
@@ -1942,10 +1972,33 @@ export function findOptimizedRoute(
   originNode?: CityNode,
   destinationNode?: CityNode
 ): RoutePlanResult | null {
-  const allOptions = findAllRouteOptions(originId, destinationId, vehicle, terrainFilters);
+  // Resolve routing graph nodes. User-selected places that are not in the
+  // curated junction graph are snapped for pathfinding only — the report must
+  // still show the names the user actually picked.
+  const routingOriginId = CITIES_AND_JUNCTIONS.some((c) => c.id === originId)
+    ? originId
+    : originNode
+      ? snapToNearestRoutingCity(originNode).id
+      : originId;
+  const routingDestId = CITIES_AND_JUNCTIONS.some((c) => c.id === destinationId)
+    ? destinationId
+    : destinationNode
+      ? snapToNearestRoutingCity(destinationNode).id
+      : destinationId;
+
+  const applyDisplayNodes = (result: RoutePlanResult | null): RoutePlanResult | null => {
+    if (!result) return null;
+    return {
+      ...result,
+      origin: originNode || result.origin,
+      destination: destinationNode || result.destination,
+    };
+  };
+
+  const allOptions = findAllRouteOptions(routingOriginId, routingDestId, vehicle, terrainFilters);
   if (allOptions.length === 0) {
-    let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
-    let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
+    let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === routingOriginId);
+    let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === routingDestId);
     if (!origin && originNode && originNode.lat && originNode.lng) {
       origin = snapToNearestRoutingCity(originNode);
     }
@@ -1953,8 +2006,10 @@ export function findOptimizedRoute(
       destination = snapToNearestRoutingCity(destinationNode);
     }
     if (origin && destination) {
-      return buildRoadGraphRouteResult(origin, destination, preference, vehicle)
-        || buildAerialRouteResult(origin, destination, preference, vehicle);
+      return applyDisplayNodes(
+        buildRoadGraphRouteResult(origin, destination, preference, vehicle)
+          || buildAerialRouteResult(origin, destination, preference, vehicle)
+      );
     }
     return null;
   }
@@ -1962,14 +2017,18 @@ export function findOptimizedRoute(
   // Find matching option for current preference, or default to fastest
   let selected = allOptions.find(opt => opt.preference === preference);
   if (!selected) {
-    selected = findRouteByPreference(originId, destinationId, preference, vehicle, new Set(), undefined, terrainFilters) || allOptions[0];
+    selected = findRouteByPreference(routingOriginId, routingDestId, preference, vehicle, new Set(), undefined, terrainFilters) || allOptions[0];
   }
 
   // Attach all available route options to the result for easy toggling
-  return {
+  return applyDisplayNodes({
     ...selected,
-    allRouteOptions: allOptions,
+    allRouteOptions: allOptions.map((opt) => ({
+      ...opt,
+      origin: originNode || opt.origin,
+      destination: destinationNode || opt.destination,
+    })),
     appliedTerrainFilters: Object.keys(terrainFilters).some(k => (terrainFilters as any)[k]) ? terrainFilters : undefined
-  };
+  });
 }
 

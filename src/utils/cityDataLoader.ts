@@ -133,13 +133,23 @@ export function getNearestRoutingCity(city: CityNode): CityNode {
   const bundledCities = CITIES_AND_JUNCTIONS;
   if (bundledCities.some((candidate) => candidate.id === city.id)) return city;
 
+  const normalize = (s: string) => s.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').trim();
+  const cityName = normalize(city.name);
+  const byName = bundledCities.find((c) => normalize(c.name) === cityName);
+  if (byName) return byName;
+
+  // Prefer shared-highway corridor over pure nearest-neighbour so e.g. Bardaghat
+  // (NH01) snaps to Butwal/Narayanghat instead of Bhairahawa (NH10).
   let nearest = bundledCities[0] || city;
-  let minimumDistance = Infinity;
+  let bestScore = Infinity;
+  const cityHighways = new Set((city.connectedHighways || []).map((h) => h.toUpperCase()));
 
   for (const candidate of bundledCities) {
     const distance = distanceKm(city.lat, city.lng, candidate.lat, candidate.lng);
-    if (distance < minimumDistance) {
-      minimumDistance = distance;
+    const shared = (candidate.connectedHighways || []).some((h) => cityHighways.has(h.toUpperCase()));
+    const score = shared ? distance * 0.65 : distance;
+    if (score < bestScore) {
+      bestScore = score;
       nearest = candidate;
     }
   }

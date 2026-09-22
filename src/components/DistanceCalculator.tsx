@@ -43,20 +43,6 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
       ).slice(0, 20)
     : [];
 
-  const snapToNearestRoutingNode = (city: CityNode): CityNode => {
-    if (CITIES_AND_JUNCTIONS.some((c) => c.id === city.id)) return city;
-    let nearest = CITIES_AND_JUNCTIONS[0];
-    let minDist = Infinity;
-    for (const c of CITIES_AND_JUNCTIONS) {
-      const d = calculateDirectDistanceKm(city.lat, city.lng, c.lat, c.lng);
-      if (d < minDist) {
-        minDist = d;
-        nearest = c;
-      }
-    }
-    return nearest;
-  };
-
   const swapCities = () => {
     const temp = originId;
     setOriginId(destId);
@@ -67,11 +53,11 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
     const originCity = allCities.find((c) => c.id === originId);
     const destCity = allCities.find((c) => c.id === destId);
     if (!originCity || !destCity) return null;
-    const routingOrigin = snapToNearestRoutingNode(originCity);
-    const routingDest = snapToNearestRoutingNode(destCity);
+    // Pass the user-selected cities; findOptimizedRoute snaps for pathfinding
+    // but keeps these names on the report.
     return findOptimizedRoute(
-      routingOrigin.id,
-      routingDest.id,
+      originCity.id,
+      destCity.id,
       'fastest',
       'car',
       {},

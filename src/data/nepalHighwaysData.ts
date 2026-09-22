@@ -6,6 +6,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'cht', name: 'Narayanghat / Bharatpur', nepaliName: 'नारायणगढ / भरतपुर', district: 'Chitwan', province: 'Bagmati', lat: 27.6833, lng: 84.4333, elevationM: 208, isMajorHub: true, connectedHighways: ['NH01', 'NH05'] },
   { id: 'mgl', name: 'Mugling', nepaliName: 'मुग्लिन', district: 'Chitwan', province: 'Bagmati', lat: 27.8617, lng: 84.5542, elevationM: 275, isMajorHub: true, connectedHighways: ['NH04', 'NH05'] },
   { id: 'btl', name: 'Butwal', nepaliName: 'बुटवल', district: 'Rupandehi', province: 'Lumbini', lat: 27.7006, lng: 83.4484, elevationM: 220, isMajorHub: true, connectedHighways: ['NH01', 'NH10'] },
+  { id: 'bdg', name: 'Bardaghat', nepaliName: 'बर्दघाट', district: 'Nawalparasi West', province: 'Lumbini', lat: 27.5549, lng: 83.7921, elevationM: 180, isMajorHub: false, connectedHighways: ['NH01'] },
   { id: 'bhr', name: 'Bhairahawa / Sunauli', nepaliName: 'भैरहवा / सुनौली', district: 'Rupandehi', province: 'Lumbini', lat: 27.5045, lng: 83.4503, elevationM: 105, isMajorHub: true, connectedHighways: ['NH10'] },
   { id: 'htd', name: 'Hetauda', nepaliName: 'हेटौंडा', district: 'Makwanpur', province: 'Bagmati', lat: 27.4285, lng: 85.0331, elevationM: 460, isMajorHub: true, connectedHighways: ['NH01', 'NH02', 'NH17'] },
   { id: 'brg', name: 'Birgunj', nepaliName: 'वीरगन्ज', district: 'Parsa', province: 'Madhesh', lat: 27.0128, lng: 84.8774, elevationM: 90, isMajorHub: true, connectedHighways: ['NH02', 'NH16'] },
