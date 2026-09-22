@@ -62,7 +62,7 @@ export function generateNepalHighwayTileUrls(): string[] {
 
   const getTileUrl = (x: number, y: number, z: number, _idx: number) => {
     // Single host (no a/b/c subdomain) improves Cache Storage hit rate offline
-    return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    return `https://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;
@@ -437,7 +437,7 @@ export function generateTilesForSegments(segments: HighwaySegment[]): string[] {
 
   const getTileUrl = (x: number, y: number, z: number, _idx: number) => {
     // Single host (no a/b/c subdomain) improves Cache Storage hit rate offline
-    return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    return `https://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`;
   };
 
   let tileCounter = 0;

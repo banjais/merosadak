@@ -112,7 +112,7 @@ function createNepalTileLayer(
       const tile = document.createElement('div');
       tile.style.width = tileSize.x + 'px';
       tile.style.height = tileSize.y + 'px';
-      tile.style.backgroundColor = '#ffffff';
+      tile.style.backgroundColor = '#0b1220';
 
       const tileBounds = this._tileCoordsToBounds(coords);
       const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
@@ -369,17 +369,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       maxBounds: NEPAL_BOUNDS,
       maxBoundsViscosity: 1.0,
       zoomControl: false,
+      // Hide bottom-right “© OpenStreetMap contributors” label on the map
+      attributionControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
-
-    // Leaflet's own "Leaflet" branding link isn't required (BSD license) —
-    // hide just that prefix. The tile provider's own attribution (OSM/Esri/
-    // CARTO/OpenTopoMap depending on style) stays, since those are required
-    // by the tile providers' usage terms.
-    map.attributionControl.setPrefix(false);
 
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);
@@ -540,27 +536,29 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.removeLayer(tileLayerRef.current);
     }
 
-    let url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    let attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | DoR Nepal Highway GIS';
+    // Do NOT use tile.openstreetmap.org in production — OSM blocks heavy use (403)
+    // and requires visible attribution. CARTO basemaps are intended for apps.
+    let url = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    let attribution = ''; // UI attribution hidden; legal notice lives in Data Sources
     let maxZoom = 19;
+    let subdomains = 'abcd';
 
     if (mapStyle === 'satellite') {
       url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+      subdomains = '';
     } else if (mapStyle === 'terrain') {
+      // OpenTopoMap — lighter traffic than OSM.org; still OSM-derived data
       url = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-      attribution = 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)';
       maxZoom = 17;
+      subdomains = 'abc';
     } else if (mapStyle === 'territorial') {
       url = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | &copy; <a href="https://carto.com/">CARTO</a>';
-      maxZoom = 19;
+      subdomains = 'abcd';
     }
 
-    const newLayer = createNepalTileLayer(url, attribution, maxZoom, 'abc');
+    const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains || 'abcd');
 
     newLayer.addTo(map);
-    map.attributionControl.addAttribution(attribution);
     tileLayerRef.current = newLayer;
   }, [mapStyle]);
 

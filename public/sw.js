@@ -44,31 +44,30 @@ const API_ENDPOINTS = [
 ];
 
 const NEPAL_CORE_TILES = [
-  'https://tile.openstreetmap.org/6/46/27.png',
-  'https://tile.openstreetmap.org/6/47/27.png',
-  'https://tile.openstreetmap.org/6/46/28.png',
-  'https://tile.openstreetmap.org/6/47/28.png',
-  'https://tile.openstreetmap.org/7/93/54.png',
-  'https://tile.openstreetmap.org/7/94/54.png',
-  'https://tile.openstreetmap.org/7/95/54.png',
-  'https://tile.openstreetmap.org/7/93/55.png',
-  'https://tile.openstreetmap.org/7/94/55.png',
-  'https://tile.openstreetmap.org/7/95/55.png',
-  'https://tile.openstreetmap.org/8/187/109.png',
-  'https://tile.openstreetmap.org/8/188/109.png',
-  'https://tile.openstreetmap.org/8/189/109.png',
-  'https://tile.openstreetmap.org/8/190/109.png',
-  'https://tile.openstreetmap.org/8/187/110.png',
-  'https://tile.openstreetmap.org/8/188/110.png',
-  'https://tile.openstreetmap.org/8/189/110.png',
-  'https://tile.openstreetmap.org/8/190/110.png',
+  'https://a.basemaps.cartocdn.com/dark_all/6/46/27.png',
+  'https://a.basemaps.cartocdn.com/dark_all/6/47/27.png',
+  'https://a.basemaps.cartocdn.com/dark_all/6/46/28.png',
+  'https://a.basemaps.cartocdn.com/dark_all/6/47/28.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/93/54.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/94/54.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/95/54.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/93/55.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/94/55.png',
+  'https://a.basemaps.cartocdn.com/dark_all/7/95/55.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/187/109.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/188/109.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/189/109.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/190/109.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/187/110.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/188/110.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/189/110.png',
+  'https://a.basemaps.cartocdn.com/dark_all/8/190/110.png',
 ];
 
 function isTileRequest(url) {
   try {
     const u = new URL(url);
     return (
-      u.hostname.endsWith('tile.openstreetmap.org') ||
       u.hostname.includes('basemaps.cartocdn.com') ||
       /\/\d+\/\d+\/\d+\.(png|jpg|jpeg|webp)$/i.test(u.pathname)
     );
@@ -216,7 +215,7 @@ self.addEventListener('fetch', (event) => {
         await putIfUsable(tileCache, request, networkRes);
         return networkRes;
       } catch {
-        const alt = await tileCache.match(request.url.replace(/[a-d]\.tile\.openstreetmap\.org/, 'tile.openstreetmap.org'));
+        const alt = await tileCache.match(request.url);
         if (alt) return alt;
         return new Response('', { status: 408, statusText: 'Tile Offline' });
       }

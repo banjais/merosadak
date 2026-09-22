@@ -119,10 +119,7 @@
 }
 
 .leaflet-control-attribution {
-  background: rgba(15, 23, 42, 0.75) !important;
-  color: #94a3b8 !important;
-  font-size: 9px !important;
-  max-width: 55vw;
+  display: none !important;
 }
 
 /* Custom Mountain Pass Weather Popup Styling */
