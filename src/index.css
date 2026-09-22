@@ -40,6 +40,17 @@
   background-color: #0b1220;
 }
 
+/* Tile fade-in to prevent ghost tiles during zoom/pan */
+.leaflet-tile {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Nepal map container — dark background, no white edges */
+#nepal-gis-canvas {
+  background-color: #0b1220;
+}
+
 /* Transparent shells — no white Leaflet box behind markers */
 .custom-weather-marker,
 .custom-city-marker,

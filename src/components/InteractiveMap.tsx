@@ -113,7 +113,7 @@ function createNepalTileLayer(
       const tile = document.createElement('div');
       tile.style.width = tileSize.x + 'px';
       tile.style.height = tileSize.y + 'px';
-      tile.style.backgroundColor = '#0b1220';
+      tile.style.backgroundColor = 'transparent';
 
       const tileBounds = this._tileCoordsToBounds(coords);
       const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
@@ -134,6 +134,10 @@ function createNepalTileLayer(
         img.alt = '';
         img.style.width = '100%';
         img.style.height = '100%';
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.3s ease';
+        img.onload = () => { img.style.opacity = '1'; };
+        img.onerror = () => { img.style.opacity = '0'; };
         tile.appendChild(img);
       }
 
