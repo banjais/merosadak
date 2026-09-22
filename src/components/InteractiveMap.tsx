@@ -5,18 +5,12 @@ import {
   CityNode,
   RoadIncident,
   RoutePlanResult,
-  HighwayPOI,
-  TrafficCorridor,
   KnownBlackspot,
   SegmentSafetyData,
-  HighwayWeatherNode,
 } from '../types';
 import {
   NEPAL_HIGHWAYS,
   LIVE_ROAD_INCIDENTS,
-  HIGHWAY_POIS,
-  TRAFFIC_CORRIDORS,
-  HIGHWAY_WEATHER_NODES,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
 import { getHighwayEnrichment } from '../utils/geoUtils';
@@ -39,24 +33,20 @@ import {
   Activity,
   Eye,
   Compass,
-  Fuel,
-  Utensils,
-  Mountain,
   Box,
   Ticket,
   ShieldAlert,
-  Gauge,
+  Mountain,
+  Route,
+  Repeat,
+  Building,
+  Info,
+  X,
   Map as MapIcon,
   Globe,
   Locate,
   LocateFixed,
-  X,
-  Info,
-  CloudRain,
-  Route,
-  Repeat,
 } from 'lucide-react';
-import { normalizeLatLng } from '../utils/routeCorridor';
 
 interface InteractiveMapProps {
   activeRoute: RoutePlanResult | null;
@@ -64,15 +54,10 @@ interface InteractiveMapProps {
   onSelectCity?: (city: CityNode, type: 'origin' | 'destination') => void;
   onSelectHighway?: (highway: Highway) => void;
   onSelectBlackspot?: (blackspot: KnownBlackspot) => void;
-  weatherNodes?: HighwayWeatherNode[];
-  onSelectWeatherNode?: (node: HighwayWeatherNode) => void;
-  selectedWeatherNodeId?: string | null;
   focusedTarget?: { lat: number; lng: number; title: string; zoom?: number } | null;
   colorMode?: 'safety' | 'preference';
   onToggleColorMode?: (mode: 'safety' | 'preference') => void;
   liveIncidents?: RoadIncident[];
-  livePOIs?: HighwayPOI[];
-  liveTrafficCorridors?: TrafficCorridor[];
   isDimmed?: boolean;
   isAppReady?: boolean;
   onMyLocationMoreInfo?: () => void;
@@ -81,11 +66,10 @@ interface InteractiveMapProps {
 export type ActiveMapOverlayLayer =
   | 'none'
   | 'highways'
-  | 'weather'
   | 'incidents'
   | 'traffic'
-  | 'pois'
-  | 'alternatives';
+  | 'alternatives'
+  | 'cities';
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
@@ -176,15 +160,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onSelectCity,
   onSelectHighway,
   onSelectBlackspot,
-  weatherNodes,
-  onSelectWeatherNode,
-  selectedWeatherNodeId,
   focusedTarget,
   colorMode: externalColorMode,
   onToggleColorMode: externalToggleColorMode,
   liveIncidents,
-  livePOIs,
-  liveTrafficCorridors,
   isDimmed,
   isAppReady,
   onMyLocationMoreInfo,
@@ -196,10 +175,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     highways: L.LayerGroup;
     cities: L.LayerGroup;
     incidents: L.LayerGroup;
-    pois: L.LayerGroup;
-    traffic: L.LayerGroup;
     blackspots: L.LayerGroup;
-    weather: L.LayerGroup;
     route: L.LayerGroup;
     alternatives: L.LayerGroup;
     nepalBorder: L.LayerGroup;
@@ -208,10 +184,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     highways: L.layerGroup(),
     cities: L.layerGroup(),
     incidents: L.layerGroup(),
-    pois: L.layerGroup(),
-    traffic: L.layerGroup(),
     blackspots: L.layerGroup(),
-    weather: L.layerGroup(),
     route: L.layerGroup(),
     alternatives: L.layerGroup(),
     nepalBorder: L.layerGroup(),
@@ -220,16 +193,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   });
 
   // Mutually Exclusive Overlay Layer Selection
-  // Defaults to 'weather' so interactive weather markers for mountain passes are immediately rendered on the map.
-  // When another layer toggle is clicked, it switches; toggling the active layer hides it.
+  // Toggles are mutually exclusive; clicking active layer hides it.
   // When the layer toolbar is closed, all showing layers are closed.
   const [activeLayer, setActiveLayer] = useState<ActiveMapOverlayLayer>('none');
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const [showMapStyle, setShowMapStyle] = useState(false);
 
-  const weatherMarkersRef = useRef<Map<string, L.Marker>>(new Map());
-
+  const showBlackspots = false;
+  const routeColorMode = 'safety' as const;
   const toolbarToggleRef = useRef<HTMLButtonElement>(null);
   const toolbarContainerRef = useRef<HTMLDivElement>(null);
   const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
@@ -243,9 +215,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
-  const showBlackspots = false;
-  const routeColorMode = 'safety' as const;
-
   // Toggle layer with exclusive selection
   const handleToggleLayer = (layer: ActiveMapOverlayLayer) => {
     setActiveLayer((prev) => (prev === layer ? 'none' : layer));
@@ -256,10 +225,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setActiveLayer('none');
     setShowLegend(false);
     layersRef.current.highways.clearLayers();
-    layersRef.current.weather.clearLayers();
     layersRef.current.incidents.clearLayers();
-    layersRef.current.pois.clearLayers();
-    layersRef.current.traffic.clearLayers();
     layersRef.current.alternatives.clearLayers();
   };
 
@@ -386,10 +352,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);
-    layersRef.current.weather.addTo(map);
     layersRef.current.incidents.addTo(map);
-    layersRef.current.pois.addTo(map);
-    layersRef.current.traffic.addTo(map);
     layersRef.current.alternatives.addTo(map);
     layersRef.current.route.addTo(map);
     layersRef.current.outsideMask.addTo(map);
@@ -753,16 +716,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       .catch(err => console.warn('Failed to load Nepal border:', err));
   }, []);
 
-  // Update outside mask color based on theme (light=white, dark=soft transparent)
+  // Update outside mask color based on theme
   useEffect(() => {
     const updateMaskForTheme = () => {
       const mask = outsideMaskRef.current;
       if (!mask) return;
       const theme = document.documentElement.getAttribute('data-theme');
       if (theme === 'light') {
-        mask.setStyle({ fillColor: '#ffffff', fillOpacity: 1.0 });
+        mask.setStyle({ fillColor: '#efefeb', fillOpacity: 1.0 });
       } else {
-        mask.setStyle({ fillColor: '#0b1220', fillOpacity: 0.9 });
+        mask.setStyle({ fillColor: '#0b1220', fillOpacity: 0.4 });
       }
     };
 
@@ -822,45 +785,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       .catch(err => console.warn('Failed to load provinces:', err));
   }, []);
 
-  // Render Live Traffic Corridors Layer (shows everywhere across Nepal when selected)
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const trafficGroup = layersRef.current.traffic;
-    trafficGroup.clearLayers();
-
-    if (activeLayer !== 'traffic') return;
-
-    const corridorsList =
-      liveTrafficCorridors && liveTrafficCorridors.length > 0
-        ? liveTrafficCorridors
-        : TRAFFIC_CORRIDORS;
-
-    corridorsList.forEach((corridor) => {
-      const color =
-        corridor.level === 'smooth'
-          ? '#10b981'
-          : corridor.level === 'moderate'
-          ? '#f59e0b'
-          : corridor.level === 'heavy'
-          ? '#f97316'
-          : '#ef4444';
-
-      // The corridor JSON served by the API stores [lng, lat]; bundled data is [lat, lng].
-      const from = normalizeLatLng(corridor.startCoord?.[0], corridor.startCoord?.[1]);
-      const to = normalizeLatLng(corridor.endCoord?.[0], corridor.endCoord?.[1]);
-      if (!from || !to) return;
-
-      const polyline = L.polyline([from, to], {
-        color,
-        weight: 8,
-        opacity: 0.6,
-        dashArray: corridor.level === 'standstill' ? '5, 10' : undefined,
-      });
-
-      trafficGroup.addLayer(polyline);
-    });
-  }, [activeLayer, liveTrafficCorridors]);
-
   // Render Incidents & Road Hazards Layer (shows everywhere across Nepal when selected)
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -905,59 +829,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
 
 
-  // Render POIs Layer (shows everywhere across Nepal when selected)
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const poisGroup = layersRef.current.pois;
-    poisGroup.clearLayers();
-
-    if (activeLayer !== 'pois') return;
-
-    const poisList = livePOIs && livePOIs.length > 0 ? livePOIs : HIGHWAY_POIS;
-
-    poisList.forEach((poi) => {
-      let iconEmoji = '📍';
-      let bgColor = 'bg-cyan-600 border-cyan-300';
-      if (poi.category === 'ev_charger') {
-        iconEmoji = '⚡';
-        bgColor = 'bg-cyan-600 border-cyan-300';
-      } else if (poi.category === 'food_rest') {
-        iconEmoji = '🍲';
-        bgColor = 'bg-amber-600 border-amber-300';
-      } else if (poi.category === 'fuel_station') {
-        iconEmoji = '⛽';
-        bgColor = 'bg-emerald-600 border-emerald-300';
-      } else if (poi.category === 'scenic_pass') {
-        iconEmoji = '🏔️';
-        bgColor = 'bg-purple-600 border-purple-300';
-      } else if (poi.category === 'emergency_dor') {
-        iconEmoji = '🚨';
-        bgColor = 'bg-rose-600 border-rose-300';
-      } else if (poi.category === 'toll_plaza') {
-        iconEmoji = '🎟️';
-        bgColor = 'bg-blue-600 border-blue-300';
-      }
-
-      const markerHtml = `
-        <div class="relative flex items-center justify-center cursor-pointer">
-          <div class="w-6 h-6 ${bgColor} rounded-full flex items-center justify-center shadow-md border text-[11px]">
-            ${iconEmoji}
-          </div>
-        </div>
-      `;
-
-      const icon = L.divIcon({
-        className: 'custom-poi-marker',
-        html: markerHtml,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-      });
-
-      const marker = L.marker([poi.lat, poi.lng], { icon });
-
-      poisGroup.addLayer(marker);
-    });
-  }, [activeLayer, livePOIs]);
 
   const highwayTouchCities = useMemo(
     () => filterCitiesNearHighways(expandedCities, highwaysList, CITY_HIGHWAY_TOUCH_DISTANCE_KM),
@@ -966,6 +837,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
+    if (activeLayer !== 'cities') return;
     const citiesGroup = layersRef.current.cities;
     citiesGroup.clearLayers();
 
@@ -1014,145 +886,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       citiesGroup.addLayer(marker);
     });
-  }, [highwayTouchCities, activeRoute, onSelectCity]);
-
-  // Render Weather Nodes Layer (Mountain Passes & Highway Met Nodes - shows everywhere across Nepal when selected)
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    const weatherGroup = layersRef.current.weather;
-    weatherGroup.clearLayers();
-    weatherMarkersRef.current.clear();
-
-    if (activeLayer !== 'weather') return;
-
-    const nodesToRender =
-      weatherNodes && weatherNodes.length > 0 ? weatherNodes : HIGHWAY_WEATHER_NODES;
-
-    nodesToRender.forEach((node) => {
-      const isSelected = selectedWeatherNodeId === node.id;
-
-      // Determine condition emoji & styling
-      let conditionEmoji = '🌤️';
-      let conditionName = 'Partly Cloudy';
-      let badgeBorderColor = '#38bdf8';
-      let badgeBg = 'rgba(15, 23, 42, 0.95)';
-
-      switch (node.condition) {
-        case 'thunderstorm':
-          conditionEmoji = '⛈️';
-          conditionName = 'Severe Thunderstorm';
-          badgeBorderColor = '#ef4444';
-          badgeBg = 'rgba(69, 10, 10, 0.95)';
-          break;
-        case 'rain_monsoon':
-          conditionEmoji = '🌧️';
-          conditionName = 'Monsoon Downpour';
-          badgeBorderColor = '#3b82f6';
-          badgeBg = 'rgba(15, 23, 42, 0.95)';
-          break;
-        case 'mountain_shower':
-          conditionEmoji = '🌦️';
-          conditionName = 'Mountain Shower';
-          badgeBorderColor = '#06b6d4';
-          badgeBg = 'rgba(15, 23, 42, 0.95)';
-          break;
-        case 'dense_fog':
-          conditionEmoji = '🌫️';
-          conditionName = 'Dense Mountain Fog';
-          badgeBorderColor = '#f59e0b';
-          badgeBg = 'rgba(69, 26, 3, 0.95)';
-          break;
-        case 'cloudy':
-          conditionEmoji = '⛅';
-          conditionName = 'Overcast / Cloudy';
-          badgeBorderColor = '#94a3b8';
-          badgeBg = 'rgba(15, 23, 42, 0.95)';
-          break;
-        case 'sunny':
-        default:
-          conditionEmoji = '☀️';
-          conditionName = 'Sunny & Clear';
-          badgeBorderColor = '#10b981';
-          badgeBg = 'rgba(6, 78, 59, 0.95)';
-          break;
-      }
-
-      if (node.landslideRisk === 'severe' || node.landslideRisk === 'high') {
-        badgeBorderColor = '#ef4444';
-      }
-
-      // Format Road Grip Badge
-      let gripBadge = { text: 'DRY ROAD (EXCELLENT)', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
-      if (node.roadGrip === 'mud_slippery') {
-        gripBadge = { text: 'MUD SLIPPERY (4WD REC)', color: 'bg-rose-500/20 text-rose-300 border-rose-500/40' };
-      } else if (node.roadGrip === 'fog_low_visibility') {
-        gripBadge = { text: 'FOG / LOW TRACTION', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
-      } else if (node.roadGrip === 'wet_caution') {
-        gripBadge = { text: 'WET ASPHALT (CAUTION)', color: 'bg-sky-500/20 text-sky-300 border-sky-500/40' };
-      }
-
-      // Format Landslide Risk Badge
-      let landslideBadge = { text: 'LOW RISK', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
-      if (node.landslideRisk === 'severe') {
-        landslideBadge = { text: 'SEVERE HAZARD', color: 'bg-rose-600/30 text-rose-300 border-rose-500/60' };
-      } else if (node.landslideRisk === 'high') {
-        landslideBadge = { text: 'HIGH HAZARD', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' };
-      } else if (node.landslideRisk === 'moderate') {
-        landslideBadge = { text: 'MODERATE RISK', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
-      }
-
-      const iconHtml = `
-        <div class="relative flex flex-col items-center cursor-pointer" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));">
-          ${
-            isSelected
-              ? '<div class="absolute -inset-1 rounded-lg bg-cyan-400/35 animate-ping pointer-events-none"></div>'
-              : ''
-          }
-          <div style="background-color: ${badgeBg}; border-color: ${badgeBorderColor};"
-            class="px-1.5 py-0.5 rounded-lg border flex items-center gap-1 backdrop-blur-md shadow-md ${
-              isSelected ? 'ring-1 ring-cyan-300' : ''
-            }">
-            <span class="text-[10px] leading-none">${conditionEmoji}</span>
-            <span class="text-[10px] font-black text-white leading-none tabular-nums">${node.tempC}°</span>
-          </div>
-          <div class="w-1 h-1 rounded-full mt-0.5" style="background-color: ${badgeBorderColor};"></div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'custom-weather-marker',
-        iconSize: [44, 24],
-        iconAnchor: [22, 24],
-      });
-
-      const marker = L.marker([node.lat, node.lng], { icon: customIcon });
-
-      // Interactive Quick Tooltip
-      marker.bindTooltip(
-        `<div class="p-2 text-xs font-sans max-w-xs">
-          <div class="font-bold text-white flex items-center justify-between gap-2">
-            <span class="text-sm font-black">${node.name}</span>
-            <span class="text-[10px] text-cyan-300 font-mono font-bold px-1.5 py-0.5 bg-slate-900 rounded border border-slate-700">⛰️ ${node.elevationM}m ASL</span>
-          </div>
-           <div class="text-slate-300 text-[11px] mt-0.5"><span class="text-emerald-400 font-semibold">${node.highwayCode}</span></div>
-          <div class="mt-2 flex items-center gap-2 text-[10px] flex-wrap">
-            <span class="text-amber-300 font-bold px-1.5 py-0.5 bg-amber-500/10 rounded">${conditionEmoji} ${node.tempC}°C (${conditionName})</span>
-            <span class="text-sky-300 font-medium px-1.5 py-0.5 bg-sky-500/10 rounded">💧 ${node.rainProbabilityPercent}% Rain</span>
-            <span class="px-1.5 py-0.5 rounded font-bold uppercase ${
-              node.landslideRisk === 'severe' || node.landslideRisk === 'high'
-                ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50'
-                : 'bg-amber-500/20 text-amber-300'
-             }">${node.landslideRisk} Hazard</span>
-          </div>
-        </div>`,
-        { sticky: true, className: 'custom-dark-tooltip', direction: 'top' }
-      );
-
-      weatherMarkersRef.current.set(node.id, marker);
-      weatherGroup.addLayer(marker);
-    });
-  }, [activeLayer, weatherNodes, selectedWeatherNodeId, onSelectWeatherNode, onSelectCity]);
+  }, [activeLayer, highwayTouchCities, activeRoute, onSelectCity]);
 
   // Render Blackspots Layer (Global Nepal Accident Blackspots)
   useEffect(() => {
@@ -1512,10 +1246,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         setShowLegend(false);
         setShowMapStyle(false);
         layersRef.current.highways.clearLayers();
-        layersRef.current.weather.clearLayers();
         layersRef.current.incidents.clearLayers();
-        layersRef.current.pois.clearLayers();
-        layersRef.current.traffic.clearLayers();
         layersRef.current.alternatives.clearLayers();
       }
     } else {
@@ -1644,20 +1375,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => handleToggleLayer('weather')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
-              activeLayer === 'weather'
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-sky-500/20'
-                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
-            }`}
-            title="Weather"
-            id="toggle-layer-weather"
-          >
-            <CloudRain className="w-4 h-4" />
-              <span className="text-[10px] font-bold">Weather</span>
-          </button>
-          <button
-            type="button"
             onClick={() => handleToggleLayer('incidents')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'incidents'
@@ -1672,31 +1389,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => handleToggleLayer('traffic')}
+            onClick={() => handleToggleLayer('cities')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
-              activeLayer === 'traffic'
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20'
+              activeLayer === 'cities'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-500/20'
                 : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
-            title="Traffic"
-            id="toggle-layer-traffic"
+            title="Cities"
+            id="toggle-layer-cities"
           >
-            <Gauge className="w-4 h-4" />
-              <span className="text-[10px] font-bold">Traffic</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleToggleLayer('pois')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
-              activeLayer === 'pois'
-                ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-teal-500/20'
-                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
-            }`}
-            title="POIs"
-            id="toggle-layer-pois"
-          >
-            <Fuel className="w-4 h-4" />
-              <span className="text-[10px] font-bold">POIs</span>
+            <Building className="w-4 h-4" />
+              <span className="text-[10px] font-bold">Cities</span>
           </button>
           {hasAlternatives && (
             <button

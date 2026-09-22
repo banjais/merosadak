@@ -813,9 +813,6 @@ function AppContent() {
             onSelectCity={handleSelectCityOnMap}
             onMyLocationMoreInfo={() => setIsMyLocationOpen(true)}
             focusedTarget={focusedTarget}
-            weatherNodes={weatherNodes}
-            onSelectWeatherNode={handleSelectWeatherNode}
-            selectedWeatherNodeId={selectedWeatherId}
           />
         </div>
 
