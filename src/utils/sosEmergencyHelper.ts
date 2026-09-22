@@ -17,7 +17,7 @@ export const NEPAL_EMERGENCY_HOTLINES = [
   { name: 'Tourist Police Nepal', number: '1144', tel: 'tel:1144', role: 'Foreign Travelers & Trekking Route Assistance', badge: '🏔️ 1144' },
   { name: 'Ambulance (Red Cross)', number: '102', tel: 'tel:102', role: 'Immediate Medical & Trauma Evacuation', badge: '🚑 102' },
   { name: 'Armed Police Force (APF)', number: '1114', tel: 'tel:1114', role: 'Disaster Relief & Landslide Search-and-Rescue', badge: '🛡️ 1114' },
-  { name: 'Road Department (DoR)', number: '+977-1-4262693', tel: 'tel:+97714262693', role: 'Heavy Machinery, Road Blockage & Bulldozer Dispatch', badge: '🏗️ DoR' },
+  { name: 'Road Department (DoR)', number: '+977-1-4262693', tel: 'tel:+97714262693', role: 'Road clearance / machinery', badge: '🏗️ DoR' },
 ];
 
 export const DISTRESS_TYPE_CONFIG: Record<
@@ -25,59 +25,59 @@ export const DISTRESS_TYPE_CONFIG: Record<
   { label: string; nepaliLabel: string; iconEmoji: string; description: string; priority: 'Critical' | 'Urgent' | 'High' }
 > = {
   accident: {
-    label: 'Road Accident / Vehicle Collision',
-    nepaliLabel: 'सडक दुर्घटना / गाडी ठोक्किएको',
+    label: 'Accident',
+    nepaliLabel: 'दुर्घटना',
     iconEmoji: '🚨',
-    description: 'Collision, rollover, or passenger injury requiring urgent ambulance / police response',
+    description: 'Crash or injury — need ambulance or police',
     priority: 'Critical',
   },
   landslide_obstruction: {
-    label: 'Landslide / Rockfall / Mudflow Trapped',
-    nepaliLabel: 'पहिरो / ढुङ्गा खसेर थुनिएको',
+    label: 'Landslide / blocked road',
+    nepaliLabel: 'पहिरो / बाटो थुनिएको',
     iconEmoji: '⛰️',
-    description: 'Vehicle trapped between active landslide zones or washed-out road section',
+    description: 'Road blocked or vehicle stuck in landslide',
     priority: 'Critical',
   },
   medical: {
-    label: 'Acute Medical Emergency / Altitude Sickness',
-    nepaliLabel: 'आकस्मिक स्वास्थ्य समस्या / लेक लागेको',
+    label: 'Medical',
+    nepaliLabel: 'स्वास्थ्य आपतकाल',
     iconEmoji: '🚑',
-    description: 'Severe illness, trauma, breathing distress, or acute mountain sickness (AMS)',
+    description: 'Illness, injury, or altitude sickness',
     priority: 'Critical',
   },
   offroad_distress: {
-    label: 'Vehicle Slipped Off-Road / Cliff Edge Danger',
-    nepaliLabel: 'सडकबाट चिप्लिएको / भीरको जोखिम',
+    label: 'Off the road',
+    nepaliLabel: 'सडकबाट बाहिर',
     iconEmoji: '🆘',
-    description: 'Vehicle hanging off shoulder, deep mud ditch, or risk of rolling down ridge',
+    description: 'Vehicle off the road or unsafe edge',
     priority: 'Critical',
   },
   vehicle_breakdown: {
-    label: 'Mechanical Failure / Engine / Axle / Brake Breakdown',
-    nepaliLabel: 'गाडी बिग्रिएको / इन्जिन वा ब्रेक फेल',
-    iconEmoji: '🚙',
-    description: 'Severe mechanical breakdown in isolated stretch without cellular workshop support',
+    label: 'Breakdown',
+    nepaliLabel: 'गाडी बिग्रियो',
+    iconEmoji: '🔧',
+    description: 'Engine, brakes, or other mechanical failure',
     priority: 'Urgent',
   },
   ev_battery_or_fuel: {
-    label: 'EV Battery Depleted / Out of Fuel on Remote Pass',
-    nepaliLabel: 'इभी चार्ज सकिएको / इन्धन रित्तिएको',
+    label: 'No fuel / battery',
+    nepaliLabel: 'इन्धन / चार्ज सकियो',
     iconEmoji: '⚡',
-    description: 'Battery 0% or zero fuel on high-altitude gradient or isolated highway section',
+    description: 'Empty tank or EV battery on the highway',
     priority: 'Urgent',
   },
   mountain_weather: {
-    label: 'Severe Blizzard / Flash Flood / Torrential Whiteout',
-    nepaliLabel: 'हिमपात / बाढी / भारी वर्षामा अलपत्र',
+    label: 'Bad weather',
+    nepaliLabel: 'खराब मौसम',
     iconEmoji: '🌨️',
-    description: 'Severe weather whiteout, freezing conditions, zero visibility, or river overflow',
+    description: 'Storm, flood, or zero visibility',
     priority: 'Urgent',
   },
   general_rescue: {
-    label: 'General Rescue / Stranded Traveler Assistance',
-    nepaliLabel: 'अन्य उद्धार तथा सहयोग',
+    label: 'Other help',
+    nepaliLabel: 'अन्य सहयोग',
     iconEmoji: '🚩',
-    description: 'Lost route, night isolation, wildlife threat, or urgent traveler support',
+    description: 'Stranded, lost, or need general assistance',
     priority: 'High',
   },
 };
@@ -376,10 +376,10 @@ class SosAudioBeacon {
   }
 
   /**
-   * Standard Morse Code SOS: ... --- ... (880 Hz / 1200 Hz tone)
+   * Standard Sound signal: ... --- ... (880 Hz / 1200 Hz tone)
    */
   private runMorseSos(ctx: AudioContext) {
-    // Morse Code SOS: dot=100ms, dash=300ms
+    // Sound signal: dot=100ms, dash=300ms
     const pattern = [
       100, 100, 100, 100, 100, 300, // S (...)
       300, 100, 300, 100, 300, 300, // O (---)

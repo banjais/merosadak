@@ -73,7 +73,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
       } else if (currentPct < 85) {
         setStatusText('Syncing Live Incidents, Weather & Traffic…');
       } else {
-        setStatusText('Finalizing Route Engine & Map Layers…');
+        setStatusText('Loading map……');
       }
 
       if (currentPct >= 100) {
@@ -194,7 +194,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
           className="mt-2 text-sm text-slate-500 hover:text-amber-400 transition-colors duration-200 underline underline-offset-4 cursor-pointer font-medium"
           disabled={isFadingOut}
         >
-          Skip loading screen
+          Skip
         </button>
       </div>
     </div>

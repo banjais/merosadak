@@ -102,7 +102,7 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
               type="button"
               onClick={() => handleAction(onOpenSos)}
               className="w-11 h-11 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-red-400/40 shadow-rose-600/30"
-              title="Emergency SOS"
+              title="Emergency"
             >
               <ShieldAlert className="w-5 h-5 animate-pulse" />
             </button>
