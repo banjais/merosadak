@@ -463,3 +463,5 @@ class SosAudioBeacon {
 }
 
 export const sosAudioBeacon = new SosAudioBeacon();
+/** Alias used by SosEmergencyModal (short “alert” naming) */
+export const sosAudioAlert = sosAudioBeacon;
