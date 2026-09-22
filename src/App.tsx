@@ -506,15 +506,15 @@ function AppContent() {
               onClick={resetMapView}
               title="Reset map"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10 group-hover:border-amber-500/50 transition">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-slate-600 transition">
                 <svg viewBox="0 0 24 24" width="22" height="22">
-                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#f59e0b" />
+                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
                 </svg>
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
                   <span className="text-base font-black tracking-tight text-white font-display">MERO SADAK</span>
-                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded">
+                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold accent-bg accent-text accent-border border rounded">
                     मेरो सडक
                   </span>
                 </div>

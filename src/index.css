@@ -819,6 +819,9 @@ html[data-accent='sky'] {
 html[data-accent] .accent-bg { background-color: var(--accent-bg) !important; }
 html[data-accent] .accent-border { border-color: var(--accent-border) !important; }
 html[data-accent] .accent-text { color: var(--accent-text) !important; }
+html[data-accent] .logo-icon { color: var(--accent); }
+html[data-accent] .logo-shadow { box-shadow: 0 4px 12px -4px var(--accent); }
+html[data-accent] .logo-svg { fill: var(--accent); }
 
 /* Accent Color Remap - remaps hardcoded emerald colors to selected accent */
 html[data-accent='emerald'] .text-emerald-400,
