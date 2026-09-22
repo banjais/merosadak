@@ -22,10 +22,30 @@ import {
   Clock,
   Gauge,
   Layers,
+  Star,
    ArrowRight,
    Info,
    FileText
  } from 'lucide-react';
+
+function deriveRoadType(highway: Highway): string {
+  const surfaces = new Set<string>();
+  const segs = highway.segments || [];
+  for (const seg of segs) {
+    if (seg.surface) surfaces.add(seg.surface);
+  }
+  if (surfaces.size === 0) return 'Unknown';
+  const hasPaved = surfaces.has('asphalt_excellent') || surfaces.has('blacktopped_fair');
+  const hasGravel = surfaces.has('gravel');
+  const hasUnpaved = surfaces.has('offroad_mud') || surfaces.has('under_construction');
+  if (hasPaved && !hasGravel && !hasUnpaved) return 'Blacktopped';
+  if (hasGravel && !hasPaved && !hasUnpaved) return 'Gravel';
+  if (hasUnpaved && !hasPaved && !hasGravel) return 'Unpaved';
+  if (hasPaved && hasGravel && !hasUnpaved) return 'Mixed (Asphalt + Gravel)';
+  if (hasPaved && hasUnpaved && !hasGravel) return 'Mixed (Asphalt + Unpaved)';
+  if (hasGravel && hasUnpaved && !hasPaved) return 'Gravel / Unpaved';
+  return 'Mixed Surface';
+}
 
 interface HighwayDirectoryProps {
   onSelectHighwayOnMap?: (highway: Highway) => void;
@@ -107,6 +127,15 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   }, [highways, incidents, reports]);
 
   const totalCalculatedKm = highways.reduce((acc, h) => acc + (h.totalLengthKm || 0), 0);
+
+  // Derive road type for each highway from its segments
+  const roadTypesMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const hw of highways) {
+      map.set((hw.id || hw.code).toLowerCase(), deriveRoadType(hw));
+    }
+    return map;
+  }, [highways]);
   const totalFeatureLinks = highways.reduce((acc, h) => acc + (h.segmentLinks?.length || h.segments?.length || 0), 0);
 
   // Status counts for top summary
@@ -353,6 +382,29 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
                           {analysis.passabilityScore}% Passable
                         </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                          {roadTypesMap.get(highwayKey) || 'Unknown'}
+                        </span>
+                      </div>
+
+                      {/* Condition & Scenic Ratings */}
+                      <div className="flex items-center gap-3 mt-1 text-[10px]">
+                        <span className="flex items-center gap-0.5">
+                          <Gauge className="w-3 h-3 text-amber-400" />
+                          <span className="font-semibold text-slate-300">{highway.conditionRating || '—'}</span>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`w-2.5 h-2.5 ${i < Math.round(highway.conditionRating || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-700'}`} />
+                          ))}
+                          <span className="text-slate-600 ml-0.5">Cond</span>
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <Mountain className="w-3 h-3 text-emerald-400" />
+                          <span className="font-semibold text-slate-300">{highway.scenicRating || '—'}</span>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`w-2.5 h-2.5 ${i < Math.round(highway.scenicRating || 0) ? 'text-emerald-400 fill-emerald-400' : 'text-slate-700'}`} />
+                          ))}
+                          <span className="text-slate-600 ml-0.5">Scenic</span>
+                        </span>
                       </div>
 
                       {/* Route Corridor & Key Metadata */}
@@ -400,7 +452,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         </div>
 
                         {/* Segmented Color Bar */}
-                        <div className="flex items-center space-x-1 h-3 w-full bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                        <div className="flex items-center space-x-1 h-3 max-w-lg mx-auto bg-slate-950 p-0.5 rounded-lg border border-slate-800">
                           {segments.map((seg, sIdx) => {
                             let barColor = 'bg-emerald-500 hover:bg-emerald-400';
                             if (seg.realtimeStatusType === 'obstruction') barColor = 'bg-rose-500 hover:bg-rose-400 animate-pulse';
@@ -458,7 +510,30 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 {/* Expanded Details Section */}
                 {isExpanded && (
                   <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5">
-                     {/* Highway Description & Route Context */}
+                    {/* Highway Info Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
+                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Condition</div>
+                        <div className="text-sm font-black text-amber-400">{highway.conditionRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
+                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Scenic</div>
+                        <div className="text-sm font-black text-emerald-400">{highway.scenicRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
+                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Road Type</div>
+                        <div className="text-xs font-bold text-sky-300 truncate">{roadTypesMap.get(highwayKey) || '—'}</div>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60">
+                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Provinces</div>
+                        <div className="text-xs font-bold text-slate-200 truncate">{highway.provinces?.length || 0}</div>
+                      </div>
+                    </div>
+                    {highway.nepaliName && (
+                      <div className="text-xs text-slate-500 italic">{highway.nepaliName}</div>
+                    )}
+
+                    {/* Highway Description & Route Context */}
                      <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
                        {highway.description || `National Highway ${highway.code} connecting ${highway.route || `${highway.startPoint} to ${highway.endPoint}`}, maintained by Department of Roads, Nepal.`}
                      </p>

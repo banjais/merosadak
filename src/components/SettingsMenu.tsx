@@ -167,6 +167,12 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   );
 }
 
+interface SettingsButtonProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSettingsClose?: () => void;
+}
+
 export const SettingsButton: React.FC<SettingsButtonProps> = ({ isOpen, onOpenChange, onSettingsClose }) => {
   const handleClick = () => {
     onOpenChange(!isOpen);

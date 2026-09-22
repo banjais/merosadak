@@ -176,6 +176,7 @@ export interface Highway {
   conditionRating: number; // 1 to 5
   scenicRating: number; // 1 to 5
   terrainType: 'Plains' | 'Hilly' | 'High Mountain' | 'Mixed';
+  roadType?: string; // derived from segments: e.g. "Blacktopped", "Gravel", "Mixed"
   description: string;
   dorDivision: string;
   emergencyContact: string;

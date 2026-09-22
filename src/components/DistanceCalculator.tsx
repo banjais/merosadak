@@ -233,7 +233,6 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
         </div>
 
         {/* Calculation Result Display */}
-        {
         {verifiedPairMissing && (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
             <p className="font-bold">No verified highway route</p>
@@ -243,7 +242,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
             </p>
           </div>
         )}
-routeResult ? (
+        {routeResult ? (
           <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div className="flex items-center space-x-3">
