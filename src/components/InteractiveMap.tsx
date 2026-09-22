@@ -117,8 +117,10 @@ function createNepalTileLayer(
       const tileBounds = this._tileCoordsToBounds(coords);
       const nepalBounds = L.latLngBounds(NEPAL_BOUNDS as any);
       if (tileBounds.intersects(nepalBounds)) {
-        const sdIndex = (coords.x + coords.y) % (this.options.subdomains?.length || 3);
-        const s = (this.options.subdomains || 'abc')[sdIndex];
+        const subs = this.options.subdomains || '';
+        const s = subs.length
+          ? subs[(coords.x + coords.y) % subs.length]
+          : '';
         let tileUrl = this.options.url.replace('{s}', s);
         tileUrl = L.Util.template(tileUrl, {
           x: coords.x,
@@ -536,27 +538,27 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.removeLayer(tileLayerRef.current);
     }
 
-    // Do NOT use tile.openstreetmap.org in production — OSM blocks heavy use (403)
-    // and requires visible attribution. CARTO basemaps are intended for apps.
-    let url = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    let attribution = ''; // UI attribution hidden; legal notice lives in Data Sources
-    let maxZoom = 19;
-    let subdomains = 'abcd';
+    // No CARTO (requires API key). No tile.openstreetmap.org (403 in production).
+    // Esri public ArcGIS Online tiles — no API key for standard basemap use.
+    let url =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+    let attribution = '';
+    let maxZoom = 16;
+    let subdomains = '';
 
     if (mapStyle === 'satellite') {
       url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      subdomains = '';
+      maxZoom = 19;
     } else if (mapStyle === 'terrain') {
-      // OpenTopoMap — lighter traffic than OSM.org; still OSM-derived data
-      url = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-      maxZoom = 17;
-      subdomains = 'abc';
+      url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
+      maxZoom = 19;
     } else if (mapStyle === 'territorial') {
-      url = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      subdomains = 'abcd';
+      url =
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+      maxZoom = 16;
     }
 
-    const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains || 'abcd');
+    const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains);
 
     newLayer.addTo(map);
     tileLayerRef.current = newLayer;

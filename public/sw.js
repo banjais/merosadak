@@ -44,24 +44,16 @@ const API_ENDPOINTS = [
 ];
 
 const NEPAL_CORE_TILES = [
-  'https://a.basemaps.cartocdn.com/dark_all/6/46/27.png',
-  'https://a.basemaps.cartocdn.com/dark_all/6/47/27.png',
-  'https://a.basemaps.cartocdn.com/dark_all/6/46/28.png',
-  'https://a.basemaps.cartocdn.com/dark_all/6/47/28.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/93/54.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/94/54.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/95/54.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/93/55.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/94/55.png',
-  'https://a.basemaps.cartocdn.com/dark_all/7/95/55.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/187/109.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/188/109.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/189/109.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/190/109.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/187/110.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/188/110.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/189/110.png',
-  'https://a.basemaps.cartocdn.com/dark_all/8/190/110.png',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/6/27/46',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/6/27/47',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/6/28/46',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/6/28/47',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/54/93',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/54/94',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/54/95',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/55/93',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/55/94',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/55/95',
 ];
 
 function isTileRequest(url) {
@@ -69,6 +61,7 @@ function isTileRequest(url) {
     const u = new URL(url);
     return (
       u.hostname.includes('basemaps.cartocdn.com') ||
+      u.hostname.includes('arcgisonline.com') ||
       /\/\d+\/\d+\/\d+\.(png|jpg|jpeg|webp)$/i.test(u.pathname)
     );
   } catch {
