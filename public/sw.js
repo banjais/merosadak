@@ -1,19 +1,36 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
-// Version 1.3.0 - Mountain Offline Caching & Map Tile Engine
+// Version 1.4.0 - Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
+const SW_VERSION = '1.4.0';
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v3',
-  TILES: 'mero-sadak-tiles-v3',
-  DATA: 'mero-sadak-data-v3',
+  STATIC: 'mero-sadak-static-v4',
+  TILES: 'mero-sadak-tiles-v4',
+  DATA: 'mero-sadak-data-v4',
 };
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png',
+  '/assets/icons/apple-touch-icon.png',
 ];
 
-// Core API endpoints to cache for offline mountain travel
+const STATIC_DATA_URLS = [
+  '/data/cities-and-junctions.json',
+  '/data/cities.json',
+  '/data/distance-matrix.json',
+  '/data/highway-info.json',
+  '/data/highway-coords.json',
+  '/data/blackspots.json',
+  '/data/bus-stations.json',
+  '/data/airports.json',
+  '/data/district-hqs.json',
+  '/data/district-centroids.json',
+  '/data/district-terrain.json',
+];
+
 const API_ENDPOINTS = [
   '/api/highways',
   '/api/cities',
@@ -22,377 +39,321 @@ const API_ENDPOINTS = [
   '/api/pois',
   '/api/traffic',
   '/api/offline-bundle',
+  '/api/dhm-rainfall',
 ];
 
-// Key Nepal highway tile bounding coordinates (Zoom 6, 7, 8 base covers all Nepal)
 const NEPAL_CORE_TILES = [
-  'https://a.tile.openstreetmap.org/6/46/27.png',
-  'https://b.tile.openstreetmap.org/6/47/27.png',
-  'https://c.tile.openstreetmap.org/6/46/28.png',
-  'https://a.tile.openstreetmap.org/6/47/28.png',
-  'https://a.tile.openstreetmap.org/7/93/54.png',
-  'https://b.tile.openstreetmap.org/7/94/54.png',
-  'https://c.tile.openstreetmap.org/7/95/54.png',
-  'https://a.tile.openstreetmap.org/7/93/55.png',
-  'https://b.tile.openstreetmap.org/7/94/55.png',
-  'https://c.tile.openstreetmap.org/7/95/55.png',
-  'https://a.tile.openstreetmap.org/8/187/109.png',
-  'https://b.tile.openstreetmap.org/8/188/109.png',
-  'https://c.tile.openstreetmap.org/8/189/109.png',
-  'https://a.tile.openstreetmap.org/8/190/109.png',
-  'https://b.tile.openstreetmap.org/8/187/110.png',
-  'https://c.tile.openstreetmap.org/8/188/110.png',
-  'https://a.tile.openstreetmap.org/8/189/110.png',
-  'https://b.tile.openstreetmap.org/8/190/110.png',
+  'https://tile.openstreetmap.org/6/46/27.png',
+  'https://tile.openstreetmap.org/6/47/27.png',
+  'https://tile.openstreetmap.org/6/46/28.png',
+  'https://tile.openstreetmap.org/6/47/28.png',
+  'https://tile.openstreetmap.org/7/93/54.png',
+  'https://tile.openstreetmap.org/7/94/54.png',
+  'https://tile.openstreetmap.org/7/95/54.png',
+  'https://tile.openstreetmap.org/7/93/55.png',
+  'https://tile.openstreetmap.org/7/94/55.png',
+  'https://tile.openstreetmap.org/7/95/55.png',
+  'https://tile.openstreetmap.org/8/187/109.png',
+  'https://tile.openstreetmap.org/8/188/109.png',
+  'https://tile.openstreetmap.org/8/189/109.png',
+  'https://tile.openstreetmap.org/8/190/109.png',
+  'https://tile.openstreetmap.org/8/187/110.png',
+  'https://tile.openstreetmap.org/8/188/110.png',
+  'https://tile.openstreetmap.org/8/189/110.png',
+  'https://tile.openstreetmap.org/8/190/110.png',
 ];
 
-// Install Event: Precaches base static app shell and core tiles
+function isTileRequest(url) {
+  try {
+    const u = new URL(url);
+    return (
+      u.hostname.endsWith('tile.openstreetmap.org') ||
+      u.hostname.includes('basemaps.cartocdn.com') ||
+      /\/\d+\/\d+\/\d+\.(png|jpg|jpeg|webp)$/i.test(u.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isApiRequest(url) {
+  try {
+    const u = new URL(url);
+    return u.pathname.startsWith('/api/');
+  } catch {
+    return false;
+  }
+}
+
+function isStaticDataRequest(url) {
+  try {
+    return new URL(url).pathname.startsWith('/data/');
+  } catch {
+    return false;
+  }
+}
+
+function isManifestRequest(url) {
+  try {
+    return new URL(url).pathname === '/manifest.json';
+  } catch {
+    return false;
+  }
+}
+
+function isNavigationRequest(request) {
+  return request.mode === 'navigate' || (request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html'));
+}
+
+async function putIfUsable(cache, request, response) {
+  if (!response || response.type === 'opaque' || response.status !== 200) return false;
+  try {
+    await cache.put(request, response.clone());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    (async () => {
-      try {
-        const staticCache = await caches.open(CACHE_NAMES.STATIC);
-        await Promise.allSettled(
-          PRECACHE_ASSETS.map(async (url) => {
-            try {
-              const req = new Request(url, { mode: 'no-cors' });
-              await staticCache.add(req);
-            } catch (e) {
-              console.warn('[SW] Skipping precache for:', url, e.message);
-            }
-          })
-        );
-
-        const tileCache = await caches.open(CACHE_NAMES.TILES);
-        await Promise.allSettled(
-          NEPAL_CORE_TILES.map(async (tileUrl) => {
-            try {
-              const res = await fetch(tileUrl, { mode: 'no-cors' });
-              if (res) await tileCache.put(tileUrl, res);
-            } catch (e) {
-              console.warn('[SW] Skipping tile prefetch:', tileUrl, e.message);
-            }
-          })
-        );
-      } catch (err) {
-        console.warn('[SW] Precache during install partially skipped:', err);
-      }
-    })()
-  );
-});
-
-// Activate Event: Clean up outdated caches only (preserve current version)
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      try {
-        const allCacheKeys = await caches.keys();
-        const currentCaches = Object.values(CACHE_NAMES);
-        await Promise.all(
-          allCacheKeys
-            .filter((key) => !currentCaches.includes(key) && key.startsWith('mero-sadak-'))
-            .map((key) => caches.delete(key))
-        );
-      } catch (err) {
-        console.warn('[SW] Cache cleanup skipped:', err);
-      }
-      await self.clients.claim();
-    })()
-  );
-});
-
-// Helper: Check if request is a map tile
-function isTileRequest(url) {
-  const u = new URL(url, self.location.href);
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-  return (
-    u.hostname.includes('tile.openstreetmap.org') ||
-    u.hostname.includes('tile.opentopomap.org') ||
-    u.hostname.includes('server.arcgisonline.com') ||
-    u.hostname.includes('basemaps.cartocdn.com') ||
-    u.pathname.match(/\/\d+\/\d+\/\d+(\.png|@2x\.png|\.jpg|\.webp)/i)
-  );
-}
-
-// Helper: Check if request is API
-function isApiRequest(url) {
-  const u = new URL(url, self.location.href);
-  return u.pathname.startsWith('/api/');
-}
-
-// Helper: Check if request is for manifest.json
-function isManifestRequest(url) {
-  const u = new URL(url, self.location.href);
-  return u.pathname === '/manifest.json';
-}
-
-// Fetch Event Router
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // Skip non-GET requests (e.g. POST report submissions)
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Skip non-http(s) schemes (e.g. chrome-extension, data, blob)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return;
-  }
-
-  // Strategy 0: Manifest -> Cache-First (critical for PWA)
-  if (isManifestRequest(event.request.url)) {
-    event.respondWith(
-      (async () => {
-        try {
-          const staticCache = await caches.open(CACHE_NAMES.STATIC);
-          const cached = await staticCache.match(event.request);
-          if (cached) return cached;
-
-          const networkRes = await fetch(event.request);
-          if (networkRes && networkRes.status === 200) {
-            staticCache.put(event.request, networkRes.clone());
-          }
-          return networkRes;
-        } catch {
-          // Return minimal valid manifest to prevent PWA install failure
-          return new Response(JSON.stringify({
-            name: 'Mero Sadak',
-            short_name: 'MeroSadak',
-            start_url: '/',
-            display: 'standalone',
-            background_color: '#070f1e',
-            theme_color: '#070f1e',
-            icons: []
-          }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-      })()
-    );
-    return;
-  }
-
-  // Strategy 1: Map Tiles -> Cache-First with Stale-While-Revalidate
-  if (isTileRequest(event.request.url)) {
-    event.respondWith(
-      (async () => {
-        let tileCache;
-        try {
-          tileCache = await caches.open(CACHE_NAMES.TILES);
-        } catch {
-          return fetch(event.request).catch(() => new Response('', { status: 408, statusText: 'Tile Offline' }));
-        }
-        const cachedResponse = await tileCache.match(event.request);
-
-        if (cachedResponse) {
-          fetch(event.request)
-            .then((networkRes) => {
-              if (networkRes && networkRes.status === 200) {
-                tileCache.put(event.request, networkRes).catch(() => {});
-              }
-            })
-            .catch(() => {});
-          return cachedResponse;
-        }
-
-        try {
-          const networkResponse = await fetch(event.request);
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-            tileCache.put(event.request, networkResponse.clone()).catch(() => {});
-          }
-          return networkResponse;
-        } catch (err) {
-          return new Response('', { status: 408, statusText: 'Tile Offline' });
-        }
-      })()
-    );
-    return;
-  }
-
-  // Strategy 2: Core Highway APIs -> Network-First with Cache Fallback
-  if (isApiRequest(url)) {
-    event.respondWith(
-      (async () => {
-        let dataCache;
-        try {
-          dataCache = await caches.open(CACHE_NAMES.DATA);
-        } catch {
-          return fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'Offline cache unavailable' }), {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' },
-          }));
-        }
-        try {
-          const networkResponse = await fetch(event.request);
-          if (networkResponse && networkResponse.status === 200) {
-            dataCache.put(event.request, networkResponse.clone()).catch(() => {});
-          }
-          return networkResponse;
-        } catch (error) {
-          const cachedResponse = await dataCache.match(event.request);
-          if (cachedResponse) {
-            const headers = new Headers(cachedResponse.headers);
-            headers.set('X-MeroSadak-Offline-Cached', 'true');
-            return new Response(await cachedResponse.blob(), {
-              status: cachedResponse.status,
-              statusText: 'OK (Mountain Offline Cache)',
-              headers,
-            });
-          }
-          return new Response(JSON.stringify({ error: 'Offline and no cached highway data available' }), {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      })()
-    );
-    return;
-  }
-
-  // Strategy 3: Static App Shell & CSS/JS -> Stale-While-Revalidate
-  event.respondWith(
-    (async () => {
-      try {
-        const staticCache = await caches.open(CACHE_NAMES.STATIC);
-        const cached = await staticCache.match(event.request);
-
-        if (cached) return cached;
-
-        try {
-          const networkRes = await fetch(event.request);
-          if (networkRes && networkRes.status === 200) {
-            const contentType = networkRes.headers.get('content-type') || '';
-            const isHtml = contentType.includes('text/html');
-            const url = new URL(event.request.url);
-            const isHtmlPath =
-              url.pathname.endsWith('.html') ||
-              url.pathname === '/' ||
-              !url.pathname.includes('.');
-
-            if (!isHtml || isHtmlPath) {
-              staticCache.put(event.request, networkRes.clone());
-            }
-          }
-          return networkRes;
-        } catch {
-          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-        }
-      } catch (err) {
-        console.warn('[SW] Static fetch strategy failed:', err);
-        return fetch(event.request);
-      }
-    })()
-  );
-});
-
-// Custom Message Event: Allows the UI to trigger bulk prefetching for Nepal mountain regions
-self.addEventListener('message', async (event) => {
-  if (!event.data) return;
-
-  if (event.data.type === 'PREFETCH_MOUNTAIN_PACK') {
-    const { tileUrls = [], apiUrls = [] } = event.data;
-    let totalItems = tileUrls.length + apiUrls.length;
-    let processedItems = 0;
-
+  event.waitUntil((async () => {
+    const staticCache = await caches.open(CACHE_NAMES.STATIC);
     const dataCache = await caches.open(CACHE_NAMES.DATA);
     const tileCache = await caches.open(CACHE_NAMES.TILES);
 
-    for (const apiUrl of apiUrls) {
+    await Promise.allSettled(PRECACHE_ASSETS.map(async (url) => {
       try {
-        const res = await fetch(apiUrl);
-        if (res && res.status === 200) {
-          await dataCache.put(apiUrl, res);
-        }
-      } catch (err) {
-        console.warn('[SW] API prefetch failed for:', apiUrl);
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (res.ok) await staticCache.put(url, res);
+      } catch (e) {
+        console.warn('[SW] precache skip', url);
       }
-      processedItems++;
-      notifyProgress(processedItems, totalItems, `Cached API: ${apiUrl}`);
-    }
+    }));
 
-    for (const tileUrl of tileUrls) {
+    await Promise.allSettled(STATIC_DATA_URLS.map(async (url) => {
       try {
-        const res = await fetch(tileUrl, { mode: 'no-cors' });
-        if (res) {
-          await tileCache.put(tileUrl, res);
-        }
-      } catch (err) {
-        // Continue
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (res.ok) await dataCache.put(url, res);
+      } catch (e) {
+        console.warn('[SW] static data skip', url);
       }
-      processedItems++;
-      if (processedItems % 5 === 0 || processedItems === totalItems) {
-        notifyProgress(processedItems, totalItems, `Cached Map Tile (${processedItems}/${totalItems})`);
-      }
-    }
+    }));
 
-    if (event.source) {
-      event.source.postMessage({
-        type: 'PREFETCH_COMPLETE',
-        totalItems,
-        timestamp: Date.now(),
-      });
-    }
-  }
+    await Promise.allSettled(NEPAL_CORE_TILES.map(async (tileUrl) => {
+      try {
+        const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+        if (res.ok) await tileCache.put(tileUrl, res);
+      } catch (_) {}
+    }));
 
-  if (event.data.type === 'CLEAR_OFFLINE_CACHE') {
+    console.log('[SW] Mero Sadak', SW_VERSION, 'installed');
+  })());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keep = new Set(Object.values(CACHE_NAMES));
     const keys = await caches.keys();
-    for (const key of keys) {
-      if (key.startsWith('mero-sadak-')) {
-        await caches.delete(key);
+    await Promise.all(keys.filter((k) => k.startsWith('mero-sadak-') && !keep.has(k)).map((k) => caches.delete(k)));
+    await self.clients.claim();
+    console.log('[SW] Mero Sadak', SW_VERSION, 'active');
+  })());
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  let url;
+  try { url = new URL(request.url); } catch { return; }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  if (isManifestRequest(request.url)) {
+    event.respondWith((async () => {
+      const staticCache = await caches.open(CACHE_NAMES.STATIC);
+      const cached = await staticCache.match(request);
+      if (cached) return cached;
+      try {
+        const networkRes = await fetch(request);
+        if (networkRes.ok) await staticCache.put(request, networkRes.clone());
+        return networkRes;
+      } catch {
+        return new Response(JSON.stringify({
+          name: 'Mero Sadak', short_name: 'MeroSadak', start_url: '/', display: 'standalone',
+          background_color: '#070f1e', theme_color: '#070f1e', icons: []
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
-    }
-    if (event.source) {
-      event.source.postMessage({ type: 'CACHE_CLEARED' });
-    }
+    })());
+    return;
   }
 
-  if (event.data.type === 'GET_CACHE_STATS') {
-    const stats = await calculateCacheStats();
-    if (event.source) {
-      event.source.postMessage({
-        type: 'CACHE_STATS_RESULT',
-        stats,
-      });
-    }
+  if (isTileRequest(request.url)) {
+    event.respondWith((async () => {
+      const tileCache = await caches.open(CACHE_NAMES.TILES);
+      const cached = await tileCache.match(request);
+      if (cached) {
+        fetch(request, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' })
+          .then((res) => putIfUsable(tileCache, request, res)).catch(() => {});
+        return cached;
+      }
+      try {
+        const networkRes = await fetch(request, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+        await putIfUsable(tileCache, request, networkRes);
+        return networkRes;
+      } catch {
+        const alt = await tileCache.match(request.url.replace(/[a-d]\.tile\.openstreetmap\.org/, 'tile.openstreetmap.org'));
+        if (alt) return alt;
+        return new Response('', { status: 408, statusText: 'Tile Offline' });
+      }
+    })());
+    return;
+  }
+
+  if (isStaticDataRequest(request.url) && url.origin === self.location.origin) {
+    event.respondWith((async () => {
+      const dataCache = await caches.open(CACHE_NAMES.DATA);
+      const cached = await dataCache.match(request);
+      if (cached) {
+        fetch(request).then((res) => putIfUsable(dataCache, request, res)).catch(() => {});
+        return cached;
+      }
+      try {
+        const networkRes = await fetch(request);
+        await putIfUsable(dataCache, request, networkRes);
+        return networkRes;
+      } catch {
+        return new Response(JSON.stringify({ error: 'offline', path: url.pathname }), {
+          status: 503, headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    })());
+    return;
+  }
+
+  if (isApiRequest(request.url)) {
+    event.respondWith((async () => {
+      const dataCache = await caches.open(CACHE_NAMES.DATA);
+      try {
+        const networkRes = await fetch(request);
+        if (networkRes.ok) await putIfUsable(dataCache, request, networkRes);
+        return networkRes;
+      } catch {
+        const cached = (await dataCache.match(request)) || (await dataCache.match(url.pathname));
+        if (cached) return cached;
+        return new Response(JSON.stringify({ error: 'offline', source: 'none' }), {
+          status: 503, headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    })());
+    return;
+  }
+
+  if (isNavigationRequest(request)) {
+    event.respondWith((async () => {
+      const staticCache = await caches.open(CACHE_NAMES.STATIC);
+      try {
+        const networkRes = await fetch(request);
+        if (networkRes.ok) await putIfUsable(staticCache, '/index.html', networkRes);
+        return networkRes;
+      } catch {
+        return (await staticCache.match('/index.html')) || (await staticCache.match('/')) ||
+          new Response('Offline — open Mero Sadak once online to refresh the app shell.', {
+            status: 503, headers: { 'Content-Type': 'text/plain' }
+          });
+      }
+    })());
+    return;
+  }
+
+  if (url.origin === self.location.origin) {
+    event.respondWith((async () => {
+      const staticCache = await caches.open(CACHE_NAMES.STATIC);
+      const cached = await staticCache.match(request);
+      const networkPromise = fetch(request).then(async (res) => {
+        if (res.ok) await putIfUsable(staticCache, request, res);
+        return res;
+      }).catch(() => null);
+      if (cached) { networkPromise.catch(() => {}); return cached; }
+      const networkRes = await networkPromise;
+      if (networkRes) return networkRes;
+      return new Response('', { status: 504, statusText: 'Offline' });
+    })());
   }
 });
+
+self.addEventListener('message', (event) => {
+  if (!event.data || typeof event.data !== 'object') return;
+  if (event.data.type === 'SKIP_WAITING') { self.skipWaiting(); return; }
+  if (event.data.type === 'PREFETCH_OFFLINE_PACK') { event.waitUntil(handlePrefetch(event)); return; }
+  if (event.data.type === 'CLEAR_OFFLINE_CACHE') {
+    event.waitUntil((async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k.startsWith('mero-sadak-')).map((k) => caches.delete(k)));
+      if (event.source) event.source.postMessage({ type: 'CACHE_CLEARED' });
+    })());
+    return;
+  }
+  if (event.data.type === 'GET_CACHE_STATS') {
+    event.waitUntil((async () => {
+      const stats = await calculateCacheStats();
+      if (event.source) event.source.postMessage({ type: 'CACHE_STATS_RESULT', stats });
+    })());
+  }
+});
+
+async function handlePrefetch(event) {
+  const apiUrls = event.data.apiUrls || API_ENDPOINTS;
+  const tileUrls = event.data.tileUrls || [];
+  const dataUrls = event.data.dataUrls || STATIC_DATA_URLS;
+  const totalItems = apiUrls.length + tileUrls.length + dataUrls.length;
+  let processed = 0;
+  const dataCache = await caches.open(CACHE_NAMES.DATA);
+  const tileCache = await caches.open(CACHE_NAMES.TILES);
+
+  for (const dataUrl of dataUrls) {
+    try {
+      const res = await fetch(dataUrl, { credentials: 'same-origin' });
+      if (res.ok) await dataCache.put(dataUrl, res);
+    } catch (_) {}
+    processed++;
+    notifyProgress(processed, totalItems, 'Cached data: ' + dataUrl);
+  }
+  for (const apiUrl of apiUrls) {
+    try {
+      const res = await fetch(apiUrl);
+      if (res && res.status === 200) await dataCache.put(apiUrl, res.clone ? res.clone() : res);
+    } catch (_) {}
+    processed++;
+    notifyProgress(processed, totalItems, 'Cached API: ' + apiUrl);
+  }
+  for (const tileUrl of tileUrls) {
+    try {
+      const res = await fetch(tileUrl, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+      if (res && res.ok) await tileCache.put(tileUrl, res);
+    } catch (_) {}
+    processed++;
+    if (processed % 5 === 0 || processed === totalItems) {
+      notifyProgress(processed, totalItems, 'Cached map tile (' + processed + '/' + totalItems + ')');
+    }
+  }
+  if (event.source) {
+    event.source.postMessage({ type: 'PREFETCH_COMPLETE', totalItems, timestamp: Date.now(), version: SW_VERSION });
+  }
+}
 
 function notifyProgress(processed, total, currentTask) {
   self.clients.matchAll().then((clients) => {
     clients.forEach((client) => {
-      client.postMessage({
-        type: 'PREFETCH_PROGRESS',
-        processed,
-        total,
-        percentage: Math.round((processed / total) * 100),
-        currentTask,
-      });
+      client.postMessage({ type: 'PREFETCH_PROGRESS', processed, total, percentage: Math.round((processed / total) * 100), currentTask });
     });
   }).catch(() => {});
 }
 
 async function calculateCacheStats() {
-  let totalTiles = 0;
-  let totalDataEntries = 0;
-
+  let totalTiles = 0, totalDataEntries = 0;
   try {
-    const tileCache = await caches.open(CACHE_NAMES.TILES);
-    const tileKeys = await tileCache.keys();
-    totalTiles = tileKeys.length;
-
-    const dataCache = await caches.open(CACHE_NAMES.DATA);
-    const dataKeys = await dataCache.keys();
-    totalDataEntries = dataKeys.length;
-  } catch (e) {
-    // Ignore
-  }
-
-  return {
-    tilesCount: totalTiles,
-    dataCount: totalDataEntries,
-    isReady: totalTiles > 0 && totalDataEntries > 0,
-  };
+    totalTiles = (await (await caches.open(CACHE_NAMES.TILES)).keys()).length;
+    totalDataEntries = (await (await caches.open(CACHE_NAMES.DATA)).keys()).length;
+  } catch (_) {}
+  return { tilesCount: totalTiles, dataCount: totalDataEntries, isReady: totalTiles > 0 || totalDataEntries > 0, version: SW_VERSION };
 }
