@@ -9,13 +9,14 @@
        when the user picks an explicit size. */
     font-size: clamp(14px, 0.85vw + 12px, 17px);
   }
-  html, body {
-    /* Guards against any component briefly overflowing its container on
-       narrow screens from ever creating a horizontal scrollbar/shift. */
+  html, body, #root {
+    /* Full viewport height so flex children (map under search) get real height */
+    height: 100%;
     max-width: 100%;
     overflow-x: hidden;
   }
   body {
+    margin: 0;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
   h1, h2, h3, .font-display {

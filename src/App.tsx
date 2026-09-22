@@ -443,7 +443,7 @@ function AppContent() {
   return (
     <PullToRefresh
       onRefresh={fetchLiveFeeds}
-      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950"
+      className="h-full bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950"
     >
       {/* Animated Flash / Splash Screen */}
       <SplashScreen isReady={isAppReady} onFinished={() => setIsAppReady(true)} />
@@ -744,7 +744,7 @@ function AppContent() {
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
-        <main className="flex-1 w-full overflow-hidden bg-slate-950 flex flex-col">
+        <main className="flex min-h-0 flex-1 w-full flex-col overflow-hidden bg-slate-950">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-10 w-full bg-slate-900">
           <RoutePlanner
@@ -796,7 +796,7 @@ function AppContent() {
         )}
 
         {/* Interactive Map - fills remaining viewport */}
-        <div className="flex-1 relative z-0 w-full min-h-0">
+        <div className="flex-1 relative z-0 w-full min-h-[45vh] sm:min-h-0">
           <InteractiveMap
             activeRoute={activeRoute}
             isDimmed={false}
