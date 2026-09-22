@@ -191,6 +191,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onMyLocationMoreInfo,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const outsideMaskRef = useRef<L.Polygon | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<{
     highways: L.LayerGroup;
@@ -723,6 +724,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           );
           maskGroup.addLayer(mask);
           mask.bringToBack();
+          outsideMaskRef.current = mask;
 
           const border = L.geoJSON(data, {
             style: {
@@ -750,6 +752,34 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         }
       })
       .catch(err => console.warn('Failed to load Nepal border:', err));
+  }, []);
+
+  // Update outside mask color based on theme (light=white, dark=soft transparent)
+  useEffect(() => {
+    const updateMaskForTheme = () => {
+      const mask = outsideMaskRef.current;
+      if (!mask) return;
+      const theme = document.documentElement.getAttribute('data-theme');
+      if (theme === 'light') {
+        mask.setStyle({ fillColor: '#ffffff', fillOpacity: 1.0 });
+      } else {
+        mask.setStyle({ fillColor: '#0b1220', fillOpacity: 0.9 });
+      }
+    };
+
+    updateMaskForTheme();
+
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          updateMaskForTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => { observer.disconnect(); };
   }, []);
 
   // Render Province Boundaries (always visible)
@@ -1606,20 +1636,20 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       {/* Layer Toolbar - vertical stack top-to-bottom */}
       {isToolbarOpen && (
-        <div ref={toolbarContainerRef} className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-44 animate-fadeIn">
+        <div ref={toolbarContainerRef} className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-36 animate-fadeIn">
           <button
             type="button"
             onClick={() => handleToggleLayer('highways')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'highways'
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="Highways"
             id="toggle-layer-highways"
           >
             <Route className="w-4 h-4" />
-            <span className="text-xs font-bold">Highways</span>
+              <span className="text-[10px] font-bold">Highways</span>
           </button>
           <button
             type="button"
@@ -1627,13 +1657,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'weather'
                 ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-sky-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="Weather"
             id="toggle-layer-weather"
           >
             <CloudRain className="w-4 h-4" />
-            <span className="text-xs font-bold">Weather</span>
+              <span className="text-[10px] font-bold">Weather</span>
           </button>
           <button
             type="button"
@@ -1641,13 +1671,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'incidents'
                 ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-rose-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="Incidents"
             id="toggle-layer-incidents"
           >
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs font-bold">Incidents</span>
+              <span className="text-[10px] font-bold">Incidents</span>
           </button>
           <button
             type="button"
@@ -1655,13 +1685,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'traffic'
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="Traffic"
             id="toggle-layer-traffic"
           >
             <Gauge className="w-4 h-4" />
-            <span className="text-xs font-bold">Traffic</span>
+              <span className="text-[10px] font-bold">Traffic</span>
           </button>
           <button
             type="button"
@@ -1669,28 +1699,28 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               activeLayer === 'pois'
                 ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-teal-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="POIs"
             id="toggle-layer-pois"
           >
             <Fuel className="w-4 h-4" />
-            <span className="text-xs font-bold">POIs</span>
+              <span className="text-[10px] font-bold">POIs</span>
           </button>
           {hasAlternatives && (
             <button
               type="button"
               onClick={() => handleToggleLayer('alternatives')}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
                 activeLayer === 'alternatives'
                   ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-purple-500/20'
-                  : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                  : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
               }`}
               title="Alternatives"
               id="toggle-layer-alternatives"
             >
               <Repeat className="w-4 h-4" />
-              <span className="text-xs font-bold">Alternatives</span>
+              <span className="text-[10px] font-bold">Alternatives</span>
             </button>
           )}
           <button
@@ -1699,13 +1729,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-xl transition shadow-2xl shadow-black/50 ${
               showLegend
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20'
-                : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-slate-200'
+                : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
             }`}
             title="Legend"
             id="toggle-map-legend"
           >
             <Info className="w-4 h-4" />
-            <span className="text-xs font-bold">Legend</span>
+              <span className="text-[10px] font-bold">Legend</span>
           </button>
         </div>
       )}
@@ -1717,13 +1747,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         onClick={handleToggleToolbar}
         className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
           isToolbarOpen
-            ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/10'
-            : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'
+            ? 'bg-accent-bg accent-text accent-border shadow-black/10'
+            : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
         }`}
         title="Layers"
         id="toggle-toolbar-collapse"
       >
-        <Layers className={`w-4 h-4 ${isToolbarOpen ? 'rotate-90 text-emerald-400' : 'text-slate-300'} transition-transform`} />
+        <Layers className={`w-4 h-4 ${isToolbarOpen ? 'rotate-90 accent-text' : 'accent-text'} transition-transform`} />
       </button>
 
       {/* Map Legend Overlay Component with Smooth Slide-in Fade Animation */}
