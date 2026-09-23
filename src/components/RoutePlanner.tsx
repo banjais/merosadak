@@ -112,6 +112,7 @@ interface RoutePlannerProps {
   isMapFull?: boolean;
   onOpenHighwayDirectory?: () => void;
   onViewHighwayOnMap?: (highway: Highway) => void;
+  onOpenMyLocation?: () => void;
 }
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
@@ -171,6 +172,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   isMapFull = false,
   onOpenHighwayDirectory,
   onViewHighwayOnMap,
+  onOpenMyLocation,
 }) => {
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
@@ -941,152 +943,143 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
-{/* 1. MY LOCATION CARD / PICKER - Always visible */}
-      <div className="relative" ref={locationMenuRef}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-800">
-            {/* Clickable My Location Widget */}
-            <div
-                onClick={() => {
-                 if (isCustomLocationMode) {
-                   setLocationMode('my_location');
-                   closeAllMenus(null);
-                   return;
-                 }
-                 closeAllMenus('location');
-                 setIsLocationMenuOpen(!isLocationMenuOpen);
-               }}
-              id="btn-my-location-toggle"
-              className={`flex items-center space-x-3 group select-none rounded-xl px-3.5 py-2 border transition ${
-                isCustomLocationMode
-                  ? 'cursor-pointer bg-slate-900/60 border-slate-800 opacity-40'
-                  : 'cursor-pointer bg-slate-950/80 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50'
-              }`}
-              aria-disabled={isCustomLocationMode}
-              title={isCustomLocationMode ? 'Click to return to My Location' : 'Click to view My Location or Change Origin'}
-             >
-               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition ${
-                 detectedLocation
-                   ? 'bg-emerald-500/30 text-emerald-400 border-emerald-400/50'
-                   : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-               }`}>
-                 {detectedLocation ? <LocateFixed className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
-               </div>
-                <div className="min-w-0">
-                  <div className="flex items-center space-x-1.5 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                    <span>My Location</span>
-                    <ChevronDown className={`w-3 h-3 transition-transform ${isLocationMenuOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                   <div className="text-[10px] font-normal text-slate-400 truncate space-y-0.5">
-                     {detectedLocation ? (
-                       gpsOriginCity ? (
-                         <>
-                            <span className="block text-white font-medium text-xs truncate">{gpsOriginCity.name}</span>
-                            <span className="block text-[9px] text-slate-500 truncate">{gpsOriginCity.district}, {gpsOriginCity.province}</span>
-                            {gpsNearestHighway && (
-                              <span className="block text-[9px] text-cyan-400 truncate mt-0.5">
-                                {gpsNearestHighway.code} • {gpsNearestHighway.distanceKm.toFixed(1)} km away
-                              </span>
-                            )}
-                         </>
-                       ) : (
-                         <>
-                           <span className="block text-white font-medium text-xs truncate">Near {detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                         </>
-                       )
-                     ) : isCustomLocationMode ? (
-                       <span className="text-slate-500 truncate block">Custom origin mode</span>
-                     ) : (
-                       <span className="text-slate-500 truncate block">Select a location</span>
-                     )}
-                  </div>
-                </div>
+      {/* 1. MY LOCATION CARD - Always visible */}
+      <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div
+            onClick={() => {
+              if (isCustomLocationMode) {
+                setLocationMode('my_location');
+                closeAllMenus(null);
+                return;
+              }
+              closeAllMenus('location');
+              setIsLocationMenuOpen(!isLocationMenuOpen);
+            }}
+            id="btn-my-location-toggle"
+            className={`flex items-center space-x-3 group select-none rounded-xl px-3 py-2 border transition min-w-0 flex-1 cursor-pointer ${
+              isCustomLocationMode
+                ? 'bg-slate-900/60 border-slate-800 opacity-40'
+                : 'bg-slate-950/50 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50'
+            }`}
+            aria-disabled={isCustomLocationMode}
+            title={isCustomLocationMode ? 'Click to return to My Location' : 'Click to view My Location or Change Origin'}
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition ${
+              detectedLocation
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700'
+            }`}>
+              {detectedLocation ? <LocateFixed className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
             </div>
-          </div>
-
-          {/* Location Dropdown Options Menu (When user clicks My Location) */}
-          {isLocationMenuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2.5 z-50 space-y-1.5 animate-fadeIn">
-              {!detectedLocation && (
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                  Choose Location Preference:
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-white truncate">
+                {detectedLocation
+                  ? (gpsOriginCity ? gpsOriginCity.name : 'Location acquired')
+                  : isCustomLocationMode ? 'Custom origin mode' : 'Select a location'}
+              </div>
+              <div className="text-[11px] text-slate-400 truncate">
+                {detectedLocation
+                  ? (gpsOriginCity
+                    ? (gpsOriginCity.district || gpsOriginCity.province
+                      ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
+                      : 'Location detected')
+                    : 'Coordinates acquired')
+                  : isCustomLocationMode ? 'Choose from list' : 'Tap to set origin'}
+              </div>
+              {detectedLocation && gpsNearestHighway && (
+                <div className="text-[10px] text-cyan-400 truncate">
+                  {gpsNearestHighway.code} · {gpsNearestHighway.distanceKm.toFixed(1)} km
                 </div>
               )}
-
-               {/* Option 1: Current GPS / Device Location - only when not detected */}
-               {!detectedLocation && (
-                 <button
-                   onClick={() => {
-                     handleDetectDeviceLocation();
-                     setLocationMode('my_location');
-                     closeAllMenus(null);
-                   }}
-                   className={`w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border transition flex items-start space-x-2.5 group ${
-                     locationPermissionDenied
-                       ? 'border-rose-500/50 hover:border-rose-500/60'
-                       : 'border-slate-800 hover:border-emerald-500/50'
-                   }`}
-                 >
-                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                     locationPermissionDenied
-                       ? 'bg-rose-500/20 text-rose-400'
-                       : 'bg-emerald-500/20 text-emerald-400'
-                   }`}>
-                     <LocateFixed className="w-4 h-4 group-hover:scale-110 transition" />
-                   </div>
-                   <div>
-                     <div className={`text-xs font-bold group-hover:font-bold ${
-                       locationPermissionDenied ? 'text-rose-200 group-hover:text-rose-300' : 'text-white group-hover:text-emerald-300'
-                     }`}>
-                       Use GPS{locationPermissionDenied && ' (blocked)'}
-                     </div>
-                     <div className="text-[11px] text-slate-400">
-                       {locationPermissionDenied
-                         ? 'Tap to re-enable location access'
-                         : 'Auto-detects via device sensors'}
-                     </div>
-                   </div>
-                 </button>
-               )}
-
-                {/* Option 2: Change Location (Custom From / To) - keeps GPS-origin permanent */}
-                 <button
-                   onClick={() => {
-                     setLocationMode('custom_from_to');
-                     setOriginSearchQuery('');
-                     setDestSearchQuery('');
-                     setSingleSearchQuery('');
-                     closeAllMenus(null);
-                     setTimeout(() => {
-                       originInputRef.current?.focus();
-                       setIsOriginDropdownOpen(true);
-                     }, 100);
-                   }}
-                  className="w-full p-2.5 rounded-xl text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 transition flex items-start space-x-2.5 group"
-               >
-                 <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                   <ArrowUpDown className="w-4 h-4 group-hover:scale-110 transition" />
-                 </div>
-                 <div>
-                   <div className="text-xs font-bold text-white group-hover:text-amber-300">
-                     Change Origin
-                   </div>
-                   <div className="text-[11px] text-slate-400">
-                     Specify origin &amp; destination
-                   </div>
-                 </div>
-               </button>
             </div>
-          )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpenMyLocation?.()}
+            className="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-xl transition shrink-0"
+            title="View full Location Info"
+          >
+            <LocateFixed className="w-4 h-4 text-slate-400" />
+          </button>
         </div>
 
-        {/* Speech / Live Notice - simple text under the My Location box */}
-        {speechTranscriptNotice && (
-          <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn">
-            <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
-            <span className="font-medium">{speechTranscriptNotice}</span>
+        {isLocationMenuOpen && (
+          <div className="mt-4 space-y-2 animate-fadeIn">
+            {!detectedLocation && (
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1 py-0.5">
+                Choose Location:
+              </div>
+            )}
+
+            {!detectedLocation && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleDetectDeviceLocation();
+                  setLocationMode('my_location');
+                  closeAllMenus(null);
+                }}
+                className={`w-full flex items-center space-x-3 p-3 rounded-xl border transition text-left bg-slate-950/80 hover:bg-slate-800 ${
+                  locationPermissionDenied
+                    ? 'border-rose-500/30 hover:border-rose-500/50'
+                    : 'border-slate-800 hover:border-emerald-500/30'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
+                }`}>
+                  <LocateFixed className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className={`text-sm font-bold ${
+                    locationPermissionDenied ? 'text-rose-300' : 'text-white'
+                  }`}>
+                    Use GPS{locationPermissionDenied && ' (blocked)'}
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    {locationPermissionDenied
+                      ? 'Tap to re-enable location access'
+                      : 'Auto-detects via device sensors'}
+                  </div>
+                </div>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setLocationMode('custom_from_to');
+                setOriginSearchQuery('');
+                setDestSearchQuery('');
+                setSingleSearchQuery('');
+                closeAllMenus(null);
+                setTimeout(() => {
+                  originInputRef.current?.focus();
+                  setIsOriginDropdownOpen(true);
+                }, 100);
+              }}
+              className="w-full flex items-center space-x-3 p-3 rounded-xl border border-slate-800 hover:border-amber-500/30 transition text-left bg-slate-950/80 hover:bg-slate-800"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <ArrowUpDown className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-white">Change Origin</div>
+                <div className="text-[11px] text-slate-400">Specify origin &amp; destination</div>
+              </div>
+            </button>
           </div>
         )}
+      </div>
 
+      {speechTranscriptNotice && (
+        <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2">
+          <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
+          <span className="font-medium truncate">{speechTranscriptNotice}</span>
+        </div>
+      )}
 
         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
         {!hasCalculated && (

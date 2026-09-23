@@ -678,7 +678,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           const mask = L.polygon(
             [worldCorners, ...holes] as unknown as L.LatLngExpression[][],
             {
-              fillColor: '#ffffff',
+              fillColor: '#efefeb',
               fillOpacity: 1.0,
               color: 'transparent',
               weight: 0,
@@ -1673,30 +1673,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           )}
         </div>
       )}
-
-      {/* Custom Zoom Controls — bottom-right column, horizontal, right-to-left */}
-      <div className="absolute bottom-4 right-16 z-[1000] flex flex-row-reverse items-center rounded-lg border border-slate-700/60 bg-slate-950/80 overflow-hidden shadow-lg shadow-black/30">
-        <button
-          type="button"
-          onClick={() => mapInstanceRef.current?.zoomIn()}
-          className="px-3 py-1.5 text-xs text-white hover:bg-slate-700/80 transition-colors"
-          title="Zoom In"
-          aria-label="Zoom In"
-        >
-          +
-        </button>
-        <div className="w-px h-5 bg-slate-700/60" />
-        <button
-          type="button"
-          onClick={() => mapInstanceRef.current?.zoomOut()}
-          className="px-3 py-1.5 text-xs text-white hover:bg-slate-700/80 transition-colors"
-          title="Zoom Out"
-          aria-label="Zoom Out"
-        >
-          −
-        </button>
-      </div>
-
     </div>
   );
 };

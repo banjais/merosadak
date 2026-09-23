@@ -765,6 +765,7 @@ function AppContent() {
             simulationControls={simulationControls}
             onToggleMapFull={() => setIsMapFull((prev) => !prev)}
             isMapFull={isMapFull}
+            onOpenMyLocation={() => setIsMyLocationOpen(true)}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);
