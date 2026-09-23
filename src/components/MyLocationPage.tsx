@@ -57,7 +57,7 @@ function detectGPSPosition(): Promise<MyLocationInfo> {
       () => {
         resolve({ lat: 0, lng: 0, accuracy: null, nearestHighway: null, nearestJunction: { city: null, distanceKm: null } });
       },
-      { timeout: 8000, maximumAge: 60000, enableHighAccuracy: true }
+      { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
     );
   });
 }
@@ -159,17 +159,13 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                 <LocateFixed className="w-4 h-4 text-emerald-400" />
                 <h2 className="text-sm font-bold text-white">Current Location</h2>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <div className="bg-slate-950 rounded-xl p-3 space-y-1">
-                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Latitude</p>
-                  <p className="text-sm font-mono text-emerald-300">{locationInfo.lat.toFixed(6)}</p>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3 space-y-1">
-                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Longitude</p>
-                  <p className="text-sm font-mono text-emerald-300">{locationInfo.lng.toFixed(6)}</p>
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Coordinate</p>
+                  <p className="text-sm font-mono text-emerald-300">{locationInfo.lat.toFixed(6)}, {locationInfo.lng.toFixed(6)}</p>
                 </div>
                 {locationInfo.accuracy && (
-                  <div className="bg-slate-950 rounded-xl p-3 col-span-2 space-y-1">
+                  <div className="bg-slate-950 rounded-xl p-3 space-y-1">
                     <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Accuracy</p>
                     <p className="text-sm font-mono text-slate-300">± {Math.round(locationInfo.accuracy)} m</p>
                   </div>
