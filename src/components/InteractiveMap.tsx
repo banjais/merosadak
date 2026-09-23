@@ -337,19 +337,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
+    // Use focusedTarget as initial center if available, otherwise Nepal overview
+    const hasFocusedTarget = focusedTarget &&
+      typeof focusedTarget.lat === 'number' &&
+      typeof focusedTarget.lng === 'number' &&
+      !isNaN(focusedTarget.lat) &&
+      !isNaN(focusedTarget.lng);
+    const initialCenter: L.LatLngExpression = hasFocusedTarget
+      ? [focusedTarget.lat, focusedTarget.lng]
+      : [27.95, 84.6];
+    const initialZoom = hasFocusedTarget ? (focusedTarget.zoom || 12) : 7;
+
     const map = L.map(mapContainerRef.current, {
-      center: [27.95, 84.6],
-      zoom: 7,
+      center: initialCenter,
+      zoom: initialZoom,
       minZoom: 6,
       maxZoom: 17,
       maxBounds: NEPAL_BOUNDS,
       maxBoundsViscosity: 1.0,
       zoomControl: false,
-      // Hide bottom-right “© OpenStreetMap contributors” label on the map
       attributionControl: false,
     });
 
-    map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
+    if (!focusedTarget) {
+      map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
+    }
 
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);

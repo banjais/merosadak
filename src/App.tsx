@@ -62,15 +62,10 @@ import {
   Route,
   X,
   MapPin,
-  LocateFixed,
-  Search,
-  Crosshair,
   RotateCcw,
-  ChevronDown,
   Home,
   Activity,
   Settings,
-  Building,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -124,13 +119,6 @@ function AppContent() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [globalLocation, setGlobalLocation] = useState<{
-    name: string;
-    lat: number;
-    lng: number;
-    source: 'gps' | 'manual';
-  } | null>(null);
   const [accentColor, setAccentColor] = useState<string>(() => {
     try { return localStorage.getItem('mero-sadak-accent') || 'emerald'; } catch { return 'emerald'; }
   });
@@ -155,19 +143,59 @@ function AppContent() {
   const [pois, setPois] = useState<HighwayPOI[]>(HIGHWAY_POIS);
   const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>(TRAFFIC_CORRIDORS);
 
-  // Focus on map target
+  // Focus on map target - initialize with user's GPS location if available
   const [focusedTarget, setFocusedTarget] = useState<{
     lat: number;
     lng: number;
     title: string;
     zoom?: number;
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      // Try to get cached GPS location for instant map centering
+      try {
+        const cached = sessionStorage.getItem('mero-sadak-gps');
+        if (cached) {
+          const { lat, lng, timestamp } = JSON.parse(cached);
+          // Use cached location if less than 5 minutes old
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            return { lat, lng, title: 'Your Location', zoom: 12 };
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    return null;
+  });
 
   // Selected item tracking in sidebar
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [selectedWeatherId, setSelectedWeatherId] = useState<string | null>(null);
   const [selectedPOIId, setSelectedPOIId] = useState<string | null>(null);
   const [selectedTrafficId, setSelectedTrafficId] = useState<string | null>(null);
+
+  // Detect GPS early and cache for instant map centering
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    if (focusedTarget) return; // Already have location
+    
+    const handleSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const location = { lat: latitude, lng: longitude, title: 'Your Location', zoom: 12 };
+      setFocusedTarget(location);
+      try {
+        sessionStorage.setItem('mero-sadak-gps', JSON.stringify({ lat: latitude, lng: longitude, timestamp: Date.now() }));
+      } catch { /* ignore */ }
+    };
+    
+    const handleError = () => {
+      // Keep default null, will show Nepal overview
+    };
+    
+    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+      timeout: 8000,
+      maximumAge: 60000,
+      enableHighAccuracy: true
+    });
+  }, [focusedTarget]);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
@@ -539,137 +567,7 @@ function AppContent() {
                   Routes · alerts · weather
                 </div>
               </div>
-</div>
-           </div>
-
-          {/* Global Location Picker */}
-          <div className="relative">
-            <button
-              onClick={() => setIsLocationPickerOpen(!isLocationPickerOpen)}
-              className="btn-glass flex items-center space-x-2 px-3 py-2 rounded-xl min-w-[180px] max-w-[280px]"
-              title="Select location"
-              id="btn-header-location-picker"
-              type="button"
-            >
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                {globalLocation ? (
-                  <MapPin className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Crosshair className="w-4 h-4 text-slate-400" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-bold text-white truncate">
-                  {globalLocation ? globalLocation.name : 'Set Location'}
-                </p>
-                <p className="text-[9px] text-slate-500 truncate">
-                  {globalLocation
-                    ? `${globalLocation.source === 'gps' ? 'GPS' : 'Manual'} · ${globalLocation.lat.toFixed(4)}, ${globalLocation.lng.toFixed(4)}`
-                    : 'Tap to set origin for route planning'}
-                </p>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition ${isLocationPickerOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Location Picker Dropdown */}
-            {isLocationPickerOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsLocationPickerOpen(false)}
-                />
-                <div
-                  className="dropdown-glass absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl z-50 overflow-hidden animate-fadeIn"
-                >
-                  <div className="p-3 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
-                    <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-emerald-400" />
-                      <span>Select Location</span>
-                    </h3>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
-                      ORIGIN
-                    </span>
-                  </div>
-
-                  <div className="p-3 space-y-3">
-                    {/* GPS Detection */}
-                    <button
-                      onClick={async () => {
-                        if (!navigator.geolocation) return;
-                        navigator.geolocation.getCurrentPosition(
-                          (pos) => {
-                            const { latitude, longitude } = pos.coords;
-                            const city = CITIES_AND_JUNCTIONS.find(
-                              (c) => Math.abs(c.lat - latitude) < 0.02 && Math.abs(c.lng - longitude) < 0.02
-                            );
-                            const name = city ? city.name : `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                            setGlobalLocation({ name, lat: latitude, lng: longitude, source: 'gps' });
-                            setPlannerOrigin(city?.id || 'ktm');
-                            setIsLocationPickerOpen(false);
-                          },
-                          () => alert('GPS permission denied or unavailable'),
-                          { timeout: 10000, enableHighAccuracy: true }
-                        );
-                      }}
-                      className="w-full flex items-center space-x-3 p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/60 border border-slate-700/50 transition text-left"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                        <LocateFixed className="w-4 h-4 text-emerald-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white">Use GPS Location</p>
-                        <p className="text-[10px] text-slate-400">Auto-detect current position</p>
-                      </div>
-                    </button>
-
-                    {/* Search Input */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="Search places, cities, highways..."
-                        className="w-full bg-slate-900/60 border border-slate-700/50 focus:border-emerald-500/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition"
-                        onChange={() => {/* Could add live search here */}}
-                        onKeyDown={(e) => { if (e.key === 'Enter') {/* handle search */ }}}
-                      />
-                    </div>
-
-                    {/* Recent / Common Locations */}
-                    <div className="max-h-48 overflow-y-auto space-y-1">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-1">Popular Destinations</p>
-                      {CITIES_AND_JUNCTIONS.slice(0, 8).map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => {
-                            setGlobalLocation({ name: city.name, lat: city.lat, lng: city.lng, source: 'manual' });
-                            setPlannerOrigin(city.id);
-                            setIsLocationPickerOpen(false);
-                          }}
-                          className="w-full flex items-center space-x-3 p-2.5 rounded-lg bg-slate-900/50 hover:bg-slate-800/50 border border-slate-700/40 transition text-left"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
-                            <Building className="w-3.5 h-3.5 text-slate-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{city.name}</p>
-                            <p className="text-[9px] text-slate-500">{city.district} · {city.province}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => setIsLocationPickerOpen(false)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+            </div>
           </div>
 
           {/* Right Header Controls: Notifications Bell, Fullscreen Maximize, Language Toggle & Emergency SOS */}
