@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, MapPin, Navigation, Route, Building, Mountain, X, LocateFixed, RotateCcw, AlertTriangle, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  ArrowLeft, Route, Building, Mountain, LocateFixed, RotateCcw,
+  AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
+  UtensilsCrossed, Compass, Shield, Landmark, Info,
+} from 'lucide-react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
 import { CityNode } from '../types';
@@ -21,6 +25,18 @@ interface MyLocationInfo {
   address?: string | null;
 }
 
+interface NearbyItem {
+  id: string;
+  name: string;
+  category: string;
+  subcategory?: string;
+  lat: number;
+  lng: number;
+  distanceKm: number;
+  icon: React.ElementType;
+  color: string;
+}
+
 function formatDMS(lat: number, lng: number): string {
   const convert = (coord: number, isLat: boolean) => {
     const absolute = Math.abs(coord);
@@ -34,6 +50,31 @@ function formatDMS(lat: number, lng: number): string {
   return `${convert(lat, true)} ${convert(lng, false)}`;
 }
 
+const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+  airport: { icon: Plane, color: 'text-sky-400', label: 'Airport' },
+  bus_station: { icon: Bus, color: 'text-amber-400', label: 'Bus Station' },
+  ev_charger: { icon: Zap, color: 'text-emerald-400', label: 'EV Charger' },
+  fuel_station: { icon: Fuel, color: 'text-orange-400', label: 'Fuel' },
+  food_rest: { icon: UtensilsCrossed, color: 'text-yellow-400', label: 'Food' },
+  hospital: { icon: Heart, color: 'text-rose-400', label: 'Hospital' },
+  emergency_dor: { icon: Shield, color: 'text-red-400', label: 'Emergency' },
+  temple: { icon: Landmark, color: 'text-amber-400', label: 'Temple' },
+  attraction: { icon: Camera, color: 'text-fuchsia-400', label: 'Attraction' },
+  viewpoint: { icon: Compass, color: 'text-cyan-400', label: 'Viewpoint' },
+  tourist: { icon: Camera, color: 'text-fuchsia-400', label: 'Tourist Place' },
+  landmark: { icon: MapPin, color: 'text-purple-400', label: 'Landmark' },
+  pass: { icon: Mountain, color: 'text-slate-300', label: 'Mountain Pass' },
+  interchange: { icon: Route, color: 'text-blue-400', label: 'Interchange' },
+  poi: { icon: Info, color: 'text-indigo-400', label: 'POI' },
+  place: { icon: MapPin, color: 'text-teal-400', label: 'Place' },
+};
+
+const DEFAULT_CONFIG = { icon: MapPin, color: 'text-slate-400', label: 'Location' };
+
+function getConfig(category: string): { icon: React.ElementType; color: string; label: string } {
+  return CATEGORY_CONFIG[category?.toLowerCase()] || DEFAULT_CONFIG;
+}
+
 export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,10 +82,24 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
 
   const [touristPlaces, setTouristPlaces] = useState<any[]>([]);
   const [incidents, setIncidents] = useState<any[]>([]);
+  const [airports, setAirports] = useState<any[]>([]);
+  const [busStations, setBusStations] = useState<any[]>([]);
+  const [landmarks, setLandmarks] = useState<any[]>([]);
+  const [pois, setPois] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/data/tourist-places.json').then(r => r.json()).then(setTouristPlaces).catch(console.error);
-    fetch('/data/incidents.json').then(r => r.json()).then(setIncidents).catch(console.error);
+    const fetchAll = async () => {
+      const fetches = [
+        fetch('/data/tourist-places.json').then(r => r.json()).then(setTouristPlaces).catch(() => []),
+        fetch('/data/incidents.json').then(r => r.json()).then(setIncidents).catch(() => []),
+        fetch('/data/airports.json').then(r => r.json()).then(setAirports).catch(() => []),
+        fetch('/data/bus-stations.json').then(r => r.json()).then(setBusStations).catch(() => []),
+        fetch('/data/landmarks.json').then(r => r.json()).then(setLandmarks).catch(() => []),
+        fetch('/data/pois.json').then(r => r.json()).then(setPois).catch(() => []),
+      ];
+      await Promise.allSettled(fetches);
+    };
+    fetchAll();
   }, []);
 
   useEffect(() => {
@@ -117,6 +172,64 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
     if (m < 100) return `${Math.round(m)} m`;
     return `${(m / 1000).toFixed(2)} km`;
   };
+
+  const nearbyLandmarks = React.useMemo(() => {
+    if (!locationInfo) return [];
+
+    const items: NearbyItem[] = [];
+
+    const addItem = (id: string, name: string, category: string, subcategory: string | undefined, lat: number, lng: number, icon: React.ElementType, color: string) => {
+      const d = getDistanceKm(locationInfo.lat, locationInfo.lng, lat, lng);
+      items.push({ id, name, category, subcategory, lat, lng, distanceKm: d, icon, color });
+    };
+
+    airports.forEach((a: any) => {
+      if (a.lat != null && a.lng != null) {
+        const cfg = getConfig('airport');
+        addItem(a.code || `air-${a.name}`, a.name, 'Airport', a.type || a.district, a.lat, a.lng, cfg.icon, cfg.color);
+      }
+    });
+
+    busStations.forEach((b: any) => {
+      if (b.lat != null && b.lng != null) {
+        const cfg = getConfig('bus_station');
+        addItem(b.id || `bus-${b.name}`, b.name, 'Bus Station', b.location || b.district, b.lat, b.lng, cfg.icon, cfg.color);
+      }
+    });
+
+    pois.forEach((p: any) => {
+      if (p.lat != null && p.lng != null) {
+        const cfg = getConfig(p.category || 'poi');
+        addItem(p.id || `poi-${p.name}`, p.name, cfg.label, p.locationName || p.highwayCode || p.district, p.lat, p.lng, cfg.icon, cfg.color);
+      }
+    });
+
+    landmarks.forEach((l: any) => {
+      if (l.lat != null && l.lng != null) {
+        const cat = l.categoryLabel || l.category || 'landmark';
+        const cfg = getConfig(cat.toLowerCase());
+        addItem(l.id || `lm-${l.name}`, l.name, cat, l.district || l.fromId, l.lat, l.lng, cfg.icon, cfg.color);
+      }
+    });
+
+    touristPlaces.forEach((t: any) => {
+      if (t.lat != null && t.lng != null) {
+        const cfg = getConfig(t.type || 'tourist');
+        addItem(t.id || `tour-${t.name}`, t.name, 'Tourist Place', t.type || t.district, t.lat, t.lng, cfg.icon, cfg.color);
+      }
+    });
+
+    const nearby = items.filter(item => item.distanceKm <= 25);
+    const bestPerCategory: Record<string, NearbyItem> = {};
+    for (const item of nearby) {
+      const cat = item.category;
+      if (!bestPerCategory[cat] || item.distanceKm < bestPerCategory[cat].distanceKm) {
+        bestPerCategory[cat] = item;
+      }
+    }
+
+    return Object.values(bestPerCategory).sort((a, b) => a.distanceKm - b.distanceKm);
+  }, [locationInfo, airports, busStations, pois, landmarks, touristPlaces]);
 
   const nearestTouristPlace = React.useMemo(() => {
     if (!locationInfo || touristPlaces.length === 0) return null;
@@ -194,20 +307,19 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
         )}
 
         {locationInfo && !loading && !error && (
-          <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-5 shadow-2xl space-y-6">
-            
-            {/* Header: Address and GPS */}
-            <div className="space-y-2">
-              {nearbyIncidents.length > 0 && (
-                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-2xl flex items-start space-x-3 mb-4">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-bold">Safety Warning</h4>
-                    <p className="text-xs mt-1">{nearbyIncidents.length} incident(s) reported near your location.</p>
-                  </div>
-                </div>
-              )}
+          <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-5 shadow-2xl space-y-5">
 
+            {nearbyIncidents.length > 0 && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-2xl flex items-start space-x-3">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-bold">Safety Warning</h4>
+                  <p className="text-xs mt-1">{nearbyIncidents.length} incident(s) reported near your location.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
               <div className="flex items-start justify-between">
                 <div className="space-y-1 pr-4">
                   <h2 className="text-2xl font-black text-white leading-tight">
@@ -238,9 +350,8 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
 
             <hr className="border-slate-800" />
 
-            {/* Administrative Context */}
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Region & Admin</h3>
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Region &amp; Admin</h3>
               {locationInfo.nearestJunction.city ? (
                 <div className="flex items-center space-x-3 bg-slate-950 p-4 rounded-2xl">
                   <Building className="w-5 h-5 text-amber-400 flex-shrink-0" />
@@ -261,7 +372,6 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               )}
             </div>
 
-            {/* Road Context */}
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nearest Highway</h3>
               {locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code ? (
@@ -289,7 +399,33 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               )}
             </div>
 
-            {/* Tourist Place Context */}
+            {nearbyLandmarks.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nearby Landmarks</h3>
+                <div className="space-y-2">
+                  {nearbyLandmarks.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.id} className="flex items-center space-x-3 bg-slate-950 p-3 rounded-xl">
+                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{item.category}{item.subcategory ? ` · ${item.subcategory}` : ''}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-white">
+                            {item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(2)} km`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {nearestTouristPlace && (
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nearest Tourist Place</h3>
