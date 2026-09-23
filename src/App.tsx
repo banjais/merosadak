@@ -775,7 +775,13 @@ function AppContent() {
 
       {/* My Location Page - Full Page View */}
       {isMyLocationOpen && (
-        <MyLocationPage onBack={() => setIsMyLocationOpen(false)} />
+        <MyLocationPage
+          onBack={() => setIsMyLocationOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
+        />
       )}
 
       {isDataSourcesOpen && (

@@ -8,6 +8,8 @@ import {
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
 import { CityNode } from '../types';
+import { SettingsMenu, SettingsButton } from './SettingsMenu';
+import { TextScale } from '../hooks/useTextScale';
 
 interface MyLocationInfo {
   lat: number;
@@ -120,8 +122,15 @@ function getWeatherIconBg(code: number): string {
   return 'bg-slate-500/20';
 }
 
-export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+export const MyLocationPage: React.FC<{
+  onBack: () => void;
+  textScale?: TextScale;
+  onTextScaleChange?: (scale: TextScale) => void;
+  accentColor?: string;
+  onAccentColorChange?: (color: string) => void;
+}> = ({ onBack, textScale = 'md', onTextScaleChange, accentColor = 'emerald', onAccentColorChange }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -326,31 +335,49 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
     });
   }, [locationInfo?.lat, locationInfo?.lng, incidents]);
 
-  return (
+return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-3 sm:px-5 py-2.5">
-        <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
-              title="Back"
-              type="button"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl accent-bg flex items-center justify-center">
+      {/* Page Header - matching Distance Calculator style */}
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
+            title="Back to Main App"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md">
                 <LocateFixed className="w-5 h-5 accent-text" />
-              </div>
-              <div>
-                <h1 className="text-base font-black text-white font-display tracking-tight">My Location</h1>
-                <p className="text-[9px] accent-text font-semibold uppercase tracking-wider">GPS &amp; Road Info</p>
-              </div>
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold accent-text tracking-wider">
+                MERO SADAK
+              </h1>
+              <p className="text-xl font-black tracking-tight text-white font-display">
+                My Location
+              </p>
             </div>
           </div>
-          <div className="w-8 h-8 flex items-center justify-center">
-            {loading && <RotateCcw className="w-4 h-4 text-emerald-400 animate-spin" />}
+          {/* Settings Menu */}
+          <div className="relative ml-auto">
+            <SettingsButton
+              isOpen={isSettingsOpen}
+              onOpenChange={setIsSettingsOpen}
+            />
+
+            <SettingsMenu
+              isOpen={isSettingsOpen}
+              onClose={() => setIsSettingsOpen(false)}
+              onOpenChange={setIsSettingsOpen}
+              showTextSize={true}
+              showAccentColor={true}
+              textScale={textScale}
+              onTextScaleChange={onTextScaleChange}
+              accentColor={accentColor}
+              onAccentColorChange={onAccentColorChange}
+            />
           </div>
         </div>
       </header>
