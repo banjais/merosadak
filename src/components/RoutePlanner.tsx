@@ -980,27 +980,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      {detectedLocation ? (
                        gpsOriginCity ? (
                          <>
-                            <span className="block">{gpsOriginCity.name} / {getCityType(gpsOriginCity)}</span>
-                            <span className="block text-[9px] text-slate-500">District: {gpsOriginCity.district}, Province: {gpsOriginCity.province}</span>
-                            {gpsOriginDistanceKm != null && (
-                              <span className="block text-[9px] text-slate-500">~{gpsOriginDistanceKm.toFixed(1)} km away from {gpsOriginCity.name}</span>
-                            )}
+                            <span className="block text-white font-medium text-xs truncate">{gpsOriginCity.name}</span>
+                            <span className="block text-[9px] text-slate-500 truncate">{gpsOriginCity.district}, {gpsOriginCity.province}</span>
                             {gpsNearestHighway && (
-                              <span className="block text-[9px] text-slate-500">Nearest: {gpsNearestHighway.code} ({gpsNearestHighway.name}) — {gpsNearestHighway.distanceKm.toFixed(1)} km</span>
+                              <span className="block text-[9px] text-cyan-400 truncate mt-0.5">
+                                {gpsNearestHighway.code} • {gpsNearestHighway.distanceKm.toFixed(1)} km away
+                              </span>
                             )}
-                            <span className="block text-[9px] text-slate-500">Data source: GPS triangulation (DoR GeoJSON network)</span>
-                            <span className="block">{detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                          </>
                        ) : (
                          <>
-                           <span className="block">Near {detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
-                           <span className="block text-[9px] text-slate-500">Coordinates: {detectedLocation.lat.toFixed(6)}, {detectedLocation.lng.toFixed(6)}</span>
+                           <span className="block text-white font-medium text-xs truncate">Near {detectedLocation.lat.toFixed(4)}° N, {detectedLocation.lng.toFixed(4)}° E</span>
                          </>
                        )
                      ) : isCustomLocationMode ? (
-                       <span className="text-slate-500">Custom origin mode</span>
+                       <span className="text-slate-500 truncate block">Custom origin mode</span>
                      ) : (
-                       <span className="text-slate-500">Select a location</span>
+                       <span className="text-slate-500 truncate block">Select a location</span>
                      )}
                   </div>
                 </div>

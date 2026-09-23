@@ -64,8 +64,8 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
     if (refreshing) return;
     if (!canReloadNow()) return;
     refreshing = true;
-    console.log('[Mero Sadak] New service worker active — reloading to latest build');
-    window.location.reload();
+    console.log('[Mero Sadak] New service worker active — ready for next reload');
+    // window.location.reload(); // Removed to prevent visible restart/flicker
   });
 
   navigator.serviceWorker.addEventListener('message', (event) => {
@@ -73,8 +73,8 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
     if (!data || typeof data !== 'object') return;
     if (data.type === 'SW_ACTIVATED' && data.action === 'reload-recommended') {
       if (canReloadNow()) {
-        console.log('[Mero Sadak] SW activated', data.version, '— reloading');
-        window.location.reload();
+        console.log('[Mero Sadak] SW activated', data.version, '— ready for next reload');
+        // window.location.reload(); // Removed to prevent visible restart/flicker
       }
     }
   });
@@ -186,7 +186,7 @@ export async function checkRemoteVersionAndRefresh(): Promise<void> {
         /* ignore */
       }
       if (canReloadNow()) {
-        window.location.reload();
+        // window.location.reload(); // Removed to prevent visible restart/flicker
       }
     } else if (remoteBuild !== localBuild) {
       // Align stored build with what we ship in this bundle
