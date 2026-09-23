@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { VehicleType, CityNode } from '../types';
-import { NOC_FUEL_RATES, getNOCFuelRate } from '../utils/vehicleConfigs';
+import { getEffectiveFuelRate } from '../utils/fuelPriceService';
+import { FuelRateConfig } from '../utils/vehicleConfigs';
 import {
   Fuel,
   Zap,
@@ -38,6 +39,7 @@ interface FuelCostEstimatorProps {
   origin?: CityNode;
   destination?: CityNode;
   defaultTollCost?: number;
+  fuelPrices?: FuelRateConfig | null;
   onVehicleChange?: (vehicle: VehicleType) => void;
   className?: string;
 }
@@ -53,58 +55,60 @@ interface VehicleBenchmark {
   tollMultiplier: number;
 }
 
-const VEHICLE_BENCHMARKS: Record<VehicleType, VehicleBenchmark> = {
-  car: {
-    defaultMileage: 14,
-    unit: 'km/L',
-    defaultFuelType: 'petrol',
-    defaultRateNpr: NOC_FUEL_RATES.petrol,
-    label: 'Car / Sedan / Hatchback',
-    icon: Car,
-    co2GramsPerKm: 142,
-    tollMultiplier: 1.0,
-  },
-  suv_4wd: {
-    defaultMileage: 10,
-    unit: 'km/L',
-    defaultFuelType: 'diesel',
-    defaultRateNpr: NOC_FUEL_RATES.diesel,
-    label: 'SUV / 4WD Jeep',
-    icon: Mountain,
-    co2GramsPerKm: 198,
-    tollMultiplier: 1.4,
-  },
-  motorbike: {
-    defaultMileage: 35,
-    unit: 'km/L',
-    defaultFuelType: 'petrol',
-    defaultRateNpr: NOC_FUEL_RATES.petrol,
-    label: 'Motorcycle / Scooter',
-    icon: Bike,
-    co2GramsPerKm: 65,
-    tollMultiplier: 0.4,
-  },
-  bus_truck: {
-    defaultMileage: 4.5,
-    unit: 'km/L',
-    defaultFuelType: 'diesel',
-    defaultRateNpr: NOC_FUEL_RATES.diesel,
-    label: 'Bus / Heavy Truck',
-    icon: Truck,
-    co2GramsPerKm: 580,
-    tollMultiplier: 2.8,
-  },
-  electric_vehicle: {
-    defaultMileage: 6.5,
-    unit: 'km/kWh',
-    defaultFuelType: 'electricity',
-    defaultRateNpr: NOC_FUEL_RATES.electricity,
-    label: 'Electric Vehicle (EV)',
-    icon: Zap,
-    co2GramsPerKm: 18,
-    tollMultiplier: 1.0,
-  },
-};
+function getVehicleBenchmarks(prices?: FuelRateConfig | null): Record<VehicleType, VehicleBenchmark> {
+  return {
+    car: {
+      defaultMileage: 14,
+      unit: 'km/L',
+      defaultFuelType: 'petrol',
+      defaultRateNpr: getEffectiveFuelRate('car', prices),
+      label: 'Car / Sedan / Hatchback',
+      icon: Car,
+      co2GramsPerKm: 142,
+      tollMultiplier: 1.0,
+    },
+    suv_4wd: {
+      defaultMileage: 10,
+      unit: 'km/L',
+      defaultFuelType: 'diesel',
+      defaultRateNpr: getEffectiveFuelRate('suv_4wd', prices),
+      label: 'SUV / 4WD Jeep',
+      icon: Mountain,
+      co2GramsPerKm: 198,
+      tollMultiplier: 1.4,
+    },
+    motorbike: {
+      defaultMileage: 35,
+      unit: 'km/L',
+      defaultFuelType: 'petrol',
+      defaultRateNpr: getEffectiveFuelRate('motorbike', prices),
+      label: 'Motorcycle / Scooter',
+      icon: Bike,
+      co2GramsPerKm: 65,
+      tollMultiplier: 0.4,
+    },
+    bus_truck: {
+      defaultMileage: 4.5,
+      unit: 'km/L',
+      defaultFuelType: 'diesel',
+      defaultRateNpr: getEffectiveFuelRate('bus_truck', prices),
+      label: 'Bus / Heavy Truck',
+      icon: Truck,
+      co2GramsPerKm: 580,
+      tollMultiplier: 2.8,
+    },
+    electric_vehicle: {
+      defaultMileage: 6.5,
+      unit: 'km/kWh',
+      defaultFuelType: 'electricity',
+      defaultRateNpr: getEffectiveFuelRate('electric_vehicle', prices),
+      label: 'Electric Vehicle (EV)',
+      icon: Zap,
+      co2GramsPerKm: 18,
+      tollMultiplier: 1.0,
+    },
+  };
+}
 
 interface TollItem {
   id: string;
@@ -132,10 +136,11 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   origin,
   destination,
   defaultTollCost = 60,
+  fuelPrices,
   onVehicleChange,
   className = '',
 }) => {
-  const currentBenchmark = VEHICLE_BENCHMARKS[vehicleType] || VEHICLE_BENCHMARKS.car;
+  const currentBenchmark = getVehicleBenchmarks(fuelPrices)[vehicleType] || getVehicleBenchmarks(fuelPrices).car;
 
   // Custom fuel configuration state
   const [customMileage, setCustomMileage] = useState<number>(currentBenchmark.defaultMileage);
@@ -341,11 +346,12 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
 
   // Comparison across all vehicle types for this exact distance & tolls
   const vehicleComparisons = useMemo(() => {
+    const benchmarks = getVehicleBenchmarks(fuelPrices);
     const effectiveDist = isRoundTrip ? distanceKm * 2 : distanceKm;
     const multiplier = isRoundTrip ? 2 : 1;
 
-    return (Object.keys(VEHICLE_BENCHMARKS) as VehicleType[]).map((vKey) => {
-      const b = VEHICLE_BENCHMARKS[vKey];
+    return (Object.keys(benchmarks) as VehicleType[]).map((vKey) => {
+      const b = benchmarks[vKey];
       let tFactor = 1.0;
       if (includeMountainGradient) tFactor += 0.12;
       if (includeAcAndLoad) tFactor += 0.08;
@@ -391,6 +397,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     emergencyServices,
     includeMeals,
     calculation.totalMealsNpr,
+    fuelPrices,
   ]);
 
   // Copy receipt summary to clipboard
@@ -442,6 +449,11 @@ Generated via Mero Sadak Nepal Highway GIS`;
             <p className="text-[11px] text-slate-400">
               Estimates total highway journey budget including fuel/energy, tunnel tolls, and emergency roadside protection
             </p>
+            {fuelPrices && (
+              <p className="text-[10px] text-emerald-400/80">
+                Fuel rates: NPR {fuelPrices.petrol}/L petrol · NPR {fuelPrices.diesel}/L diesel · NPR {fuelPrices.electricity}/kWh EV (live)
+              </p>
+            )}
           </div>
         </div>
 

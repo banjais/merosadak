@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Route, Building, Mountain, LocateFixed, RotateCcw,
   AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
-  UtensilsCrossed, Compass, Shield, Landmark, Info,
+  UtensilsCrossed, Compass, Shield, Landmark, Info, CloudSun, CloudRain,
+  CloudSnow, Wind, Droplets, Thermometer, Sun, Cloud,
 } from 'lucide-react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
@@ -35,6 +36,26 @@ interface NearbyItem {
   distanceKm: number;
   icon: React.ElementType;
   color: string;
+}
+
+interface WeatherData {
+  current: {
+    temperature_2m: number;
+    relative_humidity_2m: number;
+    precipitation: number;
+    weather_code: number;
+    wind_speed_10m: number;
+    visibility: number;
+    cloud_cover: number;
+  };
+  daily: {
+    time: string[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    precipitation_probability_max: number[];
+  };
+  elevation: number;
+  timezone: string;
 }
 
 function formatDMS(lat: number, lng: number): string {
@@ -75,6 +96,30 @@ function getConfig(category: string): { icon: React.ElementType; color: string; 
   return CATEGORY_CONFIG[category?.toLowerCase()] || DEFAULT_CONFIG;
 }
 
+function getWeatherIcon(code: number): React.ReactElement {
+  if (code === 0) return <Sun className="w-5 h-5" />;
+  if (code <= 3) return <Cloud className="w-5 h-5" />;
+  if (code === 45 || code === 48) return <Cloud className="w-5 h-5" />; // Fog
+  if (code <= 55) return <CloudRain className="w-5 h-5" />; // Drizzle
+  if (code <= 65) return <CloudRain className="w-5 h-5" />; // Rain
+  if (code <= 67) return <CloudRain className="w-5 h-5" />; // Freezing rain
+  if (code <= 75) return <CloudSnow className="w-5 h-5" />; // Snow
+  if (code <= 82) return <CloudRain className="w-5 h-5" />; // Rain showers
+  if (code >= 95) return <CloudRain className="w-5 h-5" />; // Thunderstorm
+  return <Cloud className="w-5 h-5" />;
+}
+
+function getWeatherIconBg(code: number): string {
+  if (code === 0) return 'bg-amber-500/20';
+  if (code <= 3) return 'bg-slate-500/20';
+  if (code === 45 || code === 48) return 'bg-slate-400/20';
+  if (code <= 67) return 'bg-sky-500/20';
+  if (code <= 75) return 'bg-blue-500/20';
+  if (code <= 82) return 'bg-sky-500/20';
+  if (code >= 95) return 'bg-purple-500/20';
+  return 'bg-slate-500/20';
+}
+
 export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +131,8 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
   const [busStations, setBusStations] = useState<any[]>([]);
   const [landmarks, setLandmarks] = useState<any[]>([]);
   const [pois, setPois] = useState<any[]>([]);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -101,6 +148,30 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
     };
     fetchAll();
   }, []);
+
+  useEffect(() => {
+    if (!locationInfo?.lat || !locationInfo?.lng) return;
+    let cancelled = false;
+    const fetchWeather = async () => {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${locationInfo.lat}&longitude=${locationInfo.lng}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,visibility,cloud_cover&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia/Kathmandu`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setWeather({ ...data, elevation: locationInfo.lat });
+          setWeatherError(null);
+        }
+      } catch (err) {
+        if (!cancelled) setWeatherError((err as Error).message);
+      }
+    };
+    fetchWeather();
+    return () => { cancelled = true; };
+  }, [locationInfo?.lat, locationInfo?.lng]);
 
   useEffect(() => {
     setLoading(true);
@@ -371,6 +442,80 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                 <p className="text-xs text-slate-500 italic">No region data available.</p>
               )}
             </div>
+
+            {/* Weather Section */}
+            {weather && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Weather</h3>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-700/50">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="flex items-center space-x-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getWeatherIconBg(weather.current.weather_code)}`}>
+                        {getWeatherIcon(weather.current.weather_code)}
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Temp</p>
+                        <p className="text-xl font-black text-white">{Math.round(weather.current.temperature_2m)}°C</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <Droplets className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Rain</p>
+                        <p className="text-xl font-black text-emerald-400">{weather.current.precipitation.toFixed(1)} mm/hr</p>
+                        <p className="text-[9px] text-slate-500">{weather.current.precipitation > 0 ? 'Active rain' : 'No rain'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                      <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center">
+                        <Droplets className="w-5 h-5 text-sky-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Humidity</p>
+                        <p className="text-xl font-black text-white">{weather.current.relative_humidity_2m}%</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                        <Wind className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">Wind</p>
+                        <p className="text-xl font-black text-white">{Math.round(weather.current.wind_speed_10m)} km/h</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-800">
+                    <div className="text-center p-2 bg-slate-900/50 rounded-lg">
+                      <p className="text-[10px] text-slate-500">Visibility</p>
+                      <p className="text-sm font-bold text-white">{weather.current.visibility ? (weather.current.visibility / 1000).toFixed(1) : '—'} km</p>
+                    </div>
+                    <div className="text-center p-2 bg-slate-900/50 rounded-lg">
+                      <p className="text-[10px] text-slate-500">Cloud Cover</p>
+                      <p className="text-sm font-bold text-white">{weather.current.cloud_cover}%</p>
+                    </div>
+                    <div className="text-center p-2 bg-slate-900/50 rounded-lg">
+                      <p className="text-[10px] text-slate-500">Today High</p>
+                      <p className="text-sm font-bold text-rose-400">{weather.daily?.temperature_2m_max?.[0] ? Math.round(weather.daily.temperature_2m_max[0]) : '—'}°C</p>
+                    </div>
+                    <div className="text-center p-2 bg-slate-900/50 rounded-lg">
+                      <p className="text-[10px] text-slate-500">Rain Risk</p>
+                      <p className="text-sm font-bold text-emerald-400">{weather.daily?.precipitation_probability_max?.[0] ? weather.daily.precipitation_probability_max[0] : '—'}%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {weatherError && !weather && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Weather</h3>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-700/50 text-center">
+                  <p className="text-slate-500 text-sm">Weather unavailable: {weatherError}</p>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nearest Highway</h3>

@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
@@ -291,6 +292,30 @@ async function startServer() {
       dhmCalibrated: true,
       lastUpdated: new Date().toISOString(),
     });
+  });
+
+  // Live fuel prices (served from cache file, updated daily via npm run sync:fuel)
+  app.get('/api/fuel-prices', (req, res) => {
+    const cacheFile = path.join(process.cwd(), 'public', 'data', 'fuel-prices.json');
+    try {
+      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      res.json(data);
+    } catch {
+      const now = new Date();
+      res.json({
+        prices: { petrol: 175, diesel: 158, electricity: 15 },
+        source: 'noc.org.np',
+        sourceUrl: 'https://noc.org.np/retailprice',
+        sourceLabel: 'Nepal Oil Corporation - Retail Selling Price',
+        currency: 'NPR',
+        units: { petrol: 'L', diesel: 'L', electricity: 'kWh' },
+        regions: 'Kathmandu, Pokhara, Dipayal',
+        lastUpdated: now.toISOString(),
+        fetchedAt: now.toISOString(),
+        nextUpdate: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        note: 'Default NOC standard rates. Run npm run sync:fuel for live rates.',
+      });
+    }
   });
 
   // Highway POIs, EV chargers, fuel stations, rest stops

@@ -1,0 +1,21 @@
+{
+  "prices": {
+    "petrol": 170,
+    "diesel": 150,
+    "electricity": 15
+  },
+  "source": "noc.org.np",
+  "sourceUrl": "https://noc.org.np/retailprice",
+  "sourceLabel": "Nepal Oil Corporation - Retail Selling Price",
+  "currency": "NPR",
+  "units": {
+    "petrol": "L",
+    "diesel": "L",
+    "electricity": "kWh"
+  },
+  "regions": "Kathmandu, Pokhara, Dipayal",
+  "lastUpdated": "2026-09-23T15:38:10.864Z",
+  "fetchedAt": "2026-09-23T15:38:10.864Z",
+  "nextUpdate": "2026-09-24T15:38:10.864Z",
+  "note": "Rates effective from midnight NST. VAT inclusive. Prices may vary by region within 15km of depot."
+}

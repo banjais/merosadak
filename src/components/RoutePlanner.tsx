@@ -17,6 +17,7 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute } from '../utils/routeOptimizer';
 import { FuelCostEstimator } from './FuelCostEstimator';
+import { FuelPriceCard } from './FuelPriceCard';
 import { ShareTripModal } from './ShareTripModal';
 import { TripAssistantPanel } from './TripAssistantPanel';
 import { RouteTerrainAndTrafficAnalysis } from './RouteTerrainAndTrafficAnalysis';
@@ -86,7 +87,7 @@ import { DataAttribution } from './DataAttribution';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
 import {
   VEHICLE_CONFIGS,
-  NOC_FUEL_RATES,
+  FuelRateConfig,
   getNOCFuelRate,
   getFuelRateLabel,
   getFuelName,
@@ -96,6 +97,7 @@ import {
   PREFERENCE_CONFIGS,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
+import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { filterCities } from '../utils/citySearch';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 
@@ -279,6 +281,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isRefreshingTraffic, setIsRefreshingTraffic] = useState<boolean>(false);
   const [hasCalculated, setHasCalculated] = useState<boolean>(false);
 
+  // Fuel price state
+  const [fuelPrices, setFuelPrices] = useState<FuelRateConfig | null>(null);
+  const [fuelPriceMetadata, setFuelPriceMetadata] = useState<any>(null);
+  const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
+  const [priceFetchError, setPriceFetchError] = useState<string | null>(null);
+
   // Custom Fuel Efficiency Override States
   const [customMileageKmL, setCustomMileageKmL] = useState<number>(() => {
     return initialVehicle === 'car'
@@ -455,16 +463,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setIsCalculating(true);
     setTimeout(() => {
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined);
-      setRoutePlan(plan);
-      setHasCalculated(true);
-      setIsReportExpanded(true);
-      setCalcKey((k) => k + 1);
-      setAiCustomAdvisory(null);
-      setIsCalculating(false);
-
-      if (plan) {
+      if (plan && fuelPrices) {
+        const updatedPlan = applyLiveFuelPrices(plan, veh, fuelPrices);
+        setRoutePlan(updatedPlan);
+        onRouteCalculated(updatedPlan);
+      } else if (plan) {
+        setRoutePlan(plan);
         onRouteCalculated(plan);
       }
+      setHasCalculated(true);
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
       setSingleSearchQuery('');
@@ -478,6 +485,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setLocationMode('my_location');
       setShowSearchPanel(false);
       setNeedsRecalculation(false);
+      setIsReportExpanded(true);
+      setCalcKey((k) => k + 1);
+      setAiCustomAdvisory(null);
+      setIsCalculating(false);
     }, 200);
   };
 
@@ -931,6 +942,82 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     handleCalculateRoute();
   }, [originId, destId, userPickedDestination, hasCalculated, isCalculating, needsRecalculation]);
 
+  // Fetch fuel prices on mount and periodically refresh
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setIsLoadingPrices(true);
+      setPriceFetchError(null);
+      try {
+        const prices = await fetchFuelPrices();
+        if (!cancelled) {
+          setFuelPrices(prices);
+          setFuelPriceMetadata(getFuelPriceMetadata());
+        }
+      } catch (err: any) {
+        if (!cancelled) setPriceFetchError(err?.message || 'Failed to load fuel prices');
+      } finally {
+        if (!cancelled) setIsLoadingPrices(false);
+      }
+    };
+    load();
+    const interval = setInterval(() => {
+      if (isPriceStale()) {
+        fetchFuelPrices()
+          .then((p) => {
+            setFuelPrices(p);
+            setFuelPriceMetadata(getFuelPriceMetadata());
+          })
+          .catch(() => {});
+      }
+    }, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Re-apply live fuel prices when they change and we have a route plan
+  useEffect(() => {
+    if (fuelPrices && routePlan) {
+      const updatedPlan = applyLiveFuelPrices(routePlan, vehicle, fuelPrices);
+      if (updatedPlan.fuelEstimate.costNpr !== routePlan.fuelEstimate.costNpr) {
+        setRoutePlan(updatedPlan);
+        onRouteCalculated(updatedPlan);
+      }
+    }
+  }, [fuelPrices, routePlan, vehicle]);
+
+  // Recalculate route fuel costs with fresh prices
+  const applyLiveFuelPrices = (plan: RoutePlanResult, vehicleType: VehicleType, prices: FuelRateConfig): RoutePlanResult => {
+    const effectiveRate = (v: VehicleType): number => {
+      if (v === 'electric_vehicle') return prices.electricity;
+      if (v === 'suv_4wd' || v === 'bus_truck') return prices.diesel;
+      return prices.petrol;
+    };
+    const rate = effectiveRate(vehicleType);
+    const updatedPlan: RoutePlanResult = {
+      ...plan,
+      fuelEstimate: {
+        ...plan.fuelEstimate,
+        costNpr: Math.round(plan.fuelEstimate.liters * rate),
+      },
+    };
+    if (updatedPlan.allRouteOptions) {
+      updatedPlan.allRouteOptions = updatedPlan.allRouteOptions.map((opt) => {
+        const optRate = effectiveRate(opt.vehicle);
+        return {
+          ...opt,
+          fuelEstimate: {
+            ...opt.fuelEstimate,
+            costNpr: Math.round(opt.fuelEstimate.liters * optRate),
+          },
+        };
+      });
+    }
+    return updatedPlan;
+  };
+
   return (
     <div className="space-y-4">
       {/* AI Parsing Message Banner */}
@@ -938,6 +1025,63 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         <div className="bg-cyan-950/90 border border-cyan-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-cyan-200 animate-fadeIn shadow-lg">
           <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
           <span className="font-medium">{aiParseMessage}</span>
+        </div>
+      )}
+
+      {/* Fuel Price Freshness Indicator */}
+      {hasCalculated && routePlan && (
+        <div className="flex items-center justify-between gap-2 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2 text-xs">
+          <div className="flex items-center space-x-2 min-w-0">
+            <Fuel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            {isLoadingPrices ? (
+              <span className="text-slate-400 animate-pulse">Checking fuel prices…</span>
+            ) : fuelPrices ? (
+              <span className="text-slate-300 truncate">
+                Fuel prices last checked{' '}
+                <span className="font-semibold text-emerald-400">
+                  {getMinutesSinceLastCheck() < 1 ? 'just now' : `${getMinutesSinceLastCheck()} min ago`}
+                </span>
+                {isPriceStale() && (
+                  <span className="ml-1 text-amber-400">(stale)</span>
+                )}
+              </span>
+            ) : priceFetchError ? (
+              <span className="text-rose-400 truncate">Prices unavailable — using NOC defaults</span>
+            ) : (
+              <span className="text-slate-500">Loading fuel prices…</span>
+            )}
+          </div>
+          <button
+            onClick={async () => {
+              setIsLoadingPrices(true);
+              setPriceFetchError(null);
+              try {
+                const prices = await fetchFuelPrices();
+                setFuelPrices(prices);
+                setFuelPriceMetadata(getFuelPriceMetadata());
+                if (routePlan) {
+                  const updated = applyLiveFuelPrices(routePlan, vehicle, prices);
+                  setRoutePlan(updated);
+                  onRouteCalculated(updated);
+                }
+              } catch (err: any) {
+                setPriceFetchError(err?.message || 'Refresh failed');
+              } finally {
+                setIsLoadingPrices(false);
+              }
+            }}
+            disabled={isLoadingPrices}
+            className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition shrink-0"
+            title="Refresh fuel prices"
+            type="button"
+          >
+            {isLoadingPrices ? (
+              <span className="animate-spin inline-block w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
+            )}
+            <span>Refresh</span>
+          </button>
         </div>
       )}
 
@@ -1531,7 +1675,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <span>Rs {(() => {
                     const effKmL = Math.max(1.0, customMileageKmL);
                     const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
-                    const price = getNOCFuelRate(vehicle);
+                    const price = fuelPrices ? getEffectiveFuelRate(vehicle, fuelPrices) : getNOCFuelRate(vehicle);
                     return (Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0)).toLocaleString();
                   })()}</span>
                 </span>
@@ -1905,6 +2049,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {/* MODULE CONTENT: 6. Fuel & Tolls */}
               {activeModuleTab === 'fuel_tolls' && (
                 <div className="space-y-4">
+                  <FuelPriceCard
+                    fuelPrices={fuelPrices}
+                    metadata={fuelPriceMetadata}
+                    isLoading={isLoadingPrices}
+                  />
                   <FuelCostEstimator
                     distanceKm={routePlan.totalDistanceKm}
                     vehicleType={vehicle}
@@ -1912,6 +2061,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     origin={routePlan.origin}
                     destination={routePlan.destination}
                     defaultTollCost={routePlan.totalTollCostNpr}
+                    fuelPrices={fuelPrices}
                     onVehicleChange={(newV) => setVehicle(newV)}
                   />
                   <CarbonFootprintCard
