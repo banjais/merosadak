@@ -244,16 +244,15 @@ export const MyLocationPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               {locationInfo.nearestJunction.city ? (
                 <div className="flex items-center space-x-3 bg-slate-950 p-4 rounded-2xl">
                   <Building className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-bold text-white">{locationInfo.nearestJunction.city.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-white truncate">{locationInfo.nearestJunction.city.name}</p>
+                      <span className="bg-slate-800 text-slate-400 text-[9px] px-2 py-0.5 rounded-lg whitespace-nowrap">
+                        {locationInfo.nearestJunction.city.elevationM}m ASL
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-400">
                       {locationInfo.nearestJunction.city.district} Dist • {locationInfo.nearestJunction.city.province} Prov
-                    </p>
-                  </div>
-                  <div className="ml-auto text-right pl-2 border-l border-slate-800">
-                    <p className="text-[10px] text-slate-500 uppercase">Distance</p>
-                    <p className="text-sm font-bold text-amber-300">
-                      {locationInfo.nearestJunction.distanceKm !== null ? `${locationInfo.nearestJunction.distanceKm.toFixed(2)} km` : '—'}
                     </p>
                   </div>
                 </div>

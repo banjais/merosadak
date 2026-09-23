@@ -2,6 +2,66 @@
 import { NEPAL_HIGHWAYS, CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { CityNode, Highway } from '../types';
 
+function toRadians(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+function latLngToMeters(lat: number, lng: number, refLat: number): { x: number; y: number } {
+  const kx = 111320 * Math.cos(toRadians(refLat));
+  const ky = 110574;
+  return { x: kx * toRadians(lng), y: ky * toRadians(lat) };
+}
+
+function closestPointOnSegment(
+  px: number, py: number,
+  ax: number, ay: number,
+  bx: number, by: number
+): { x: number; y: number; along: number } {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return { x: ax, y: ay, along: 0 };
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+  return { x: ax + t * dx, y: ay + t * dy, along: t };
+}
+
+function metersToKm(m: number): number {
+  return m / 1000;
+}
+
+/**
+ * Computes the perpendicular distance from a point to the nearest line segment
+ * of a highway, using equirectangular projection at the point's latitude.
+ * Returns distance in km and the nearest point on the road geometry.
+ */
+export function distanceToHighwayGeometry(
+  lat: number, lng: number,
+  coordinates: [number, number][]
+): { distanceKm: number; nearestLat: number; nearestLng: number } | null {
+  if (!coordinates || coordinates.length < 2) return null;
+  const refLat = lat;
+  const p = latLngToMeters(lat, lng, refLat);
+  let minDistM = Infinity;
+  let nearestLat = coordinates[0][0];
+  let nearestLng = coordinates[0][1];
+
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const a = latLngToMeters(coordinates[i][0], coordinates[i][1], refLat);
+    const b = latLngToMeters(coordinates[i + 1][0], coordinates[i + 1][1], refLat);
+    const cp = closestPointOnSegment(p.x, p.y, a.x, a.y, b.x, b.y);
+    const dx = cp.x - p.x;
+    const dy = cp.y - p.y;
+    const distM = Math.sqrt(dx * dx + dy * dy);
+    if (distM < minDistM) {
+      minDistM = distM;
+      nearestLat = coordinates[i][0] + (coordinates[i + 1][0] - coordinates[i][0]) * cp.along;
+      nearestLng = coordinates[i][1] + (coordinates[i + 1][1] - coordinates[i][1]) * cp.along;
+    }
+  }
+
+  return { distanceKm: metersToKm(minDistM), nearestLat, nearestLng };
+}
+
 /**
  * Calculates the Haversine distance in kilometers between two lat/lng coordinates.
  */
@@ -85,8 +145,8 @@ export function findNearestHighwayJunction(lat: number, lng: number): {
 
 /**
  * Finds the nearest highway segment from a given coordinate.
- * Returns the highway code/name, the nearest point on the segment,
- * the distance in km, and the segment's from/to junctions.
+ * Uses perpendicular projection onto road geometry for accuracy,
+ * falling back to waypoint distance for sparse data.
  */
 export function findNearestHighwayFromCoords(lat: number, lng: number): {
   highway: Highway | null;
@@ -106,8 +166,24 @@ export function findNearestHighwayFromCoords(lat: number, lng: number): {
     for (const segment of highway.segments) {
       if (!segment.coordinates || segment.coordinates.length === 0) continue;
 
-      for (let i = 0; i < segment.coordinates.length; i++) {
-        const [segLat, segLng] = segment.coordinates[i];
+      // Use perpendicular projection for segments with 2+ points
+      if (segment.coordinates.length >= 2) {
+        const geoDist = distanceToHighwayGeometry(lat, lng, segment.coordinates);
+        if (geoDist && (!nearest || geoDist.distanceKm < nearest.distanceKm)) {
+          nearest = {
+            highway,
+            segment: {
+              from: segment.from,
+              to: segment.to,
+              distanceKm: segment.distanceKm,
+            },
+            nearestPoint: { lat: geoDist.nearestLat, lng: geoDist.nearestLng },
+            distanceKm: geoDist.distanceKm,
+          };
+        }
+      } else {
+        // Fallback: single waypoint
+        const [segLat, segLng] = segment.coordinates[0];
         const d = getDistanceKm(lat, lng, segLat, segLng);
         if (!nearest || d < nearest.distanceKm) {
           nearest = {
