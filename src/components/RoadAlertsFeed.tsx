@@ -213,9 +213,9 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
       </div>
 
       {activeTab === 'dor' ? (
-        <div className="space-y-3">
+        <div className="space-y-4 gap-cards">
           {filteredIncidents.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl">
+            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card-3d-flat">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
               <p className="text-slate-300 text-sm font-semibold">No severe obstructions reported at this moment.</p>
               <p className="text-slate-500 text-xs mt-1">All major corridors are operating normally.</p>
@@ -224,7 +224,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
             filteredIncidents.map((incident) => (
               <div
                 key={incident.id}
-                className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 p-5 rounded-2xl shadow-lg transition space-y-3"
+                className="card-3d-heavy transition space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center space-x-3">
@@ -304,7 +304,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
                     {onSelectIncident && (
                       <button
                         onClick={() => onSelectIncident(incident)}
-                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold rounded-lg transition flex items-center space-x-1 shrink-0"
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold rounded-lg transition hover-lift-3d flex items-center space-x-1 shrink-0 card-3d-flat"
                       >
                         <MapPin className="w-3 h-3" />
                         <span>Locate on Map</span>
@@ -317,9 +317,9 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4 gap-cards">
           {routeReports.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl">
+            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card-3d-flat">
               <Radio className="w-10 h-10 text-slate-600 mx-auto mb-2" />
               <p className="text-slate-400 text-sm">
                 {focusCorridorOnly && activeRoute
@@ -338,7 +338,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
               return (
                 <div
                   key={rep.id}
-                  className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-2.5"
+                  className="card-3d-heavy space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">

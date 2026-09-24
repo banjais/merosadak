@@ -36,6 +36,202 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* ===== 3D CARD UTILITIES ===== */
+/* 3D Heavy Card Base - strong depth, layered shadows */
+.card-3d-heavy {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  background: linear-gradient(145deg, #0f172a 0%, #111827 50%, #0b1220 100%);
+  border: 1px solid #1e293b;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 1rem;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.card-3d-heavy:hover {
+  transform: translateY(-4px) translateZ(20px);
+  box-shadow:
+    0 8px 12px -2px rgba(0, 0, 0, 0.5),
+    0 30px 40px -10px rgba(0, 0, 0, 0.4),
+    0 15px 15px -8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* 3D Card with accent border */
+.card-3d-heavy-accent {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  background: linear-gradient(145deg, #0f172a 0%, #111827 50%, #0b1220 100%);
+  border: 1px solid;
+  border-image: linear-gradient(180deg, rgba(56, 189, 248, 0.4), rgba(16, 185, 129, 0.3)) 1;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 30px -10px rgba(56, 189, 248, 0.15);
+  border-radius: 1rem;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.card-3d-heavy-accent:hover {
+  transform: translateY(-4px) translateZ(20px) scale(1.01);
+  box-shadow:
+    0 8px 12px -2px rgba(0, 0, 0, 0.5),
+    0 30px 40px -10px rgba(0, 0, 0, 0.4),
+    0 15px 15px -8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 0 50px -5px rgba(56, 189, 248, 0.25),
+    0 0 0 1px rgba(56, 189, 248, 0.3);
+}
+
+/* 3D Elevated Card - lighter elevation */
+.card-3d-elevated {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  background: linear-gradient(145deg, #111827 0%, #1e293b 100%);
+  border: 1px solid #334155;
+  box-shadow:
+    0 2px 4px -1px rgba(0, 0, 0, 0.3),
+    0 10px 15px -3px rgba(0, 0, 0, 0.2),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-radius: 0.875rem;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-3d-elevated:hover {
+  transform: translateY(-2px) translateZ(10px);
+  box-shadow:
+    0 4px 8px -2px rgba(0, 0, 0, 0.4),
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 8px 10px -4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* 3D Flat Card - minimal elevation, good for lists */
+.card-3d-flat {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 6px -1px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-radius: 0.75rem;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.card-3d-flat:hover {
+  transform: translateY(-1px) translateZ(5px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 8px 12px -2px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+/* 3D Inner Content Layer - for content inside cards */
+.card-3d-inner {
+  transform: translateZ(20px);
+  position: relative;
+  z-index: 1;
+}
+
+/* 3D Hover Lift Effect */
+.hover-lift-3d {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift-3d:hover {
+  transform: translateY(-3px) translateZ(15px);
+  box-shadow:
+    0 6px 12px -2px rgba(0, 0, 0, 0.4),
+    0 25px 35px -8px rgba(0, 0, 0, 0.35),
+    0 10px 10px -5px rgba(0, 0, 0, 0.15);
+}
+
+/* Card Gap Utilities */
+.gap-cards {
+  gap: 1.25rem;
+}
+
+.gap-cards-sm {
+  gap: 0.875rem;
+}
+
+.gap-cards-lg {
+  gap: 1.5rem;
+}
+
+.gap-cards-xl {
+  gap: 2rem;
+}
+
+/* Grid gap utilities for card grids */
+.grid-cards-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.grid-cards-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.grid-cards-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.grid-cards-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .grid-cards-2,
+  .grid-cards-3,
+  .grid-cards-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid-cards-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-cards-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .glass-strong {
   background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(24px) saturate(200%);

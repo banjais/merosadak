@@ -616,12 +616,12 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
             })}
           </div>
 
-          {/* Current Step Focused Content */}
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className={`p-3 rounded-xl border ${currentStep.color} shrink-0`}>
-                {React.createElement(currentStep.icon, { className: 'w-6 h-6' })}
-              </div>
+{/* Current Step Focused Content */}
+           <div className="space-y-3">
+             <div className="flex items-start space-x-3">
+               <div className={`p-3 rounded-xl border ${currentStep.color} shrink-0 card-3d-flat`}>
+                 {React.createElement(currentStep.icon, { className: 'w-6 h-6' })}
+               </div>
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
                   Step {currentStep.step} of 5
@@ -635,7 +635,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
             {/* Quick Context Summary */}
             {activeRouteSummary && currentStep.step === 1 && (
-              <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs flex items-center justify-between text-slate-300">
+              <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs flex items-center justify-between text-slate-300 card-3d-flat">
                 <span className="font-semibold text-white">
                   {activeRouteSummary.originName} ➔ {activeRouteSummary.destinationName}
                 </span>
@@ -647,7 +647,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
             )}
 
             {currentStep.step === 2 && (
-              <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs flex items-center justify-between text-slate-300">
+              <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs flex items-center justify-between text-slate-300 card-3d-flat">
                 <span>Active road incidents reported:</span>
                 <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold font-mono">
                   {incidentCount} Alerts Active
@@ -658,7 +658,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
             {/* Dynamic Travel Tip Callout Banner in Step 1 & Step 5 */}
             <div
               id="embedded-travel-tip-banner"
-              className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition space-y-2"
+              className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition space-y-2 hover-lift-3d card-3d-heavy"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1.5">
@@ -811,7 +811,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
           {/* Featured Priority Tip Banner */}
           <div
             id="featured-vehicle-tip-card"
-            className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-amber-500/40 shadow-xl space-y-2.5 relative overflow-hidden"
+            className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-amber-500/40 shadow-xl space-y-2.5 relative overflow-hidden card-3d-heavy-accent"
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center space-x-2">
@@ -926,17 +926,17 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
           </div>
 
           {/* Tactical Tips List */}
-          <div className="space-y-2.5">
+          <div className="space-y-3 gap-cards">
             {filteredTips.map((tip) => {
               const isChecked = !!checkedTips[tip.id];
 
               return (
                 <div
                   key={tip.id}
-                  className={`p-3 rounded-xl border transition space-y-2 ${
+                  className={`p-3 rounded-xl border transition space-y-2 hover-lift-3d ${
                     isChecked
-                      ? 'bg-slate-950/60 border-slate-800/60 opacity-80'
-                      : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+                      ? 'bg-slate-950/60 border-slate-800/60 opacity-80 card-3d-elevated'
+                      : 'bg-slate-900/90 border-slate-800 card-3d-heavy'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
