@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Compass,
   AlertTriangle,
@@ -20,9 +20,17 @@ import {
   Layers,
   Lightbulb,
   Gauge,
+  Archive,
+  MapPin,
+  Settings,
+  Share2,
+  Bell,
+  Bookmark,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { VehicleType } from '../types';
+import { useCardSwipe, SwipeAction } from '../hooks/useCardSwipe';
+import { useCardArchive } from '../context/CardArchiveContext';
 
 export interface TravelStepsGuideProps {
   currentStep?: number;
@@ -497,10 +505,14 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
     }));
   };
 
-  const filteredTips =
+  const { isArchived: isTipArchived } = useCardArchive();
+
+  const filteredTipsBase =
     selectedCategory === 'All'
       ? activeVehicleConfig.tips
       : activeVehicleConfig.tips.filter((t) => t.category === selectedCategory);
+
+  const filteredTips = filteredTipsBase.filter((tip) => !isTipArchived(tip.id, 'tip'));
 
   const vehicleOptions: { type: VehicleType; label: string; icon: React.ElementType }[] = [
     { type: 'electric_vehicle', label: 'EV', icon: Zap },
@@ -658,7 +670,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
             {/* Dynamic Travel Tip Callout Banner in Step 1 & Step 5 */}
             <div
               id="embedded-travel-tip-banner"
-              className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition space-y-2 hover-lift-3d card-3d-heavy"
+               className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition space-y-2 hover-lift-3d card-modern"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1.5">
@@ -759,7 +771,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
       {/* 3. MODE B: DEDICATED TRAVEL TIPS SECTION (Vehicle-Adaptive) */}
       {guideMode === 'tips' && (
-        <div id="travel-tips-section" className="flex-1 flex flex-col space-y-3.5 overflow-y-auto pr-0.5 custom-scrollbar">
+        <div id="travel-tips-section" className="flex-1 flex flex-col space-y-3.5 overflow-y-auto pr-0.5 scrollbar-paddle">
           {/* Vehicle Selector Tabs */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -811,7 +823,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
           {/* Featured Priority Tip Banner */}
           <div
             id="featured-vehicle-tip-card"
-            className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-amber-500/40 shadow-xl space-y-2.5 relative overflow-hidden card-3d-heavy-accent"
+             className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-amber-500/40 shadow-xl space-y-2.5 relative overflow-hidden card-modern-accent"
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center space-x-2">
@@ -930,15 +942,100 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
             {filteredTips.map((tip) => {
               const isChecked = !!checkedTips[tip.id];
 
+              // Swipe actions for tip card
+              const leftAction: SwipeAction = {
+                id: 'archive',
+                label: 'Archive',
+                icon: <Archive className="w-5 h-5" />,
+                color: 'text-rose-400',
+                bgColor: 'bg-rose-500/20',
+                onTrigger: () => {
+                  // Archive the tip
+                },
+              };
+
+              const rightAction: SwipeAction = {
+                id: 'action',
+                label: 'Action',
+                icon: <MapPin className="w-5 h-5" />,
+                color: 'text-emerald-400',
+                bgColor: 'bg-emerald-500/20',
+                onTrigger: () => tip.actionText && handleTipAction(tip),
+              };
+
+              const longPressAction: SwipeAction = {
+                id: 'pin',
+                label: 'Pin',
+                icon: <Bookmark className="w-5 h-5" />,
+                color: 'text-amber-400',
+                bgColor: 'bg-amber-500/20',
+                onTrigger: () => toggleTipCheck(tip.id),
+              };
+
+              const {
+                dragOffset,
+                showQuickOverlay,
+                setShowQuickOverlay,
+                onTouchStart,
+                onTouchMove,
+                onTouchEnd,
+                onMouseDown,
+                onMouseUp,
+                onMouseLeave,
+                onContextMenu,
+                dragStyles,
+                leftActionStyles,
+                rightActionStyles,
+              } = useCardSwipe({
+                cardId: `tip-${tip.id}`,
+                leftAction,
+                rightAction,
+                longPressAction,
+                threshold: 80,
+                longPressDelay: 500,
+                haptics: true,
+              });
+
               return (
                 <div
                   key={tip.id}
-                  className={`p-3 rounded-xl border transition space-y-2 hover-lift-3d ${
-                    isChecked
-                      ? 'bg-slate-950/60 border-slate-800/60 opacity-80 card-3d-elevated'
-                      : 'bg-slate-900/90 border-slate-800 card-3d-heavy'
-                  }`}
+                   className={`p-3 rounded-xl border transition space-y-2 hover-lift-3d relative overflow-hidden ${
+                     isChecked
+                       ? 'bg-slate-950/60 border-slate-800/60 opacity-80 card-3d-elevated'
+                       : 'bg-slate-900/90 border border-slate-800 card-modern'
+                   }`}
+                  style={dragStyles as React.CSSProperties}
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
+                  onMouseDown={onMouseDown}
+                  onMouseUp={onMouseUp}
+                  onMouseLeave={onMouseLeave}
+                  onContextMenu={onContextMenu}
                 >
+                  {/* Swipe Action Backgrounds */}
+                  <div className="absolute inset-0 z-0 flex items-center justify-between pointer-events-none">
+                    {/* Left Swipe Background (Archive) - revealed when dragging right */}
+                    <div
+                      className="absolute inset-y-0 left-0 w-32 flex items-center justify-start pl-6 text-rose-400 font-bold text-xs uppercase tracking-wider bg-rose-500/10 border-r border-rose-500/20 transition-opacity"
+                      style={leftActionStyles as React.CSSProperties}
+                    >
+                      <Archive className="w-5 h-5 mr-2" />
+                      Archive
+                    </div>
+
+                    {/* Right Swipe Background (Action) - revealed when dragging left */}
+                    <div
+                      className="absolute inset-y-0 right-0 w-32 flex items-center justify-end pr-6 text-emerald-400 font-bold text-xs uppercase tracking-wider bg-emerald-500/10 border-l border-emerald-500/20 transition-opacity"
+                      style={rightActionStyles as React.CSSProperties}
+                    >
+                      <MapPin className="w-5 h-5 ml-2" />
+                      Action
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="relative z-10">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start space-x-2 min-w-0">
                       <button
@@ -996,6 +1093,79 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
                       </button>
                     </div>
                   )}
+                  </div>
+
+                  {/* Quick Actions Overlay (Long Press) */}
+                  {showQuickOverlay && (
+                    <div
+                      className="absolute inset-0 z-20 bg-slate-950/95 backdrop-blur-md flex flex-col p-4 border border-amber-500/30 rounded-xl"
+                      onClick={() => setShowQuickOverlay(false)}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2 text-amber-400">
+                          <div className="p-2 rounded-lg bg-amber-500/20">
+                            <Settings className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-wider">Quick Actions</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{tip.category}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 flex-1">
+                        {tip.actionText && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleTipAction(tip); setShowQuickOverlay(false); }}
+                            className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-300 flex flex-col items-center justify-center gap-1.5 transition"
+                          >
+                            <MapPin className="w-5 h-5 text-emerald-400" />
+                            <span className="text-xs font-bold">Take Action</span>
+                            <span className="text-[9px] text-slate-500">{tip.actionText}</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleTipCheck(tip.id); setShowQuickOverlay(false); }}
+                          className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-300 flex flex-col items-center justify-center gap-1.5 transition"
+                        >
+                          <Bookmark className="w-5 h-5 text-amber-400" />
+                          <span className="text-xs font-bold">{isChecked ? 'Unpin' : 'Pin Tip'}</span>
+                          <span className="text-[9px] text-slate-500">Save for later</span>
+                        </button>
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                          className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-sky-500/20 hover:border-sky-500/40 hover:text-sky-300 flex flex-col items-center justify-center gap-1.5 transition"
+                        >
+                          <Share2 className="w-5 h-5 text-sky-400" />
+                          <span className="text-xs font-bold">Share Tip</span>
+                          <span className="text-[9px] text-slate-500">Copy Link</span>
+                        </button>
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                          className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-300 flex flex-col items-center justify-center gap-1.5 transition"
+                        >
+                          <Bell className="w-5 h-5 text-rose-400" />
+                          <span className="text-xs font-bold">Remind Me</span>
+                          <span className="text-[9px] text-slate-500">Set Notification</span>
+                        </button>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400">
+                        <span className="font-mono">Tap outside to close</span>
+                        <span>{tip.category}</span>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               );
             })}

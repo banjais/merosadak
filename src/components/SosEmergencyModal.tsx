@@ -323,7 +323,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
 
  return (
  <div
- className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+ className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto scrollbar-paddle animate-fadeIn"
  id="emergency-sos-modal"
  >
  {/* Fullscreen Strobe Visual Alert (if active) */}
@@ -534,7 +534,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
 
  {/* Modal Body */}
- <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-slate-200">
+ <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-slate-200 scrollbar-paddle">
  {/* Top Row: GPS Coordinates & Proximity Landmark Banner */}
  <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
  {/* GPS Status Card */}

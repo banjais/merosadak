@@ -596,16 +596,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           setGpsNearestJunction(null);
           setGpsNearestHighway(null);
           setDetectedLocation(null);
-         setLocationPermissionDenied(true);
-         if (err.code === err.PERMISSION_DENIED && permissionState === 'denied') {
-           alert(
-            'GPS location access is blocked. Please enable location permissions in your browser settings, then tap "Use GPS" again.\n\n' +
-            'On Chrome: Settings → Privacy → Site Settings → Location → Allow\n' +
-            'On Safari: Settings → Safari → Location → merosadak.com → While Using\n' +
-            'On Firefox: Options → Privacy → Permissions → Settings → Location → Allow'
-          );
-         }
-         setIsLocationMenuOpen(false);
+          setLocationPermissionDenied(true);
+          setIsLocationMenuOpen(false);
        },
        { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
     );
@@ -707,7 +699,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const startVoiceRecognition = (target: 'single' | 'origin' | 'dest' | 'ai') => {
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
-      alert('Speech Recognition is not supported in this browser. Try Chrome, Edge, or Safari.');
+      setSpeechTranscriptNotice('Speech Recognition is not supported in this browser. Try Chrome, Edge, or Safari.');
+      setTimeout(() => {
+        setListeningTarget(null);
+        setSpeechTranscriptNotice(null);
+      }, 3000);
       return;
     }
 
@@ -1138,15 +1134,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => onOpenMyLocation?.()}
-            className="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-xl transition shrink-0"
-            title="View full Location Info"
-          >
-            <LocateFixed className="w-4 h-4 text-slate-400" />
-          </button>
         </div>
 
         {isLocationMenuOpen && (
@@ -1363,25 +1350,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   autoComplete="off"
                   className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                 />
-                <button
+                 <button
                   onClick={() => startVoiceRecognition('origin')}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition ${
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
                     listeningTarget === 'origin'
                       ? 'bg-rose-500 text-white animate-pulse'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
                   }`}
                   title="Voice input for Origin"
+                  aria-label="Voice input for origin"
                 >
-                  <Mic className="w-3.5 h-3.5" />
+                  <Mic className="w-4 h-4" />
                 </button>
                 {(originSearchQuery || originId) && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleClearOrigin(); }}
-                    className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                    className="absolute right-11 top-1/2 -translate-y-1/2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition touch-target"
                     title="Clear origin"
+                    aria-label="Clear origin"
                     type="button"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -1423,9 +1412,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <button
                 onClick={handleSwapLocations}
                 title="Swap Origin and Destination"
-                className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center transition shadow active:scale-95"
+                className="touch-target rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center transition shadow active:scale-95"
+                aria-label="Swap origin and destination"
               >
-                <ArrowUpDown className="w-3.5 h-3.5" />
+                <ArrowUpDown className="w-5 h-5" />
               </button>
             </div>
 
@@ -1456,23 +1446,25 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 />
                 <button
                   onClick={() => startVoiceRecognition('dest')}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition ${
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
                     listeningTarget === 'dest'
                       ? 'bg-rose-500 text-white animate-pulse'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
                   }`}
                   title="Voice input for Destination"
+                  aria-label="Voice input for destination"
                 >
-                  <Mic className="w-3.5 h-3.5" />
+                  <Mic className="w-4 h-4" />
                 </button>
                 {(destSearchQuery || destId) && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleClearDestination(); }}
-                    className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                    className="absolute right-11 top-1/2 -translate-y-1/2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition touch-target"
                     title="Clear destination"
+                    aria-label="Clear destination"
                     type="button"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>

@@ -171,7 +171,7 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto space-y-5">
+        <div className="p-5 overflow-y-auto space-y-5 scrollbar-paddle">
           {/* Visual Trip Summary Card / Digital Itinerary Ticket */}
           <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/30 border border-emerald-500/30 rounded-2xl p-5 shadow-inner relative overflow-hidden space-y-4">
             {/* Background glowing watermarks */}

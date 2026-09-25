@@ -107,7 +107,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
         <div className="space-y-8">
           {/* Cover / Title Block */}
           <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl space-y-4">

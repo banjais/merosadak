@@ -151,17 +151,17 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
         </div>
 
         {/* Title */}
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white font-display mb-1.5 splash-shimmer-text leading-none">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-display mb-1.5 splash-shimmer-text leading-none">
           MERO SADAK
         </h1>
 
         {/* Nepali Subtitle */}
-        <div className="text-lg sm:text-xl font-extrabold text-amber-400 mb-2.5 font-display tracking-wide leading-tight">
+        <div className="text-base sm:text-lg font-extrabold text-amber-400 mb-2.5 font-display tracking-wide leading-tight">
           मेरो सडक
         </div>
 
         {/* Description */}
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400 mb-8 leading-tight">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mb-8 leading-tight whitespace-nowrap">
           Nepal National Road Network & GIS
         </p>
 
@@ -174,13 +174,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="font-mono text-sm font-black text-amber-300 min-w-[42px] text-right tabular-nums">
+            <span className="font-mono text-xs font-black text-amber-300 min-w-[42px] text-right tabular-nums">
               {progress}%
             </span>
           </div>
 
           {/* Dynamic Footer Status */}
-          <div className="text-sm font-medium text-slate-400 tracking-wide min-h-[22px] transition-opacity duration-200">
+          <div className="text-xs font-medium text-slate-400 tracking-wide min-h-[22px] transition-opacity duration-200">
             {statusText}
           </div>
         </div>
@@ -191,7 +191,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
         {/* Skip Link */}
         <button
           onClick={finishSplash}
-          className="mt-2 text-sm text-slate-500 hover:text-amber-400 transition-colors duration-200 underline underline-offset-4 cursor-pointer font-medium"
+          className="mt-2 text-xs text-slate-500 hover:text-amber-400 transition-colors duration-200 underline underline-offset-4 cursor-pointer font-medium"
           disabled={isFadingOut}
         >
           Skip

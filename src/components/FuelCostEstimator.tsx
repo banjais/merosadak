@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { VehicleType, CityNode } from '../types';
 import { getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { FuelRateConfig } from '../utils/vehicleConfigs';
+import { getTollPlazasForHighway, calculateTollCost, getAllTollPlazas } from '../utils/tollRates.client';
 import {
   Fuel,
   Zap,
@@ -30,6 +31,8 @@ import {
   Utensils,
   CreditCard,
   Layers,
+  FileText,
+  Route,
 } from 'lucide-react';
 
 interface FuelCostEstimatorProps {
@@ -42,6 +45,7 @@ interface FuelCostEstimatorProps {
   fuelPrices?: FuelRateConfig | null;
   onVehicleChange?: (vehicle: VehicleType) => void;
   className?: string;
+  highwayCodes?: string[]; // Highway codes traversed by the route
 }
 
 interface VehicleBenchmark {
@@ -139,6 +143,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   fuelPrices,
   onVehicleChange,
   className = '',
+  highwayCodes = [],
 }) => {
   const currentBenchmark = getVehicleBenchmarks(fuelPrices)[vehicleType] || getVehicleBenchmarks(fuelPrices).car;
 
@@ -150,12 +155,52 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   const [includeAcAndLoad, setIncludeAcAndLoad] = useState<boolean>(false);
   const [includeMountainGradient, setIncludeMountainGradient] = useState<boolean>(elevationGainM > 400);
 
-  // Toll Fees State
+  // Live Toll Plazas from Route Highways
+  const [liveTollPlazas, setLiveTollPlazas] = useState<Array<{
+    id: string;
+    name: string;
+    location: string;
+    highwayCode: string;
+    baseCostNpr: number;
+    enabled: boolean;
+    notes: string;
+    directional: boolean;
+  }>>([]);
+
+  // Initialize live toll plazas from highway codes
+  useEffect(() => {
+    if (highwayCodes.length === 0) {
+      setLiveTollPlazas([]);
+      return;
+    }
+    // Get all toll plazas for the highways on this route
+    const allPlazas = highwayCodes.flatMap((code) => getTollPlazasForHighway(code));
+    // Deduplicate by ID
+    const uniquePlazas = Array.from(new Map(allPlazas.map(p => [p.id, p])).values());
+    // Convert to TollItem format
+    const tollItems = uniquePlazas.map((plaza) => {
+      const rates = plaza.directional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
+      const baseCost = rates?.[vehicleType] ?? rates?.car ?? 0;
+      return {
+        id: plaza.id,
+        name: plaza.name,
+        location: plaza.location,
+        highwayCode: plaza.highwayCode,
+        baseCostNpr: baseCost,
+        enabled: true,
+        notes: plaza.gazetteRef || `Rate for ${vehicleType}`,
+        directional: plaza.directional,
+      };
+    });
+    setLiveTollPlazas(tollItems);
+  }, [highwayCodes, vehicleType]);
+
+  // Merge live tolls with additional optional fees
   const [tolls, setTolls] = useState<TollItem[]>([
     {
       id: 'nagdhunga_tunnel',
       name: 'Nagdhunga Tunnel Bypass Toll',
-      location: 'Sisne Khola - Nagdhunga (NH02)',
+      location: 'Sisne Khola - Nagdhunga (NH04)',
       baseCostNpr: 60,
       enabled: true,
       notes: 'Active RFID FASTag & Cash Toll',
@@ -177,6 +222,24 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
       notes: 'National Highway Road User Fee',
     },
   ]);
+
+  // Sync live toll plazas with toll state
+  useEffect(() => {
+    setTolls((prev) => {
+      // Start with live toll plazas
+      const liveItems = liveTollPlazas.map((p) => ({
+        id: p.id,
+        name: p.name,
+        location: p.location,
+        baseCostNpr: p.baseCostNpr,
+        enabled: p.enabled,
+        notes: p.notes,
+      }));
+      // Add any additional fees that aren't already covered
+      const additionalFees = prev.filter((t) => !liveItems.some((l) => l.id === t.id));
+      return [...liveItems, ...additionalFees];
+    });
+  }, [liveTollPlazas, vehicleType]);
 
   // Emergency Assistance & Protection Services
   const [emergencyServices, setEmergencyServices] = useState<EmergencyServiceItem[]>([

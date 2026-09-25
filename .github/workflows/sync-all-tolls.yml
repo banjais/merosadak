@@ -1,0 +1,35 @@
+name: Sync All Toll Rates Weekly
+
+on:
+  schedule:
+    # Runs at 01:30 UTC every Monday = 07:15 NST
+    - cron: '30 1 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write  # Needed to commit updated all-toll-rates.json
+
+jobs:
+  sync-all-tolls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run sync:all-tolls
+
+      # Commit and push if toll rates changed
+      - name: Commit updated all toll rates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/all-toll-rates.json
+          git diff --staged --quiet || git commit -m "chore: update all toll rates $(date +'%Y-%m-%d')"
+          git push

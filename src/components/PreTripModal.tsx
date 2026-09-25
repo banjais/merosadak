@@ -39,7 +39,7 @@ export const PreTripModal: React.FC<PreTripModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 scrollbar-paddle">
           <PreTripChecklist routePlan={routePlan} vehicle={vehicle} />
         </div>
 

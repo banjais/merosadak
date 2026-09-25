@@ -180,7 +180,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-paddle">
           {routeLabel && (
             <p className="text-[10px] text-emerald-400/90 px-2 font-medium truncate" title={routeLabel || undefined}>
               {routeLabel}

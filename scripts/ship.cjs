@@ -28,9 +28,8 @@ try {
   console.log('\n[ship] git rebase onto origin/main (if needed)...');
   run('git rebase', 'git rebase --autostash origin/main', { allowFailure: true });
 
-  run('sync data', 'npm run sync:data', { allowFailure: true });
   run('deploy worker', 'npm run worker:deploy', { allowFailure: true });
-  run('build', 'npm run build:static');
+  run('build (all syncs + frontend + server)', 'npm run build');
 
   console.log('\n[ship] git add...');
   try {

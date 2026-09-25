@@ -7,8 +7,12 @@ import dotenv from 'dotenv';
 import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, CITIES_AND_JUNCTIONS, INITIAL_USER_REPORTS, HIGHWAY_WEATHER_NODES, HIGHWAY_POIS, TRAFFIC_CORRIDORS } from './src/data/nepalHighwaysData';
 import { findOptimizedRoute } from './src/utils/routeOptimizer';
 import { UserRoadReport, TripAssistantStop, HighwayWeatherNode } from './src/types';
+import { loadTollPlazas } from './src/utils/tollRates';
 
 dotenv.config();
+
+// Initialize toll rates cache on server startup
+loadTollPlazas();
 
 let userReports: UserRoadReport[] = [...INITIAL_USER_REPORTS];
 
@@ -314,6 +318,102 @@ async function startServer() {
         fetchedAt: now.toISOString(),
         nextUpdate: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
         note: 'Default NOC standard rates. Run npm run sync:fuel for live rates.',
+      });
+    }
+  });
+
+  // Nagdhunga Tunnel toll rates (served from cache file, updated via npm run sync:tolls)
+  app.get('/api/toll-rates', (req, res) => {
+    const cacheFile = path.join(process.cwd(), 'public', 'data', 'toll-rates.json');
+    try {
+      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      res.json(data);
+    } catch {
+      const now = new Date();
+      res.json({
+        tunnel: 'Nagdhunga-Sisnekhola Tunnel',
+        source: 'gazette.gov.np',
+        currency: 'NPR',
+        unit: 'per single entry',
+        rates: {
+          entry: {
+            category1: { name: 'Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)', rate: 65 },
+            category2: { name: 'Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)', rate: 115 },
+            category3: { name: 'Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)', rate: 260 },
+            category4: { name: 'Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)', rate: 600 },
+          },
+          exit: {
+            category1: { name: 'Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)', rate: 60 },
+            category2: { name: 'Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)', rate: 80 },
+            category3: { name: 'Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)', rate: 200 },
+            category4: { name: 'Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)', rate: 250 },
+          },
+        },
+        lastUpdated: now.toISOString(),
+        note: 'Default verified rates. Run npm run sync:tolls for updates.',
+      });
+    }
+  });
+
+  // All Roads Board Nepal toll plazas (unified endpoint)
+  app.get('/api/all-toll-rates', (req, res) => {
+    const cacheFile = path.join(process.cwd(), 'public', 'data', 'all-toll-rates.json');
+    try {
+      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      res.json(data);
+    } catch {
+      const now = new Date();
+      res.json({
+        source: 'rbn.org.np',
+        currency: 'NPR',
+        unit: 'per single entry',
+        tollPlazas: [
+          {
+            id: 'toll-nagdhunga',
+            name: 'Nagdhunga Tunnel Toll Plaza',
+            highwayCode: 'NH04',
+            location: 'Nagdhunga-Sisne Khola',
+            directional: true,
+            rates: {
+              entry: { car: 65, suv_4wd: 80, motorbike: 0, bus_truck: 260, electric_vehicle: 50 },
+              exit: { car: 60, suv_4wd: 75, motorbike: 0, bus_truck: 200, electric_vehicle: 50 },
+            },
+          },
+          {
+            id: 'toll-malekhu',
+            name: 'Roads Board Nepal Malekhu Toll',
+            highwayCode: 'NH04',
+            location: 'Malekhu Bridge, Dhading',
+            directional: false,
+            rates: { single: { car: 30, suv_4wd: 40, motorbike: 0, bus_truck: 70, electric_vehicle: 30 } },
+          },
+          {
+            id: 'toll-aaptari',
+            name: 'Roads Board Nepal Aaptari Toll Plaza',
+            highwayCode: 'NH05',
+            location: 'Aaptari Gate, Chitwan',
+            directional: false,
+            rates: { single: { car: 35, suv_4wd: 50, motorbike: 0, bus_truck: 80, electric_vehicle: 35 } },
+          },
+          {
+            id: 'toll-hetauda',
+            name: 'RBN Hetauda Entry Toll',
+            highwayCode: 'NH01',
+            location: 'Rato Mate, Hetauda',
+            directional: false,
+            rates: { single: { car: 30, suv_4wd: 50, motorbike: 0, bus_truck: 80, electric_vehicle: 30 } },
+          },
+          {
+            id: 'toll-butwal',
+            name: 'RBN Butwal Toll Gate',
+            highwayCode: 'NH01',
+            location: 'Ramuapur, Butwal',
+            directional: false,
+            rates: { single: { car: 30, suv_4wd: 50, motorbike: 0, bus_truck: 80, electric_vehicle: 30 } },
+          },
+        ],
+        lastUpdated: now.toISOString(),
+        note: 'Default verified rates. Run npm run sync:all-tolls for updates.',
       });
     }
   });

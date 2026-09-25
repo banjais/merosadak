@@ -68,6 +68,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CardArchiveProvider } from './context/CardArchiveContext';
 
 export type ActiveFeatureType = 'steps' | 'highways' | null;
 
@@ -201,22 +202,6 @@ function AppContent() {
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        // Clear all saved search, cache, and session data on every load
-        const meroKeys: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.startsWith('mero') || key.startsWith('merosadak'))) {
-            meroKeys.push(key);
-          }
-        }
-        meroKeys.forEach(key => localStorage.removeItem(key));
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          if (key && (key.startsWith('mero') || key.startsWith('merosadak'))) {
-            sessionStorage.removeItem(key);
-          }
-        }
-
         const searchParams = new URLSearchParams(window.location.search);
         const urlOrigin = searchParams.get('origin');
         const urlDest = searchParams.get('dest');
@@ -532,19 +517,20 @@ function AppContent() {
       />
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
       <header className="header-glass sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Menu Button, App Logo, Header & Sub-header */}
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="btn-glass p-2 rounded-xl"
-              title="Menu"
-              id="btn-header-menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="btn-glass p-2 rounded-xl touch-target"
+            title="Menu"
+            id="btn-header-menu"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
             <div
               className="flex items-center space-x-2.5 cursor-pointer group select-none"
@@ -576,15 +562,18 @@ function AppContent() {
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className={`p-2 rounded-xl border text-xs font-semibold transition relative ${
+                className={`p-2 rounded-xl border text-xs font-semibold transition relative touch-target ${
                   isNotificationsOpen
                     ? 'bg-accent-bg accent-text accent-border shadow-md shadow-black/10'
                     : 'bg-slate-800/90 hover:bg-slate-700 accent-text border-slate-700/80'
                 }`}
                 title="Road Alerts & Notifications"
                 id="btn-header-notifications"
+                aria-label="Road alerts and notifications"
+                aria-expanded={isNotificationsOpen}
+                aria-controls="header-notifications-dropdown"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-5 h-5" />
                 {incidents.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-500 text-white font-black text-[9px] rounded-full flex items-center justify-center ring-2 ring-slate-900 animate-pulse">
                     {incidents.length}
@@ -666,23 +655,24 @@ function AppContent() {
                                 </p>
                               </div>
 
-                              <button
-                                onClick={() => {
-                                  if (inc.lat && inc.lng) {
-                                    setFocusedTarget({
-                                      lat: inc.lat,
-                                      lng: inc.lng,
-                                      title: `${inc.highwayCode} - ${inc.locationName}`,
-                                      zoom: 12,
-                                    });
-                                  }
-                                  setIsNotificationsOpen(false);
-                                }}
-                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white transition shrink-0"
-                                title="View on Map"
-                              >
-                                <Locate className="w-3.5 h-3.5" />
-                              </button>
+                <button
+                  onClick={() => {
+                    if (inc.lat && inc.lng) {
+                      setFocusedTarget({
+                        lat: inc.lat,
+                        lng: inc.lng,
+                        title: `${inc.highwayCode} - ${inc.locationName}`,
+                        zoom: 12,
+                      });
+                    }
+                    setIsNotificationsOpen(false);
+                  }}
+                  className="p-2 rounded-lg bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white transition shrink-0 touch-target"
+                  title="View on Map"
+                  aria-label={`View ${inc.highwayCode} incident on map`}
+                >
+                  <Locate className="w-4 h-4" />
+                </button>
                             </div>
 
                             <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-slate-400">
@@ -848,7 +838,7 @@ function AppContent() {
         </div>
 
         {/* Driver / passenger trip strip — only when a route is active */}
-        {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
+{!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
           <TripStatusBar
             route={activeRoute}
             alertCount={activeRoute?.incidentsOnRoute?.length ?? incidents.length}
@@ -1050,7 +1040,9 @@ export default function App() {
   return (
     <AuthProvider>
       <OfflineProvider>
-        <AppContent />
+        <CardArchiveProvider>
+          <AppContent />
+        </CardArchiveProvider>
       </OfflineProvider>
     </AuthProvider>
   );

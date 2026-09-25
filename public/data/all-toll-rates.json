@@ -1,0 +1,148 @@
+{
+  "source": "rbn.org.np",
+  "sourceUrl": "https://rbn.org.np/ne/downloads/nepal-gazette",
+  "sourceLabel": "Roads Board Nepal - Nepal Gazette Notices",
+  "currency": "NPR",
+  "unit": "per single entry",
+  "lastUpdated": "2026-09-24T10:12:46.106Z",
+  "fetchedAt": "2026-09-24T10:12:46.106Z",
+  "nextUpdate": "2026-10-24T10:12:46.106Z",
+  "note": "Rates from Nepal Gazette notices published by Roads Board Nepal. Vehicle categories: car (car/jeep/van), suv_4wd (SUV/pickup), motorbike, bus_truck (bus/truck), electric_vehicle. Rates may vary by plaza. Update when new Gazette is published.",
+  "tollPlazas": [
+    {
+      "id": "toll-nagdhunga",
+      "name": "Nagdhunga Tunnel Toll Plaza",
+      "highwayCode": "NH04",
+      "location": "Nagdhunga-Sisne Khola (Dhading to Kathmandu)",
+      "lat": 27.702,
+      "lng": 85.201,
+      "operator": "USIN-ART JV (5-year contract)",
+      "directional": true,
+      "rates": {
+        "entry": {
+          "car": 65,
+          "suv_4wd": 80,
+          "motorbike": 0,
+          "bus_truck": 260,
+          "electric_vehicle": 50
+        },
+        "exit": {
+          "car": 60,
+          "suv_4wd": 75,
+          "motorbike": 0,
+          "bus_truck": 200,
+          "electric_vehicle": 50
+        }
+      },
+      "prohibitedVehicles": [
+        "Two-wheelers (Motorcycles, Scooters, Bicycles)",
+        "Three-wheelers (Auto-rickshaws, Tempos)",
+        "Pedestrians and non-motorized carts",
+        "Vehicles carrying flammable, toxic, or hazardous chemical cargo"
+      ],
+      "gazetteRef": "Sisnekhola-Nagdhunga Tunnel Transport Operation Directive, 2081 (Gazette Chaitra 27, 2082 / Apr 10, 2026)",
+      "cabinetDecisionDate": "2025-08-11",
+      "tollBooths": {
+        "entry": 3,
+        "exit": 2
+      },
+      "operatingHours": "24/7"
+    },
+    {
+      "id": "toll-malekhu",
+      "name": "Roads Board Nepal Malekhu Toll",
+      "highwayCode": "NH04",
+      "location": "Malekhu Bridge, Dhading",
+      "lat": 27.823,
+      "lng": 84.816,
+      "operator": "Roads Board Nepal",
+      "directional": false,
+      "rates": {
+        "single": {
+          "car": 30,
+          "suv_4wd": 40,
+          "motorbike": 0,
+          "bus_truck": 70,
+          "electric_vehicle": 30
+        }
+      },
+      "gazetteRef": "Nepal Gazette - Road Usage Fee Notification (RBN Malekhu Bridge)",
+      "tollBooths": {
+        "total": 2
+      },
+      "operatingHours": "6:00-22:00"
+    },
+    {
+      "id": "toll-aaptari",
+      "name": "Roads Board Nepal Aaptari Toll Plaza",
+      "highwayCode": "NH05",
+      "location": "Aaptari Gate, Chitwan",
+      "lat": 27.695,
+      "lng": 84.438,
+      "operator": "Roads Board Nepal",
+      "directional": false,
+      "rates": {
+        "single": {
+          "car": 35,
+          "suv_4wd": 50,
+          "motorbike": 0,
+          "bus_truck": 80,
+          "electric_vehicle": 35
+        }
+      },
+      "gazetteRef": "Nepal Gazette - Road Usage Fee Notification (RBN Aaptari, Narayanghat-Mugling)",
+      "tollBooths": {
+        "total": 2
+      },
+      "operatingHours": "6:00-22:00"
+    },
+    {
+      "id": "toll-hetauda",
+      "name": "RBN Hetauda Entry Toll",
+      "highwayCode": "NH01",
+      "location": "Rato Mate, Hetauda, Makwanpur",
+      "lat": 27.435,
+      "lng": 85.021,
+      "operator": "Roads Board Nepal",
+      "directional": false,
+      "rates": {
+        "single": {
+          "car": 30,
+          "suv_4wd": 50,
+          "motorbike": 0,
+          "bus_truck": 80,
+          "electric_vehicle": 30
+        }
+      },
+      "gazetteRef": "Nepal Gazette - Road Usage Fee Notification (RBN Hetauda, Mahendra Highway)",
+      "tollBooths": {
+        "total": 2
+      },
+      "operatingHours": "6:00-22:00"
+    },
+    {
+      "id": "toll-butwal",
+      "name": "RBN Butwal Toll Gate",
+      "highwayCode": "NH01",
+      "location": "Ramuapur, Butwal, Rupandehi",
+      "lat": 27.705,
+      "lng": 83.439,
+      "operator": "Roads Board Nepal",
+      "directional": false,
+      "rates": {
+        "single": {
+          "car": 30,
+          "suv_4wd": 50,
+          "motorbike": 0,
+          "bus_truck": 80,
+          "electric_vehicle": 30
+        }
+      },
+      "gazetteRef": "Nepal Gazette - Road Usage Fee Notification (RBN Butwal, Mahendra Highway)",
+      "tollBooths": {
+        "total": 2
+      },
+      "operatingHours": "6:00-22:00"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../da
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
 import { preloadRoadGraph, findRoadGraphRoute } from './roadGraphRouter';
 import { getVehicleCalcConfig } from './vehicleConfigs';
+import { calculateTollCost, mapVehicleToTollCategory } from './tollRates.client';
 
 export function classifyRoadTier(highwayCode?: string, surface?: string): {
   tier: RoadClassificationTier;
@@ -1694,15 +1695,9 @@ export function findRouteByPreference(
     }
   });
 
-  // Toll calculations
-  let totalTollCost = 0;
-  NEPAL_HIGHWAYS.forEach((hw) => {
-    if (highwayCodesOnPath.some(c => hw.code === c || hw.code.includes(c))) {
-      hw.tollPlazas.forEach((tp) => {
-        totalTollCost += tp.costNpr[vehicle] || 0;
-      });
-    }
-  });
+  // Toll calculations (using live toll rates from Roads Board Nepal Gazette)
+  const tollVehicleCategory = mapVehicleToTollCategory(vehicle);
+  const totalTollCost = calculateTollCost(highwayCodesOnPath, tollVehicleCategory);
 
   const incidentsOnRoute = LIVE_ROAD_INCIDENTS.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
 

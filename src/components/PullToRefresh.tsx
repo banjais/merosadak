@@ -197,7 +197,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative flex h-dvh max-h-dvh w-full min-h-0 flex-col overflow-hidden overscroll-y-contain ${className}`}
+      className={`relative flex h-dvh max-h-dvh w-full min-h-0 flex-col overflow-auto overscroll-y-contain ${className}`}
       style={{ overscrollBehaviorY: 'contain', touchAction: 'pan-x pan-y' }}
     >
       <div
@@ -281,7 +281,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
       </div>
 
       <div
-        className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+        className="flex h-full min-h-0 flex-1 flex-col overflow-auto"
         style={{
           transform:
             pullPx > 0 || refreshing ? `translateY(${Math.min(pullPx, maxPull) * 0.22}px)` : undefined,

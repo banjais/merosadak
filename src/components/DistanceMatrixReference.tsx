@@ -106,7 +106,7 @@ export const DistanceMatrixReference: React.FC<DistanceMatrixReferenceProps> = (
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
         <div className="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>

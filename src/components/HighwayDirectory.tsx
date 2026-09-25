@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Highway, RoadIncident, UserRoadReport } from '../types';
 import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, INITIAL_USER_REPORTS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
 import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
+import { getTollPlazasForHighway } from '../utils/tollRates.client';
+import { useCardSwipe, SwipeAction } from '../hooks/useCardSwipe';
+import { useCardArchive } from '../context/CardArchiveContext';
 import {
   Search,
   Route,
@@ -23,10 +26,22 @@ import {
   Gauge,
   Layers,
   Star,
-   ArrowRight,
-   Info,
-   FileText
- } from 'lucide-react';
+  ArrowRight,
+  Info,
+  FileText,
+  CreditCard,
+  Receipt,
+  Archive,
+  Eye,
+  Settings,
+  Share2,
+  Download,
+  Bell,
+  History,
+  Map,
+  Wrench,
+  X
+} from 'lucide-react';
 
 function deriveRoadType(highway: Highway): string {
   const surfaces = new Set<string>();
@@ -75,6 +90,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
   const [filterToRouteOnly, setFilterToRouteOnly] = useState<boolean>(filterToRouteOnlyProp);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
+  const { isArchived: isHighwayArchived, archiveCard: archiveHighway, restoreCard: restoreHighway } = useCardArchive();
 
   useEffect(() => {
     let isMounted = true;
@@ -187,7 +203,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
         (code) => code && code.split('/').some((c) => c.trim().toLowerCase() === (hw.code || hw.id).toLowerCase())
       );
 
-    return matchesSearch && matchesStatus && matchesTerrain && matchesRoute;
+    const highwayKey = (hw.id || hw.code).toLowerCase();
+    const matchesArchive = !isHighwayArchived(highwayKey, 'highway');
+
+    return matchesSearch && matchesStatus && matchesTerrain && matchesRoute && matchesArchive;
   });
 
   return (
@@ -347,20 +366,110 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             const segments = analysis.segments;
             const snhLookup = snhReference ? lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference) : null;
 
+            // Swipe actions for highway card
+            const leftAction: SwipeAction = {
+              id: 'archive',
+              label: 'Archive',
+              icon: <Archive className="w-5 h-5" />,
+              color: 'text-rose-400',
+              bgColor: 'bg-rose-500/20',
+              onTrigger: () => {
+                archiveHighway({
+                  id: highwayKey,
+                  type: 'highway',
+                  data: { code: highway.code, name: highway.name },
+                });
+              },
+            };
+
+            const rightAction: SwipeAction = {
+              id: 'view-map',
+              label: 'View Map',
+              icon: <Map className="w-5 h-5" />,
+              color: 'text-emerald-400',
+              bgColor: 'bg-emerald-500/20',
+              onTrigger: () => onSelectHighwayOnMap && onSelectHighwayOnMap(highway),
+            };
+
+            const longPressAction: SwipeAction = {
+              id: 'quick-actions',
+              label: 'Actions',
+              icon: <Settings className="w-5 h-5" />,
+              color: 'text-amber-400',
+              bgColor: 'bg-amber-500/20',
+              onTrigger: () => {}, // Handled by overlay
+            };
+
+            const {
+              dragOffset,
+              showQuickOverlay,
+              setShowQuickOverlay,
+              onTouchStart,
+              onTouchMove,
+              onTouchEnd,
+              onMouseDown,
+              onMouseUp,
+              onMouseLeave,
+              onContextMenu,
+              dragStyles,
+              leftActionStyles,
+              rightActionStyles,
+              isArchived: cardArchived,
+            } = useCardSwipe({
+              cardId: `highway-${highwayKey}`,
+              leftAction,
+              rightAction,
+              longPressAction,
+              threshold: 65,
+              longPressDelay: 400,
+              haptics: true,
+            });
+
+            const archived = cardArchived || isHighwayArchived(highwayKey, 'highway');
+
             return (
               <div
                 key={highwayKey}
                 id={`highway-card-${highwayKey}`}
-                className="card-3d-heavy overflow-hidden"
+                className="card-modern swipe-card overflow-hidden relative"
+                style={dragStyles as React.CSSProperties}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onMouseDown={onMouseDown}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseLeave}
+                onContextMenu={onContextMenu}
               >
+                {/* Swipe Action Backgrounds */}
+                <div className="absolute inset-0 z-0 flex items-center justify-between pointer-events-none">
+                  {/* Left Swipe Background (Archive) - revealed when dragging right */}
+                  <div
+                    className="absolute inset-y-0 left-0 w-32 flex items-center justify-start pl-6 text-rose-400 font-bold text-xs uppercase tracking-wider bg-rose-500/10 border-r border-rose-500/20 transition-opacity"
+                    style={leftActionStyles as React.CSSProperties}
+                  >
+                    <Archive className="w-5 h-5 mr-2" />
+                    Archive
+                  </div>
+
+                  {/* Right Swipe Background (View Map) - revealed when dragging left */}
+                  <div
+                    className="absolute inset-y-0 right-0 w-32 flex items-center justify-end pr-6 text-emerald-400 font-bold text-xs uppercase tracking-wider bg-emerald-500/10 border-l border-emerald-500/20 transition-opacity"
+                    style={rightActionStyles as React.CSSProperties}
+                  >
+                    <Map className="w-5 h-5 ml-2" />
+                    View Map
+                  </div>
+                </div>
+
                 {/* Main Card Header */}
                 <div
-                  onClick={() => setExpandedHighwayId(isExpanded ? null : highwayKey)}
-                  className="p-5 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-850/50 transition select-none"
+                  onClick={() => !archived && setExpandedHighwayId(isExpanded ? null : highwayKey)}
+                  className="relative z-10 p-5 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-850/50 transition select-none"
                 >
                   <div className="flex items-start space-x-4 flex-1">
                     {/* Highway Badge */}
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 flex flex-col items-center justify-center shrink-0 shadow-md">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 flex flex-col items-center justify-center shrink-0 shadow-lg">
                       <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">NEPAL</span>
                       <span className="text-base font-black text-amber-400 font-display">{highway.code}</span>
                     </div>
@@ -507,8 +616,77 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                   </div>
                 </div>
 
+                {/* Quick Actions Overlay (Long Press) */}
+                {showQuickOverlay && !archived && (
+                  <div
+                    className="absolute inset-0 z-20 bg-slate-950/95 backdrop-blur-md flex flex-col p-4 border border-amber-500/30 rounded-xl"
+                    onClick={() => setShowQuickOverlay(false)}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2 text-amber-400">
+                        <div className="p-2 rounded-lg bg-amber-500/20">
+                          <Settings className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wider">Quick Actions</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{highway.code}</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 flex-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onSelectHighwayOnMap && onSelectHighwayOnMap(highway); setShowQuickOverlay(false); }}
+                        className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-300 flex flex-col items-center justify-center gap-1.5 transition"
+                      >
+                        <Map className="w-5 h-5 text-emerald-400" />
+                        <span className="text-xs font-bold">View on Map</span>
+                        <span className="text-[9px] text-slate-500">GIS Vector</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onPlanTripForHighway && onPlanTripForHighway(highway.startPoint, highway.endPoint); setShowQuickOverlay(false); }}
+                        className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-300 flex flex-col items-center justify-center gap-1.5 transition"
+                      >
+                        <Route className="w-5 h-5 text-amber-400" />
+                        <span className="text-xs font-bold">Plan Route</span>
+                        <span className="text-[9px] text-slate-500">{highway.startPoint} ➔ {highway.endPoint}</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-sky-500/20 hover:border-sky-500/40 hover:text-sky-300 flex flex-col items-center justify-center gap-1.5 transition"
+                      >
+                        <Share2 className="w-5 h-5 text-sky-400" />
+                        <span className="text-xs font-bold">Share Highway</span>
+                        <span className="text-[9px] text-slate-500">Copy Link</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-300 flex flex-col items-center justify-center gap-1.5 transition"
+                      >
+                        <Bell className="w-5 h-5 text-rose-400" />
+                        <span className="text-xs font-bold">Alert Me</span>
+                        <span className="text-[9px] text-slate-500">Status Changes</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400">
+                      <span className="font-mono">Tap outside to close</span>
+                      <span>{analysis.passabilityScore}% Passable</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Expanded Details Section */}
-                {isExpanded && (
+                {isExpanded && !archived && (
                   <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5 card-3d-inner">
                     {/* Highway Info Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 gap-cards-sm">
@@ -532,6 +710,87 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                     {highway.nepaliName && (
                       <div className="text-xs text-slate-500 italic">{highway.nepaliName}</div>
                     )}
+
+                    {/* Toll Plazas on This Highway */}
+                    {(() => {
+                      const tollPlazas = getTollPlazasForHighway(highway.code);
+                      if (tollPlazas.length === 0) return null;
+                      return (
+                        <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2 text-xs font-bold text-white">
+                              <Receipt className="w-4 h-4 text-cyan-400" />
+                              <span>Highway Toll Plazas & Fees</span>
+                            </div>
+                            <span className="text-[10px] text-cyan-400 font-mono font-semibold">
+                              {tollPlazas.length} plaza{tollPlazas.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {tollPlazas.map((plaza) => {
+                              const isDirectional = plaza.directional;
+                              const rates = isDirectional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
+                              return (
+                                <div
+                                  key={plaza.id}
+                                  className="p-2.5 rounded-lg border bg-slate-950/80 border-slate-700/60"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-start space-x-2.5">
+                                      <CreditCard className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                                      <div>
+                                        <div className="font-semibold text-slate-200">{plaza.name}</div>
+                                        <div className="text-[10px] text-slate-400">{plaza.location}</div>
+                                        {plaza.operatingHours && (
+                                          <div className="text-[9px] text-slate-500 mt-0.5">
+                                            Hours: {plaza.operatingHours}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="text-right shrink-0 ml-2">
+                                      {isDirectional && rates ? (
+                                        <>
+                                          <div className="text-[10px] text-emerald-400 font-bold">
+                                            Entry: Rs. {rates.car} (Car)
+                                          </div>
+                                          <div className="text-[10px] text-amber-400 font-bold">
+                                            Exit: Rs. {plaza.rates.exit?.car ?? '—'} (Car)
+                                          </div>
+                                        </>
+                                      ) : rates ? (
+                                        <div className="font-mono font-bold text-cyan-400">
+                                          Rs. {rates.car} <span className="text-[9px] font-normal text-slate-400">(Car)</span>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] text-slate-500">Rate N/A</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {plaza.gazetteRef && (
+                                    <div className="text-[9px] text-slate-500 mt-1.5 flex items-center space-x-1">
+                                      <FileText className="w-2.5 h-2.5" />
+                                      <span>{plaza.gazetteRef}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+                            <span>Source: Roads Board Nepal Gazette</span>
+                            <a
+                              href="https://rbn.org.np/ne/downloads/nepal-gazette"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 hover:underline"
+                            >
+                              View Gazette PDFs
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Highway Description & Route Context */}
                      <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">

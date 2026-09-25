@@ -200,6 +200,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const [showMapStyle, setShowMapStyle] = useState(false);
+  const [mapInteracted, setMapInteracted] = useState(false);
 
   const showBlackspots = false;
   const routeColorMode = 'safety' as const;
@@ -216,6 +217,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
+  // Map activation state - controls when controls become visible
+  const [mapActive, setMapActive] = useState(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  const [userLocationRequested, setUserLocationRequested] = useState(false);
+
+  // Activate map when user interacts or location is detected
+  const activateMap = useCallback(() => {
+    setMapInteracted(true);
+    if (!mapActive) {
+      setMapActive(true);
+    }
+  }, [mapActive]);
+
+  // Auto-detect user location on map load
+  useEffect(() => {
+    if (mapInitialized && !gpsDetected && !userLocationRequested) {
+      setUserLocationRequested(true);
+      // Small delay to ensure map is fully ready
+      const timer = setTimeout(() => {
+        detectGpsPosition();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [mapInitialized, gpsDetected, userLocationRequested]);
+
   // Toggle layer with exclusive selection
   const handleToggleLayer = (layer: ActiveMapOverlayLayer) => {
     setActiveLayer((prev) => (prev === layer ? 'none' : layer));
@@ -230,12 +256,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.alternatives.clearLayers();
   };
 
-   const handleToggleToolbar = () => {
+  const handleToggleToolbar = () => {
     if (isToolbarOpen) {
       closeLayerToolbar();
       return;
     }
 
+    setMapInteracted(true);
     setIsToolbarOpen(true);
     setShowMapStyle(false);
     setIsLocationDropdownOpen(false);
@@ -374,6 +401,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     mapInstanceRef.current = map;
 
+    // Mark map as initialized after layers are added
+    setMapInitialized(true);
+
     const timer = window.setTimeout(() => {
       map.invalidateSize();
     }, 500);
@@ -506,9 +536,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [placeGpsMarker]);
 
+  // Activate map when GPS is successfully detected
   useEffect(() => {
-    detectGpsPosition();
-  }, [detectGpsPosition]);
+    if (gpsDetected && !mapActive) {
+      setMapActive(true);
+    }
+  }, [gpsDetected, mapActive]);
 
   // Update tile layer based on mapStyle
   useEffect(() => {
@@ -1246,11 +1279,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         duration: 1.2,
       });
     }
-  }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot]);
+   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot]);
+
+  useEffect(() => {
+    if (activeRoute) {
+      setMapInteracted(true);
+    }
+  }, [activeRoute]);
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
    const handleMyLocation = () => {
+    setMapInteracted(true);
     if (gpsDetected) {
       setIsLocationDropdownOpen((open) => !open);
       if (!isLocationDropdownOpen) {
@@ -1275,54 +1315,61 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800/90 shadow-2xl bg-slate-950">
       {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full z-0" id="nepal-gis-canvas" />
+      <div
+        ref={mapContainerRef}
+        className="w-full h-full z-0"
+        id="nepal-gis-canvas"
+        onClick={activateMap}
+      />
 
-      {/* Dimming overlay when no route */}
-      {isDimmed && (
-        <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px] z-[500] pointer-events-none" />
+      {/* Dimming overlay - shows when map is not active OR when isDimmed prop is true */}
+      {(!mapActive || isDimmed) && (
+        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-[500] pointer-events-none transition-opacity duration-500" />
       )}
 
-      {/* My Location GPS Button */}
-      <div
-        ref={locationButtonRef}
-        className="absolute top-3 right-3 z-[1000] flex flex-col items-end"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={handleMyLocation}
-          className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-xl border shadow-2xl shadow-black/50 transition ${
-            gpsDetected
-              ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/20 hover:bg-emerald-900/90'
-              : 'bg-slate-950/90 hover:bg-slate-900 text-sky-300 border-sky-500/40'
-          }`}
-          title={gpsDetected ? 'My Location detected' : 'My Location'}
-          aria-label={gpsDetected ? 'My Location detected' : 'Detect My Location'}
-          aria-expanded={gpsDetected && isLocationDropdownOpen}
-          id="btn-my-location-gps"
+      {/* My Location GPS Button - only show when map is active */}
+      {mapActive && (
+        <div
+          ref={locationButtonRef}
+          className="absolute top-3 right-3 z-[1000] flex flex-col items-end"
+          onMouseDown={(event) => event.stopPropagation()}
         >
-          {gpsDetected ? <LocateFixed className="w-4 h-4" /> : <Locate className="w-4 h-4" />}
-        </button>
-
-        {gpsDetected && isLocationDropdownOpen && (
-          <div
-            ref={changeDropdownRef}
-            className="absolute top-full right-0 mt-2 w-32 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-1.5 animate-fadeIn"
+          <button
+            type="button"
+            onClick={handleMyLocation}
+            className={`min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center backdrop-blur-xl border shadow-2xl shadow-black/50 transition ${
+              gpsDetected
+                ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/20 hover:bg-emerald-900/90'
+                : 'bg-slate-950/90 hover:bg-slate-900 text-sky-300 border-sky-500/40'
+            }`}
+            title={gpsDetected ? 'My Location detected' : 'My Location'}
+            aria-label={gpsDetected ? 'My Location detected' : 'Detect My Location'}
+            aria-expanded={gpsDetected && isLocationDropdownOpen}
+            id="btn-my-location-gps"
           >
-            <button
-              type="button"
-              onClick={handleChangeLocation}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-xs font-bold text-amber-300 hover:bg-slate-800 border border-transparent hover:border-amber-500/50 transition"
-            >
-              <MapPin className="w-4 h-4 shrink-0" />
-              <span>More Info</span>
-            </button>
-          </div>
-        )}
-      </div>
+            {gpsDetected ? <LocateFixed className="w-5 h-5" /> : <Locate className="w-5 h-5" />}
+          </button>
 
-      {/* Map Style Selector */}
-      {showMapStyle && (
+          {gpsDetected && isLocationDropdownOpen && (
+            <div
+              ref={changeDropdownRef}
+              className="absolute top-full right-0 mt-2 w-32 bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-1.5 animate-fadeIn"
+            >
+              <button
+                type="button"
+                onClick={handleChangeLocation}
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-xs font-bold text-amber-300 hover:bg-slate-800 border border-transparent hover:border-amber-500/50 transition"
+              >
+                <MapPin className="w-4 h-4 shrink-0" />
+                <span>More Info</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Map Style Selector - only show when map is active */}
+      {mapActive && showMapStyle && (
         <div ref={mapStyleContainerRef} className="absolute top-14 right-28 z-[1000] flex flex-col bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl p-1 shadow-2xl shadow-black/50 animate-fadeIn">
           <button
             type="button"
@@ -1356,39 +1403,48 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           >
             <Box className="w-4 h-4" />
           </button>
-        </div>
+</div>
       )}
-      <button
-        type="button"
-        ref={mapStyleToggleRef}
-        onClick={handleToggleMapStyle}
-        className={`absolute top-3 right-28 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
-        title="Map Style"
-        id="btn-map-style-toggle"
-      >
-        <Globe className="w-4 h-4" />
-      </button>
+      {mapActive && (
+          <button
+            type="button"
+            ref={mapStyleToggleRef}
+            onClick={handleToggleMapStyle}
+            className={`absolute top-3 right-16 z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+            title="Map Style"
+            id="btn-map-style-toggle"
+            aria-label="Toggle map style"
+          >
+            <Globe className="w-5 h-5" />
+          </button>
+      )}
 
-      {/* Zoom Controls - at top, left of Map Style button */}
-      <button
-        type="button"
-        onClick={() => mapInstanceRef.current?.zoomOut()}
-        className="absolute top-3 right-[9.5rem] z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
-        title="Zoom Out"
-      >
-        <ZoomOut className="w-4 h-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => mapInstanceRef.current?.zoomIn()}
-        className="absolute top-3 right-[12rem] z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
-        title="Zoom In"
-      >
-        <ZoomIn className="w-4 h-4" />
-      </button>
+      {/* Zoom Controls - at top, left of Map Style button - only show when map is active */}
+      {mapActive && (
+        <>
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.zoomOut()}
+            className="absolute top-3 right-[9.5rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            title="Zoom Out"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => mapInstanceRef.current?.zoomIn()}
+            className="absolute top-3 right-[12rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            title="Zoom In"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+        </>
+      )}
 
-      {/* Layer Toolbar - vertical stack top-to-bottom */}
-      {isToolbarOpen && (
+      {/* Layer Toolbar - vertical stack top-to-bottom - only show when map is active */}
+      {mapActive && isToolbarOpen && (
         <div ref={toolbarContainerRef} className="absolute top-14 right-16 z-[1000] flex flex-col items-end gap-1.5 w-36 animate-fadeIn">
           <button
             type="button"
@@ -1465,7 +1521,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </div>
       )}
 
-      {/* Toolbar toggle button */}
+      {/* Toolbar toggle button - hidden until user interacts with map */}
+      {mapInteracted && (
       <button
         type="button"
         ref={toolbarToggleRef}
@@ -1480,6 +1537,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       >
         <Layers className={`w-4 h-4 ${isToolbarOpen ? 'rotate-90 accent-text' : 'accent-text'} transition-transform`} />
       </button>
+      )}
 
       {/* Map Legend Overlay Component with Smooth Slide-in Fade Animation */}
       <div
@@ -1515,7 +1573,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </div>
 
         {/* Legend Content */}
-        <div className="p-3.5 space-y-3 max-h-80 overflow-y-auto custom-scrollbar text-xs">
+        <div className="p-3.5 space-y-3 max-h-80 overflow-y-auto scrollbar-paddle text-xs">
           {/* Corridor Safety Tiers */}
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">

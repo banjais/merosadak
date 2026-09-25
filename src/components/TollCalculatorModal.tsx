@@ -1,5 +1,29 @@
-import React from 'react';
-import { X, ShieldAlert, AlertCircle, Info } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ShieldAlert, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+
+interface TollRateCategory {
+  name: string;
+  rate: number;
+}
+
+interface TollRates {
+  entry: {
+    category1: TollRateCategory;
+    category2: TollRateCategory;
+    category3: TollRateCategory;
+    category4: TollRateCategory;
+  };
+  exit: {
+    category1: TollRateCategory;
+    category2: TollRateCategory;
+    category3: TollRateCategory;
+    category4: TollRateCategory;
+  };
+  prohibitedVehicles: string[];
+  lastUpdated?: string;
+  source?: string;
+  sourceLabel?: string;
+}
 
 interface TollCalculatorModalProps {
   isOpen: boolean;
@@ -10,7 +34,66 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const [tollRates, setTollRates] = useState<TollRates | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    const loadTollRates = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/toll-rates');
+        if (!res.ok) throw new Error('Failed to fetch toll rates');
+        const data = await res.json();
+        if (!cancelled) {
+          setTollRates(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError('Unable to load toll rates. Showing cached/default rates.');
+          // Fallback to verified default rates
+          setTollRates({
+            entry: {
+              category1: { name: 'Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)', rate: 65 },
+              category2: { name: 'Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)', rate: 115 },
+              category3: { name: 'Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)', rate: 260 },
+              category4: { name: 'Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)', rate: 600 },
+            },
+            exit: {
+              category1: { name: 'Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)', rate: 60 },
+              category2: { name: 'Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)', rate: 80 },
+              category3: { name: 'Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)', rate: 200 },
+              category4: { name: 'Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)', rate: 250 },
+            },
+            prohibitedVehicles: [
+              'Two-wheelers (Motorcycles, Scooters, Bicycles)',
+              'Three-wheelers (Auto-rickshaws, Tempos)',
+              'Pedestrians and non-motorized carts',
+              'Vehicles carrying flammable, toxic, or hazardous chemical cargo',
+            ],
+          });
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    loadTollRates();
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const categories = [
+    { key: 'category1', icon: '🚗', label: 'Category 1 — Light Vehicles', desc: 'Car, Jeep, Van, SUV, Pickup (up to 9 seats)' },
+    { key: 'category2', icon: '🚐', label: 'Category 2 — Medium Vehicles / Minibuses', desc: 'Minibus, Mini-truck, Microbus (10–25 seats)' },
+    { key: 'category3', icon: '🚌', label: 'Category 3 — Heavy Commercial Vehicles', desc: 'Bus, Large Truck (3–10 tons payload)' },
+    { key: 'category4', icon: '🚛', label: 'Category 4 — Multi-Axle Heavy Freighters', desc: 'Multi-axle trucks, trailers (over 10 tons)' },
+  ] as const;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
@@ -33,61 +116,95 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1 text-slate-200 text-sm">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1 text-slate-200 text-sm scrollbar-paddle">
           {/* Gazette Banner */}
           <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
             <div className="text-xs font-extrabold text-amber-400 mb-1">Official Toll Rate Notification</div>
             <div className="text-xs text-slate-300">
               Effective from Nepal Gazette, Chaitra 26, 2082 BS (Ministry of Physical Infrastructure & Transport, Department of Roads).
+              {tollRates?.lastUpdated && (
+                <>
+                  <br />
+                  Last updated: {new Date(tollRates.lastUpdated).toLocaleDateString('en-NP', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {tollRates.sourceLabel && <span className="ml-2"> · Source: {tollRates.sourceLabel}</span>}
+                </>
+              )}
             </div>
           </div>
 
-          {/* Toll Rates Cards */}
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
-              <div>
-                <div className="font-bold text-white text-sm">🚗 Category 1 — Light Vehicles</div>
-                <div className="text-xs text-slate-400 mt-0.5">Car, Jeep, Van, SUV, Pickup (up to 9 seats)</div>
-              </div>
-              <div className="text-right">
-                <div className="text-base font-black text-cyan-400 font-mono">NPR 65</div>
-                <div className="text-[10px] text-slate-400">Per Single Entry</div>
-              </div>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-2.5">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl animate-pulse">
+                  <div className="w-48 h-6 bg-slate-700/50 rounded"></div>
+                  <div className="w-24 h-6 bg-slate-700/50 rounded"></div>
+                </div>
+              ))}
             </div>
+          )}
 
-            <div className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
-              <div>
-                <div className="font-bold text-white text-sm">🚐 Category 2 — Medium Vehicles / Minibuses</div>
-                <div className="text-xs text-slate-400 mt-0.5">Minibus, Mini-truck, Microbus (10–25 seats)</div>
-              </div>
-              <div className="text-right">
-                <div className="text-base font-black text-cyan-400 font-mono">NPR 115</div>
-                <div className="text-[10px] text-slate-400">Per Single Entry</div>
-              </div>
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+              {error}
             </div>
+          )}
 
-            <div className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+          {/* Toll Rates Cards - Directional (Entry/Exit) */}
+          {tollRates && !isLoading && (
+            <div className="space-y-3">
+              {/* Entry Rates */}
               <div>
-                <div className="font-bold text-white text-sm">🚌 Category 3 — Heavy Commercial Vehicles</div>
-                <div className="text-xs text-slate-400 mt-0.5">Bus, Large Truck (3–10 tons payload)</div>
+                <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-400 mb-2">
+                  <ArrowUpRight className="w-4 h-4" />
+                  <span>Entry to Kathmandu (Dhading → Nagdhunga)</span>
+                </div>
+                <div className="space-y-2">
+                  {categories.map((cat) => {
+                    const entryRate = tollRates.entry[cat.key];
+                    return (
+                      <div key={cat.key} className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+                        <div>
+                          <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-base font-black text-cyan-400 font-mono">NPR {entryRate.rate}</div>
+                          <div className="text-[10px] text-slate-400">Per Single Entry</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-base font-black text-cyan-400 font-mono">NPR 260</div>
-                <div className="text-[10px] text-slate-400">Per Single Entry</div>
-              </div>
-            </div>
 
-            <div className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+              {/* Exit Rates */}
               <div>
-                <div className="font-bold text-white text-sm">🚛 Category 4 — Multi-Axle Heavy Freighters</div>
-                <div className="text-xs text-slate-400 mt-0.5">Multi-axle trucks, trailers (over 10 tons)</div>
-              </div>
-              <div className="text-right">
-                <div className="text-base font-black text-cyan-400 font-mono">NPR 500</div>
-                <div className="text-[10px] text-slate-400">Per Single Entry</div>
+                <div className="flex items-center space-x-2 text-xs font-semibold text-amber-400 mb-2">
+                  <ArrowDownLeft className="w-4 h-4" />
+                  <span>Exit from Kathmandu (Nagdhunga → Dhading)</span>
+                </div>
+                <div className="space-y-2">
+                  {categories.map((cat) => {
+                    const exitRate = tollRates.exit[cat.key];
+                    return (
+                      <div key={`exit-${cat.key}`} className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+                        <div>
+                          <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-base font-black text-amber-400 font-mono">NPR {exitRate.rate}</div>
+                          <div className="text-[10px] text-slate-400">Per Single Entry</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Prohibited Vehicles & Rules */}
           <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl">
@@ -96,12 +213,30 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
               <span>Strictly Prohibited Inside Tunnel:</span>
             </div>
             <ul className="text-xs text-slate-300 list-disc list-inside space-y-1 mt-1">
-              <li>Two-wheelers (Motorcycles, Scooters, Bicycles)</li>
-              <li>Three-wheelers (Auto-rickshaws, Tempos)</li>
-              <li>Pedestrians and non-motorized carts</li>
-              <li>Vehicles carrying flammable, toxic, or hazardous chemical cargo</li>
+              {tollRates?.prohibitedVehicles?.map((v, i) => (
+                <li key={i}>{v}</li>
+              )) ?? (
+                <>
+                  <li>Two-wheelers (Motorcycles, Scooters, Bicycles)</li>
+                  <li>Three-wheelers (Auto-rickshaws, Tempos)</li>
+                  <li>Pedestrians and non-motorized carts</li>
+                  <li>Vehicles carrying flammable, toxic, or hazardous chemical cargo</li>
+                </>
+              )}
             </ul>
           </div>
+
+          {/* Data Source Info */}
+          {tollRates && !isLoading && (
+            <div className="p-2.5 bg-slate-800/40 border border-slate-700/50 rounded-lg">
+              <p className="text-[10px] text-slate-500 text-center">
+                Data source: {tollRates.sourceLabel || 'Nepal Gazette'} · Auto-updated via CI/CD ·{' '}
+                <a href={tollRates.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                  View official notice
+                </a>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}

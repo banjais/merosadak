@@ -512,7 +512,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
         <div className="space-y-6">
           {/* Search Bar Card - Hidden when report is shown */}
           {showSearchBars && (

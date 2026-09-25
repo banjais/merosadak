@@ -1,0 +1,84 @@
+{
+  "tunnel": "Nagdhunga-Sisnekhola Tunnel",
+  "lengthKm": 2.688,
+  "location": "Dhading (Sisnekhola) to Kathmandu (Nagdhunga), Prithvi Highway NH04",
+  "source": "gazette.gov.np",
+  "sourceUrl": "https://www.gazette.gov.np/",
+  "sourceLabel": "Nepal Gazette - Sisnekhola-Nagdhunga Tunnel Transport Operation Directive, 2081",
+  "gazetteDate": "2026-04-10",
+  "cabinetDecisionDate": "2025-08-11",
+  "currency": "NPR",
+  "unit": "per single entry",
+  "rates": {
+    "entry": {
+      "category1": {
+        "name": "Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)",
+        "rate": 65
+      },
+      "category2": {
+        "name": "Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)",
+        "rate": 115
+      },
+      "category3": {
+        "name": "Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)",
+        "rate": 260
+      },
+      "category4": {
+        "name": "Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)",
+        "rate": 600
+      }
+    },
+    "exit": {
+      "category1": {
+        "name": "Light Vehicles (Car, Jeep, Van, SUV, Pickup up to 9 seats)",
+        "rate": 60
+      },
+      "category2": {
+        "name": "Medium Vehicles / Minibuses (Minibus, Mini-truck, Microbus 10-25 seats)",
+        "rate": 80
+      },
+      "category3": {
+        "name": "Heavy Commercial Vehicles (Bus, Large Truck 3-10 tons payload)",
+        "rate": 200
+      },
+      "category4": {
+        "name": "Multi-Axle Heavy Freighters (Multi-axle trucks, trailers over 10 tons)",
+        "rate": 250
+      }
+    }
+  },
+  "prohibitedVehicles": [
+    "Two-wheelers (Motorcycles, Scooters, Bicycles)",
+    "Three-wheelers (Auto-rickshaws, Tempos)",
+    "Pedestrians and non-motorized carts",
+    "Vehicles carrying flammable, toxic, or hazardous chemical cargo"
+  ],
+  "operationalDetails": {
+    "tollBoothsEntry": 3,
+    "tollBoothsExit": 2,
+    "operatingHours": "24/7",
+    "operator": "USIN-ART JV (5-year contract)",
+    "estimatedDailyTraffic": {
+      "category1": {
+        "entry": 859,
+        "exit": 646
+      },
+      "category2": {
+        "entry": 540,
+        "exit": 406
+      },
+      "category3": {
+        "entry": 794,
+        "exit": 597
+      },
+      "category4": {
+        "entry": 596,
+        "exit": 448
+      }
+    }
+  },
+  "lastUpdated": "2026-09-24T10:12:44.659Z",
+  "fetchedAt": "2026-09-24T10:12:44.659Z",
+  "nextUpdate": "2026-10-24T10:12:44.659Z",
+  "note": "Rates published in Nepal Gazette Chaitra 27, 2082 (Apr 10, 2026). Directional tolls: entry (to Kathmandu) higher than exit. Source: Cabinet decision Aug 11, 2025 via Ministry of Physical Infrastructure & Transport / Roads Board Nepal."
+}

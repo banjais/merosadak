@@ -20,9 +20,12 @@ import {
   Share2,
   ShieldCheck,
   Zap,
+  CreditCard,
+  Receipt,
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
+import { getTollPlazasForHighway } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
@@ -218,7 +221,7 @@ export function UnifiedRouteReport({
   const printLabel = distanceSource === 'snh_published' ? 'Proof Sheet / PDF' : 'Print / PDF';
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4 shadow-xl shadow-black/20 sm:p-5 card-3d-heavy">
+    <section className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4 shadow-xl shadow-black/20 sm:p-5 card-modern">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
@@ -306,6 +309,13 @@ export function UnifiedRouteReport({
           detail={`${formatNumber(aerialDistance, 1)} km vs direct`}
           tone="slate"
         />
+        <MetricCard
+          icon={CreditCard}
+          label="Toll fees"
+          value={`NPR ${route.totalTollCostNpr.toLocaleString()}`}
+          detail="Highway plazas"
+          tone="cyan"
+        />
       </div>
 
       <button
@@ -333,7 +343,7 @@ export function UnifiedRouteReport({
                   Road classification & provenance
                 </span>
                 <span className="text-emerald-400">
-                  {route.roadTierBreakdown.certifiedPercent}% DoR federal highway
+{route.roadTierBreakdown.certifiedPercent}% DoR federal highway
                 </span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
@@ -349,7 +359,59 @@ export function UnifiedRouteReport({
                   <span>Unpaved track: <strong className="text-slate-200">{formatNumber(route.roadTierBreakdown.communityKm, 1)} km</strong></span>
                 )}
               </div>
-</div>
+            </div>
+          )}
+
+          {/* Toll Breakdown Section */}
+          {route.totalTollCostNpr > 0 && (
+            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 card-3d-elevated">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-300">
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>Highway Toll Breakdown</span>
+                </div>
+                <span className="text-cyan-400 font-mono font-bold text-sm">
+                  Total: NPR {route.totalTollCostNpr.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2 text-[11px] text-slate-300">
+                {(() => {
+                  const highwayCodes = Array.from(new Set(route.steps?.map(s => s.highwayCode).filter(Boolean) || []));
+                  const tollPlazas = highwayCodes.flatMap((code) => getTollPlazasForHighway(code));
+                  if (tollPlazas.length === 0) return <span>No toll plaza data available for this route</span>;
+                  return (
+                    <ul className="space-y-1.5">
+                      {tollPlazas.map((plaza) => {
+                        const rates = plaza.directional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
+                        return (
+                          <li key={plaza.id} className="flex items-center justify-between p-1.5 bg-slate-950/50 rounded border border-slate-800/50">
+                            <div className="flex items-center space-x-2">
+                              <CreditCard className="w-3.5 h-3.5 text-cyan-400" />
+                              <span className="font-medium text-slate-200">{plaza.name}</span>
+                              <span className="text-slate-500">({plaza.highwayCode})</span>
+                            </div>
+                            <span className="font-mono text-cyan-400">
+                              {rates ? `Rs. ${rates.car} (Car)` : 'Rate N/A'}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  );
+                })()}
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400">
+                <span>Source: Roads Board Nepal Gazette</span>
+                <a
+                  href="https://rbn.org.np/ne/downloads/nepal-gazette"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:underline"
+                >
+                  View Gazette
+                </a>
+              </div>
+            </div>
           )}
 
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">

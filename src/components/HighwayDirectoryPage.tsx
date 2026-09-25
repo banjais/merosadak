@@ -71,7 +71,7 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
         <HighwayDirectory />
       </main>
     </div>

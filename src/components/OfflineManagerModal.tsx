@@ -254,7 +254,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+        <div className="p-5 space-y-4 overflow-y-auto scrollbar-paddle flex-1">
           {/* Live Network & Service Worker Status Banner */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div

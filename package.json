@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build": "npm run sync:data && npm run sync:fuel && npm run sync:tolls && npm run sync:all-tolls && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "build:static": "vite build",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
@@ -14,6 +14,8 @@
     "ship": "node scripts/ship.cjs",
     "sync:data": "node worker/sync-data.js",
     "sync:fuel": "npx tsx scripts/sync-fuel-prices.ts",
+    "sync:tolls": "npx tsx scripts/sync-toll-rates.ts",
+    "sync:all-tolls": "npx tsx scripts/sync-all-toll-rates.ts",
     "sync:kv:setup": "node worker/setup-kv.js",
     "worker:deploy": "node deploy-worker.cjs",
     "worker:tail": "cd worker && npx wrangler tail --config wrangler.toml",

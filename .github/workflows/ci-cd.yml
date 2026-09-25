@@ -83,26 +83,26 @@ jobs:
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
-  build-frontend:
-    name: Build frontend
-    needs: [typecheck, worker-typecheck]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
-      - run: npm run build:static
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist-frontend
-          path: dist
-          if-no-files-found: error
-          retention-days: 1
+build-frontend:
+     name: Build frontend (with data sync)
+     needs: [typecheck, worker-typecheck]
+     runs-on: ubuntu-latest
+     timeout-minutes: 15
+     steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-node@v4
+         with:
+           node-version: '24'
+           cache: npm
+           cache-dependency-path: package-lock.json
+       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+       - run: npm run build
+       - uses: actions/upload-artifact@v4
+         with:
+           name: dist-frontend
+           path: dist
+           if-no-files-found: error
+           retention-days: 1
 
   deploy-frontend:
     name: Deploy frontend to Firebase Hosting

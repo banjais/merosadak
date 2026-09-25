@@ -1,4 +1,4 @@
-export type HapticType = 'light' | 'medium' | 'success' | 'warning';
+export type HapticType = 'light' | 'medium' | 'heavy' | 'success' | 'warning';
 
 export function triggerHaptic(type: HapticType = 'light'): void {
   if (typeof window === 'undefined') return;
@@ -7,6 +7,7 @@ export function triggerHaptic(type: HapticType = 'light'): void {
   const patterns: Record<HapticType, number | number[]> = {
     light: 8,
     medium: 15,
+    heavy: 30,
     success: [10, 30, 10],
     warning: [20, 20, 20, 20],
   };
