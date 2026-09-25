@@ -601,7 +601,7 @@ function AppContent() {
                           <h4 className="text-xs font-black text-white uppercase tracking-wider">
                             Highway Alerts &amp; Notices
                           </h4>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-secondary">
                             {incidents.length} active road incident{incidents.length !== 1 ? 's' : ''} reported
                           </p>
                         </div>
@@ -650,9 +650,9 @@ function AppContent() {
                                     {inc.locationName}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                                  {inc.description}
-                                </p>
+                              <p className="text-[11px] text-secondary line-clamp-2 leading-relaxed">
+                                {inc.description}
+                              </p>
                               </div>
 
                 <button
@@ -675,9 +675,9 @@ function AppContent() {
                 </button>
                             </div>
 
-                            <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-slate-400">
+                            <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-tertiary">
                               <span>Reported by {inc.reportedBy}</span>
-                              <span className="font-mono text-slate-400">{inc.timestamp}</span>
+                              <span className="font-mono text-tertiary">{inc.timestamp}</span>
                             </div>
                           </div>
                         ))

@@ -218,15 +218,15 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             <span className="px-2.5 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
               GOVERNMENT OF NEPAL • DEPARTMENT OF ROADS (DOR)
             </span>
-            <span className="text-xs text-slate-400 flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-              <span>Real-Time Segment Telemetry</span>
-            </span>
+          <span className="text-xs text-tertiary flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+            <span>Real-Time Segment Telemetry</span>
+          </span>
           </div>
           <h2 className="text-2xl font-bold text-white tracking-tight mt-1 font-display">
             Nepal 79 National Highways Directory
           </h2>
-          <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+          <p className="text-sm text-secondary mt-1 max-w-2xl">
             Live segment passability, real-time roadwork notices, active landslide obstructions, and DoR surveyed chainage links across all 79 national highways (NNH01–NH80).
           </p>
         </div>

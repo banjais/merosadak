@@ -172,11 +172,12 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition touch-target"
             title="Close menu"
             id="btn-close-drawer"
+            aria-label="Close menu"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -195,10 +196,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition text-left group ${
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition text-left group touch-target ${
                     isActive
                       ? item.activeBg
-                      : 'text-slate-200 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
@@ -207,7 +208,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     </div>
                     <div>
                       <span className="block font-bold">{item.label}</span>
-                      <span className="text-[9px] text-slate-400 font-normal">{item.subtitle}</span>
+                      <span className="text-[9px] text-tertiary font-normal">{item.subtitle}</span>
                     </div>
                   </div>
                   <ChevronRight className={`w-3 h-3 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
@@ -217,14 +218,14 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
         </div>
 
-        <div className="p-3 border-t border-slate-800 bg-slate-900/60 text-xs text-slate-400">
+        <div className="p-3 border-t border-slate-800 bg-slate-900/60 text-xs text-tertiary">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-slate-300 truncate">DoR Nepal</span>
+              <span className="text-[11px] font-medium text-secondary truncate">DoR Nepal</span>
             </div>
             {loading ? (
-              <span className="text-[10px] text-slate-500 shrink-0">Authenticating...</span>
+              <span className="text-[10px] text-muted shrink-0">Authenticating...</span>
             ) : user ? (
               <button
                 onClick={logout}
@@ -244,9 +245,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             )}
           </div>
           <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="text-[9px] font-mono text-slate-500">v2.4.0</span>
+            <span className="text-[9px] font-mono text-muted">v2.4.0</span>
             {user?.email && (
-              <span className="text-[9px] text-slate-500 truncate max-w-[60%]">{user.email}</span>
+              <span className="text-[9px] text-muted truncate max-w-[60%]">{user.email}</span>
             )}
           </div>
         </div>
