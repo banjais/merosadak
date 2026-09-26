@@ -34,7 +34,8 @@
       "title": "Road Distance of District Headquarters from Kathmandu via NH17 Prithvi Highway",
       "printed_page": 12,
       "pdf_page": 22,
-      "entry_count": 77
+      "entry_count": 77,
+      "added_to_published_distances": 3
     }
   },
   "published_distances": {
@@ -2566,6 +2567,33 @@
       "printed_page": 12,
       "pdf_page": 22,
       "via": "via NH17 Prithvi Highway"
+    },
+    "kathmandu|bhaktapur": {
+      "distance_km": 13.37,
+      "source": "SNH 2022/23",
+      "table": "Table 6",
+      "row": null,
+      "printed_page": 12,
+      "pdf_page": 22,
+      "via": "NH17 Prithvi Highway"
+    },
+    "kathmandu|resunga": {
+      "distance_km": 375.06,
+      "source": "SNH 2022/23",
+      "table": "Table 6",
+      "row": null,
+      "printed_page": 12,
+      "pdf_page": 22,
+      "via": "NH17 Prithvi Highway"
+    },
+    "kathmandu|tansen": {
+      "distance_km": 299.47,
+      "source": "SNH 2022/23",
+      "table": "Table 6",
+      "row": null,
+      "printed_page": 12,
+      "pdf_page": 22,
+      "via": "NH17 Prithvi Highway"
     }
   },
   "links": [

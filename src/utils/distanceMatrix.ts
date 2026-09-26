@@ -64,6 +64,7 @@ export function getPdfMatrixName(name: string): string {
 }
 
 export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
+  const columnsPerPage = 6;
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -73,14 +74,15 @@ export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 6;
-  const tableTop = 20;
-  const tableTopSticky = 16;
-  const tableBottom = pageHeight - 12;
+  const margin = 8;
+  const labelWidth = 32;
+  const tableTop = 22;
+  const tableTopSticky = 6;
+  const tableBottom = pageHeight - 14;
   const tableWidth = pageWidth - margin * 2;
   const cityCount = data.cities.length;
-  const labelWidth = Math.min(27, tableWidth * 0.1);
-  const availableRowsPerPage = Math.floor((tableBottom - tableTop - tableTopSticky) / 4.5);
+  const cellWidth = (tableWidth - labelWidth) / columnsPerPage;
+  const rowHeight = 7;
 
   doc.setProperties({
     title: 'Mero Sadak Nepal Distance Matrix',
@@ -89,24 +91,20 @@ export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
   });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(10);
   doc.setTextColor(15, 23, 42);
-  doc.text('Nepal Distance Matrix (km)', margin, 8);
+  doc.text('Nepal Distance Matrix (km)', margin, 9);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(3.5);
+  doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text('Static bundled matrix | A4 landscape | values shown to two decimals', margin, 12);
+  doc.text('Static bundled matrix | A4 landscape | values shown to two decimals', margin, 14);
 
-  doc.setFontSize(2.15);
-  doc.setTextColor(15, 23, 42);
-  doc.setLineWidth(0.04);
+  doc.setLineWidth(0.08);
   doc.setDrawColor(203, 213, 225);
 
-  const cellWidth = (tableWidth - labelWidth) / Math.max(1, cityCount);
-  const rowHeight = 4.5;
-
   let currentRow = 0;
+  const availableRowsPerPage = Math.floor((tableBottom - tableTop - tableTopSticky) / rowHeight);
 
   while (currentRow < cityCount) {
     const rowsThisPage = Math.min(availableRowsPerPage, cityCount - currentRow);
@@ -117,37 +115,39 @@ export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
     doc.rect(margin, headerY, tableWidth, rowHeight, 'F');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(3.5);
+    doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text('City', margin + 0.6, headerY + rowHeight * 0.68, { align: 'left' });
-    for (let columnIndex = 0; columnIndex < rowsThisPage; columnIndex += 1) {
+    doc.text('City', margin + 1, headerY + rowHeight * 0.65, { align: 'left' });
+    for (let columnIndex = 0; columnIndex < columnsPerPage; columnIndex += 1) {
       const actualCol = currentRow + columnIndex;
+      if (actualCol >= cityCount) break;
       const x = margin + labelWidth + columnIndex * cellWidth;
-      doc.text(getPdfMatrixName(data.cities[actualCol].name), x + cellWidth / 2, headerY + rowHeight * 0.68, {
+      doc.text(getPdfMatrixName(data.cities[actualCol].name), x + cellWidth / 2, headerY + rowHeight * 0.65, {
         align: 'center',
       });
     }
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(2.15);
+    doc.setFontSize(7);
     for (let rowIndex = 0; rowIndex < rowsThisPage; rowIndex += 1) {
       const actualRow = currentRow + rowIndex;
       const y = headerY + (rowIndex + 1) * rowHeight;
       const x = margin;
-      doc.text(getPdfMatrixName(data.cities[actualRow].name), x + 0.6, y + rowHeight * 0.68, {
+      doc.text(getPdfMatrixName(data.cities[actualRow].name), x + 1, y + rowHeight * 0.65, {
         align: 'left',
       });
 
-      for (let columnIndex = 0; columnIndex < rowsThisPage; columnIndex += 1) {
+      for (let columnIndex = 0; columnIndex < columnsPerPage; columnIndex += 1) {
         const actualCol = currentRow + columnIndex;
+        if (actualCol >= cityCount) break;
         const distance = getMatrixDistance(data, actualRow, actualCol);
         const cellX = margin + labelWidth + columnIndex * cellWidth;
         const label = distance === null ? '—' : formatDistanceKm(distance);
-        doc.text(label, cellX + cellWidth / 2, y + rowHeight * 0.68, { align: 'center' });
+        doc.text(label, cellX + cellWidth / 2, y + rowHeight * 0.65, { align: 'center' });
       }
     }
 
-    for (let columnIndex = 0; columnIndex <= rowsThisPage; columnIndex += 1) {
+    for (let columnIndex = 0; columnIndex <= columnsPerPage; columnIndex += 1) {
       const x = margin + (columnIndex === 0 ? 0 : columnIndex === 1 ? labelWidth : labelWidth + (columnIndex - 1) * cellWidth);
       doc.line(x, headerY, x, pageBottom);
     }
@@ -157,10 +157,10 @@ export function exportDistanceMatrixPdf(data: DistanceMatrixData): void {
     }
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(3);
+    doc.setFontSize(7);
     doc.setTextColor(100, 116, 139);
-    doc.text('Source: public/data/distance-matrix.json', margin, pageHeight - 3);
-    doc.text('Reference values only; no aerial or fallback distances are included.', margin + 40, pageHeight - 3);
+    doc.text('Source: public/data/distance-matrix.json', margin, pageHeight - 6);
+    doc.text('Reference values only; no aerial or fallback distances are included.', margin + 50, pageHeight - 6);
 
     currentRow += rowsThisPage;
     if (currentRow < cityCount) {

@@ -456,16 +456,21 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
     if (!user) {
       const alert = document.createElement('div');
       alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
-      alert.textContent = 'Sign in to print or share reports.';
+      alert.textContent = 'Sign in to print reports.';
       document.body.appendChild(alert);
       setTimeout(() => alert.remove(), 4000);
       return;
     }
+    window.print();
+  }, [user]);
+
+  const handleDownloadReport = useCallback(async () => {
     await handleExportProofSheet();
-    if (!distanceWithSource) {
-      window.print();
-    }
-  }, [user, distanceWithSource, handleExportProofSheet]);
+  }, [handleExportProofSheet]);
+
+  const handleDownloadMatrix = useCallback(async () => {
+    await handleExportPdf();
+  }, [handleExportPdf]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -740,6 +745,8 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               onChangeLocation={handleChangeLocation}
               onPrint={handlePrintReport}
               onShare={handleShareReport}
+              onDownloadReport={handleDownloadReport}
+              onDownloadMatrix={handleDownloadMatrix}
               calculatorCoverage={calculatorCoverage}
             />
           )}

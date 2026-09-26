@@ -62,6 +62,26 @@ function deriveRoadType(highway: Highway): string {
   return 'Mixed Surface';
 }
 
+function getPavementBadges(highway: Highway) {
+  const counts = { BT: 0, GR: 0, ER: 0, UC: 0, PL: 0 };
+  const links = highway.segmentLinks || [];
+  const total = links.reduce((sum, link) => sum + (link.linkLenKm || 0), 0);
+
+  for (const link of links) {
+    const pave = (link.paveType || '').toUpperCase();
+    if (pave in counts) counts[pave as keyof typeof counts] += link.linkLenKm || 0;
+  }
+
+  const badges: Array<{ label: string; km: number; color: string; bg: string }> = [];
+  if (counts.BT > 0) badges.push({ label: 'Black Topped', km: counts.BT, color: 'text-sky-300', bg: 'bg-sky-500/10 border-sky-500/20' });
+  if (counts.GR > 0) badges.push({ label: 'Gravel', km: counts.GR, color: 'text-amber-300', bg: 'bg-amber-500/10 border-amber-500/20' });
+  if (counts.ER > 0) badges.push({ label: 'Earthen', km: counts.ER, color: 'text-orange-300', bg: 'bg-orange-500/10 border-orange-500/20' });
+  if (counts.UC > 0) badges.push({ label: 'Under Construction', km: counts.UC, color: 'text-yellow-300', bg: 'bg-yellow-500/10 border-yellow-500/20' });
+  if (counts.PL > 0) badges.push({ label: 'Planned', km: counts.PL, color: 'text-slate-300', bg: 'bg-slate-500/10 border-slate-500/20' });
+
+  return { badges, total };
+}
+
 interface HighwayDirectoryProps {
   onSelectHighwayOnMap?: (highway: Highway) => void;
   onPlanTripForHighway?: (startPoint: string, endPoint: string) => void;
@@ -251,6 +271,61 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Province Statistics Panel (from SNH PDF Table 8) */}
+      {(() => {
+        const provinceStats = useMemo(() => {
+          const stats: Record<string, { total: number; bt: number; gr: number; er: number; uc: number; pl: number }> = {};
+          for (const hw of highways) {
+            const provs = hw.provinces || [];
+            const links = hw.segmentLinks || [];
+            const len = hw.totalLengthKm || 0;
+            for (const prov of provs) {
+              if (!stats[prov]) stats[prov] = { total: 0, bt: 0, gr: 0, er: 0, uc: 0, pl: 0 };
+              stats[prov].total += len;
+              for (const link of links) {
+                const pave = (link.paveType || '').toUpperCase();
+                if (pave === 'BT') stats[prov].bt += link.linkLenKm || 0;
+                else if (pave === 'GR') stats[prov].gr += link.linkLenKm || 0;
+                else if (pave === 'ER') stats[prov].er += link.linkLenKm || 0;
+                else if (pave === 'UC') stats[prov].uc += link.linkLenKm || 0;
+                else if (pave === 'PL') stats[prov].pl += link.linkLenKm || 0;
+              }
+            }
+          }
+          return stats;
+        }, [highways]);
+
+        const entries = Object.entries(provinceStats).sort((a, b) => (b[1] as { total: number }).total - (a[1] as { total: number }).total);
+        if (entries.length === 0) return null;
+
+        return (
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
+              <Map className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Province Highway Coverage (DoR SNH 2022/23)</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {entries.map(([prov, data]) => {
+                const d = data as { total: number; bt: number; gr: number; er: number; uc: number; pl: number };
+                return (
+                  <div key={prov} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <div className="text-xs font-bold text-white truncate">{prov}</div>
+                    <div className="text-[11px] font-mono text-slate-300">{d.total.toLocaleString(undefined, { maximumFractionDigits: 1 })} km total</div>
+                    <div className="flex flex-wrap gap-1">
+                      {d.bt > 0 && <span className="px-1.5 py-0.5 rounded border border-sky-500/20 bg-sky-500/10 text-[9px] text-sky-300 font-bold">BT {d.bt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                      {d.gr > 0 && <span className="px-1.5 py-0.5 rounded border border-amber-500/20 bg-amber-500/10 text-[9px] text-amber-300 font-bold">GR {d.gr.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                      {d.er > 0 && <span className="px-1.5 py-0.5 rounded border border-orange-500/20 bg-orange-500/10 text-[9px] text-orange-300 font-bold">ER {d.er.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                      {d.uc > 0 && <span className="px-1.5 py-0.5 rounded border border-yellow-500/20 bg-yellow-500/10 text-[9px] text-yellow-300 font-bold">UC {d.uc.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                      {d.pl > 0 && <span className="px-1.5 py-0.5 rounded border border-slate-500/20 bg-slate-500/10 text-[9px] text-slate-300 font-bold">PL {d.pl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Search & Real-Time Status Filters */}
       <div className="flex flex-col lg:flex-row gap-3">
@@ -493,10 +568,18 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
                           {analysis.passabilityScore}% Passable
                         </span>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
-                          {roadTypesMap.get(highwayKey) || 'Unknown'}
-                        </span>
-                      </div>
+                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                           {roadTypesMap.get(highwayKey) || 'Unknown'}
+                         </span>
+                         {(() => {
+                           const { badges } = getPavementBadges(highway);
+                           return badges.slice(0, 3).map((badge) => (
+                             <span key={badge.label} className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${badge.bg} ${badge.color}`}>
+                               {badge.label}
+                             </span>
+                           ));
+                         })()}
+                       </div>
 
                       {/* Condition & Scenic Ratings */}
                       <div className="flex items-center gap-3 mt-1 text-[10px]">
@@ -690,25 +773,66 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 {/* Expanded Details Section */}
                 {isExpanded && !archived && (
                   <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5">
-                    {/* Highway Info Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 gap-cards-sm">
-                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
-                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Condition</div>
-                        <div className="text-sm font-black text-amber-400">{highway.conditionRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
-                      </div>
-                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
-                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Scenic</div>
-                        <div className="text-sm font-black text-emerald-400">{highway.scenicRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
-                      </div>
-                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
-                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Road Type</div>
-                        <div className="text-xs font-bold text-sky-300 truncate">{roadTypesMap.get(highwayKey) || '—'}</div>
-                      </div>
-                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
-                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Provinces</div>
-                        <div className="text-xs font-bold text-slate-200 truncate">{highway.provinces?.length || 0}</div>
-                      </div>
-                    </div>
+                     {/* Highway Info Grid */}
+                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 gap-cards-sm">
+                        <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Condition</div>
+                         <div className="text-sm font-black text-amber-400">{highway.conditionRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
+                       </div>
+                        <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Scenic</div>
+                         <div className="text-sm font-black text-emerald-400">{highway.scenicRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
+                       </div>
+                        <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Road Type</div>
+                         <div className="text-xs font-bold text-sky-300 truncate">{roadTypesMap.get(highwayKey) || '—'}</div>
+                       </div>
+                        <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Provinces</div>
+                         <div className="text-xs font-bold text-slate-200 truncate">{highway.provinces?.length || 0}</div>
+                       </div>
+                     </div>
+
+                     {/* Pavement Breakdown */}
+                     {(() => {
+                       const { badges, total } = getPavementBadges(highway);
+                       if (badges.length === 0) return null;
+                       return (
+                         <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pavement Breakdown (DoR SNH 2022/23)</div>
+                           <div className="flex flex-wrap gap-2">
+                             {badges.map((badge) => (
+                               <span key={badge.label} className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] font-bold ${badge.bg} ${badge.color}`}>
+                                 <span>{badge.label}</span>
+                                 <span className="font-mono opacity-80">{badge.km.toFixed(1)} km</span>
+                               </span>
+                             ))}
+                           </div>
+                           {total > 0 && (
+                             <div className="text-[10px] text-slate-500">Total corridor length from links: {total.toFixed(1)} km</div>
+                           )}
+                         </div>
+                       );
+                     })()}
+
+                     {/* Link Codes */}
+                     {highway.segmentLinks && highway.segmentLinks.length > 0 && (
+                       <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Corridor Link Codes</div>
+                         <div className="flex flex-wrap gap-1.5">
+                           {highway.segmentLinks.slice(0, 20).map((link) => (
+                             <span key={link.code} className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-300" title={`${link.linkName || link.code} (${link.linkLenKm || 0} km)`}>
+                               {link.code}
+                             </span>
+                           ))}
+                           {highway.segmentLinks.length > 20 && (
+                             <span className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] text-slate-400">
+                               +{highway.segmentLinks.length - 20} more
+                             </span>
+                           )}
+                         </div>
+                       </div>
+                     )}
                     {highway.nepaliName && (
                       <div className="text-xs text-slate-500 italic">{highway.nepaliName}</div>
                     )}

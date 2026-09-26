@@ -22,6 +22,7 @@ import {
   Zap,
   CreditCard,
   Receipt,
+  Download,
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
@@ -45,6 +46,8 @@ export interface UnifiedRouteReportProps {
   preferenceLabel?: string;
   onPrint: () => void;
   onShare: () => void;
+  onDownloadReport?: () => void;
+  onDownloadMatrix?: () => void;
   onChangeLocation?: () => void;
   showElevationProfile?: boolean;
   simulationControls?: RouteSimulationControls;
@@ -173,6 +176,8 @@ export function UnifiedRouteReport({
   preferenceLabel,
   onPrint,
   onShare,
+  onDownloadReport,
+  onDownloadMatrix,
   onChangeLocation,
   showElevationProfile,
   simulationControls,
@@ -238,6 +243,42 @@ export function UnifiedRouteReport({
 
         <div className="flex flex-wrap items-center gap-2">
           {sourceControl}
+          <button
+            type="button"
+            onClick={onPrint}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            {printLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onShare}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-900/50"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </button>
+          {onDownloadReport && (
+            <button
+              type="button"
+              onClick={onDownloadReport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/40 px-2.5 py-1.5 text-[10px] font-bold text-sky-300 transition hover:bg-sky-900/50"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download Report
+            </button>
+          )}
+          {onDownloadMatrix && (
+            <button
+              type="button"
+              onClick={onDownloadMatrix}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-700/60 bg-indigo-950/40 px-2.5 py-1.5 text-[10px] font-bold text-indigo-300 transition hover:bg-indigo-900/50"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Distance Matrix
+            </button>
+          )}
           {onChangeLocation && (
             <button
               type="button"
@@ -248,22 +289,6 @@ export function UnifiedRouteReport({
               Change
             </button>
           )}
-          <button
-            type="button"
-            onClick={onShare}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-900/50"
-          >
-            <Share2 className="h-3.5 w-3.5" />
-            Share
-          </button>
-          <button
-            type="button"
-            onClick={onPrint}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            {printLabel}
-          </button>
         </div>
       </header>
 
