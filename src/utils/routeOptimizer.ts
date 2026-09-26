@@ -1752,7 +1752,7 @@ export function findRouteByPreference(
 
   // Toll calculations (using live toll rates from Roads Board Nepal Gazette)
   const tollVehicleCategory = mapVehicleToTollCategory(vehicle);
-  const totalTollCost = calculateTollCost(highwayCodesOnPath, tollVehicleCategory);
+  const totalTollCost = calculateTollCost(highwayCodesOnPath, tollVehicleCategory, origin, destination);
 
   const incidentsOnRoute = LIVE_ROAD_INCIDENTS.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
 

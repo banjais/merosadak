@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
-import { getTollPlazasForHighway } from '../utils/tollRates.client';
+import { getTollPlazasForHighway, isEnteringKathmandu } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
@@ -468,10 +468,13 @@ export function UnifiedRouteReport({
                     const highwayCodes = Array.from(new Set(route.steps?.map(s => s.highwayCode).filter(Boolean) || []));
                     const tollPlazas = highwayCodes.flatMap((code) => getTollPlazasForHighway(code));
                     if (tollPlazas.length === 0) return <span>No toll plaza data available for this route</span>;
+                    const entering = isEnteringKathmandu(route.origin, route.destination);
                     return (
                       <ul className="space-y-1.5">
                         {tollPlazas.map((plaza) => {
-                          const rates = plaza.directional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
+                          const rates = plaza.directional
+                            ? (entering === false ? plaza.rates.exit || plaza.rates.entry : plaza.rates.entry) || plaza.rates.single
+                            : plaza.rates.single;
                           return (
                             <li key={plaza.id} className="flex items-center justify-between p-1.5 bg-slate-950/50 rounded border border-slate-800/50">
                               <div className="flex items-center space-x-2">

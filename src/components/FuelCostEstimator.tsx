@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { VehicleType, CityNode } from '../types';
 import { getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { FuelRateConfig } from '../utils/vehicleConfigs';
-import { getTollPlazasForHighway, calculateTollCost, getAllTollPlazas } from '../utils/tollRates.client';
+import { getTollPlazasForHighway, calculateTollCost, getAllTollPlazas, isEnteringKathmandu } from '../utils/tollRates.client';
 import {
   Fuel,
   Zap,
@@ -177,9 +177,16 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     const allPlazas = highwayCodes.flatMap((code) => getTollPlazasForHighway(code));
     // Deduplicate by ID
     const uniquePlazas = Array.from(new Map(allPlazas.map(p => [p.id, p])).values());
+    // Direction matters for plazas with different entry/exit rates (e.g. Nagdhunga Tunnel)
+    const entering = isEnteringKathmandu(
+      origin ? { lat: origin.lat, lng: origin.lng } : undefined,
+      destination ? { lat: destination.lat, lng: destination.lng } : undefined
+    );
     // Convert to TollItem format
     const tollItems = uniquePlazas.map((plaza) => {
-      const rates = plaza.directional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
+      const rates = plaza.directional
+        ? (entering === false ? plaza.rates.exit || plaza.rates.entry : plaza.rates.entry) || plaza.rates.single
+        : plaza.rates.single;
       const baseCost = rates?.[vehicleType] ?? rates?.car ?? 0;
       return {
         id: plaza.id,
@@ -193,35 +200,15 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
       };
     });
     setLiveTollPlazas(tollItems);
-  }, [highwayCodes, vehicleType]);
+  }, [highwayCodes, vehicleType, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
 
-  // Merge live tolls with additional optional fees
-  const [tolls, setTolls] = useState<TollItem[]>([
-    {
-      id: 'nagdhunga_tunnel',
-      name: 'Nagdhunga Tunnel Bypass Toll',
-      location: 'Sisne Khola - Nagdhunga (NH04)',
-      baseCostNpr: 60,
-      enabled: true,
-      notes: 'Active RFID FASTag & Cash Toll',
-    },
-    {
-      id: 'expressway_cess',
-      name: 'Municipal Road Maintenance Cess',
-      location: 'Mugling / Narayangadh corridor',
-      baseCostNpr: 35,
-      enabled: distanceKm > 80,
-      notes: 'Local bridge and road upkeep fee',
-    },
-    {
-      id: 'terai_corridor_toll',
-      name: 'East-West Highway Entry Toll',
-      location: 'NH01 Hetauda / Pathlaiya Junction',
-      baseCostNpr: 40,
-      enabled: distanceKm > 150,
-      notes: 'National Highway Road User Fee',
-    },
-  ]);
+  // Toll list is populated entirely from live/gazette toll-plaza data (the
+  // effect above). It used to seed three hardcoded placeholder fees here,
+  // but their ids didn't match the real data's ids, so the real Nagdhunga
+  // Tunnel toll was being charged twice, and two fees with no official
+  // source ("Municipal Road Maintenance Cess", "East-West Highway Entry
+  // Toll") were silently added to every longer trip's report.
+  const [tolls, setTolls] = useState<TollItem[]>([]);
 
   // Sync live toll plazas with toll state
   useEffect(() => {
