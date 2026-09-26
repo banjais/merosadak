@@ -77,7 +77,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   liveIncidents = LIVE_ROAD_INCIDENTS,
   userReports = INITIAL_USER_REPORTS,
   routeHighwayCodes = [],
-  filterToRouteOnlyProp = false,
+  filterToRouteOnly = false,
 }) => {
   const [highways, setHighways] = useState<Highway[]>(NEPAL_HIGHWAYS);
   const [incidents, setIncidents] = useState<RoadIncident[]>(liveIncidents);
@@ -88,7 +88,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   const [expandedHighwayId, setExpandedHighwayId] = useState<string | null>(null);
   const [activeSegmentTooltip, setActiveSegmentTooltip] = useState<{ highwayId: string; segmentIndex: number } | null>(null);
 
-  const [filterToRouteOnly, setFilterToRouteOnly] = useState<boolean>(filterToRouteOnlyProp);
+  const [isFilterRouteOnly, setIsFilterRouteOnly] = useState<boolean>(filterToRouteOnly);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const { isArchived: isHighwayArchived, archiveCard: archiveHighway, restoreCard: restoreHighway } = useCardArchive();
 
@@ -129,8 +129,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   }, [userReports]);
 
   useEffect(() => {
-    setFilterToRouteOnly(filterToRouteOnlyProp);
-  }, [filterToRouteOnlyProp]);
+    setIsFilterRouteOnly(filterToRouteOnly);
+  }, [filterToRouteOnly]);
 
   // Compute real-time status analysis for each highway using segments data & incidents
   const highwayAnalyses = useMemo(() => {
@@ -197,7 +197,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
     const matchesTerrain = terrainFilter === 'all' || hw.terrainType === terrainFilter;
 
     const matchesRoute =
-      !filterToRouteOnly ||
+      !isFilterRouteOnly ||
       routeHighwayCodes.length === 0 ||
       routeHighwayCodes.some(
         (code) => code && code.split('/').some((c) => c.trim().toLowerCase() === (hw.code || hw.id).toLowerCase())
@@ -281,8 +281,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             <input
               id="checkbox-route-filter"
               type="checkbox"
-              checked={filterToRouteOnly}
-              onChange={(e) => setFilterToRouteOnly(e.target.checked)}
+              checked={isFilterRouteOnly}
+              onChange={(e) => setIsFilterRouteOnly(e.target.checked)}
               className="w-3.5 h-3.5 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500/30"
             />
             <label htmlFor="checkbox-route-filter" className="text-slate-300">

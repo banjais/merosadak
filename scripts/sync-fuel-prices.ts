@@ -80,7 +80,7 @@ function parsePriceFromText(text: string): { petrol: number; diesel: number } | 
 async function fetchFromNOC(): Promise<NocPriceData | null> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000, new Error('Timeout'));
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const res = await fetch(NOC_RETAIL_URL, {
       signal: controller.signal,
@@ -96,7 +96,8 @@ async function fetchFromNOC(): Promise<NocPriceData | null> {
     if (parsed) return { ...parsed, electricity: 15 };
 
     const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), 8000, new Error('Timeout'));
+    const timeoutId2 = setTimeout(() => controller2.abort(), 8000);
+
     const mainRes = await fetch(NOC_MAIN_URL, {
       signal: controller2.signal,
       headers: { 'User-Agent': 'MeroSadak/1.0 (+https://merosadak.com)' },

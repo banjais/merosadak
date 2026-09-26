@@ -1,4 +1,4 @@
-import { FuelRateConfig } from './vehicleConfigs';
+import { FuelRateConfig, NOC_FUEL_RATES } from './vehicleConfigs';
 export type { FuelRateConfig };
 
 const CACHE_KEY = 'merosadak_fuel_prices';
@@ -61,7 +61,10 @@ export async function fetchFuelPrices(): Promise<FuelRateConfig> {
         }
       }
     } catch { /* ignore parse errors */ }
-    throw new Error(message);
+    cachedPrices = NOC_FUEL_RATES;
+    lastChecked = Date.now();
+    cachedMetadata = null;
+    return NOC_FUEL_RATES;
   }
 }
 

@@ -1284,6 +1284,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   useEffect(() => {
     if (activeRoute) {
       setMapInteracted(true);
+      setMapActive(true);
     }
   }, [activeRoute]);
 

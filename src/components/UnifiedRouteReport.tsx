@@ -511,17 +511,15 @@ export function UnifiedRouteReport({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5 text-cyan-500/80" />
-              Route geometry: <span className="font-semibold text-slate-300">DoR Nepal Highway GIS</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-emerald-500/80" />
-              Distance: <span className="font-semibold text-slate-300">{sourceLabel}</span>
+              <span className="font-semibold text-slate-300">
+                DoR Nepal Highway GIS · {sourceLabel}
+              </span>
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <SourceLink label="DoR" href="https://dor.gov.np" />
-            {distanceSource === 'snh_published' && <SourceLink label="SNH 2022/23" href="https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23" />}
-            {distanceSource === 'dor_geojson_linksum' && <SourceLink label="DoR SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
+            {distanceSource === 'snh_published' && <SourceLink label="SNH" href="https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23" />}
+            {distanceSource === 'dor_geojson_linksum' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
           </div>
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-600">

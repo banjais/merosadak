@@ -233,10 +233,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   );
 
   const displayedDistance = useMemo(() => {
-    if (!origin || !destination) return routeResult?.totalDistanceKm || 0;
-    if (!distanceWithSource) return routeResult?.totalDistanceKm || 0;
+    if (!origin || !destination) return 0;
+    if (!distanceWithSource) return 0;
     return distanceWithSource.distanceKm;
-  }, [origin, destination, distanceWithSource, routeResult]);
+  }, [origin, destination, distanceWithSource]);
 
   const displayedSource = useMemo(() => {
     if (distanceWithSource) return distanceWithSource.source;

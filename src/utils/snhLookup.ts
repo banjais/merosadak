@@ -151,17 +151,23 @@ export function computeLinkSumDistance(
   const destMatches: string[] = [];
 
   for (const key of originKeys) {
-    const match = ref.links.find(
-      (l) => l.name.toLowerCase().includes(key.replace(/\s+/g, ' '))
+    const normalizedKey = key.replace(/\s+/g, ' ').toLowerCase();
+    const exactMatch = ref.links.find(
+      (l) => l.name.toLowerCase().replace(/\s+/g, ' ') === normalizedKey
     );
-    if (match && originMatches.indexOf(match.name) === -1) originMatches.push(match.name);
+    if (exactMatch && originMatches.indexOf(exactMatch.name) === -1) {
+      originMatches.push(exactMatch.name);
+    }
   }
 
   for (const key of destKeys) {
-    const match = ref.links.find(
-      (l) => l.name.toLowerCase().includes(key.replace(/\s+/g, ' '))
+    const normalizedKey = key.replace(/\s+/g, ' ').toLowerCase();
+    const exactMatch = ref.links.find(
+      (l) => l.name.toLowerCase().replace(/\s+/g, ' ') === normalizedKey
     );
-    if (match && destMatches.indexOf(match.name) === -1) destMatches.push(match.name);
+    if (exactMatch && destMatches.indexOf(exactMatch.name) === -1) {
+      destMatches.push(exactMatch.name);
+    }
   }
 
   if (originMatches.length === 0 || destMatches.length === 0) return null;
@@ -169,60 +175,39 @@ export function computeLinkSumDistance(
   const fromEnd = originMatches[0];
   const toEnd = destMatches[0];
 
+  const links = ref.links;
+  const originIdx = links.findIndex((l) => l.name.toLowerCase().includes(fromEnd.toLowerCase()));
+  const destIdx = links.findIndex((l) => l.name.toLowerCase().includes(toEnd.toLowerCase()));
+
+  if (originIdx === -1 || destIdx === -1) return null;
+
+  const startIdx = Math.min(originIdx, destIdx);
+  const endIdx = Math.max(originIdx, destIdx);
+  const forward = originIdx <= destIdx;
+
   const chain: LinkChainEntry[] = [];
-  let foundStart = false;
   let totalDistance = 0;
 
-  for (const link of ref.links) {
-    if (link.name.toLowerCase().includes(fromEnd.toLowerCase()) || !foundStart) {
-      if (!foundStart) {
-        if (
-          link.name.toLowerCase().includes(fromEnd.toLowerCase()) ||
-          link.name.toLowerCase().includes(originKeys[0]) ||
-          link.name.toLowerCase().includes(originKeys[0].replace(/^the\s+/, ''))
-        ) {
-          foundStart = true;
-        }
-      }
-    }
-
-    if (foundStart) {
-      chain.push({
-        code: link.code,
-        name: link.name,
-        lengthKm: link.length_km,
-        pavementType: link.pavement_type,
-        fromKm: link.from_km,
-        toKm: link.to_km,
-      });
-      totalDistance += link.length_km;
-
-      if (
-        link.name.toLowerCase().includes(toEnd.toLowerCase()) ||
-        link.name.toLowerCase().includes(destKeys[0]) ||
-        destKeys.some((dk) => link.name.toLowerCase().includes(dk))
-      ) {
-        return {
-          distanceKm: Math.round(totalDistance * 100) / 100,
-          evidenceLevel: 'link_sum',
-          linkChain: chain,
-          publishedDistanceKm: totalDistance,
-        };
-      }
-    }
+  for (let i = startIdx; i <= endIdx; i += 1) {
+    const link = links[i];
+    chain.push({
+      code: link.code,
+      name: link.name,
+      lengthKm: link.length_km,
+      pavementType: link.pavement_type,
+      fromKm: link.from_km,
+      toKm: link.to_km,
+    });
+    totalDistance += link.length_km;
   }
 
-  if (chain.length > 0) {
-    return {
-      distanceKm: Math.round(totalDistance * 100) / 100,
-      evidenceLevel: 'link_sum',
-      note: 'Route extends beyond the matched chain. Partial link-sum only.',
-      isUncertain: true,
-      linkChain: chain,
-    };
-  }
-
-  return null;
+  return {
+    distanceKm: Math.round(totalDistance * 100) / 100,
+    evidenceLevel: 'link_sum',
+    linkChain: forward ? chain : chain.reverse(),
+    publishedDistanceKm: totalDistance,
+    note: forward ? undefined : 'Matched in reverse link order; distance is still the corridor length between these endpoints.',
+  };
 }
 
 export function traceKathmanduToGulariya(ref?: SNHReferenceData | null): DistanceLookupResult {

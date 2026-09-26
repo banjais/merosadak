@@ -235,6 +235,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const allCitiesRef = useRef(allCities);
   const gpsAutoDetectAttemptedRef = useRef(false);
 
+  // Modern stepper: origin -> destination -> vehicle -> results
+  type RoutePlannerStep = 'origin' | 'destination' | 'vehicle' | 'results';
+  const [routePlannerStep, setRoutePlannerStep] = useState<RoutePlannerStep>(() => {
+    if (initialOriginId && initialDestId) return 'vehicle';
+    if (initialOriginId || detectedLocation) return 'destination';
+    return 'origin';
+  });
+
   useEffect(() => {
     allCitiesRef.current = allCities;
   }, [allCities]);
@@ -382,6 +390,34 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setOriginSearchQuery(originCity.name);
     }
   }, [originCity?.name]);
+
+  // Update stepper when origin/destination/calculated state changes
+  useEffect(() => {
+    if (hasCalculated && routePlan) {
+      setRoutePlannerStep('results');
+    } else if (originId && destId) {
+      setRoutePlannerStep('vehicle');
+    } else if (originId || detectedLocation) {
+      setRoutePlannerStep('destination');
+    } else {
+      setRoutePlannerStep('origin');
+    }
+  }, [originId, destId, hasCalculated, routePlan, detectedLocation]);
+
+  // Auto-focus inputs based on current step
+  useEffect(() => {
+    if (routePlannerStep === 'origin' && !originId && !detectedLocation) {
+      setTimeout(() => originInputRef.current?.focus(), 150);
+    } else if (routePlannerStep === 'destination' && originId && !destId) {
+      setTimeout(() => {
+        if (locationMode === 'my_location') {
+          singleSearchInputRef.current?.focus();
+        } else {
+          destInputRef.current?.focus();
+        }
+      }, 150);
+    }
+  }, [routePlannerStep, originId, destId, detectedLocation, locationMode]);
 
   // Fetch optional telemetry data when respective tabs are clicked
   useEffect(() => {
@@ -531,12 +567,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           setLocationPermissionDenied(false);
         } else if (permissionStatus.state === 'denied') {
           setLocationPermissionDenied(true);
-          alert(
-            'GPS location access is blocked. Please enable location permissions in your browser settings, then tap "Use GPS" again.\n\n' +
-            'On Chrome: Settings → Privacy → Site Settings → Location → Allow\n' +
-            'On Safari: Settings → Safari → Location → merosadak.com → While Using\n' +
-            'On Firefox: Options → Privacy → Permissions → Settings → Location → Allow'
-          );
           return;
         }
 
@@ -1083,6 +1113,51 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
       {/* Main Clean Route Planner Box */}
       <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
+      {/* Modern Stepper: Origin -> Destination -> Vehicle -> Results */}
+      {!hasCalculated && (
+        <div className="flex items-center justify-between gap-2 px-1">
+          {([
+            { step: 'origin', label: 'Origin', icon: LocateFixed },
+            { step: 'destination', label: 'Destination', icon: MapPin },
+            { step: 'vehicle', label: 'Vehicle', icon: Car },
+          ] as const).map(({ step, label, icon: Icon }, idx) => {
+            const stepOrder = ['origin', 'destination', 'vehicle'] as const;
+            const currentIdx = stepOrder.indexOf(routePlannerStep);
+            const isActive = routePlannerStep === step;
+            const isCompleted = currentIdx > idx;
+            return (
+              <div key={step} className="flex items-center flex-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isCompleted || step === routePlannerStep) {
+                      setRoutePlannerStep(step);
+                    }
+                  }}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition ${
+                    isActive
+                      ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/20'
+                      : isCompleted
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-400'
+                      : 'border-slate-700 bg-slate-950 text-slate-500'
+                  }`}
+                  title={label}
+                  aria-label={`${label} step${isCompleted ? ' (completed)' : ''}${isActive ? ' (current)' : ''}`}
+                >
+                  <Icon className="w-4 h-4" />
+                </button>
+                <div className="ml-2 hidden sm:block">
+                  <div className={`text-xs font-bold ${isActive ? 'text-white' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}>{label}</div>
+                </div>
+                {idx < 2 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded ${currentIdx > idx ? 'bg-emerald-500/60' : 'bg-slate-800'}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 1. MY LOCATION CARD - Always visible */}
       <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
@@ -1213,8 +1288,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
-        {!hasCalculated && (
-          <>
+         {!hasCalculated && (
+           <>
             <p className="text-[10px] text-slate-500 px-0.5">
               Trip planner · mixed places (highway nodes + nearby towns). For official km only, use Distance.
             </p>
@@ -1239,8 +1314,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   closeAllMenus('single');
                   setIsSingleDropdownOpen(true);
                 }}
-                placeholder="Where to?"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                placeholder={routePlannerStep === 'destination' ? 'Where to?' : 'Where to?'}
+                className={`w-full rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
+                  routePlannerStep === 'destination'
+                    ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
+                    : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
+                }`}
               />
 
               {/* Functional Microphone and AI Icon Action Buttons */}
@@ -1346,9 +1425,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      closeAllMenus('origin');
                      setIsOriginDropdownOpen(true);
                    }}
-                  placeholder="From where?"
-                  autoComplete="off"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                   placeholder={routePlannerStep === 'origin' ? 'Where are you starting from?' : 'From where?'}
+                   autoComplete="off"
+                   className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
+                     routePlannerStep === 'origin'
+                       ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
+                       : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
+                   }`}
                 />
                  <button
                   onClick={() => startVoiceRecognition('origin')}
@@ -1440,9 +1523,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      closeAllMenus('dest');
                      setIsDestDropdownOpen(true);
                    }}
-                  placeholder="Where to?"
-                  autoComplete="off"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
+                      placeholder={routePlannerStep === 'destination' ? 'Where do you want to go?' : 'Where to?'}
+                      autoComplete="off"
+                      className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
+                        routePlannerStep === 'destination'
+                          ? 'bg-slate-950 border-2 border-cyan-500/60 focus:border-cyan-400'
+                          : 'bg-slate-950 border border-slate-800 focus:border-cyan-500'
+                      }`}
                 />
                 <button
                   onClick={() => startVoiceRecognition('dest')}
@@ -1498,11 +1585,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
                    )}
                  </div>
-               )}
-             </div>
-           </div>
-         )}
-       </>)}
+                )}
+              </div>
+            </div>
+          )}
+        </>)}
 
          {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
         {!hasCalculated && isAiPromptOpen && (
@@ -1564,74 +1651,86 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
            key={`route-results-panel-${calcKey}-${routePlan.id}`}
           className="bg-slate-900/95 border border-slate-800 p-3 sm:p-5 rounded-2xl shadow-xl space-y-3.5 sm:space-y-4 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
         >
-          {/* Header Summary & Expand/Reduce + Map Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
-            <div className="min-w-0">
+           {/* Header Summary & Expand/Reduce + Map Actions */}
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
+             <div className="min-w-0 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRoutePlannerStep('origin');
+                  setHasCalculated(false);
+                  setRoutePlan(null);
+                  setActiveModuleTab('none');
+                  onRouteClear?.();
+                }}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
+                title="Plan a new route"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                <span>New Route</span>
+              </button>
               <div className="flex items-center space-x-2 flex-wrap">
                 <span className="text-sm sm:text-base font-black text-white font-display truncate">{routePlan.origin.name}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="text-sm sm:text-base font-black text-white font-display truncate">{routePlan.destination.name}</span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} •{' '}
-                <span className="capitalize">{preference.replace('_', ' ')}</span> priority
-              </p>
             </div>
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+              {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} •{' '}
+              <span className="capitalize">{preference.replace('_', ' ')}</span> priority
+            </p>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
-              {/* Expand / Reduce Report Button */}
-              <button
-                type="button"
-                onClick={() => setIsReportExpanded(!isReportExpanded)}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
-                title={isReportExpanded ? "Reduce Report" : "Expand Full Report"}
-              >
-                {isReportExpanded ? (
-                  <>
-                    <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-[11px]">Reduce</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-[11px]">Expand</span>
-                  </>
-                )}
-              </button>
+          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+            {/* Expand / Reduce Report Button */}
+            <button
+              type="button"
+              onClick={() => setIsReportExpanded(!isReportExpanded)}
+              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+              title={isReportExpanded ? "Reduce Report" : "Expand Full Report"}
+            >
+              {isReportExpanded ? (
+                <>
+                  <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-[11px]">Reduce</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-[11px]">Expand</span>
+                </>
+              )}
+            </button>
 
-                {/* View/Full Map Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onToggleMapFull) {
-                      onToggleMapFull();
-                    } else if (onViewOnMap) {
-                      onViewOnMap();
-                    }
-                    const mapElem = document.getElementById('nepal-gis-canvas');
-                    if (mapElem) {
-                      mapElem.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
-                  title={isMapFull ? "Reduce Map View" : "Full Map View"}
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
-                </button>
+            {/* View/Full Map Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onToggleMapFull) {
+                  onToggleMapFull();
+                } else if (onViewOnMap) {
+                  onViewOnMap();
+                }
+                const mapElem = document.getElementById('nepal-gis-canvas');
+                if (mapElem) {
+                  mapElem.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+              title={isMapFull ? "Reduce Map View" : "Full Map View"}
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
+            </button>
 
-
-
-            </div>
-
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
-                title="Share this trip"
-              >
-                <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-              </button>
-            </div>
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
+              title="Share this trip"
+            >
+              <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+            </button>
+          </div>
 
           {/* PRIMARY ACTION ROW: the one thing most people want right after a route is found,
               plus who-is-traveling so the tools below can be tailored instead of dumped flat. */}
@@ -2099,17 +2198,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           <div className="text-cyan-300 font-bold">{aiCustomAdvisory.bestDepartureWindow}</div>
                           {aiCustomAdvisory.monsoonOrWeatherWarning && (
                             <div className="text-amber-400 text-[11px] mt-1">⚠️ {aiCustomAdvisory.monsoonOrWeatherWarning}</div>
-                          )}
-                        </div>
-                        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                          <div className="font-semibold text-slate-300 mb-1">Emergency Contacts:</div>
-                          <ul className="text-slate-300 text-[11px] space-y-0.5">
-                            {aiCustomAdvisory.emergencyContacts?.map((c: string, i: number) => (
-                              <li key={i}>• {c}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
+                           )}
+                         </div>
+                       </div>
                     </div>
                   ) : routePlan.aiAdvisory ? (
                     <div className="space-y-3 text-xs">
@@ -2135,32 +2226,29 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               )}
 
-              {/* MODULE CONTENT: 8. SOS Emergency */}
-              {activeModuleTab === 'sos' && (
-                <div className="bg-red-950/30 border border-red-900/60 p-4 rounded-2xl space-y-3">
-                  <div className="flex items-center space-x-2 text-rose-400 font-bold text-sm">
-                    <PhoneCall className="w-4 h-4 text-rose-500 animate-pulse" />
-                    <span>Nepal Highway Emergency Dispatch Hotlines</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1">
-                      <div className="text-xs text-slate-400 font-bold">Nepal Police Emergency</div>
-                      <div className="text-xl font-black text-rose-400 font-mono">100</div>
-                      <div className="text-[10px] text-slate-500">Toll-free 24/7 Dispatch</div>
-                    </div>
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1">
-                      <div className="text-xs text-slate-400 font-bold">Traffic Police Control</div>
-                      <div className="text-xl font-black text-amber-400 font-mono">103</div>
-                      <div className="text-[10px] text-slate-500">Highway Road Clearance</div>
-                    </div>
-                    <div className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1">
-                      <div className="text-xs text-slate-400 font-bold">APF Highway Rescue</div>
-                      <div className="text-xl font-black text-cyan-400 font-mono">1114</div>
-                      <div className="text-[10px] text-slate-500">Disaster &amp; Medical Unit</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+               {/* MODULE CONTENT: 8. SOS Emergency */}
+               {activeModuleTab === 'sos' && (
+                 <div className="bg-red-950/30 border border-red-900/60 p-4 rounded-2xl space-y-3">
+                   <div className="flex items-center space-x-2 text-rose-400 font-bold text-sm">
+                     <PhoneCall className="w-4 h-4 text-rose-500 animate-pulse" />
+                     <span>Emergency Hotlines</span>
+                   </div>
+                   <div className="grid grid-cols-3 gap-2.5">
+                     <a href="tel:100" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-rose-500/50 transition">
+                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Police</div>
+                       <div className="text-xl font-black text-rose-400 font-mono">100</div>
+                     </a>
+                     <a href="tel:103" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-amber-500/50 transition">
+                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Traffic</div>
+                       <div className="text-xl font-black text-amber-400 font-mono">103</div>
+                     </a>
+                     <a href="tel:1114" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-cyan-500/50 transition">
+                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">APF Rescue</div>
+                       <div className="text-xl font-black text-cyan-400 font-mono">1114</div>
+                     </a>
+                   </div>
+                 </div>
+               )}
 
               {/* MODULE CONTENT: 9. Eco & Carbon */}
               {activeModuleTab === 'eco' && (

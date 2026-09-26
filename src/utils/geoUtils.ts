@@ -223,9 +223,9 @@ export function getHighwayTotalDistance(
   if (roadGraph && roadGraph.highways) {
     for (let i = 0; i < roadGraph.highways.length; i++) {
       if (roadGraph.highways[i].toUpperCase() === code) {
-        for (const node of roadGraph.adjacency) {
-          for (const [to, dist, hwyIdx] of node) {
-            if (hwyIdx === i) {
+        for (let node = 0; node < roadGraph.adjacency.length; node++) {
+          for (const [to, dist, hwyIdx] of roadGraph.adjacency[node]) {
+            if (hwyIdx === i && node < to) {
               roadGraphKm += dist;
             }
           }
@@ -363,9 +363,9 @@ export function getHighwayEnrichment(
     for (let i = 0; i < roadGraph.highways.length; i++) {
       if (roadGraph.highways[i].toUpperCase() === code) {
         let sumKm = 0;
-        for (const node of roadGraph.adjacency) {
-          for (const [to, dist, hwyIdx] of node) {
-            if (hwyIdx === i) {
+        for (let node = 0; node < roadGraph.adjacency.length; node++) {
+          for (const [to, dist, hwyIdx] of roadGraph.adjacency[node]) {
+            if (hwyIdx === i && node < to) {
               sumKm += dist;
             }
           }

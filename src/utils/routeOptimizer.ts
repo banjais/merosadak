@@ -3,6 +3,7 @@ import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../da
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
 import { preloadRoadGraph, findRoadGraphRoute } from './roadGraphRouter';
 import { getVehicleCalcConfig } from './vehicleConfigs';
+import { getEffectiveFuelRate } from './fuelPriceService';
 import { calculateTollCost, mapVehicleToTollCategory } from './tollRates.client';
 
 export function classifyRoadTier(highwayCode?: string, surface?: string): {
@@ -1226,7 +1227,7 @@ function buildAerialRouteResult(
     statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
     fuelEstimate: {
       liters: fuelLiters,
-      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit),
+      costNpr: Math.round(fuelLiters * getEffectiveFuelRate(vehicle)),
       avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
@@ -1319,7 +1320,7 @@ function buildRoadGraphRouteResult(
     statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
     fuelEstimate: {
       liters: fuelLiters,
-      costNpr: Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit),
+      costNpr: Math.round(fuelLiters * getEffectiveFuelRate(vehicle)),
       avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
@@ -1682,7 +1683,7 @@ export function findRouteByPreference(
 
   // Fuel calculation
   const fuelLiters = Math.round((totalDistanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
-  const fuelCostNpr = Math.round(fuelLiters * vehicleConfig.fuelCostPerUnit);
+  const fuelCostNpr = Math.round(fuelLiters * getEffectiveFuelRate(vehicle));
 
   // EV Calculations
   const evKwhRequired = Math.round((totalDistanceKm / 6.2) * 10) / 10;
@@ -1769,7 +1770,7 @@ export function findRouteByPreference(
     },
     fuelEstimate: {
       liters: fuelLiters,
-      costNpr: fuelCostNpr,
+      costNpr: Math.round(fuelLiters * getEffectiveFuelRate(vehicle)),
       avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
@@ -1785,9 +1786,9 @@ export function findRouteByPreference(
     pathCoordinates,
     appliedTerrainFilters: hasActiveTerrainFilters ? terrainFilters : undefined,
     alternateRouteSummary: {
-      name: preference === 'fastest' ? 'Scenic Hill Pass Alternative' : 'Primary Express Corridor',
-      distanceDiffKm: preference === 'fastest' ? 24 : -18,
-      timeDiffMinutes: preference === 'fastest' ? 45 : -25,
+      name: 'Alternative Highway Bypass',
+      distanceDiffKm: 0,
+      timeDiffMinutes: 0,
       reason: viaHighways
     },
     dataSource: 'Department of Roads, Nepal (NH01–NH80 Network)',
