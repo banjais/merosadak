@@ -846,7 +846,7 @@ function AppContent() {
         )}
 
         {/* Interactive Map - fills remaining viewport */}
-        <div className="flex-1 relative z-0 w-full min-h-[45vh] sm:min-h-0">
+        <div className="flex-1 relative z-0 w-full min-h-[45dvh] sm:min-h-0">
           <InteractiveMap
             activeRoute={activeRoute}
             isDimmed={false}

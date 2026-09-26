@@ -219,16 +219,13 @@ self.addEventListener('fetch', (event) => {
   if (isStaticDataRequest(request.url) && url.origin === self.location.origin) {
     event.respondWith((async () => {
       const dataCache = await caches.open(CACHE_NAMES.DATA);
-      const cached = await dataCache.match(request);
-      if (cached) {
-        fetch(request).then((res) => putIfUsable(dataCache, request, res)).catch(() => {});
-        return cached;
-      }
       try {
         const networkRes = await fetch(request);
-        await putIfUsable(dataCache, request, networkRes);
+        if (networkRes.ok) await putIfUsable(dataCache, request, networkRes);
         return networkRes;
       } catch {
+        const cached = await dataCache.match(request);
+        if (cached) return cached;
         return new Response(JSON.stringify({ error: 'offline', path: url.pathname }), {
           status: 503, headers: { 'Content-Type': 'application/json' }
         });

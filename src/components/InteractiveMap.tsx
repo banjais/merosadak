@@ -1279,7 +1279,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         duration: 1.2,
       });
     }
-   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot]);
+   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized]);
 
   useEffect(() => {
     if (activeRoute) {
@@ -1323,8 +1323,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         onClick={activateMap}
       />
 
-      {/* Dimming overlay - shows when map is not active OR when isDimmed prop is true */}
-      {(!mapActive || isDimmed) && (
+      {/* Dimming overlay - shows when map is not active AND no route is shown */}
+      {(!mapActive && !activeRoute) && (
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-[500] pointer-events-none transition-opacity duration-500" />
       )}
 
