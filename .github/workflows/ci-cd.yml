@@ -77,9 +77,11 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
-      - run: npx tsc --noEmit -p worker/tsconfig.json
+          cache-dependency-path: worker/package-lock.json
+      - working-directory: worker
+        run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+      - working-directory: worker
+        run: npx tsc --noEmit
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
@@ -171,8 +173,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+          cache-dependency-path: worker/package-lock.json
+      - working-directory: worker
+        run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - working-directory: worker
         run: npx --no-install wrangler deploy
         env:
