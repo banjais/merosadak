@@ -142,8 +142,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: worker/package-lock.json
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+        working-directory: worker
       - working-directory: worker
         run: |
           set -euo pipefail
@@ -155,6 +156,17 @@ jobs:
           npm exec --no-install wrangler kv key put "highway/index.json" --binding DATA --path ../public/data/highway/index.json --remote
           npm exec --no-install wrangler kv key put "nepal_boundary.geojson" --binding DATA --path ../public/data/nepal_boundary.geojson --remote
           npm exec --no-install wrangler kv key put "distance-matrix.json" --binding DATA --path ../public/data/distance-matrix.json --remote
+          npm exec --no-install wrangler kv key put "road-graph.json" --binding DATA --path ../public/data/road-graph.json --remote
+          npm exec --no-install wrangler kv key put "snh-reference.json" --binding DATA --path ../public/data/snh-reference.json --remote
+          npm exec --no-install wrangler kv key put "calculator-cities.json" --binding DATA --path ../public/data/calculator-cities.json --remote
+          npm exec --no-install wrangler kv key put "fuel-prices.json" --binding DATA --path ../public/data/fuel-prices.json --remote
+          npm exec --no-install wrangler kv key put "toll-rates.json" --binding DATA --path ../public/data/toll-rates.json --remote
+          npm exec --no-install wrangler kv key put "all-toll-rates.json" --binding DATA --path ../public/data/all-toll-rates.json --remote
+          npm exec --no-install wrangler kv key put "cities-and-junctions.json" --binding DATA --path ../public/data/cities-and-junctions.json --remote
+          npm exec --no-install wrangler kv key put "incidents.json" --binding DATA --path ../public/data/incidents.json --remote
+          npm exec --no-install wrangler kv key put "pois.json" --binding DATA --path ../public/data/pois.json --remote
+          npm exec --no-install wrangler kv key put "traffic-corridors.json" --binding DATA --path ../public/data/traffic-corridors.json --remote
+          npm exec --no-install wrangler kv key put "mountain-weather.json" --binding DATA --path ../public/data/mountain-weather.json --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -171,8 +183,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: worker/package-lock.json
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+        working-directory: worker
       - working-directory: worker
         run: npm exec --no-install wrangler deploy
         env:
