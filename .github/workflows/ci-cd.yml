@@ -81,7 +81,7 @@ jobs:
       - working-directory: worker
         run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - working-directory: worker
-        run: npx tsc --noEmit
+        run: npm exec tsc --noEmit
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
