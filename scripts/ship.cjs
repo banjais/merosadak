@@ -33,6 +33,7 @@ try {
   run('sync:fuel', 'npm run sync:fuel', { allowFailure: true });
   run('sync:tolls', 'npm run sync:tolls', { allowFailure: true });
   run('sync:all-tolls', 'npm run sync:all-tolls', { allowFailure: true });
+  run('auto-update tolls', 'npm run sync:all-tolls:auto', { allowFailure: true });
   run('build (frontend + server)', 'npm run build', { allowFailure: true });
 
   console.log('\n[ship] git add...');

@@ -201,11 +201,25 @@ async function main() {
     console.log('[All Toll Sync] No existing file, creating new.');
   }
 
-  fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf8');
-  console.log(`\n[${hasChanges ? 'All Toll Sync' : 'All Toll Sync (no changes)'}] Saved to ${CACHE_FILE}`);
-  console.log(`[All Toll Sync] Next update check: ${cache.nextUpdate}`);
-  console.log('\n[All Toll Sync] Note: All toll rates are set by Cabinet decision and published in Nepal Gazette by Roads Board Nepal.');
-  console.log('[All Toll Sync] This script maintains verified rates. Update VERIFIED_TOLL_PLAZAS when new Gazette is published.');
+   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf8');
+   console.log(`\n[${hasChanges ? 'All Toll Sync' : 'All Toll Sync (no changes)'}] Saved to ${CACHE_FILE}`);
+   console.log(`[All Toll Sync] Next update check: ${cache.nextUpdate}`);
+
+   // Auto-update pass: detect new/updated official documents
+   const autoUpdate = await import('./auto-update-toll-rates.ts');
+   await autoUpdate.detectNewOrUpdatedDocs().then(async () => {
+     const docs = await autoUpdate.detectNewOrUpdatedDocs();
+     if (docs.length > 0) {
+       const existing = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+       existing.note = existing.note + ` ${docs.length} new/updated official document(s) found for review.`;
+       existing.lastUpdated = new Date().toISOString();
+       fs.writeFileSync(CACHE_FILE, JSON.stringify(existing, null, 2), 'utf8');
+       console.log(`[All Toll Sync] Flagged ${docs.length} new document(s) for toll-rate review.`);
+     }
+   }).catch(() => {});
+
+   console.log('\n[All Toll Sync] Note: All toll rates are set by Cabinet decision and published in Nepal Gazette by Roads Board Nepal.');
+   console.log('[All Toll Sync] This script maintains verified rates. Update VERIFIED_TOLL_PLAZAS when new Gazette is published.');
 }
 
 main().catch(console.error);
