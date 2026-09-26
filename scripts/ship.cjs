@@ -29,7 +29,11 @@ try {
   run('git rebase', 'git rebase --autostash origin/main', { allowFailure: true });
 
   run('deploy worker', 'npm run worker:deploy', { allowFailure: true });
-  run('build (all syncs + frontend + server)', 'npm run build', { allowFailure: true });
+  run('sync:data', 'npm run sync:data', { allowFailure: true });
+  run('sync:fuel', 'npm run sync:fuel', { allowFailure: true });
+  run('sync:tolls', 'npm run sync:tolls', { allowFailure: true });
+  run('sync:all-tolls', 'npm run sync:all-tolls', { allowFailure: true });
+  run('build (frontend + server)', 'npm run build', { allowFailure: true });
 
   console.log('\n[ship] git add...');
   try {
