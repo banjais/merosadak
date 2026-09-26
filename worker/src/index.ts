@@ -237,6 +237,22 @@ export default {
       ]);
       return jsonResponse(env, { version: "1.6.0", syncedAt: new Date().toISOString(), highways, cities, incidents, pois });
     }
+    if (url.pathname === "/api/fuel-prices" && request.method === "GET") {
+      const fuel = await readJsonData<any>(env, "fuel-prices.json", null);
+      return jsonResponse(env, fuel || { prices: null, source: "unavailable" });
+    }
+    if (url.pathname === "/api/toll-rates" && request.method === "GET") {
+      const tolls = await readJsonData<any>(env, "toll-rates.json", { tolls: [] });
+      return jsonResponse(env, tolls);
+    }
+    if (url.pathname === "/api/all-toll-rates" && request.method === "GET") {
+      const allTolls = await readJsonData<any>(env, "all-toll-rates.json", { tolls: [] });
+      return jsonResponse(env, allTolls);
+    }
+    if (url.pathname === "/api/traffic" && request.method === "GET") {
+      const corridors = await readJsonData<any[]>(env, "traffic-corridors.json", []);
+      return jsonResponse(env, { corridors, source: "local_static" });
+    }
     if (url.pathname.startsWith("/api/data/") && request.method === "GET") {
       const key = url.pathname.replace("/api/data/", "");
       const value = await env.DATA.get(key);
