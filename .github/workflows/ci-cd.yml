@@ -19,10 +19,7 @@ on:
       - 'server.ts'
       - 'Dockerfile'
       - '.github/workflows/ci-cd.yml'
-      - 'worker/wrangler.toml'
-      - 'worker/sync-data.js'
-      - 'worker/setup-kv.js'
-      - 'worker/package.json'
+      - 'worker/**'
   pull_request:
     branches: [main]
     paths:
@@ -41,10 +38,7 @@ on:
       - 'server.ts'
       - 'Dockerfile'
       - '.github/workflows/ci-cd.yml'
-      - 'worker/wrangler.toml'
-      - 'worker/sync-data.js'
-      - 'worker/setup-kv.js'
-      - 'worker/package.json'
+      - 'worker/**'
   workflow_dispatch:
 
 permissions:
@@ -79,6 +73,8 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error --legacy-peer-deps
+        working-directory: worker
       - run: npm exec tsc --noEmit -p worker/tsconfig.json
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
@@ -143,7 +139,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: worker/package-lock.json
-      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error --legacy-peer-deps
         working-directory: worker
       - working-directory: worker
         run: |
@@ -184,7 +180,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: worker/package-lock.json
-      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
+      - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error --legacy-peer-deps
         working-directory: worker
       - working-directory: worker
         run: npm exec --no-install wrangler deploy
