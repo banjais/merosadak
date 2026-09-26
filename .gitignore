@@ -10,3 +10,6 @@ build/
 !.dev.vars.example
 *.log
 .DS_Store
+public/data/SNH/*.pdf
+public/data/**/*.pdf
+*.pdf
