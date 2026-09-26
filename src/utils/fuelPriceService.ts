@@ -2,7 +2,7 @@ import { FuelRateConfig, NOC_FUEL_RATES } from './vehicleConfigs';
 export type { FuelRateConfig };
 
 const CACHE_KEY = 'merosadak_fuel_prices';
-const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 export interface FuelPriceMetadata {
   source: string;

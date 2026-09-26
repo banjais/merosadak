@@ -2144,6 +2144,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     fuelPrices={fuelPrices}
                     metadata={fuelPriceMetadata}
                     isLoading={isLoadingPrices}
+                    onRefresh={async () => {
+                      setPriceFetchError(null);
+                      try {
+                        const prices = await fetchFuelPrices();
+                        setFuelPrices(prices);
+                        setFuelPriceMetadata(getFuelPriceMetadata());
+                        if (routePlan) {
+                          const updated = applyLiveFuelPrices(routePlan, vehicle, prices);
+                          setRoutePlan(updated);
+                          onRouteCalculated(updated);
+                        }
+                      } catch (err: any) {
+                        setPriceFetchError(err?.message || 'Refresh failed');
+                      }
+                    }}
+                    minutesSinceLastCheck={getMinutesSinceLastCheck()}
+                    isStale={isPriceStale()}
                   />
                   <FuelCostEstimator
                     distanceKm={routePlan.totalDistanceKm}
