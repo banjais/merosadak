@@ -201,18 +201,16 @@ export function UnifiedRouteReport({
   const cautionKm = route.statusSummary.cautionKm;
   const obstructedKm = route.statusSummary.obstructedKm;
   const sourceLabel = distanceSourceLabel || distanceSource;
-  const sourceUrl = distanceSourceUrl || (distanceSource === 'snh_published'
+  const sourceUrl = distanceSourceUrl || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
     ? 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23'
-    : distanceSource === 'dor_geojson_linksum'
-      ? 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement'
+    : distanceSource === 'estimate_aerial'
+      ? undefined
       : undefined);
-  const sourceDescription = distanceSourceDescription || (distanceSource === 'snh_published'
-    ? 'Official Department of Roads published distance from Statistics of National Highway 2022/23.'
-    : distanceSource === 'dor_geojson_linksum'
-      ? 'DoR Archives survey geometry summed from per-link chainage.'
-      : distanceSource === 'estimate_aerial'
-        ? 'Aerial line-of-sight estimate; road distance will normally be longer.'
-        : 'DoR Nepal highway GIS route geometry and certified road network.');
+  const sourceDescription = distanceSourceDescription || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
+    ? 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).'
+    : distanceSource === 'estimate_aerial'
+      ? 'Aerial line-of-sight estimate (Great Circle); actual road distance will normally be longer.'
+      : 'DoR Nepal highway GIS route geometry and certified road network.');
 
   const citationText = useMemo(() => {
     if (!distanceCitation) return '';

@@ -64,7 +64,9 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'bkb', name: 'Bhakundebesi', nepaliName: 'भकुण्डेबेसी', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.5000, lng: 85.6700, elevationM: 520, isMajorHub: false, connectedHighways: ['NH13'] },
   { id: 'npt', name: 'Nepalthok', nepaliName: 'नेपालथोक', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.4200, lng: 85.8700, elevationM: 520, isMajorHub: false, connectedHighways: ['NH13'] },
   { id: 'khk', name: 'Khurkot', nepaliName: 'खुर्कोट', district: 'Sindhuli', province: 'Bagmati', lat: 27.3333, lng: 86.0167, elevationM: 470, isMajorHub: false, connectedHighways: ['NH13'] },
-  { id: 'smd', name: 'Sindhuli Madi', nepaliName: 'सिन्धुली माडी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2800, lng: 85.9100, elevationM: 500, isMajorHub: false, connectedHighways: ['NH13'] }
+  { id: 'smd', name: 'Sindhuli Madi', nepaliName: 'सिन्धुली माडी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2800, lng: 85.9100, elevationM: 500, isMajorHub: false, connectedHighways: ['NH13'] },
+  { id: 'bkt', name: 'Bhaktapur (Suryabinayak)', nepaliName: 'भक्तपुर (सूर्यबिनायक)', district: 'Bhaktapur', province: 'Bagmati', lat: 27.6880, lng: 85.4412, elevationM: 1380, isMajorHub: false, connectedHighways: ['NH03'] },
+  { id: 'bnp', name: 'Banepa', nepaliName: 'बाँपेपा', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.9330, lng: 85.5330, elevationM: 1040, isMajorHub: false, connectedHighways: ['NH13'] }
 ];
 
 export const NEPAL_HIGHWAYS: Highway[] = [

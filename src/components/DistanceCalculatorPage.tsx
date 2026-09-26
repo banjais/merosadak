@@ -41,16 +41,16 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
 
   const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
     {
-      value: 'snh_published',
-      label: 'SNH 2022/23',
+      value: 'dor_snh',
+      label: 'DOR-SNH / DOR-Archives',
       url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'DoR Statistics of National Highway — published table distances',
+      description: 'DoR Statistics of National Highway 2022/23 published distances + surveyed highway network (NH01–NH80)',
     },
     {
-      value: 'dor_geojson_linksum',
-      label: 'Highway network',
+      value: 'estimate_aerial',
+      label: 'Aerial (Straight-Line)',
       url: '',
-      description: 'Road length on the DoR highway graph / GeoJSON network (verified nodes)',
+      description: 'Geodesic Great Circle distance — no surveyed corridor data available',
     },
   ];
 
@@ -255,20 +255,20 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const displayedSource = useMemo(() => {
     if (distanceWithSource) return distanceWithSource.source;
-    return 'snh_published' as DataSourceType;
+    return 'dor_snh' as DataSourceType;
   }, [distanceWithSource]);
 
   const handleDataSourceChange = (source: DataSourceType) => {
     setSelectedDataSource(source);
     if (!origin || !destination) return;
 
-    if (source === 'snh_published') {
+    if (source === 'dor_snh') {
       const pub = lookupSNHDistance(origin.name, destination.name, snhReference);
       if (pub) {
         setDistanceWithSource({
           distanceKm: pub.distanceKm,
           evidenceLevel: 'published',
-          source: 'snh_published',
+          source: 'dor_snh',
           citation: pub.citation,
           linkChain: pub.linkChain,
           publishedDistanceKm: pub.publishedDistanceKm,
@@ -280,7 +280,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       return;
     }
 
-    if (source === 'dor_geojson_linksum') {
+    if (source === 'estimate_aerial') {
       // Prefer live highway graph route km, then SNH link-chain sum
       const graphKm = routeResult?.totalDistanceKm;
       const certified = routeResult?.roadTierBreakdown?.certifiedPercent ?? 0;
@@ -293,7 +293,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
         setDistanceWithSource({
           distanceKm: graphKm,
           evidenceLevel: 'link_sum',
-          source: 'dor_geojson_linksum',
+          source: 'dor_snh',
           note: 'Distance along DoR highway network graph',
         });
         return;
@@ -304,7 +304,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
         setDistanceWithSource({
           distanceKm: linkSum.distanceKm,
           evidenceLevel: 'link_sum',
-          source: 'dor_geojson_linksum',
+          source: 'dor_snh',
           citation: linkSum.citation,
           linkChain: linkSum.linkChain,
           isUncertain: linkSum.isUncertain,

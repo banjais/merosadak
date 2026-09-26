@@ -5,6 +5,9 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev"
   },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  },
   "devDependencies": {
     "wrangler": "^4.0.0",
     "@cloudflare/workers-types": "^4.0.0"

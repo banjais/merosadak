@@ -354,6 +354,58 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: 198,
     intermediateCoords: [[28.2096, 83.9856], [28.2500, 83.7500], [28.2725, 83.6006]]
   },
+  // Kathmandu to Bhaktapur / Suryabinayak (NH03 Araniko)
+  {
+    fromId: 'ktm',
+    toId: 'bkt',
+    distanceKm: 12,
+    baseTimeMinutes: 20,
+    highwayCode: 'NH03',
+    highwayName: 'Araniko 6-Lane Expressway (Kathmandu-Bhaktapur)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -20,
+    intermediateCoords: [[27.7172, 85.3240], [27.7000, 85.3600], [27.6880, 85.4412]]
+  },
+  // Bhaktapur / Suryabinayak to Dhulikhel (NH03)
+  {
+    fromId: 'bkt',
+    toId: 'dhk',
+    distanceKm: 17,
+    baseTimeMinutes: 28,
+    highwayCode: 'NH03',
+    highwayName: 'Araniko Highway (Bhaktapur-Dhulikhel)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 170,
+    intermediateCoords: [[27.6880, 85.4412], [27.6500, 85.4900], [27.6221, 85.5428]]
+  },
+  // Dhulikhel to Banepa (NH13 BP Highway)
+  {
+    fromId: 'dhk',
+    toId: 'bnp',
+    distanceKm: 34,
+    baseTimeMinutes: 45,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Dhulikhel-Banepa)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: -510,
+    intermediateCoords: [[27.6221, 85.5428], [27.7000, 85.5400], [27.8000, 85.5350], [27.9330, 85.5330]]
+  },
+  // Banepa to Nepalthok (NH13 BP Highway)
+  {
+    fromId: 'bnp',
+    toId: 'npt',
+    distanceKm: 45,
+    baseTimeMinutes: 65,
+    highwayCode: 'NH13',
+    highwayName: 'B.P. Koirala Highway (Banepa-Nepalthok)',
+    surface: 'asphalt_excellent',
+    status: 'caution',
+    elevationGain: -510,
+    intermediateCoords: [[27.9330, 85.5330], [27.8200, 85.6200], [27.4200, 85.8700]]
+  },
   // KTM to Dhulikhel (NH03 Araniko)
   {
     fromId: 'ktm',
@@ -1250,7 +1302,7 @@ function buildAerialRouteResult(
       certificationBadge: '📐 Aerial Approx'
     }],
     pathCoordinates: [[origin.lat, origin.lng], [destination.lat, destination.lng]],
-    dataSource: 'Aerial Distance Estimation',
+    dataSource: 'Aerial (Straight-Line)',
     dataProvenance: {
       source: 'Direct Geodesic Line-of-Sight Calculation',
       version: 'Great Circle Haversine (Aerial)',
@@ -1343,10 +1395,10 @@ function buildRoadGraphRouteResult(
       certificationBadge: '🛡️ DoR Certified'
     }],
     pathCoordinates: real.pathCoordinates,
-    dataSource: 'Department of Roads, Nepal (Surveyed Network)',
+    dataSource: 'DOR-SNH / DOR-Archives',
     dataProvenance: {
-      source: 'Department of Roads (DoR Nepal) GIS Survey',
-      version: 'DoR Official Gazette Network (NH01–NH80)',
+      source: 'Department of Roads (DoR Nepal) GIS Survey + SNH 2022/23',
+      version: 'DoR Official Gazette Network (NH01–NH80) + SNH Published Distances',
       updatedAt: '2026-03-01',
       certifiedAuthority: 'Federal Ministry of Physical Infrastructure & Transport'
     },
@@ -1791,10 +1843,10 @@ export function findRouteByPreference(
       timeDiffMinutes: 0,
       reason: viaHighways
     },
-    dataSource: 'Department of Roads, Nepal (NH01–NH80 Network)',
+    dataSource: 'DOR-SNH / DOR-Archives',
     dataProvenance: {
       source: 'Department of Roads (DoR Nepal) GIS Network',
-      version: 'DoR Official Gazette Highway Network (NH01–NH80)',
+      version: 'DoR Official Gazette Highway Network (NH01–NH80) + SNH 2022/23 Published Distances',
       updatedAt: '2026-03-01',
       certifiedAuthority: 'Federal Ministry of Physical Infrastructure & Transport'
     },

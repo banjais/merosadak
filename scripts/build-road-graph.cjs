@@ -112,6 +112,8 @@ function makeSnapper(cellKm) {
   return { getOrCreate, nodes };
 }
 
+const CALCULATOR_CITIES_FILE = path.join(__dirname, '..', 'public', 'data', 'calculator-cities.json');
+
 function loadCityNodes() {
   const src = fs.readFileSync(CITY_DATA_FILE, 'utf8');
   const block = src.match(/CITIES_AND_JUNCTIONS[\s\S]*?=\s*\[([\s\S]*?)\n\];/);
@@ -128,8 +130,28 @@ function loadCityNodes() {
       .split(',')
       .map((s) => s.trim().replace(/['"]/g, ''))
       .filter(Boolean);
-    entries.push({ id, lat, lng, highways });
+    entries.push({ id, lat, lng, highways, source: 'curated' });
   }
+
+  // Also load calculator cities (SNH-published district HQs + bundled cities)
+  // Filter out infrastructure points (EV chargers, tolls, weather, POIs, traffic)
+  const calcData = JSON.parse(fs.readFileSync(CALCULATOR_CITIES_FILE, 'utf8'));
+  const infraPrefixes = ['NH', 'ev-', 'toll-', 'wx-', 'poi-', 'tr-', 'inc-'];
+  for (const city of calcData.cities) {
+    const isInfra = infraPrefixes.some(p => city.id.startsWith(p));
+    if (isInfra) continue;
+    // Skip if already in curated list
+    if (entries.some(e => e.id === city.id)) continue;
+    // Use district from calculator cities or infer
+    entries.push({ 
+      id: city.id, 
+      lat: city.lat, 
+      lng: city.lng, 
+      highways: [], // Will be inferred from snapping
+      source: city.source 
+    });
+  }
+
   return entries;
 }
 

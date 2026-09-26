@@ -307,7 +307,7 @@ export function estimateDistance(
   };
 }
 
-export type DataSourceType = 'snh_published' | 'dor_geojson_linksum' | 'estimate_aerial';
+export type DataSourceType = 'dor_snh' | 'estimate_aerial';
 
 export interface DistanceWithSource {
   distanceKm: number;
@@ -322,12 +322,10 @@ export interface DistanceWithSource {
 
 export function getSourceLabel(source: DataSourceType): string {
   switch (source) {
-    case 'snh_published':
-      return 'DoR Published SNH 2022/23';
-    case 'dor_geojson_linksum':
-      return 'DoR Archives (GeoJSON Link-Sum)';
+    case 'dor_snh':
+      return 'DOR-SNH / DOR-Archives';
     case 'estimate_aerial':
-      return 'Estimate (Aerial Line-of-Sight)';
+      return 'Aerial (Straight-Line)';
     default:
       return source;
   }
@@ -335,10 +333,8 @@ export function getSourceLabel(source: DataSourceType): string {
 
 export function getSourceDescription(source: DataSourceType): string {
   switch (source) {
-    case 'snh_published':
-      return 'Official Department of Roads published distance from Statistics of National Highway 2022/23';
-    case 'dor_geojson_linksum':
-      return 'DoR Archives survey link geometry — distance summed from per-link chainage in highway GeoJSON files';
+    case 'dor_snh':
+      return 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).';
     case 'estimate_aerial':
       return 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.';
     default:
@@ -362,7 +358,7 @@ export function lookupDistanceWithFallback(
     return {
       distanceKm: published.distanceKm,
       evidenceLevel: 'published',
-      source: 'snh_published',
+      source: 'dor_snh',
       citation: published.citation,
       linkChain: published.linkChain,
       publishedDistanceKm: published.publishedDistanceKm,
@@ -374,7 +370,7 @@ export function lookupDistanceWithFallback(
     return {
       distanceKm: linkSum.distanceKm,
       evidenceLevel: 'link_sum',
-      source: 'dor_geojson_linksum',
+      source: 'dor_snh',
       citation: linkSum.citation,
       linkChain: linkSum.linkChain,
       isUncertain: linkSum.isUncertain,
