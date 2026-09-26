@@ -1825,7 +1825,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onViewOnMap={onViewOnMap}
                 />
 
-           {/* Multi-Route Alternatives (If available) */}
+           
+              {/* Route Alternatives Toggle (show when alternatives exist) */}
+              {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setResultsViewMode(resultsViewMode === 'overview' ? 'comparison' : 'overview')}
+                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    resultsViewMode === 'comparison'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
+                      : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
+                  }`}
+                  title="Toggle route alternatives comparison"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>{resultsViewMode === 'overview' ? 'Compare' : 'Overview'}</span>
+                  <span className="text-[10px] opacity-70">
+                    ({routePlan.allRouteOptions.length} routes)
+                  </span>
+                </button>
+              )}{/* Multi-Route Alternatives (If available) */}
           {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
             <RouteOptionsSelector
               activePlan={routePlan}

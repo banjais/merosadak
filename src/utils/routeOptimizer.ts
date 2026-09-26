@@ -1,10 +1,12 @@
 import { CityNode, RoutePlanResult, VehicleType, RoutePreference, RoadIncident, RouteStep, EVCharger, SegmentSafetyData, TerrainFilterOptions, RoadClassificationTier } from '../types';
 import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
-import { preloadRoadGraph, findRoadGraphRoute } from './roadGraphRouter';
+import { preloadRoadGraph, findRoadGraphRoute, getRoadGraph } from './roadGraphRouter';
 import { getVehicleCalcConfig } from './vehicleConfigs';
 import { getEffectiveFuelRate } from './fuelPriceService';
 import { calculateTollCost, mapVehicleToTollCategory } from './tollRates.client';
+import { findUnifiedRouteSync } from './comprehensiveDistance';
+import { getCachedSNHReference } from './snhLookup';
 
 export function classifyRoadTier(highwayCode?: string, surface?: string): {
   tier: RoadClassificationTier;
@@ -367,33 +369,33 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
     elevationGain: -20,
     intermediateCoords: [[27.7172, 85.3240], [27.7000, 85.3600], [27.6880, 85.4412]]
   },
-  // Bhaktapur / Suryabinayak to Dhulikhel (NH03)
+  // Bhaktapur / Suryabinayak to Banepa (NH03 Araniko) — correct order: KTM → BKT → BNP → DHK
   {
     fromId: 'bkt',
-    toId: 'dhk',
-    distanceKm: 17,
-    baseTimeMinutes: 28,
-    highwayCode: 'NH03',
-    highwayName: 'Araniko Highway (Bhaktapur-Dhulikhel)',
-    surface: 'asphalt_excellent',
-    status: 'clear',
-    elevationGain: 170,
-    intermediateCoords: [[27.6880, 85.4412], [27.6500, 85.4900], [27.6221, 85.5428]]
-  },
-  // Dhulikhel to Banepa (NH13 BP Highway)
-  {
-    fromId: 'dhk',
     toId: 'bnp',
-    distanceKm: 34,
-    baseTimeMinutes: 45,
-    highwayCode: 'NH13',
-    highwayName: 'B.P. Koirala Highway (Dhulikhel-Banepa)',
+    distanceKm: 16,
+    baseTimeMinutes: 25,
+    highwayCode: 'NH03',
+    highwayName: 'Araniko Highway (Bhaktapur-Banepa)',
     surface: 'asphalt_excellent',
     status: 'clear',
-    elevationGain: -510,
-    intermediateCoords: [[27.6221, 85.5428], [27.7000, 85.5400], [27.8000, 85.5350], [27.9330, 85.5330]]
+    elevationGain: 50,
+    intermediateCoords: [[27.6880, 85.4412], [27.7200, 85.4700], [27.8000, 85.5100], [27.9330, 85.5330]]
   },
-  // Banepa to Nepalthok (NH13 BP Highway)
+  // Banepa to Dhulikhel (NH03 Araniko)
+  {
+    fromId: 'bnp',
+    toId: 'dhk',
+    distanceKm: 18,
+    baseTimeMinutes: 30,
+    highwayCode: 'NH03',
+    highwayName: 'Araniko Highway (Banepa-Dhulikhel)',
+    surface: 'asphalt_excellent',
+    status: 'clear',
+    elevationGain: 200,
+    intermediateCoords: [[27.9330, 85.5330], [27.8500, 85.5400], [27.6221, 85.5428]]
+  },
+  // Banepa to Nepalthok (NH13 BP Highway) — BP Highway branches east from Banepa
   {
     fromId: 'bnp',
     toId: 'npt',
@@ -2054,10 +2056,104 @@ export function findOptimizedRoute(
       destination = snapToNearestRoutingCity(destinationNode);
     }
     if (origin && destination) {
-      return applyDisplayNodes(
-        buildRoadGraphRouteResult(origin, destination, preference, vehicle)
-          || buildAerialRouteResult(origin, destination, preference, vehicle)
+      // Use unified distance chain: road graph → SNH published → aerial
+      const roadGraph = getRoadGraph();
+      const snhRef = getCachedSNHReference();
+      const snhDistances = snhRef?.published_distances || {};
+      const unified = findUnifiedRouteSync(
+        routingOriginId,
+        routingDestId,
+        { lat: origin.lat, lng: origin.lng },
+        { lat: destination.lat, lng: destination.lng },
+        roadGraph,
+        snhDistances
       );
+      if (unified && unified.distanceKm > 0) {
+        // Convert unified result to RoutePlanResult
+        const aerialKm = Math.round(calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) * 10) / 10;
+        const vehicleConfig = getVehicleCalcConfig(vehicle);
+        const estimatedMinutes = Math.round((unified.distanceKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+        const fuelLiters = Math.round((unified.distanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
+        const highwaysLabel = unified.highwaysUsed?.filter((h) => h && h !== 'undefined').join(' → ') || 'Local road network';
+        const isAerial = unified.source === 'aerial';
+
+        return applyDisplayNodes({
+          id: `unified-${routingOriginId}-${routingDestId}-${preference}-${vehicle}`,
+          origin,
+          destination,
+          preference,
+          vehicle,
+          routeName: isAerial ? 'Aerial (Straight-Line)' : 'Highway Route (real road distance)',
+          routeBadge: isAerial ? '📐 Aerial Approx' : '🛣️ DoR Network',
+          routeColor: isAerial ? '#94a3b8' : '#64748b',
+          viaHighlights: isAerial ? 'None — aerial line-of-sight' : highwaysLabel,
+          totalDistanceKm: unified.distanceKm,
+          aerialDistanceKm: aerialKm,
+          circuityFactor: aerialKm > 0 ? Math.round((unified.distanceKm / aerialKm) * 100) / 100 : 1.0,
+          roadTierBreakdown: {
+            highwayKm: isAerial ? 0 : unified.distanceKm,
+            provincialKm: 0,
+            localKm: 0,
+            communityKm: 0,
+            certifiedPercent: isAerial ? 0 : 100
+          },
+          estimatedTimeMinutes: estimatedMinutes,
+          roadConditionScore: 0,
+          safetyIndex: {
+            overallScore: 0,
+            safetyTier: 'moderate',
+            tierLabel: 'Unknown',
+            color: '#94a3b8',
+            roadQualityAverage: 0,
+            accidentRiskSummary: { safeKm: 0, moderateKm: 0, elevatedRiskKm: 0, highHazardKm: 0, safePercentage: 0 },
+            totalHistoricalAnnualAccidents: 0,
+            activeBlackspots: [],
+            segmentBreakdown: [],
+            keySafetyDirectives: isAerial
+              ? ['Aerial line-of-sight distance. No surveyed road corridor available.']
+              : ['Distance follows real road network; live condition data unavailable.']
+          },
+          statusSummary: { clearKm: 0, cautionKm: 0, obstructedKm: 0 },
+          fuelEstimate: {
+            liters: fuelLiters,
+            costNpr: Math.round(fuelLiters * getEffectiveFuelRate(vehicle)),
+            avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
+          },
+          evEstimate: {
+            kwhRequired: Math.round((unified.distanceKm / 6.2) * 10) / 10,
+            recommendedChargingStops: [],
+            batteryUsagePercent: Math.round(((unified.distanceKm / 6.2) / 50) * 100)
+          },
+          totalTollCostNpr: 0,
+          elevationGainM: Math.abs(destination.elevationM - origin.elevationM),
+          maxElevationM: Math.max(origin.elevationM, destination.elevationM),
+          incidentsOnRoute: [],
+          steps: [{
+            instruction: isAerial
+              ? `Straight-line aerial path from ${origin.name} to ${destination.name} (no DoR highway route available)`
+              : `Follow ${highwaysLabel} from ${origin.name} to ${destination.name}`,
+            highwayCode: isAerial ? 'AERIAL' : (unified.highwaysUsed?.[0] || 'NH'),
+            distanceKm: unified.distanceKm,
+            durationMinutes: estimatedMinutes,
+            roadStatus: 'clear',
+            surface: isAerial ? 'asphalt_excellent' : 'blacktopped_fair',
+            roadClassification: isAerial ? 'community_track' : 'national_highway',
+            certificationBadge: isAerial ? '📐 Aerial Approx' : '🛡️ DoR Certified'
+          }],
+          pathCoordinates: unified.pathCoordinates || [[origin.lat, origin.lng], [destination.lat, destination.lng]],
+          dataSource: isAerial ? 'Aerial (Straight-Line)' : 'DOR-SNH / DOR-Archives',
+          dataProvenance: {
+            source: isAerial
+              ? 'Direct Geodesic Line-of-Sight Calculation'
+              : 'Department of Roads (DoR Nepal) GIS Network + SNH 2022/23',
+            version: isAerial ? 'Great Circle Haversine (Aerial)' : 'DoR Official Gazette (NH01–NH80) + SNH Published',
+            updatedAt: 'Real-time',
+            certifiedAuthority: isAerial ? 'Aerial Geometry (No DoR Corridor)' : 'Federal Ministry of Physical Infrastructure & Transport'
+          },
+          corridorsTraversed: isAerial ? 'None — no Department of Roads highway corridor covers this origin-destination pair' : highwaysLabel
+        });
+      }
+      return null;
     }
     return null;
   }

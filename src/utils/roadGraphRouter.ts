@@ -36,6 +36,10 @@ export function isRoadGraphReady(): boolean {
   return graph !== null;
 }
 
+export function getRoadGraph(): RoadGraph | null {
+  return graph;
+}
+
 // Small binary min-heap keyed by distance, for Dijkstra
 class MinHeap {
   private heap: [number, number][] = []; // [dist, nodeId]
