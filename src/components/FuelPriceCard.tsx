@@ -89,10 +89,10 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
             <button
               onClick={() => setShowInfo(!showInfo)}
               className="p-1 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 transition"
-              title="Source & update info"
+              title="Source & update details"
               type="button"
             >
-              <Info className="w-4 h-4" />
+              <Info className="w-3.5 h-3.5" />
             </button>
             {showInfo && metadata && (
               <div className="absolute right-0 top-8 z-50 w-72 bg-slate-950 border border-slate-700 rounded-xl p-3 shadow-2xl animate-fadeIn">
@@ -141,6 +141,17 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
             )}
           </div>
         </div>
+      </div>
+
+      {/* Source & freshness summary */}
+      <div className="flex items-center justify-between text-[11px] text-slate-400">
+        <span className="truncate">
+          {metadata?.sourceLabel || metadata?.source || 'NOC defaults'}
+          {metadata?.lastUpdated ? (
+            <span className="text-slate-500"> • Updated {formatDate(metadata.lastUpdated)}</span>
+          ) : null}
+        </span>
+        <span className="text-slate-500">{freshnessText}</span>
       </div>
 
       {/* Price Grid */}
