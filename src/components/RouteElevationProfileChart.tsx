@@ -791,6 +791,10 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
         </div>
       </div>
 
+      <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-900">
+        Elevation data source: interpolated from city database. Not DEM/survey grade.
+      </div>
+
       {/* Chart Legend, Zoom Toolbar & Drag-to-Zoom Controls */}
       <div className="space-y-2 pt-1 border-t border-slate-900">
         <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">

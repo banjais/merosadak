@@ -271,7 +271,7 @@ export function UnifiedRouteReport({
           label="Road distance"
           value={formatNumber(distanceKm, 2)}
           unit="km"
-          detail={`${formatNumber(routeDistance, 2)} km route`}
+          detail={`${formatNumber(routeDistance, 2)} km route • ${evidenceLabels[distanceEvidence] || distanceEvidence}`}
           tone="emerald"
         />
         <MetricCard
@@ -299,7 +299,7 @@ export function UnifiedRouteReport({
           icon={Mountain}
           label="Peak elev."
           value={`${route.maxElevationM} m`}
-          detail={`+${route.elevationGainM} m climb`}
+          detail={`+${route.elevationGainM} m climb • City database`}
           tone="purple"
         />
         <MetricCard
