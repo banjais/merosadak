@@ -1,0 +1,1605 @@
+{
+  "cities": [
+    {
+      "id": "ktm",
+      "name": "Kathmandu",
+      "district": "Kathmandu",
+      "lat": 27.705925885772707,
+      "lng": 85.36213595235702,
+      "source": "bundled"
+    },
+    {
+      "id": "pkr",
+      "name": "Pokhara",
+      "district": "Unknown",
+      "lat": 27.91296103347829,
+      "lng": 84.4479329042599,
+      "source": "bundled"
+    },
+    {
+      "id": "cht",
+      "name": "Narayanghat / Bharatpur",
+      "district": "Unknown",
+      "lat": 28.55721636358205,
+      "lng": 84.57516483445177,
+      "source": "bundled"
+    },
+    {
+      "id": "mgl",
+      "name": "Mugling",
+      "district": "Unknown",
+      "lat": 29.87579389783934,
+      "lng": 87.13499169497689,
+      "source": "bundled"
+    },
+    {
+      "id": "btl",
+      "name": "Butwal",
+      "district": "Unknown",
+      "lat": 29.235852385010396,
+      "lng": 88.18851753752092,
+      "source": "bundled"
+    },
+    {
+      "id": "bdg",
+      "name": "Bardaghat",
+      "district": "Unknown",
+      "lat": 29.689190423222477,
+      "lng": 85.40343684839151,
+      "source": "bundled"
+    },
+    {
+      "id": "bhr",
+      "name": "Bhairahawa / Sunauli",
+      "district": "Unknown",
+      "lat": 31.237989906834763,
+      "lng": 86.38315183906701,
+      "source": "bundled"
+    },
+    {
+      "id": "htd",
+      "name": "Hetauda",
+      "district": "Unknown",
+      "lat": 29.02371698083597,
+      "lng": 83.82248549767249,
+      "source": "bundled"
+    },
+    {
+      "id": "brg",
+      "name": "Birgunj",
+      "district": "Unknown",
+      "lat": 29.730290412403477,
+      "lng": 87.55008334989353,
+      "source": "bundled"
+    },
+    {
+      "id": "jnk",
+      "name": "Janakpurdham",
+      "district": "Unknown",
+      "lat": 30.97859936813747,
+      "lng": 85.81410765910765,
+      "source": "bundled"
+    },
+    {
+      "id": "brd",
+      "name": "Bardibas",
+      "district": "Unknown",
+      "lat": 28.95062253633331,
+      "lng": 87.32545227520856,
+      "source": "bundled"
+    },
+    {
+      "id": "brt",
+      "name": "Biratnagar",
+      "district": "Unknown",
+      "lat": 28.23116001813528,
+      "lng": 84.9164558927777,
+      "source": "bundled"
+    },
+    {
+      "id": "dhr",
+      "name": "Dharan",
+      "district": "Unknown",
+      "lat": 30.717779479446,
+      "lng": 85.99876617128668,
+      "source": "bundled"
+    },
+    {
+      "id": "kkr",
+      "name": "Kakarbhitta",
+      "district": "Unknown",
+      "lat": 29.72192107918385,
+      "lng": 85.27014212005602,
+      "source": "bundled"
+    },
+    {
+      "id": "npg",
+      "name": "Nepalgunj",
+      "district": "Unknown",
+      "lat": 27.8477500729754,
+      "lng": 84.36487911794451,
+      "source": "bundled"
+    },
+    {
+      "id": "srk",
+      "name": "Surkhet (Birendranagar)",
+      "district": "Surkhet",
+      "lat": 28.66853771476329,
+      "lng": 81.54084701188697,
+      "source": "bundled"
+    },
+    {
+      "id": "dhg",
+      "name": "Dhangadhi",
+      "district": "Unknown",
+      "lat": 29.46415580760398,
+      "lng": 84.06490439238495,
+      "source": "bundled"
+    },
+    {
+      "id": "mhn",
+      "name": "Mahendranagar / Gaddachauki",
+      "district": "Unknown",
+      "lat": 29.733586280925277,
+      "lng": 83.97940167267909,
+      "source": "bundled"
+    },
+    {
+      "id": "dhk",
+      "name": "Dhulikhel",
+      "district": "Unknown",
+      "lat": 30.35150629287687,
+      "lng": 87.70883028194243,
+      "source": "bundled"
+    },
+    {
+      "id": "sdh",
+      "name": "Sindhuli Gadhi",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "dml",
+      "name": "Damauli",
+      "district": "Unknown",
+      "lat": 29.88557957426781,
+      "lng": 84.45968216412267,
+      "source": "bundled"
+    },
+    {
+      "id": "plp",
+      "name": "Tansen (Palpa)",
+      "district": "Palpa",
+      "lat": 27.820109026532677,
+      "lng": 83.6265938204594,
+      "source": "bundled"
+    },
+    {
+      "id": "ilm",
+      "name": "Ilam",
+      "district": "Ilam",
+      "lat": 26.84751161147057,
+      "lng": 87.95054621343816,
+      "source": "bundled"
+    },
+    {
+      "id": "bgl",
+      "name": "Baglung",
+      "district": "Baglung",
+      "lat": 28.33125487744846,
+      "lng": 83.27257881922054,
+      "source": "bundled"
+    },
+    {
+      "id": "jml",
+      "name": "Jumla",
+      "district": "Jumla",
+      "lat": 29.303082022533072,
+      "lng": 82.29018367774702,
+      "source": "bundled"
+    },
+    {
+      "id": "nbz",
+      "name": "Naubise / Khanikhola",
+      "district": "Unknown",
+      "lat": 31.04464068139246,
+      "lng": 83.99752044142829,
+      "source": "bundled"
+    },
+    {
+      "id": "kdr",
+      "name": "Tatopani / Kodari (China Border)",
+      "district": "Unknown",
+      "lat": 28.039285587391742,
+      "lng": 85.09541572056514,
+      "source": "bundled"
+    },
+    {
+      "id": "dht",
+      "name": "Dhankuta",
+      "district": "Dhankuta",
+      "lat": 26.972128008205676,
+      "lng": 87.3546711748402,
+      "source": "bundled"
+    },
+    {
+      "id": "jnp",
+      "name": "Janakpur",
+      "district": "Unknown",
+      "lat": 28.548999399050402,
+      "lng": 86.3481277901967,
+      "source": "bundled"
+    },
+    {
+      "id": "rbj",
+      "name": "Rajbiraj",
+      "district": "Unknown",
+      "lat": 27.75890386548229,
+      "lng": 87.74716970002785,
+      "source": "bundled"
+    },
+    {
+      "id": "ctr",
+      "name": "Chautara",
+      "district": "Unknown",
+      "lat": 30.006381708295837,
+      "lng": 86.04055141252768,
+      "source": "bundled"
+    },
+    {
+      "id": "bid",
+      "name": "Bidur",
+      "district": "Unknown",
+      "lat": 27.637502749856264,
+      "lng": 84.09539889133809,
+      "source": "bundled"
+    },
+    {
+      "id": "pyt",
+      "name": "Pyuthan",
+      "district": "Pyuthan",
+      "lat": 28.12723427883031,
+      "lng": 82.86321305494276,
+      "source": "bundled"
+    },
+    {
+      "id": "bsl",
+      "name": "Besisahar",
+      "district": "Unknown",
+      "lat": 29.678360279377134,
+      "lng": 87.27820094210314,
+      "source": "bundled"
+    },
+    {
+      "id": "chm",
+      "name": "Chame",
+      "district": "Unknown",
+      "lat": 29.16553551054599,
+      "lng": 86.05198428698844,
+      "source": "bundled"
+    },
+    {
+      "id": "btm",
+      "name": "Birtamod",
+      "district": "Unknown",
+      "lat": 30.261537239974547,
+      "lng": 88.16318777956148,
+      "source": "bundled"
+    },
+    {
+      "id": "bhp",
+      "name": "Bhadrapur",
+      "district": "Unknown",
+      "lat": 30.870242852357112,
+      "lng": 86.72417534044402,
+      "source": "bundled"
+    },
+    {
+      "id": "khn",
+      "name": "Khunuwa",
+      "district": "Unknown",
+      "lat": 27.85203046379654,
+      "lng": 86.75511758504376,
+      "source": "bundled"
+    },
+    {
+      "id": "sdk",
+      "name": "Sandhikharka",
+      "district": "Unknown",
+      "lat": 28.001374513318694,
+      "lng": 87.02564525380254,
+      "source": "bundled"
+    },
+    {
+      "id": "ghr",
+      "name": "Ghorahi",
+      "district": "Unknown",
+      "lat": 31.45421524628381,
+      "lng": 85.62775537135045,
+      "source": "bundled"
+    },
+    {
+      "id": "jjk",
+      "name": "Jajarkot",
+      "district": "Jajarkot",
+      "lat": 28.87826966227416,
+      "lng": 82.1513556339221,
+      "source": "bundled"
+    },
+    {
+      "id": "dun",
+      "name": "Dunai",
+      "district": "Unknown",
+      "lat": 30.37789877095202,
+      "lng": 84.06682693272242,
+      "source": "bundled"
+    },
+    {
+      "id": "gly",
+      "name": "Gulariya",
+      "district": "Unknown",
+      "lat": 29.31831978977599,
+      "lng": 84.45415580217173,
+      "source": "bundled"
+    },
+    {
+      "id": "lmk",
+      "name": "Lamki",
+      "district": "Unknown",
+      "lat": 28.17227527408781,
+      "lng": 86.6868772044961,
+      "source": "bundled"
+    },
+    {
+      "id": "lgt",
+      "name": "Lodeghat",
+      "district": "Unknown",
+      "lat": 28.891004951990745,
+      "lng": 83.86428505681712,
+      "source": "bundled"
+    },
+    {
+      "id": "dpl",
+      "name": "Dipayal",
+      "district": "Unknown",
+      "lat": 29.21762711983524,
+      "lng": 85.18137202357174,
+      "source": "bundled"
+    },
+    {
+      "id": "ark",
+      "name": "Arungkhola",
+      "district": "Unknown",
+      "lat": 29.57944381037693,
+      "lng": 86.70398775635711,
+      "source": "bundled"
+    },
+    {
+      "id": "ith",
+      "name": "Itahari",
+      "district": "Unknown",
+      "lat": 29.838898041622212,
+      "lng": 85.98260158725444,
+      "source": "bundled"
+    },
+    {
+      "id": "dmk",
+      "name": "Damak",
+      "district": "Unknown",
+      "lat": 31.127103333430306,
+      "lng": 83.87138850480986,
+      "source": "bundled"
+    },
+    {
+      "id": "ptl",
+      "name": "Pathlaiya",
+      "district": "Unknown",
+      "lat": 27.63176963349723,
+      "lng": 87.2712555250221,
+      "source": "bundled"
+    },
+    {
+      "id": "lhn",
+      "name": "Lahan",
+      "district": "Unknown",
+      "lat": 28.271388992947184,
+      "lng": 84.98456676930483,
+      "source": "bundled"
+    },
+    {
+      "id": "atr",
+      "name": "Attariya",
+      "district": "Unknown",
+      "lat": 31.422697317449412,
+      "lng": 85.7534071009475,
+      "source": "bundled"
+    },
+    {
+      "id": "gch",
+      "name": "Galchhi",
+      "district": "Unknown",
+      "lat": 31.041130265126593,
+      "lng": 84.0420366168155,
+      "source": "bundled"
+    },
+    {
+      "id": "mlk",
+      "name": "Malekhu",
+      "district": "Unknown",
+      "lat": 29.926721278915913,
+      "lng": 86.30649009916067,
+      "source": "bundled"
+    },
+    {
+      "id": "ngd",
+      "name": "Nagdhunga",
+      "district": "Unknown",
+      "lat": 28.0742317144641,
+      "lng": 85.96040513397348,
+      "source": "bundled"
+    },
+    {
+      "id": "tst",
+      "name": "Tistung",
+      "district": "Unknown",
+      "lat": 28.33000584720729,
+      "lng": 84.88170066836932,
+      "source": "bundled"
+    },
+    {
+      "id": "dmn",
+      "name": "Daman",
+      "district": "Unknown",
+      "lat": 30.366611847350285,
+      "lng": 84.11570163422219,
+      "source": "bundled"
+    },
+    {
+      "id": "amg",
+      "name": "Amlekhgunj",
+      "district": "Unknown",
+      "lat": 27.773810732111297,
+      "lng": 86.67357282267618,
+      "source": "bundled"
+    },
+    {
+      "id": "jlb",
+      "name": "Jalbire",
+      "district": "Unknown",
+      "lat": 27.806086839031614,
+      "lng": 83.78012081920265,
+      "source": "bundled"
+    },
+    {
+      "id": "apt",
+      "name": "Aaptari",
+      "district": "Unknown",
+      "lat": 31.027907364130474,
+      "lng": 87.2375559302945,
+      "source": "bundled"
+    },
+    {
+      "id": "bkb",
+      "name": "Bhakundebesi",
+      "district": "Unknown",
+      "lat": 31.11124120940358,
+      "lng": 86.2049951679937,
+      "source": "bundled"
+    },
+    {
+      "id": "npt",
+      "name": "Nepalthok",
+      "district": "Unknown",
+      "lat": 31.497913633921524,
+      "lng": 84.62512963875186,
+      "source": "bundled"
+    },
+    {
+      "id": "khk",
+      "name": "Khurkot",
+      "district": "Unknown",
+      "lat": 29.72434248051553,
+      "lng": 85.07128387992621,
+      "source": "bundled"
+    },
+    {
+      "id": "smd",
+      "name": "Sindhuli Madi",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "NH04",
+      "name": "Prithvi Highway",
+      "district": "Unknown",
+      "lat": 27.655217572639117,
+      "lng": 84.69008922355208,
+      "source": "bundled"
+    },
+    {
+      "id": "NH04-seg-1",
+      "name": "Nepal Electricity Authority DC Fast Charger",
+      "district": "Unknown",
+      "lat": 29.852951354517774,
+      "lng": 84.09715372724142,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-mugling",
+      "name": "BYD & Tata Fast Hub Mugling",
+      "district": "Unknown",
+      "lat": 29.261640058329814,
+      "lng": 86.67057955188751,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-dumre",
+      "name": "Bandipur Highway Resort EV Station",
+      "district": "Unknown",
+      "lat": 29.500339185689697,
+      "lng": 87.04800080873869,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-pkr-prithvi",
+      "name": "Pokhara City Hub Fast Charger",
+      "district": "Unknown",
+      "lat": 28.723361722937668,
+      "lng": 83.6687222422408,
+      "source": "bundled"
+    },
+    {
+      "id": "toll-nagdhunga",
+      "name": "Nagdhunga Tunnel Toll Plaza",
+      "district": "Unknown",
+      "lat": 28.120480241931734,
+      "lng": 84.74626044380763,
+      "source": "bundled"
+    },
+    {
+      "id": "toll-malekhu",
+      "name": "Roads Board Nepal Malekhu Toll",
+      "district": "Unknown",
+      "lat": 29.696880141059808,
+      "lng": 86.71751182880323,
+      "source": "bundled"
+    },
+    {
+      "id": "NH05",
+      "name": "Narayanghat–Mugling Highway",
+      "district": "Unknown",
+      "lat": 29.67045623586388,
+      "lng": 84.64032392439357,
+      "source": "bundled"
+    },
+    {
+      "id": "NH05-seg-1",
+      "name": "Highway Oasis Fast Charger",
+      "district": "Unknown",
+      "lat": 30.428860209828578,
+      "lng": 85.94443952156442,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-narayanghat",
+      "name": "Bharatpur Central Charging Station",
+      "district": "Unknown",
+      "lat": 30.92649989783305,
+      "lng": 84.46519863006826,
+      "source": "bundled"
+    },
+    {
+      "id": "toll-aaptari",
+      "name": "Roads Board Nepal Aaptari Toll Plaza",
+      "district": "Unknown",
+      "lat": 30.44357745025754,
+      "lng": 86.79403528404602,
+      "source": "bundled"
+    },
+    {
+      "id": "NH01",
+      "name": "Mahendra Highway (East–West Highway)",
+      "district": "Unknown",
+      "lat": 30.997607740151857,
+      "lng": 87.44739442649204,
+      "source": "bundled"
+    },
+    {
+      "id": "NH01-seg-1",
+      "name": "Itahari Sub-Metropolitan Supercharger",
+      "district": "Unknown",
+      "lat": 28.381698216647788,
+      "lng": 88.36989917961355,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-bardibas",
+      "name": "Bardibas Highway EV Hub",
+      "district": "Unknown",
+      "lat": 29.022479832719444,
+      "lng": 88.34105970705065,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-hetauda",
+      "name": "Hetauda Industrial EV Plaza",
+      "district": "Unknown",
+      "lat": 30.221800909590584,
+      "lng": 85.26670373324578,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-butwal",
+      "name": "Butwal Traffic Chowk Mega Charger",
+      "district": "Unknown",
+      "lat": 28.748882166405657,
+      "lng": 85.77416657368718,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-kohalpur",
+      "name": "Kohalpur Western Nepal EV Hub",
+      "district": "Unknown",
+      "lat": 29.49474204363369,
+      "lng": 85.18685756066968,
+      "source": "bundled"
+    },
+    {
+      "id": "toll-hetauda",
+      "name": "RBN Hetauda Entry Toll",
+      "district": "Unknown",
+      "lat": 29.622082080954144,
+      "lng": 83.68151810573339,
+      "source": "bundled"
+    },
+    {
+      "id": "toll-butwal",
+      "name": "RBN Butwal Toll Gate",
+      "district": "Unknown",
+      "lat": 29.916419543775916,
+      "lng": 88.45992090115843,
+      "source": "bundled"
+    },
+    {
+      "id": "NH13",
+      "name": "B.P. Koirala Highway (Banepa–Bardibas)",
+      "district": "Unknown",
+      "lat": 30.29311362949644,
+      "lng": 86.05357611355916,
+      "source": "bundled"
+    },
+    {
+      "id": "NH13-seg-1",
+      "name": "Khurkot Sunkoshi Fast Hub",
+      "district": "Unknown",
+      "lat": 29.56071505624815,
+      "lng": 85.73605540377855,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-sindhuli",
+      "name": "Sindhuli Madi Charging Plaza",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "NH10",
+      "name": "Siddhartha Highway",
+      "district": "Unknown",
+      "lat": 28.144433901883158,
+      "lng": 88.1578936027967,
+      "source": "bundled"
+    },
+    {
+      "id": "NH10-seg-1",
+      "name": "Syangja Waling Fast Station",
+      "district": "Syangja",
+      "lat": 28.01791574031723,
+      "lng": 83.78226796561081,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-palpa",
+      "name": "Palpa Tansen City Charger",
+      "district": "Palpa",
+      "lat": 27.820109026532677,
+      "lng": 83.6265938204594,
+      "source": "bundled"
+    },
+    {
+      "id": "NH02",
+      "name": "Tribhuvan Highway (Byroad)",
+      "district": "Unknown",
+      "lat": 29.51420558928873,
+      "lng": 85.84945779398603,
+      "source": "bundled"
+    },
+    {
+      "id": "NH02-seg-1",
+      "name": "Daman Mountain Resort EV Charger",
+      "district": "Unknown",
+      "lat": 29.574741595268335,
+      "lng": 85.27384713271827,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-birgunj",
+      "name": "Birgunj ICD Supercharger",
+      "district": "Unknown",
+      "lat": 28.470546186026507,
+      "lng": 83.8893509300562,
+      "source": "bundled"
+    },
+    {
+      "id": "NH06",
+      "name": "Karnali Highway",
+      "district": "Unknown",
+      "lat": 30.712763727525157,
+      "lng": 88.17682611436261,
+      "source": "bundled"
+    },
+    {
+      "id": "NH06-seg-1",
+      "name": "Surkhet Valley Fast Hub",
+      "district": "Surkhet",
+      "lat": 28.66853771476329,
+      "lng": 81.54084701188697,
+      "source": "bundled"
+    },
+    {
+      "id": "NH03",
+      "name": "Araniko Highway",
+      "district": "Unknown",
+      "lat": 28.610097598067686,
+      "lng": 85.05720883926958,
+      "source": "bundled"
+    },
+    {
+      "id": "NH03-seg-1",
+      "name": "Banepa Bus Station Fast Charger",
+      "district": "Unknown",
+      "lat": 30.11892589773231,
+      "lng": 87.41977198559825,
+      "source": "bundled"
+    },
+    {
+      "id": "ev-dolalghat",
+      "name": "Dolalghat River View EV Point",
+      "district": "Unknown",
+      "lat": 31.366081998222043,
+      "lng": 86.93601737215357,
+      "source": "bundled"
+    },
+    {
+      "id": "NH15",
+      "name": "Mid-Hill Highway (Pushpalal Rajmarga)",
+      "district": "Unknown",
+      "lat": 27.584278281585703,
+      "lng": 86.94374841743,
+      "source": "bundled"
+    },
+    {
+      "id": "NH15-seg-1",
+      "name": "Baglung Kalika EV Station",
+      "district": "Baglung",
+      "lat": 28.33125487744846,
+      "lng": 83.27257881922054,
+      "source": "bundled"
+    },
+    {
+      "id": "inc-1",
+      "name": "Nagdhunga Pass / Sisne Khola",
+      "district": "Unknown",
+      "lat": 30.574852678917946,
+      "lng": 84.8236345149799,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-mugling",
+      "name": "Mugling Trishuli Gorge",
+      "district": "Unknown",
+      "lat": 27.585812334807716,
+      "lng": 88.17984536927699,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-daunne",
+      "name": "Daunne Hill Pass",
+      "district": "Unknown",
+      "lat": 30.11683430822528,
+      "lng": 86.44661514050311,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-sindhuli",
+      "name": "Sindhuli Gadhi Mountain Pass",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-damauli",
+      "name": "Damauli - Tanahun Valley",
+      "district": "Tanahu",
+      "lat": 27.958170800572105,
+      "lng": 84.24058224619083,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-siddhababa",
+      "name": "Siddhababa Rock Face (Palpa)",
+      "district": "Palpa",
+      "lat": 27.820109026532677,
+      "lng": 83.6265938204594,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-pokhara",
+      "name": "Pokhara Valley Entry",
+      "district": "Unknown",
+      "lat": 30.870896291185606,
+      "lng": 87.1010211548859,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-narayanghat",
+      "name": "Narayanghat / Chitwan Plains",
+      "district": "Unknown",
+      "lat": 31.453928744293613,
+      "lng": 83.78240757797757,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-daman",
+      "name": "Daman Pass / Simbhanjyang Summit",
+      "district": "Unknown",
+      "lat": 28.878873190432994,
+      "lng": 87.4341155419965,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-kande",
+      "name": "Kande Pass / Naudanda Ridge",
+      "district": "Unknown",
+      "lat": 27.55565622982885,
+      "lng": 87.46389246002454,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-khurkot",
+      "name": "Khurkot Sun Koshi Pass",
+      "district": "Unknown",
+      "lat": 31.067976082017026,
+      "lng": 86.96005238488708,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-dhunche",
+      "name": "Dhunche High Mountain Pass",
+      "district": "Unknown",
+      "lat": 27.547817391237782,
+      "lng": 87.22693839709464,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-kalikot",
+      "name": "Kalikot Shubhakalika Gorge Pass",
+      "district": "Kalikot",
+      "lat": 29.17151009727114,
+      "lng": 81.78899686104789,
+      "source": "bundled"
+    },
+    {
+      "id": "wx-jumla",
+      "name": "Chandannath Jumla Alpine Pass",
+      "district": "Jumla",
+      "lat": 29.303082022533072,
+      "lng": 82.29018367774702,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-ev-mugling",
+      "name": "NEA DC Fast Charging Hub Mugling",
+      "district": "Unknown",
+      "lat": 29.395954021324428,
+      "lng": 83.95322347595103,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-ev-kurintar",
+      "name": "Tata Power / BYD Supercharger Kurintar",
+      "district": "Unknown",
+      "lat": 30.334258487502456,
+      "lng": 83.81715673028289,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-ev-itahari",
+      "name": "NEA DC Fast Charging Station Itahari",
+      "district": "Unknown",
+      "lat": 28.145323060612082,
+      "lng": 86.29314262432008,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-ev-butwal",
+      "name": "NEA / BYD Fast Charging Hub Butwal",
+      "district": "Unknown",
+      "lat": 27.61801463693974,
+      "lng": 86.15706479670486,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-food-malekhu",
+      "name": "Malekhu Riverside Fish Dhabas",
+      "district": "Unknown",
+      "lat": 28.461848640778936,
+      "lng": 84.79030667581154,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-food-mugling",
+      "name": "Mugling Highway Nepali Thakali Thali",
+      "district": "Unknown",
+      "lat": 28.76796111226471,
+      "lng": 84.7198431353566,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-fuel-naubise",
+      "name": "NOC Smart Petrol Pump & Service Naubise",
+      "district": "Unknown",
+      "lat": 31.2814381668713,
+      "lng": 84.37548010201199,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-scenic-sindhuli",
+      "name": "Sindhuli Gadhi Historic Ridge Viewpoint",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-scenic-nagdhunga",
+      "name": "Nagdhunga Sisne Khola Valley Overlook",
+      "district": "Unknown",
+      "lat": 29.209207869511516,
+      "lng": 85.6610952519901,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-dor-bharatpur",
+      "name": "DOR Heavy Equipment & Emergency Rescue Depot",
+      "district": "Unknown",
+      "lat": 30.437957644006012,
+      "lng": 84.49297039318066,
+      "source": "bundled"
+    },
+    {
+      "id": "poi-toll-nagdhunga",
+      "name": "Nagdhunga Tunnel Expressway Toll Plaza",
+      "district": "Unknown",
+      "lat": 31.36663411865337,
+      "lng": 84.93211397562946,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-daunne",
+      "name": "Daunne Hill Chokepoint (NH01)",
+      "district": "Unknown",
+      "lat": 29.152538701706398,
+      "lng": 83.50036128000477,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-mugling-abukhaireni",
+      "name": "Mugling - Abukhaireni Widening (NH04)",
+      "district": "Unknown",
+      "lat": 29.4414024762248,
+      "lng": 86.1278507585875,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-nagdhunga",
+      "name": "Nagdhunga Inbound Checkpost (NH02 / NH04)",
+      "district": "Unknown",
+      "lat": 29.125100885910157,
+      "lng": 87.04538819530771,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-narayanghat-mugling",
+      "name": "Narayanghat - Mugling Trishuli Gorge (NH05)",
+      "district": "Unknown",
+      "lat": 28.683040421814276,
+      "lng": 88.08843236058829,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-siddhababa",
+      "name": "Siddhababa Rock Shed Zone (NH10)",
+      "district": "Unknown",
+      "lat": 28.521415174050226,
+      "lng": 84.08622044904713,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-sindhuli-bp",
+      "name": "Sindhuli Gadhi Serpentine Ridge (NH13)",
+      "district": "Sindhuli",
+      "lat": 27.197841606950043,
+      "lng": 85.94573315721779,
+      "source": "bundled"
+    },
+    {
+      "id": "tr-chitwan-express",
+      "name": "Narayanghat - Butwal Plains (NH01)",
+      "district": "Unknown",
+      "lat": 28.704097305094624,
+      "lng": 87.19578774601106,
+      "source": "bundled"
+    },
+    {
+      "id": "dhalkebar",
+      "name": "dhalkebar",
+      "district": "Unknown",
+      "lat": 28.56299290851827,
+      "lng": 86.99189537571856,
+      "source": "snh_published"
+    },
+    {
+      "id": "narayangadh",
+      "name": "narayangadh",
+      "district": "Unknown",
+      "lat": 28.749935495189725,
+      "lng": 84.7576608297433,
+      "source": "snh_published"
+    },
+    {
+      "id": "butwal-mahendrachok",
+      "name": "butwal (mahendrachok)",
+      "district": "Unknown",
+      "lat": 28.12926299846207,
+      "lng": 84.8473070712181,
+      "source": "snh_published"
+    },
+    {
+      "id": "kohalpur",
+      "name": "kohalpur",
+      "district": "Unknown",
+      "lat": 31.46367433866787,
+      "lng": 87.79324947886575,
+      "source": "snh_published"
+    },
+    {
+      "id": "attaria",
+      "name": "attaria",
+      "district": "Unknown",
+      "lat": 28.0913243361646,
+      "lng": 84.65143702594972,
+      "source": "snh_published"
+    },
+    {
+      "id": "gaddachowki",
+      "name": "gaddachowki",
+      "district": "Unknown",
+      "lat": 28.98783504978111,
+      "lng": 88.2559968156322,
+      "source": "snh_published"
+    },
+    {
+      "id": "taplejung",
+      "name": "taplejung",
+      "district": "Taplejung",
+      "lat": 27.693724744407458,
+      "lng": 87.91566429301737,
+      "source": "snh_published"
+    },
+    {
+      "id": "siddhicharan",
+      "name": "siddhicharan",
+      "district": "Unknown",
+      "lat": 28.02624967152385,
+      "lng": 85.18997437847231,
+      "source": "snh_published"
+    },
+    {
+      "id": "myanglung",
+      "name": "myanglung",
+      "district": "Unknown",
+      "lat": 30.527975423047934,
+      "lng": 87.39831263771332,
+      "source": "snh_published"
+    },
+    {
+      "id": "phidim",
+      "name": "phidim",
+      "district": "Unknown",
+      "lat": 30.43520819680906,
+      "lng": 86.2611493716843,
+      "source": "snh_published"
+    },
+    {
+      "id": "inaruwa",
+      "name": "inaruwa",
+      "district": "Unknown",
+      "lat": 31.491207022070068,
+      "lng": 87.77956978132059,
+      "source": "snh_published"
+    },
+    {
+      "id": "gaighat",
+      "name": "gaighat",
+      "district": "Unknown",
+      "lat": 29.093718174013084,
+      "lng": 84.94004581344231,
+      "source": "snh_published"
+    },
+    {
+      "id": "siraha",
+      "name": "siraha",
+      "district": "Siraha",
+      "lat": 26.74329943889632,
+      "lng": 86.33588648993954,
+      "source": "snh_published"
+    },
+    {
+      "id": "jaleshwor",
+      "name": "jaleshwor",
+      "district": "Unknown",
+      "lat": 30.754182808109267,
+      "lng": 87.37574933365629,
+      "source": "snh_published"
+    },
+    {
+      "id": "malangawa",
+      "name": "malangawa",
+      "district": "Unknown",
+      "lat": 28.804561744045852,
+      "lng": 85.96185953497472,
+      "source": "snh_published"
+    },
+    {
+      "id": "gaur",
+      "name": "gaur",
+      "district": "Unknown",
+      "lat": 28.42792419730494,
+      "lng": 83.97400496241423,
+      "source": "snh_published"
+    },
+    {
+      "id": "kalaiya",
+      "name": "kalaiya",
+      "district": "Unknown",
+      "lat": 30.696233242116957,
+      "lng": 88.48907159020168,
+      "source": "snh_published"
+    },
+    {
+      "id": "kamalamai",
+      "name": "kamalamai",
+      "district": "Unknown",
+      "lat": 31.205147204680088,
+      "lng": 83.87883818430063,
+      "source": "snh_published"
+    },
+    {
+      "id": "khandbari",
+      "name": "khandbari",
+      "district": "Unknown",
+      "lat": 28.402865781538395,
+      "lng": 87.87120673569883,
+      "source": "snh_published"
+    },
+    {
+      "id": "salleri",
+      "name": "salleri",
+      "district": "Unknown",
+      "lat": 27.66698690627028,
+      "lng": 88.03331604013161,
+      "source": "snh_published"
+    },
+    {
+      "id": "diktel",
+      "name": "diktel",
+      "district": "Unknown",
+      "lat": 29.524985974987942,
+      "lng": 85.58448410787008,
+      "source": "snh_published"
+    },
+    {
+      "id": "bhojpur",
+      "name": "bhojpur",
+      "district": "Bhojpur",
+      "lat": 27.157072548621148,
+      "lng": 87.06656994568338,
+      "source": "snh_published"
+    },
+    {
+      "id": "bhimeshwar",
+      "name": "bhimeshwar",
+      "district": "Unknown",
+      "lat": 28.496318259998784,
+      "lng": 88.21413054539235,
+      "source": "snh_published"
+    },
+    {
+      "id": "dhunche",
+      "name": "dhunche",
+      "district": "Unknown",
+      "lat": 30.464605704946603,
+      "lng": 88.10420808610978,
+      "source": "snh_published"
+    },
+    {
+      "id": "nilkantha",
+      "name": "nilkantha",
+      "district": "Unknown",
+      "lat": 27.92943110593275,
+      "lng": 84.78295343696774,
+      "source": "snh_published"
+    },
+    {
+      "id": "bhaktapur-suryabinayak",
+      "name": "bhaktapur(suryabinayak)",
+      "district": "Bhaktapur",
+      "lat": 27.68798754923052,
+      "lng": 85.44119272106495,
+      "source": "snh_published"
+    },
+    {
+      "id": "lalitpur",
+      "name": "lalitpur",
+      "district": "Lalitpur",
+      "lat": 27.54814334917466,
+      "lng": 85.34476037930774,
+      "source": "snh_published"
+    },
+    {
+      "id": "manthali",
+      "name": "manthali",
+      "district": "Unknown",
+      "lat": 28.790738598090527,
+      "lng": 84.84364327415783,
+      "source": "snh_published"
+    },
+    {
+      "id": "bharatpur",
+      "name": "bharatpur",
+      "district": "Unknown",
+      "lat": 27.8206386618932,
+      "lng": 85.7572065234976,
+      "source": "snh_published"
+    },
+    {
+      "id": "gorkha",
+      "name": "gorkha",
+      "district": "Gorkha",
+      "lat": 28.311385388802258,
+      "lng": 84.77453092996292,
+      "source": "snh_published"
+    },
+    {
+      "id": "jomsom",
+      "name": "jomsom",
+      "district": "Unknown",
+      "lat": 28.456191707686155,
+      "lng": 83.65633539910309,
+      "source": "snh_published"
+    },
+    {
+      "id": "simikot",
+      "name": "simikot",
+      "district": "Unknown",
+      "lat": 31.474907776980025,
+      "lng": 83.97364528790864,
+      "source": "snh_published"
+    },
+    {
+      "id": "rukumkot",
+      "name": "rukumkot",
+      "district": "Unknown",
+      "lat": 29.48229150655528,
+      "lng": 84.21312681334231,
+      "source": "snh_published"
+    },
+    {
+      "id": "beni",
+      "name": "beni",
+      "district": "Unknown",
+      "lat": 28.55339531824747,
+      "lng": 83.80256832153262,
+      "source": "snh_published"
+    },
+    {
+      "id": "besishahar",
+      "name": "besishahar",
+      "district": "Unknown",
+      "lat": 31.065670326620015,
+      "lng": 83.6006757803568,
+      "source": "snh_published"
+    },
+    {
+      "id": "byas",
+      "name": "byas",
+      "district": "Unknown",
+      "lat": 27.875257002307308,
+      "lng": 84.1536777232058,
+      "source": "snh_published"
+    },
+    {
+      "id": "kawasoti",
+      "name": "kawasoti",
+      "district": "Unknown",
+      "lat": 29.489049088670974,
+      "lng": 86.07742993022228,
+      "source": "snh_published"
+    },
+    {
+      "id": "putalibazar",
+      "name": "putalibazar",
+      "district": "Unknown",
+      "lat": 30.94783836617293,
+      "lng": 86.02689711341326,
+      "source": "snh_published"
+    },
+    {
+      "id": "kusma",
+      "name": "kusma",
+      "district": "Unknown",
+      "lat": 27.69687429315177,
+      "lng": 84.11347161086583,
+      "source": "snh_published"
+    },
+    {
+      "id": "libang",
+      "name": "libang",
+      "district": "Unknown",
+      "lat": 30.72366898810963,
+      "lng": 83.78649084170914,
+      "source": "snh_published"
+    },
+    {
+      "id": "resunga-via-butwal",
+      "name": "resunga(via butwal)",
+      "district": "Unknown",
+      "lat": 31.114104344906885,
+      "lng": 84.73794069171653,
+      "source": "snh_published"
+    },
+    {
+      "id": "sandhikhark",
+      "name": "sandhikhark",
+      "district": "Unknown",
+      "lat": 31.356464473506538,
+      "lng": 85.60081436262102,
+      "source": "snh_published"
+    },
+    {
+      "id": "tansen-via-butwal",
+      "name": "tansen(via butwal)",
+      "district": "Unknown",
+      "lat": 29.830259338932073,
+      "lng": 85.84122487123085,
+      "source": "snh_published"
+    },
+    {
+      "id": "ramgram",
+      "name": "ramgram",
+      "district": "Unknown",
+      "lat": 30.944377062003756,
+      "lng": 84.80090767799058,
+      "source": "snh_published"
+    },
+    {
+      "id": "siddharthanagar",
+      "name": "siddharthanagar",
+      "district": "Unknown",
+      "lat": 27.609322831184045,
+      "lng": 83.96371896716921,
+      "source": "snh_published"
+    },
+    {
+      "id": "kapilvastu",
+      "name": "kapilvastu",
+      "district": "Unknown",
+      "lat": 31.376472907788493,
+      "lng": 88.18965060945638,
+      "source": "snh_published"
+    },
+    {
+      "id": "tribhuwannager",
+      "name": "tribhuwannager",
+      "district": "Unknown",
+      "lat": 30.38989576872043,
+      "lng": 86.05257892037834,
+      "source": "snh_published"
+    },
+    {
+      "id": "gamgadhi",
+      "name": "gamgadhi",
+      "district": "Unknown",
+      "lat": 30.093584358171505,
+      "lng": 86.51664932921655,
+      "source": "snh_published"
+    },
+    {
+      "id": "chandannath",
+      "name": "chandannath",
+      "district": "Unknown",
+      "lat": 27.672227480530744,
+      "lng": 87.17114434600985,
+      "source": "snh_published"
+    },
+    {
+      "id": "manma",
+      "name": "manma",
+      "district": "Unknown",
+      "lat": 28.425969860872257,
+      "lng": 88.47461586730836,
+      "source": "snh_published"
+    },
+    {
+      "id": "narayan",
+      "name": "narayan",
+      "district": "Unknown",
+      "lat": 27.696993249320847,
+      "lng": 87.44373430815818,
+      "source": "snh_published"
+    },
+    {
+      "id": "khalanga",
+      "name": "khalanga",
+      "district": "Unknown",
+      "lat": 30.55267859657526,
+      "lng": 85.72115545312946,
+      "source": "snh_published"
+    },
+    {
+      "id": "musikot",
+      "name": "musikot",
+      "district": "Unknown",
+      "lat": 29.851829596577314,
+      "lng": 87.26923153119724,
+      "source": "snh_published"
+    },
+    {
+      "id": "salyan",
+      "name": "salyan",
+      "district": "Salyan",
+      "lat": 28.363641960833533,
+      "lng": 82.13843974547727,
+      "source": "snh_published"
+    },
+    {
+      "id": "birendranagar",
+      "name": "birendranagar",
+      "district": "Unknown",
+      "lat": 30.848584890768905,
+      "lng": 86.83786471824287,
+      "source": "snh_published"
+    },
+    {
+      "id": "martadi",
+      "name": "martadi",
+      "district": "Unknown",
+      "lat": 31.494371658269728,
+      "lng": 88.12974650857119,
+      "source": "snh_published"
+    },
+    {
+      "id": "jayaprithvi",
+      "name": "jayaprithvi",
+      "district": "Unknown",
+      "lat": 30.843659772234062,
+      "lng": 86.20922165891385,
+      "source": "snh_published"
+    },
+    {
+      "id": "api",
+      "name": "api",
+      "district": "Kapilbastu",
+      "lat": 27.63662868555964,
+      "lng": 83.01085219433733,
+      "source": "snh_published"
+    },
+    {
+      "id": "dasharathchand",
+      "name": "dasharathchand",
+      "district": "Unknown",
+      "lat": 28.015328645151428,
+      "lng": 84.52349377741226,
+      "source": "snh_published"
+    },
+    {
+      "id": "amargadhi",
+      "name": "amargadhi",
+      "district": "Unknown",
+      "lat": 31.243779650002367,
+      "lng": 84.10421929944611,
+      "source": "snh_published"
+    },
+    {
+      "id": "dipayal-silgadhi",
+      "name": "dipayal silgadhi",
+      "district": "Unknown",
+      "lat": 29.821260790193506,
+      "lng": 87.50583636248847,
+      "source": "snh_published"
+    },
+    {
+      "id": "mangalsen",
+      "name": "mangalsen",
+      "district": "Unknown",
+      "lat": 30.564838703144936,
+      "lng": 86.07922741862255,
+      "source": "snh_published"
+    },
+    {
+      "id": "dhangadi",
+      "name": "dhangadi",
+      "district": "Unknown",
+      "lat": 31.13535197173477,
+      "lng": 84.91033836773461,
+      "source": "snh_published"
+    },
+    {
+      "id": "bhimdatta",
+      "name": "bhimdatta",
+      "district": "Unknown",
+      "lat": 29.277446659965417,
+      "lng": 87.17291720112505,
+      "source": "snh_published"
+    },
+    {
+      "id": "birgunj-parsa",
+      "name": "Birgunj (Parsa)",
+      "district": "Parsa",
+      "lat": 27.209702730399478,
+      "lng": 84.77040506663967,
+      "source": "snh_published"
+    },
+    {
+      "id": "bharatpur-narayani",
+      "name": "Bharatpur (Narayani)",
+      "district": "Unknown",
+      "lat": 27.78728955924873,
+      "lng": 85.00138311715524,
+      "source": "snh_published"
+    },
+    {
+      "id": "narayan-ghad",
+      "name": "Narayan Ghad",
+      "district": "Unknown",
+      "lat": 28.337925633623964,
+      "lng": 85.82480827364247,
+      "source": "snh_published"
+    },
+    {
+      "id": "lazimpat",
+      "name": "Lazimpat",
+      "district": "Unknown",
+      "lat": 29.980027608804797,
+      "lng": 84.75197926920897,
+      "source": "snh_published"
+    }
+  ],
+  "sourceBreakdown": {
+    "bundled": 131,
+    "snh_published": 68
+  },
+  "total": 199,
+  "publishedDistanceCoverage": {
+    "totalPublishedCities": 86,
+    "coveredCities": 64
+  }
+}

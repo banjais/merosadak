@@ -277,6 +277,7 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
     { url: '/data/palika-coords.json', grouped: false, key: 'palika' },
     { url: '/data/district-hqs.json', grouped: false, key: 'district-hqs' },
     { url: '/data/district-centroids.json', grouped: false, key: 'district-centroids' },
+    { url: '/data/calculator-cities.json', grouped: true, key: 'cities' },
     { url: '/data/airports.json', grouped: false, key: 'airports', cityType: 'Airport' },
     { url: '/data/temples.json', grouped: false, key: 'temples', cityType: 'Temple' },
     { url: '/data/tourist-places.json', grouped: false, key: 'tourist', cityType: 'Tourist Place' },

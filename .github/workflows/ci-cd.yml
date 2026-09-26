@@ -84,9 +84,9 @@ jobs:
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
   build-frontend:
-      name: Build frontend (with data sync)
-      needs: [typecheck, worker-typecheck]
-      runs-on: ubuntu-latest
+    name: Build frontend (with data sync)
+    needs: [typecheck, worker-typecheck]
+    runs-on: ubuntu-latest
       timeout-minutes: 15
       env:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -121,10 +121,10 @@ jobs:
         with:
           name: dist-frontend
           path: dist
-      - uses: FirebaseExtended/action-hosting-deploy@v0.11.0
+      - uses: FirebaseExtended/action-hosting-deploy@v1
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          serviceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MEROSADAK }}
           channelId: live
           projectId: sadak-sathi-3ab73
           entryPoint: .
