@@ -36,41 +36,24 @@ export interface UseCardSwipeOptions {
 }
 
 export interface UseCardSwipeReturn {
-  /** Current drag offset in pixels */
   dragOffset: number;
-  /** Whether long press overlay is showing */
   showQuickOverlay: boolean;
-  /** Whether vertical action was triggered */
   showVerticalAction: boolean;
-  /** Set quick overlay visibility */
   setShowQuickOverlay: (show: boolean) => void;
-  /** Set vertical action visibility */
   setShowVerticalAction: (show: boolean) => void;
-  /** Touch start handler */
   onTouchStart: (e: React.TouchEvent) => void;
-  /** Touch move handler */
   onTouchMove: (e: React.TouchEvent) => void;
-  /** Touch end handler */
   onTouchEnd: (e: React.TouchEvent) => void;
-  /** Mouse down handler (for desktop testing) */
   onMouseDown: (e: React.MouseEvent) => void;
-  /** Mouse up handler */
   onMouseUp: () => void;
-  /** Mouse leave handler */
   onMouseLeave: () => void;
-  /** Context menu handler (right click = long press) */
   onContextMenu: (e: React.MouseEvent) => void;
-  /** Drag styles for the card */
   dragStyles: React.CSSProperties;
-  /** Left action background styles */
   leftActionStyles: React.CSSProperties;
-  /** Right action background styles */
   rightActionStyles: React.CSSProperties;
-  /** Archive the card */
+  cardRef: React.RefObject<HTMLDivElement | null>;
   archiveCard: () => void;
-  /** Restore the card */
   restoreCard: () => void;
-  /** Check if card is archived */
   isArchived: boolean;
 }
 
@@ -119,6 +102,7 @@ export function useCardSwipe({
   const touchStartCoords = useRef<{ x: number; y: number } | null>(null);
   const thresholdCrossedRef = useRef<'none' | 'left' | 'right'>('none');
   const isDraggingRef = useRef(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   // Sync with external archive state
   useEffect(() => {
@@ -292,22 +276,19 @@ export function useCardSwipe({
   // Compute glow styles based on drag offset
   const glowStyles = dragOffset !== 0 ? (() => {
     const ratio = Math.min(1, Math.abs(dragOffset) / 100);
-    const intensity = ratio * 0.55;
-    const size = 12 + ratio * 24;
-    
+    const size = 10 + ratio * 18;
+
     if (dragOffset > 0 && rightAction) {
-      // Right swipe glow (action color)
       const color = rightAction.color.replace('text-', '').replace('-400', '-500').replace('-300', '-500');
       return {
-        boxShadow: `0 0 ${size}px ${color}, inset 0 0 10px ${color}CC`,
-        borderColor: `${color}DD`,
+        boxShadow: `0 0 ${size}px ${color}`,
+        borderColor: `${color}99`,
       };
     } else if (dragOffset < 0 && leftAction) {
-      // Left swipe glow (archive color)
       const color = leftAction.color.replace('text-', '').replace('-400', '-500').replace('-300', '-500');
       return {
-        boxShadow: `0 0 ${size}px ${color}, inset 0 0 10px ${color}CC`,
-        borderColor: `${color}DD`,
+        boxShadow: `0 0 ${size}px ${color}`,
+        borderColor: `${color}99`,
       };
     }
     return {};
@@ -316,7 +297,6 @@ export function useCardSwipe({
   const dragStyles: React.CSSProperties = {
     transform: `translateX(${dragOffset}px)`,
     ...glowStyles,
-    transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease',
     touchAction: 'pan-y',
   };
 
@@ -350,6 +330,7 @@ export function useCardSwipe({
     dragStyles,
     leftActionStyles,
     rightActionStyles,
+    cardRef,
     archiveCard,
     restoreCard,
     isArchived,

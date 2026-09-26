@@ -54,7 +54,7 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
       : `Updated ${minutesSinceLastCheck} min ago`;
 
   return (
-    <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-2xl p-4 space-y-3">
+    <div className="card card-elevated p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -164,14 +164,14 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
               <span className="text-[10px] font-normal text-slate-500 ml-0.5">/L</span>
             </div>
           </div>
-          <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 text-center">
+          <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 text-center">
             <div className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider">Diesel</div>
             <div className="text-lg font-black text-white font-mono mt-0.5">
               Rs.{fuelPrices.diesel}
               <span className="text-[10px] font-normal text-slate-500 ml-0.5">/L</span>
             </div>
           </div>
-          <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 text-center">
+          <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 text-center">
             <div className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">EV</div>
             <div className="text-lg font-black text-white font-mono mt-0.5">
               Rs.{fuelPrices.electricity}

@@ -355,26 +355,25 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
 
  <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[94vh]">
  {/* Header */}
- <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-red-900/80 to-slate-950 border-b border-red-800/60 flex items-center justify-between gap-2 flex-wrap">
- <div className="flex items-center space-x-3.5">
- <div className="relative">
- <div className="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40">
- <AlertOctagon className="w-6 h-6 animate-pulse" />
- </div>
- <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-400 border-2 border-slate-900 rounded-full animate-ping" />
- </div>
- <div>
- <div className="flex items-center space-x-2">
- <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/30 border border-red-400/50 text-red-300">
- Emergency
- </span>
- <span className="text-xs text-red-200/80 font-medium">Mero Sadak</span>
- </div>
- <h2 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center space-x-1.5">
- <span>Emergency help</span>
- </h2>
- </div>
- </div>
+  <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-red-900/80 to-slate-950 border-b border-red-800/60 flex items-center justify-between gap-2 flex-wrap">
+  <div className="flex items-center space-x-3.5">
+  <div className="relative">
+  <div className="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40">
+  <AlertOctagon className="w-6 h-6 animate-pulse" />
+  </div>
+  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-400 border-2 border-slate-900 rounded-full animate-ping" />
+  </div>
+  <div>
+  <div className="flex items-center space-x-2">
+  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/30 border border-red-400/50 text-red-300">
+  SOS
+  </span>
+  </div>
+  <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+  <span>Emergency Assist</span>
+  </h2>
+  </div>
+  </div>
 
  <div className="flex items-center space-x-2">
  {/* Alert toggle */}
@@ -1040,20 +1039,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
 
- {/* Footer */}
- <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
- <div className="flex items-center space-x-2">
- <Info className="w-4 h-4 text-slate-500" />
- <span>Mero Sadak SAR Assistant • Offline Coordinates Cached</span>
- </div>
- <button
- onClick={onClose}
- className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-colors"
- >
- Close
- </button>
- </div>
- </div>
- </div>
- );
+  </div>
+  </div>
+  );
 };

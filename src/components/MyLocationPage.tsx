@@ -514,7 +514,7 @@ export const MyLocationPage: React.FC<{
              )}
 
              {/* Address Card */}
-            <div className="card-modern p-5">
+             <div className="card card-elevated p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
@@ -579,7 +579,7 @@ export const MyLocationPage: React.FC<{
             </nav>
 
              {/* Content Card */}
-            <div className="card-modern p-5 overflow-hidden min-h-[120px]">
+             <div className="card card-elevated p-5 overflow-hidden min-h-[120px]">
               {activeTab === 'weather' && (
                 weather ? (
                   <div className="space-y-3">

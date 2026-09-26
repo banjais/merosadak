@@ -74,6 +74,8 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
     dragStyles,
     leftActionStyles,
     rightActionStyles,
+    cardRef,
+    dragOffset,
   } = useCardSwipe({
     cardId: `incident-${incident.id}`,
     leftAction,
@@ -87,7 +89,8 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
   return (
     <div
       key={incident.id}
-      className="card-modern swipe-card space-y-3 relative overflow-hidden"
+      ref={cardRef}
+      className={`card card-interactive gesture-card space-y-3 relative overflow-hidden ${dragOffset !== 0 ? 'dragging' : ''}`}
       style={dragStyles as React.CSSProperties}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -193,7 +196,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({
           {onSelectIncident && (
             <button
               onClick={() => onSelectIncident(incident)}
-              className="touch-target px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shrink-0 card-modern-flat"
+               className="touch-target px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shrink-0 card card-interactive"
               aria-label={`View ${incident.highwayCode} incident on map`}
             >
               <MapPin className="w-4 h-4" />
@@ -295,7 +298,7 @@ const CommunityReportCard: React.FC<CommunityReportCardProps> = ({
   return (
     <div
       key={rep.id}
-      className="card-modern swipe-card space-y-2.5"
+      className="card card-interactive gesture-card space-y-2.5"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
@@ -542,7 +545,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
       {activeTab === 'dor' ? (
         <div className="space-y-4 gap-cards">
           {filteredIncidents.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card-3d-flat">
+            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card card-flat">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
               <p className="text-slate-300 text-sm font-semibold">No severe obstructions reported at this moment.</p>
               <p className="text-slate-500 text-xs mt-1">All major corridors are operating normally.</p>
@@ -562,7 +565,7 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
       ) : (
         <div className="space-y-4 gap-cards">
           {routeReports.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card-3d-flat">
+            <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card card-flat">
               <Radio className="w-10 h-10 text-slate-600 mx-auto mb-2" />
               <p className="text-slate-400 text-sm">
                 {focusCorridorOnly && activeRoute

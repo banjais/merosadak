@@ -126,7 +126,7 @@ function MetricCard({
   };
 
   return (
-    <div className={`rounded-xl border p-3 transition hover:border-slate-600 ${tones[tone]} card-3d-elevated hover-lift-3d`}>
+    <div className={`rounded-xl border p-3 transition hover:border-slate-600 ${tones[tone]} card card-interactive`}>
       <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
         <span className="inline-flex items-center gap-1.5">
           <Icon className="h-3.5 w-3.5" />
@@ -221,7 +221,7 @@ export function UnifiedRouteReport({
   const printLabel = distanceSource === 'snh_published' ? 'Proof Sheet / PDF' : 'Print / PDF';
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-950/90 p-4 shadow-xl shadow-black/20 sm:p-5 card-modern">
+    <section className="card card-elevated p-4 sm:p-5">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
@@ -321,7 +321,7 @@ export function UnifiedRouteReport({
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="mt-4 flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 hover-lift-3d card-3d-flat"
+        className="mt-4 flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 card card-interactive"
         aria-expanded={expanded}
       >
         <span className="inline-flex items-center gap-2">
@@ -336,7 +336,7 @@ export function UnifiedRouteReport({
       {expanded && (
         <div className="mt-4 space-y-4 animate-fadeIn gap-cards">
           {route.roadTierBreakdown && (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">
+            <div className="card card-elevated p-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-300">
                 <span className="inline-flex items-center gap-1.5">
                   <Award className="h-3.5 w-3.5 text-emerald-400" />
@@ -364,7 +364,7 @@ export function UnifiedRouteReport({
 
           {/* Toll Breakdown Section */}
           {route.totalTollCostNpr > 0 && (
-            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 card-3d-elevated">
+            <div className="card card-elevated p-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-300">
                   <Receipt className="w-3.5 h-3.5" />
@@ -414,7 +414,7 @@ export function UnifiedRouteReport({
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">
+          <div className="card card-elevated p-3.5">
             <div className="mb-2.5 text-xs font-semibold text-slate-300">Corridors traversed</div>
             <div className="space-y-2">
               {route.steps.map((step, index) => (
@@ -435,7 +435,7 @@ export function UnifiedRouteReport({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 gap-cards">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">
+            <div className="card card-elevated p-3.5">
               <div className="mb-2 text-xs font-semibold text-slate-300">Surface</div>
               <div className="flex flex-wrap gap-1.5">
                 {surfaces.map((surface) => (
@@ -446,7 +446,7 @@ export function UnifiedRouteReport({
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">
+            <div className="card card-elevated p-3.5">
               <div className="mb-2 text-xs font-semibold text-slate-300">Road status</div>
               <div className="space-y-2 text-[11px]">
                 <div className="flex items-center gap-2 text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /><span>{route.statusSummary.clearKm} km clear</span></div>
@@ -458,11 +458,11 @@ export function UnifiedRouteReport({
           </div>
 
           {showElevationProfile && (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 card-3d-elevated">
+            <div className="card card-elevated">
               <button
                 type="button"
                 onClick={() => setShowElevation((value) => !value)}
-                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 text-left hover-lift-3d card-3d-flat"
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 text-left hover:bg-slate-900/50 card card-interactive"
               >
                 <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
                   <Mountain className="w-3.5 h-3.5 text-amber-400" />
@@ -488,7 +488,7 @@ export function UnifiedRouteReport({
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5 card-3d-elevated">
+          <div className="card card-elevated p-3.5">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <div className="text-xs font-semibold text-slate-300">Distance evidence</div>
@@ -507,7 +507,7 @@ export function UnifiedRouteReport({
       )}
 
       <footer className="mt-4 border-t border-slate-800 pt-3">
-        <div className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between card-3d-flat">
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between card card-flat">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5 text-cyan-500/80" />

@@ -1112,7 +1112,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
       {/* Main Clean Route Planner Box */}
-      <div className="bg-slate-900/95 border border-slate-800 border-t-0 rounded-t-none sm:rounded-t-none p-4 sm:p-5 space-y-4">
+      <div className="card card-elevated p-4 sm:p-5 space-y-4">
       {/* Modern Stepper: Origin -> Destination -> Vehicle -> Results */}
       {!hasCalculated && (
         <div className="flex items-center justify-between gap-2 px-1">
@@ -1649,7 +1649,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
          <div
            id="route-results-panel"
            key={`route-results-panel-${calcKey}-${routePlan.id}`}
-          className="bg-slate-900/95 border border-slate-800 p-3 sm:p-5 rounded-2xl shadow-xl space-y-3.5 sm:space-y-4 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
+           className="card card-elevated p-3 sm:p-5 rounded-2xl shadow-xl space-y-3.5 sm:space-y-4 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
         >
            {/* Header Summary & Expand/Reduce + Map Actions */}
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">

@@ -344,7 +344,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
       {/* Highway Cards List */}
       <div className="space-y-5 gap-cards">
         {filteredHighways.length === 0 ? (
-          <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card-3d-flat">
+          <div className="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-2xl card card-flat">
             <Route className="w-10 h-10 text-slate-600 mx-auto mb-2" />
             <p className="text-slate-400 text-sm font-medium">No highways found matching your status or search filters.</p>
             <button
@@ -353,7 +353,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 setStatusFilter('all');
                 setTerrainFilter('all');
               }}
-              className="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white font-bold rounded-lg border border-slate-700 transition hover-lift-3d"
+              className="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white font-bold rounded-lg border border-slate-700 transition card card-interactive"
             >
               Reset Filters
             </button>
@@ -414,6 +414,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
               dragStyles,
               leftActionStyles,
               rightActionStyles,
+              cardRef,
               isArchived: cardArchived,
             } = useCardSwipe({
               cardId: `highway-${highwayKey}`,
@@ -431,8 +432,9 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
               <div
                 key={highwayKey}
                 id={`highway-card-${highwayKey}`}
-                className="card-modern swipe-card overflow-hidden relative"
+                className={`card card-interactive gesture-card overflow-hidden relative ${dragOffset !== 0 ? 'dragging' : ''}`}
                 style={dragStyles as React.CSSProperties}
+                ref={cardRef}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -687,23 +689,23 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
                 {/* Expanded Details Section */}
                 {isExpanded && !archived && (
-                  <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5 card-3d-inner">
+                  <div className="px-5 pb-5 pt-3 border-t border-slate-800/80 bg-slate-950/60 space-y-5">
                     {/* Highway Info Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 gap-cards-sm">
-                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card-3d-flat">
-                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Condition</div>
+                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Condition</div>
                         <div className="text-sm font-black text-amber-400">{highway.conditionRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
                       </div>
-                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card-3d-flat">
-                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Scenic</div>
+                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Scenic</div>
                         <div className="text-sm font-black text-emerald-400">{highway.scenicRating || '—'}<span className="text-xs text-slate-500 font-normal">/5</span></div>
                       </div>
-                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card-3d-flat">
-                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Road Type</div>
+                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Road Type</div>
                         <div className="text-xs font-bold text-sky-300 truncate">{roadTypesMap.get(highwayKey) || '—'}</div>
                       </div>
-                      <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card-3d-flat">
-                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Provinces</div>
+                       <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/60 card card-flat">
+                         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Provinces</div>
                         <div className="text-xs font-bold text-slate-200 truncate">{highway.provinces?.length || 0}</div>
                       </div>
                     </div>
@@ -1022,7 +1024,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 gap-cards-sm">
                       <button
                         onClick={() => onSelectHighwayOnMap && onSelectHighwayOnMap(highway)}
-                        className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl text-xs font-bold transition shadow-sm hover-lift-3d flex items-center justify-center space-x-2 card-3d-flat"
+                        className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center space-x-2 card card-interactive"
                       >
                         <MapPin className="w-4 h-4 text-emerald-400" />
                         <span>View Highway Vector on GIS Map</span>
@@ -1030,7 +1032,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
                       <button
                         onClick={() => onPlanTripForHighway && onPlanTripForHighway(highway.startPoint, highway.endPoint)}
-                        className="py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition shadow-md shadow-amber-500/20 hover-lift-3d flex items-center justify-center space-x-2 card-3d-elevated"
+                        className="py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition shadow-md shadow-amber-500/20 flex items-center justify-center space-x-2 card card-interactive"
                       >
                         <Route className="w-4 h-4 text-slate-950" />
                         <span>Plan Route along {highway.code} ({highway.name})</span>
