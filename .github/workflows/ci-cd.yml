@@ -59,7 +59,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
-      - run: npm exec tsc --noEmit
+      - run: npx tsc --noEmit
 
   worker-typecheck:
     name: Type check worker
@@ -75,7 +75,7 @@ jobs:
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error --legacy-peer-deps
         working-directory: worker
-      - run: npm exec tsc --noEmit -p worker/tsconfig.json
+      - run: npx tsc --noEmit -p worker/tsconfig.json
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
