@@ -1,7 +1,7 @@
 {
   "prices": {
-    "petrol": 170,
-    "diesel": 150,
+    "petrol": 197,
+    "diesel": 195,
     "electricity": 15
   },
   "source": "noc.org.np",
@@ -14,8 +14,8 @@
     "electricity": "kWh"
   },
   "regions": "Kathmandu, Pokhara, Dipayal",
-  "lastUpdated": "2026-09-26T16:24:22.076Z",
-  "fetchedAt": "2026-09-26T16:24:22.076Z",
-  "nextUpdate": "2026-09-27T16:24:22.076Z",
+  "lastUpdated": "2026-09-27T05:46:28.658Z",
+  "fetchedAt": "2026-09-27T05:46:28.658Z",
+  "nextUpdate": "2026-09-28T05:46:28.658Z",
   "note": "Rates effective from midnight NST. VAT inclusive. Prices may vary by region within 15km of depot."
 }
