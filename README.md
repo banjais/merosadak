@@ -16,10 +16,9 @@ Worker backend for anything that needs a paid/rate-limited key.
   solid white square with only route/highway lines drawn on top. Replaced
   with `L.geoJSON()`, which handles coordinate order correctly, drawing the
   boundary as an outline rather than a punch-hole mask.
-  **Note:** `data/nepal_boundary.geojson` currently contains only 7 sample
-  district polygons (one per province), not a full dissolved country
-  outline — it needs to be regenerated from a complete source before the
-  outline will look right.
+  **Note:** Map mask/border uses `public/data/nepal-provinces.geojson` (7
+  provinces). `public/data/nepal_boundary.geojson` holds full district
+  polygons (~77 features) for other GIS uses.
 
 **New in this rebuild:**
 - Search-first trip planner: type a place name (Photon autocomplete, free,
@@ -48,7 +47,7 @@ key is unset the Worker simply skips that source.
 
 | Service              | Variable                     | Purpose                                      | Free tier                          |
 |----------------------|------------------------------|----------------------------------------------|------------------------------------|
-| OpenRouteService     | `OPENROUTESERVICE_API_KEY`   | Routing + elevation alternative to OSRM      | Free key (openrouteservice.org)    |
+| OpenRouteService     | `OPENROUTESERVICE_API_KEY`   | Routing / isochrones / elevation alternative | ~2,000 req/day                     |
 | LocationIQ           | `LOCATIONIQ_API_KEY`         | Geocoding / search fallback                  | ~5,000 req/day                     |
 | OpenCage             | `OPENCAGE_API_KEY`           | Geocoding / search fallback                  | ~2,500 req/day                     |
 | WAQI / AQICN         | `WAQI_API_KEY`               | Air quality (Kathmandu & major cities)       | Free key (aqicn.org)               |
@@ -87,14 +86,12 @@ crashes, the response just degrades gracefully to the next source (or
 to empty/`"source":"none"` if every tier is unavailable).
 
 The frontend calls the deployed Worker for traffic/assistant features
-rather than calling TomTom/Gemini directly — see `WORKER_URL` near the
-top of `public/index.html`'s script. **Note:** this README previously
-said the worker lives at `merosadak.banjais.workers.dev`, but the code
-actually calls `merosadak.banjays.workers.dev` (note the extra "y").
-One of these is a typo — worth confirming against your actual Cloudflare
-`workers.dev` subdomain before relying on it, since a wrong hostname
-would make every Worker-proxied call fail silently (they're all wrapped
-in try/catch that falls back to empty data).
+rather than calling TomTom/Gemini directly. Canonical Worker URL:
+
+`https://merosadak.banjays.workers.dev`
+
+(Configured in `src/utils/apiConfig.ts`, `index.html` meta `worker-base-url`,
+and `public/embed.html`.)
 
 ## Deploy the frontend
 ```
