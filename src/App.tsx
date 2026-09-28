@@ -389,6 +389,30 @@ function AppContent() {
     setActiveFeature(null);
   };
 
+  /** Match a free-text highway endpoint (e.g. "Kathmandu", "Pokhara") to a routing city id. */
+  const resolveEndpointToCityId = (label: string): string | null => {
+    const q = (label || '').toLowerCase().trim();
+    if (!q) return null;
+    const cities = CITIES_AND_JUNCTIONS;
+    const exact = cities.find((c) => c.name.toLowerCase() === q || c.id.toLowerCase() === q);
+    if (exact) return exact.id;
+    const partial = cities.find(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        q.includes(c.name.toLowerCase()) ||
+        (c.district && c.district.toLowerCase().includes(q))
+    );
+    return partial?.id || null;
+  };
+
+  const handlePlanTripForHighway = (startPoint: string, endPoint: string) => {
+    const originId = resolveEndpointToCityId(startPoint) || 'ktm';
+    const destId = resolveEndpointToCityId(endPoint) || 'pkr';
+    setPlannerOrigin(originId);
+    setPlannerDest(destId);
+    setActiveFeature(null);
+  };
+
   const handleSelectIncident = (inc: RoadIncident | UserRoadReport) => {
     setSelectedIncidentId(inc.id);
     setIsHighwayInfoOpen(true);
@@ -807,6 +831,9 @@ function AppContent() {
             onToggleMapFull={() => setIsMapFull((prev) => !prev)}
             isMapFull={isMapFull}
             onOpenMyLocation={() => setIsMyLocationOpen(true)}
+            onShareTrip={() => setIsShareModalOpen(true)}
+            onOpenPreTrip={() => setIsPreTripModalOpen(true)}
+            uiLanguage={language}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);
@@ -958,11 +985,7 @@ function AppContent() {
                         setActiveFeature(null);
                       }
                     }}
-                    onPlanTripForHighway={(start, end) => {
-                      setPlannerOrigin('ktm');
-                      setPlannerDest('pkr');
-                      setActiveFeature(null);
-                    }}
+                    onPlanTripForHighway={handlePlanTripForHighway}
                     routeHighwayCodes={activeRoute ? activeRoute.steps.map((s) => s.highwayCode).filter(Boolean) : []}
                     filterToRouteOnly={!!activeRoute}
                   />
