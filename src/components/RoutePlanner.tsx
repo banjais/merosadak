@@ -5,9 +5,6 @@ import {
   VehicleType,
   RoutePreference,
   TerrainFilterOptions,
-  HighwayWeatherNode,
-  HighwayPOI,
-  TrafficCorridor,
   RouteSimulationControls,
   Highway,
   RoadIncident,
@@ -23,11 +20,7 @@ import { TripAssistantPanel } from './TripAssistantPanel';
 import { RouteTerrainAndTrafficAnalysis } from './RouteTerrainAndTrafficAnalysis';
 import { PreTripChecklist } from './PreTripChecklist';
 import { RouteOptionsSelector } from './RouteOptionsSelector';
-import { HighwaySafetyIndexCard } from './HighwaySafetyIndexCard';
 import { CarbonFootprintCard } from './CarbonFootprintCard';
-import { WeatherPassesPanel } from './WeatherPassesPanel';
-import { HighwayPOIsPanel } from './HighwayPOIsPanel';
-import { TrafficCorridorPanel } from './TrafficCorridorPanel';
 import { RouteComparisonView } from './RouteComparisonView';
 import { RouteJunctionTimeline } from './RouteJunctionTimeline';
 import { RouteHighwayInfoPanel } from './RouteHighwayInfoPanel';
@@ -146,17 +139,9 @@ const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[])
 
 type DetailModuleTab =
   | 'none'
-  | 'timeline'
-  | 'comparison'
   | 'travel_plan'
-  | 'elevation'
-  | 'weather'
-  | 'pois'
-  | 'traffic'
-  | 'safety'
   | 'fuel_tolls'
   | 'ai_advisory'
-  | 'eco'
   | 'sos'
   | 'checklist'
   | 'highway_info'
@@ -349,9 +334,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [trafficSyncedNotification, setTrafficSyncedNotification] = useState<boolean>(false);
 
   // Telemetry data for embedded option tabs (if opened)
-  const [weatherNodes, setWeatherNodes] = useState<HighwayWeatherNode[]>([]);
-  const [poisList, setPoisList] = useState<HighwayPOI[]>([]);
-  const [corridorsList, setTrafficCorridorsList] = useState<TrafficCorridor[]>([]);
 
   const singleSearchRef = useRef<HTMLDivElement>(null);
   const originSearchRef = useRef<HTMLDivElement>(null);
@@ -419,25 +401,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       }, 150);
     }
   }, [routePlannerStep, originId, destId, detectedLocation, locationMode]);
-
-  // Fetch optional telemetry data when respective tabs are clicked
-  useEffect(() => {
-    if (activeModuleTab === 'weather' && weatherNodes.length === 0) {
-      fetchJson<Record<string, any>>('/api/weather')
-        .then((data) => data.weatherNodes && setWeatherNodes(data.weatherNodes))
-        .catch(() => {});
-    }
-    if (activeModuleTab === 'pois' && poisList.length === 0) {
-      fetchJson<Record<string, any>>('/api/pois')
-        .then((data) => data.pois && setPoisList(data.pois))
-        .catch(() => {});
-    }
-    if (activeModuleTab === 'traffic' && corridorsList.length === 0) {
-      fetchJson<Record<string, any>>('/api/traffic')
-        .then((data) => data.corridors && setTrafficCorridorsList(data.corridors))
-        .catch(() => {});
-    }
-  }, [activeModuleTab]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -1909,18 +1872,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {/* Module Header with Close Tab button */}
               <div className="flex items-center justify-between bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
                 <div className="flex items-center space-x-2 text-xs font-bold text-white min-w-0">
-                  {activeModuleTab === 'timeline' && <span>🕒 Timeline</span>}
-                  {activeModuleTab === 'comparison' && <span>⚖️ Compare routes</span>}
                   {activeModuleTab === 'travel_plan' && <span>📋 Trip plan</span>}
-                  {activeModuleTab === 'elevation' && <span>⛰️ Elevation</span>}
-                  {activeModuleTab === 'weather' && <span>🌤️ Mountain weather</span>}
-                  {activeModuleTab === 'pois' && <span>⛽ POIs &amp; charging</span>}
-                  {activeModuleTab === 'traffic' && <span>🚦 Traffic &amp; terrain</span>}
-                  {activeModuleTab === 'safety' && <span>🛡️ Safety score</span>}
                   {activeModuleTab === 'fuel_tolls' && <span>💰 Fuel &amp; tolls</span>}
                   {activeModuleTab === 'ai_advisory' && <span>🤖 AI advisory</span>}
                   {activeModuleTab === 'sos' && <span>🚨 Emergency SOS</span>}
-                  {activeModuleTab === 'eco' && <span>🌱 Eco &amp; carbon</span>}
                   {activeModuleTab === 'checklist' && <span>🔧 Vehicle checklist</span>}
                   {activeModuleTab === 'highway_info' && <span>🛣️ Route highways</span>}
                   <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
@@ -1933,33 +1888,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-
-              {/* MODULE CONTENT: Timeline View */}
-              {activeModuleTab === 'timeline' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <RouteJunctionTimeline
-                    routePlan={routePlan}
-                    vehicle={vehicle}
-                    onViewOnMap={onViewOnMap}
-                  />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 0. Comparison View */}
-              {activeModuleTab === 'comparison' && (
-                <RouteComparisonView
-                  activePlan={routePlan}
-                  allOptions={routePlan.allRouteOptions || [routePlan]}
-                  selectedRouteId={routePlan.id}
-                  vehicle={vehicle}
-                  onSelectRoute={(opt) => {
-                    setRoutePlan(opt);
-                    setPreference(opt.preference);
-                    onRouteCalculated(opt);
-                  }}
-                  onViewOnMap={onViewOnMap}
-                />
-              )}
 
               {/* MODULE CONTENT: 1. Travel Plan */}
               {activeModuleTab === 'travel_plan' && (
@@ -2050,110 +1978,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       </div>
                     </>
                   )}
-                </div>
-              )}
 
-              {/* MODULE CONTENT: 2. Weather & Mountain Passes */}
-              {activeModuleTab === 'weather' && (
-                <div className="space-y-3">
-                  <WeatherPassesPanel
-                    weatherNodes={weatherNodes}
-                    routeHighways={routePlan?.steps.map((s) => s.highwayCode).filter(Boolean) as string[] | undefined}
-                    onSelectNode={(node) => {
-                      if (onViewOnMap) {
-                        onViewOnMap({ lat: node.lat, lng: node.lng, title: `${node.name} (${node.elevationM}m)`, zoom: 12 });
-                      }
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 3. POIs & Fuel / EV */}
-              {activeModuleTab === 'pois' && (
-                <div className="space-y-3">
-                  <HighwayPOIsPanel
-                    pois={poisList}
-                    onSelectPOI={(poi) => {
-                      if (onViewOnMap) {
-                        onViewOnMap({ lat: poi.lat, lng: poi.lng, title: poi.name, zoom: 13 });
-                      }
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 4. Traffic & Terrain */}
-              {activeModuleTab === 'traffic' && (
-                <div className="space-y-4">
+                  {/* Terrain, gradient & time-of-day traffic analysis — folded in here
+                      (rather than its own tab) since it's part of planning the trip,
+                      and its live weather/POI/corridor/safety-score equivalents are
+                      already covered by the "Ahead" tab and the summary card above. */}
                   <RouteTerrainAndTrafficAnalysis routePlan={routePlan} vehicle={vehicle} />
-                  {corridorsList.length > 0 && (
-                    <TrafficCorridorPanel
-                      corridors={corridorsList}
-                      onSelectCorridor={(corridor) => {
-                        if (onViewOnMap && corridor.startCoord && corridor.endCoord) {
-                          onViewOnMap({
-                            lat: (corridor.startCoord[0] + corridor.endCoord[0]) / 2,
-                            lng: (corridor.startCoord[1] + corridor.endCoord[1]) / 2,
-                            title: corridor.name,
-                            zoom: 11,
-                          });
-                        }
-                      }}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 5. Safety & Hazards */}
-              {activeModuleTab === 'safety' && (
-                <div className="space-y-4">
-                  {routePlan.safetyIndex && (
-                    <HighwaySafetyIndexCard
-                      safetyIndex={routePlan.safetyIndex}
-                      onFocusBlackspot={(spot) => {
-                        if (onViewOnMap && spot?.coordinates) {
-                          onViewOnMap({ lat: spot.coordinates[0], lng: spot.coordinates[1], title: spot.name, zoom: 13 });
-                        }
-                      }}
-                      onFocusSegment={(seg) => {
-                        if (onViewOnMap && seg?.coordinates?.[0]) {
-                          onViewOnMap({ lat: seg.coordinates[0][0], lng: seg.coordinates[0][1], title: seg.highwayName, zoom: 11 });
-                        }
-                      }}
-                    />
-                  )}
-
-                  {/* Active Road Hazards & Incident Warnings along this route */}
-                  {routePlan.incidentsOnRoute.length > 0 ? (
-                    <div className="bg-red-950/20 border border-red-900/50 p-4 rounded-xl space-y-3">
-                      <div className="flex items-center space-x-2 text-xs font-bold text-red-400 uppercase tracking-wider">
-                        <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
-                        <span>Active Road Advisories On Selected Corridor ({routePlan.incidentsOnRoute.length})</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                        {routePlan.incidentsOnRoute.map((inc) => (
-                          <div key={inc.id} className="bg-slate-900/90 p-3 rounded-lg border border-red-900/40 text-xs space-y-1">
-                            <div className="flex items-center justify-between font-bold text-white">
-                              <span>{inc.title}</span>
-                              <span className="text-[10px] text-red-400 uppercase font-semibold px-1.5 py-0.5 bg-red-950 rounded border border-red-800">
-                                {inc.severity}
-                              </span>
-                            </div>
-                            <p className="text-slate-300 text-[11px]">{inc.locationName} • {inc.highwayName}</p>
-                            <p className="text-slate-400 text-[11px]">{inc.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-xl flex items-center space-x-3 text-xs text-emerald-300">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                      <div>
-                        <div className="font-bold">Highway Corridors All Clear</div>
-                        <div className="text-[11px] text-slate-400">No active landslides or major roadblocks reported along this path.</div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -2191,6 +2021,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     defaultTollCost={routePlan.totalTollCostNpr}
                     fuelPrices={fuelPrices}
                     onVehicleChange={(newV) => setVehicle(newV)}
+                  />
+                  <CarbonFootprintCard
+                    distanceKm={routePlan.totalDistanceKm}
+                    vehicleType={vehicle}
+                    elevationGainM={routePlan.elevationGainM}
+                    onVehicleChange={(v) => setVehicle(v)}
                   />
                 </div>
               )}
@@ -2280,18 +2116,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                    </div>
                  </div>
                )}
-
-              {/* MODULE CONTENT: 9. Eco & Carbon */}
-              {activeModuleTab === 'eco' && (
-                <div className="space-y-3">
-                  <CarbonFootprintCard
-                    distanceKm={routePlan.totalDistanceKm}
-                    vehicleType={vehicle}
-                    elevationGainM={routePlan.elevationGainM}
-                    onVehicleChange={(v) => setVehicle(v)}
-                  />
-                </div>
-              )}
 
               {/* MODULE CONTENT: 10. Checklist */}
               {activeModuleTab === 'checklist' && (
