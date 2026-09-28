@@ -795,7 +795,7 @@ function AppContent() {
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
         <main className="flex min-h-0 flex-1 w-full flex-col bg-slate-950">
         {/* Route Planner as Main Content */}
-        <div className="flex-shrink-0 relative z-[9999] w-full bg-slate-900">
+        <div className="flex-shrink-0 relative z-20 w-full bg-slate-900">
           <RoutePlanner
             initialOriginId={plannerOrigin}
             initialDestId={plannerDest}
