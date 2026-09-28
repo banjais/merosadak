@@ -231,7 +231,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
             <div className="p-2.5 bg-slate-800/40 border border-slate-700/50 rounded-lg">
               <p className="text-[10px] text-slate-500 text-center">
                 Data source: {tollRates.sourceLabel || 'Nepal Gazette'} · Auto-updated via CI/CD ·{' '}
-                <a href={tollRates.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                <a href={tollRates.source} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
                   View official notice
                 </a>
               </p>

@@ -38,7 +38,7 @@ import {
   Download,
   Bell,
   History,
-  Map,
+  Map as MapIcon,
   Wrench,
   X
 } from 'lucide-react';
@@ -154,7 +154,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
   // Compute real-time status analysis for each highway using segments data & incidents
   const highwayAnalyses = useMemo(() => {
-    const map = new Map<string, HighwayRealtimeAnalysis>();
+    const map = new globalThis.Map<string, HighwayRealtimeAnalysis>();
     for (const hw of highways) {
       const key = (hw.id || hw.code).toLowerCase();
       map.set(key, analyzeHighwayRealtimeStatus(hw, incidents, reports));
@@ -166,7 +166,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
   // Derive road type for each highway from its segments
   const roadTypesMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new globalThis.Map<string, string>();
     for (const hw of highways) {
       map.set((hw.id || hw.code).toLowerCase(), deriveRoadType(hw));
     }
@@ -302,7 +302,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
         return (
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
             <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
-              <Map className="w-3.5 h-3.5 text-cyan-400" />
+              <MapIcon className="w-3.5 h-3.5 text-cyan-400" />
               <span>Province Highway Coverage (DoR SNH 2022/23)</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -460,7 +460,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             const rightAction: SwipeAction = {
               id: 'view-map',
               label: 'View Map',
-              icon: <Map className="w-5 h-5" />,
+              icon: <MapIcon className="w-5 h-5" />,
               color: 'text-emerald-400',
               bgColor: 'bg-emerald-500/20',
               onTrigger: () => onSelectHighwayOnMap && onSelectHighwayOnMap(highway),
@@ -534,7 +534,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                     className="absolute inset-y-0 right-0 w-32 flex items-center justify-end pr-6 text-emerald-400 font-bold text-xs uppercase tracking-wider bg-emerald-500/10 border-l border-emerald-500/20 transition-opacity"
                     style={rightActionStyles as React.CSSProperties}
                   >
-                    <Map className="w-5 h-5 ml-2" />
+                    <MapIcon className="w-5 h-5 ml-2" />
                     View Map
                   </div>
                 </div>
@@ -730,7 +730,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         onClick={(e) => { e.stopPropagation(); onSelectHighwayOnMap && onSelectHighwayOnMap(highway); setShowQuickOverlay(false); }}
                         className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-300 flex flex-col items-center justify-center gap-1.5 transition"
                       >
-                        <Map className="w-5 h-5 text-emerald-400" />
+                        <MapIcon className="w-5 h-5 text-emerald-400" />
                         <span className="text-xs font-bold">View on Map</span>
                         <span className="text-[9px] text-slate-500">GIS Vector</span>
                       </button>
@@ -820,11 +820,11 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                        <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Corridor Link Codes</div>
                          <div className="flex flex-wrap gap-1.5">
-                           {highway.segmentLinks.slice(0, 20).map((link) => (
-                             <span key={link.code} className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-300" title={`${link.linkName || link.code} (${link.linkLenKm || 0} km)`}>
-                               {link.code}
-                             </span>
-                           ))}
+                            {highway.segmentLinks.slice(0, 20).map((link) => (
+                              <span key={link.linkCode} className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-300" title={`${link.linkName || link.linkCode} (${link.linkLenKm || 0} km)`}>
+                                {link.linkCode}
+                              </span>
+                            ))}
                            {highway.segmentLinks.length > 20 && (
                              <span className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] text-slate-400">
                                +{highway.segmentLinks.length - 20} more

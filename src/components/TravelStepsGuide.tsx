@@ -58,7 +58,7 @@ interface TravelStep {
   id: ActiveFeatureType | 'prep';
   title: string;
   subtitle: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   actionText: string;
   checklist: string[];
   color: string;
@@ -79,7 +79,7 @@ export interface VehicleTipsConfig {
   type: VehicleType;
   label: string;
   shortName: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   badgeBg: string;
   featuredHeadline: string;
@@ -514,7 +514,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
 
   const filteredTips = filteredTipsBase.filter((tip) => !isTipArchived(tip.id, 'tip'));
 
-  const vehicleOptions: { type: VehicleType; label: string; icon: React.ElementType }[] = [
+  const vehicleOptions: { type: VehicleType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { type: 'electric_vehicle', label: 'EV', icon: Zap },
     { type: 'car', label: 'Car', icon: Car },
     { type: 'suv_4wd', label: '4WD SUV', icon: Mountain },

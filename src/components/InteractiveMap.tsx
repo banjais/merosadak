@@ -180,6 +180,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     route: L.LayerGroup;
     alternatives: L.LayerGroup;
     nepalBorder: L.LayerGroup;
+    outsideMask: L.LayerGroup;
     provinces: L.LayerGroup;
   }>({
     highways: L.layerGroup(),

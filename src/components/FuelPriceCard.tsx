@@ -61,10 +61,10 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
           <Fuel className="w-4 h-4 text-amber-400" />
           <span className="text-sm font-bold text-white">Fuel Prices</span>
           {fuelPrices && !isLoading && !isRefreshing && (
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" title="Live data" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           )}
           {isRefreshing && (
-            <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" title="Refreshing…" />
+            <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
           )}
           {isStale && !isLoading && !isRefreshing && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-amber-500/40 text-amber-300 bg-amber-500/10">STALE</span>

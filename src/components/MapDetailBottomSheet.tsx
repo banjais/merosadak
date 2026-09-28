@@ -71,14 +71,14 @@ export const MapDetailBottomSheet: React.FC<MapDetailBottomSheetProps> = ({
         </div>
         <div className="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800">
           <div className="text-slate-400 mb-0.5">Type</div>
-          <div className="text-white font-bold capitalize">{selectedCity.type}</div>
+          <div className="text-white font-bold capitalize">{selectedCity.cityType || selectedCity.type || ''}</div>
         </div>
       </div>
 
-      {selectedCity.highwayCode && (
+      {(selectedCity.highwayCode || (selectedCity.connectedHighways && selectedCity.connectedHighways.length > 0)) && (
         <div className="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800 text-xs">
           <div className="text-slate-400 mb-0.5">Connected Highway</div>
-          <div className="text-white font-bold">{selectedCity.highwayCode}</div>
+          <div className="text-white font-bold">{selectedCity.highwayCode || selectedCity.connectedHighways?.[0]}</div>
         </div>
       )}
 

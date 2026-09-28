@@ -587,7 +587,6 @@ export const ActiveRouteElevationCard: React.FC<ActiveRouteElevationCardProps> =
                   x={currentNavPosition.distance}
                   y={currentNavPosition.elevation}
                   r={8}
-                  isFront={true}
                   shape={(props: any) => (
                     <AnimatedElevationProgressMarker
                       cx={props.cx}

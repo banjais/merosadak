@@ -21,7 +21,7 @@ interface IncidentCardProps {
   incident: RoadIncident;
   onSelectIncident?: (incident: RoadIncident) => void;
   onUpvoteReport?: (id: string) => void;
-  archiveIncident: (data: { id: string; type: string; data: { title: string; highwayCode: string } }) => void;
+  archiveIncident: (data: { id: string; type: 'highway' | 'incident' | 'tip' | 'custom'; data: { title: string; highwayCode: string } }) => void;
 }
 
 const IncidentCard: React.FC<IncidentCardProps> = ({
@@ -463,12 +463,12 @@ export const RoadAlertsFeed: React.FC<RoadAlertsFeedProps> = ({
         <div className="flex items-center space-x-2 shrink-0">
           <div className="flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
             <div className="text-center px-1">
-              <span className="text-rose-400 font-bold">{routeIncidents.filter(i => i.severity === 'critical' || i.status === 'blocked').length}</span>
+              <span className="text-rose-400 font-bold">{routeIncidents.filter(i => i.severity === 'critical' || i.status === 'closed').length}</span>
               <span className="text-slate-500 text-[10px] ml-1">Blocked</span>
             </div>
             <div className="w-px h-4 bg-slate-800" />
             <div className="text-center px-1">
-              <span className="text-amber-400 font-bold">{routeIncidents.filter(i => i.status === 'caution' || i.status === 'single_lane').length}</span>
+              <span className="text-amber-400 font-bold">{routeIncidents.filter(i => i.status === 'caution').length}</span>
               <span className="text-slate-500 text-[10px] ml-1">Caution</span>
             </div>
             <div className="w-px h-4 bg-slate-800" />

@@ -1222,7 +1222,6 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
               stroke="#38bdf8"
               strokeWidth={2}
               fill="url(#rechartsElevationGradient)"
-              allowDataOverflow={true}
               isAnimationActive={false}
             />
 
@@ -1234,7 +1233,6 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
               stroke="#38bdf8"
               strokeWidth={2.2}
               dot={renderCustomDot}
-              allowDataOverflow={true}
               activeDot={{
                 r: 7,
                 fill: '#38bdf8',

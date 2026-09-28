@@ -116,7 +116,7 @@ function MetricCard({
   detail,
   tone = 'slate',
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   unit?: string;
@@ -597,7 +597,6 @@ export function UnifiedRouteReport({
                   <div className="px-3.5 pb-3.5 animate-fadeIn">
                     <RouteElevationProfileChart
                       activeRoute={route}
-                      routePlan={route}
                       vehicle={route.vehicle}
                       simulationControls={simulationControls}
                       onViewOnMap={onViewOnMap}

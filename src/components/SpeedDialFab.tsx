@@ -7,10 +7,11 @@ import {
   Menu,
 } from 'lucide-react';
 import { useHaptic } from '../hooks/useHaptic';
+import { ActiveFeatureType } from '../App';
 
 interface SpeedDialFabProps {
-  activeFeature: 'highways' | null;
-  onSelectFeature: (feature: 'highways' | null) => void;
+  activeFeature: ActiveFeatureType;
+  onSelectFeature: (feature: ActiveFeatureType) => void;
   onOpenSos: () => void;
   onOpenDrawer: () => void;
   onOpenHighwayInfo?: () => void;
@@ -109,7 +110,7 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
             <button
               type="button"
               onClick={() =>
-                handleAction(
+                handleAction(() =>
                   onOpenHighwayInfo
                     ? onOpenHighwayInfo()
                     : onSelectFeature(activeFeature === 'highways' ? null : 'highways')

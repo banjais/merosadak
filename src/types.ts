@@ -213,7 +213,7 @@ export interface RoadIncident {
   lat: number;
   lng: number;
   type: IncidentType;
-  severity: 'minor' | 'moderate' | 'severe' | 'critical';
+  severity: 'minor' | 'moderate' | 'severe' | 'high' | 'critical';
   title: string;
   description: string;
   status: RoadStatusType;
@@ -232,11 +232,13 @@ export interface CityNode {
   district: string;
   province: string;
   cityType?: string;
+  type?: string;
   lat: number;
   lng: number;
   elevationM: number;
   isMajorHub: boolean;
   connectedHighways: string[];
+  highwayCode?: string;
 }
 
 export type SafetyTier = 'high' | 'moderate' | 'elevated_risk' | 'high_hazard';
@@ -256,6 +258,8 @@ export interface KnownBlackspot {
 
 export interface SegmentSafetyData {
   segmentId: string;
+  fromId?: string;
+  toId?: string;
   fromName: string;
   toName: string;
   highwayCode: string;
@@ -301,6 +305,7 @@ export type RoadClassificationTier =
 export interface RouteStep {
   instruction: string;
   highwayCode?: string;
+  highwayName?: string;
   distanceKm: number;
   durationMinutes: number;
   roadStatus: RoadStatusType;
@@ -310,6 +315,10 @@ export interface RouteStep {
   safetyData?: SegmentSafetyData;
   roadClassification?: RoadClassificationTier;
   certificationBadge?: string;
+  coordinates?: [number, number][];
+  from?: { lat: number; lng: number; name?: string };
+  to?: { lat: number; lng: number; name?: string };
+  roadConditionScore?: number;
 }
 
 export interface RouteSimulationControls {
@@ -408,6 +417,8 @@ export interface UserRoadReport {
   createdAt: string;
   upvotes: number;
   verified: boolean;
+  lat?: number;
+  lng?: number;
 }
 
 export type TripStopCategory = 'scenic_viewpoint' | 'cafe_dining' | 'rest_stop' | 'cultural_heritage' | 'ev_charging';

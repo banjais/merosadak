@@ -70,7 +70,7 @@ import {
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CardArchiveProvider } from './context/CardArchiveContext';
 
-export type ActiveFeatureType = 'steps' | 'highways' | null;
+export type ActiveFeatureType = 'steps' | 'highways' | 'route' | null;
 
 interface LiveFeedResponse {
   incidents?: RoadIncident[];
@@ -676,8 +676,8 @@ function AppContent() {
                             </div>
 
                             <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-tertiary">
-                              <span>Reported by {inc.reportedBy}</span>
-                              <span className="font-mono text-tertiary">{inc.timestamp}</span>
+                              <span>Reported by {inc.source || 'Community'}</span>
+                              <span className="font-mono text-tertiary">{inc.reportedAt ? new Date(inc.reportedAt).toLocaleString() : ''}</span>
                             </div>
                           </div>
                         ))

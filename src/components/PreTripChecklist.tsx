@@ -948,7 +948,7 @@ export const PreTripChecklist: React.FC<PreTripChecklistProps> = ({
         {/* Action Controls */}
         <div className="flex items-center space-x-2 shrink-0">
           <button
-            onClick={handleCopyChecklist}
+            onClick={() => handleCopyChecklist()}
             className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1.5 transition border border-slate-700"
             title="Copy checklist text to clipboard"
           >

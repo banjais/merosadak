@@ -145,6 +145,7 @@ const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[])
 };
 
 type DetailModuleTab =
+  | 'none'
   | 'timeline'
   | 'comparison'
   | 'travel_plan'
@@ -1122,7 +1123,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             { step: 'vehicle', label: 'Vehicle', icon: Car },
           ] as const).map(({ step, label, icon: Icon }, idx) => {
             const stepOrder = ['origin', 'destination', 'vehicle'] as const;
-            const currentIdx = stepOrder.indexOf(routePlannerStep);
+            const currentIdx = stepOrder.indexOf(routePlannerStep as 'origin' | 'destination' | 'vehicle');
             const isActive = routePlannerStep === step;
             const isCompleted = currentIdx > idx;
             return (
@@ -1832,14 +1833,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   type="button"
                   onClick={() => setResultsViewMode(resultsViewMode === 'overview' ? 'comparison' : 'overview')}
                   className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    resultsViewMode === 'comparison'
+                    (resultsViewMode as 'overview' | 'comparison') === 'comparison'
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
                       : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
                   }`}
                   title="Toggle route alternatives comparison"
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  <span>{resultsViewMode === 'overview' ? 'Compare' : 'Overview'}</span>
+                  <span>{(resultsViewMode as 'overview' | 'comparison') === 'overview' ? 'Compare' : 'Overview'}</span>
                   <span className="text-[10px] opacity-70">
                     ({routePlan.allRouteOptions.length} routes)
                   </span>

@@ -37,7 +37,7 @@ interface NearbyItem {
   lat: number;
   lng: number;
   distanceKm: number;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
@@ -74,7 +74,7 @@ function formatDMS(lat: number, lng: number): string {
   return `${convert(lat, true)} ${convert(lng, false)}`;
 }
 
-const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+const CATEGORY_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
   airport: { icon: Plane, color: 'text-sky-400', label: 'Airport' },
   bus_station: { icon: Bus, color: 'text-amber-400', label: 'Bus Station' },
   ev_charger: { icon: Zap, color: 'text-emerald-400', label: 'EV Charger' },
@@ -95,7 +95,7 @@ const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; 
 
 const DEFAULT_CONFIG = { icon: MapPin, color: 'text-slate-400', label: 'Location' };
 
-function getConfig(category: string): { icon: React.ElementType; color: string; label: string } {
+function getConfig(category: string): { icon: React.ComponentType<{ className?: string }>; color: string; label: string } {
   return CATEGORY_CONFIG[category?.toLowerCase()] || DEFAULT_CONFIG;
 }
 
@@ -131,7 +131,7 @@ export const MyLocationPage: React.FC<{
   onTextScaleChange?: (scale: TextScale) => void;
   accentColor?: string;
   onAccentColorChange?: (color: string) => void;
-}> = ({ onBack, textScale = 'md', onTextScaleChange, accentColor = 'emerald', onAccentColorChange }) => {
+}> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald', onAccentColorChange }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -277,7 +277,7 @@ export const MyLocationPage: React.FC<{
 
     const items: NearbyItem[] = [];
 
-    const addItem = (id: string, name: string, category: string, subcategory: string | undefined, lat: number, lng: number, icon: React.ElementType, color: string) => {
+    const addItem = (id: string, name: string, category: string, subcategory: string | undefined, lat: number, lng: number, icon: React.ComponentType<{ className?: string }>, color: string) => {
       const d = getDistanceKm(locationInfo.lat, locationInfo.lng, lat, lng);
       items.push({ id, name, category, subcategory, lat, lng, distanceKm: d, icon, color });
     };
@@ -357,7 +357,7 @@ export const MyLocationPage: React.FC<{
   const nearbyEmergency = useMemo(() => {
     if (!locationInfo) return [];
     const items: NearbyItem[] = [];
-    const addItem = (id: string, name: string, category: string, subcategory: string | undefined, lat: number, lng: number, icon: React.ElementType, color: string) => {
+    const addItem = (id: string, name: string, category: string, subcategory: string | undefined, lat: number, lng: number, icon: React.ComponentType<{ className?: string }>, color: string) => {
       const d = getDistanceKm(locationInfo.lat, locationInfo.lng, lat, lng);
       items.push({ id, name, category, subcategory, lat, lng, distanceKm: d, icon, color });
     };

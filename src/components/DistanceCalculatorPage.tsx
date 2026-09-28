@@ -156,7 +156,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
-  const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('snh_published');
+  const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('dor_snh');
   const [calculatorCoverage, setCalculatorCoverage] = useState<{ total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number }; highwayCoverage?: { totalCities: number; citiesOnHighway: number } } | null>(null);
 
   useEffect(() => {
@@ -371,7 +371,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       if (result) {
         setSelectedDataSource(result.source);
       } else {
-        setSelectedDataSource('snh_published');
+        setSelectedDataSource('dor_snh');
       }
     } else if (!origin || !destination) {
       setSnhLookupResult(null);
