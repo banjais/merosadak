@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ArrowLeft, Route, Settings, Settings2 } from 'lucide-react';
 import { HighwayDirectory } from './HighwayDirectory';
+import { Full3DPhoto } from './Full3DPhoto';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { TextScale } from '../hooks/useTextScale';
 
@@ -72,7 +73,18 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
-        <HighwayDirectory />
+        <div className="space-y-6">
+          <HighwayDirectory />
+          {/* 3D Parallax Photo - Nepal Highway Scenery at bottom of page */}
+          <div className="card p-0 overflow-hidden h-80">
+            <Full3DPhoto
+              photoUrl="/assets/photos/nepal-highway-photo.svg"
+              depthMapUrl="/assets/photos/nepal-highway-depth.svg"
+              width={4}
+              height={2.5}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );

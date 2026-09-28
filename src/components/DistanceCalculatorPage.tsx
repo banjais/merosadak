@@ -13,6 +13,7 @@ import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, D
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
+import { Full3DPhoto } from './Full3DPhoto';
 import { DistanceMatrixData } from '../types';
 import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
@@ -795,7 +796,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
 
           {/* Calculation Result Display - Shown only when route is found */}
           {!showSearchBars && routeResult && (
-            <UnifiedRouteReport
+            <>
+              {/* 3D Parallax Photo - Nepal Highway Scenery */}
+              <div className="card p-0 overflow-hidden h-80">
+                <Full3DPhoto
+                  photoUrl="/assets/photos/nepal-highway-photo.svg"
+                  depthMapUrl="/assets/photos/nepal-highway-depth.svg"
+                  width={4}
+                  height={2.5}
+                />
+              </div>
+
+              <UnifiedRouteReport
               route={routeResult}
               distanceKm={displayedDistance}
               distanceSource={displayedSource}
@@ -816,6 +828,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               onDownloadMatrix={handleDownloadMatrix}
               calculatorCoverage={calculatorCoverage}
             />
+          </>
           )}
         </div>
       </main>

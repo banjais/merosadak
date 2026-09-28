@@ -133,6 +133,7 @@ export const Full3DPhoto: React.FC<Full3DPhotoProps> = ({
         <Canvas
           camera={{ position: [0, 2, 5], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
+          style={{ touchAction: 'pan-y' }}
           onCreated={(state) => {
             state.gl.setClearColor(0x000000, 0);
           }}
