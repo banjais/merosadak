@@ -110,6 +110,8 @@ const CITY_TO_DISTRICT = {
   'salleri': 'Solukhumbu',
   'khandbari': 'Khotang',
   // Madhesh
+  // Madhesh
+  'arungkhola': 'Rautahat',
   'malangawa': 'Sarlahi',
   'gaur': 'Nawalparasi East',
   'kalaiya': 'Bara',
@@ -284,6 +286,19 @@ for (const c of idAndName) {
 
 const SUSPICIOUS_NODE_COORDS = { lat: 27.50527, lng: 83.49345 };
 
+// Hardcoded coordinates for cities not found in any data source (by normalized lowercase name)
+const FALLBACK_COORDINATES = {
+  'jaleshwor': { lat: 27.6135, lng: 83.1275 },
+  'manma': { lat: 28.3217, lng: 81.3575 },
+  'khalanga': { lat: 27.3028, lng: 86.8628 },
+  'gaur': { lat: 27.652, lng: 83.2 },
+  'lazimpat': { lat: 28.71, lng: 80.6 },
+  'arungkhola': { lat: 26.707, lng: 85.492 },
+};
+
+// Synthetic/placeholder node IDs (361xx range) that were auto-generated with wrong coordinates
+const SUSPICIOUS_NODE_IDS = new Set([36121, 36122, 36123, 36124, 36125, 36126, 36127, 36128, 36129, 36130, 36131, 36132, 36133, 36134, 36135, 36136, 36137, 36138]);
+
 const CITY_ALIASES = {
   'dhangadi': 'dhangadhi',
   'nilkantha': 'nilakantha',
@@ -322,12 +337,20 @@ function latLngFor(name, id) {
   const normName = normalizeLookupName(name);
   const normAlias = normalizeLookupName(aliasName);
 
+  // 0. Check hardcoded fallback coordinates first (authoritative for known bad snaps)
+  if (FALLBACK_COORDINATES[normName] || FALLBACK_COORDINATES[aliasName.toLowerCase()]) {
+    const fb = FALLBACK_COORDINATES[normName] || FALLBACK_COORDINATES[aliasName.toLowerCase()];
+    return { lat: fb.lat, lng: fb.lng };
+  }
+
   // 1. Check citySnapByName with normalized alias name first (most accurate for real cities)
   for (const lookupName of [normAlias, normName, aliasName.toLowerCase(), name.toLowerCase()]) {
     const nodeId = graphCitySnapByName[lookupName];
     if (typeof nodeId === 'number' && graphNodes[nodeId]) {
       const node = graphNodes[nodeId];
-      if (!(node[0] === SUSPICIOUS_NODE_COORDS.lat && node[1] === SUSPICIOUS_NODE_COORDS.lng)) {
+      const isSuspiciousCoord = node[0] === SUSPICIOUS_NODE_COORDS.lat && node[1] === SUSPICIOUS_NODE_COORDS.lng;
+      const isSuspiciousId = SUSPICIOUS_NODE_IDS.has(nodeId);
+      if (!isSuspiciousCoord && !isSuspiciousId) {
         return { lat: node[0], lng: node[1] };
       }
     }
@@ -348,7 +371,9 @@ function latLngFor(name, id) {
   // 3. Check road graph snapped coordinates by ID (skip suspicious generic node 8044)
   if (id && graphCoordLookup.has(id.toLowerCase())) {
     const g = graphCoordLookup.get(id.toLowerCase());
-    if (!(g.lat === SUSPICIOUS_NODE_COORDS.lat && g.lng === SUSPICIOUS_NODE_COORDS.lng)) {
+    const graphNodeId = roadGraph.citySnap[id.toLowerCase()];
+    const isSuspiciousId = typeof graphNodeId === 'number' && SUSPICIOUS_NODE_IDS.has(graphNodeId);
+    if (!isSuspiciousId && !(g.lat === SUSPICIOUS_NODE_COORDS.lat && g.lng === SUSPICIOUS_NODE_COORDS.lng)) {
       return { lat: g.lat, lng: g.lng };
     }
   }
@@ -397,7 +422,9 @@ function addCity(name, source, district, province, cityType) {
 }
 
 idAndName.forEach(c => {
-  addCity(c.name, 'bundled', c.district, c.province, 'Highway Node');
+  const district = CITY_TO_DISTRICT[c.name.toLowerCase()] || c.district;
+  const province = DISTRICT_TO_PROVINCE[district.toLowerCase()] || c.province;
+  addCity(c.name, 'bundled', district, province, 'Highway Node');
 });
 
 pubCities.forEach(name => {

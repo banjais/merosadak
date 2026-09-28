@@ -509,10 +509,10 @@
     {
       "id": "ark",
       "name": "Arungkhola",
-      "district": "Bara",
+      "district": "Rautahat",
       "province": "Madhesh",
-      "lat": 27.7395,
-      "lng": 84.14306,
+      "lat": 26.707,
+      "lng": 85.492,
       "source": "bundled",
       "cityType": "Highway Node",
       "onHighway": true
@@ -874,8 +874,8 @@
       "name": "jaleshwor",
       "district": "Rupandehi",
       "province": "Lumbini",
-      "lat": 28.18881,
-      "lng": 88.26066,
+      "lat": 27.6135,
+      "lng": 83.1275,
       "source": "snh_published",
       "cityType": "Published",
       "onHighway": true
@@ -896,8 +896,8 @@
       "name": "gaur",
       "district": "Nawalparasi East",
       "province": "Bagmati",
-      "lat": 26.75387,
-      "lng": 85.27523,
+      "lat": 27.652,
+      "lng": 83.2,
       "source": "snh_published",
       "cityType": "Published",
       "onHighway": true
@@ -1270,8 +1270,8 @@
       "name": "manma",
       "district": "Salyan",
       "province": "Gandaki",
-      "lat": 29.12429,
-      "lng": 84.75219,
+      "lat": 28.3217,
+      "lng": 81.3575,
       "source": "snh_published",
       "cityType": "Published",
       "onHighway": true
@@ -1292,8 +1292,8 @@
       "name": "khalanga",
       "district": "Sankhuwasabha",
       "province": "Koshi",
-      "lat": 29.43395,
-      "lng": 86.1836,
+      "lat": 27.3028,
+      "lng": 86.8628,
       "source": "snh_published",
       "cityType": "Published",
       "onHighway": true
@@ -1501,8 +1501,8 @@
       "name": "Lazimpat",
       "district": "Kailali",
       "province": "Sudurpashchim",
-      "lat": 27.84432,
-      "lng": 85.45928,
+      "lat": 28.71,
+      "lng": 80.6,
       "source": "snh_published",
       "cityType": "Published Alias",
       "onHighway": true
