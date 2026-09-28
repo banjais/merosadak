@@ -57,6 +57,124 @@ for (const aliases of Object.values(ref.city_aliases || {})) {
 const centroidsRaw = JSON.parse(fs.readFileSync(path.join(root, 'public', 'data', 'district-centroids.json'), 'utf8'));
 const centroids = centroidsRaw.reduce((m, d) => { m[(d.name || '').toLowerCase()] = d; return m; }, {});
 
+// Comprehensive district-to-province mapping for all 77 districts of Nepal
+const DISTRICT_TO_PROVINCE = {
+  // Province 1 (Koshi)
+  'bhojpur': 'Koshi', 'dhankuta': 'Koshi', 'ilam': 'Koshi', 'jhapa': 'Koshi',
+  'khotang': 'Koshi', 'okhaldhunga': 'Koshi', 'panchthar': 'Koshi',
+  'sankhuwasabha': 'Koshi', 'solukhumbu': 'Koshi', 'sunsari': 'Koshi',
+  'taplejung': 'Koshi', 'terhathum': 'Koshi', 'udayapur': 'Koshi', 'morang': 'Koshi',
+  // Province 2 (Madhesh)
+  'bara': 'Madhesh', 'dhanusha': 'Madhesh', 'mahottari': 'Madhesh',
+  'parsa': 'Madhesh', 'rautahat': 'Madhesh', 'saptari': 'Madhesh',
+  'sarlahi': 'Madhesh', 'siraha': 'Madhesh',
+  // Province 3 (Bagmati)
+  'bagmati': 'Bagmati', 'chitwan': 'Bagmati', 'chitawan': 'Bagmati', 'dhading': 'Bagmati',
+  'dolakha': 'Bagmati', 'gorkha': 'Gandaki', 'kabhrepalanchok': 'Bagmati', 'kavrepalanchok': 'Bagmati',
+  'kathmandu': 'Bagmati', 'lalitpur': 'Bagmati', 'makwanpur': 'Bagmati',
+  'nuwakot': 'Bagmati', 'ramechhap': 'Bagmati', 'rasuwa': 'Bagmati',
+  'sindhuli': 'Bagmati', 'sindhupalchok': 'Bagmati', 'nawalparasi east': 'Bagmati',
+  // Province 4 (Gandaki)
+  'baglung': 'Gandaki', 'kaski': 'Gandaki', 'lamjung': 'Gandaki', 'manang': 'Gandaki',
+  'mustang': 'Gandaki', 'myagdi': 'Gandaki', 'syangja': 'Gandaki', 'tanahu': 'Gandaki',
+  'tanahun': 'Gandaki', 'gulmi': 'Gandaki', 'palpa': 'Gandaki', 'salyan': 'Gandaki',
+  'gorkha': 'Gandaki',
+  // Province 5 (Lumbini)
+  'arghakhanchi': 'Lumbini', 'banke': 'Lumbini', 'bardiya': 'Lumbini',
+  'dang': 'Lumbini', 'kapilvastu': 'Lumbini', 'kapilbastu': 'Lumbini',
+  'pyuthan': 'Lumbini', 'rupandehi': 'Lumbini', 'rolpa': 'Lumbini',
+  'nawalparasi west': 'Lumbini',
+  // Province 6 (Karnali)
+  'dolpa': 'Karnali', 'humla': 'Karnali', 'jajarkot': 'Karnali', 'jumla': 'Karnali',
+  'kalikot': 'Karnali', 'mugu': 'Karnali', 'rukum east': 'Karnali',
+  'rukum west': 'Karnali', 'surkhet': 'Karnali', 'dailekh': 'Karnali',
+  // Province 7 (Sudurpashchim)
+  'achham': 'Sudurpashchim', 'baitadi': 'Sudurpashchim', 'bajhang': 'Sudurpashchim',
+  'bajura': 'Sudurpashchim', 'dadeldhura': 'Sudurpashchim', 'darchula': 'Sudurpashchim',
+  'doti': 'Sudurpashchim', 'kanchanpur': 'Sudurpashchim', 'kailali': 'Sudurpashchim',
+};
+
+// City-to-district mapping for cities whose names don't match their district
+const CITY_TO_DISTRICT = {
+  // Koshi
+  'dhalkebar': 'Dhanusha',
+  'siddhicharan': 'Okhaldhunga',
+  'myanglung': 'Terhathum',
+  'phidim': 'Panchthar',
+  'inaruwa': 'Sunsari',
+  'gaighat': 'Sunsari',
+  'jaleshwor': 'Rupandehi',
+  'tribhuwannager': 'Jhapa',
+  'khalanga': 'Sankhuwasabha',
+  'diktel': 'Dhankuta',
+  'salleri': 'Solukhumbu',
+  'khandbari': 'Khotang',
+  // Madhesh
+  'malangawa': 'Sarlahi',
+  'gaur': 'Nawalparasi East',
+  'kalaiya': 'Bara',
+  // Bagmati
+  'narayangadh': 'Chitwan',
+  'narayan ghad': 'Chitwan',
+  'kohalpur': 'Chitwan',
+  'attaria': 'Kathmandu',
+  'dhunche': 'Rasuwa',
+  'kamalamai': 'Sindhuli',
+  'bhimeshwar': 'Rasuwa',
+  'bhimeshwor': 'Rasuwa',
+  'nilkantha': 'Chitwan',
+  'nilakantha': 'Chitwan',
+  'manthali': 'Ramechhap',
+  'bharatpur': 'Chitwan',
+  'kawasoti': 'Nawalparasi East',
+  'byas': 'Tanahun',
+  // Gandaki
+  'jomsom': 'Mustang',
+  'beni': 'Myagdi',
+  'besishahar': 'Lamjung',
+  'putalibazar': 'Kaski',
+  'kusma': 'Syangja',
+  'libang': 'Gulmi',
+  'resunga': 'Gulmi',
+  'resunga(via butwal)': 'Gulmi',
+  'sandhikhark': 'Arghakhanchi',
+  'tansen(via butwal)': 'Palpa',
+  'gorkha': 'Gorkha',
+  'salyan': 'Salyan',
+  'manma': 'Salyan',
+  'musikot': 'Rukum West',
+  // Lumbini
+  'butwal (mahendrachok)': 'Rupandehi',
+  'gaddachowki': 'Kanchanpur',
+  'gaddachauki': 'Kanchanpur',
+  'siddharthanagar': 'Rupandehi',
+  'kapilvastu': 'Kapilvastu',
+  'kapilbastu': 'Kapilvastu',
+  'ramgram': 'Nawalparasi West',
+  'tansen': 'Palpa',
+  'dipayal silgadhi': 'Doti',
+  // Karnali
+  'simikot': 'Humla',
+  'rukumkot': 'Rukum West',
+  'birendranagar': 'Surkhet',
+  'chandannath': 'Jumla',
+  'bajura': 'Bajura',
+  // Sudurpashchim
+  'gamgadhi': 'Bajura',
+  'martadi': 'Baitadi',
+  'jayaprithvi': 'Bajhang',
+  'dasharathchand': 'Baitadi',
+  'amargadhi': 'Bardiya',
+  'dipayal': 'Doti',
+  'mangalsen': 'Achham',
+  'dhangadi': 'Kailali',
+  'dhangadhi': 'Kailali',
+  'bhimdatta': 'Kanchanpur',
+  'narayan': 'Chitwan',
+  'lazimpat': 'Kailali',
+  'dharan': 'Sunsari',
+};
+
 // Build comprehensive coordinate lookup from multiple data sources
 const coordLookup = new Map();
 
@@ -141,6 +259,27 @@ function districtFor(name) {
     if (n.includes(d) || d.includes(n)) return centroids[d];
   }
   return null;
+}
+
+function resolveDistrictProvince(name) {
+  const norm = normalizeLookupName(name);
+  const lower = name.toLowerCase();
+  let district = CITY_TO_DISTRICT[norm] || CITY_TO_DISTRICT[lower] || CITY_TO_DISTRICT[lower.replace(/\s*\(.*\)\s*/g, '').trim()];
+  if (!district) {
+    const d = districtFor(name);
+    if (d) district = d.name;
+  }
+  if (!district) district = 'Unknown';
+  const province = DISTRICT_TO_PROVINCE[district.toLowerCase()] || 'Unknown';
+  return { district, province };
+}
+
+// Build lookup from bundled data for fast district/province access
+const bundledInfo = new Map();
+for (const c of idAndName) {
+  bundledInfo.set(c.name.toLowerCase(), { district: c.district, province: c.province });
+  const norm = normalizeLookupName(c.name);
+  bundledInfo.set(norm, { district: c.district, province: c.province });
 }
 
 const SUSPICIOUS_NODE_COORDS = { lat: 27.50527, lng: 83.49345 };
@@ -236,17 +375,19 @@ function isOnHighway(name, id) {
   return !!graphCitySnapByName[cleanName];
 }
 
-function addCity(name, source, district, cityType) {
+function addCity(name, source, district, province, cityType) {
   const key = name.toLowerCase();
   if (cities.has(key)) return;
 
   const id = nameToId.get(key) || key.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const coord = latLngFor(name, id);
   const onHighway = isOnHighway(name, id);
+  const finalProvince = DISTRICT_TO_PROVINCE[district.toLowerCase()] || province || 'Unknown';
   cities.set(key, {
     id,
     name,
     district: district || 'Unknown',
+    province: finalProvince,
     lat: coord.lat,
     lng: coord.lng,
     source,
@@ -256,18 +397,17 @@ function addCity(name, source, district, cityType) {
 }
 
 idAndName.forEach(c => {
-  const district = districtFor(c.name)?.name;
-  addCity(c.name, 'bundled', district, 'Highway Node');
+  addCity(c.name, 'bundled', c.district, c.province, 'Highway Node');
 });
 
 pubCities.forEach(name => {
-  const district = districtFor(name)?.name;
-  addCity(name, 'snh_published', district, 'Published');
+  const info = bundledInfo.get(name.toLowerCase()) || bundledInfo.get(normalizeLookupName(name)) || resolveDistrictProvince(name);
+  addCity(name, 'snh_published', info.district, info.province, 'Published');
 });
 
 aliasTargets.forEach(name => {
-  const district = districtFor(name)?.name;
-  addCity(name, 'snh_published', district, 'Published Alias');
+  const info = bundledInfo.get(name.toLowerCase()) || bundledInfo.get(normalizeLookupName(name)) || resolveDistrictProvince(name);
+  addCity(name, 'snh_published', info.district, info.province, 'Published Alias');
 });
 
 const list = Array.from(cities.values());
@@ -284,6 +424,11 @@ const out = {
     bundled: list.filter(c => c.source === 'bundled').length,
     snh_published: list.filter(c => c.source === 'snh_published').length,
   },
+  provinceBreakdown: (() => {
+    const b = {};
+    list.forEach(c => { b[c.province] = (b[c.province] || 0) + 1; });
+    return b;
+  })(),
   cityTypeBreakdown: cityTypeCounts,
   total: list.length,
   highwayCoverage: {

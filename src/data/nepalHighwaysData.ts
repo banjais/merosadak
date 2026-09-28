@@ -22,7 +22,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'dhk', name: 'Dhulikhel', nepaliName: 'धुलिखेल', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.6221, lng: 85.5428, elevationM: 1550, isMajorHub: false, connectedHighways: ['NH03', 'NH13'] },
   { id: 'sdh', name: 'Sindhuli Gadhi', nepaliName: 'सिन्धुलीगढी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2486, lng: 85.9186, elevationM: 1100, isMajorHub: false, connectedHighways: ['NH13'] },
   { id: 'dml', name: 'Damauli', nepaliName: 'दमौली', district: 'Tanahun', province: 'Gandaki', lat: 27.9733, lng: 84.2833, elevationM: 450, isMajorHub: false, connectedHighways: ['NH04'] },
-  { id: 'plp', name: 'Tansen (Palpa)', nepaliName: 'तानसेन (पाल्पा)', district: 'Palpa', province: 'Lumbini', lat: 27.8683, lng: 83.5489, elevationM: 1350, isMajorHub: false, connectedHighways: ['NH10'] },
+  { id: 'plp', name: 'Tansen (Palpa)', nepaliName: 'तानसेन (पाल्पा)', district: 'Palpa', province: 'Gandaki', lat: 27.8683, lng: 83.5489, elevationM: 1350, isMajorHub: false, connectedHighways: ['NH10'] },
   { id: 'ilm', name: 'Ilam', nepaliName: 'इलाम', district: 'Ilam', province: 'Koshi', lat: 26.9117, lng: 87.9275, elevationM: 1208, isMajorHub: false, connectedHighways: ['NH09'] },
   { id: 'bgl', name: 'Baglung', nepaliName: 'बागलुङ', district: 'Baglung', province: 'Gandaki', lat: 28.2725, lng: 83.6006, elevationM: 1020, isMajorHub: false, connectedHighways: ['NH15'] },
   { id: 'jml', name: 'Jumla', nepaliName: 'जुम्ला', district: 'Jumla', province: 'Karnali', lat: 29.2747, lng: 82.1838, elevationM: 2514, isMajorHub: false, connectedHighways: ['NH06'] },
