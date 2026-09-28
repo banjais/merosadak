@@ -15,10 +15,8 @@ import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLo
 import { findOptimizedRoute } from '../utils/routeOptimizer';
 import { FuelCostEstimator } from './FuelCostEstimator';
 import { FuelPriceCard } from './FuelPriceCard';
-import { ShareTripModal } from './ShareTripModal';
 import { TripAssistantPanel } from './TripAssistantPanel';
 import { RouteTerrainAndTrafficAnalysis } from './RouteTerrainAndTrafficAnalysis';
-import { PreTripChecklist } from './PreTripChecklist';
 import { RouteOptionsSelector } from './RouteOptionsSelector';
 import { CarbonFootprintCard } from './CarbonFootprintCard';
 import { RouteComparisonView } from './RouteComparisonView';
@@ -108,6 +106,12 @@ interface RoutePlannerProps {
   onOpenHighwayDirectory?: () => void;
   onViewHighwayOnMap?: (highway: Highway) => void;
   onOpenMyLocation?: () => void;
+  /** Parent-owned share modal (avoid double-mounting ShareTripModal here). */
+  onShareTrip?: () => void;
+  /** Parent-owned pre-trip checklist modal. */
+  onOpenPreTrip?: () => void;
+  /** App language for speech recognition and labels. */
+  uiLanguage?: 'EN' | 'NE';
 }
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
@@ -161,6 +165,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   onOpenHighwayDirectory,
   onViewHighwayOnMap,
   onOpenMyLocation,
+  onShareTrip,
+  onOpenPreTrip,
+  uiLanguage = 'EN',
 }) => {
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
@@ -315,6 +322,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // 'passenger' hides those and keeps only what someone riding along actually needs.
   const [travelerMode, setTravelerMode] = useState<'driver' | 'passenger'>('driver');
 
+  const estimatedTripCostNpr = useMemo(() => {
+    if (!routePlan) return 0;
+    const effKmL = Math.max(1.0, customMileageKmL);
+    const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
+    const price = fuelPrices ? getEffectiveFuelRate(vehicle, fuelPrices) : getNOCFuelRate(vehicle);
+    return Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0);
+  }, [routePlan, customMileageKmL, fuelPrices, vehicle]);
+
+
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
   const [activeModuleTab, setActiveModuleTab] = useState<DetailModuleTab>('none');
   const [resultsViewMode, setResultsViewMode] = useState<'overview' | 'comparison'>('overview');
@@ -329,8 +345,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [loadingAiAdvisory, setLoadingAiAdvisory] = useState<boolean>(false);
   const [aiCustomAdvisory, setAiCustomAdvisory] = useState<any | null>(null);
 
-  // Share Modal & Toast Feedback
-  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  // Toast Feedback (share modal owned by App — no local ShareTripModal)
   const [trafficSyncedNotification, setTrafficSyncedNotification] = useState<boolean>(false);
 
   // Telemetry data for embedded option tabs (if opened)
@@ -472,6 +487,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(plan);
       }
       setHasCalculated(true);
+      setActiveModuleTab('ahead');
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
       setSingleSearchQuery('');
@@ -703,7 +719,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
     try {
       const recognition = new SpeechRecognitionAPI();
-      recognition.lang = 'en-US';
+      recognition.lang = uiLanguage === 'NE' ? 'ne-NP' : 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 3;
 
@@ -1613,7 +1629,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
          <div
            id="route-results-panel"
            key={`route-results-panel-${calcKey}-${routePlan.id}`}
-           className="card card-elevated p-3 sm:p-5 rounded-2xl shadow-xl space-y-3.5 sm:space-y-4 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
+           className="card card-elevated p-3 sm:p-4 rounded-2xl shadow-xl space-y-2.5 sm:space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
         >
            {/* Header Summary & Expand/Reduce + Map Actions */}
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
@@ -1688,7 +1704,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </button>
 
             <button
-              onClick={() => setIsShareModalOpen(true)}
+              onClick={() => onShareTrip?.()}
               className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
               title="Share this trip"
             >
@@ -1727,12 +1743,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </span>
                 <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
                   <Fuel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>Rs {(() => {
-                    const effKmL = Math.max(1.0, customMileageKmL);
-                    const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
-                    const price = fuelPrices ? getEffectiveFuelRate(vehicle, fuelPrices) : getNOCFuelRate(vehicle);
-                    return (Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0)).toLocaleString();
-                  })()}</span>
+                  <span>Rs {estimatedTripCostNpr.toLocaleString()}</span>
                 </span>
                 <span className="flex items-center space-x-1 text-emerald-400 font-bold" title="Safety">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -1783,7 +1794,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
                   preferenceLabel={preference.replace('_', ' ')}
                   onPrint={() => window.print()}
-                  onShare={() => setIsShareModalOpen(true)}
+                  onShare={() => onShareTrip?.()}
                   showElevationProfile
                   simulationControls={simulationControls}
                   onViewOnMap={onViewOnMap}
@@ -1824,18 +1835,47 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             />
           )}
 
-          {/* 6. ALONG YOUR ROUTE: information first, scoped to THIS route (not the whole
-              country), split by who is asking. Detail views stay behind a few buttons. */}
-          <div className="pt-2 border-t border-slate-800 space-y-3">
-            <div className="flex flex-wrap gap-2" id="route-detail-actions">
+          {/* 6. Mode first, then along-route modules (driver vs passenger). */}
+          <div className="pt-2 border-t border-slate-800 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 justify-between">
+              <div className="inline-flex items-center rounded-xl border border-slate-800 bg-slate-950 p-0.5 text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setTravelerMode('driver')}
+                  aria-pressed={travelerMode === 'driver'}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg transition ${
+                    travelerMode === 'driver'
+                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Driving</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTravelerMode('passenger')}
+                  aria-pressed={travelerMode === 'passenger'}
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg transition ${
+                    travelerMode === 'passenger'
+                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Passenger</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5" id="route-detail-actions">
               {([
-                { tab: 'travel_plan', label: 'Timeline', Icon: Milestone, show: true, tone: 'emerald' },
+                { tab: 'ahead', label: 'Ahead', Icon: Navigation, show: true, tone: 'emerald' },
+                { tab: 'travel_plan', label: 'Trip plan', Icon: Milestone, show: true, tone: 'emerald' },
                 { tab: 'highway_info', label: 'Highways', Icon: Route, show: true, tone: 'cyan' },
                 { tab: 'fuel_tolls', label: 'Cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
                 { tab: 'checklist', label: 'Checklist', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
                 { tab: 'ai_advisory', label: 'AI', Icon: Sparkles, show: true, tone: 'cyan' },
                 { tab: 'sos', label: 'SOS', Icon: PhoneCall, show: true, tone: 'red' },
-                { tab: 'ahead', label: 'Ahead', Icon: Navigation, show: true, tone: 'emerald' },
               ] as Array<{ tab: DetailModuleTab; label: string; Icon: React.ComponentType<{ className?: string }>; show: boolean; tone: string }>)
                 .filter((a) => a.show)
                 .map(({ tab, label, Icon, tone }) => (
@@ -1844,7 +1884,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     type="button"
                     onClick={() => handleToggleModuleTab(tab)}
                     aria-pressed={activeModuleTab === tab}
-                    className={`px-3 py-2 rounded-xl border text-xs font-bold transition inline-flex items-center gap-1.5 ${
+                    className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition inline-flex items-center gap-1 ${
                       activeModuleTab === tab
                         ? tone === 'red'
                           ? 'bg-red-600/30 text-red-300 border-red-500'
@@ -1854,7 +1894,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
                     }`}
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{label}</span>
                   </button>
                 ))}
@@ -1872,12 +1912,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               {/* Module Header with Close Tab button */}
               <div className="flex items-center justify-between bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
                 <div className="flex items-center space-x-2 text-xs font-bold text-white min-w-0">
-                  {activeModuleTab === 'travel_plan' && <span>📋 Trip plan</span>}
-                  {activeModuleTab === 'fuel_tolls' && <span>💰 Fuel &amp; tolls</span>}
-                  {activeModuleTab === 'ai_advisory' && <span>🤖 AI advisory</span>}
-                  {activeModuleTab === 'sos' && <span>🚨 Emergency SOS</span>}
-                  {activeModuleTab === 'checklist' && <span>🔧 Vehicle checklist</span>}
-                  {activeModuleTab === 'highway_info' && <span>🛣️ Route highways</span>}
+                  {activeModuleTab === 'travel_plan' && <span>Trip plan</span>}
+                  {activeModuleTab === 'fuel_tolls' && <span>Cost &amp; eco</span>}
+                  {activeModuleTab === 'ai_advisory' && <span>AI advisory</span>}
+                  {activeModuleTab === 'sos' && <span>Emergency SOS</span>}
+                  {activeModuleTab === 'checklist' && <span>Vehicle checklist</span>}
+                  {activeModuleTab === 'highway_info' && <span>Route highways</span>}
                   <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
                 </div>
                 <button
@@ -2119,8 +2159,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
               {/* MODULE CONTENT: 10. Checklist */}
               {activeModuleTab === 'checklist' && (
-                <div className="space-y-3">
-                  <PreTripChecklist routePlan={routePlan} vehicle={vehicle} />
+                <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
+                  <p className="text-xs text-slate-300">
+                    Pre-trip vehicle checklist opens in one place so it is not duplicated on this screen.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenPreTrip?.()}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/40 px-3 py-2 text-xs font-bold text-amber-200 hover:bg-amber-900/50 transition"
+                  >
+                    <Wrench className="w-3.5 h-3.5" />
+                    Open full checklist
+                  </button>
                 </div>
               )}
 
@@ -2158,36 +2208,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   </div>
    )}
 
-  {hasCalculated && (
-    <div className="inline-flex items-center self-start sm:self-auto rounded-xl border border-slate-800 bg-slate-950 p-1 text-[11px] font-bold">
-      <button
-        type="button"
-        onClick={() => setTravelerMode('driver')}
-        aria-pressed={travelerMode === 'driver'}
-        className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
-          travelerMode === 'driver'
-            ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-            : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        <User className="w-3.5 h-3.5" />
-        <span>Driving</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setTravelerMode('passenger')}
-        aria-pressed={travelerMode === 'passenger'}
-        className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition ${
-          travelerMode === 'passenger'
-            ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-            : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        <Users className="w-3.5 h-3.5" />
-        <span>Passenger</span>
-      </button>
-    </div>
-  )}
 
         {hasCalculated && (
           <div className="mt-3 border-t border-slate-800/60 pt-3">
@@ -2268,15 +2288,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
             </div>
           )}
-      {routePlan && (
-        <ShareTripModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          routePlan={routePlan}
-          vehicle={vehicle}
-          preference={preference}
-        />
-      )}
     </div>
     </div>
   );
