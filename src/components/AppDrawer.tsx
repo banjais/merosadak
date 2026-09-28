@@ -96,7 +96,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
     },
     {
       id: 'highways',
-      label: hasActiveRoute ? 'Highway Info' : 'Highway Info',
+      label: hasActiveRoute ? 'Route Highways' : 'Highway Info',
       subtitle: hasActiveRoute ? 'On your route' : 'Highway directory',
       icon: Route,
       color: 'accent-text',

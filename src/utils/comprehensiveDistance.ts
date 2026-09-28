@@ -105,8 +105,8 @@ export function findUnifiedRouteSync(
   snhDistances: Record<string, SNHDistance>
 ): UnifiedDistanceResult {
   // 1. Try DoR road graph (real highway network from geojson)
-  const startNode = roadGraph?.citySnap?.[originId];
-  const endNode = roadGraph?.citySnap?.[destId];
+  const startNode = roadGraph?.citySnap?.[originId] ?? roadGraph?.citySnapByName?.[originId?.toLowerCase()];
+  const endNode = roadGraph?.citySnap?.[destId] ?? roadGraph?.citySnapByName?.[destId?.toLowerCase()];
   if (startNode !== undefined && endNode !== undefined && startNode !== endNode) {
     const { distanceKm, pathCoordinates, highwaysUsed } = findRoadGraphRouteDijkstra(
       roadGraph, startNode, endNode

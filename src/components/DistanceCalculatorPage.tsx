@@ -6,7 +6,7 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, computeLinkSumDistance, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
+import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, computeLinkSumDistance, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, lookupGeoJsonRouteDistance, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
 import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2, X } from 'lucide-react';
@@ -45,6 +45,12 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
       label: 'DOR-SNH / DOR-Archives',
       url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
       description: 'DoR Statistics of National Highway 2022/23 published distances + surveyed highway network (NH01–NH80)',
+    },
+    {
+      value: 'dor_geojson',
+      label: 'DOR Highway Network',
+      url: 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement',
+      description: 'DoR GeoJSON highway geometry — route computed along surveyed road graph',
     },
     {
       value: 'estimate_aerial',
@@ -150,7 +156,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
   const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('snh_published');
-  const [calculatorCoverage, setCalculatorCoverage] = useState<{ total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number } } | null>(null);
+  const [calculatorCoverage, setCalculatorCoverage] = useState<{ total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number }; highwayCoverage?: { totalCities: number; citiesOnHighway: number } } | null>(null);
 
   useEffect(() => {
     loadExpandedCities()
@@ -162,10 +168,11 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     fetch('/data/calculator-cities.json')
       .then(res => res.json())
       .then(data => {
-        if (data && typeof data.total === 'number') {
+         if (data && typeof data.total === 'number') {
           setCalculatorCoverage({
             total: data.total,
             publishedDistanceCoverage: data.publishedDistanceCoverage || { totalPublishedCities: 0, coveredCities: 0 },
+            highwayCoverage: data.highwayCoverage || { totalCities: 0, citiesOnHighway: 0 },
           });
         }
       })
@@ -280,6 +287,30 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       return;
     }
 
+    if (source === 'dor_geojson') {
+      const geoRoute = lookupGeoJsonRouteDistance(origin.id, destination.id);
+      if (geoRoute && geoRoute.distanceKm > 0) {
+        setDistanceWithSource(geoRoute);
+      } else {
+        const linkSum = computeLinkSumDistance(origin.name, destination.name, snhReference);
+        if (linkSum && linkSum.distanceKm > 0) {
+          setDistanceWithSource({
+            distanceKm: linkSum.distanceKm,
+            evidenceLevel: 'link_sum',
+            source: 'dor_snh',
+            citation: linkSum.citation,
+            linkChain: linkSum.linkChain,
+            isUncertain: linkSum.isUncertain,
+            note: linkSum.note,
+            publishedDistanceKm: linkSum.publishedDistanceKm,
+          });
+        } else {
+          setDistanceWithSource(null);
+        }
+      }
+      return;
+    }
+
     if (source === 'estimate_aerial') {
       // Prefer live highway graph route km, then SNH link-chain sum
       const graphKm = routeResult?.totalDistanceKm;
@@ -326,6 +357,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       const result = lookupDistanceWithFallback(
         origin.name,
         destination.name,
+        origin.id,
+        destination.id,
         origin.lat,
         origin.lng,
         destination.lat,
@@ -342,8 +375,37 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     } else if (!origin || !destination) {
       setSnhLookupResult(null);
       setDistanceWithSource(null);
+    } else if (origin && destination) {
+      const graphKm = routeResult?.totalDistanceKm;
+      const certified = routeResult?.roadTierBreakdown?.certifiedPercent ?? 0;
+      const isAerialRoute =
+        routeResult?.routeBadge?.includes('Approximate') ||
+        routeResult?.routeName?.toLowerCase().includes('aerial') ||
+        certified <= 0;
+
+      if (graphKm && graphKm > 0 && !isAerialRoute) {
+        setDistanceWithSource({
+          distanceKm: graphKm,
+          evidenceLevel: 'link_sum',
+          source: 'dor_snh',
+          note: 'Distance along DoR highway network graph',
+        });
+      } else {
+        const directDist = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
+        setDistanceWithSource({
+          distanceKm: directDist,
+          evidenceLevel: 'estimate',
+          source: 'estimate_aerial',
+          citation: {
+            document: 'Geodesic Great Circle Calculation',
+            table: 'Aerial Line-of-Sight',
+          },
+          isUncertain: true,
+          note: 'Aerial distance only. No published DoR corridor data available for this city pair. Use for rough reference only — road distance will be longer, especially in mountain terrain.',
+        });
+      }
     }
-  }, [origin, destination, snhReference]);
+  }, [origin, destination, snhReference, routeResult]);
 
   const handleSelectOrigin = (cityId: string) => {
     const city = allCities.find((candidate) => candidate.id === cityId);
@@ -543,11 +605,16 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                   <span className="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
                     {allCities.length} cities
                   </span>
-                  {calculatorCoverage && (
-                    <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
-                      {calculatorCoverage.publishedDistanceCoverage.coveredCities}/{calculatorCoverage.publishedDistanceCoverage.totalPublishedCities} published
-                    </span>
-                  )}
+                   {calculatorCoverage && (
+                     <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
+                       {calculatorCoverage.publishedDistanceCoverage.coveredCities}/{calculatorCoverage.publishedDistanceCoverage.totalPublishedCities} published
+                     </span>
+                   )}
+                   {calculatorCoverage?.highwayCoverage && (
+                     <span className="text-[10px] font-mono px-2 py-1 rounded bg-cyan-900/40 text-cyan-300 border border-cyan-700/50">
+                       {calculatorCoverage.highwayCoverage.citiesOnHighway}/{calculatorCoverage.highwayCoverage.totalCities} on highway
+                     </span>
+                   )}
                   {distanceWithSource && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
                       distanceWithSource.evidenceLevel === 'published' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :

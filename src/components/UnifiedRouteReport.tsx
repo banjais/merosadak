@@ -52,12 +52,13 @@ export interface UnifiedRouteReportProps {
   showElevationProfile?: boolean;
   simulationControls?: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
-  calculatorCoverage?: { total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number } } | null;
+  calculatorCoverage?: { total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number }; highwayCoverage?: { totalCities: number; citiesOnHighway: number } } | null;
 }
 
 const evidenceLabels: Record<ReportEvidenceLevel, string> = {
   published: 'DoR Published',
   link_sum: 'Link-Sum',
+  geodesic: 'GeoJSON Route',
   estimate: 'Estimate',
   route_graph: 'GIS Route',
 };
@@ -65,6 +66,7 @@ const evidenceLabels: Record<ReportEvidenceLevel, string> = {
 const evidenceColors: Record<ReportEvidenceLevel, [number, number, number]> = {
   published: [16, 185, 129],
   link_sum: [59, 130, 246],
+  geodesic: [99, 102, 242],
   estimate: [245, 152, 61],
   route_graph: [148, 163, 184],
 };
@@ -203,14 +205,18 @@ export function UnifiedRouteReport({
   const sourceLabel = distanceSourceLabel || distanceSource;
   const sourceUrl = distanceSourceUrl || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
     ? 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23'
-    : distanceSource === 'estimate_aerial'
-      ? undefined
-      : undefined);
+    : distanceSource === 'dor_geojson'
+      ? 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement'
+      : distanceSource === 'estimate_aerial'
+        ? undefined
+        : undefined);
   const sourceDescription = distanceSourceDescription || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
     ? 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).'
-    : distanceSource === 'estimate_aerial'
-      ? 'Aerial line-of-sight estimate (Great Circle); actual road distance will normally be longer.'
-      : 'DoR Nepal highway GIS route geometry and certified road network.');
+    : distanceSource === 'dor_geojson'
+      ? 'Department of Roads highway network geometry (GeoJSON surveyed link chainages, NH01–NH80). Distance computed by routing along the DoR road graph.'
+      : distanceSource === 'estimate_aerial'
+        ? 'Aerial line-of-sight estimate (Great Circle); actual road distance will normally be longer.'
+        : 'DoR Nepal highway GIS route geometry and certified road network.');
 
   const citationText = useMemo(() => {
     if (!distanceCitation) return '';
@@ -384,6 +390,11 @@ export function UnifiedRouteReport({
             <div className="mt-1 text-[10px] text-slate-400">
               {calculatorCoverage ? `${calculatorCoverage.publishedDistanceCoverage.coveredCities}/${calculatorCoverage.publishedDistanceCoverage.totalPublishedCities} published` : ''}
             </div>
+            {calculatorCoverage?.highwayCoverage && (
+              <div className="mt-1 text-[10px] text-cyan-400">
+                {calculatorCoverage.highwayCoverage.citiesOnHighway}/{calculatorCoverage.highwayCoverage.totalCities} on highway network
+              </div>
+            )}
           </div>
         </div>
         {citationText && (
@@ -636,7 +647,7 @@ export function UnifiedRouteReport({
           <div className="flex flex-wrap items-center gap-2">
             <SourceLink label="DoR" href="https://dor.gov.np" />
             {distanceSource === 'snh_published' && <SourceLink label="SNH" href="https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23" />}
-            {distanceSource === 'dor_geojson_linksum' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
+            {distanceSource === 'dor_geojson' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
           </div>
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-600">

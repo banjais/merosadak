@@ -113,6 +113,13 @@ function makeSnapper(cellKm) {
 }
 
 const CALCULATOR_CITIES_FILE = path.join(__dirname, '..', 'public', 'data', 'calculator-cities.json');
+const CITIES_JSON_FILE = path.join(__dirname, '..', 'public', 'data', 'cities.json');
+const PALIKA_COORDS_FILE = path.join(__dirname, '..', 'public', 'data', 'palika-coords.json');
+const GEO_TOWN_COORDS_FILE = path.join(__dirname, '..', 'public', 'data', 'geojson-town-coords.json');
+const DISTRICT_CENTROIDS_FILE = path.join(__dirname, '..', 'public', 'data', 'district-centroids.json');
+
+// Maximum additional cities to load from external sources to avoid bloating the graph
+const EXTRA_CITY_SNAP_MAX_KM = 25; // only near-snap (not inject) for external cities
 
 function loadCityNodes() {
   const src = fs.readFileSync(CITY_DATA_FILE, 'utf8');
@@ -120,39 +127,119 @@ function loadCityNodes() {
   if (!block) throw new Error('Could not locate CITIES_AND_JUNCTIONS array');
   const body = block[1];
   const entries = [];
-  const re = /\{\s*id:\s*'([^']+)'[\s\S]*?lat:\s*([\d.\-]+),\s*lng:\s*([\d.\-]+)[\s\S]*?connectedHighways:\s*\[([^\]]*)\]/g;
+  const re = /\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'[\s\S]*?lat:\s*([\d.\-]+),\s*lng:\s*([\d.\-]+)[\s\S]*?connectedHighways:\s*\[([^\]]*)\]/g;
   let m;
   while ((m = re.exec(body))) {
     const id = m[1];
-    const lat = parseFloat(m[2]);
-    const lng = parseFloat(m[3]);
-    const highways = m[4]
+    const name = m[2];
+    const lat = parseFloat(m[3]);
+    const lng = parseFloat(m[4]);
+    const highways = m[5]
       .split(',')
       .map((s) => s.trim().replace(/['"]/g, ''))
       .filter(Boolean);
-    entries.push({ id, lat, lng, highways, source: 'curated' });
+    entries.push({ id, name, lat, lng, highways, source: 'curated' });
   }
 
   // Also load calculator cities (SNH-published district HQs + bundled cities)
   // Filter out infrastructure points (EV chargers, tolls, weather, POIs, traffic)
   const calcData = JSON.parse(fs.readFileSync(CALCULATOR_CITIES_FILE, 'utf8'));
   const infraPrefixes = ['NH', 'ev-', 'toll-', 'wx-', 'poi-', 'tr-', 'inc-'];
-  for (const city of calcData.cities) {
+  for (const city of calcData.cities || []) {
     const isInfra = infraPrefixes.some(p => city.id.startsWith(p));
     if (isInfra) continue;
-    // Skip if already in curated list
     if (entries.some(e => e.id === city.id)) continue;
-    // Use district from calculator cities or infer
     entries.push({ 
       id: city.id, 
       lat: city.lat, 
       lng: city.lng, 
-      highways: [], // Will be inferred from snapping
+      highways: [],
       source: city.source 
     });
   }
 
+  // Load additional small towns from external data sources
+  // These are small municipalities/towns not in the curated or SNH published lists
+  // but that still lie on highway routes
+  loadExtraCities(entries, CITIES_JSON_FILE, 'cities_json', (item) => {
+    return {
+      id: `city-${item.name.toLowerCase().replace(/\s+/g, '-')}`,
+      name: item.name,
+      lat: item.lat,
+      lng: item.lng,
+    };
+  });
+
+  loadExtraCities(entries, PALIKA_COORDS_FILE, 'palika_coords', (item) => {
+    return {
+      id: `pal-${item.Palika ? item.Palika.toLowerCase().replace(/\s+/g, '-') : ''}-${item.District ? item.District.toLowerCase() : ''}`,
+      name: item.Palika,
+      lat: item.lat,
+      lng: item.lng,
+    };
+  });
+
+  loadExtraCities(entries, GEO_TOWN_COORDS_FILE, 'geojson_town', (item) => {
+    return {
+      id: `gtown-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name: item.name,
+      lat: item.lat,
+      lng: item.lng,
+    };
+  });
+
+  loadExtraCities(entries, DISTRICT_CENTROIDS_FILE, 'district_centroid', (item) => {
+    return {
+      id: `dcentroid-${item.name ? item.name.toLowerCase().replace(/\s+/g, '-') : ''}`,
+      name: item.name,
+      lat: item.lat,
+      lng: item.lng,
+    };
+  });
+
   return entries;
+}
+
+function loadExtraCities(entries, filePath, sourceLabel, mapper) {
+  if (!fs.existsSync(filePath)) {
+    console.log(`  ${sourceLabel}: file not found, skipping`);
+    return;
+  }
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    let items = [];
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (data && typeof data === 'object') {
+      // Handle grouped format (e.g. cities.json: { metropolitan: [...], municipality: [...] })
+      // or wrapper format (e.g. geojson-town-coords.json: { towns: [...] })
+      if (Array.isArray(data.towns)) items = data.towns;
+      else if (Array.isArray(data.cities)) items = data.cities;
+      else {
+        for (const v of Object.values(data)) {
+          if (Array.isArray(v)) items = items.concat(v);
+        }
+      }
+    }
+
+    const added = [];
+    for (const item of items) {
+      const city = mapper(item);
+      if (!city || !city.name) continue;
+      if (!city.lat || !city.lng) continue;
+      if (isNaN(city.lat) || isNaN(city.lng)) continue;
+      if (entries.some(e => e.lat === city.lat && e.lng === city.lng)) continue;
+      if (entries.some(e => e.id === city.id)) continue;
+      entries.push({ id: city.id, name: city.name, lat: city.lat, lng: city.lng, highways: [], source: sourceLabel });
+      added.push(city.name);
+    }
+    if (added.length > 0) {
+      console.log(`  ${sourceLabel}: ${added.length} extra cities loaded`);
+    }
+  } catch (e) {
+    console.warn(`  ${sourceLabel}: error reading - ${e.message}`);
+  }
 }
 
 function main() {
@@ -259,6 +346,7 @@ function main() {
   // ---- snap cities (or inject missing nodes onto nearest highway) ----
   const cities = loadCityNodes();
   const citySnap = {};
+  const citySnapByName = {};
   let snappedNear = 0;
   let injected = 0;
   let unsnapped = 0;
@@ -274,14 +362,15 @@ function main() {
     }
     if (bestId >= 0 && bestDist <= CITY_SNAP_MAX_KM) {
       citySnap[city.id] = bestId;
+      if (city.name) citySnapByName[city.name.toLowerCase()] = bestId;
       snappedNear++;
     } else if (bestId >= 0 && bestDist <= CITY_INJECT_MAX_KM) {
-      // Add an explicit graph node at the city and connect to nearest highway node
       const cityNodeId = snapper.nodes.length;
       snapper.nodes.push([city.lat, city.lng]);
       const accessKm = Math.round(bestDist * 1000) / 1000;
       addEdge(cityNodeId, bestId, accessKm, 0);
       citySnap[city.id] = cityNodeId;
+      if (city.name) citySnapByName[city.name.toLowerCase()] = cityNodeId;
       injected++;
       console.log(`  city ${city.id} injected @ ${accessKm}km access → node ${bestId}`);
     } else {
@@ -481,12 +570,14 @@ function main() {
     adjacency: adjacency2,
     highways: highwayList,
     citySnap,
+    citySnapByName,
     stats: {
       generatedAt: new Date().toISOString(),
       files: files.length,
       nodeCount: snapper.nodes.length,
       citiesSnapped: Object.keys(citySnap).length,
       citiesTotal: cities.length,
+      citySnapByNameEntries: Object.keys(citySnapByName).length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
       distanceBasis: 'DoR official chainage (link_len) per survey link, Department of Roads, Government of Nepal',

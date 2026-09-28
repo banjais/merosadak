@@ -7,6 +7,7 @@ interface RoadGraph {
   adjacency: [number, number, number][][]; // per node: [toNodeId, distKm, highwayIdx]
   highways: string[];
   citySnap: Record<string, number>;
+  citySnapByName: Record<string, number>;
   stats: Record<string, unknown>;
 }
 
@@ -89,8 +90,8 @@ class MinHeap {
  */
 export function findRoadGraphRoute(originCityId: string, destCityId: string): RoadGraphRoute | null {
   if (!graph) return null;
-  const startNode = graph.citySnap[originCityId];
-  const endNode = graph.citySnap[destCityId];
+  const startNode = graph.citySnap[originCityId] ?? graph.citySnapByName[originCityId?.toLowerCase()];
+  const endNode = graph.citySnap[destCityId] ?? graph.citySnapByName[destCityId?.toLowerCase()];
   if (startNode === undefined || endNode === undefined) return null;
   if (startNode === endNode) return null;
 

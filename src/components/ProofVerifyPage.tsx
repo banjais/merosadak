@@ -37,7 +37,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
         if (alive) setVerdict('no-data');
         return;
       }
-      const found = lookupDistanceWithFallback(claim.from, claim.to, undefined, undefined, undefined, undefined, ref);
+      const found = lookupDistanceWithFallback(claim.from, claim.to, undefined, undefined, undefined, undefined, undefined, undefined, ref);
       if (!alive) return;
       setApp(found);
       setVerdict(found && Math.abs(found.distanceKm - claim.km) < 0.006 ? 'match' : 'mismatch');

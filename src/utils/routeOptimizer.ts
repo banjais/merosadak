@@ -2025,16 +2025,22 @@ export function findOptimizedRoute(
   // Resolve routing graph nodes. User-selected places that are not in the
   // curated junction graph are snapped for pathfinding only — the report must
   // still show the names the user actually picked.
-  const routingOriginId = CITIES_AND_JUNCTIONS.some((c) => c.id === originId)
-    ? originId
-    : originNode
-      ? snapToNearestRoutingCity(originNode).id
-      : originId;
-  const routingDestId = CITIES_AND_JUNCTIONS.some((c) => c.id === destinationId)
-    ? destinationId
-    : destinationNode
-      ? snapToNearestRoutingCity(destinationNode).id
-      : destinationId;
+  const roadGraphForResolve = getRoadGraph();
+  const resolveRoutingId = (cityId: string, cityNode?: CityNode): string => {
+    // 1. Curated junction city — use its ID directly
+    if (CITIES_AND_JUNCTIONS.some((c) => c.id === cityId)) return cityId;
+    // 2. City has a direct snap entry in the DoR road graph (by ID)
+    if (roadGraphForResolve?.citySnap && cityId in roadGraphForResolve.citySnap) return cityId;
+    // 3. Expanded city matched by name in the road graph (e.g. small towns)
+    if (roadGraphForResolve?.citySnapByName && cityNode?.name) {
+      const nameKey = cityNode.name.toLowerCase();
+      if (nameKey in roadGraphForResolve.citySnapByName) return nameKey;
+    }
+    // 4. Fall back: snap to nearest curated junction for pathfinding
+    return cityNode ? snapToNearestRoutingCity(cityNode).id : cityId;
+  };
+  const routingOriginId = resolveRoutingId(originId, originNode);
+  const routingDestId = resolveRoutingId(destinationId, destinationNode);
 
   const applyDisplayNodes = (result: RoutePlanResult | null): RoutePlanResult | null => {
     if (!result) return null;
@@ -2050,10 +2056,18 @@ export function findOptimizedRoute(
     let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === routingOriginId);
     let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === routingDestId);
     if (!origin && originNode && originNode.lat && originNode.lng) {
-      origin = snapToNearestRoutingCity(originNode);
+      const rg = roadGraphForResolve;
+      const nameKey = originNode.name?.toLowerCase();
+      const hasRoadMatch = (rg?.citySnap && originId in rg.citySnap) ||
+        (rg?.citySnapByName && nameKey && nameKey in rg.citySnapByName);
+      origin = hasRoadMatch ? originNode : snapToNearestRoutingCity(originNode);
     }
     if (!destination && destinationNode && destinationNode.lat && destinationNode.lng) {
-      destination = snapToNearestRoutingCity(destinationNode);
+      const rg = roadGraphForResolve;
+      const nameKey = destinationNode.name?.toLowerCase();
+      const hasRoadMatch = (rg?.citySnap && destinationId in rg.citySnap) ||
+        (rg?.citySnapByName && nameKey && nameKey in rg.citySnapByName);
+      destination = hasRoadMatch ? destinationNode : snapToNearestRoutingCity(destinationNode);
     }
     if (origin && destination) {
       // Use unified distance chain: road graph → SNH published → aerial

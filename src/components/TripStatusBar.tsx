@@ -47,7 +47,7 @@ export const TripStatusBar: React.FC<TripStatusBarProps> = ({
         </div>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-slate-400">
-        <span className="font-medium text-slate-300">Driver · passenger</span>
+        <span className="font-medium text-slate-300">{route.routeBadge || route.routeName || 'Active Route'}</span>
         {alertCount > 0 ? (
           <span className="inline-flex items-center gap-0.5 font-semibold text-amber-300">
             <AlertTriangle className="h-3 w-3" />

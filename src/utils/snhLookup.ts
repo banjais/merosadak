@@ -1,4 +1,7 @@
-export type EvidenceLevel = 'published' | 'link_sum' | 'estimate';
+import type { CityNode } from '../types';
+import { findRoadGraphRoute, isRoadGraphReady } from './roadGraphRouter';
+
+export type EvidenceLevel = 'published' | 'link_sum' | 'geodesic' | 'estimate';
 
 export function getEvidenceLevelLabel(level: EvidenceLevel): string {
   switch (level) {
@@ -6,6 +9,8 @@ export function getEvidenceLevelLabel(level: EvidenceLevel): string {
       return 'DoR Published';
     case 'link_sum':
       return 'Link-Sum';
+    case 'geodesic':
+      return 'GeoJSON Route';
     case 'estimate':
       return 'Estimate (not DoR-certified)';
     default:
@@ -19,6 +24,8 @@ export function getEvidenceLevelColor(level: EvidenceLevel): [number, number, nu
       return [16, 185, 129];
     case 'link_sum':
       return [59, 130, 246];
+    case 'geodesic':
+      return [99, 102, 242];
     case 'estimate':
       return [245, 152, 61];
     default:
@@ -53,6 +60,7 @@ export interface DistanceLookupResult {
   isUncertain?: boolean;
   unreconciledGapKm?: number;
   publishedDistanceKm?: number;
+  highwaysUsed?: string[];
 }
 
 export interface SNHReferenceData {
@@ -307,7 +315,7 @@ export function estimateDistance(
   };
 }
 
-export type DataSourceType = 'dor_snh' | 'estimate_aerial';
+export type DataSourceType = 'dor_snh' | 'dor_geojson' | 'estimate_aerial';
 
 export interface DistanceWithSource {
   distanceKm: number;
@@ -318,12 +326,15 @@ export interface DistanceWithSource {
   note?: string;
   isUncertain?: boolean;
   publishedDistanceKm?: number;
+  highwaysUsed?: string[];
 }
 
 export function getSourceLabel(source: DataSourceType): string {
   switch (source) {
     case 'dor_snh':
       return 'DOR-SNH / DOR-Archives';
+    case 'dor_geojson':
+      return 'DOR Highway Network (GeoJSON)';
     case 'estimate_aerial':
       return 'Aerial (Straight-Line)';
     default:
@@ -335,6 +346,8 @@ export function getSourceDescription(source: DataSourceType): string {
   switch (source) {
     case 'dor_snh':
       return 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).';
+    case 'dor_geojson':
+      return 'Department of Roads highway network geometry (GeoJSON surveyed link chainages, NH01–NH80). Distance computed by routing along the DoR road graph.';
     case 'estimate_aerial':
       return 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.';
     default:
@@ -342,9 +355,27 @@ export function getSourceDescription(source: DataSourceType): string {
   }
 }
 
+export function lookupGeoJsonRouteDistance(
+  originId: string,
+  destinationId: string
+): DistanceWithSource | null {
+  if (!isRoadGraphReady()) return null;
+  const route = findRoadGraphRoute(originId, destinationId);
+  if (!route) return null;
+  return {
+    distanceKm: route.distanceKm,
+    evidenceLevel: 'geodesic',
+    source: 'dor_geojson',
+    note: 'Distance computed by routing along DoR highway network GeoJSON geometry',
+    highwaysUsed: route.highwaysUsed,
+  };
+}
+
 export function lookupDistanceWithFallback(
   originName: string,
   destinationName: string,
+  originId?: string,
+  destId?: string,
   originLat?: number,
   originLng?: number,
   destLat?: number,
@@ -379,6 +410,13 @@ export function lookupDistanceWithFallback(
     };
   }
 
+  if (originId && destId) {
+    const geoRoute = lookupGeoJsonRouteDistance(originId, destId);
+    if (geoRoute && geoRoute.distanceKm > 0) {
+      return geoRoute;
+    }
+  }
+
   if (originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined) {
     const estimated = estimateDistance(originLat, originLng, destLat, destLng);
     return {
@@ -387,7 +425,7 @@ export function lookupDistanceWithFallback(
       source: 'estimate_aerial',
       citation: estimated.citation,
       isUncertain: estimated.isUncertain,
-      note: estimated.note,
+      note: 'Aerial distance only. No published DoR corridor data available for this city pair. Use for rough reference only — road distance will be longer, especially in mountain terrain.',
     };
   }
 

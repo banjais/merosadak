@@ -2191,12 +2191,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     fuelPrices={fuelPrices}
                     onVehicleChange={(newV) => setVehicle(newV)}
                   />
-                  <CarbonFootprintCard
-                    distanceKm={routePlan.totalDistanceKm}
-                    vehicleType={vehicle}
-                    elevationGainM={routePlan.elevationGainM}
-                    onVehicleChange={(v) => setVehicle(v)}
-                  />
                 </div>
               )}
 

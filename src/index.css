@@ -34,6 +34,10 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  /* 3D card depth shadows */
+  --shadow-3d: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  --shadow-3d-hover: 0 20px 60px rgba(0,0,0,0.7), 0 6px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  --shadow-3d-active: 0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -43,25 +47,86 @@
   --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ===== MODERN CARD SYSTEM ===== */
-.card {
-  position: relative;
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.35s var(--spring), box-shadow 0.35s var(--spring), border-color 0.2s ease;
-  overflow: hidden;
+/* ===== HEADER GLASS ===== */
+.header-glass {
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255,255,255,0.04) inset;
 }
 
+/* ===== BUTTON GLASS ===== */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s var(--spring);
+}
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.btn-glass:active {
+  transform: scale(0.95);
+}
+
+/* ===== MODERN 3D CARD SYSTEM (Facebook-Reels Style) ===== */
+
+/* Base card: perspective container + depth shadow */
+.card {
+  position: relative;
+  background: linear-gradient(145deg, #16202f 0%, #111827 60%, #0d1520 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3d);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.4s var(--spring),
+    box-shadow 0.4s var(--spring),
+    border-color 0.25s ease;
+  overflow: hidden;
+  will-change: transform, box-shadow;
+}
+
+/* Top-edge shine — simulates a physical light source */
 .card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.08) 70%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Shimmer sweep on hover — Reels-style gloss */
+.card::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 60%);
+  background: linear-gradient(
+    125deg,
+    rgba(255,255,255,0) 20%,
+    rgba(255,255,255,0.06) 45%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.06) 55%,
+    rgba(255,255,255,0) 80%
+  );
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 0.3s ease, transform 0s;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
+}
+
+.card:hover::after {
+  opacity: 1;
+  transform: translateX(100%);
+  transition: opacity 0.3s ease, transform 0.6s var(--spring);
 }
 
 .card > * {
@@ -69,34 +134,36 @@
   z-index: 1;
 }
 
+/* Interactive card — 3D tilt lift on hover */
 .card-interactive {
   cursor: pointer;
 }
 
 .card-interactive:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-6px) rotateX(2deg) scale(1.012);
+  box-shadow: var(--shadow-3d-hover);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .card-interactive:active {
-  transform: translateY(0) scale(0.995);
+  transform: translateY(-1px) scale(0.99);
+  box-shadow: var(--shadow-3d-active);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-/* Elevated variant for primary content */
+/* Elevated variant — primary content card */
 .card-elevated {
-  background: linear-gradient(160deg, #1a2332 0%, #111827 100%);
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(145deg, #1c2840 0%, #131f30 50%, #0f1a28 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-3d);
 }
 
 .card-elevated:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: var(--shadow-3d-hover);
 }
 
-/* Flat variant for lists and secondary content */
+/* Flat variant — secondary / list items */
 .card-flat {
   background: transparent;
   border-color: transparent;
@@ -104,34 +171,36 @@
 }
 
 .card-flat:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.025);
   border-color: var(--border-subtle);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Accent variant with left-border accent bar */
+/* Accent variant — colored left-bar */
 .card-accent {
   border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
-  background: linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background: linear-gradient(160deg, rgba(255,255,255,0.025) 0%, transparent 100%);
 }
 
 .card-accent:hover {
   border-left-color: var(--accent-text);
-  background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+  background: linear-gradient(160deg, rgba(255,255,255,0.045) 0%, transparent 100%);
 }
 
-/* Glass variant for overlays */
+/* Glass variant — used in overlays and panels */
 .card-glass {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border-subtle);
+  background: rgba(13, 21, 32, 0.8);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset;
 }
 
-/* Card sections */
+/* Card structure helpers */
 .card-header {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 .card-body {
@@ -140,8 +209,8 @@
 
 .card-footer {
   padding: 0.75rem 1.25rem;
-  border-top: 1px solid var(--border-subtle);
-  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 /* ===== MODERN BADGES & CHIPS ===== */
@@ -1243,17 +1312,81 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   border: 2px solid #000000 !important;
 }
 
-/* ===== LEGACY COMPATIBILITY SHIMS ===== */
-.card-modern { @extend .card; }
-.card-elevated { @extend .card-elevated; }
-.card-flat { @extend .card-flat; }
-.card-accent { @extend .card-accent; }
-.card-glass { @extend .card-glass; }
-.card-3d-heavy { @extend .card-elevated; }
-.card-3d-elevated { @extend .card-elevated; }
-.card-3d-flat { @extend .card-flat; }
-.card-modern-accent { @extend .card-accent; }
-.hover-lift-3d { transition: transform 0.35s var(--spring), box-shadow 0.35s var(--spring); }
-.hover-lift-3d:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+/* ===== LEGACY COMPATIBILITY ALIASES ===== */
+/* Note: Pure CSS cannot use @extend — these are explicit duplicates for backward compat */
+.card-modern {
+  position: relative;
+  background: linear-gradient(145deg, #16202f 0%, #111827 60%, #0d1520 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3d);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.4s var(--spring), box-shadow 0.4s var(--spring);
+}
+.card-modern:hover {
+  transform: translateY(-6px) rotateX(2deg) scale(1.012);
+  box-shadow: var(--shadow-3d-hover);
+}
+
+.card-3d-heavy,
+.card-3d-elevated {
+  background: linear-gradient(145deg, #1c2840 0%, #131f30 50%, #0f1a28 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3d);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.4s var(--spring), box-shadow 0.4s var(--spring);
+}
+.card-3d-heavy:hover,
+.card-3d-elevated:hover {
+  transform: translateY(-6px) rotateX(2deg) scale(1.012);
+  box-shadow: var(--shadow-3d-hover);
+}
+
+.card-3d-flat {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.card-3d-flat:hover {
+  background: rgba(255,255,255,0.025);
+  border-color: rgba(255,255,255,0.06);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card-modern-accent {
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, rgba(255,255,255,0.025) 0%, transparent 100%);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.card-modern-accent:hover {
+  border-left-color: var(--accent-text);
+}
+
+.hover-lift-3d {
+  transition: transform 0.4s var(--spring), box-shadow 0.4s var(--spring);
+}
+.hover-lift-3d:hover {
+  transform: translateY(-6px) rotateX(2deg) scale(1.012);
+  box-shadow: var(--shadow-3d-hover);
+}
+
 .card-3d-inner { position: relative; z-index: 1; }
-.swipe-card { @extend .gesture-card; }
+
+.swipe-card {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.4s var(--spring), opacity 0.3s ease;
+  will-change: transform;
+}
+.swipe-card.dragging {
+  transition: none;
+  cursor: grabbing;
+}
