@@ -1370,7 +1370,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             {/* Destination Autocomplete Suggestions Dropdown */}
             {isSingleDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
                 {filterCities(allCities, singleSearchQuery).map((c) => (
                   <button
                     key={c.id}
@@ -1460,7 +1460,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {isOriginDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
                   {filteredOriginCities.length > 0 ? (
                     filteredOriginCities.map((c) => (
                       <button
@@ -1558,7 +1558,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {isDestDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 max-h-60 overflow-y-auto space-y-1">
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
                   {filteredDestCities.length > 0 ? (
                     filteredDestCities.map((c) => (
                       <button
