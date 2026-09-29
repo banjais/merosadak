@@ -3,6 +3,7 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
 import { CityNode } from '../types';
 import { ArrowRight, ArrowUpDown, MapPin, ChevronDown, Award, Route, Database, Clock, ExternalLink } from 'lucide-react';
+import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
 
 interface DistanceCalculatorProps {
   onPlanFullRoute?: (originId: string, destId: string) => void;
@@ -262,7 +263,7 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
               )}
             </div>
 
-            {/* 4-Card Multi-Metric Grid (International Standard) */}
+            {/* Separate Reels-style metric cards (swipe left/right) */}
             {(() => {
               const detourPercent = aerialDistance > 0
                 ? Math.round(((routeResult.totalDistanceKm - aerialDistance) / aerialDistance) * 100)
@@ -273,67 +274,87 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                 ? (routeResult.totalDistanceKm / aerialDistance).toFixed(2)
                 : '1.00';
 
-              return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {/* Card 1: Road Driving Distance (Primary Hero) */}
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/30 shadow-sm relative overflow-hidden">
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                      <span>Road Driving Distance</span>
-                      <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Primary</span>
+              const metricCards: ReelCardItem[] = [
+                {
+                  id: `dist-road-${originId}-${destId}`,
+                  type: 'distance',
+                  title: 'Road driving distance',
+                  subtitle: 'Primary DoR graph distance',
+                  archiveData: { title: 'Road distance', from: originId, to: destId },
+                  content: (
+                    <div>
+                      <div className="text-3xl font-black text-emerald-400 font-display">
+                        {routeResult.totalDistanceKm}{' '}
+                        <span className="text-sm font-normal text-slate-400">km</span>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-400">
+                        ~{Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m driving
+                      </p>
                     </div>
-                    <div className="text-2xl font-black text-emerald-400 mt-1 font-display">
-                      {routeResult.totalDistanceKm} <span className="text-sm font-normal text-slate-400">km</span>
+                  ),
+                },
+                {
+                  id: `dist-aerial-${originId}-${destId}`,
+                  type: 'distance',
+                  title: 'Direct aerial line',
+                  subtitle: 'Geodesic line-of-sight',
+                  archiveData: { title: 'Aerial distance' },
+                  content: (
+                    <div>
+                      <div className="text-3xl font-black text-cyan-400 font-display">
+                        {aerialDistance}{' '}
+                        <span className="text-sm font-normal text-slate-400">km</span>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-500">As the crow flies</p>
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1 flex items-center space-x-1">
-                      <span>⏱️ ~{Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m driving</span>
+                  ),
+                },
+                {
+                  id: `dist-detour-${originId}-${destId}`,
+                  type: 'distance',
+                  title: 'Mountain detour',
+                  subtitle: 'Extra road vs straight line',
+                  archiveData: { title: 'Detour ratio' },
+                  content: (
+                    <div>
+                      <div className="text-3xl font-black text-amber-400 font-display">+{detourPercent}%</div>
+                      <p className="mt-2 text-[11px] text-slate-400">Circuity factor {circuityRatio}×</p>
                     </div>
-                  </div>
+                  ),
+                },
+                {
+                  id: `dist-elev-${originId}-${destId}`,
+                  type: 'distance',
+                  title: 'Elevation context',
+                  subtitle: origin && destination ? `${origin.name} → ${destination.name}` : 'Hubs',
+                  archiveData: { title: 'Elevation' },
+                  content: (
+                    <div className="space-y-2 text-[11px] text-slate-300">
+                      {origin && (
+                        <div className="flex justify-between">
+                          <span>{origin.name}</span>
+                          <span className="font-mono text-purple-300">{origin.elevationM} m</span>
+                        </div>
+                      )}
+                      {destination && (
+                        <div className="flex justify-between">
+                          <span>{destination.name}</span>
+                          <span className="font-mono text-purple-300">{destination.elevationM} m</span>
+                        </div>
+                      )}
+                      {origin && destination && (
+                        <p className="text-slate-500 pt-1 border-t border-slate-800">
+                          Δ {Math.abs((destination.elevationM || 0) - (origin.elevationM || 0))} m vertical difference
+                        </p>
+                      )}
+                    </div>
+                  ),
+                },
+              ];
 
-                  {/* Card 2: Direct Aerial Distance */}
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                      <span>Direct (Aerial) Line</span>
-                      <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">Line-of-Sight</span>
-                    </div>
-                    <div className="text-2xl font-black text-cyan-400 mt-1 font-display">
-                      {aerialDistance} <span className="text-sm font-normal text-slate-400">km</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
-                      As the crow flies (geodesic)
-                    </div>
-                  </div>
-
-                  {/* Card 3: Mountain Circuity / Detour Factor */}
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                      <span>Mountain Detour Ratio</span>
-                      <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Circuity</span>
-                    </div>
-                    <div className="text-2xl font-black text-amber-400 mt-1 font-display">
-                      +{detourPercent}%
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-1">
-                      {circuityRatio}× terrain winding index
-                    </div>
-                  </div>
-
-                  {/* Card 4: Elevation Delta */}
-                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 shadow-sm">
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                      <span>Elevation Delta</span>
-                      <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">ASL</span>
-                    </div>
-                    <div className="text-2xl font-black text-purple-400 mt-1 font-display flex items-baseline space-x-1">
-                      <span>{destination.elevationM - origin.elevationM > 0 ? `+${destination.elevationM - origin.elevationM}` : destination.elevationM - origin.elevationM}</span>
-                      <span className="text-sm font-normal text-slate-400">m</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-1">
-                      {origin.elevationM}m ➔ {destination.elevationM}m
-                    </div>
-                  </div>
-                </div>
-              );
+              return <SwipeableReelStack cards={metricCards} />;
             })()}
+
 
             {/* Road Network Composition & Multi-Tier Classification */}
             {routeResult.roadTierBreakdown && (
