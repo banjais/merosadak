@@ -94,7 +94,7 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
     elevationM: numberValue(item, ['elevationM', 'elevation']),
     isMajorHub: item.isMajorHub === true,
     connectedHighways,
-    highwayCode: stringValue(item, ['highwayCode', 'highway']),
+    highwayCode: stringValue(item, ['highwayCode', 'highway']) || connectedHighways[0],
   };
 }
 
@@ -276,8 +276,8 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
   }
 
   const existingIds = new Set(CITIES_AND_JUNCTIONS.map((city) => city.id));
-  const existingKeys = new Set(CITIES_AND_JUNCTIONS.map(cityKey));
   const merged: CityNode[] = CITIES_AND_JUNCTIONS.map((city) => ({ ...city, name: normalizeName(city.name) }));
+  const cityIndexByKey = new Map(merged.map((city, index) => [cityKey(city), index]));
   const INFRA_PREFIXES = ['NH', 'ev-', 'toll-', 'wx-', 'poi-', 'tr-', 'inc-'];
   const sources = [
     { url: '/data/cities.json', grouped: true, key: 'cities' },
@@ -334,15 +334,28 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
           }
           const city = toCityNode(item, index, `${source.key}-${index}`, cityType);
           const key = cityKey(city);
-          if (
-            isValidCity(city) &&
-            !existingIds.has(city.id) &&
-            !existingKeys.has(key)
-          ) {
-            merged.push(city);
-            existingIds.add(city.id);
-            existingKeys.add(key);
+          if (!isValidCity(city)) continue;
+
+          const existingIndex = cityIndexByKey.get(key);
+          if (existingIndex !== undefined) {
+            const existing = merged[existingIndex];
+            const connectedHighways = [...new Set([
+              ...existing.connectedHighways,
+              ...city.connectedHighways,
+            ])];
+            merged[existingIndex] = {
+              ...existing,
+              connectedHighways,
+              highwayCode: existing.highwayCode || city.highwayCode || connectedHighways[0],
+              cityType: existing.cityType || city.cityType,
+            };
+            continue;
           }
+
+          if (existingIds.has(city.id)) continue;
+          merged.push(city);
+          existingIds.add(city.id);
+          cityIndexByKey.set(key, merged.length - 1);
         }
       }
     } catch (error) {

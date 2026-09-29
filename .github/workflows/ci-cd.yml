@@ -151,7 +151,6 @@ jobs:
           npx wrangler kv key put "palika-names.json" --binding DATA --path ../public/data/palika-names.json --remote
           npx wrangler kv key put "highway/index.json" --binding DATA --path ../public/data/highway/index.json --remote
           npx wrangler kv key put "nepal_boundary.geojson" --binding DATA --path ../public/data/nepal_boundary.geojson --remote
-          npx wrangler kv key put "distance-matrix.json" --binding DATA --path ../public/data/distance-matrix.json --remote
           npx wrangler kv key put "road-graph.json" --binding DATA --path ../public/data/road-graph.json --remote
           npx wrangler kv key put "snh-reference.json" --binding DATA --path ../public/data/snh-reference.json --remote
           npx wrangler kv key put "calculator-cities.json" --binding DATA --path ../public/data/calculator-cities.json --remote

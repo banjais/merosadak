@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import { DOR_DOCUMENT, DOR_PUBLISHER, DOR_SOURCE_URL, ProofClaim, claimHash, proofId } from '../utils/proofLinks';
 import { DistanceWithSource, getEvidenceLevelLabel, loadSNHReference, lookupDistanceWithFallback } from '../utils/snhLookup';
+import { preloadRoadGraph } from '../utils/roadGraphRouter';
 
 /**
  * Landing page for the QR code printed on a proof sheet.
@@ -32,15 +33,15 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
         if (alive) setVerdict('unverifiable');
         return;
       }
-      const ref = await loadSNHReference();
-      if (!ref) {
+      const [ref] = await Promise.all([loadSNHReference(), preloadRoadGraph()]);
+      const found = lookupDistanceWithFallback(claim.from, claim.to, undefined, undefined, undefined, undefined, undefined, undefined, ref);
+      if (!found) {
         if (alive) setVerdict('no-data');
         return;
       }
-      const found = lookupDistanceWithFallback(claim.from, claim.to, undefined, undefined, undefined, undefined, undefined, undefined, ref);
       if (!alive) return;
       setApp(found);
-      setVerdict(found && Math.abs(found.distanceKm - claim.km) < 0.006 ? 'match' : 'mismatch');
+      setVerdict(found.evidenceLevel === claim.lv && Math.abs(found.distanceKm - claim.km) < 0.006 ? 'match' : 'mismatch');
     })();
     return () => {
       alive = false;
@@ -50,7 +51,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
   const cit = app?.citation;
   const head = {
     checking: { Icon: Loader2, tone: 'text-slate-300 border-slate-700 bg-slate-900', title: 'Checking…', spin: true },
-    match: { Icon: CheckCircle2, tone: 'text-emerald-300 border-emerald-500/50 bg-emerald-500/10', title: 'Matches the DoR reference data', spin: false },
+    match: { Icon: CheckCircle2, tone: 'text-emerald-300 border-emerald-500/50 bg-emerald-500/10', title: 'Matches current reference data', spin: false },
     mismatch: { Icon: XCircle, tone: 'text-rose-300 border-rose-500/50 bg-rose-500/10', title: 'Does not match the DoR reference data', spin: false },
     altered: { Icon: XCircle, tone: 'text-rose-300 border-rose-500/50 bg-rose-500/10', title: 'Reference code does not match this link', spin: false },
     unverifiable: { Icon: AlertTriangle, tone: 'text-amber-300 border-amber-500/50 bg-amber-500/10', title: 'Estimate: not a published DoR figure', spin: false },
@@ -76,7 +77,8 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
           <head.Icon className={`w-6 h-6 shrink-0 ${head.spin ? 'animate-spin' : ''}`} />
           <div>
             <div className="text-base font-black">{head.title}</div>
-            {verdict === 'match' && <div className="text-xs mt-1 opacity-90">The printed figure equals the figure this app reads from the published tables.</div>}
+            {verdict === 'match' && app?.evidenceLevel === 'published' && <div className="text-xs mt-1 opacity-90">The exact place pair and distance match the cited published SNH table entry.</div>}
+            {verdict === 'match' && app?.evidenceLevel === 'geodesic' && <div className="text-xs mt-1 opacity-90">The computed distance matches the current route over archived DoR highway geometry. This pair is not a DoR-published figure.</div>}
             {verdict === 'mismatch' && <div className="text-xs mt-1 opacity-90">The printed figure differs from what the reference data gives for this pair. Do not rely on the sheet.</div>}
             {verdict === 'altered' && <div className="text-xs mt-1 opacity-90">The link or the printed details were changed after printing, or the QR code was misread.</div>}
             {verdict === 'unverifiable' && <div className="text-xs mt-1 opacity-90">Estimates are not published by the Department of Roads, so there is nothing official to check against.</div>}
@@ -112,14 +114,14 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
                 {cit.via ? `. ${cit.via}.` : ''}
               </div>
             )}
+            {app.highwaysUsed && app.highwaysUsed.length > 0 && <div className="text-xs text-cyan-300 mt-2">Route highways: {app.highwaysUsed.join(' → ')}</div>}
           </section>
         )}
 
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs text-slate-300 leading-relaxed">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">What this check means</div>
           <p>
-            This page confirms that the printed figure matches the reference data bundled with this app, which is transcribed from{' '}
-            <strong>{DOR_DOCUMENT}</strong>. It cannot confirm who printed or issued the paper. Only a signature and seal from an authorised officer of the Department of Roads does that.
+            This page checks the figure against the cited SNH table or computes it again over archived DoR highway geometry. A published badge means the exact pair appears in the named table; an archive-route badge means Mero Sadak computed the path and DoR did not publish that pair. It cannot confirm who issued the paper.
           </p>
           <p>
             Data source: <strong>{DOR_PUBLISHER}</strong>.{' '}

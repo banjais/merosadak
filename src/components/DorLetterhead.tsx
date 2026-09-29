@@ -1,5 +1,5 @@
 import React from 'react';
-import { DOR_BRANDING, DOR_BRANDING_NE, ReportIdentity } from '../utils/reportBranding';
+import { ReportIdentity } from '../utils/reportBranding';
 
 /**
  * Stylised national emblem of Nepal: the two pennons, the Himalayan range and
@@ -58,19 +58,16 @@ interface DorLetterheadProps {
 }
 
 /**
- * Small Department of Roads letterhead shown at the top of the report.
- * Hidden on screen chrome but rendered in the print view and the PDF.
+ * Branded report header. The source agency is cited separately; this app is
+ * independent and does not issue Department of Roads documents.
  */
 export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identity, compact }) => (
   <div className="dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1">
-    <NepalEmblem className="h-12 w-12 shrink-0 text-amber-500" />
+    <img src="/logo.svg" alt="Mero Sadak logo" className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1`} />
     <div className="min-w-0 flex-1">
-      <p className="text-[9px] font-semibold text-slate-400 leading-tight">{DOR_BRANDING_NE.line1}</p>
-      <p className="text-xs font-bold text-slate-200 leading-tight">{DOR_BRANDING.line1}</p>
-      <p className="text-[10px] text-slate-400 leading-tight">{DOR_BRANDING_NE.line2}</p>
-      <p className="text-[11px] font-semibold text-slate-300 leading-tight">{DOR_BRANDING.line2}</p>
-      <p className="text-[10px] text-slate-400 leading-tight">{DOR_BRANDING_NE.line3}</p>
-      <p className="text-sm font-black text-amber-500 leading-tight tracking-wide">{DOR_BRANDING.line3}</p>
+      <p className="text-sm font-black text-white leading-tight">Mero Sadak</p>
+      <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
+      <p className="text-[9px] text-amber-400 leading-tight">Independent report; not issued by the Department of Roads.</p>
     </div>
     <div className="text-right shrink-0">
       <p className="text-[9px] uppercase tracking-wider text-slate-500">Printed</p>

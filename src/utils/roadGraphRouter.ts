@@ -15,6 +15,7 @@ export interface RoadGraphRoute {
   distanceKm: number;
   pathCoordinates: [number, number][];
   highwaysUsed: string[];
+  inferredConnectorKm: number;
 }
 
 let graph: RoadGraph | null = null;
@@ -98,6 +99,7 @@ export function findRoadGraphRoute(originCityId: string, destCityId: string): Ro
   const dist = new Float64Array(graph.nodes.length).fill(Infinity);
   const prevNode = new Int32Array(graph.nodes.length).fill(-1);
   const prevHwy = new Int32Array(graph.nodes.length).fill(-1);
+  const prevEdgeKm = new Float64Array(graph.nodes.length);
   const visited = new Uint8Array(graph.nodes.length);
 
   dist[startNode] = 0;
@@ -119,6 +121,7 @@ export function findRoadGraphRoute(originCityId: string, destCityId: string): Ro
         dist[to] = nd;
         prevNode[to] = node;
         prevHwy[to] = hwyIdx;
+        prevEdgeKm[to] = w;
         heap.push([nd, to]);
       }
     }
@@ -129,10 +132,12 @@ export function findRoadGraphRoute(originCityId: string, destCityId: string): Ro
   // reconstruct path
   const pathNodeIds: number[] = [];
   const highwaysUsed: string[] = [];
+  let inferredConnectorKm = 0;
   let cur = endNode;
   while (cur !== startNode) {
     pathNodeIds.push(cur);
     const hwyIdx = prevHwy[cur];
+    if (hwyIdx < 0) inferredConnectorKm += prevEdgeKm[cur];
     if (hwyIdx >= 0) {
       const code = graph.highways[hwyIdx];
       if (highwaysUsed[highwaysUsed.length - 1] !== code) highwaysUsed.push(code);
@@ -150,5 +155,6 @@ export function findRoadGraphRoute(originCityId: string, destCityId: string): Ro
     distanceKm: Math.round(dist[endNode] * 10) / 10,
     pathCoordinates,
     highwaysUsed,
+    inferredConnectorKm: Math.round(inferredConnectorKm * 10) / 10,
   };
 }

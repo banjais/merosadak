@@ -6,11 +6,11 @@ export type EvidenceLevel = 'published' | 'link_sum' | 'geodesic' | 'estimate';
 export function getEvidenceLevelLabel(level: EvidenceLevel): string {
   switch (level) {
     case 'published':
-      return 'DoR Published';
+      return 'DoR Published (SNH)';
     case 'link_sum':
-      return 'Link-Sum';
+      return 'DoR Link-Sum (derived)';
     case 'geodesic':
-      return 'GeoJSON Route';
+      return 'DoR Archive Route (derived)';
     case 'estimate':
       return 'Estimate (not DoR-certified)';
     default:
@@ -327,14 +327,15 @@ export interface DistanceWithSource {
   isUncertain?: boolean;
   publishedDistanceKm?: number;
   highwaysUsed?: string[];
+  inferredConnectorKm?: number;
 }
 
 export function getSourceLabel(source: DataSourceType): string {
   switch (source) {
     case 'dor_snh':
-      return 'DOR-SNH / DOR-Archives';
+      return 'DoR SNH published tables';
     case 'dor_geojson':
-      return 'DOR Highway Network (GeoJSON)';
+      return 'DoR highway archive geometry (computed route)';
     case 'estimate_aerial':
       return 'Aerial (Straight-Line)';
     default:
@@ -345,9 +346,9 @@ export function getSourceLabel(source: DataSourceType): string {
 export function getSourceDescription(source: DataSourceType): string {
   switch (source) {
     case 'dor_snh':
-      return 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).';
+      return 'DoR Statistics of National Highway 2022/23. Only a pair with a table/page citation is a distance published by DoR.';
     case 'dor_geojson':
-      return 'Department of Roads highway network geometry (GeoJSON surveyed link chainages, NH01–NH80). Distance computed by routing along the DoR road graph.';
+      return 'Distance computed over archived DoR highway geometry. It is derived by Mero Sadak and is not a DoR-published city-pair figure.';
     case 'estimate_aerial':
       return 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.';
     default:
@@ -357,17 +358,27 @@ export function getSourceDescription(source: DataSourceType): string {
 
 export function lookupGeoJsonRouteDistance(
   originId: string,
-  destinationId: string
+  destinationId: string,
+  originName?: string,
+  destinationName?: string
 ): DistanceWithSource | null {
   if (!isRoadGraphReady()) return null;
-  const route = findRoadGraphRoute(originId, destinationId);
+  const route = findRoadGraphRoute(originId, destinationId)
+    || (originName && destinationName ? findRoadGraphRoute(originName, destinationName) : null);
   if (!route) return null;
   return {
     distanceKm: route.distanceKm,
     evidenceLevel: 'geodesic',
     source: 'dor_geojson',
-    note: 'Distance computed by routing along DoR highway network GeoJSON geometry',
+    citation: {
+      document: 'Department of Roads highway archive',
+      table: 'Computed shortest path over archived highway geometry',
+    },
+    note: route.inferredConnectorKm > 0
+      ? `Derived by Mero Sadak over DoR archive geometry; DoR does not publish this pair. ${route.inferredConnectorKm.toFixed(1)} km uses inferred access or network-join connectors.`
+      : 'Derived route computed by Mero Sadak over DoR archive geometry; DoR does not publish this city-pair figure.',
     highwaysUsed: route.highwaysUsed,
+    inferredConnectorKm: route.inferredConnectorKm,
   };
 }
 
@@ -396,25 +407,14 @@ export function lookupDistanceWithFallback(
     };
   }
 
-  const linkSum = computeLinkSumDistance(originName, destinationName, ref);
-  if (linkSum && linkSum.distanceKm > 0) {
-    return {
-      distanceKm: linkSum.distanceKm,
-      evidenceLevel: 'link_sum',
-      source: 'dor_snh',
-      citation: linkSum.citation,
-      linkChain: linkSum.linkChain,
-      isUncertain: linkSum.isUncertain,
-      note: linkSum.note,
-      publishedDistanceKm: linkSum.publishedDistanceKm,
-    };
-  }
-
-  if (originId && destId) {
-    const geoRoute = lookupGeoJsonRouteDistance(originId, destId);
-    if (geoRoute && geoRoute.distanceKm > 0) {
-      return geoRoute;
-    }
+  const geoRoute = lookupGeoJsonRouteDistance(
+    originId || originName,
+    destId || destinationName,
+    originName,
+    destinationName
+  );
+  if (geoRoute && geoRoute.distanceKm > 0) {
+    return geoRoute;
   }
 
   if (originLat !== undefined && originLng !== undefined && destLat !== undefined && destLng !== undefined) {

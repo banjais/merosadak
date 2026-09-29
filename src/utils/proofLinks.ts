@@ -14,7 +14,7 @@ import type { EvidenceLevel } from './snhLookup';
 export const DOR_SOURCE_URL = 'https://dor.gov.np';
 export const DOR_PUBLISHER = 'Department of Roads, Government of Nepal';
 export const DOR_DOCUMENT = 'Statistics of National Highway (SNH) 2022/23';
-const LEVELS: EvidenceLevel[] = ['published', 'link_sum', 'estimate'];
+const LEVELS: EvidenceLevel[] = ['published', 'link_sum', 'geodesic', 'estimate'];
 
 export interface ProofClaim {
   from: string;
@@ -86,7 +86,7 @@ export async function sha256Hex(text: string): Promise<string> {
 }
 
 export function claimText(c: Omit<ProofClaim, 'h'>): string {
-  return `SNH2022/23|${c.from}|${c.to}|${c.km.toFixed(2)}|${c.lv}|${c.d}`;
+  return `MEROSADAK_DISTANCE_REPORT_V1|${c.from}|${c.to}|${c.km.toFixed(2)}|${c.lv}|${c.d}`;
 }
 
 export async function claimHash(c: Omit<ProofClaim, 'h'>): Promise<string> {

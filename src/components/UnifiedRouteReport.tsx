@@ -24,7 +24,7 @@ import {
   Download,
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
-import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
+import { EvidenceLevel, SNHCitation, getSourceDescription, getSourceLabel } from '../utils/snhLookup';
 import { getTollPlazasForHighway, isEnteringKathmandu } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
@@ -43,6 +43,7 @@ export interface UnifiedRouteReportProps {
   distanceEvidence?: ReportEvidenceLevel;
   distanceCitation?: SNHCitation | null;
   distanceNote?: string | null;
+  distanceHighways?: string[];
   sourceControl?: React.ReactNode;
   vehicleLabel?: string;
   preferenceLabel?: string;
@@ -65,11 +66,11 @@ export interface UnifiedRouteReportProps {
 }
 
 const evidenceLabels: Record<ReportEvidenceLevel, string> = {
-  published: 'DoR Published',
-  link_sum: 'Link-Sum',
-  geodesic: 'GeoJSON Route',
-  estimate: 'Estimate',
-  route_graph: 'GIS Route',
+  published: 'DoR-published (SNH)',
+  link_sum: 'DoR archive link-sum (derived)',
+  geodesic: 'DoR archive route (derived)',
+  estimate: 'Unverified aerial estimate',
+  route_graph: 'Route planner GIS',
 };
 
 const evidenceColors: Record<ReportEvidenceLevel, [number, number, number]> = {
@@ -182,6 +183,7 @@ export function UnifiedRouteReport({
   distanceEvidence = 'route_graph',
   distanceCitation,
   distanceNote,
+  distanceHighways = [],
   sourceControl,
   vehicleLabel,
   preferenceLabel,
@@ -230,7 +232,7 @@ export function UnifiedRouteReport({
   const surfaces = [...new Set(route.steps.map((step) => step.surface))];
   const cautionKm = route.statusSummary.cautionKm;
   const obstructedKm = route.statusSummary.obstructedKm;
-  const sourceLabel = distanceSourceLabel || distanceSource;
+  const sourceLabel = distanceSourceLabel || getSourceLabel(distanceSource as 'dor_snh' | 'dor_geojson' | 'estimate_aerial');
   const sourceUrl = distanceSourceUrl || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
     ? 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23'
     : distanceSource === 'dor_geojson'
@@ -238,13 +240,7 @@ export function UnifiedRouteReport({
       : distanceSource === 'estimate_aerial'
         ? undefined
         : undefined);
-  const sourceDescription = distanceSourceDescription || (distanceSource === 'snh_published' || distanceSource === 'dor_geojson_linksum' || distanceSource === 'dor_snh'
-    ? 'Official Department of Roads data: Statistics of National Highway 2022/23 published distances and surveyed highway network geometry (NH01–NH80).'
-    : distanceSource === 'dor_geojson'
-      ? 'Department of Roads highway network geometry (GeoJSON surveyed link chainages, NH01–NH80). Distance computed by routing along the DoR road graph.'
-      : distanceSource === 'estimate_aerial'
-        ? 'Aerial line-of-sight estimate (Great Circle); actual road distance will normally be longer.'
-        : 'DoR Nepal highway GIS route geometry and certified road network.');
+  const sourceDescription = distanceSourceDescription || getSourceDescription(distanceSource as 'dor_snh' | 'dor_geojson' | 'estimate_aerial');
 
   const citationText = useMemo(() => {
     if (!distanceCitation) return '';
@@ -262,20 +258,23 @@ export function UnifiedRouteReport({
   return (
     <section
       id="route-report"
-      className={embedded ? '' : 'card card-elevated card--dropdown-host p-4 sm:p-5'}
+      className="space-y-4"
     >
       <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
-            <span className="truncate">{route.origin.name}</span>
-            <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
-            <span className="truncate">{route.destination.name}</span>
+        <div className="min-w-0 flex items-center gap-3">
+          <img src="/logo.svg" alt="Mero Sadak logo" className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 shadow-lg shadow-slate-950/30" />
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
+              <span className="truncate">{route.origin.name}</span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
+              <span className="truncate">{route.destination.name}</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">
+              {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
+            </p>
           </div>
-          <p className="mt-1 text-[11px] text-slate-400">
-            {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -341,350 +340,76 @@ export function UnifiedRouteReport({
         </div>
       </header>
 
-      {(() => {
-        const reportCards: ReelCardItem[] = [
-          {
-            id: `report-dist-${route.id}`,
-            type: 'report',
-            title: 'Road distance',
-            subtitle: evidenceLabels[distanceEvidence] || String(distanceEvidence),
-            archiveData: { title: 'Road distance', routeId: route.id },
-            summary: (
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-emerald-400 font-display">{formatNumber(distanceKm, 1)}</span>
-                <span className="text-sm text-slate-400">km</span>
-              </div>
-            ),
-            detail: (
-              <p className="text-slate-400">
-                Route graph {formatNumber(routeDistance, 2)} km · {evidenceLabels[distanceEvidence] || distanceEvidence}
-              </p>
-            ),
-          },
-          {
-            id: `report-time-${route.id}`,
-            type: 'report',
-            title: 'Travel time',
-            archiveData: { title: 'Travel time', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-cyan-400 font-display">
-                {formatDuration(route.estimatedTimeMinutes)}
-              </div>
-            ),
-            detail: <p className="text-slate-400">Estimated driving time for selected vehicle & preference.</p>,
-          },
-          {
-            id: `report-fuel-${route.id}`,
-            type: 'report',
-            title: route.fuelEstimate?.avgMileageKmPerLiter ? 'Fuel cost' : 'Energy cost',
-            archiveData: { title: 'Fuel', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-amber-400 font-display">
-                NPR {fuelCost.toLocaleString('en-US')}
-              </div>
-            ),
-            detail: (
-              <p className="text-slate-400">
-                ~{formatNumber(fuelQuantity, 1)} {fuelUnit} estimated · tolls shown separately
-              </p>
-            ),
-          },
-          {
-            id: `report-safety-${route.id}`,
-            type: 'report',
-            title: 'Safety',
-            archiveData: { title: 'Safety', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-emerald-400 font-display">
-                {route.roadConditionScore}<span className="text-base text-slate-500">/100</span>
-              </div>
-            ),
-            detail: (
-              <p className="text-slate-400">{route.statusSummary.clearKm} km clear corridor segments</p>
-            ),
-          },
-          {
-            id: `report-elev-${route.id}`,
-            type: 'report',
-            title: 'Peak elevation',
-            archiveData: { title: 'Elevation', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-purple-400 font-display">
-                {route.maxElevationM} <span className="text-sm text-slate-400">m</span>
-              </div>
-            ),
-            detail: <p className="text-slate-400">+{route.elevationGainM} m climb along the route</p>,
-          },
-          {
-            id: `report-detour-${route.id}`,
-            type: 'report',
-            title: 'Detour vs direct',
-            archiveData: { title: 'Detour', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-slate-200 font-display">+{detourPercent}%</div>
-            ),
-            detail: (
-              <p className="text-slate-400">{formatNumber(aerialDistance, 1)} km aerial vs road path</p>
-            ),
-          },
-          {
-            id: `report-toll-${route.id}`,
-            type: 'report',
-            title: 'Toll fees',
-            archiveData: { title: 'Tolls', routeId: route.id },
-            summary: (
-              <div className="text-3xl font-black text-cyan-300 font-display">
-                NPR {route.totalTollCostNpr.toLocaleString()}
-              </div>
-            ),
-            detail: <p className="text-slate-400">Highway plaza estimate · expand Cost tab for breakdown</p>,
-          },
-        ];
-        return (
-          <div className="mt-3">
-            <SwipeableReelStack cards={reportCards} />
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="card card-elevated card-interactive p-3.5">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+            <span>Distance</span>
+            <EvidenceBadge level={distanceEvidence} />
           </div>
-        );
-      })()}
-
-
-      {/* Methodology & Data Sources */}
-      <div className="mt-4 card card-elevated p-4">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Database className="h-3.5 w-3.5 text-cyan-500" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
-            Data Sources & Methodology
-          </span>
+          <div className="mt-3 flex items-end gap-1.5">
+            <span className="text-3xl font-black text-emerald-400 font-display">{formatNumber(distanceKm, 1)}</span>
+            <span className="pb-1 text-sm text-slate-400">km</span>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-400">Reference basis: {evidenceLabels[distanceEvidence] || distanceEvidence}</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-slate-300">
-          <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Primary Source</div>
-            <div className="font-semibold text-white">
-              {sourceLabel}
-            </div>
-            <div className="mt-1 text-[10px] text-slate-400">
-              {sourceDescription}
-            </div>
-          </div>
-          <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Evidence Level</div>
-            <div className="flex items-center gap-1.5">
-              <EvidenceBadge level={distanceEvidence} />
-              <span className="text-[10px] text-slate-400">
-                {evidenceLabels[distanceEvidence]}
-              </span>
-            </div>
-            <div className="mt-1 text-[10px] text-slate-400">
-              {distanceEvidence === 'published' ? 'Official DoR certified distance' :
-               distanceEvidence === 'link_sum' ? 'Summed from verified DoR corridor links' :
-               distanceEvidence === 'estimate' ? 'Aerial line-of-sight approximation' :
-               'DoR GIS route geometry'}
-            </div>
-          </div>
-          <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-950/50">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">City Coverage</div>
-            <div className="font-semibold text-white">
-              {calculatorCoverage ? `${calculatorCoverage.total} cities` : 'Loading...'}
-            </div>
-            <div className="mt-1 text-[10px] text-slate-400">
-              {calculatorCoverage ? `${calculatorCoverage.publishedDistanceCoverage.coveredCities}/${calculatorCoverage.publishedDistanceCoverage.totalPublishedCities} published` : ''}
-            </div>
-            {calculatorCoverage?.highwayCoverage && (
-              <div className="mt-1 text-[10px] text-cyan-400">
-                {calculatorCoverage.highwayCoverage.citiesOnHighway}/{calculatorCoverage.highwayCoverage.totalCities} on highway network
-              </div>
-            )}
-          </div>
+
+        <div className="card card-elevated card-interactive p-3.5">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Travel time</div>
+          <div className="mt-3 text-2xl font-black text-cyan-400 font-display">{formatDuration(route.estimatedTimeMinutes)}</div>
+          <p className="mt-2 text-[11px] text-slate-400">Estimated driving time by selected route profile.</p>
         </div>
-        {citationText && (
-          <div className="mt-3 pt-2.5 border-t border-slate-800/50 text-[10px] text-slate-400">
-            <span className="font-semibold text-slate-300">Citation:</span> {citationText}
-          </div>
-        )}
-        {distanceNote && (
-          <div className="mt-2 text-[10px] text-amber-300/90">
-            <Info className="inline-block h-3 w-3 align-[-2px] mr-1" />
-            {distanceNote}
-          </div>
-        )}
+
+        <div className="card card-elevated card-interactive p-3.5">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Cost</div>
+          <div className="mt-3 text-2xl font-black text-amber-400 font-display">NPR {fuelCost.toLocaleString('en-US')}</div>
+          <p className="mt-2 text-[11px] text-slate-400">~{formatNumber(fuelQuantity, 1)} {fuelUnit} • Tolls separate</p>
+        </div>
+
+        <div className="card card-elevated card-interactive p-3.5">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Safety</div>
+          <div className="mt-3 text-2xl font-black text-emerald-400 font-display">{route.roadConditionScore}<span className="text-base text-slate-500">/100</span></div>
+          <p className="mt-2 text-[11px] text-slate-400">{route.statusSummary.clearKm} km corridor is in clear condition.</p>
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        className="mt-4 flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 card card-interactive"
-        aria-expanded={expanded}
-      >
-        <span className="inline-flex items-center gap-2">
-          {expanded ? <ChevronUp className="h-4 w-4 text-emerald-400" /> : <ChevronDown className="h-4 w-4 text-emerald-400" />}
-          {expanded ? 'Hide Technical Appendix' : 'Technical Appendix — Route Breakdown & Evidence'}
-        </span>
-        <span className="text-[10px] font-medium text-slate-500">
-          {route.steps.length} corridor steps · {route.incidentsOnRoute.length} advisories
-        </span>
-      </button>
-
-      {expanded && (
-        <div className="mt-4 space-y-4 animate-fadeIn gap-cards">
-          {/* Section: Route Summary */}
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-            Route Summary
-          </div>
-          {route.roadTierBreakdown && (
-            <div className="card card-elevated p-3.5">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-300">
-                <span className="inline-flex items-center gap-1.5">
-                  <Award className="h-3.5 w-3.5 text-emerald-400" />
-                  Road classification & provenance
-                </span>
-                <span className="text-emerald-400">
-{route.roadTierBreakdown.certifiedPercent}% DoR federal highway
-                </span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all"
-                  style={{ width: `${route.roadTierBreakdown.certifiedPercent}%` }}
-                />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
-                <span>Federal highway: <strong className="text-slate-200">{formatNumber(route.roadTierBreakdown.highwayKm, 1)} km</strong></span>
-                <span>Provincial / local: <strong className="text-slate-200">{formatNumber(route.roadTierBreakdown.provincialKm + route.roadTierBreakdown.localKm, 1)} km</strong></span>
-                {route.roadTierBreakdown.communityKm > 0 && (
-                  <span>Unpaved track: <strong className="text-slate-200">{formatNumber(route.roadTierBreakdown.communityKm, 1)} km</strong></span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Section: Path Certification Detail — which path is DoR verified vs not */}
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Path Certification Detail
-            </div>
-            <div className="card card-elevated p-3.5">
-              <div className="mb-2.5 text-xs font-semibold text-slate-300">Which path is DoR verified?</div>
-              <div className="space-y-2">
-                {route.steps.map((step, index) => {
-                  const isCertified = step.roadClassification === 'national_highway';
-                  const isProvincial = step.roadClassification === 'provincial_feeder';
-                  const isLocal = step.roadClassification === 'local_palika';
-                  const isCommunity = step.roadClassification === 'community_track';
-                  return (
-                    <div key={`${step.instruction}-${index}`} className="flex flex-wrap items-start gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-emerald-400">
-                        {index + 1}
-                      </span>
-                      <span className="min-w-0 flex-1 text-[11px] text-slate-200">{step.instruction}</span>
-                      <span className="text-[10px] font-semibold text-slate-400">{formatNumber(step.distanceKm, 2)} km</span>
-                      <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold ${
-                        isCertified ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400' :
-                        isProvincial ? 'border-blue-500/25 bg-blue-500/10 text-blue-400' :
-                        isLocal ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-400' :
-                        'border-amber-500/25 bg-amber-500/10 text-amber-400'
-                      }`}>
-                        {step.certificationBadge}
-                      </span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                        isCertified ? 'bg-emerald-500/15 text-emerald-300' :
-                        isProvincial ? 'bg-blue-500/15 text-blue-300' :
-                        isLocal ? 'bg-cyan-500/15 text-cyan-300' :
-                        'bg-amber-500/15 text-amber-300'
-                      }`}>
-                        {isCertified ? '✓ DoR VERIFIED' :
-                         isProvincial ? '~ Provincial' :
-                         isLocal ? '~ Local Palika' :
-                         '~ Unpaved'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-2 pt-2 border-t border-slate-800/50 text-[10px] text-slate-500">
-                <strong className="text-slate-300">Legend:</strong>{' '}
-                <span className="text-emerald-400">✓ DoR VERIFIED</span> = Federal certified highway (NH01–NH80) with official surveyed distance ·{' '}
-                <span className="text-blue-400">~ Provincial</span> = PRN feeder corridor ·{' '}
-                <span className="text-cyan-400">~ Local Palika</span> = Municipal/local road ·{' '}
-                <span className="text-amber-400">~ Unpaved</span> = Community track / unpaved segment
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Toll Breakdown */}
-          {route.totalTollCostNpr > 0 && (
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                Toll Breakdown
-              </div>
-              <div className="card card-elevated p-3.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-300">
-                    <Receipt className="w-3.5 h-3.5" />
-                    <span>Highway Toll Breakdown</span>
-                  </div>
-                  <span className="text-cyan-400 font-mono font-bold text-sm">
-                    Total: NPR {route.totalTollCostNpr.toLocaleString()}
-                  </span>
-                </div>
-                <div className="mt-2 text-[11px] text-slate-300">
-                  {(() => {
-                    const highwayCodes = Array.from(new Set(route.steps?.map(s => s.highwayCode).filter(Boolean) || []));
-                    const tollPlazas = highwayCodes.flatMap((code) => getTollPlazasForHighway(code));
-                    if (tollPlazas.length === 0) return <span>No toll plaza data available for this route</span>;
-                    const entering = isEnteringKathmandu(route.origin, route.destination);
-                    return (
-                      <ul className="space-y-1.5">
-                        {tollPlazas.map((plaza) => {
-                          const rates = plaza.directional
-                            ? (entering === false ? plaza.rates.exit || plaza.rates.entry : plaza.rates.entry) || plaza.rates.single
-                            : plaza.rates.single;
-                          return (
-                            <li key={plaza.id} className="flex items-center justify-between p-1.5 bg-slate-950/50 rounded border border-slate-800/50">
-                              <div className="flex items-center space-x-2">
-                                <CreditCard className="w-3.5 h-3.5 text-cyan-400" />
-                                <span className="font-medium text-slate-200">{plaza.name}</span>
-                                <span className="text-slate-500">({plaza.highwayCode})</span>
-                              </div>
-                              <span className="font-mono text-cyan-400">
-                                {rates ? `Rs. ${rates.car} (Car)` : 'Rate N/A'}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    );
-                  })()}
-                </div>
-                <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>Source: Roads Board Nepal Gazette</span>
-                  <a
-                    href="https://rbn.org.np/ne/downloads/nepal-gazette"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 hover:underline"
-                  >
-                    View Gazette
-                  </a>
+      <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+        <div className="space-y-4">
+          <div className="card card-elevated p-4">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route overview</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-lg font-black text-white font-display">
+                  <span>{route.origin.name}</span>
+                  <ArrowRight className="h-4 w-4 text-emerald-400" />
+                  <span>{route.destination.name}</span>
                 </div>
               </div>
+              <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase text-emerald-300">
+                {evidenceLabels[distanceEvidence] || distanceEvidence}
+              </div>
             </div>
-          )}
 
-           {/* Section: Corridors */}
-           <div>
-             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-               Corridors Traversed
-             </div>
-             <div className="card card-elevated p-3.5">
-              <div className="mb-2.5 text-xs font-semibold text-slate-300">Corridors traversed</div>
-              <div className="space-y-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Total route</div>
+                <div className="mt-2 text-xl font-black text-white font-display">{formatNumber(routeDistance, 1)} km</div>
+              </div>
+              <div className="border-l border-slate-800 pl-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Detour</div>
+                <div className="mt-2 text-xl font-black text-cyan-300 font-display">+{detourPercent}%</div>
+              </div>
+              <div className="border-l border-slate-800 pl-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Peak elevation</div>
+                <div className="mt-2 text-xl font-black text-purple-300 font-display">{route.maxElevationM} m</div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
               {route.steps.map((step, index) => (
-                <div key={`${step.instruction}-${index}`} className="flex flex-wrap items-start gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-emerald-400">
-                    {index + 1}
-                  </span>
+                <div key={`${step.instruction}-${index}`} className="flex flex-wrap items-center gap-2 border-t border-slate-800 py-2.5">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-black text-emerald-400">{index + 1}</span>
                   <span className="min-w-0 flex-1 text-[11px] text-slate-200">{step.instruction}</span>
-                  <span className="text-[10px] font-semibold text-slate-400">{formatNumber(step.distanceKm, 2)} km</span>
+                  <span className="text-[10px] text-slate-400">{formatNumber(step.distanceKm, 1)} km</span>
                   {step.certificationBadge && (
                     <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold ${step.roadClassification === 'national_highway' ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400' : step.roadClassification === 'provincial_feeder' ? 'border-blue-500/25 bg-blue-500/10 text-blue-400' : 'border-amber-500/25 bg-amber-500/10 text-amber-400'}`}>
                       {step.certificationBadge}
@@ -694,116 +419,119 @@ export function UnifiedRouteReport({
               ))}
             </div>
           </div>
-        </div>
 
-       <div>
-         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-           Road Characteristics
-         </div>
-            <div className="grid gap-3 sm:grid-cols-2 gap-cards">
-              <div className="card card-elevated p-3.5">
-                <div className="mb-2 text-xs font-semibold text-slate-300">Surface</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {surfaces.map((surface) => (
-                    <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">
-                      {surfaceLabels[surface] || surface}
-                    </span>
-                  ))}
-                </div>
-              </div>
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 card card-interactive"
+            aria-expanded={expanded}
+          >
+            <span className="inline-flex items-center gap-2">
+              {expanded ? <ChevronUp className="h-4 w-4 text-emerald-400" /> : <ChevronDown className="h-4 w-4 text-emerald-400" />}
+              {expanded ? 'Hide technical appendix' : 'Technical appendix'}
+            </span>
+            <span className="text-[10px] font-medium text-slate-500">{route.steps.length} steps</span>
+          </button>
 
-              <div className="card card-elevated p-3.5">
-                <div className="mb-2 text-xs font-semibold text-slate-300">Road status</div>
-                <div className="space-y-2 text-[11px]">
-                  <div className="flex items-center gap-2 text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /><span>{route.statusSummary.clearKm} km clear</span></div>
-                  {cautionKm > 0 && <div className="flex items-center gap-2 text-amber-300"><AlertTriangle className="h-3.5 w-3.5" /><span>{cautionKm} km caution</span></div>}
-                  {obstructedKm > 0 && <div className="flex items-center gap-2 text-red-300"><AlertTriangle className="h-3.5 w-3.5" /><span>{obstructedKm} km obstructed</span></div>}
-                  {route.incidentsOnRoute.length > 0 && <div className="text-slate-400">{route.incidentsOnRoute.length} active advisory / advisories on this corridor.</div>}
-                </div>
-              </div>
-            </div>
-          </div>
+          {expanded && (
+            <div className="card card-elevated p-4 animate-fadeIn">
+              <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Method and evidence</div>
 
-          {/* Section: Elevation */}
-          {showElevationProfile && (
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                Elevation
-              </div>
-              <div className="card card-elevated">
-                <button
-                  type="button"
-                  onClick={() => setShowElevation((value) => !value)}
-                  className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 text-left hover:bg-slate-900/50 card card-interactive"
-                >
-                  <div className="flex items-center space-x-2 text-xs font-bold text-white uppercase tracking-wider">
-                    <Mountain className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Elevation profile</span>
+              <div className="space-y-3">
+                {route.roadTierBreakdown && (
+                  <div className="border-t border-slate-800 pt-3">
+                    <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-200">
+                      <span>Road classification</span>
+                      <span className="text-emerald-400">{route.roadTierBreakdown.certifiedPercent}% mapped to DoR highway geometry</span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${route.roadTierBreakdown.certifiedPercent}%` }} /></div>
                   </div>
-                  <div className="flex items-center space-x-3 text-[11px] text-slate-400">
-                    <span>+{route.elevationGainM}m climb • Peak {route.maxElevationM}m</span>
-                    {showElevation ? <ChevronUp className="w-3.5 h-3.5 text-emerald-400" /> : <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />}
-                  </div>
-                </button>
-                {showElevation && simulationControls && (
-                  <div className="px-3.5 pb-3.5 animate-fadeIn">
-                    <RouteElevationProfileChart
-                      activeRoute={route}
-                      vehicle={route.vehicle}
-                      simulationControls={simulationControls}
-                      onViewOnMap={onViewOnMap}
-                      disableVehicleSwitch
-                    />
+                )}
+
+                <div className="border-t border-slate-800 pt-3">
+                  <div className="text-xs font-semibold text-slate-200">Source and citation</div>
+                  <div className="mt-2 text-[11px] text-slate-400">{sourceLabel}</div>
+                  {citationText && <div className="mt-1 text-[10px] text-slate-500">{citationText}</div>}
+                  {distanceHighways.length > 0 && <div className="mt-2 text-[10px] text-cyan-300">Route highways: {distanceHighways.join(' → ')}</div>}
+                  {distanceNote && <div className="mt-2 text-[10px] text-amber-300/90"><Info className="inline-block h-3 w-3 align-[-2px] mr-1" />{distanceNote}</div>}
+                </div>
+
+                {route.totalTollCostNpr > 0 && (
+                  <div className="border-t border-slate-800 pt-3">
+                    <div className="text-xs font-semibold text-slate-200">Toll estimate</div>
+                    <div className="mt-2 text-lg font-black text-cyan-300 font-display">NPR {route.totalTollCostNpr.toLocaleString()}</div>
                   </div>
                 )}
               </div>
             </div>
           )}
+        </div>
 
-          {/* Section: Evidence */}
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-              Distance Evidence
+        <div className="space-y-4">
+          <div className="card card-elevated p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              <Database className="h-3.5 w-3.5 text-cyan-500" />
+              <span>Methodology</span>
             </div>
-            <div className="card card-elevated p-3.5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <div className="text-xs font-semibold text-slate-300">Distance evidence</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                    <strong className="text-slate-200">{sourceLabel}</strong>
-                    <EvidenceBadge level={distanceEvidence} />
-                  </div>
-                  {citationText && <div className="mt-1.5 text-[10px] leading-relaxed text-slate-500">{citationText}</div>}
-                  {distanceNote && <div className="mt-1.5 text-[10px] leading-relaxed text-amber-300/90"><Info className="inline-block h-3 w-3 align-[-2px]" /> {distanceNote}</div>}
-                </div>
-                <SourceLink label="Open source" href={sourceUrl} />
+            <div className="mt-3 space-y-3 text-[11px] text-slate-300">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Primary source</div>
+                <div className="mt-1 font-semibold text-white">{sourceLabel}</div>
+                <div className="mt-1 text-slate-400">{sourceDescription}</div>
               </div>
-              <div className="mt-2 text-[10px] leading-relaxed text-slate-500">{sourceDescription}</div>
+
+              <div className="border-t border-slate-800 pt-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Evidence</div>
+                <div className="mt-1 flex items-center gap-2"><EvidenceBadge level={distanceEvidence} /><span className="text-slate-300">{evidenceLabels[distanceEvidence]}</span></div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Pair verification</div>
+                <div className="mt-1 text-slate-300">{distanceEvidence === 'published' ? 'This exact place pair has a DoR-published SNH citation.' : 'No DoR-published distance is available for this pair; the evidence badge identifies the computed route or estimate.'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card card-elevated p-4">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Road condition</div>
+            <div className="mt-3 space-y-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Surface</div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {surfaces.map((surface) => (
+                    <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">{surfaceLabels[surface] || surface}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-3">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Status</div>
+                <div className="mt-2 space-y-2 text-[11px]">
+                  <div className="flex items-center gap-2 text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /> <span>{route.statusSummary.clearKm} km clear</span></div>
+                  {cautionKm > 0 && <div className="flex items-center gap-2 text-amber-300"><AlertTriangle className="h-3.5 w-3.5" /> <span>{cautionKm} km caution</span></div>}
+                  {obstructedKm > 0 && <div className="flex items-center gap-2 text-red-300"><AlertTriangle className="h-3.5 w-3.5" /> <span>{obstructedKm} km obstructed</span></div>}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )
-      }
+      </div>
 
       <footer className="mt-4 border-t border-slate-800 pt-3">
-        <div className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between card card-flat">
+        <div className="flex flex-col gap-2 border-t border-slate-800 pt-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5 text-cyan-500/80" />
-              <span className="font-semibold text-slate-300">
-                DoR Nepal Highway GIS · {sourceLabel}
-              </span>
+              <span className="font-semibold text-slate-300">DoR Nepal Highway GIS · {sourceLabel}</span>
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <SourceLink label="DoR" href="https://dor.gov.np" />
-            {distanceSource === 'snh_published' && <SourceLink label="SNH" href="https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23" />}
+            {(distanceSource === 'snh_published' || distanceSource === 'dor_snh') && <SourceLink label="SNH 2022/23" href="https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23" />}
             {distanceSource === 'dor_geojson' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
           </div>
         </div>
-        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">
-          Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged into one certified value.
-        </p>
+        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged into one certified value.</p>
       </footer>
     </section>
   );

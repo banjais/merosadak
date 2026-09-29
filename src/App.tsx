@@ -541,7 +541,7 @@ function AppContent() {
           setIsHighwayInfoOpen(true);
           setIsDrawerOpen(false);
         }}
-        onOpenDistanceMatrix={() => setIsDistanceCalculatorOpen(true)}
+        onOpenDistanceCalculator={() => setIsDistanceCalculatorOpen(true)}
         onOpenDataSources={() => setIsDataSourcesOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
         onOpenSosModal={() => setIsSosModalOpen(true)}

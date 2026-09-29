@@ -1593,6 +1593,11 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 
 /* ===== PRINT STYLES — Route Report Print View ===== */
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
   /* Hide everything except the report */
   body * {
     visibility: hidden;
@@ -1608,9 +1613,16 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   .speed-dial-fab,
   .sos-floating-button,
   .pull-to-refresh,
-  .leaflet-container,
-  #root > :not(#route-report) {
+  .leaflet-container {
     display: none !important;
+  }
+
+  #root,
+  #root > div,
+  #root main {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   /* Reset backgrounds & shadows for print */
@@ -1639,6 +1651,15 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
     box-shadow: none !important;
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  #route-report {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Typography */

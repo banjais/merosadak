@@ -188,7 +188,6 @@ export async function downloadMountainOfflinePack(
   const staticDataUrls = [
     '/data/cities-and-junctions.json',
     '/data/cities.json',
-    '/data/distance-matrix.json',
     '/data/highway-info.json',
     '/data/highway-coords.json',
     '/data/blackspots.json',

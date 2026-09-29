@@ -1,12 +1,12 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
 // Version 1.6.0 - Background Sync outbox + Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
-const SW_VERSION = '1.6.0';
-const APP_BUILD = '20260922-pwa-auto';
+const SW_VERSION = '1.6.1';
+const APP_BUILD = '20260929-no-distance-matrix';
 const CACHE_NAMES = {
   STATIC: 'mero-sadak-static-v5',
   TILES: 'mero-sadak-tiles-v5',
-  DATA: 'mero-sadak-data-v5',
+  DATA: 'mero-sadak-data-v6',
 };
 
 const PRECACHE_ASSETS = [
@@ -21,7 +21,6 @@ const PRECACHE_ASSETS = [
 const STATIC_DATA_URLS = [
   '/data/cities-and-junctions.json',
   '/data/cities.json',
-  '/data/distance-matrix.json',
   '/data/highway-info.json',
   '/data/highway-coords.json',
   '/data/blackspots.json',

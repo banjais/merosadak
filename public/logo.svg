@@ -1,0 +1,67 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Mero Sadak</title>
+  <desc id="desc">A modern Nepal mountain and road travel brand mark with a map silhouette.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#081827"/>
+      <stop offset="100%" stop-color="#030b14"/>
+    </linearGradient>
+    <linearGradient id="mountainFill" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="roadFill" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="42" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="206" fill="#0b1724" stroke="#1f2937" stroke-width="4"/>
+
+  <g opacity="0.88">
+    <path d="M171 176c20-28 23-45 43-45 15 0 38 18 47 34 6-8 11-12 20-12 10 0 17 7 22 16 10 18 16 26 27 27 18 2 28 16 24 30-5 18-16 32-31 42-17 11-28 17-42 26-17 11-30 23-56 23-22 0-39-11-55-27-12-12-19-28-20-47-1-23 8-38 21-57z" fill="#ef4444"/>
+    <path d="M96 176c16-23 33-31 50-31 17 0 27 6 38 17 10-10 17-14 32-14 12 0 18 5 26 15 13 17 18 24 26 24 8 0 15 5 18 13 6 13 3 22-5 35-6 9-17 16-31 21-17 5-32 10-40 18-15 15-26 31-52 31-22 0-38-10-52-27-9-12-15-24-15-39 0-19 7-33 15-43z" fill="#ef4444" opacity="0.96"/>
+  </g>
+
+  <g transform="translate(25 40)">
+    <path d="M90 275 L240 125 L388 275 Z" fill="url(#mountainFill)"/>
+    <path d="M120 275 L240 168 L352 275 Z" fill="#dbeafe" opacity="0.96"/>
+    <path d="M149 224 L175 168 L198 224 Z" fill="#f8fafc" opacity="0.92"/>
+    <path d="M220 229 L260 168 L303 229 Z" fill="#f8fafc" opacity="0.92"/>
+    <path d="M283 208 L316 169 L352 208 Z" fill="#f8fafc" opacity="0.92"/>
+    <path d="M111 277 L223 277 L187 254 L172 266 L158 250 L140 270 Z" fill="#f8fafc" opacity="0.9"/>
+    <path d="M219 278 L358 278 L308 254 L288 270 L277 251 L242 268 Z" fill="#f8fafc" opacity="0.9"/>
+    <path d="M96 252 L185 252 L142 216 L115 233 Z" fill="#f8fafc" opacity="0.8"/>
+    <path d="M293 253 L398 253 L350 218 L320 235 Z" fill="#f8fafc" opacity="0.8"/>
+    <path d="M72 345 L212 345 L178 288 L146 300 L105 270 L70 311 Z" fill="url(#roadFill)" opacity="0.98"/>
+    <path d="M209 345 L391 345 L333 285 L300 303 L274 270 L232 304 L206 289 Z" fill="url(#roadFill)" opacity="0.98"/>
+    <path d="M136 346 L258 346 L206 397 L154 398 Z" fill="#eef2ff" opacity="0.92"/>
+    <path d="M249 346 L376 346 L314 399 L255 399 Z" fill="#eef2ff" opacity="0.92"/>
+    <path d="M102 360 Q210 335 288 360 Q340 372 392 360 L392 410 L100 410 Z" fill="#d0f0d6" opacity="0.96"/>
+  </g>
+
+  <g opacity="0.97">
+    <path d="M150 104 L192 72 L231 104 L206 104 L191 89 L176 104 Z" fill="#f8fafc"/>
+    <path d="M273 104 L315 72 L354 104 L329 104 L314 89 L299 104 Z" fill="#f8fafc"/>
+    <path d="M224 90 L256 44 L287 90 L266 90 L256 71 L246 90 Z" fill="#f8fafc"/>
+  </g>
+
+  <g>
+    <path d="M120 435c18-28 39-42 65-42 27 0 40 14 54 34 14-16 30-28 52-28 30 0 54 21 64 47-10 1-17 2-23 4-15 3-28 9-40 18-14 10-27 17-47 17-20 0-38-10-53-24-10-9-18-19-32-23-18-6-36-4-50 7z" fill="url(#ribbon)"/>
+    <path d="M120 438c20 0 38 8 54 22 14-18 38-29 62-29 22 0 43 8 58 23 17-15 39-23 62-23 31 0 52 13 69 39l-21 16c-29-25-44-30-58-30-20 0-35 8-53 26l-20 18-24-22-23 22-23-20-19 15-21-18-17 16-20-18-18 16-17-17-12 15-25-18c9-14 19-28 34-38 14-10 36-15 52-15z" fill="#ef4444"/>
+  </g>
+
+  <g transform="translate(90 188)">
+    <path d="M97 150c12-18 31-28 50-28 27 0 53 16 71 47 15-10 32-15 52-15 40 0 73 28 77 69-15 13-35 22-57 22-13 0-26-3-38-10-12 12-29 18-48 18-16 0-31-5-42-16-18 20-46 32-74 30-30-2-56-20-70-48 11-6 21-14 29-24 8-11 14-18 20-27 9-15 15-27 30-38z" fill="#0f172a" opacity="0.12"/>
+  </g>
+
+  <g fill="#f8fafc">
+    <circle cx="256" cy="256" r="7"/>
+    <path d="M256 180c11 0 20 9 20 20 0 11-9 20-20 20s-20-9-20-20c0-11 9-20 20-20zm0 28c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15z"/>
+  </g>
+</svg>

@@ -63,7 +63,6 @@ async function main() {
     'traffic-corridors.json',
     'calculator-cities.json',
     'mountain-weather.json',
-    'distance-matrix.json',
   ];
 
   const token = process.env.CLOUDFLARE_API_TOKEN;

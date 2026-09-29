@@ -25,7 +25,7 @@ interface AppDrawerProps {
    activeTab?: ActiveFeatureType;
    onNavigateTab: (tab: ActiveFeatureType) => void;
   onOpenTravelSteps?: () => void;
-  onOpenDistanceMatrix: () => void;
+  onOpenDistanceCalculator: () => void;
   onOpenDataSources?: () => void;
   onOpenTollModal: () => void;
   onOpenSosModal: () => void;
@@ -50,7 +50,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   activeTab = 'route',
   onNavigateTab,
   onOpenTravelSteps,
-  onOpenDistanceMatrix,
+  onOpenDistanceCalculator,
   onOpenDataSources,
   onOpenTollModal,
   onOpenSosModal,
@@ -115,7 +115,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeColor: 'accent-bg text-slate-950',
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg text-slate-950',
-      onClick: () => { onOpenDistanceMatrix(); onClose(); },
+      onClick: () => { onOpenDistanceCalculator(); onClose(); },
     },
     {
       id: 'tolls',

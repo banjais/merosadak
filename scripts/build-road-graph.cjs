@@ -25,8 +25,8 @@ const OUT_FILE = path.join(__dirname, '..', 'public', 'data', 'road-graph.json')
 // ---- tunables ----
 const SIMPLIFY_TOLERANCE_KM = 0.05; // ~50m — Douglas-Peucker tolerance for rendering
 const SNAP_GRID_KM = 0.06;          // ~60m — grid cell used to merge nearby vertices into shared graph nodes
-const CITY_SNAP_MAX_KM = 25;        // snap cities within this distance of a highway node
-const CITY_INJECT_MAX_KM = 80;      // beyond that, inject city node + access edge to nearest highway
+const CITY_SNAP_MAX_KM = 0.05;      // only treat a point as on-network within 50m
+const CITY_INJECT_MAX_KM = 25;      // farther points need an explicit inferred access connector or remain unsnapped
 const ENDPOINT_JOIN_MAX_KM = 0.25;   // merge nearby polyline endpoints (~250m) across gaps
 const COMPONENT_JOIN_MAX_KM = 2.0;   // bridge small components to nearest other component
 const JOIN_HWY_IDX = -1;             // synthetic join edges (not a real NH code)
@@ -368,7 +368,7 @@ function main() {
       const cityNodeId = snapper.nodes.length;
       snapper.nodes.push([city.lat, city.lng]);
       const accessKm = Math.round(bestDist * 1000) / 1000;
-      addEdge(cityNodeId, bestId, accessKm, 0);
+      addEdge(cityNodeId, bestId, accessKm, JOIN_HWY_IDX);
       citySnap[city.id] = cityNodeId;
       if (city.name) citySnapByName[city.name.toLowerCase()] = cityNodeId;
       injected++;
@@ -580,8 +580,10 @@ function main() {
       citySnapByNameEntries: Object.keys(citySnapByName).length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
-      distanceBasis: 'DoR official chainage (link_len) per survey link, Department of Roads, Government of Nepal',
+      distanceBasis: 'DoR link_len-scaled highway geometry; inferred access and component connectors are included and tagged as non-highway edges',
       totalOfficialChainageKm: Math.round(totalOfficialKm),
+      inferredAccessLinks: injected,
+      unsnappedPlaces: unsnapped,
       endpointJoins,
       componentBridges,
       endpointJoinMaxKm: ENDPOINT_JOIN_MAX_KM,

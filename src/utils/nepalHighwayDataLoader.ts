@@ -15,7 +15,6 @@ let cachedWeather: HighwayWeatherNode[] | null = null;
 let cachedPOIs: HighwayPOI[] | null = null;
 let cachedCorridors: TrafficCorridor[] | null = null;
 let cachedBlackspots: KnownBlackspot[] | null = null;
-let cachedDistanceMatrix: Record<string, Record<string, number>> | null = null;
 
 /**
  * Fetch and parse all 79 National Highways with full GeoJSON vector paths and DoR metadata
@@ -166,22 +165,3 @@ export async function loadBlackspots(): Promise<KnownBlackspot[]> {
   return INITIAL_BLACKSPOTS;
 }
 
-/**
- * Load inter-city DoR distance matrix
- */
-export async function loadDistanceMatrix(): Promise<Record<string, Record<string, number>> | null> {
-  if (cachedDistanceMatrix) return cachedDistanceMatrix;
-
-  try {
-    const res = await fetch('/data/distance-matrix.json');
-    if (res.ok) {
-      const data = await res.json();
-      cachedDistanceMatrix = data;
-      return data;
-    }
-  } catch (e) {
-    console.warn('Failed loading distance matrix:', e);
-  }
-
-  return null;
-}

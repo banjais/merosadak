@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
 import QRCode from 'qrcode';
-import { DOR_BRANDING, formatReportTimestamp } from './reportBranding';
+import { formatReportTimestamp } from './reportBranding';
 import {
   DOR_DOCUMENT,
   DOR_PUBLISHER,
@@ -105,15 +105,47 @@ function drawEmblem(doc: jsPDF, x: number, y: number, size: number, color: [numb
   doc.setLineJoin('miter');
 }
 
+async function loadBrandLogo(): Promise<string | null> {
+  let objectUrl: string | null = null;
+  try {
+    const response = await fetch('/logo.svg');
+    if (!response.ok) return null;
+    objectUrl = URL.createObjectURL(await response.blob());
+    const image = new Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('Logo image could not be loaded'));
+      image.src = objectUrl!;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }
+}
+
 /** Build the proof sheet PDF (does not save). Kept separate so it can be tested. */
 export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPDF; claim: ProofClaim; verifyUrl: string }> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+  const brandLogo = await loadBrandLogo();
   const W = doc.internal.pageSize.getWidth(); // 210
   const H = doc.internal.pageSize.getHeight(); // 297
   const M = 15;
   const FOOTER_TOP = H - 20;
 
   const res = data.lookupResult;
+  const sourceUrl = res.source === 'dor_geojson'
+    ? 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement'
+    : res.source === 'dor_snh'
+      ? 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23'
+      : '';
   const printedAt = new Date(data.generatedAt);
   const baseClaim = {
     from: data.from,
@@ -129,9 +161,9 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   const shortHost = origin.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
   doc.setProperties({
-    title: `${DOR_BRANDING.line3} — Distance proof sheet: ${data.from} to ${data.to} (${id})`,
-    subject: 'Distance proof sheet prepared from DoR SNH 2022/23. Not issued by the Department of Roads unless countersigned.',
-    author: 'Department of Roads, Government of Nepal',
+    title: `Mero Sadak distance report: ${data.from} to ${data.to} (${id})`,
+    subject: 'Unofficial Mero Sadak report identifying its source and evidence level.',
+    author: 'Mero Sadak',
     keywords: `${id}, SNH 2022/23, Department of Roads, Government of Nepal`,
     creator: 'Mero Sadak',
   });
@@ -173,8 +205,17 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  // Emblem + three-line government letterhead, kept compact in the band.
-  drawEmblem(doc, M, 5, 15, [245, 158, 11]);
+  // App branding is distinct from the Department of Roads, which is cited as a data source.
+  if (brandLogo) {
+    doc.addImage(brandLogo, 'PNG', M, 5, 15, 15);
+  } else {
+    doc.setFillColor(16, 185, 129);
+    doc.roundedRect(M, 5, 15, 15, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('MS', M + 7.5, 14.5, { align: 'center' });
+  }
   const LX = M + 19;
   const LY = 8.4;
   const line = (s: string, dy: number, size: number, style: 'normal' | 'bold' | 'italic', c: [number, number, number]) => {
@@ -183,9 +224,9 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setTextColor(c[0], c[1], c[2]);
     doc.text(ascii(s), LX, LY + dy);
   };
-  line(DOR_BRANDING.line1, 0, 11, 'bold', [255, 255, 255]);
-  line(DOR_BRANDING.line2, 5.2, 8, 'normal', [203, 213, 225]);
-  line(DOR_BRANDING.line3, 10.4, 10, 'bold', [245, 158, 11]);
+  line('Mero Sadak', 0, 11, 'bold', [255, 255, 255]);
+  line('Nepal route and distance report', 5.2, 8, 'normal', [203, 213, 225]);
+  line('Independent report; not issued by DoR', 10.4, 7.5, 'normal', [245, 158, 11]);
 
   // Right side: reference code, print stamp, and the signed-in user.
   const stamp = formatReportTimestamp(printedAt);
@@ -197,15 +238,15 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   };
   rightLine(id, 0, 8.5, 'bold', [255, 255, 255]);
   rightLine(`Printed: ${stamp}`, 5, 7.5, 'normal', [203, 213, 225]);
-  rightLine('Data: SNH 2022/23', 10, 7.5, 'normal', [203, 213, 225]);
+  rightLine(`Evidence: ${getEvidenceLevelLabel(res.evidenceLevel)}`, 10, 7.5, 'normal', [203, 213, 225]);
   if (data.issuedToName) rightLine(data.issuedToName, 16.5, 7.5, 'bold', [255, 255, 255]);
   if (data.issuedToEmail) rightLine(data.issuedToEmail, 21, 7, 'normal', [148, 163, 184]);
 
   // Document title and the not-issued-unless-signed caveat.
   y = 45;
-  text('DISTANCE PROOF SHEET', M, 15, 'bold', INK);
+  text('DISTANCE REPORT', M, 15, 'bold', INK);
   y = 52;
-  text('Prepared from Department of Roads, Statistics of National Highway (SNH) 2022/23', M, 7.5, 'normal', MUTED);
+  text(`Source: ${getSourceLabel(res.source)}`, M, 7.5, 'normal', MUTED);
   y = 56.5;
   text('Not issued by the Department of Roads unless countersigned below', M, 7.5, 'italic', WARN);
   doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
@@ -236,13 +277,14 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   const cit = res.citation;
   const lines: string[] = [
     `Data source: ${getSourceLabel(res.source)}`,
-    `Document: ${cit?.document || DOR_DOCUMENT}`,
-    `Table: ${cit?.table || 'N/A'}${cit?.row ? `, row ${cit.row}` : ''}`,
+    `Document: ${cit?.document || getSourceLabel(res.source)}`,
+    `Table: ${cit?.table || (res.evidenceLevel === 'published' ? DOR_DOCUMENT : 'No published city-pair table')}${cit?.row ? `, row ${cit.row}` : ''}`,
   ];
   if (cit?.printedPage || cit?.pdfPage) {
     lines.push(`Page: ${cit?.printedPage ? `printed p.${cit.printedPage}` : ''}${cit?.printedPage && cit?.pdfPage ? ' / ' : ''}${cit?.pdfPage ? `PDF file p.${cit.pdfPage}` : ''}`);
   }
   if (cit?.via) lines.push(`Route basis: ${cit.via}`);
+  if (res.highwaysUsed?.length) lines.push(`Highways in computed route: ${res.highwaysUsed.join(' -> ')}`);
   lines.forEach((l) => {
     ensure(4.6);
     text(l, M, 8.5, 'normal', INK);
@@ -325,18 +367,18 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   heading('VERIFY THIS SHEET AND DATA SOURCE');
   const qrY = y;
   drawQr(doc, verifyUrl, M, qrY, QR);
-  drawQr(doc, DOR_SOURCE_URL, W / 2 + 4, qrY, QR);
+  if (sourceUrl) drawQr(doc, sourceUrl, W / 2 + 4, qrY, QR);
   y = qrY + QR + 1;
   const captionY = y;
   y = captionY;
   text('1. VERIFY IN THE APP', M + 2, 7.5, 'bold', INK);
-  text('2. DATA SOURCE: DEPARTMENT OF ROADS', W / 2 + 6, 7.5, 'bold', INK);
+  text(sourceUrl ? '2. DEPARTMENT OF ROADS SOURCE' : '2. SOURCE BASIS', W / 2 + 6, 7.5, 'bold', INK);
   y += 3.6;
   text(`Scan to re-check this figure at ${shortHost}`, M + 2, 6.8, 'normal', MUTED);
-  text(`Scan to open ${DOR_SOURCE_URL.replace('https://', '')}`, W / 2 + 6, 6.8, 'normal', MUTED);
+  text(sourceUrl ? `Scan to open ${sourceUrl.replace('https://', '')}` : 'Aerial great-circle calculation; no DoR route found', W / 2 + 6, 6.8, 'normal', MUTED);
   y += 3.4;
   text(`Reference code ${claim.h}`, M + 2, 6.8, 'normal', MUTED);
-  text('Publisher of the SNH data', W / 2 + 6, 6.8, 'normal', MUTED);
+  text(sourceUrl ? 'Publisher/source reference' : 'Not a road-distance measurement', W / 2 + 6, 6.8, 'normal', MUTED);
   y += 5;
   wrapped(
     'A QR code confirms what this sheet says and where the data comes from. It does not by itself prove that the Department of Roads issued this sheet: only an authorised DoR signature and seal below does.',
@@ -386,11 +428,12 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   ensure(52);
   heading('DATA SOURCE');
   const src: Array<[string, string]> = [
-    ['Publisher', `${DOR_PUBLISHER}  (${DOR_SOURCE_URL})`],
-    ['Document', `${DOR_DOCUMENT}, HMIS-ICT Unit, published June 2024`],
-    ['Snapshot', 'Data reflects the 2022/23 publication. It is not a live road-status report.'],
+    ['Source', sourceUrl ? `${getSourceLabel(res.source)} (${sourceUrl})` : 'Mero Sadak geodesic estimate; no DoR pair or route found'],
+    ...(res.source === 'dor_snh' ? [['Publisher', DOR_PUBLISHER] as [string, string]] : []),
+    ['DoR publication', res.evidenceLevel === 'published' ? `${DOR_DOCUMENT}, HMIS-ICT Unit, published June 2024` : 'No DoR-published distance for this city pair'],
+    ['Snapshot', res.source === 'dor_snh' ? 'Data reflects the 2022/23 publication, not live road conditions.' : 'Computed route from archived road geometry; not a live road-status report.'],
     ['Dataset fingerprint', `SHA-256 (first 12): ${data.dataHash}`],
-    ['Prepared by', 'Mero Sadak (unofficial). Distances are read from a transcription of the published tables.'],
+    ['Prepared by', 'Mero Sadak (independent report; not issued by the Department of Roads).'],
     ['Copyright', '(c) 2023 Department of Roads (source data). Reproduced for reference.'],
   ];
   src.forEach(([k, v]) => {
@@ -416,8 +459,8 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text(ascii(`${id}  |  ref ${claim.h}  |  verify at ${shortHost}  |  source ${DOR_SOURCE_URL.replace('https://', '')}`), M, H - 10.5);
-    doc.text(ascii('(c) 2023 Department of Roads (source data). Unofficial unless countersigned by DoR.'), M, H - 7);
+    doc.text(ascii(`${id}  |  ref ${claim.h}  |  verify at ${shortHost}  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`), M, H - 10.5);
+    doc.text(ascii('Mero Sadak report. DoR is cited as a data source, not as the report issuer.'), M, H - 7);
     doc.text(`Page ${p} of ${pages}`, W - M, H - 10.5, { align: 'right' });
   }
 
