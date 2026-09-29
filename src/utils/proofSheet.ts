@@ -109,10 +109,10 @@ function drawEmblem(doc: jsPDF, x: number, y: number, size: number, color: [numb
   doc.setLineJoin('miter');
 }
 
-async function loadBrandLogo(): Promise<string | null> {
+async function loadReportEmblem(): Promise<string | null> {
   let objectUrl: string | null = null;
   try {
-    const response = await fetch('/logo.svg');
+    const response = await fetch('/logo.jpeg');
     if (!response.ok) return null;
     objectUrl = URL.createObjectURL(await response.blob());
     const image = new Image();
@@ -138,7 +138,7 @@ async function loadBrandLogo(): Promise<string | null> {
 /** Build the proof sheet PDF (does not save). Kept separate so it can be tested. */
 export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPDF; claim: ProofClaim; verifyUrl: string }> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-  const brandLogo = await loadBrandLogo();
+  const governmentEmblem = await loadReportEmblem();
   const W = doc.internal.pageSize.getWidth(); // 210
   const H = doc.internal.pageSize.getHeight(); // 297
   const M = 15;
@@ -205,13 +205,13 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     y += 4.5;
   };
 
-  // ---------------- header band (filled, white text) with DoR letterhead
+  // ---------------- header band (filled, white text) with report identity
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  // App branding is distinct from the Department of Roads, which is cited as a data source.
-  if (brandLogo) {
-    doc.addImage(brandLogo, 'PNG', M, 5, 15, 15);
+  // This emblem is shown only on the distance report; Mero Sadak remains the report issuer.
+  if (governmentEmblem) {
+    doc.addImage(governmentEmblem, 'PNG', M, 5, 15, 15);
   } else {
     doc.setFillColor(16, 185, 129);
     doc.roundedRect(M, 5, 15, 15, 2, 2, 'F');
@@ -230,7 +230,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   };
   line('Mero Sadak', 0, 11, 'bold', [255, 255, 255]);
   line('Nepal route and distance report', 5.2, 8, 'normal', [203, 213, 225]);
-  line('Independent report; not issued by DoR', 10.4, 7.5, 'normal', [245, 158, 11]);
+  line('Independent report; not issued by Government of Nepal or DoR', 10.4, 7.5, 'normal', [245, 158, 11]);
 
   // Right side: reference code, print stamp, and the signed-in user.
   const stamp = formatReportTimestamp(printedAt);

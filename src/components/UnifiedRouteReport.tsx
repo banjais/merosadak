@@ -204,11 +204,15 @@ export function UnifiedRouteReport({
       id="route-report"
       className="space-y-4"
     >
-      <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
+      <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} useGovernmentEmblem={distanceCalculatorMode} />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex items-center gap-3">
-          <img src="/logo.svg" alt="Mero Sadak logo" className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 shadow-lg shadow-slate-950/30" />
+          <img
+            src={distanceCalculatorMode ? '/logo.jpeg' : '/logo.svg'}
+            alt={distanceCalculatorMode ? 'Government of Nepal emblem' : 'Mero Sadak logo'}
+            className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 object-contain shadow-lg shadow-slate-950/30"
+          />
           <div>
             <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
               <span className="truncate">{route.origin.name}</span>

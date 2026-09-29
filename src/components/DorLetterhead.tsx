@@ -55,15 +55,21 @@ interface DorLetterheadProps {
   identity?: ReportIdentity;
   /** Compact rendering for narrow viewports. */
   compact?: boolean;
+  /** Show the provided national emblem for a distance-calculator report only. */
+  useGovernmentEmblem?: boolean;
 }
 
 /**
  * Branded report header. The source agency is cited separately; this app is
  * independent and does not issue Department of Roads documents.
  */
-export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identity, compact }) => (
+export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identity, compact, useGovernmentEmblem = false }) => (
   <div className="dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1">
-    <img src="/logo.svg" alt="Mero Sadak logo" className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1`} />
+    <img
+      src={useGovernmentEmblem ? '/logo.jpeg' : '/logo.svg'}
+      alt={useGovernmentEmblem ? 'Government of Nepal emblem' : 'Mero Sadak logo'}
+      className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1 object-contain`}
+    />
     <div className="min-w-0 flex-1">
       <p className="text-sm font-black text-white leading-tight">Mero Sadak</p>
       <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
