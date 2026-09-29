@@ -386,6 +386,7 @@ export interface RoutePlanResult {
   };
   allRouteOptions?: RoutePlanResult[];
   appliedTerrainFilters?: TerrainFilterOptions;
+  __aerialWarning?: boolean;
   aiAdvisory?: {
     summary: string;
     riskLevel: 'Low' | 'Moderate' | 'High' | 'Severe';

@@ -2020,6 +2020,46 @@ export function pickVerifiedRoute(plan: RoutePlanResult): RoutePlanResult | null
     })[0];
 }
 
+/**
+ * Select the best route from a plan's `allRouteOptions`, prioritising DoR-verified
+ * road distances. The option with the highest `certifiedPercent` wins; ties are
+ * broken by shortest road distance.
+ *
+ * Unlike `pickVerifiedRoute`, this never returns `null` — when every option is
+ * aerial (0% certified) the highest-ranked aerial option is still returned so the
+ * caller can display it with a warning. The returned plan is augmented with
+ * `__aerialWarning` when the best available option is still aerial.
+ */
+export function pickRouteByCertification(plan: RoutePlanResult): RoutePlanResult | null {
+  if (!plan) return null;
+
+  const options = plan.allRouteOptions && plan.allRouteOptions.length > 0
+    ? plan.allRouteOptions
+    : [plan];
+
+  const ranked = options
+    .slice()
+    .sort((a, b) => {
+      const certDelta =
+        (b.roadTierBreakdown?.certifiedPercent ?? 0) - (a.roadTierBreakdown?.certifiedPercent ?? 0);
+      if (certDelta !== 0) return certDelta;
+      return a.totalDistanceKm - b.totalDistanceKm;
+    });
+
+  const best = ranked[0];
+  const bestCertified = best.roadTierBreakdown?.certifiedPercent ?? 0;
+
+  // If the best option is still aerial, mark it with a warning flag
+  if (bestCertified <= 0 && isAerialRoute(best)) {
+    return {
+      ...best,
+      __aerialWarning: true,
+    };
+  }
+
+  return best;
+}
+
 export function snapToNearestRoutingCity(city: CityNode): CityNode {
   // Prefer exact id match first
   const exact = CITIES_AND_JUNCTIONS.find((c) => c.id === city.id);

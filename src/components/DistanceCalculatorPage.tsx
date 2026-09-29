@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, calculateDirectDistanceKm, pickVerifiedRoute } from '../utils/routeOptimizer';
+import { findOptimizedRoute, calculateDirectDistanceKm, pickRouteByCertification } from '../utils/routeOptimizer';
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
@@ -293,8 +293,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     () => {
       if (!(originId && destId && originId !== destId && origin && destination)) return null;
       const plan = findOptimizedRoute(originId, destId, 'fastest', 'car', {}, origin, destination);
-      // Never surface a straight-line approximation as a road distance.
-      return plan ? pickVerifiedRoute(plan) : null;
+      return plan ? pickRouteByCertification(plan) : null;
     },
     [originId, destId, roadGraphVersion, origin, destination]
   );
@@ -831,6 +830,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
           {/* Calculation Result Display - Shown only when route is found */}
           {!showSearchBars && routeResult && (
             <>
+              {/* Aerial warning banner */}
+              {routeResult.__aerialWarning && (
+                <div className="bg-amber-900/90 border border-amber-500/40 text-amber-200 rounded-xl p-3 mb-3 flex items-start gap-2.5 text-sm">
+                  <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.8 0h13.6c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1H5c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1z" />
+                  </svg>
+                  <span>
+                    <strong className="font-bold">Aerial approximation only.</strong> No surveyed DoR highway corridor covers this origin-destination pair. The distance shown is a straight-line estimate — actual road distance will be longer, especially in mountain terrain.
+                  </span>
+                </div>
+              )}
+
               {/* 3D Parallax Photo - Nepal Highway Scenery */}
               <div className="card p-0 overflow-hidden h-80">
                 <Full3DPhoto
