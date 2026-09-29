@@ -1,4 +1,11 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  PanInfo,
+  animate,
+} from 'motion/react';
 import { Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { useCardArchive } from '../context/CardArchiveContext';
 import { triggerHaptic } from '../utils/haptic';
@@ -10,11 +17,8 @@ export interface ReelCardItem {
   type?: ReelCardType;
   title?: string;
   subtitle?: string;
-  /** Compact face (always visible) — preferred over dumping everything in content */
   summary?: React.ReactNode;
-  /** Expanded body when user taps the card */
   detail?: React.ReactNode;
-  /** Fallback full body when summary/detail not split */
   content?: React.ReactNode;
   archiveData?: Record<string, unknown>;
 }
@@ -26,12 +30,17 @@ interface SwipeableReelStackProps {
   className?: string;
   emptyState?: React.ReactNode;
   onIndexChange?: (index: number) => void;
-  /** Start with detail open */
   defaultExpanded?: boolean;
 }
 
+const SWIPE_DISTANCE = 72;
+const SWIPE_VELOCITY = 450;
+/** Max rotateY degrees at full drag */
+const ROTATE_RANGE = 10;
+
 /**
- * Modern Reels-style stack: swipe between cards, tap to open more info, archive on top.
+ * High-performance Reels stack: MotionValues for drag (no React re-renders per frame),
+ * transform-only animation, velocity-aware snap.
  */
 export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
   cards,
@@ -44,13 +53,11 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
 }) => {
   const { isArchived, archiveCard, restoreCard } = useCardArchive();
   const [index, setIndex] = useState(0);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
-  const startX = useRef(0);
-  const startY = useRef(0);
-  const axisLock = useRef<'x' | 'y' | null>(null);
-  const moved = useRef(false);
+  // Compositor-thread friendly — do not put drag offset in React state
+  const x = useMotionValue(0);
+  const rotateY = useTransform(x, [-160, 0, 160], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
+  const dragOpacity = useTransform(x, [-200, -80, 0, 80, 200], [0.55, 1, 1, 1, 0.55]);
 
   const visible = useMemo(() => {
     if (!hideArchived) return cards;
@@ -65,51 +72,42 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
       const clamped = ((next % visible.length) + visible.length) % visible.length;
       setIndex(clamped);
       onIndexChange?.(clamped);
+      x.set(0);
       try {
         triggerHaptic('light');
       } catch {
         /* optional */
       }
     },
-    [visible.length, onIndexChange]
+    [visible.length, onIndexChange, x]
   );
 
-  const onPointerDown = (clientX: number, clientY: number) => {
-    startX.current = clientX;
-    startY.current = clientY;
-    axisLock.current = null;
-    moved.current = false;
-    setDragging(true);
-    setDragX(0);
-  };
+  const snapHome = useCallback(() => {
+    void animate(x, 0, { type: 'spring', stiffness: 420, damping: 32, mass: 0.6 });
+  }, [x]);
 
-  const onPointerMove = (clientX: number, clientY: number) => {
-    if (!dragging) return;
-    const dx = clientX - startX.current;
-    const dy = clientY - startY.current;
-    if (!axisLock.current) {
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        axisLock.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-        if (axisLock.current === 'x') moved.current = true;
+  const onDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const { offset, velocity } = info;
+      const wentLeft =
+        offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY;
+      const wentRight =
+        offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY;
+
+      if (wentLeft) {
+        void animate(x, -280, { duration: 0.18, ease: 'easeOut' }).then(() => {
+          goTo(activeIndex + 1);
+        });
+      } else if (wentRight) {
+        void animate(x, 280, { duration: 0.18, ease: 'easeOut' }).then(() => {
+          goTo(activeIndex - 1);
+        });
+      } else {
+        snapHome();
       }
-    }
-    if (axisLock.current === 'x') {
-      setDragX(dx);
-      moved.current = true;
-    }
-  };
-
-  const onPointerUp = () => {
-    if (!dragging) return;
-    setDragging(false);
-    const threshold = 56;
-    if (axisLock.current === 'x') {
-      if (dragX <= -threshold) goTo(activeIndex + 1);
-      else if (dragX >= threshold) goTo(activeIndex - 1);
-    }
-    setDragX(0);
-    axisLock.current = null;
-  };
+    },
+    [activeIndex, goTo, snapHome, x]
+  );
 
   const handleArchiveToggle = (card: ReelCardItem) => {
     const type = card.type || 'custom';
@@ -136,7 +134,6 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
     expandedIds[id] !== undefined ? expandedIds[id] : defaultExpanded;
 
   const toggleExpand = (id: string) => {
-    if (moved.current) return;
     setExpandedIds((prev) => ({ ...prev, [id]: !isExpanded(id) }));
     try {
       triggerHaptic('light');
@@ -162,17 +159,17 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
   return (
     <div className={`reel-stack ${className}`}>
       <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 min-w-0">
-          <span className="text-slate-300 shrink-0">
+        <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="shrink-0 text-slate-300">
             {activeIndex + 1}/{visible.length}
           </span>
           {active.title && (
-            <span className="truncate max-w-[11rem] normal-case tracking-normal text-slate-400 font-semibold">
+            <span className="max-w-[11rem] truncate font-semibold normal-case tracking-normal text-slate-400">
               {active.title}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5">
           {visible.length > 1 && (
             <>
               <button
@@ -211,111 +208,111 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
         </div>
       </div>
 
-      <div
-        className="reel-stack-stage"
-        onTouchStart={(e) => onPointerDown(e.touches[0].clientX, e.touches[0].clientY)}
-        onTouchMove={(e) => onPointerMove(e.touches[0].clientX, e.touches[0].clientY)}
-        onTouchEnd={onPointerUp}
-        onMouseDown={(e) => onPointerDown(e.clientX, e.clientY)}
-        onMouseMove={(e) => {
-          if (dragging) onPointerMove(e.clientX, e.clientY);
-        }}
-        onMouseUp={onPointerUp}
-        onMouseLeave={() => {
-          if (dragging) onPointerUp();
-        }}
-      >
-        {visible.map((card, i) => {
-          const offset = i - activeIndex;
-          let slotClass = 'reel-card-slot is-hidden';
-          let transform = 'translateX(0) scale(0.9) translateZ(-120px)';
-          let opacity = 0;
-
-          if (offset === 0) {
-            slotClass = 'reel-card-slot is-active';
-            const rot = dragging ? dragX * 0.08 : 0;
-            const tx = dragging ? dragX : 0;
-            transform = `translateX(${tx}px) rotateY(${rot}deg) translateZ(0) scale(1)`;
-            opacity = 1;
-          } else if (offset === 1 || (offset === -visible.length + 1 && visible.length > 1)) {
-            slotClass = 'reel-card-slot is-next';
-            transform = 'translateX(10%) scale(0.94) translateZ(-48px) rotateY(-8deg)';
-            opacity = 0.5;
-          } else if (offset === -1 || (offset === visible.length - 1 && visible.length > 1)) {
-            slotClass = 'reel-card-slot is-prev';
-            transform = 'translateX(-10%) scale(0.94) translateZ(-48px) rotateY(8deg)';
-            opacity = 0.5;
-          }
-
-          const open = isExpanded(card.id);
-          const hasSplit = !!(card.summary || card.detail);
-          const body = hasSplit ? (
-            <>
-              <div className="text-sm text-slate-200">{card.summary}</div>
-              {card.detail && open && (
-                <div className="mt-3 border-t border-slate-800/80 pt-3 text-xs text-slate-300 space-y-2">
-                  {card.detail}
-                </div>
-              )}
-              {card.detail && (
-                <div className="mt-2 flex justify-center">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400/90">
-                    {open ? (
-                      <>
-                        <ChevronUp className="h-3 w-3" /> Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-3 w-3" /> More
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
-            </>
-          ) : (
-            card.content
-          );
-
+      <div className="reel-stack-stage">
+        {/* Peek layers — static CSS transforms, only ±1 neighbor rendered */}
+        {visible.length > 1 && (() => {
+          const prev = visible[(activeIndex - 1 + visible.length) % visible.length];
+          const next = visible[(activeIndex + 1) % visible.length];
           return (
-            <div
-              key={card.id}
-              className={slotClass}
-              style={{
-                transform,
-                opacity,
-                transition: dragging && offset === 0 ? 'none' : undefined,
-              }}
-            >
+            <>
               <div
-                className={`reel-card-face p-3 sm:p-4 ${offset === 0 ? 'cursor-pointer' : ''}`}
-                onClick={() => {
-                  if (offset === 0 && (card.detail || hasSplit)) toggleExpand(card.id);
+                className="reel-card-slot is-prev"
+                style={{
+                  transform: 'translate3d(-10%,0,-48px) scale(0.94) rotateY(8deg)',
+                  opacity: 0.4,
                 }}
-                role={offset === 0 ? 'button' : undefined}
-                tabIndex={offset === 0 ? 0 : -1}
-                onKeyDown={(e) => {
-                  if (offset === 0 && (e.key === 'Enter' || e.key === ' ')) {
-                    e.preventDefault();
-                    toggleExpand(card.id);
-                  }
-                }}
+                aria-hidden
               >
-                {(card.title || card.subtitle) && (
-                  <div className="mb-2 border-b border-slate-800/80 pb-2">
-                    {card.title && (
-                      <div className="text-sm font-black text-white font-display">{card.title}</div>
-                    )}
-                    {card.subtitle && (
-                      <div className="text-[11px] text-slate-400 mt-0.5">{card.subtitle}</div>
-                    )}
+                <div className="reel-card-face p-3 sm:p-4 pointer-events-none">
+                  <div className="text-xs font-bold text-slate-500 truncate">{prev.title || '·'}</div>
+                </div>
+              </div>
+              <div
+                className="reel-card-slot is-next"
+                style={{
+                  transform: 'translate3d(10%,0,-48px) scale(0.94) rotateY(-8deg)',
+                  opacity: 0.4,
+                }}
+                aria-hidden
+              >
+                <div className="reel-card-face p-3 sm:p-4 pointer-events-none">
+                  <div className="text-xs font-bold text-slate-500 truncate">{next.title || '·'}</div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
+
+        {/* Active card only is draggable — single Motion subtree */}
+        <motion.div
+          className="reel-card-slot is-active"
+          style={{
+            x,
+            rotateY,
+            opacity: dragOpacity,
+            willChange: 'transform',
+            transformPerspective: 1200,
+          }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.18}
+          dragMomentum={false}
+          dragDirectionLock
+          onDragEnd={onDragEnd}
+        >
+          <div
+            className="reel-card-face p-3 sm:p-4 cursor-grab active:cursor-grabbing select-none"
+            onClick={() => {
+              if (active.detail || active.summary) toggleExpand(active.id);
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleExpand(active.id);
+              }
+            }}
+          >
+            {(active.title || active.subtitle) && (
+              <div className="mb-2 border-b border-slate-800/80 pb-2">
+                {active.title && (
+                  <div className="text-sm font-black text-white font-display">{active.title}</div>
+                )}
+                {active.subtitle && (
+                  <div className="mt-0.5 text-[11px] text-slate-400">{active.subtitle}</div>
+                )}
+              </div>
+            )}
+            {active.summary || active.detail ? (
+              <>
+                <div className="text-sm text-slate-200">{active.summary}</div>
+                {active.detail && isExpanded(active.id) && (
+                  <div className="mt-3 space-y-2 border-t border-slate-800/80 pt-3 text-xs text-slate-300">
+                    {active.detail}
                   </div>
                 )}
-                {body}
-              </div>
-            </div>
-          );
-        })}
+                {active.detail && (
+                  <div className="mt-2 flex justify-center">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400/90">
+                      {isExpanded(active.id) ? (
+                        <>
+                          <ChevronUp className="h-3 w-3" /> Less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-3 w-3" /> More
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              active.content
+            )}
+          </div>
+        </motion.div>
       </div>
 
       {visible.length > 1 && (
@@ -333,7 +330,7 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
         </div>
       )}
       <p className="mt-1.5 text-center text-[10px] text-slate-500">
-        Swipe ⇆ · tap card for more · archive ↗
+        Swipe ⇆ · tap for more · archive ↗
       </p>
     </div>
   );
