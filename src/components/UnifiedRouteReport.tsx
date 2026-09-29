@@ -353,7 +353,9 @@ export function UnifiedRouteReport({
                       <div className="min-w-0">
                         <span className="text-[11px] font-semibold text-slate-100">{segment.highwayName}</span>
                         <span className="ml-2 font-mono text-[10px] text-cyan-300">{segment.highwayCode}</span>
-                        <span className="ml-2 text-[10px] capitalize text-slate-400">{segment.roadClass}</span>
+                        {segment.roadClass.toLowerCase() !== 'national highway' && (
+                          <span className="ml-2 text-[10px] capitalize text-slate-400">{segment.roadClass}</span>
+                        )}
                       </div>
                       <div className="text-[10px] text-slate-300">
                         {surfaceLabels[segment.surface] || segment.surface.replaceAll('_', ' ')} · {formatNumber(segment.distanceKm, 1)} km

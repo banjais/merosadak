@@ -303,7 +303,8 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     heading('ROUTE PLANNER GIS PATH - CONTEXT ONLY');
     wrapped('This separate GIS route is shown for context. It is not a segment-by-segment verification or breakdown of the selected distance.', 7.5, 'italic', MUTED, 3.5);
     data.routeHighways.forEach((segment, index) => {
-      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode}) - ${segment.roadClass} - ${segment.surface.replaceAll('_', ' ')} - ${segment.distanceKm.toFixed(1)} km`;
+      const roadClass = segment.roadClass.toLowerCase() === 'national highway' ? '' : ` - ${segment.roadClass}`;
+      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode})${roadClass} - ${segment.surface.replaceAll('_', ' ')} - ${segment.distanceKm.toFixed(1)} km`;
       const wrapped = doc.splitTextToSize(ascii(description), W - M * 2);
       ensure(wrapped.length * 4.2);
       wrapped.forEach((line: string) => {
