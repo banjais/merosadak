@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 
 interface ArchivedCard {
   id: string;
-  type: 'highway' | 'incident' | 'tip' | 'custom';
+  type: 'highway' | 'incident' | 'tip' | 'custom' | 'report' | 'distance';
   data: Record<string, unknown>;
   archivedAt: number;
 }
