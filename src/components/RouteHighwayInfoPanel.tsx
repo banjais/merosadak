@@ -8,14 +8,11 @@ import {
   Mountain,
   PhoneCall,
   Building,
-  Clock,
-  Zap,
   AlertTriangle,
-  HardHat,
+  Zap,
   Layers,
-  ExternalLink,
-  FileText,
 } from 'lucide-react';
+import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
 
 interface RouteHighwayInfoPanelProps {
   routeHighwayCodes: string[];
@@ -36,11 +33,34 @@ const STATUS_COLORS: Record<string, string> = {
   obstructed: 'bg-rose-950/80 text-rose-300 border-rose-700/80',
 };
 
-const STATUS_ICONS: Record<string, React.ReactNode> = {
-  clear: '🟢',
-  caution: '⚠️',
-  obstructed: '⛔',
-};
+/** Expand codes like "NH02/NH04" or "NH04, NH05" into individual tokens. */
+function expandCodes(codes: string[]): string[] {
+  const out: string[] = [];
+  codes.filter(Boolean).forEach((raw) => {
+    raw.split(/[/,&+|]+/).forEach((part) => {
+      const t = part.trim();
+      if (t) out.push(t);
+    });
+  });
+  return out;
+}
+
+function normalizeCode(code: string): string {
+  return code.trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function findHighway(code: string): Highway | undefined {
+  const key = normalizeCode(code);
+  const digits = key.replace(/[^0-9]/g, '');
+  return NEPAL_HIGHWAYS.find((h) => {
+    const hc = normalizeCode(h.code);
+    const hi = normalizeCode(h.id);
+    if (hc === key || hi === key) return true;
+    if (hc.replace('NNH', 'NH') === key.replace('NNH', 'NH')) return true;
+    if (digits && (hc.endsWith(digits) || hi.endsWith(digits)) && digits.length >= 2) return true;
+    return false;
+  });
+}
 
 export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
   routeHighwayCodes,
@@ -51,56 +71,151 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
 
   useEffect(() => {
-    loadSNHReference().then(setSnhReference);
+    loadSNHReference().then(setSnhReference).catch(() => setSnhReference(null));
   }, []);
 
   const highwayInfos = useMemo<HighwayStatusInfo[]>(() => {
-    const codes = routeHighwayCodes.filter(Boolean);
-    if (codes.length === 0) return [];
+    const tokens = expandCodes(routeHighwayCodes);
+    if (tokens.length === 0) return [];
 
     const infos: HighwayStatusInfo[] = [];
     const seen = new Set<string>();
 
-    codes.forEach((code) => {
-      const normalizedCode = code.trim();
-      const key = normalizedCode.toLowerCase();
+    tokens.forEach((code) => {
+      const highway = findHighway(code);
+      if (!highway) return;
+      const key = normalizeCode(highway.code);
       if (seen.has(key)) return;
       seen.add(key);
 
-      const highway = NEPAL_HIGHWAYS.find(
-        (h) => h.code.toLowerCase() === key || h.id.toLowerCase() === key
-      );
-      if (!highway) return;
-
-      const hwIncidents = incidents.filter(
-        (inc) =>
-          inc.highwayCode === highway.code ||
-          inc.highwayCode === highway.id ||
-          inc.highwayCode.includes(highway.code) ||
-          highway.code.split(' ').some((c) => inc.highwayCode.includes(c))
-      );
+      const hwIncidents = incidents.filter((inc) => {
+        const ic = normalizeCode(inc.highwayCode || '');
+        return (
+          ic === key ||
+          ic.includes(key) ||
+          key.includes(ic) ||
+          ic.replace('NNH', 'NH') === key.replace('NNH', 'NH')
+        );
+      });
 
       const snhLookup = lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference);
-
       infos.push({ highway, incidents: hwIncidents, snhLookup });
     });
 
     return infos;
-  }, [routeHighwayCodes, incidents]);
+  }, [routeHighwayCodes, incidents, snhReference]);
 
-  if (highwayInfos.length === 0) {
+  const cards: ReelCardItem[] = useMemo(() => {
+    return highwayInfos.map(({ highway, incidents: hwIncidents, snhLookup }) => {
+      const status = highway.overallStatus || 'clear';
+      const statusClass = STATUS_COLORS[status] || STATUS_COLORS.clear;
+
+      return {
+        id: `route-hw-${highway.code}`,
+        type: 'highway' as const,
+        title: `${highway.code} · ${highway.name}`,
+        subtitle: `${highway.startPoint} → ${highway.endPoint}`,
+        archiveData: {
+          title: highway.name,
+          highwayCode: highway.code,
+        },
+        content: (
+          <div className="space-y-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-black uppercase ${statusClass}`}>
+                {status}
+              </span>
+              <span className="text-slate-400 flex items-center gap-1">
+                <Layers className="w-3 h-3 text-cyan-400" />
+                {highway.totalLengthKm} km
+              </span>
+              <span className="text-slate-400 flex items-center gap-1">
+                <Mountain className="w-3 h-3 text-purple-400" />
+                {highway.terrainType}
+              </span>
+              <span className="text-amber-300/90">★ {highway.conditionRating}/5</span>
+            </div>
+
+            {highway.nepaliName && (
+              <p className="text-slate-400 text-[11px]">{highway.nepaliName}</p>
+            )}
+
+            {highway.description && (
+              <p className="text-slate-300 leading-relaxed line-clamp-4">{highway.description}</p>
+            )}
+
+            {hwIncidents.length > 0 && (
+              <div className="rounded-lg border border-rose-900/50 bg-rose-950/20 p-2 space-y-1.5">
+                <div className="flex items-center gap-1 text-rose-300 font-bold text-[10px] uppercase">
+                  <AlertTriangle className="w-3 h-3" />
+                  Active on this highway ({hwIncidents.length})
+                </div>
+                {hwIncidents.slice(0, 3).map((inc) => (
+                  <div key={inc.id} className="text-[11px] text-slate-200">
+                    <span className="font-semibold">{inc.title}</span>
+                    {inc.locationName && (
+                      <span className="text-slate-500"> · {inc.locationName}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {snhLookup && snhLookup.distanceKm != null && (
+              <div className="rounded-lg border border-cyan-900/40 bg-cyan-950/20 p-2 text-[11px] text-cyan-100/90">
+                DoR / SNH ref: <strong>{snhLookup.distanceKm} km</strong>
+                {snhLookup.evidenceLevel && (
+                  <span className="text-slate-400"> · {snhLookup.evidenceLevel}</span>
+                )}
+              </div>
+            )}
+
+            {highway.evChargers && highway.evChargers.length > 0 && (
+              <div className="flex items-center gap-1 text-[11px] text-yellow-200/90">
+                <Zap className="w-3 h-3 text-yellow-400" />
+                {highway.evChargers.length} EV charger(s) listed
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-800/70 text-[11px] text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <Building className="w-3.5 h-3.5 text-emerald-400" />
+                {highway.dorDivision || 'DoR'}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <PhoneCall className="w-3.5 h-3.5 text-amber-400" />
+                {highway.emergencyContact || '—'}
+              </span>
+            </div>
+
+            {onViewHighwayOnMap && (
+              <button
+                type="button"
+                onClick={() => onViewHighwayOnMap(highway)}
+                className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 flex items-center justify-center gap-2"
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                View {highway.code} on map
+              </button>
+            )}
+          </div>
+        ),
+      };
+    });
+  }, [highwayInfos, onViewHighwayOnMap]);
+
+  if (routeHighwayCodes.filter(Boolean).length === 0) {
     return (
-      <div className="text-center py-8">
-        <Route className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-        <p className="text-slate-400 text-sm font-medium">
-          No national highway information available for this route.
-        </p>
+      <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4 text-center space-y-2">
+        <Route className="w-6 h-6 text-slate-500 mx-auto" />
+        <p className="text-xs text-slate-400">No highway codes on this route yet.</p>
         {onOpenHighwayDirectory && (
           <button
+            type="button"
             onClick={onOpenHighwayDirectory}
-            className="mt-3 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white font-bold rounded-lg border border-slate-700 transition"
+            className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300"
           >
-            Browse All Highways
+            Open highway directory
           </button>
         )}
       </div>
@@ -108,303 +223,32 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Route className="w-5 h-5 text-emerald-400" />
-          <h3 className="text-sm font-black text-white">
-            Route Highway Information ({highwayInfos.length} corridor{highwayInfos.length > 1 ? 's' : ''})
-          </h3>
-        </div>
-        {onOpenHighwayDirectory && (
-          <button
-            onClick={onOpenHighwayDirectory}
-            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white rounded-lg border border-slate-700 transition flex items-center space-x-1"
-            title="Browse all highways in directory"
-          >
-            <ExternalLink className="w-3 h-3" />
-            <span>All Highways</span>
-          </button>
-        )}
-      </div>
-
-      {highwayInfos.map(({ highway, incidents: hwIncidents, snhLookup }) => {
-        const statusKey = highway.overallStatus || 'clear';
-        const statusClass = STATUS_COLORS[statusKey] || STATUS_COLORS.caution;
-        const statusIcon = STATUS_ICONS[statusKey] || STATUS_ICONS.caution;
-
-        return (
-          <div
-            key={highway.id}
-            className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/90 rounded-xl overflow-hidden transition shadow-lg"
-          >
-            <div className="p-4 border-b border-slate-800">
-              <div className="flex items-start space-x-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">NEPAL</span>
-                  <span className="text-sm font-black text-amber-400 font-display">{highway.code}</span>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                    <h4 className="text-base font-bold text-white">{highway.name}</h4>
-                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${statusClass}`}>
-                      <span>{statusIcon}</span>
-                      <span className="uppercase">{statusKey}</span>
-                    </span>
-                    {highway.conditionRating && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">
-                        ⭐ {highway.conditionRating}/5
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-400 mt-1.5">
-                    <span className="flex items-center space-x-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{highway.startPoint} → {highway.endPoint}</span>
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="font-semibold text-slate-300">{highway.totalLengthKm} km</span>
-                    <span className="text-slate-600">•</span>
-                    <span className="flex items-center space-x-1">
-                      <Mountain className="w-3.5 h-3.5 text-purple-400" />
-                      <span>{highway.terrainType || 'Hilly'}</span>
-                    </span>
-                    {highway.activeAlertCount > 0 && (
-                      <>
-                        <span className="text-slate-600">•</span>
-                        <span className="flex items-center space-x-1 text-rose-400">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>{highway.activeAlertCount} Active Alert{highway.activeAlertCount > 1 ? 's' : ''}</span>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-4 py-3 space-y-3">
-              {/* Key Passes & Junctions */}
-              {highway.keyPassesAndJunctions && highway.keyPassesAndJunctions.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <Layers className="w-3 h-3 text-cyan-400" />
-                    <span>Key Passes & Junctions ({highway.keyPassesAndJunctions.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {highway.keyPassesAndJunctions.map((pass, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-[10px] text-slate-300"
-                      >
-                        {pass}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+    <div className="space-y-2">
+      <SwipeableReelStack
+        cards={cards}
+        emptyState={
+          <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 p-4 text-center space-y-2">
+            <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto" />
+            <p className="text-xs text-slate-300">
+              Could not match route codes to the highway directory
+              {routeHighwayCodes.length > 0 && (
+                <span className="block text-slate-500 mt-1 font-mono text-[10px]">
+                  {expandCodes(routeHighwayCodes).slice(0, 8).join(', ')}
+                </span>
               )}
-
-              {/* Active Incidents on Route Segments */}
-              {hwIncidents.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <AlertTriangle className="w-3 h-3 text-rose-400" />
-                    <span>Active Incidents on This Highway ({hwIncidents.length})</span>
-                  </div>
-                  <div className="space-y-2">
-                    {hwIncidents.map((inc) => (
-                      <div
-                        key={inc.id}
-                        className="p-2.5 bg-slate-950/60 border border-slate-800/80 rounded-lg"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="text-xs font-bold text-white">{inc.title}</span>
-                              <span
-                                className={`text-[9px] px-1.5 py-0.25 rounded uppercase font-black ${
-                                  inc.severity === 'severe' || inc.severity === 'critical'
-                                    ? 'bg-rose-950/80 text-rose-300 border border-rose-700/80'
-                                    : inc.severity === 'moderate'
-                                    ? 'bg-yellow-950/80 text-yellow-300 border border-yellow-700/80'
-                                    : 'bg-amber-950/80 text-amber-300 border border-amber-700/80'
-                                }`}
-                              >
-                                {inc.severity}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
-                              {inc.description}
-                            </p>
-                            <div className="flex items-center space-x-3 mt-1 text-[10px] text-slate-500">
-                              <span className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{inc.reportedAt}</span>
-                              </span>
-                              {inc.estimatedClearance && (
-                                <span>ETA: {inc.estimatedClearance}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Segments Summary */}
-              {highway.segments && highway.segments.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <HardHat className="w-3 h-3 text-amber-400" />
-                    <span>Road Conditions ({highway.segments.length} Segments)</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {highway.segments.map((seg) => (
-                      <div
-                        key={seg.id || seg.from}
-                        className="flex items-center justify-between p-2 bg-slate-950/40 rounded-lg border border-slate-800/60"
-                      >
-                        <div className="flex items-center space-x-2.5">
-                          <span className="text-[10px] font-mono text-slate-400">{seg.from} → {seg.to}</span>
-                          <span className="text-[10px] text-slate-500">({seg.distanceKm} km)</span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-slate-300">
-                          {seg.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-                             {/* SNH Reference — Verified DoR Distance */}
-               {snhLookup && snhLookup.citation && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <FileText className="w-3 h-3 text-cyan-400" />
-                    <span>SNH 2022/23 Verified Distance</span>
-                  </div>
-                  <div className="p-3 bg-slate-950/40 border border-slate-800/60 rounded-lg">
-                    <div className="flex items-baseline space-x-2 mb-1">
-                      <span className="text-sm font-black text-white">{snhLookup.distanceKm.toFixed(1)} km</span>
-                      <span className="text-[10px] text-slate-500">published road distance</span>
-                    </div>
-                    {snhLookup.evidenceLevel === 'published' && (
-                      <span className="inline-flex items-center space-x-1 px-1.5 py-0.25 rounded text-[9px] font-black uppercase bg-emerald-950/40 text-emerald-300 border border-emerald-700/40">
-                        <span>DoR Published</span>
-                      </span>
-                    )}
-                    {snhLookup.citation.table && (
-                      <div className="text-[10px] text-slate-500 mt-1">
-                        Source: {snhLookup.citation.table}
-                        {snhLookup.citation.row && `, row ${snhLookup.citation.row}`}
-                        {snhLookup.citation.printedPage && `, p.${snhLookup.citation.printedPage}`}
-                        (PDF p.{snhLookup.citation.pdfPage})
-                        {snhLookup.citation.via && <span> via {snhLookup.citation.via}</span>}
-                      </div>
-                    )}
-                    {snhLookup.linkChain && snhLookup.linkChain.length > 0 && (
-                      <details className="mt-1.5">
-                        <summary className="text-[10px] text-cyan-400 cursor-pointer font-medium">Show link chain breakdown</summary>
-                        <div className="mt-1 space-y-0.5">
-                          {snhLookup.linkChain.map((link, i) => (
-                            <div key={`${link.code}-${i}`} className="text-[9px] text-slate-400 flex justify-between">
-                              <span>{link.code} — {link.name}</span>
-                              <span>{link.lengthKm} km ({link.fromKm}→{link.toKm})</span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* EV Chargers on Highway */}
-              {highway.evChargers && highway.evChargers.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <Zap className="w-3 h-3 text-yellow-400" />
-                    <span>EV Chargers ({highway.evChargers.length})</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {highway.evChargers.map((charger) => (
-                      <div
-                        key={charger.id}
-                        className="p-2 bg-slate-950/40 rounded-lg border border-slate-800/60"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-200 truncate">{charger.name}</span>
-                          <span className={`text-[10px] px-1 py-0.25 rounded ${
-                            charger.available
-                              ? 'bg-emerald-950/80 text-emerald-300'
-                              : 'bg-rose-950/80 text-rose-300'
-                          }`}>
-                            {charger.available ? 'Available' : 'Offline'}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          {charger.powerKw} kW • {charger.type} • {charger.location}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Toll Plazas */}
-              {highway.tollPlazas && highway.tollPlazas.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1">
-                    <Layers className="w-3 h-3 text-amber-400" />
-                    <span>Toll Plazas ({highway.tollPlazas.length})</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {highway.tollPlazas.map((toll) => (
-                      <div
-                        key={toll.id}
-                        className="flex items-center justify-between p-2 bg-slate-950/40 rounded-lg border border-slate-800/60"
-                      >
-                        <span className="text-xs font-medium text-slate-200">{toll.name}</span>
-                        <span className="text-[10px] text-slate-400">
-                          Car: ₨{toll.costNpr.car} • Bike: ₨{toll.costNpr.motorbike}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* DoR Division & Emergency */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
-                <div className="flex items-center space-x-2">
-                  <Building className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs text-slate-300">{highway.dorDivision}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <PhoneCall className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs text-slate-300">{highway.emergencyContact}</span>
-                </div>
-              </div>
-
-              {/* Action: View on Map */}
-              {onViewHighwayOnMap && (
-                <button
-                  onClick={() => onViewHighwayOnMap(highway)}
-                  className="w-full mt-2 py-1.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 hover:text-white rounded-lg transition flex items-center justify-center space-x-2"
-                >
-                  <MapPin className="w-3 h-3 text-emerald-400" />
-                  <span>View {highway.code} on Map</span>
-                </button>
-              )}
-            </div>
+            </p>
+            {onOpenHighwayDirectory && (
+              <button
+                type="button"
+                onClick={onOpenHighwayDirectory}
+                className="text-[11px] font-bold text-emerald-400"
+              >
+                Browse all highways
+              </button>
+            )}
           </div>
-        );
-      })}
+        }
+      />
     </div>
   );
 };
