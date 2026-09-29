@@ -8,13 +8,15 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
-  const { loginWithGoogle, loading, redirectError } = useAuth();
+  const { loginWithGoogle, loading, redirectError, clearRedirectError } = useAuth();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleGoogleLogin = async () => {
     setError('');
+    // Drop any previous failure so a retry does not show a stale banner.
+    clearRedirectError();
     setIsLoading(true);
     try {
       await loginWithGoogle(rememberMe);

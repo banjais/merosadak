@@ -344,7 +344,7 @@ export function getPavementBreakdown(segmentLinks?: Array<{ paveType?: string; p
 
 export function getHighwayEnrichment(
   highwayCode: string,
-  roadGraph?: { highways: string[]; adjacency: [number, number, number][][]; nodes: [number, number][] } | null,
+  roadGraph?: { highways: string[]; adjacency: [number, number, number][][]; nodes: [number, number][]; citySnap?: Record<string, string>; citySnapByName?: Record<string, string> } | null,
   all79Data?: any[] | null
 ): HighwayEnrichment | null {
   const code = highwayCode.trim().toUpperCase();
@@ -394,15 +394,46 @@ export function getHighwayEnrichment(
   const segmentLinks = hw79?.segmentLinks || highway?.segmentLinks || [];
   const pavement = getPavementBreakdown(segmentLinks);
 
-  const citiesAlongRoute = CITIES_AND_JUNCTIONS.filter((city) =>
+  // Cities along route: curated junctions + road-graph-snapped towns (geojson endpoints)
+  const curatedCities = CITIES_AND_JUNCTIONS.filter((city) =>
     city.connectedHighways.some((ch) => ch.toUpperCase() === code)
-  ).map((city) => ({
-    name: city.name,
-    district: city.district,
-    lat: city.lat,
-    lng: city.lng,
-    isMajorHub: city.isMajorHub,
-  }));
+  );
+  const curatedIds = new Set(curatedCities.map((c) => c.id));
+  const curatedNames = new Set(curatedCities.map((c) => c.name.toLowerCase()));
+
+  // Also include road-graph citySnap entries whose ID encodes the highway code
+  const snappedCities: { name: string; district: string; lat: number; lng: number; isMajorHub: boolean }[] = [];
+  if (roadGraph?.citySnapByName) {
+    for (const [nameKey, nodeId] of Object.entries(roadGraph.citySnapByName)) {
+      // citySnapByName keys are lowercase names; check if this node is on the target highway
+      // We can't easily determine highway from node ID alone, so we include all snapped
+      // towns that are not already in curatedCities — they are DoR-surveyed highway corridor towns.
+      if (curatedNames.has(nameKey)) continue;
+      // Only include if the name looks like a real town (not infrastructure)
+      if (/^(NH|ev-|toll-|wx-|poi-|tr-|inc-)/i.test(nameKey)) continue;
+      const nodeIdx = parseInt(nodeId, 10);
+      if (!Number.isFinite(nodeIdx) || !roadGraph.nodes?.[nodeIdx]) continue;
+      const [lat, lng] = roadGraph.nodes[nodeIdx];
+      snappedCities.push({
+        name: nameKey,
+        district: '',
+        lat,
+        lng,
+        isMajorHub: false,
+      });
+    }
+  }
+
+  const citiesAlongRoute = [
+    ...curatedCities.map((city) => ({
+      name: city.name,
+      district: city.district,
+      lat: city.lat,
+      lng: city.lng,
+      isMajorHub: city.isMajorHub,
+    })),
+    ...snappedCities,
+  ];
 
   let status: HighwayEnrichment['status'] = 'unverified';
   if (highway) status = 'verified';

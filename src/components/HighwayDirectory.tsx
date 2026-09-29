@@ -5,7 +5,7 @@ import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayD
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
 import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
 import { getTollPlazasForHighway } from '../utils/tollRates.client';
-import { useCardSwipe, SwipeAction } from '../hooks/useCardSwipe';
+import { PlannerDeck } from './PlannerDeck';
 import { useCardArchive } from '../context/CardArchiveContext';
 import {
   Search,
@@ -112,6 +112,12 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const { isArchived: isHighwayArchived, archiveCard: archiveHighway, restoreCard: restoreHighway } = useCardArchive();
 
+  // Reels-style deck: which highway is in front. Browsing is by drag, no
+  // selection needed. Kept at component level because the card list is
+  // rendered through a map callback where hooks are not allowed.
+  const [deckIndex, setDeckIndex] = useState(0);
+  const [quickOverlayFor, setQuickOverlayFor] = useState<string | null>(null);
+
   useEffect(() => {
     let isMounted = true;
     loadAll79Highways().then((data) => {
@@ -174,6 +180,32 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   }, [highways]);
   const totalFeatureLinks = highways.reduce((acc, h) => acc + (h.segmentLinks?.length || h.segments?.length || 0), 0);
 
+  // Province coverage totals. Hoisted out of the JSX IIFE below — a hook inside
+  // an IIFE breaks hook order the moment any early return is added above it.
+  const provinceEntries = useMemo(() => {
+    const stats: Record<string, { total: number; bt: number; gr: number; er: number; uc: number; pl: number }> = {};
+    for (const hw of highways) {
+      const provs = hw.provinces || [];
+      const links = hw.segmentLinks || [];
+      const len = hw.totalLengthKm || 0;
+      for (const prov of provs) {
+        if (!stats[prov]) stats[prov] = { total: 0, bt: 0, gr: 0, er: 0, uc: 0, pl: 0 };
+        stats[prov].total += len;
+        for (const link of links) {
+          const pave = (link.paveType || '').toUpperCase();
+          if (pave === 'BT') stats[prov].bt += link.linkLenKm || 0;
+          else if (pave === 'GR') stats[prov].gr += link.linkLenKm || 0;
+          else if (pave === 'ER') stats[prov].er += link.linkLenKm || 0;
+          else if (pave === 'UC') stats[prov].uc += link.linkLenKm || 0;
+          else if (pave === 'PL') stats[prov].pl += link.linkLenKm || 0;
+        }
+      }
+    }
+    return Object.entries(stats).sort(
+      (a, b) => (b[1] as { total: number }).total - (a[1] as { total: number }).total
+    );
+  }, [highways]);
+
   // Status counts for top summary
   const statusCounts = useMemo(() => {
     let open = 0;
@@ -229,6 +261,16 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
     return matchesSearch && matchesStatus && matchesTerrain && matchesRoute && matchesArchive;
   });
 
+  // Keep the deck inside the filtered set (filters shrink/grow the list)
+  const safeDeckIndex = filteredHighways.length === 0
+    ? 0
+    : Math.min(Math.max(deckIndex, 0), filteredHighways.length - 1);
+  const activeHighway = filteredHighways[safeDeckIndex];
+  const deckItems = filteredHighways.map((hw) => ({
+    id: (hw.id || hw.code).toLowerCase(),
+    label: `${hw.code} · ${hw.name}`,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Header Banner with Real-Time Highway Status Metrics */}
@@ -274,29 +316,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
       {/* Province Statistics Panel (from SNH PDF Table 8) */}
       {(() => {
-        const provinceStats = useMemo(() => {
-          const stats: Record<string, { total: number; bt: number; gr: number; er: number; uc: number; pl: number }> = {};
-          for (const hw of highways) {
-            const provs = hw.provinces || [];
-            const links = hw.segmentLinks || [];
-            const len = hw.totalLengthKm || 0;
-            for (const prov of provs) {
-              if (!stats[prov]) stats[prov] = { total: 0, bt: 0, gr: 0, er: 0, uc: 0, pl: 0 };
-              stats[prov].total += len;
-              for (const link of links) {
-                const pave = (link.paveType || '').toUpperCase();
-                if (pave === 'BT') stats[prov].bt += link.linkLenKm || 0;
-                else if (pave === 'GR') stats[prov].gr += link.linkLenKm || 0;
-                else if (pave === 'ER') stats[prov].er += link.linkLenKm || 0;
-                else if (pave === 'UC') stats[prov].uc += link.linkLenKm || 0;
-                else if (pave === 'PL') stats[prov].pl += link.linkLenKm || 0;
-              }
-            }
-          }
-          return stats;
-        }, [highways]);
-
-        const entries = Object.entries(provinceStats).sort((a, b) => (b[1] as { total: number }).total - (a[1] as { total: number }).total);
+        const entries = provinceEntries;
         if (entries.length === 0) return null;
 
         return (
@@ -434,109 +454,60 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             </button>
           </div>
         ) : (
-          filteredHighways.map((highway) => {
+          <PlannerDeck
+            items={deckItems}
+            activeId={activeHighway ? (activeHighway.id || activeHighway.code).toLowerCase() : ''}
+            onChange={(id) => {
+              const next = filteredHighways.findIndex((hw) => (hw.id || hw.code).toLowerCase() === id);
+              if (next >= 0) {
+                setDeckIndex(next);
+                setExpandedHighwayId(null);
+                setQuickOverlayFor(null);
+              }
+            }}
+          >
+            {() => [activeHighway].filter(Boolean).map((highway) => {
             const highwayKey = (highway.id || highway.code).toLowerCase();
             const isExpanded = (expandedHighwayId || '').toLowerCase() === highwayKey;
             const analysis = highwayAnalyses.get(highwayKey) || analyzeHighwayRealtimeStatus(highway, incidents, reports);
             const segments = analysis.segments;
             const snhLookup = snhReference ? lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference) : null;
 
-            // Swipe actions for highway card
-            const leftAction: SwipeAction = {
-              id: 'archive',
-              label: 'Archive',
-              icon: <Archive className="w-5 h-5" />,
-              color: 'text-rose-400',
-              bgColor: 'bg-rose-500/20',
-              onTrigger: () => {
-                archiveHighway({
-                  id: highwayKey,
-                  type: 'highway',
-                  data: { code: highway.code, name: highway.name },
-                });
-              },
-            };
-
-            const rightAction: SwipeAction = {
-              id: 'view-map',
-              label: 'View Map',
-              icon: <MapIcon className="w-5 h-5" />,
-              color: 'text-emerald-400',
-              bgColor: 'bg-emerald-500/20',
-              onTrigger: () => onSelectHighwayOnMap && onSelectHighwayOnMap(highway),
-            };
-
-            const longPressAction: SwipeAction = {
-              id: 'quick-actions',
-              label: 'Actions',
-              icon: <Settings className="w-5 h-5" />,
-              color: 'text-amber-400',
-              bgColor: 'bg-amber-500/20',
-              onTrigger: () => {}, // Handled by overlay
-            };
-
-            const {
-              dragOffset,
-              showQuickOverlay,
-              setShowQuickOverlay,
-              onTouchStart,
-              onTouchMove,
-              onTouchEnd,
-              onMouseDown,
-              onMouseUp,
-              onMouseLeave,
-              onContextMenu,
-              dragStyles,
-              leftActionStyles,
-              rightActionStyles,
-              cardRef,
-              isArchived: cardArchived,
-            } = useCardSwipe({
-              cardId: `highway-${highwayKey}`,
-              leftAction,
-              rightAction,
-              longPressAction,
-              threshold: 65,
-              longPressDelay: 400,
-              haptics: true,
-            });
-
-            const archived = cardArchived || isHighwayArchived(highwayKey, 'highway');
+            // NOTE: swipe gestures are handled by the parent deck (3D horizontal
+            // move). No hooks may be called inside this map callback — the list
+            // length changes with filters, which used to break hook order and
+            // take down the whole app via the error boundary.
+            const archived = isHighwayArchived(highwayKey, 'highway');
 
             return (
               <div
                 key={highwayKey}
                 id={`highway-card-${highwayKey}`}
-                className={`card card-interactive gesture-card overflow-hidden relative ${dragOffset !== 0 ? 'dragging' : ''}`}
-                style={dragStyles as React.CSSProperties}
-                ref={cardRef}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-                onMouseDown={onMouseDown}
-                onMouseUp={onMouseUp}
-                onMouseLeave={onMouseLeave}
-                onContextMenu={onContextMenu}
+                className="relative"
               >
-                {/* Swipe Action Backgrounds */}
-                <div className="absolute inset-0 z-0 flex items-center justify-between pointer-events-none">
-                  {/* Left Swipe Background (Archive) - revealed when dragging right */}
-                  <div
-                    className="absolute inset-y-0 left-0 w-32 flex items-center justify-start pl-6 text-rose-400 font-bold text-xs uppercase tracking-wider bg-rose-500/10 border-r border-rose-500/20 transition-opacity"
-                    style={leftActionStyles as React.CSSProperties}
+                {/* Quick actions — long press was removed with the swipe hook */}
+                <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    aria-label="Quick actions"
+                    title="Quick actions"
+                    onClick={(e) => { e.stopPropagation(); setQuickOverlayFor(quickOverlayFor === highwayKey ? null : highwayKey); }}
+                    className="p-2 rounded-xl bg-slate-900/90 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition"
                   >
-                    <Archive className="w-5 h-5 mr-2" />
-                    Archive
-                  </div>
-
-                  {/* Right Swipe Background (View Map) - revealed when dragging left */}
-                  <div
-                    className="absolute inset-y-0 right-0 w-32 flex items-center justify-end pr-6 text-emerald-400 font-bold text-xs uppercase tracking-wider bg-emerald-500/10 border-l border-emerald-500/20 transition-opacity"
-                    style={rightActionStyles as React.CSSProperties}
+                    <Settings className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Archive ${highway.code}`}
+                    title="Archive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      archiveHighway({ id: highwayKey, type: 'highway', data: { code: highway.code, name: highway.name } });
+                    }}
+                    className="p-2 rounded-xl bg-slate-900/90 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition"
                   >
-                    <MapIcon className="w-5 h-5 ml-2" />
-                    View Map
-                  </div>
+                    <Archive className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Main Card Header */}
@@ -702,10 +673,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 </div>
 
                 {/* Quick Actions Overlay (Long Press) */}
-                {showQuickOverlay && !archived && (
+                {quickOverlayFor === highwayKey && !archived && (
                   <div
                     className="absolute inset-0 z-20 bg-slate-950/95 backdrop-blur-md flex flex-col p-4 border border-amber-500/30 rounded-xl"
-                    onClick={() => setShowQuickOverlay(false)}
+                    onClick={() => setQuickOverlayFor(null)}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-2 text-amber-400">
@@ -718,7 +689,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         </div>
                       </div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        onClick={(e) => { e.stopPropagation(); setQuickOverlayFor(null); }}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
                       >
                         <X className="w-4 h-4" />
@@ -727,7 +698,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 flex-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); onSelectHighwayOnMap && onSelectHighwayOnMap(highway); setShowQuickOverlay(false); }}
+                        onClick={(e) => { e.stopPropagation(); onSelectHighwayOnMap && onSelectHighwayOnMap(highway); setQuickOverlayFor(null); }}
                         className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-300 flex flex-col items-center justify-center gap-1.5 transition"
                       >
                         <MapIcon className="w-5 h-5 text-emerald-400" />
@@ -736,7 +707,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                       </button>
 
                       <button
-                        onClick={(e) => { e.stopPropagation(); onPlanTripForHighway && onPlanTripForHighway(highway.startPoint, highway.endPoint); setShowQuickOverlay(false); }}
+                        onClick={(e) => { e.stopPropagation(); onPlanTripForHighway && onPlanTripForHighway(highway.startPoint, highway.endPoint); setQuickOverlayFor(null); }}
                         className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-300 flex flex-col items-center justify-center gap-1.5 transition"
                       >
                         <Route className="w-5 h-5 text-amber-400" />
@@ -745,7 +716,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                       </button>
 
                       <button
-                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        onClick={(e) => { e.stopPropagation(); setQuickOverlayFor(null); }}
                         className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-sky-500/20 hover:border-sky-500/40 hover:text-sky-300 flex flex-col items-center justify-center gap-1.5 transition"
                       >
                         <Share2 className="w-5 h-5 text-sky-400" />
@@ -754,7 +725,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                       </button>
 
                       <button
-                        onClick={(e) => { e.stopPropagation(); setShowQuickOverlay(false); }}
+                        onClick={(e) => { e.stopPropagation(); setQuickOverlayFor(null); }}
                         className="p-3 rounded-xl border bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-300 flex flex-col items-center justify-center gap-1.5 transition"
                       >
                         <Bell className="w-5 h-5 text-rose-400" />
@@ -1166,7 +1137,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 )}
               </div>
             );
-          })
+          })}
+          </PlannerDeck>
         )}
       </div>
     </div>

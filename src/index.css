@@ -134,6 +134,16 @@
   z-index: 1;
 }
 
+/* Cards that host absolutely-positioned dropdowns.
+   `.card` sets `overflow: hidden` to clip the 3D shine sweep, which also
+   clips any `position: absolute` menu that overflows the card box — the
+   city-search lists and the report print menu were being cut off at the
+   card edge (and read as "the map is on top"). Opt those cards out.
+   Declared unlayered so it outranks the Tailwind utilities layer. */
+.card--dropdown-host {
+  overflow: visible;
+}
+
 /* Interactive card — 3D tilt lift on hover */
 .card-interactive {
   cursor: pointer;
@@ -1464,11 +1474,34 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 }
 
 .reel-stack-dots {
-  display: flex;
-  justify-content: center;
-  gap: 0.35rem;
-  margin-top: 0.65rem;
-}
+     display: flex;
+     justify-content: center;
+     gap: 0.35rem;
+     margin-top: 0.65rem;
+   }
+
+   /* Tall variant for planner sections: the default face is height:100% +
+   overflow:hidden, which clips anything taller than the stage. Let the face
+   grow with its content. Overflow stays visible so the city-search dropdowns
+   can escape the card instead of being re-clipped by a scroll container. */
+   .reel-stack--tall .reel-card-face {
+     height: auto;
+     max-height: none;
+     overflow: visible;
+   }
+   .reel-stack--tall .reel-card-slot {
+     position: relative;
+     inset: auto;
+   }
+   .reel-stack--tall .reel-card-slot.is-next,
+   .reel-stack--tall .reel-card-slot.is-prev {
+     display: none;
+   }
+   /* Keep the dragged card's own dropdowns above the 3D stage */
+   .reel-stack--tall .reel-card-face > * {
+     position: relative;
+   }
+
 
 .reel-stack-dot {
   width: 0.4rem;
@@ -1556,4 +1589,163 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 .reel-card-slot.is-active .reel-card-face {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* ===== PRINT STYLES — Route Report Print View ===== */
+@media print {
+  /* Hide everything except the report */
+  body * {
+    visibility: hidden;
+  }
+  #route-report,
+  #route-report * {
+    visibility: visible;
+  }
+  /* Fallback: hide common chrome */
+  .navbar,
+  .header-glass,
+  .archive-toolbar,
+  .speed-dial-fab,
+  .sos-floating-button,
+  .pull-to-refresh,
+  .leaflet-container,
+  #root > :not(#route-report) {
+    display: none !important;
+  }
+
+  /* Reset backgrounds & shadows for print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Report container */
+  #route-report,
+  .card,
+  .card-elevated,
+  .card-flat {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, .font-display {
+    color: #0f172a !important;
+  }
+  .text-slate-300,
+  .text-slate-200,
+  .text-slate-100,
+  .text-white {
+    color: #0f172a !important;
+  }
+  .text-slate-400,
+  .text-slate-500,
+  .text-slate-600 {
+    color: #475569 !important;
+  }
+  .text-emerald-400 { color: #059669 !important; }
+  .text-cyan-400 { color: #0284c7 !important; }
+  .text-amber-400 { color: #d97706 !important; }
+  .text-purple-400 { color: #7c3aed !important; }
+
+  /* Hide interactive controls in print */
+  .btn,
+  button,
+  [role="button"],
+  .swipe-actions,
+  .reel-archive-btn,
+  .card-interactive:hover {
+    display: none !important;
+  }
+
+  /* Show expanded appendix fully */
+  #route-report [id$="appendix"],
+  #route-report .animate-fadeIn {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Certification badges — ensure visible on white */
+  .border-emerald-500\/25,
+  .border-emerald-500\/40 {
+    border-color: #059669 !important;
+  }
+  .bg-emerald-500\/10,
+  .bg-emerald-500\/15 {
+    background-color: rgba(5, 150, 105, 0.12) !important;
+  }
+  .border-blue-500\/25 {
+    border-color: #2563eb !important;
+  }
+  .bg-blue-500\/10 {
+    background-color: rgba(37, 99, 235, 0.12) !important;
+  }
+  .border-cyan-500\/25 {
+    border-color: #0284c7 !important;
+  }
+  .bg-cyan-500\/10 {
+    background-color: rgba(2, 132, 199, 0.12) !important;
+  }
+  .border-amber-500\/25 {
+    border-color: #d97706 !important;
+  }
+  .bg-amber-500\/10 {
+    background-color: rgba(217, 119, 6, 0.12) !important;
+  }
+
+  /* Progress bars */
+  .bg-emerald-500 {
+    background-color: #059669 !important;
+  }
+  .bg-cyan-500 {
+    background-color: #0284c7 !important;
+  }
+  .bg-amber-500 {
+    background-color: #d97706 !important;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Footer */
+  #route-report footer {
+    border-top: 1px solid #cbd5e1 !important;
+  }
+
+  /* DoR letterhead — keep the emblem and headings legible on white paper */
+  .dor-letterhead {
+    border-bottom-color: #cbd5e1 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .dor-letterhead svg {
+    color: #b45309 !important;
+  }
+
+  /* Page breaks */
+  .break-before-print {
+    page-break-before: always;
+  }
+  .break-after-print {
+    page-break-after: always;
+  }
 }

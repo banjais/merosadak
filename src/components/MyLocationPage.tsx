@@ -176,7 +176,9 @@ export const MyLocationPage: React.FC<{
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) {
-          setWeather({ ...data, elevation: locationInfo.lat });
+          // Open-Meteo returns a real `elevation`; use it as-is. The previous
+          // code overwrote it with the latitude, which was never correct.
+          setWeather({ ...data, elevation: data.elevation ?? 0 });
           setWeatherError(null);
         }
       } catch (err) {

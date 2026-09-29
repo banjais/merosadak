@@ -1,21 +1,19 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, calculateDirectDistanceKm } from '../utils/routeOptimizer';
+import { findOptimizedRoute, calculateDirectDistanceKm, pickVerifiedRoute } from '../utils/routeOptimizer';
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
-import { filterCities } from '../utils/citySearch';
+import { filterCities, searchCitiesWithGeocode } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, computeLinkSumDistance, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, lookupGeoJsonRouteDistance, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Award, Edit3, Calculator, Download, Loader, FileText, Database, ChevronDown, ExternalLink, Share2, X } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, Loader2, X } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
 import { Full3DPhoto } from './Full3DPhoto';
-import { DistanceMatrixData } from '../types';
-import { isDistanceMatrixData, exportDistanceMatrixPdf } from '../utils/distanceMatrix';
 
 import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
@@ -151,8 +149,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const destSearchRef = useRef<HTMLDivElement>(null);
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
-  const [matrixData, setMatrixData] = useState<DistanceMatrixData | null>(null);
-  const [isMatrixLoading, setIsMatrixLoading] = useState(false);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
@@ -197,8 +193,16 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     }
   }, [originId]);
 
-  const origin = originId ? allCities.find((c) => c.id === originId) : undefined;
-  const destination = destId ? allCities.find((c) => c.id === destId) : undefined;
+  // Geocode fallback: unknown places (hamlets, junctions) are resolved via
+  // Nominatim so the calculator covers the same ground as the Route Planner.
+  // Declared before `origin`/`destination`, which read these.
+  const [geocodedOrigin, setGeocodedOrigin] = useState<CityNode | null>(null);
+  const [geocodedDest, setGeocodedDest] = useState<CityNode | null>(null);
+  const [geocodingOrigin, setGeocodingOrigin] = useState(false);
+  const [geocodingDest, setGeocodingDest] = useState(false);
+
+  const origin = originId ? allCities.find((c) => c.id === originId) || geocodedOrigin : undefined;
+  const destination = destId ? allCities.find((c) => c.id === destId) || geocodedDest : undefined;
 
   useEffect(() => {
     function handleCloseOnOutsideClick(event: MouseEvent) {
@@ -231,8 +235,51 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     };
   }, []);
 
-  const filteredOriginCities = filterCities(allCities, originSearch);
-  const filteredDestCities = filterCities(allCities, destSearch);
+  useEffect(() => {
+    const query = originSearch.trim();
+    // Keep the current geocoded pick while the field still shows its name.
+    if (!query || query.toLowerCase() === geocodedOrigin?.name.toLowerCase()) {
+      setGeocodingOrigin(false);
+      return;
+    }
+    if (filterCities(allCities, query).length > 0) { setGeocodedOrigin(null); setGeocodingOrigin(false); return; }
+    let cancelled = false;
+    setGeocodingOrigin(true);
+    const timer = setTimeout(async () => {
+      const results = await searchCitiesWithGeocode(allCities, query, 1);
+      if (cancelled) return;
+      setGeocodedOrigin(results[0] || null);
+      setGeocodingOrigin(false);
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [originSearch, allCities, geocodedOrigin]);
+
+  useEffect(() => {
+    const query = destSearch.trim();
+    if (!query || query.toLowerCase() === geocodedDest?.name.toLowerCase()) {
+      setGeocodingDest(false);
+      return;
+    }
+    if (filterCities(allCities, query).length > 0) { setGeocodedDest(null); setGeocodingDest(false); return; }
+    let cancelled = false;
+    setGeocodingDest(true);
+    const timer = setTimeout(async () => {
+      const results = await searchCitiesWithGeocode(allCities, query, 1);
+      if (cancelled) return;
+      setGeocodedDest(results[0] || null);
+      setGeocodingDest(false);
+    }, 400);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [destSearch, allCities, geocodedDest]);
+
+  const filteredOriginCities = useMemo(() => {
+    const local = filterCities(allCities, originSearch);
+    return geocodedOrigin ? [geocodedOrigin, ...local.filter((c) => c.id !== geocodedOrigin.id)] : local;
+  }, [allCities, originSearch, geocodedOrigin]);
+  const filteredDestCities = useMemo(() => {
+    const local = filterCities(allCities, destSearch);
+    return geocodedDest ? [geocodedDest, ...local.filter((c) => c.id !== geocodedDest.id)] : local;
+  }, [allCities, destSearch, geocodedDest]);
 
   const swapCities = () => {
     const temp = originId;
@@ -243,9 +290,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   };
 
   const routeResult = useMemo(
-    () => originId && destId && originId !== destId && origin && destination
-      ? findOptimizedRoute(originId, destId, 'fastest', 'car', {}, origin, destination)
-      : null,
+    () => {
+      if (!(originId && destId && originId !== destId && origin && destination)) return null;
+      const plan = findOptimizedRoute(originId, destId, 'fastest', 'car', {}, origin, destination);
+      // Never surface a straight-line approximation as a road distance.
+      return plan ? pickVerifiedRoute(plan) : null;
+    },
     [originId, destId, roadGraphVersion, origin, destination]
   );
   const aerialDistance = useMemo(
@@ -409,14 +459,16 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   }, [origin, destination, snhReference, routeResult]);
 
   const handleSelectOrigin = (cityId: string) => {
-    const city = allCities.find((candidate) => candidate.id === cityId);
+    const city = allCities.find((candidate) => candidate.id === cityId)
+      || (geocodedOrigin?.id === cityId ? geocodedOrigin : undefined);
     setOriginId(cityId);
     setOriginSearch(city?.name || '');
     setOriginDropdownOpen(false);
   };
 
   const handleSelectDest = (cityId: string) => {
-    const city = allCities.find((candidate) => candidate.id === cityId);
+    const city = allCities.find((candidate) => candidate.id === cityId)
+      || (geocodedDest?.id === cityId ? geocodedDest : undefined);
     setDestId(cityId);
     setDestSearch(city?.name || '');
     setDestDropdownOpen(false);
@@ -434,31 +486,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setTimeout(() => originInputRef.current?.focus(), 100);
   };
 
-  const loadMatrixData = useCallback(async () => {
-    if (matrixData) return matrixData;
-    setIsMatrixLoading(true);
-    try {
-      const res = await fetch('/data/distance-matrix.json');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (isDistanceMatrixData(json)) {
-        setMatrixData(json);
-        return json;
-      }
-    } catch (e) {
-      console.error('Failed to load distance matrix:', e);
-    } finally {
-      setIsMatrixLoading(false);
-    }
-    return null;
-  }, [matrixData]);
-
   const { user } = useAuth();
-
-  const handleExportPdf = async () => {
-    const data = await loadMatrixData();
-    if (data) exportDistanceMatrixPdf(data);
-  };
 
   const handleExportProofSheet = useCallback(async () => {
     if (!origin || !destination || !distanceWithSource) return;
@@ -471,8 +499,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       lookupResult: distanceWithSource,
       generatedAt: new Date().toISOString(),
       dataHash,
+      issuedToName: user?.displayName || undefined,
+      issuedToEmail: user?.email || undefined,
     });
-  }, [origin, destination, distanceWithSource, snhReference]);
+  }, [origin, destination, distanceWithSource, snhReference, user]);
 
   const handleShareReport = useCallback(async () => {
     if (!user) {
@@ -515,25 +545,25 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
     await navigator.clipboard.writeText(shareText);
   }, [origin, destination, routeResult, displayedDistance, distanceWithSource]);
 
-  const handlePrintReport = useCallback(async () => {
-    if (!user) {
-      const alert = document.createElement('div');
-      alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
-      alert.textContent = 'Sign in to print reports.';
-      document.body.appendChild(alert);
-      setTimeout(() => alert.remove(), 4000);
-      return;
-    }
-    window.print();
+  const requireSignIn = useCallback((action: string) => {
+    if (user) return true;
+    const alert = document.createElement('div');
+    alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
+    alert.textContent = `Sign in to ${action} reports.`;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 4000);
+    return false;
   }, [user]);
 
-  const handleDownloadReport = useCallback(async () => {
-    await handleExportProofSheet();
-  }, [handleExportProofSheet]);
+  const handlePrintReport = useCallback(async () => {
+    if (!requireSignIn('print')) return;
+    window.print();
+  }, [requireSignIn]);
 
-  const handleDownloadMatrix = useCallback(async () => {
-    await handleExportPdf();
-  }, [handleExportPdf]);
+  const handleDownloadReport = useCallback(async () => {
+    if (!requireSignIn('download')) return;
+    await handleExportProofSheet();
+  }, [handleExportProofSheet, requireSignIn]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -627,20 +657,6 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                     </span>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleExportPdf}
-                  disabled={isMatrixLoading}
-                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 transition text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-50"
-                  title="Download Nepal Full Distance Matrix (A4 PDF, multi-page)"
-                >
-                  {isMatrixLoading ? (
-                    <Loader className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                  <span>Full Matrix PDF</span>
-                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                 <div className="md:col-span-5 relative" ref={originSearchRef}>
@@ -677,7 +693,11 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                   </div>
                   {originDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-64 overflow-y-auto space-y-1">
-                      {filteredOriginCities.length > 0 ? (
+                      {geocodingOrigin ? (
+                        <div className="px-4 py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Searching maps...
+                        </div>
+                      ) : filteredOriginCities.length > 0 ? (
                         filteredOriginCities.map((city) => (
                           <button
                             key={city.id}
@@ -688,6 +708,11 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
                                 {city.name}
+                                {city.highwayCode && (
+                                  <span className="ml-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-block align-middle">
+                                    {city.highwayCode}
+                                  </span>
+                                )}
                                 {city.cityType && (
                                   <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
                                     {city.cityType}
@@ -695,7 +720,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                                 )}
                               </div>
                               <div className="text-[10px] text-slate-400 truncate">
-                                {city.district} District • {city.province} Province
+                                {city.district || 'Geocoded'} • {city.province} Province
                               </div>
                             </div>
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
@@ -756,7 +781,11 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                   </div>
                   {destDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-64 overflow-y-auto space-y-1">
-                      {filteredDestCities.length > 0 ? (
+                      {geocodingDest ? (
+                        <div className="px-4 py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Searching maps...
+                        </div>
+                      ) : filteredDestCities.length > 0 ? (
                         filteredDestCities.map((city) => (
                           <button
                             key={city.id}
@@ -767,6 +796,11 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
                                 {city.name}
+                                {city.highwayCode && (
+                                  <span className="ml-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-block align-middle">
+                                    {city.highwayCode}
+                                  </span>
+                                )}
                                 {city.cityType && (
                                   <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
                                     {city.cityType}
@@ -774,7 +808,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                                 )}
                               </div>
                               <div className="text-[10px] text-slate-400 truncate">
-                                {city.district} District • {city.province} Province
+                                {city.district || 'Geocoded'} • {city.province} Province
                               </div>
                             </div>
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
@@ -825,7 +859,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               onPrint={handlePrintReport}
               onShare={handleShareReport}
               onDownloadReport={handleDownloadReport}
-              onDownloadMatrix={handleDownloadMatrix}
+              userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
               calculatorCoverage={calculatorCoverage}
             />
           </>

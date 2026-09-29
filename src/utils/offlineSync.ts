@@ -197,6 +197,11 @@ export async function downloadMountainOfflinePack(
     '/data/district-hqs.json',
     '/data/district-centroids.json',
     '/data/district-terrain.json',
+    '/data/road-graph.json',
+    '/data/snh-reference.json',
+    '/data/geojson-town-coords.json',
+    '/data/calculator-cities.json',
+    '/data/palika-coords.json',
   ];
 
   const tileUrls = generateNepalHighwayTileUrls();

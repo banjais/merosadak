@@ -10,6 +10,7 @@ import {
   Calculator,
   Coins,
   HardDriveDownload,
+  Database,
   ChevronRight,
   FileText,
   LocateFixed,
@@ -148,6 +149,17 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenOfflineManager(); onClose(); },
+    },
+    {
+      id: 'datasources',
+      label: 'Data Sources',
+      subtitle: 'DoR datasets & attribution',
+      icon: Database,
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
+      onClick: () => { onOpenDataSources?.(); onClose(); },
     },
   ];
 

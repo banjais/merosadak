@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,7 +10,6 @@ import {
   Compass,
   Database,
   ExternalLink,
-  FileText,
   Fuel,
   Info,
   MapPin,
@@ -29,6 +28,8 @@ import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
 import { getTollPlazasForHighway, isEnteringKathmandu } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
+import { DorLetterhead } from './DorLetterhead';
+import { ReportIdentity, formatReportTimestamp } from '../utils/reportBranding';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
 
@@ -47,9 +48,16 @@ export interface UnifiedRouteReportProps {
   preferenceLabel?: string;
   onPrint: () => void;
   onShare: () => void;
+  /** Download the report as a PDF instead of sending it to the printer. */
   onDownloadReport?: () => void;
-  onDownloadMatrix?: () => void;
   onChangeLocation?: () => void;
+  /** Signed-in user, printed on the letterhead when present. */
+  userIdentity?: ReportIdentity;
+  /**
+   * Render flat, without the outer card chrome. Use when the report already
+   * sits inside a planner card — avoids a card nested inside a card.
+   */
+  embedded?: boolean;
   showElevationProfile?: boolean;
   simulationControls?: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
@@ -180,8 +188,9 @@ export function UnifiedRouteReport({
   onPrint,
   onShare,
   onDownloadReport,
-  onDownloadMatrix,
   onChangeLocation,
+  userIdentity,
+  embedded = false,
   showElevationProfile,
   simulationControls,
   onViewOnMap,
@@ -189,6 +198,24 @@ export function UnifiedRouteReport({
 }: UnifiedRouteReportProps) {
   const [expanded, setExpanded] = useState(false);
   const [showElevation, setShowElevation] = useState(false);
+  const [printMenuOpen, setPrintMenuOpen] = useState(false);
+  const printMenuRef = useRef<HTMLDivElement>(null);
+  const [reportTimestamp, setReportTimestamp] = useState(() => formatReportTimestamp(new Date()));
+
+  // Refresh the letterhead stamp right before printing or downloading so the
+  // printed sheet always carries the moment it was produced.
+  const stampNow = () => setReportTimestamp(formatReportTimestamp(new Date()));
+
+  useEffect(() => {
+    if (!printMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (printMenuRef.current && !printMenuRef.current.contains(event.target as Node)) {
+        setPrintMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [printMenuOpen]);
   const routeDistance = route.totalDistanceKm;
   const aerialDistance = route.aerialDistanceKm || 0;
   const detourPercent = aerialDistance > 0
@@ -230,10 +257,15 @@ export function UnifiedRouteReport({
     ].filter(Boolean).join(' · ');
   }, [distanceCitation]);
 
-  const printLabel = distanceSource === 'snh_published' ? 'Proof Sheet / PDF' : 'Print / PDF';
+  const printLabel = distanceSource === 'snh_published' ? 'Print / PDF' : 'Print / PDF';
 
   return (
-    <section className="card card-elevated p-4 sm:p-5">
+    <section
+      id="route-report"
+      className={embedded ? '' : 'card card-elevated card--dropdown-host p-4 sm:p-5'}
+    >
+      <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
+
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
@@ -248,14 +280,46 @@ export function UnifiedRouteReport({
 
         <div className="flex flex-wrap items-center gap-2">
           {sourceControl}
-          <button
-            type="button"
-            onClick={onPrint}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
-          >
-            <Printer className="h-3.5 w-3.5" />
-            {printLabel}
-          </button>
+          <div className="relative" ref={printMenuRef}>
+            <button
+              type="button"
+              onClick={() => setPrintMenuOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={printMenuOpen}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              {printLabel}
+              <ChevronDown className={`h-3 w-3 transition-transform ${printMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {printMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 z-50 min-w-[190px] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setPrintMenuOpen(false); stampNow(); onPrint(); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
+                >
+                  <Printer className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Print directly to printer</span>
+                </button>
+                {onDownloadReport && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setPrintMenuOpen(false); stampNow(); onDownloadReport(); }}
+                    className="flex w-full items-center gap-2 border-t border-slate-800 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
+                  >
+                    <Download className="h-3.5 w-3.5 text-sky-400" />
+                    <span>Download report (PDF)</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={onShare}
@@ -264,26 +328,6 @@ export function UnifiedRouteReport({
             <Share2 className="h-3.5 w-3.5" />
             Share
           </button>
-          {onDownloadReport && (
-            <button
-              type="button"
-              onClick={onDownloadReport}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-sky-700/60 bg-sky-950/40 px-2.5 py-1.5 text-[10px] font-bold text-sky-300 transition hover:bg-sky-900/50"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download Report
-            </button>
-          )}
-          {onDownloadMatrix && (
-            <button
-              type="button"
-              onClick={onDownloadMatrix}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-700/60 bg-indigo-950/40 px-2.5 py-1.5 text-[10px] font-bold text-indigo-300 transition hover:bg-indigo-900/50"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Distance Matrix
-            </button>
-          )}
           {onChangeLocation && (
             <button
               type="button"
@@ -512,6 +556,59 @@ export function UnifiedRouteReport({
               </div>
             </div>
           )}
+
+          {/* Section: Path Certification Detail — which path is DoR verified vs not */}
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+              Path Certification Detail
+            </div>
+            <div className="card card-elevated p-3.5">
+              <div className="mb-2.5 text-xs font-semibold text-slate-300">Which path is DoR verified?</div>
+              <div className="space-y-2">
+                {route.steps.map((step, index) => {
+                  const isCertified = step.roadClassification === 'national_highway';
+                  const isProvincial = step.roadClassification === 'provincial_feeder';
+                  const isLocal = step.roadClassification === 'local_palika';
+                  const isCommunity = step.roadClassification === 'community_track';
+                  return (
+                    <div key={`${step.instruction}-${index}`} className="flex flex-wrap items-start gap-2 rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-emerald-400">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1 text-[11px] text-slate-200">{step.instruction}</span>
+                      <span className="text-[10px] font-semibold text-slate-400">{formatNumber(step.distanceKm, 2)} km</span>
+                      <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold ${
+                        isCertified ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400' :
+                        isProvincial ? 'border-blue-500/25 bg-blue-500/10 text-blue-400' :
+                        isLocal ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-400' :
+                        'border-amber-500/25 bg-amber-500/10 text-amber-400'
+                      }`}>
+                        {step.certificationBadge}
+                      </span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                        isCertified ? 'bg-emerald-500/15 text-emerald-300' :
+                        isProvincial ? 'bg-blue-500/15 text-blue-300' :
+                        isLocal ? 'bg-cyan-500/15 text-cyan-300' :
+                        'bg-amber-500/15 text-amber-300'
+                      }`}>
+                        {isCertified ? '✓ DoR VERIFIED' :
+                         isProvincial ? '~ Provincial' :
+                         isLocal ? '~ Local Palika' :
+                         '~ Unpaved'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-800/50 text-[10px] text-slate-500">
+                <strong className="text-slate-300">Legend:</strong>{' '}
+                <span className="text-emerald-400">✓ DoR VERIFIED</span> = Federal certified highway (NH01–NH80) with official surveyed distance ·{' '}
+                <span className="text-blue-400">~ Provincial</span> = PRN feeder corridor ·{' '}
+                <span className="text-cyan-400">~ Local Palika</span> = Municipal/local road ·{' '}
+                <span className="text-amber-400">~ Unpaved</span> = Community track / unpaved segment
+              </div>
+            </div>
+          </div>
 
           {/* Section: Toll Breakdown */}
           {route.totalTollCostNpr > 0 && (

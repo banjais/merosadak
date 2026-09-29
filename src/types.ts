@@ -481,16 +481,3 @@ export interface EmergencyDispatchData {
   passengerCount?: number;
   batteryStatus?: string;
 }
-
-export interface DistanceMatrixCity {
-  id: string;
-  name: string;
-  district: string;
-  lat: number;
-  lng: number;
-}
-
-export interface DistanceMatrixData {
-  cities: DistanceMatrixCity[];
-  matrix: number[][];
-}

@@ -68,10 +68,15 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
   const name = normalizeName(rawName);
   const lat = numberValue(item, ['lat', 'latitude']);
   const lng = numberValue(item, ['lng', 'longitude']);
-  const connectedHighwaysValue = item.connectedHighways;
-  const connectedHighways = Array.isArray(connectedHighwaysValue)
+  let connectedHighwaysValue = item.connectedHighways;
+  let connectedHighways = Array.isArray(connectedHighwaysValue)
     ? connectedHighwaysValue.filter((value): value is string => typeof value === 'string')
     : [];
+  // geojson-town-coords.json uses a single "highway" field (e.g. "NH77")
+  if (connectedHighways.length === 0) {
+    const singleHighway = stringValue(item, ['highway', 'highwayCode']);
+    if (singleHighway) connectedHighways = [singleHighway];
+  }
 
   const district = stringValue(item, ['district', 'District']);
   const provinceFromData = stringValue(item, ['province', 'Province']);
@@ -89,6 +94,7 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
     elevationM: numberValue(item, ['elevationM', 'elevation']),
     isMajorHub: item.isMajorHub === true,
     connectedHighways,
+    highwayCode: stringValue(item, ['highwayCode', 'highway']),
   };
 }
 
@@ -272,12 +278,14 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
   const existingIds = new Set(CITIES_AND_JUNCTIONS.map((city) => city.id));
   const existingKeys = new Set(CITIES_AND_JUNCTIONS.map(cityKey));
   const merged: CityNode[] = CITIES_AND_JUNCTIONS.map((city) => ({ ...city, name: normalizeName(city.name) }));
+  const INFRA_PREFIXES = ['NH', 'ev-', 'toll-', 'wx-', 'poi-', 'tr-', 'inc-'];
   const sources = [
     { url: '/data/cities.json', grouped: true, key: 'cities' },
     { url: '/data/palika-coords.json', grouped: false, key: 'palika' },
     { url: '/data/district-hqs.json', grouped: false, key: 'district-hqs' },
     { url: '/data/district-centroids.json', grouped: false, key: 'district-centroids' },
-    { url: '/data/calculator-cities.json', grouped: true, key: 'cities' },
+    { url: '/data/calculator-cities.json', grouped: true, key: 'cities', filterInfra: true },
+    { url: '/data/geojson-town-coords.json', grouped: true, key: 'towns', cityType: 'Highway Town' },
     { url: '/data/airports.json', grouped: false, key: 'airports', cityType: 'Airport' },
     { url: '/data/temples.json', grouped: false, key: 'temples', cityType: 'Temple' },
     { url: '/data/tourist-places.json', grouped: false, key: 'tourist', cityType: 'Tourist Place' },
@@ -318,6 +326,12 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
           if (!cityType && source.key === 'palika') {
             cityType = 'Municipality';
           }
+          // Filter infrastructure-prefixed IDs (EV chargers, tolls, weather, POIs, etc.)
+          // to match the build-road-graph.cjs filter at line 147
+          if (source.filterInfra) {
+            const itemId = stringValue(item, ['id']);
+            if (INFRA_PREFIXES.some((p) => itemId.startsWith(p))) continue;
+          }
           const city = toCityNode(item, index, `${source.key}-${index}`, cityType);
           const key = cityKey(city);
           if (
@@ -342,4 +356,90 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
 
 export function getCachedExpandedCities(): CityNode[] {
   return cachedExpandedCities || CITIES_AND_JUNCTIONS;
+}
+
+interface GeocodeResult {
+  name: string;
+  lat: number;
+  lng: number;
+  displayName: string;
+}
+
+const GEOCODE_CACHE = new Map<string, GeocodeResult | null>();
+
+export async function geocodeUnknownPlace(query: string): Promise<GeocodeResult | null> {
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+  const cacheKey = trimmed.toLowerCase();
+  if (GEOCODE_CACHE.has(cacheKey)) return GEOCODE_CACHE.get(cacheKey)!;
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(trimmed)}, Nepal`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!res.ok) {
+      GEOCODE_CACHE.set(cacheKey, null);
+      return null;
+    }
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      GEOCODE_CACHE.set(cacheKey, null);
+      return null;
+    }
+    const first = data[0];
+    const lat = parseFloat(first.lat);
+    const lng = parseFloat(first.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      GEOCODE_CACHE.set(cacheKey, null);
+      return null;
+    }
+    const result: GeocodeResult = {
+      name: first.name || trimmed,
+      lat,
+      lng,
+      displayName: first.display_name || trimmed,
+    };
+    GEOCODE_CACHE.set(cacheKey, result);
+    return result;
+  } catch {
+    GEOCODE_CACHE.set(cacheKey, null);
+    return null;
+  }
+}
+
+export async function resolveUnknownCity(
+  query: string,
+  knownCities: CityNode[]
+): Promise<CityNode | null> {
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+
+  // Already in known cities?
+  const lower = trimmed.toLowerCase();
+  const existing = knownCities.find(
+    (c) => c.name.toLowerCase() === lower ||
+           c.name.toLowerCase().includes(lower) ||
+           lower.includes(c.name.toLowerCase())
+  );
+  if (existing) return existing;
+
+  // Try geocoding
+  const geo = await geocodeUnknownPlace(trimmed);
+  if (!geo) return null;
+
+  // Validate it's in Nepal bounds
+  if (geo.lat < 26 || geo.lat > 31 || geo.lng < 79 || geo.lng > 89) return null;
+
+  return {
+    id: `geocode-${lower.replace(/\s+/g, '-')}`,
+    name: geo.name,
+    nepaliName: '',
+    district: '',
+    province: 'Bagmati',
+    cityType: 'Geocoded',
+    lat: geo.lat,
+    lng: geo.lng,
+    elevationM: 0,
+    isMajorHub: false,
+    connectedHighways: [],
+  };
 }

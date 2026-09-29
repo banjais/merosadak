@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
 import QRCode from 'qrcode';
+import { DOR_BRANDING, formatReportTimestamp } from './reportBranding';
 import {
   DOR_DOCUMENT,
   DOR_PUBLISHER,
@@ -9,7 +10,6 @@ import {
   buildVerifyUrl,
   claimHash,
   nepalDate,
-  nepalDateTime,
   proofId,
 } from './proofLinks';
 
@@ -24,6 +24,10 @@ export interface ProofSheetData {
   dataHash: string;
   /** origin the verification QR points at; defaults to the running app */
   appOrigin?: string;
+  /** Signed-in user's name, printed on the letterhead when present. */
+  issuedToName?: string;
+  /** Signed-in user's email, printed on the letterhead when present. */
+  issuedToEmail?: string;
 }
 
 // standard PDF fonts only cover Latin-1: keep text printable everywhere
@@ -67,6 +71,40 @@ function drawQr(doc: jsPDF, text: string, x: number, y: number, size: number): v
   }
 }
 
+/** Draw the national emblem of Nepal as vector strokes on a `size` box. */
+function drawEmblem(doc: jsPDF, x: number, y: number, size: number, color: [number, number, number]): void {
+  const s = size / 64;
+  const px = (v: number) => x + v * s;
+  const py = (v: number) => y + v * s;
+  doc.setDrawColor(color[0], color[1], color[2]);
+  doc.setLineWidth(0.35);
+  doc.setLineJoin('round');
+  doc.lines(
+    [[0, -11.5], [21, 0], [0, 11.5], [-21, 0], [0, -11.5]], // outer pennon
+    px(32), py(17.5), [1, 1], 'S', true
+  );
+  doc.line(px(32), py(6), px(32), py(47));
+  doc.setLineWidth(0.22);
+  // Himalayan range
+  doc.lines(
+    [[-16, 0], [-11, 5], [-7.5, 1.5], [-4, 6], [-1, 2.5], [2, 6], [5.5, 1.5], [9, 5], [14, 0]],
+    px(32), py(21), [1, 1], 'S', false
+  );
+  // Plough and crossed books
+  doc.lines([[-8, 14], [0, 10], [6, 14]], px(31), py(35), [1, 1], 'S', false);
+  doc.line(px(26), py(39), px(33), py(43));
+  doc.line(px(38), py(39), px(31), py(43));
+  // Lotus base
+  doc.setLineWidth(0.28);
+  doc.lines(
+    [[-12, 0], [-8, -3], [-6, 0], [-4, -3.5], [-2, 0], [0, -3.5], [2, 0], [4, -3.5], [6, 0], [8, -3], [12, 0]],
+    px(32), py(50), [1, 1], 'S', false
+  );
+  doc.setLineWidth(0.35);
+  doc.line(px(17), py(53.5), px(47), py(53.5));
+  doc.setLineJoin('miter');
+}
+
 /** Build the proof sheet PDF (does not save). Kept separate so it can be tested. */
 export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPDF; claim: ProofClaim; verifyUrl: string }> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
@@ -91,10 +129,10 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   const shortHost = origin.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
   doc.setProperties({
-    title: `Distance proof sheet: ${data.from} to ${data.to} (${id})`,
+    title: `${DOR_BRANDING.line3} — Distance proof sheet: ${data.from} to ${data.to} (${id})`,
     subject: 'Distance proof sheet prepared from DoR SNH 2022/23. Not issued by the Department of Roads unless countersigned.',
-    author: 'Mero Sadak',
-    keywords: `${id}, SNH 2022/23, Department of Roads`,
+    author: 'Department of Roads, Government of Nepal',
+    keywords: `${id}, SNH 2022/23, Department of Roads, Government of Nepal`,
     creator: 'Mero Sadak',
   });
 
@@ -131,27 +169,51 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     y += 4.5;
   };
 
-  // ---------------- header band (filled, white text)
+  // ---------------- header band (filled, white text) with DoR letterhead
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, W, 30, 'F');
-  y = 13;
-  text('DISTANCE PROOF SHEET', M, 15, 'bold', [255, 255, 255]);
-  y = 20;
-  text('Prepared from Department of Roads, Statistics of National Highway (SNH) 2022/23', M, 7.5, 'normal', [203, 213, 225]);
-  y = 24.5;
-  text('Not issued by the Department of Roads unless countersigned below', M, 7.5, 'italic', [251, 191, 36]);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text(id, W - M, 13, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(203, 213, 225);
-  doc.text(`Printed ${nepalDateTime(printedAt)}`, W - M, 19, { align: 'right' });
-  doc.text('Data: SNH 2022/23', W - M, 24.5, { align: 'right' });
+  doc.rect(0, 0, W, 38, 'F');
+
+  // Emblem + three-line government letterhead, kept compact in the band.
+  drawEmblem(doc, M, 5, 15, [245, 158, 11]);
+  const LX = M + 19;
+  const LY = 8.4;
+  const line = (s: string, dy: number, size: number, style: 'normal' | 'bold' | 'italic', c: [number, number, number]) => {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(c[0], c[1], c[2]);
+    doc.text(ascii(s), LX, LY + dy);
+  };
+  line(DOR_BRANDING.line1, 0, 11, 'bold', [255, 255, 255]);
+  line(DOR_BRANDING.line2, 5.2, 8, 'normal', [203, 213, 225]);
+  line(DOR_BRANDING.line3, 10.4, 10, 'bold', [245, 158, 11]);
+
+  // Right side: reference code, print stamp, and the signed-in user.
+  const stamp = formatReportTimestamp(printedAt);
+  const rightLine = (s: string, dy: number, size: number, style: 'normal' | 'bold', c: [number, number, number]) => {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(c[0], c[1], c[2]);
+    doc.text(ascii(s), W - M, 7 + dy, { align: 'right' });
+  };
+  rightLine(id, 0, 8.5, 'bold', [255, 255, 255]);
+  rightLine(`Printed: ${stamp}`, 5, 7.5, 'normal', [203, 213, 225]);
+  rightLine('Data: SNH 2022/23', 10, 7.5, 'normal', [203, 213, 225]);
+  if (data.issuedToName) rightLine(data.issuedToName, 16.5, 7.5, 'bold', [255, 255, 255]);
+  if (data.issuedToEmail) rightLine(data.issuedToEmail, 21, 7, 'normal', [148, 163, 184]);
+
+  // Document title and the not-issued-unless-signed caveat.
+  y = 45;
+  text('DISTANCE PROOF SHEET', M, 15, 'bold', INK);
+  y = 52;
+  text('Prepared from Department of Roads, Statistics of National Highway (SNH) 2022/23', M, 7.5, 'normal', MUTED);
+  y = 56.5;
+  text('Not issued by the Department of Roads unless countersigned below', M, 7.5, 'italic', WARN);
+  doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
+  doc.setLineWidth(0.3);
+  doc.line(M, y + 1.5, W - M, y + 1.5);
+  y += 8;
 
   // ---------------- result
-  y = 42;
   text('FROM - TO', M, 7, 'bold', MUTED);
   y += 5;
   text(`${data.from}${data.fromDistrict ? ` (${data.fromDistrict})` : ''}  to  ${data.to}${data.toDistrict ? ` (${data.toDistrict})` : ''}`, M, 11, 'bold', INK);

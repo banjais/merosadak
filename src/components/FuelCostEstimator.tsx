@@ -268,11 +268,14 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   const [showComparison, setShowComparison] = useState<boolean>(false);
   const [copiedReceipt, setCopiedReceipt] = useState<boolean>(false);
 
-  // Sync with vehicle type changes from parent
+  // Sync when the vehicle changes OR when live fuel prices are refreshed.
+  // `currentBenchmark` derives from both `fuelPrices` and `vehicleType`, so
+  // depending on `vehicleType` alone left the cost maths on a stale rate while
+  // the card displayed the new one.
   useEffect(() => {
     setCustomMileage(currentBenchmark.defaultMileage);
     setCustomFuelRate(currentBenchmark.defaultRateNpr);
-  }, [vehicleType]);
+  }, [vehicleType, fuelPrices]);
 
   // Sync mountain gradient if elevation changes
   useEffect(() => {

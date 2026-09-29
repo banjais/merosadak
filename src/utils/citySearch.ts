@@ -35,6 +35,66 @@ export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
     .slice(0, limit);
 };
 
+const GEOCODE_CACHE = new Map<string, CityNode | null>();
+
+export async function searchCitiesWithGeocode(
+  cities: CityNode[],
+  query: string,
+  limit = 20
+): Promise<CityNode[]> {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return [];
+
+  // First try local match
+  const local = filterCities(cities, normalizedQuery, limit);
+  if (local.length > 0) return local;
+
+  // Fall back to Nominatim geocoding for unknown places (e.g. "Chaupatta")
+  if (GEOCODE_CACHE.has(normalizedQuery)) {
+    const cached = GEOCODE_CACHE.get(normalizedQuery);
+    return cached ? [cached] : [];
+  }
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(normalizedQuery)}, Nepal`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!res.ok) {
+      GEOCODE_CACHE.set(normalizedQuery, null);
+      return [];
+    }
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      GEOCODE_CACHE.set(normalizedQuery, null);
+      return [];
+    }
+    const first = data[0];
+    const lat = parseFloat(first.lat);
+    const lng = parseFloat(first.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 26 || lat > 31 || lng < 79 || lng > 89) {
+      GEOCODE_CACHE.set(normalizedQuery, null);
+      return [];
+    }
+    const geoCity: CityNode = {
+      id: `geocode-${normalizedQuery.toLowerCase().replace(/\s+/g, '-')}`,
+      name: first.name || normalizedQuery,
+      nepaliName: '',
+      district: '',
+      province: 'Bagmati',
+      cityType: 'Geocoded',
+      lat,
+      lng,
+      elevationM: 0,
+      isMajorHub: false,
+      connectedHighways: [],
+    };
+    GEOCODE_CACHE.set(normalizedQuery, geoCity);
+    return [geoCity];
+  } catch {
+    GEOCODE_CACHE.set(normalizedQuery, null);
+    return [];
+  }
+}
+
 export interface HighwayJunctionResult {
   id: string;
   name: string;

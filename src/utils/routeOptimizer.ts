@@ -1982,6 +1982,44 @@ export function findAllRouteOptions(
   return options;
 }
 
+/** True when a plan is a straight-line approximation rather than a road path. */
+export function isAerialRoute(plan: RoutePlanResult): boolean {
+  return (
+    !!plan.routeBadge?.includes('Approximate') ||
+    !!plan.routeName?.toLowerCase().includes('aerial') ||
+    (plan.roadTierBreakdown?.certifiedPercent ?? 0) <= 0
+  );
+}
+
+/**
+ * Drop an aerial approximation in favour of a real road-network path.
+ *
+ * The caller's route preference is respected: the returned plan keeps the
+ * requested preference whenever a non-aerial option for it exists. Only when
+ * that option is aerial (or missing) do we fall back to the shortest remaining
+ * road-network option, ranked by highest `certifiedPercent` and then by
+ * shortest distance. Returns `null` only when every option is aerial.
+ */
+export function pickVerifiedRoute(plan: RoutePlanResult): RoutePlanResult | null {
+  if (!isAerialRoute(plan)) return plan;
+
+  const options = plan.allRouteOptions || [];
+  const viable = options.filter((opt) => !isAerialRoute(opt));
+  if (viable.length === 0) return null;
+
+  const preferred = viable.find((opt) => opt.preference === plan.preference);
+  if (preferred) return preferred;
+
+  return viable
+    .slice()
+    .sort((a, b) => {
+      const certDelta =
+        (b.roadTierBreakdown?.certifiedPercent ?? 0) - (a.roadTierBreakdown?.certifiedPercent ?? 0);
+      if (certDelta !== 0) return certDelta;
+      return a.totalDistanceKm - b.totalDistanceKm;
+    })[0];
+}
+
 export function snapToNearestRoutingCity(city: CityNode): CityNode {
   // Prefer exact id match first
   const exact = CITIES_AND_JUNCTIONS.find((c) => c.id === city.id);

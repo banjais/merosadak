@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { PlannerDeck } from './PlannerDeck';
+import { usePlannerSections } from '../hooks/usePlannerSections';
 import {
   CityNode,
   RoutePlanResult,
@@ -12,7 +15,7 @@ import {
 import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
-import { findOptimizedRoute } from '../utils/routeOptimizer';
+import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
 import { FuelCostEstimator } from './FuelCostEstimator';
 import { FuelPriceCard } from './FuelPriceCard';
 import { TripAssistantPanel } from './TripAssistantPanel';
@@ -39,6 +42,8 @@ import {
   Truck,
   Layers,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Navigation,
   PhoneCall,
   CheckCircle2,
@@ -369,6 +374,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (keepOpen !== 'vehicle') setShowVehicleOptions(false);
   }, []);
 
+  // Signed-in user, printed on the report letterhead
+  const { user } = useAuth();
+
+  // Collapsible / reorderable planner sections (order + state persist)
+  const PLANNER_SECTION_IDS = ['search', 'results'] as string[];
+  const sections = usePlannerSections(PLANNER_SECTION_IDS, ['search', 'results']);
+  const sectionIndex = (id: string) => sections.state.order.indexOf(id);
+  const sectionMoveUp = (id: string) => (sectionIndex(id) > 0 ? () => sections.move(id, -1) : undefined);
+  const sectionMoveDown = (id: string) =>
+    sectionIndex(id) >= 0 && sectionIndex(id) < sections.state.order.length - 1
+      ? () => sections.move(id, 1)
+      : undefined;
+
+  // Reels-style deck: which planner card is in front
+  const [deckActive, setDeckActive] = useState<'search' | 'results' | 'vehicle'>('search');
+  // Keep the deck pointing at something that actually exists
+  useEffect(() => {
+    if (hasCalculated && deckActive === 'search') setDeckActive('results');
+    if (!hasCalculated && deckActive !== 'search') setDeckActive('search');
+  }, [hasCalculated, deckActive]);
+
   // Get current city objects
   const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
   const destCity = useMemo(() => allCities.find((c) => c.id === destId), [destId, allCities]);
@@ -478,13 +504,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setIsCalculating(true);
     setTimeout(() => {
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined);
-      if (plan && fuelPrices) {
-        const updatedPlan = applyLiveFuelPrices(plan, veh, fuelPrices);
+      // Respect the chosen preference, but never present a straight-line
+      // approximation as a road distance.
+      const resolved = plan ? pickVerifiedRoute(plan) : null;
+      if (resolved && fuelPrices) {
+        const updatedPlan = applyLiveFuelPrices(resolved, veh, fuelPrices);
         setRoutePlan(updatedPlan);
         onRouteCalculated(updatedPlan);
-      } else if (plan) {
-        setRoutePlan(plan);
-        onRouteCalculated(plan);
+      } else if (resolved) {
+        setRoutePlan(resolved);
+        onRouteCalculated(resolved);
       }
       setHasCalculated(true);
       setActiveModuleTab('ahead');
@@ -1091,10 +1120,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
       )}
 
-      {/* Main Clean Route Planner Box */}
-      <div className="card card-elevated p-4 sm:p-5 space-y-4">
+      {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
+      <PlannerDeck
+        items={[
+          { id: 'search', label: 'Search' },
+          ...(hasCalculated && routePlan
+            ? [{ id: 'results', label: 'Route' }, { id: 'vehicle', label: 'Vehicle & route' }]
+            : []),
+        ]}
+        activeId={deckActive}
+        onChange={(id) => setDeckActive(id as 'search' | 'results' | 'vehicle')}
+      >
+        {(deckId) => (
+      <div className="space-y-3">
       {/* Modern Stepper: Origin -> Destination -> Vehicle -> Results */}
-      {!hasCalculated && (
+      {deckId === 'search' && !hasCalculated && (
         <div className="flex items-center justify-between gap-2 px-1">
           {([
             { step: 'origin', label: 'Origin', icon: LocateFixed },
@@ -1268,7 +1308,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
-         {!hasCalculated && (
+         {deckId === 'search' && !hasCalculated && (
            <>
             <p className="text-[10px] text-slate-500 px-0.5">
               Trip planner · mixed places (highway nodes + nearby towns). For official km only, use Distance.
@@ -1572,7 +1612,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </>)}
 
          {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
-        {!hasCalculated && isAiPromptOpen && (
+        {deckId === 'search' && !hasCalculated && isAiPromptOpen && (
           <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
@@ -1625,11 +1665,74 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-       {hasCalculated && routePlan && (
+       {deckId === 'results' && hasCalculated && routePlan && (
+         <>
+         <div className="rounded-2xl overflow-hidden">
+          <header className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => sections.toggle('results')}
+              aria-expanded={sections.isExpanded('results')}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left group"
+            >
+              <Compass className="h-4 w-4 shrink-0 text-emerald-400" />
+              <span className="shrink-0 text-xs font-black text-white font-display">Results</span>
+              <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400 font-mono">
+                {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m · {routePlan.origin.name} → {routePlan.destination.name}
+              </span>
+              <span className={`shrink-0 text-slate-400 transition group-hover:text-slate-200 ${sections.isExpanded('results') ? 'rotate-180' : ''}`}>
+                <ChevronDown className="h-4 w-4" />
+              </span>
+            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              {sectionMoveUp('results') && (
+                <button type="button" onClick={sectionMoveUp('results')} title="Move results up" aria-label="Move results up"
+                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {sectionMoveDown('results') && (
+                <button type="button" onClick={sectionMoveDown('results')} title="Move results down" aria-label="Move results down"
+                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </header>
+          {/* Reduced view: keep the key numbers visible without expanding */}
+          {!sections.isExpanded('results') && (
+            <div className="px-3 sm:px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-300 animate-fadeIn">
+              <span className="flex items-center gap-1 text-white font-bold">
+                <Compass className="h-3.5 w-3.5 text-emerald-400" />
+                {routePlan.totalDistanceKm} km
+              </span>
+              <span className="flex items-center gap-1 text-cyan-400 font-bold">
+                <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+              </span>
+              <span className="flex items-center gap-1 text-amber-300 font-bold">
+                <Fuel className="h-3.5 w-3.5 text-amber-400" />
+                Rs {estimatedTripCostNpr.toLocaleString()}
+              </span>
+              <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                {routePlan.roadConditionScore}
+              </span>
+              <button
+                type="button"
+                onClick={() => sections.setExpanded('results', true)}
+                className="ml-auto text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
+              >
+                <span>Expand</span>
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          {sections.isExpanded('results') && (
          <div
            id="route-results-panel"
            key={`route-results-panel-${calcKey}-${routePlan.id}`}
-           className="card card-elevated p-3 sm:p-4 rounded-2xl shadow-xl space-y-2.5 sm:space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full overflow-x-hidden"
+           className="p-3 sm:p-4 space-y-2.5 sm:space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full"
         >
            {/* Header Summary & Expand/Reduce + Map Actions */}
            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
@@ -1795,6 +1898,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   preferenceLabel={preference.replace('_', ' ')}
                   onPrint={() => window.print()}
                   onShare={() => onShareTrip?.()}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  embedded
                   showElevationProfile
                   simulationControls={simulationControls}
                   onViewOnMap={onViewOnMap}
@@ -2205,12 +2310,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
       </>
     )}
-  </div>
-   )}
+          </div>
+        )}
+        </div>
+        </>
+       )}
 
 
-        {hasCalculated && (
-          <div className="mt-3 border-t border-slate-800/60 pt-3">
+         {deckId === 'vehicle' && hasCalculated && (
+          <div className="space-y-3">
             <button
               type="button"
               onClick={() => { closeAllMenus('vehicle'); setShowVehicleOptions(!showVehicleOptions); }}
@@ -2285,10 +2393,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   </div>
                  </div>
                 </div>
-              )}
-            </div>
-          )}
+               )}
+             </div>
+           )}
     </div>
+        )}
+      </PlannerDeck>
     </div>
   );
 };
