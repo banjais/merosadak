@@ -119,8 +119,8 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
           title: highway.name,
           highwayCode: highway.code,
         },
-        content: (
-          <div className="space-y-3 text-xs">
+        summary: (
+          <div className="space-y-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`px-2 py-0.5 rounded-md border text-[10px] font-black uppercase ${statusClass}`}>
                 {status}
@@ -129,26 +129,38 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
                 <Layers className="w-3 h-3 text-cyan-400" />
                 {highway.totalLengthKm} km
               </span>
-              <span className="text-slate-400 flex items-center gap-1">
+              <span className="text-amber-300/90">★ {highway.conditionRating}/5</span>
+              {hwIncidents.length > 0 && (
+                <span className="text-rose-300 font-bold">{hwIncidents.length} alert(s)</span>
+              )}
+            </div>
+            {highway.nepaliName && (
+              <p className="text-slate-500 text-[11px]">{highway.nepaliName}</p>
+            )}
+          </div>
+        ),
+        detail: (
+          <div className="space-y-3 text-xs">
+            {highway.description && (
+              <p className="text-slate-300 leading-relaxed">{highway.description}</p>
+            )}
+            <div className="flex flex-wrap gap-2 text-slate-400">
+              <span className="inline-flex items-center gap-1">
                 <Mountain className="w-3 h-3 text-purple-400" />
                 {highway.terrainType}
               </span>
-              <span className="text-amber-300/90">★ {highway.conditionRating}/5</span>
+              {highway.evChargers && highway.evChargers.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-yellow-200/90">
+                  <Zap className="w-3 h-3 text-yellow-400" />
+                  {highway.evChargers.length} EV
+                </span>
+              )}
             </div>
-
-            {highway.nepaliName && (
-              <p className="text-slate-400 text-[11px]">{highway.nepaliName}</p>
-            )}
-
-            {highway.description && (
-              <p className="text-slate-300 leading-relaxed line-clamp-4">{highway.description}</p>
-            )}
-
             {hwIncidents.length > 0 && (
               <div className="rounded-lg border border-rose-900/50 bg-rose-950/20 p-2 space-y-1.5">
                 <div className="flex items-center gap-1 text-rose-300 font-bold text-[10px] uppercase">
                   <AlertTriangle className="w-3 h-3" />
-                  Active on this highway ({hwIncidents.length})
+                  Active ({hwIncidents.length})
                 </div>
                 {hwIncidents.slice(0, 3).map((inc) => (
                   <div key={inc.id} className="text-[11px] text-slate-200">
@@ -160,24 +172,15 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
                 ))}
               </div>
             )}
-
             {snhLookup && snhLookup.distanceKm != null && (
               <div className="rounded-lg border border-cyan-900/40 bg-cyan-950/20 p-2 text-[11px] text-cyan-100/90">
-                DoR / SNH ref: <strong>{snhLookup.distanceKm} km</strong>
+                DoR / SNH: <strong>{snhLookup.distanceKm} km</strong>
                 {snhLookup.evidenceLevel && (
                   <span className="text-slate-400"> · {snhLookup.evidenceLevel}</span>
                 )}
               </div>
             )}
-
-            {highway.evChargers && highway.evChargers.length > 0 && (
-              <div className="flex items-center gap-1 text-[11px] text-yellow-200/90">
-                <Zap className="w-3 h-3 text-yellow-400" />
-                {highway.evChargers.length} EV charger(s) listed
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-1 border-t border-slate-800/70 text-[11px] text-slate-400">
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
               <span className="inline-flex items-center gap-1">
                 <Building className="w-3.5 h-3.5 text-emerald-400" />
                 {highway.dorDivision || 'DoR'}
@@ -187,15 +190,17 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
                 {highway.emergencyContact || '—'}
               </span>
             </div>
-
             {onViewHighwayOnMap && (
               <button
                 type="button"
-                onClick={() => onViewHighwayOnMap(highway)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewHighwayOnMap(highway);
+                }}
                 className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 flex items-center justify-center gap-2"
               >
                 <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                View {highway.code} on map
+                View on map
               </button>
             )}
           </div>
