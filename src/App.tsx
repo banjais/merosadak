@@ -28,6 +28,7 @@ import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { ActiveRouteElevationCard } from './components/ActiveRouteElevationCard';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
+import { ArchiveTray } from './components/ArchiveTray';
 import { getStoredOfflineBundle } from './utils/offlineSync';
 import { fetchJson } from './utils/apiConfig';
 import {
@@ -506,6 +507,8 @@ function AppContent() {
 
       {/* Offline Status Banner */}
       <OfflineStatusBanner />
+
+      <ArchiveTray />
 
       {/* Left Drawer Menu */}
       <AppDrawer
