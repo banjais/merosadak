@@ -1,4 +1,5 @@
-import { RouteStep } from '../types';
+import type { RouteStep } from '../types';
+import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 
 export interface RouteHighwaySummary {
   highwayCode: string;
@@ -10,10 +11,10 @@ export interface RouteHighwaySummary {
 
 export function summarizeRouteHighways(steps: RouteStep[]): RouteHighwaySummary[] {
   return steps.reduce<RouteHighwaySummary[]>((segments, step) => {
-    if (!step.highwayCode && !step.highwayName) return segments;
+    if (step.highwayCode?.toUpperCase() === 'AERIAL' || (!step.highwayCode && !step.highwayName)) return segments;
 
     const highwayCode = step.highwayCode || 'Code unavailable';
-    const highwayName = step.highwayName || 'Unnamed route';
+    const highwayName = step.highwayName || NEPAL_HIGHWAYS.find((highway) => highway.code === highwayCode)?.name || 'Unnamed route';
     const roadClass = step.roadClassification?.replaceAll('_', ' ') || 'Road class unavailable';
     const previous = segments[segments.length - 1];
 

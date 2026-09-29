@@ -1389,6 +1389,7 @@ function buildRoadGraphRouteResult(
     steps: [{
       instruction: `Follow ${highwaysLabel} from ${origin.name} to ${destination.name}`,
       highwayCode: real.highwaysUsed[0] || 'NH',
+      highwayName: NEPAL_HIGHWAYS.find((highway) => highway.code === real.highwaysUsed[0])?.name,
       distanceKm: real.distanceKm,
       durationMinutes: estimatedMinutes,
       roadStatus: 'clear',
@@ -1695,6 +1696,7 @@ export function findRouteByPreference(
     steps.push({
       instruction: `Follow ${edge.highwayName} (${edge.highwayCode}) from ${fromCity} to ${toCity}`,
       highwayCode: edge.highwayCode,
+      highwayName: edge.highwayName,
       distanceKm: edge.distanceKm,
       durationMinutes: Math.round(segMinutes),
       roadStatus: edge.status,
@@ -2225,6 +2227,9 @@ export function findOptimizedRoute(
               ? `Straight-line aerial path from ${origin.name} to ${destination.name} (no DoR highway route available)`
               : `Follow ${highwaysLabel} from ${origin.name} to ${destination.name}`,
             highwayCode: isAerial ? 'AERIAL' : (unified.highwaysUsed?.[0] || 'NH'),
+            highwayName: isAerial
+              ? undefined
+              : NEPAL_HIGHWAYS.find((highway) => highway.code === unified.highwaysUsed?.[0])?.name,
             distanceKm: unified.distanceKm,
             durationMinutes: estimatedMinutes,
             roadStatus: 'clear',
@@ -2267,4 +2272,3 @@ export function findOptimizedRoute(
     appliedTerrainFilters: Object.keys(terrainFilters).some(k => (terrainFilters as any)[k]) ? terrainFilters : undefined
   });
 }
-
