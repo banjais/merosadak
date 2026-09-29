@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
+import { RouteHighwaySummary } from './routeHighwaySummary';
 import QRCode from 'qrcode';
 import { formatReportTimestamp } from './reportBranding';
 import {
@@ -18,7 +19,10 @@ export interface ProofSheetData {
   to: string;
   fromDistrict?: string;
   toDistrict?: string;
+  fromCoordinates?: { lat: number; lng: number };
+  toCoordinates?: { lat: number; lng: number };
   lookupResult: DistanceWithSource;
+  routeHighways?: RouteHighwaySummary[];
   generatedAt: string;
   /** SHA-256 fingerprint (12 hex) of the reference dataset the figure was read from */
   dataHash: string;
@@ -238,17 +242,14 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   };
   rightLine(id, 0, 8.5, 'bold', [255, 255, 255]);
   rightLine(`Printed: ${stamp}`, 5, 7.5, 'normal', [203, 213, 225]);
-  rightLine(`Evidence: ${getEvidenceLevelLabel(res.evidenceLevel)}`, 10, 7.5, 'normal', [203, 213, 225]);
   if (data.issuedToName) rightLine(data.issuedToName, 16.5, 7.5, 'bold', [255, 255, 255]);
   if (data.issuedToEmail) rightLine(data.issuedToEmail, 21, 7, 'normal', [148, 163, 184]);
 
   // Document title and the not-issued-unless-signed caveat.
   y = 45;
-  text('DISTANCE REPORT', M, 15, 'bold', INK);
-  y = 52;
-  text(`Source: ${getSourceLabel(res.source)}`, M, 7.5, 'normal', MUTED);
+  text('DISTANCE EVIDENCE REPORT', M, 15, 'bold', INK);
   y = 56.5;
-  text('Not issued by the Department of Roads unless countersigned below', M, 7.5, 'italic', WARN);
+  text('Independent report; not issued by the Department of Roads.', M, 7.5, 'italic', WARN);
   doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
   doc.setLineWidth(0.3);
   doc.line(M, y + 1.5, W - M, y + 1.5);
@@ -259,6 +260,11 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   y += 5;
   text(`${data.from}${data.fromDistrict ? ` (${data.fromDistrict})` : ''}  to  ${data.to}${data.toDistrict ? ` (${data.toDistrict})` : ''}`, M, 11, 'bold', INK);
   y += 11;
+  const coordinateText = (point?: { lat: number; lng: number }) => point
+    ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
+    : 'Unavailable';
+  text(`Origin coordinates: ${coordinateText(data.fromCoordinates)}    Destination coordinates: ${coordinateText(data.toCoordinates)}`, M, 7, 'normal', MUTED);
+  y += 6;
   text(`${res.distanceKm.toFixed(2)} km`, M, 26, 'bold', INK);
 
   const col = getEvidenceLevelColor(res.evidenceLevel);
@@ -273,13 +279,15 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   y += 6;
 
   // ---------------- source citation
-  heading('SOURCE CITATION');
+  heading('DISTANCE BASIS AND SOURCE');
   const cit = res.citation;
   const lines: string[] = [
+    `Evidence type: ${getEvidenceLevelLabel(res.evidenceLevel)}`,
     `Data source: ${getSourceLabel(res.source)}`,
     `Document: ${cit?.document || getSourceLabel(res.source)}`,
     `Table: ${cit?.table || (res.evidenceLevel === 'published' ? DOR_DOCUMENT : 'No published city-pair table')}${cit?.row ? `, row ${cit.row}` : ''}`,
   ];
+  if (sourceUrl) lines.push(`Source URL: ${sourceUrl}`);
   if (cit?.printedPage || cit?.pdfPage) {
     lines.push(`Page: ${cit?.printedPage ? `printed p.${cit.printedPage}` : ''}${cit?.printedPage && cit?.pdfPage ? ' / ' : ''}${cit?.pdfPage ? `PDF file p.${cit.pdfPage}` : ''}`);
   }
@@ -291,17 +299,34 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     y += 4.6;
   });
 
+  if (data.routeHighways?.length) {
+    heading('ROUTE PLANNER GIS PATH - CONTEXT ONLY');
+    wrapped('This separate GIS route is shown for context. It is not a segment-by-segment verification or breakdown of the selected distance.', 7.5, 'italic', MUTED, 3.5);
+    data.routeHighways.forEach((segment, index) => {
+      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode}) - ${segment.roadClass} - ${segment.surface.replaceAll('_', ' ')} - ${segment.distanceKm.toFixed(1)} km`;
+      const wrapped = doc.splitTextToSize(ascii(description), W - M * 2);
+      ensure(wrapped.length * 4.2);
+      wrapped.forEach((line: string) => {
+        text(line, M, 8, 'normal', INK);
+        y += 4.2;
+      });
+    });
+  }
+
   // ---------------- link chain
   if (res.linkChain && res.linkChain.length > 0) {
     heading('LINK-BY-LINK BREAKDOWN');
+    heading('PUBLISHED LINK BREAKDOWN');
     const cSeg = M;
-    const cCode = M + 12;
-    const cName = M + 42;
+    const cCode = M + 9;
+    const cName = M + 37;
+    const cPavement = W - M - 39;
     const cKm = W - M;
     const header = () => {
       text('#', cSeg, 7, 'bold', MUTED);
       text('Link code', cCode, 7, 'bold', MUTED);
       text('Link / segment', cName, 7, 'bold', MUTED);
+      text('Pavement', cPavement, 7, 'bold', MUTED);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -321,7 +346,8 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
       }
       text(String(i + 1), cSeg, 7.5, 'normal', INK);
       text(e.code, cCode, 7.5, 'normal', INK);
-      text(e.name.length > 62 ? e.name.slice(0, 60) + '...' : e.name, cName, 7.5, 'normal', INK);
+      text(e.name.length > 44 ? e.name.slice(0, 42) + '...' : e.name, cName, 7.5, 'normal', INK);
+      text(e.pavementType.length > 18 ? `${e.pavementType.slice(0, 16)}...` : e.pavementType, cPavement, 7, 'normal', INK);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(INK[0], INK[1], INK[2]);
@@ -424,11 +450,10 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   text('Seal', W - M - 13.5, 6.8, 'normal', MUTED);
   y += 8;
 
-  // ---------------- data source (last section)
+  // ---------------- reproducibility metadata (last section)
   ensure(52);
-  heading('DATA SOURCE');
+  heading('REPRODUCIBILITY AND DATA NOTES');
   const src: Array<[string, string]> = [
-    ['Source', sourceUrl ? `${getSourceLabel(res.source)} (${sourceUrl})` : 'Mero Sadak geodesic estimate; no DoR pair or route found'],
     ...(res.source === 'dor_snh' ? [['Publisher', DOR_PUBLISHER] as [string, string]] : []),
     ['DoR publication', res.evidenceLevel === 'published' ? `${DOR_DOCUMENT}, HMIS-ICT Unit, published June 2024` : 'No DoR-published distance for this city pair'],
     ['Snapshot', res.source === 'dor_snh' ? 'Data reflects the 2022/23 publication, not live road conditions.' : 'Computed route from archived road geometry; not a live road-status report.'],
