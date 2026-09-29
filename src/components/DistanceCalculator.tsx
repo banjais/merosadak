@@ -278,81 +278,81 @@ export const DistanceCalculator: React.FC<DistanceCalculatorProps> = ({ onPlanFu
                 {
                   id: `dist-road-${originId}-${destId}`,
                   type: 'distance',
-                  title: 'Road driving distance',
-                  subtitle: 'Primary DoR graph distance',
+                  title: 'Road driving',
+                  subtitle: 'Primary graph distance',
                   archiveData: { title: 'Road distance', from: originId, to: destId },
-                  content: (
+                  summary: (
                     <div>
                       <div className="text-3xl font-black text-emerald-400 font-display">
                         {routeResult.totalDistanceKm}{' '}
                         <span className="text-sm font-normal text-slate-400">km</span>
                       </div>
-                      <p className="mt-2 text-[11px] text-slate-400">
-                        ~{Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m driving
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        ~{Math.floor(routeResult.estimatedTimeMinutes / 60)}h {routeResult.estimatedTimeMinutes % 60}m
                       </p>
                     </div>
+                  ),
+                  detail: (
+                    <p>DoR / internal road graph. Open in Route Planner for turn-by-turn.</p>
                   ),
                 },
                 {
                   id: `dist-aerial-${originId}-${destId}`,
                   type: 'distance',
-                  title: 'Direct aerial line',
-                  subtitle: 'Geodesic line-of-sight',
+                  title: 'Aerial line',
+                  subtitle: 'Straight-line geodesic',
                   archiveData: { title: 'Aerial distance' },
-                  content: (
-                    <div>
-                      <div className="text-3xl font-black text-cyan-400 font-display">
-                        {aerialDistance}{' '}
-                        <span className="text-sm font-normal text-slate-400">km</span>
-                      </div>
-                      <p className="mt-2 text-[11px] text-slate-500">As the crow flies</p>
+                  summary: (
+                    <div className="text-3xl font-black text-cyan-400 font-display">
+                      {aerialDistance}{' '}
+                      <span className="text-sm font-normal text-slate-400">km</span>
                     </div>
                   ),
+                  detail: <p>As the crow flies — not a driveable path in the hills.</p>,
                 },
                 {
                   id: `dist-detour-${originId}-${destId}`,
                   type: 'distance',
                   title: 'Mountain detour',
-                  subtitle: 'Extra road vs straight line',
-                  archiveData: { title: 'Detour ratio' },
-                  content: (
+                  archiveData: { title: 'Detour' },
+                  summary: (
                     <div>
                       <div className="text-3xl font-black text-amber-400 font-display">+{detourPercent}%</div>
-                      <p className="mt-2 text-[11px] text-slate-400">Circuity factor {circuityRatio}×</p>
+                      <p className="mt-1 text-[11px] text-slate-500">Circuity {circuityRatio}×</p>
                     </div>
                   ),
+                  detail: <p>Extra road length vs straight line — typical for Nepal corridors.</p>,
                 },
                 {
                   id: `dist-elev-${originId}-${destId}`,
                   type: 'distance',
-                  title: 'Elevation context',
+                  title: 'Elevation',
                   subtitle: origin && destination ? `${origin.name} → ${destination.name}` : 'Hubs',
                   archiveData: { title: 'Elevation' },
-                  content: (
-                    <div className="space-y-2 text-[11px] text-slate-300">
+                  summary: (
+                    <div className="space-y-1 text-[12px] text-slate-300">
                       {origin && (
                         <div className="flex justify-between">
-                          <span>{origin.name}</span>
+                          <span className="truncate">{origin.name}</span>
                           <span className="font-mono text-purple-300">{origin.elevationM} m</span>
                         </div>
                       )}
                       {destination && (
                         <div className="flex justify-between">
-                          <span>{destination.name}</span>
+                          <span className="truncate">{destination.name}</span>
                           <span className="font-mono text-purple-300">{destination.elevationM} m</span>
                         </div>
                       )}
-                      {origin && destination && (
-                        <p className="text-slate-500 pt-1 border-t border-slate-800">
-                          Δ {Math.abs((destination.elevationM || 0) - (origin.elevationM || 0))} m vertical difference
-                        </p>
-                      )}
                     </div>
                   ),
+                  detail: origin && destination ? (
+                    <p>Δ {Math.abs((destination.elevationM || 0) - (origin.elevationM || 0))} m vertical difference between hubs.</p>
+                  ) : undefined,
                 },
               ];
 
               return <SwipeableReelStack cards={metricCards} />;
+
             })()}
 
 
