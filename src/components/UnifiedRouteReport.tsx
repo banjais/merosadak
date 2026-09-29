@@ -198,32 +198,45 @@ export function UnifiedRouteReport({
     : distanceEvidence === 'published'
       ? 'Published distance'
       : 'Derived distance';
+  const distanceMethod = distanceEvidence === 'published'
+    ? 'DoR SNH 2022/23 · Published'
+    : distanceEvidence === 'link_sum'
+      ? 'DoR highway links · Link-sum'
+      : distanceEvidence === 'geodesic'
+        ? 'DoR highway GIS · Derived route'
+        : distanceEvidence === 'estimate'
+          ? 'Coordinates · Aerial estimate'
+          : 'Route planner GIS · Derived route';
 
   return (
     <section
       id="route-report"
       className="space-y-4"
     >
-      <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} useGovernmentEmblem={distanceCalculatorMode} />
+      {!distanceCalculatorMode && (
+        <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
+      )}
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex items-center gap-3">
-          <img
-            src={distanceCalculatorMode ? '/logo.jpeg' : '/logo.svg'}
-            alt={distanceCalculatorMode ? 'Government of Nepal emblem' : 'Mero Sadak logo'}
-            className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 object-contain shadow-lg shadow-slate-950/30"
-          />
-          <div>
-            <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
-              <span className="truncate">{route.origin.name}</span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span className="truncate">{route.destination.name}</span>
+        {!distanceCalculatorMode && (
+          <div className="min-w-0 flex items-center gap-3">
+            <img
+              src="/logo.svg"
+              alt="Mero Sadak logo"
+              className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 object-contain shadow-lg shadow-slate-950/30"
+            />
+            <div>
+              <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
+                <span className="truncate">{route.origin.name}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span className="truncate">{route.destination.name}</span>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-400">
+                {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
+              </p>
             </div>
-            <p className="mt-1 text-[11px] text-slate-400">
-              {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
-            </p>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-2">
           {sourceControl}
@@ -305,10 +318,15 @@ export function UnifiedRouteReport({
         {distanceCalculatorMode ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{distanceLabel}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-black text-emerald-300 font-display">
-                  {formatNumber(distanceKm, 1)} km
+              <div className="flex min-w-0 items-center gap-3">
+                <img src="/logo.jpeg" alt="Government of Nepal emblem" className="h-11 w-11 shrink-0 object-contain" />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold text-white">
+                    {route.origin.name} <ArrowRight className="mx-1 inline h-3.5 w-3.5 text-emerald-400" /> {route.destination.name}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xl font-black text-emerald-300 font-display">
+                    {distanceLabel}: {formatNumber(distanceKm, 1)} km
+                  </div>
                 </div>
               </div>
               {hasDistinctRouteDistance && (
@@ -321,7 +339,7 @@ export function UnifiedRouteReport({
 
             {highwaySegments.length > 0 && (
               <div className="border-b border-slate-800 py-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route highways</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route highway</div>
                 <div className="mt-2 space-y-2">
                   {highwaySegments.map((segment, index) => (
                     <div key={`${segment.highwayCode}-${segment.highwayName}-${segment.surface}-${index}`} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-slate-800 pt-2 first:border-t-0 first:pt-0">
@@ -340,16 +358,24 @@ export function UnifiedRouteReport({
             )}
 
             <div className="pt-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Source & method</div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-200">
-                <SourceLink label={sourceLabel} href={sourceUrl} />
-                <EvidenceBadge level={distanceEvidence} />
+              <div className="text-[11px] text-slate-300">
+                <span className="font-semibold text-slate-400">Source: </span>
+                <SourceLink
+                  label={distanceEvidence === 'published'
+                    ? 'DoR SNH 2022/23'
+                    : distanceEvidence === 'link_sum'
+                      ? 'DoR highway link inventory'
+                      : distanceEvidence === 'geodesic'
+                        ? 'DoR highway GIS'
+                        : distanceEvidence === 'estimate'
+                          ? 'Origin/destination coordinates'
+                          : 'Route planner GIS'}
+                  href={sourceUrl}
+                />
+                <span className="text-slate-400"> · {distanceMethod}</span>
               </div>
-              <p className="mt-1 text-[10px] leading-relaxed text-slate-400">{sourceDescription}</p>
               {highwaySegments.length > 0 && (
-                <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-                  Highway details are from the route planner GIS path. They are not a segment-by-segment verification or breakdown of the distance above.
-                </p>
+                <p className="mt-1 text-[10px] text-slate-500">Highway details: route planner data.</p>
               )}
               {citationText && <p className="mt-2 text-[10px] text-slate-500">{citationText}</p>}
               {distanceHighways.length > 0 && highwaySegments.length === 0 && <p className="mt-2 text-[10px] text-cyan-300">Route: {distanceHighways.join(' → ')}</p>}
