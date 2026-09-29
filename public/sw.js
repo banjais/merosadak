@@ -1,7 +1,7 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
-// Version 1.5.0 - Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
+// Version 1.6.0 - Background Sync outbox + Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
-const SW_VERSION = '1.5.0';
+const SW_VERSION = '1.6.0';
 const APP_BUILD = '20260922-pwa-auto';
 const CACHE_NAMES = {
   STATIC: 'mero-sadak-static-v5',
@@ -308,6 +308,11 @@ self.addEventListener('message', (event) => {
       const stats = await calculateCacheStats();
       if (event.source) event.source.postMessage({ type: 'CACHE_STATS_RESULT', stats });
     })());
+    return;
+  }
+  if (event.data.type === 'FLUSH_OUTBOX') {
+    event.waitUntil(flushApiOutbox());
+    return;
   }
 });
 
@@ -367,3 +372,95 @@ async function calculateCacheStats() {
   } catch (_) {}
   return { tilesCount: totalTiles, dataCount: totalDataEntries, isReady: totalTiles > 0 || totalDataEntries > 0, version: SW_VERSION };
 }
+
+
+// ===== Background Sync: failed API POST outbox =====
+const OUTBOX_DB = 'merosadak-bg-sync';
+const OUTBOX_STORE = 'outbox';
+const OUTBOX_SYNC_TAG = 'merosadak-api-outbox';
+
+function openOutboxDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(OUTBOX_DB, 1);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(OUTBOX_STORE)) {
+        db.createObjectStore(OUTBOX_STORE, { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+function outboxGetAll(db) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, 'readonly');
+    const req = tx.objectStore(OUTBOX_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function outboxDelete(db, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, 'readwrite');
+    const req = tx.objectStore(OUTBOX_STORE).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function outboxPut(db, item) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OUTBOX_STORE, 'readwrite');
+    const req = tx.objectStore(OUTBOX_STORE).put(item);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function flushApiOutbox() {
+  let sent = 0;
+  let failed = 0;
+  try {
+    const db = await openOutboxDb();
+    const items = await outboxGetAll(db);
+    for (const item of items) {
+      try {
+        const res = await fetch(item.url, {
+          method: item.method || 'POST',
+          headers: item.headers || { 'Content-Type': 'application/json' },
+          body: item.body,
+        });
+        if (res.ok || (res.status >= 400 && res.status < 500)) {
+          await outboxDelete(db, item.id);
+          sent++;
+        } else {
+          item.attempts = (item.attempts || 0) + 1;
+          item.lastError = 'HTTP ' + res.status;
+          await outboxPut(db, item);
+          failed++;
+        }
+      } catch (e) {
+        item.attempts = (item.attempts || 0) + 1;
+        item.lastError = (e && e.message) || 'network';
+        await outboxPut(db, item);
+        failed++;
+      }
+    }
+    const clients = await self.clients.matchAll({ type: 'window' });
+    for (const client of clients) {
+      client.postMessage({ type: 'OUTBOX_FLUSHED', sent, failed, remaining: failed });
+    }
+  } catch (e) {
+    console.warn('[SW] outbox flush failed', e);
+  }
+  return { sent, failed };
+}
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === OUTBOX_SYNC_TAG) {
+    event.waitUntil(flushApiOutbox());
+  }
+});
