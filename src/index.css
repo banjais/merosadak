@@ -1506,3 +1506,42 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   background: rgba(6, 78, 59, 0.4);
   color: rgb(110, 231, 183);
 }
+
+
+/* ===== PROGRESSIVE CARDS (less first, more on open) ===== */
+.progressive-card {
+  padding: 0.75rem 0.85rem;
+  border-radius: 1rem;
+}
+.progressive-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.progressive-card-summary {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.progressive-card-summary:disabled {
+  cursor: default;
+}
+.progressive-card.is-open {
+  border-color: rgba(52, 211, 153, 0.25);
+  box-shadow: var(--shadow-3d-hover);
+}
+.progressive-card.is-archived {
+  opacity: 0.85;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.22s ease-out;
+}
