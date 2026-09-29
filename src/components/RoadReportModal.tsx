@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { IncidentType } from '../types';
-import { fetchJson } from '../utils/apiConfig';
+import { fetchJson, getApiUrl } from '../utils/apiConfig'
+import { postJsonWithBackgroundSync } from '../utils/bgSyncQueue';
 import { X, Radio, MapPin, Send, AlertTriangle, CheckCircle2, Loader2, Mic, MicOff, Square, Play, Volume2, RotateCcw } from 'lucide-react';
 
 interface RoadReportModalProps {
@@ -24,6 +25,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
   const [contactNumber, setContactNumber] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [queuedOffline, setQueuedOffline] = useState(false);
 
   // Voice Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -183,10 +185,9 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
 
     setSubmitting(true);
     try {
-      const data = await fetchJson<{ success?: boolean }>('/api/submit-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await postJsonWithBackgroundSync<{ success?: boolean }>(
+        getApiUrl('/api/submit-report'),
+        {
           highwayCode,
           location,
           incidentType,
@@ -195,16 +196,26 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
           reporterName: reporterName.trim() || 'Anonymous Traveler',
           contactNumber: contactNumber.trim(),
           hasVoiceAudio: !!audioBlob,
-        }),
-      });
+        }
+      );
 
-      if (data.success) {
+      if (result.ok && result.data?.success) {
+        setQueuedOffline(false);
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
           onReportSubmitted();
           onClose();
         }, 1200);
+      } else if (result.queued) {
+        setQueuedOffline(true);
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          setQueuedOffline(false);
+          onReportSubmitted();
+          onClose();
+        }, 1800);
       }
     } catch (err) {
       console.error('Failed to submit road issue report:', err);
@@ -240,7 +251,9 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
         {success ? (
           <div className="p-8 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-bounce" />
-            <h4 className="text-lg font-bold text-white">Report Submitted Successfully!</h4>
+            <h4 className="text-lg font-bold text-white">
+              {queuedOffline ? 'Saved offline — will sync when online' : 'Report Submitted Successfully!'}
+            </h4>
             <p className="text-xs text-slate-400">
               Thank you for contributing to safer journeys across Nepal's highways.
             </p>
