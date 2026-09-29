@@ -28,6 +28,7 @@ import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation } from '../utils/snhLookup';
 import { getTollPlazasForHighway, isEnteringKathmandu } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
+import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
 
@@ -296,58 +297,128 @@ export function UnifiedRouteReport({
         </div>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6 gap-cards">
-        <MetricCard
-          icon={Compass}
-          label="Road distance"
-          value={formatNumber(distanceKm, 2)}
-          unit="km"
-          detail={`${formatNumber(routeDistance, 2)} km route • ${evidenceLabels[distanceEvidence] || distanceEvidence}`}
-          tone="emerald"
-        />
-        <MetricCard
-          icon={Clock}
-          label="Travel time"
-          value={formatDuration(route.estimatedTimeMinutes)}
-          detail="estimated"
-          tone="cyan"
-        />
-        <MetricCard
-          icon={route.fuelEstimate && route.fuelEstimate.avgMileageKmPerLiter ? Fuel : Zap}
-          label={route.fuelEstimate && route.fuelEstimate.avgMileageKmPerLiter ? 'Fuel cost' : 'Energy cost'}
-          value={`NPR ${fuelCost.toLocaleString('en-US')}`}
-          detail={`${formatNumber(fuelQuantity, 1)} ${fuelUnit} estimated`}
-          tone="amber"
-        />
-        <MetricCard
-          icon={ShieldCheck}
-          label="Safety score"
-          value={`${route.roadConditionScore}/100`}
-          detail={`${route.statusSummary.clearKm} km clear`}
-          tone="emerald"
-        />
-        <MetricCard
-          icon={Mountain}
-          label="Peak elev."
-          value={`${route.maxElevationM} m`}
-          detail={`+${route.elevationGainM} m climb • City database`}
-          tone="purple"
-        />
-        <MetricCard
-          icon={Route}
-          label="Detour"
-          value={`+${detourPercent}%`}
-          detail={`${formatNumber(aerialDistance, 1)} km vs direct`}
-          tone="slate"
-        />
-        <MetricCard
-          icon={CreditCard}
-          label="Toll fees"
-          value={`NPR ${route.totalTollCostNpr.toLocaleString()}`}
-          detail="Highway plazas"
-          tone="cyan"
-        />
-      </div>
+      {(() => {
+        const reportCards: ReelCardItem[] = [
+          {
+            id: `report-dist-${route.id}`,
+            type: 'report',
+            title: 'Road distance',
+            subtitle: evidenceLabels[distanceEvidence] || String(distanceEvidence),
+            archiveData: { title: 'Road distance', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={Compass}
+                label="Road distance"
+                value={formatNumber(distanceKm, 2)}
+                unit="km"
+                detail={`${formatNumber(routeDistance, 2)} km route • ${evidenceLabels[distanceEvidence] || distanceEvidence}`}
+                tone="emerald"
+              />
+            ),
+          },
+          {
+            id: `report-time-${route.id}`,
+            type: 'report',
+            title: 'Travel time',
+            subtitle: 'Estimated driving time',
+            archiveData: { title: 'Travel time', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={Clock}
+                label="Travel time"
+                value={formatDuration(route.estimatedTimeMinutes)}
+                detail="estimated"
+                tone="cyan"
+              />
+            ),
+          },
+          {
+            id: `report-fuel-${route.id}`,
+            type: 'report',
+            title: route.fuelEstimate && route.fuelEstimate.avgMileageKmPerLiter ? 'Fuel cost' : 'Energy cost',
+            subtitle: `${formatNumber(fuelQuantity, 1)} ${fuelUnit}`,
+            archiveData: { title: 'Fuel cost', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={route.fuelEstimate && route.fuelEstimate.avgMileageKmPerLiter ? Fuel : Zap}
+                label={route.fuelEstimate && route.fuelEstimate.avgMileageKmPerLiter ? 'Fuel cost' : 'Energy cost'}
+                value={`NPR ${fuelCost.toLocaleString('en-US')}`}
+                detail={`${formatNumber(fuelQuantity, 1)} ${fuelUnit} estimated`}
+                tone="amber"
+              />
+            ),
+          },
+          {
+            id: `report-safety-${route.id}`,
+            type: 'report',
+            title: 'Safety score',
+            subtitle: `${route.statusSummary.clearKm} km clear`,
+            archiveData: { title: 'Safety score', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={ShieldCheck}
+                label="Safety score"
+                value={`${route.roadConditionScore}/100`}
+                detail={`${route.statusSummary.clearKm} km clear`}
+                tone="emerald"
+              />
+            ),
+          },
+          {
+            id: `report-elev-${route.id}`,
+            type: 'report',
+            title: 'Peak elevation',
+            subtitle: `+${route.elevationGainM} m climb`,
+            archiveData: { title: 'Elevation', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={Mountain}
+                label="Peak elev."
+                value={`${route.maxElevationM} m`}
+                detail={`+${route.elevationGainM} m climb • City database`}
+                tone="purple"
+              />
+            ),
+          },
+          {
+            id: `report-detour-${route.id}`,
+            type: 'report',
+            title: 'Detour vs direct',
+            subtitle: `${formatNumber(aerialDistance, 1)} km aerial`,
+            archiveData: { title: 'Detour', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={Route}
+                label="Detour"
+                value={`+${detourPercent}%`}
+                detail={`${formatNumber(aerialDistance, 1)} km vs direct`}
+                tone="slate"
+              />
+            ),
+          },
+          {
+            id: `report-toll-${route.id}`,
+            type: 'report',
+            title: 'Toll fees',
+            subtitle: 'Highway plazas',
+            archiveData: { title: 'Tolls', routeId: route.id },
+            content: (
+              <MetricCard
+                icon={CreditCard}
+                label="Toll fees"
+                value={`NPR ${route.totalTollCostNpr.toLocaleString()}`}
+                detail="Highway plazas"
+                tone="cyan"
+              />
+            ),
+          },
+        ];
+        return (
+          <div className="mt-3">
+            <SwipeableReelStack cards={reportCards} />
+          </div>
+        );
+      })()}
 
       {/* Methodology & Data Sources */}
       <div className="mt-4 card card-elevated p-4">
