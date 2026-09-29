@@ -207,6 +207,59 @@ export function UnifiedRouteReport({
         : distanceEvidence === 'estimate'
           ? 'Coordinates · Aerial estimate'
           : 'Route planner GIS · Derived route';
+  const printExportMenu = (
+    <div className="relative" ref={printMenuRef}>
+      <button
+          type="button"
+          onClick={() => setPrintMenuOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={printMenuOpen}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
+      >
+          {distanceCalculatorMode ? <Share2 className="h-3.5 w-3.5" /> : <Printer className="h-3.5 w-3.5" />}
+          {distanceCalculatorMode ? 'Share / Export' : 'Print / PDF'}
+          <ChevronDown className={`h-3 w-3 transition-transform ${printMenuOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {printMenuOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full mt-1 z-50 min-w-[190px] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl"
+          >
+            {distanceCalculatorMode && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setPrintMenuOpen(false); onShare(); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
+              >
+                <Share2 className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Share distance and route</span>
+              </button>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => { setPrintMenuOpen(false); stampNow(); onPrint(); }}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800 ${distanceCalculatorMode ? 'border-t border-slate-800' : ''}`}
+            >
+              <Printer className="h-3.5 w-3.5 text-amber-400" />
+              <span>Print directly to printer</span>
+            </button>
+            {onDownloadReport && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setPrintMenuOpen(false); stampNow(); onDownloadReport(); }}
+                className="flex w-full items-center gap-2 border-t border-slate-800 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
+              >
+                <Download className="h-3.5 w-3.5 text-sky-400" />
+                <span>Download report (PDF)</span>
+              </button>
+            )}
+          </div>
+      )}
+    </div>
+  );
 
   return (
     <section
@@ -239,58 +292,12 @@ export function UnifiedRouteReport({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {sourceControl}
-          <div className="relative" ref={printMenuRef}>
-            <button
-              type="button"
-              onClick={() => setPrintMenuOpen((v) => !v)}
-              aria-haspopup="menu"
-              aria-expanded={printMenuOpen}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
-            >
-              {distanceCalculatorMode ? <Share2 className="h-3.5 w-3.5" /> : <Printer className="h-3.5 w-3.5" />}
-              {distanceCalculatorMode ? 'Share / Export' : 'Print / PDF'}
-              <ChevronDown className={`h-3 w-3 transition-transform ${printMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {printMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-full mt-1 z-50 min-w-[190px] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl"
-              >
-                {distanceCalculatorMode && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => { setPrintMenuOpen(false); onShare(); }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
-                  >
-                    <Share2 className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>Share distance and route</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => { setPrintMenuOpen(false); stampNow(); onPrint(); }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800 ${distanceCalculatorMode ? 'border-t border-slate-800' : ''}`}
-                >
-                  <Printer className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Print directly to printer</span>
-                </button>
-                {onDownloadReport && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => { setPrintMenuOpen(false); stampNow(); onDownloadReport(); }}
-                    className="flex w-full items-center gap-2 border-t border-slate-800 px-3 py-2 text-left text-[11px] font-semibold text-slate-100 transition hover:bg-slate-800"
-                  >
-                    <Download className="h-3.5 w-3.5 text-sky-400" />
-                    <span>Download report (PDF)</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {!distanceCalculatorMode && (
+            <>
+              {sourceControl}
+              {printExportMenu}
+            </>
+          )}
           {!distanceCalculatorMode && (
             <button
               type="button"
@@ -487,6 +494,11 @@ export function UnifiedRouteReport({
           </>
         )}
       </div>
+      {distanceCalculatorMode && (
+        <div className="flex justify-end border-t border-slate-800 pt-3">
+          {printExportMenu}
+        </div>
+      )}
     </section>
   );
 }

@@ -6,11 +6,11 @@ import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities, searchCitiesWithGeocode } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
+import { loadSNHReference, lookupDistanceWithFallback, getSourceLabel, getEvidenceLevelLabel, SNHReferenceData, DataSourceType, DistanceWithSource } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { summarizeRouteHighways } from '../utils/routeHighwaySummary';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, Loader2, X } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, Loader2, X } from 'lucide-react';
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
@@ -18,109 +18,6 @@ import { Full3DPhoto } from './Full3DPhoto';
 
 import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
-
-interface DataSourceSelectorProps {
-  selectedSource: DataSourceType;
-  onChange: (source: DataSourceType) => void;
-  evidenceLevel?: EvidenceLevel;
-}
-
-function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSourceSelectorProps): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
-    {
-      value: 'dor_snh',
-      label: 'DoR sources (SNH + highway archive)',
-      url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'Uses a published SNH pair when available; otherwise computes a route from archived DoR highway geometry.',
-    },
-    {
-      value: 'estimate_aerial',
-      label: 'Aerial (Straight-Line)',
-      url: '',
-      description: 'Geodesic Great Circle distance — no surveyed corridor data available',
-    },
-  ];
-
-  const openExternalLink = (url: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  };
-
-  const selected = sources.find((s) => s.value === selectedSource) || sources[0];
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white hover:border-cyan-500 transition"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <span className="truncate max-w-[140px]">{selected.label}</span>
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 overflow-hidden">
-          {sources.map((src) => (
-            <div
-              key={src.value}
-              role="option"
-              aria-selected={src.value === selectedSource}
-              onClick={() => {
-                onChange(src.value);
-                setIsOpen(false);
-              }}
-              className={`w-full px-3 py-2 text-left text-xs transition cursor-pointer ${
-                src.value === selectedSource
-                  ? 'bg-cyan-500/10 text-cyan-300'
-                  : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  onClick={(e) => openExternalLink(src.url, e)}
-                  className={`flex items-center gap-1 font-medium ${src.url ? 'hover:underline cursor-pointer' : ''}`}
-                >
-                  {src.label}
-                  {src.url && (
-                    <ExternalLink className="w-2.5 h-2.5 text-slate-400 hover:text-white" />
-                  )}
-                </span>
-                {src.value === selectedSource && evidenceLevel && (
-                  <span className="text-[8px] font-bold px-1 py-0.5 rounded border shrink-0" style={{
-                    backgroundColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.15)`,
-                    borderColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.3)`,
-                    color: `rgb(${getEvidenceLevelColor(evidenceLevel).join(',')})`,
-                  }}>
-                    {getEvidenceLevelLabel(evidenceLevel)}
-                  </span>
-                )}
-              </div>
-              <div className="text-[9px] text-slate-500 mt-0.5">{src.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function getCityHighwayLabel(city: CityNode): string {
   return [...new Set([...(city.connectedHighways || []), city.highwayCode].filter((code): code is string => Boolean(code)))].join(' · ');
@@ -150,7 +47,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const destInputRef = useRef<HTMLInputElement>(null);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
-  const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('dor_snh');
 
   useEffect(() => {
     loadExpandedCities()
@@ -290,37 +186,9 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return 'dor_snh' as DataSourceType;
   }, [distanceWithSource]);
 
-  const handleDataSourceChange = (source: DataSourceType) => {
-    setSelectedDataSource(source);
-    if (!origin || !destination) return;
-
-    if (source === 'estimate_aerial') {
-      setDistanceWithSource({
-        ...estimateDistance(origin.lat, origin.lng, destination.lat, destination.lng),
-        source: 'estimate_aerial',
-      });
-      return;
-    }
-
-    const result = lookupDistanceWithFallback(
-      origin.name,
-      destination.name,
-      origin.id,
-      destination.id,
-      origin.lat,
-      origin.lng,
-      destination.lat,
-      destination.lng,
-      snhReference
-    );
-    setDistanceWithSource(result);
-    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
-  };
-
   useEffect(() => {
     if (!origin || !destination) {
       setDistanceWithSource(null);
-      setSelectedDataSource('dor_snh');
       return;
     }
 
@@ -336,7 +204,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
         snhReference
       );
     setDistanceWithSource(result);
-    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
   }, [origin, destination, snhReference, routeResult]);
 
   const handleSelectOrigin = (cityId: string) => {
@@ -728,13 +595,6 @@ Generated by Mero Sadak. The route path is provided for context and may use sepa
               distanceCitation={distanceWithSource?.citation || null}
               distanceNote={distanceWithSource?.note || null}
               distanceHighways={distanceWithSource?.highwaysUsed || []}
-              sourceControl={
-                <DataSourceSelector
-                  selectedSource={selectedDataSource}
-                  onChange={handleDataSourceChange}
-                  evidenceLevel={distanceWithSource?.evidenceLevel}
-                />
-              }
               onChangeLocation={handleChangeLocation}
               onPrint={handlePrintReport}
               onShare={handleShareReport}
