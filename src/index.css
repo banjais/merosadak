@@ -1545,3 +1545,15 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 .animate-fadeIn {
   animation: fadeIn 0.22s ease-out;
 }
+
+/* Motion drag performance for reel stack */
+.reel-stack-stage {
+  contain: layout style;
+}
+.reel-card-slot.is-active {
+  touch-action: pan-y;
+}
+.reel-card-slot.is-active .reel-card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
