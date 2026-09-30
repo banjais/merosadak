@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Info,
   MapPin,
+  Route,
   Printer,
   Share2,
   Download,
@@ -14,8 +15,9 @@ import {
 import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation, getSourceDescription, getSourceLabel } from '../utils/snhLookup';
 import { summarizeRouteHighways } from '../utils/routeHighwaySummary';
+import { getRoadSurfaceLabel, ROAD_SURFACE_CONDITION_NOTE } from '../utils/roadSurfaceLabels';
 import { DorLetterhead } from './DorLetterhead';
-import { ReportIdentity, formatReportTimestamp } from '../utils/reportBranding';
+import { ReportIdentity, formatReportTimestampParts } from '../utils/reportBranding';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
 
@@ -66,14 +68,6 @@ const evidenceColors: Record<ReportEvidenceLevel, [number, number, number]> = {
   geodesic: [99, 102, 242],
   estimate: [245, 152, 61],
   route_graph: [148, 163, 184],
-};
-
-const surfaceLabels: Record<string, string> = {
-  asphalt_excellent: 'Excellent asphalt',
-  blacktopped_fair: 'Blacktopped',
-  gravel: 'Gravel',
-  under_construction: 'Under construction',
-  offroad_mud: 'Off-road / mud',
 };
 
 function formatDuration(minutes: number): string {
@@ -148,11 +142,11 @@ export function UnifiedRouteReport({
 }: UnifiedRouteReportProps) {
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
   const printMenuRef = useRef<HTMLDivElement>(null);
-  const [reportTimestamp, setReportTimestamp] = useState(() => formatReportTimestamp(new Date()));
+  const [reportTimestamp, setReportTimestamp] = useState(() => formatReportTimestampParts(new Date()));
 
   // Refresh the letterhead stamp right before printing or downloading so the
   // printed sheet always carries the moment it was produced.
-  const stampNow = () => setReportTimestamp(formatReportTimestamp(new Date()));
+  const stampNow = () => setReportTimestamp(formatReportTimestampParts(new Date()));
 
   useEffect(() => {
     if (!printMenuOpen) return;
@@ -266,7 +260,11 @@ export function UnifiedRouteReport({
       id="route-report"
       className="space-y-4"
     >
-      {!distanceCalculatorMode && (
+      {distanceCalculatorMode ? (
+        <div className="distance-calculator-letterhead">
+          <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} useGovernmentEmblem />
+        </div>
+      ) : (
         <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
       )}
 
@@ -344,6 +342,31 @@ export function UnifiedRouteReport({
               )}
             </div>
 
+            <div className="distance-calculator-print-summary">
+              <div className="distance-calculator-place">
+                <MapPin aria-hidden="true" />
+                <div>
+                  <span>From</span>
+                  <strong>{route.origin.name}</strong>
+                </div>
+              </div>
+              <ArrowRight className="distance-calculator-route-arrow" aria-hidden="true" />
+              <div className="distance-calculator-place">
+                <MapPin aria-hidden="true" />
+                <div>
+                  <span>To</span>
+                  <strong>{route.destination.name}</strong>
+                </div>
+              </div>
+              <div className="distance-calculator-print-distance">
+                <Route aria-hidden="true" />
+                <div>
+                  <span>{distanceLabel}</span>
+                  <strong>{formatNumber(distanceKm, 2)} km</strong>
+                </div>
+              </div>
+            </div>
+
             {highwaySegments.length > 0 && (
               <div className="border-b border-slate-800 py-4">
                 <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route highway</div>
@@ -358,7 +381,7 @@ export function UnifiedRouteReport({
                         )}
                       </div>
                       <div className="text-[10px] text-slate-300">
-                        {surfaceLabels[segment.surface] || segment.surface.replaceAll('_', ' ')} · {formatNumber(segment.distanceKm, 1)} km
+                        {getRoadSurfaceLabel(segment.surface)} · {formatNumber(segment.distanceKm, 1)} km
                       </div>
                     </div>
                   ))}
@@ -384,7 +407,7 @@ export function UnifiedRouteReport({
                 <span className="text-slate-400"> · {distanceMethod}</span>
               </div>
               {highwaySegments.length > 0 && (
-                <p className="mt-1 text-[10px] text-slate-500">Highway details: route planner data.</p>
+                <p className="mt-1 text-[10px] text-slate-500">{ROAD_SURFACE_CONDITION_NOTE}</p>
               )}
               {citationText && <p className="mt-2 text-[10px] text-slate-500">{citationText}</p>}
               {distanceHighways.length > 0 && highwaySegments.length === 0 && <p className="mt-2 text-[10px] text-cyan-300">Route: {distanceHighways.join(' → ')}</p>}
@@ -447,9 +470,10 @@ export function UnifiedRouteReport({
               <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Road condition</h2>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {surfaces.map((surface) => (
-                  <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">{surfaceLabels[surface] || surface}</span>
+                  <span key={surface} className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">{getRoadSurfaceLabel(surface)}</span>
                 ))}
               </div>
+              {surfaces.length > 0 && <p className="mt-1 text-[10px] text-slate-500">{ROAD_SURFACE_CONDITION_NOTE}</p>}
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
                 <span className="flex items-center gap-1.5 text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />{route.statusSummary.clearKm} km clear</span>
                 {cautionKm > 0 && <span className="flex items-center gap-1.5 text-amber-300"><AlertTriangle className="h-3.5 w-3.5" />{cautionKm} km caution</span>}

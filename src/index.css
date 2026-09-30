@@ -1592,6 +1592,11 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 }
 
 /* ===== PRINT STYLES — Route Report Print View ===== */
+.distance-calculator-letterhead,
+.distance-calculator-print-summary {
+  display: none;
+}
+
 @media print {
   @page {
     size: A4;
@@ -1605,6 +1610,80 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   #route-report,
   #route-report * {
     visibility: visible;
+  }
+  .distance-calculator-letterhead {
+    display: block !important;
+  }
+  .distance-calculator-print-summary {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 16px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .distance-calculator-place,
+  .distance-calculator-print-distance {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+  }
+  .distance-calculator-place {
+    flex: 1 1 0;
+  }
+  .distance-calculator-print-distance {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding-left: 12px;
+    border-left: 1px solid #cbd5e1;
+  }
+  .distance-calculator-place > svg,
+  .distance-calculator-print-distance > svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: #334155 !important;
+  }
+  .distance-calculator-route-arrow {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    color: #64748b !important;
+  }
+  .distance-calculator-place div,
+  .distance-calculator-print-distance div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+  .distance-calculator-place span,
+  .distance-calculator-print-distance span {
+    color: #64748b !important;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .distance-calculator-place strong,
+  .distance-calculator-print-distance strong {
+    overflow-wrap: anywhere;
+    color: #0f172a !important;
+    font-size: 10pt;
+  }
+  .government-report-letterhead {
+    align-items: flex-start;
+    border-bottom-color: #cbd5e1 !important;
+  }
+  .government-report-letterhead p {
+    color: #0f172a !important;
+  }
+  .government-report-letterhead p:last-child {
+    color: #475569 !important;
+    font-size: 8pt;
   }
   .distance-calculator-report-heading {
     display: none !important;

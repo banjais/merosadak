@@ -5,9 +5,14 @@
 
 export const DOR_BRANDING = {
   line1: 'Government of Nepal',
-  line2: 'Ministry of Physical Infrastructure',
+  line2: 'Ministry of Physical Infrastructure and Transport',
   line3: 'Department of Roads',
 } as const;
+
+export const DOR_REPORT_TITLE = 'Nepal Route and Distance Report (Independent)';
+
+export const DOR_REPORT_NOTE =
+  'Sources may include DoR publications, archived road data and mapped estimates. This report is not issued or endorsed by the Department of Roads.';
 
 /** Nepali (Devanagari) rendering of the same letterhead. */
 export const DOR_BRANDING_NE = {
@@ -23,11 +28,31 @@ export interface ReportIdentity {
   email?: string;
 }
 
-/** "29 Sept 2026, 12:34 (Asia/Kathmandu)" — matches the PDF letterhead. */
+const reportDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  dateStyle: 'medium',
+  timeZone: 'Asia/Kathmandu',
+});
+
+const reportTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeStyle: 'short',
+  timeZone: 'Asia/Kathmandu',
+});
+
+export interface ReportTimestamp {
+  date: string;
+  time: string;
+}
+
+/** Date and time in Nepal's timezone, suitable for separate print lines. */
+export function formatReportTimestampParts(at: Date): ReportTimestamp {
+  return {
+    date: reportDateFormatter.format(at),
+    time: reportTimeFormatter.format(at),
+  };
+}
+
+/** "29 Sept 2026, 12:34" — compact timestamp for PDF metadata and body text. */
 export function formatReportTimestamp(at: Date): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Kathmandu',
-  }).format(at);
+  const { date, time } = formatReportTimestampParts(at);
+  return `${date}, ${time}`;
 }

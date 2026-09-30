@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReportIdentity } from '../utils/reportBranding';
+import { DOR_BRANDING, DOR_REPORT_NOTE, DOR_REPORT_TITLE, ReportIdentity, ReportTimestamp } from '../utils/reportBranding';
 
 /**
  * Stylised national emblem of Nepal: the two pennons, the Himalayan range and
@@ -49,8 +49,8 @@ export const NepalEmblem: React.FC<{ className?: string }> = ({ className }) => 
 );
 
 interface DorLetterheadProps {
-  /** Formatted print/download timestamp. */
-  timestamp: string;
+  /** Print/download date and time, shown on separate lines. */
+  timestamp: ReportTimestamp;
   /** Signed-in user, when available. */
   identity?: ReportIdentity;
   /** Compact rendering for narrow viewports. */
@@ -64,20 +64,33 @@ interface DorLetterheadProps {
  * independent and does not issue Department of Roads documents.
  */
 export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identity, compact, useGovernmentEmblem = false }) => (
-  <div className="dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1">
+  <div className={`dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1 ${useGovernmentEmblem ? 'government-report-letterhead' : ''}`}>
     <img
       src={useGovernmentEmblem ? '/logo.jpeg' : '/logo.svg'}
       alt={useGovernmentEmblem ? 'Government of Nepal emblem' : 'MEROSADAK logo'}
       className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1 object-contain`}
     />
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-black text-white leading-tight">MEROSADAK</p>
-      <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
-      <p className="text-[9px] text-amber-400 leading-tight">Independent report; not issued by the Department of Roads.</p>
+      {useGovernmentEmblem ? (
+        <>
+          <p className="text-[10px] font-bold text-white leading-tight">{DOR_BRANDING.line1}</p>
+          <p className="text-[10px] font-semibold text-slate-200 leading-tight">{DOR_BRANDING.line2}</p>
+          <p className="text-[10px] font-semibold text-slate-200 leading-tight">{DOR_BRANDING.line3}</p>
+          <p className="mt-1 text-[9px] font-semibold text-slate-300 leading-tight">{DOR_REPORT_TITLE}</p>
+          <p className="max-w-2xl text-[9px] text-amber-400 leading-tight">{DOR_REPORT_NOTE}</p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-black text-white leading-tight">MEROSADAK</p>
+          <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
+          <p className="text-[9px] text-amber-400 leading-tight">Independent report; not issued by the Department of Roads.</p>
+        </>
+      )}
     </div>
     <div className="text-right shrink-0">
       <p className="text-[9px] uppercase tracking-wider text-slate-500">Printed</p>
-      <p className="text-[10px] font-semibold text-slate-300 whitespace-nowrap">{timestamp}</p>
+      <p className="text-[10px] font-semibold text-slate-300 whitespace-nowrap">{timestamp.date}</p>
+      <p className="text-[10px] text-slate-400 whitespace-nowrap">{timestamp.time}</p>
       {identity?.name && (
         <p className="text-[10px] text-slate-400 whitespace-nowrap max-w-[150px] truncate">{identity.name}</p>
       )}

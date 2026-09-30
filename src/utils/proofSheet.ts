@@ -2,7 +2,8 @@ import { jsPDF } from 'jspdf';
 import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSourceLabel } from './snhLookup';
 import { RouteHighwaySummary } from './routeHighwaySummary';
 import QRCode from 'qrcode';
-import { formatReportTimestamp } from './reportBranding';
+import { DOR_BRANDING, DOR_REPORT_NOTE, DOR_REPORT_TITLE, formatReportTimestampParts } from './reportBranding';
+import { getRoadSurfaceLabel, ROAD_SURFACE_CONDITION_NOTE } from './roadSurfaceLabels';
 import {
   DOR_DOCUMENT,
   DOR_PUBLISHER,
@@ -109,6 +110,26 @@ function drawEmblem(doc: jsPDF, x: number, y: number, size: number, color: [numb
   doc.setLineJoin('miter');
 }
 
+function drawLocationPin(doc: jsPDF, x: number, y: number, color: [number, number, number]): void {
+  doc.setDrawColor(...color);
+  doc.setFillColor(255, 255, 255);
+  doc.setLineWidth(0.55);
+  doc.circle(x, y, 1.8, 'FD');
+  doc.line(x - 1.3, y + 1.2, x, y + 3.5);
+  doc.line(x + 1.3, y + 1.2, x, y + 3.5);
+  doc.setFillColor(...color);
+  doc.circle(x, y, 0.45, 'F');
+}
+
+function drawDistanceRuler(doc: jsPDF, x: number, y: number, color: [number, number, number]): void {
+  doc.setDrawColor(...color);
+  doc.setLineWidth(0.45);
+  doc.roundedRect(x, y, 7, 4, 0.5, 0.5, 'S');
+  doc.line(x + 1.5, y, x + 1.5, y + 1.5);
+  doc.line(x + 3.5, y, x + 3.5, y + 2);
+  doc.line(x + 5.5, y, x + 5.5, y + 1.5);
+}
+
 async function loadReportEmblem(): Promise<string | null> {
   let objectUrl: string | null = null;
   try {
@@ -209,7 +230,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  // This emblem is shown only on the distance report; MEROSADAK remains the report issuer.
+  // The emblem identifies the cited public agency, not the report issuer.
   if (governmentEmblem) {
     doc.addImage(governmentEmblem, 'PNG', M, 5, 15, 15);
   } else {
@@ -228,12 +249,12 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setTextColor(c[0], c[1], c[2]);
     doc.text(ascii(s), LX, LY + dy);
   };
-  line('MEROSADAK', 0, 11, 'bold', [255, 255, 255]);
-  line('Nepal route and distance report', 5.2, 8, 'normal', [203, 213, 225]);
-  line('Independent report; not issued by Government of Nepal or DoR', 10.4, 7.5, 'normal', [245, 158, 11]);
+  line(DOR_BRANDING.line1, 0, 8.5, 'bold', [255, 255, 255]);
+  line(DOR_BRANDING.line2, 4.4, 7.5, 'normal', [203, 213, 225]);
+  line(DOR_BRANDING.line3, 8.5, 7.5, 'normal', [203, 213, 225]);
 
   // Right side: reference code, print stamp, and the signed-in user.
-  const stamp = formatReportTimestamp(printedAt);
+  const stamp = formatReportTimestampParts(printedAt);
   const rightLine = (s: string, dy: number, size: number, style: 'normal' | 'bold', c: [number, number, number]) => {
     doc.setFont('helvetica', style);
     doc.setFontSize(size);
@@ -241,31 +262,53 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.text(ascii(s), W - M, 7 + dy, { align: 'right' });
   };
   rightLine(id, 0, 8.5, 'bold', [255, 255, 255]);
-  rightLine(`Printed: ${stamp}`, 5, 7.5, 'normal', [203, 213, 225]);
-  if (data.issuedToName) rightLine(data.issuedToName, 16.5, 7.5, 'bold', [255, 255, 255]);
-  if (data.issuedToEmail) rightLine(data.issuedToEmail, 21, 7, 'normal', [148, 163, 184]);
+  rightLine('Printed', 5, 7.5, 'normal', [203, 213, 225]);
+  rightLine(stamp.date, 9, 7.5, 'normal', [203, 213, 225]);
+  rightLine(stamp.time, 13, 7.5, 'normal', [203, 213, 225]);
+  if (data.issuedToName) rightLine(data.issuedToName, 19, 7.5, 'bold', [255, 255, 255]);
+  if (data.issuedToEmail) rightLine(data.issuedToEmail, 23.5, 7, 'normal', [148, 163, 184]);
 
-  // Document title and the not-issued-unless-signed caveat.
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.2);
+  doc.setTextColor(203, 213, 225);
+  const headerNote = doc.splitTextToSize(ascii(`${DOR_REPORT_TITLE} - ${DOR_REPORT_NOTE}`), W - M * 2) as string[];
+  doc.text(headerNote, M, 32);
+
+  // Document title follows the agency attribution and independence note.
   y = 45;
-  text('DISTANCE EVIDENCE REPORT', M, 15, 'bold', INK);
-  y = 56.5;
-  text('Independent report; not issued by the Department of Roads.', M, 7.5, 'italic', WARN);
+  text('DISTANCE SUMMARY', M, 12, 'bold', INK);
+  y = 51;
   doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
   doc.setLineWidth(0.3);
   doc.line(M, y + 1.5, W - M, y + 1.5);
   y += 8;
 
-  // ---------------- result
-  text('FROM - TO', M, 7, 'bold', MUTED);
-  y += 5;
-  text(`${data.from}${data.fromDistrict ? ` (${data.fromDistrict})` : ''}  to  ${data.to}${data.toDistrict ? ` (${data.toDistrict})` : ''}`, M, 11, 'bold', INK);
-  y += 11;
+  // ---------------- route summary
+  const fromLabel = `${data.from}${data.fromDistrict ? ` (${data.fromDistrict})` : ''}`;
+  const toLabel = `${data.to}${data.toDistrict ? ` (${data.toDistrict})` : ''}`;
+  const fromX = M + 7;
+  const toX = M + 99;
+  drawLocationPin(doc, M + 2, y + 3.5, INK);
+  drawLocationPin(doc, M + 94, y + 3.5, INK);
+  text('FROM', fromX, 7, 'bold', MUTED);
+  text('TO', toX, 7, 'bold', MUTED);
+  y += 4.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...INK);
+  const fromLines = doc.splitTextToSize(ascii(fromLabel), 78) as string[];
+  const toLines = doc.splitTextToSize(ascii(toLabel), 78) as string[];
+  doc.text(fromLines, fromX, y);
+  doc.text(toLines, toX, y);
+  y += Math.max(fromLines.length, toLines.length) * 4.5 + 2;
   const coordinateText = (point?: { lat: number; lng: number }) => point
     ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
     : 'Unavailable';
-  text(`Origin coordinates: ${coordinateText(data.fromCoordinates)}    Destination coordinates: ${coordinateText(data.toCoordinates)}`, M, 7, 'normal', MUTED);
+  text(`Origin: ${coordinateText(data.fromCoordinates)}`, M, 7, 'normal', MUTED);
+  text(`Destination: ${coordinateText(data.toCoordinates)}`, M + 92, 7, 'normal', MUTED);
   y += 6;
-  text(`${res.distanceKm.toFixed(2)} km`, M, 26, 'bold', INK);
+  drawDistanceRuler(doc, M + 1, y - 5, INK);
+  text(`${res.distanceKm.toFixed(2)} km`, M + 11, 26, 'bold', INK);
 
   const col = getEvidenceLevelColor(res.evidenceLevel);
   const badge = getEvidenceLevelLabel(res.evidenceLevel);
@@ -301,10 +344,10 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
 
   if (data.routeHighways?.length) {
     heading('ROUTE PLANNER GIS PATH - CONTEXT ONLY');
-    wrapped('This separate GIS route is shown for context. It is not a segment-by-segment verification or breakdown of the selected distance.', 7.5, 'italic', MUTED, 3.5);
+    wrapped(`This separate GIS route is shown for context. It is not a segment-by-segment verification or breakdown of the selected distance. ${ROAD_SURFACE_CONDITION_NOTE}`, 7.5, 'italic', MUTED, 3.5);
     data.routeHighways.forEach((segment, index) => {
       const roadClass = segment.roadClass.toLowerCase() === 'national highway' ? '' : ` - ${segment.roadClass}`;
-      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode})${roadClass} - ${segment.surface.replaceAll('_', ' ')} - ${segment.distanceKm.toFixed(1)} km`;
+      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode})${roadClass} - ${getRoadSurfaceLabel(segment.surface)} - ${segment.distanceKm.toFixed(1)} km`;
       const wrapped = doc.splitTextToSize(ascii(description), W - M * 2);
       ensure(wrapped.length * 4.2);
       wrapped.forEach((line: string) => {
@@ -485,7 +528,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text(ascii(`${id}  |  ref ${claim.h}  |  verify at ${shortHost}  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`), M, H - 10.5);
+    doc.text(ascii(`${id}  |  ref ${claim.h}  |  https://dor.gov.np  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`), M, H - 10.5);
     doc.text(ascii('MEROSADAK report. DoR is cited as a data source, not as the report issuer.'), M, H - 7);
     doc.text(`Page ${p} of ${pages}`, W - M, H - 10.5, { align: 'right' });
   }
