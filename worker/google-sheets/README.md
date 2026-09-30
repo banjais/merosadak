@@ -3,11 +3,11 @@
 This endpoint appends Control Panel submissions to a dedicated spreadsheet. It
 does not write to the public DoR source spreadsheet.
 
-1. Create or choose a Mero Sadak-owned Google spreadsheet.
+1. Create or choose a MEROSADAK-owned Google spreadsheet.
 2. In **Extensions → Apps Script**, replace the editor contents with `Code.gs`.
 3. In **Project Settings → Script Properties**, set:
    - `SPREADSHEET_ID`: the ID between `/d/` and `/edit` in the sheet URL.
-   - `SHEET_NAME`: optional; defaults to `Mero Sadak Entries`.
+   - `SHEET_NAME`: optional; defaults to `MEROSADAK Entries`.
    - `WRITE_TOKEN`: a new, high-entropy random secret (at least 32 random bytes).
 4. Deploy the script as a **Web app**, executing as you, accessible to anyone.
    The deployed URL is the `/exec` URL. The shared token is the authorization

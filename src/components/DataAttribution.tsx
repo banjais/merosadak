@@ -121,7 +121,7 @@ export function labelDataSource(code?: string | null): string {
   if (c.includes('openweather')) return 'OpenWeatherMap';
   if (c.includes('overpass') || c.includes('osm')) return 'OpenStreetMap / Overpass';
   if (c.includes('offline')) return 'Offline bundle (device)';
-  if (c.includes('local') || c.includes('static') || c.includes('kv')) return 'Mero Sadak curated / KV';
+  if (c.includes('local') || c.includes('static') || c.includes('kv')) return 'MEROSADAK curated / KV';
   if (c.includes('osrm') || c.includes('graph')) return 'OSRM / local graph';
   if (c === 'none') return 'Unavailable';
   return code;

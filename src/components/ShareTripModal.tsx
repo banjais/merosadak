@@ -103,7 +103,7 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
 ⚠️ Active Advisories: ${routePlan.incidentsOnRoute.length} incident(s) reported
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔗 Live Map & Navigation: ${shareableUrl}
-🇳🇵 Generated via Mero Sadak Nepal Highway GIS`;
+🇳🇵 Generated via MEROSADAK Nepal Highway GIS`;
   }, [routePlan, vehicleName, durationFormatted, estimatedTotalCost, shareableUrl]);
 
   if (!isOpen) return null;
@@ -181,7 +181,7 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">
-                  Mero Sadak Itinerary
+                  MEROSADAK Itinerary
                 </span>
                 <span className="text-xs text-slate-400 flex items-center space-x-1">
                   <VehicleIcon className="w-3.5 h-3.5 text-emerald-400" />
@@ -380,7 +380,7 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
         {/* Modal Footer */}
         <div className="p-4 border-t border-slate-800 bg-slate-900 flex items-center justify-between">
           <span className="text-[11px] text-slate-500">
-            Mero Sadak Nepal Highway GIS • Real-time traffic, tolls & road updates
+            MEROSADAK Nepal Highway GIS • Real-time traffic, tolls & road updates
           </span>
           <div className="flex items-center space-x-2">
             {typeof navigator !== 'undefined' && 'share' in navigator && (

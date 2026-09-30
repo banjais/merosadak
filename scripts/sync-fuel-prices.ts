@@ -84,7 +84,7 @@ async function fetchFromNOC(): Promise<NocPriceData | null> {
 
     const res = await fetch(NOC_RETAIL_URL, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'MeroSadak/1.0 (+https://merosadak.com)' },
+      headers: { 'User-Agent': 'MEROSADAK/1.0 (+https://merosadak.com)' },
     });
     clearTimeout(timeoutId);
 
@@ -100,7 +100,7 @@ async function fetchFromNOC(): Promise<NocPriceData | null> {
 
     const mainRes = await fetch(NOC_MAIN_URL, {
       signal: controller2.signal,
-      headers: { 'User-Agent': 'MeroSadak/1.0 (+https://merosadak.com)' },
+      headers: { 'User-Agent': 'MEROSADAK/1.0 (+https://merosadak.com)' },
     });
     clearTimeout(timeoutId2);
     if (!mainRes.ok) return null;
@@ -123,7 +123,7 @@ async function fetchFromNocNews(): Promise<NocPriceData | null> {
 
     const res = await fetch('https://www.myrepublica.nagariknetwork.com/index.php/news/noc-cuts-petroleum-product-prices-96-77.html', {
       signal: controller.signal,
-      headers: { 'User-Agent': 'MeroSadak/1.0 (+https://merosadak.com)' },
+      headers: { 'User-Agent': 'MEROSADAK/1.0 (+https://merosadak.com)' },
     });
     clearTimeout(timeoutId);
 

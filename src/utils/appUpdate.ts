@@ -64,7 +64,7 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
     if (refreshing) return;
     if (!canReloadNow()) return;
     refreshing = true;
-    console.log('[Mero Sadak] New service worker active — reloading');
+    console.log('[MEROSADAK] New service worker active — reloading');
     window.location.reload();
   });
 
@@ -73,7 +73,7 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
     if (!data || typeof data !== 'object') return;
     if (data.type === 'SW_ACTIVATED' && data.action === 'reload-recommended') {
       if (canReloadNow()) {
-        console.log('[Mero Sadak] SW activated', data.version, '— reloading');
+        console.log('[MEROSADAK] SW activated', data.version, '— reloading');
         window.location.reload();
       }
     }
@@ -139,10 +139,10 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
       /* ignore */
     }
 
-    console.log('[Mero Sadak] Auto-update armed — build', CLIENT_APP_BUILD);
+    console.log('[MEROSADAK] Auto-update armed — build', CLIENT_APP_BUILD);
     return !!navigator.serviceWorker.controller || !!registration.active;
   } catch (error) {
-    console.warn('[Mero Sadak] Auto-update setup failed:', error);
+    console.warn('[MEROSADAK] Auto-update setup failed:', error);
     return false;
   }
 }
@@ -178,7 +178,7 @@ export async function checkRemoteVersionAndRefresh(): Promise<void> {
     }
 
     if (remoteBuild !== localBuild && remoteBuild !== CLIENT_APP_BUILD) {
-      console.log('[Mero Sadak] New version detected', localBuild, '→', remoteBuild);
+      console.log('[MEROSADAK] New version detected', localBuild, '→', remoteBuild);
       await purgeLegacyCaches();
       try {
         localStorage.setItem(STORAGE_BUILD_KEY, remoteBuild);

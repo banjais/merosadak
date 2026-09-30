@@ -1,4 +1,4 @@
-# Mero Sadak — agent notes
+# MEROSADAK — agent notes
 
 Nepal road-travel PWA (Leaflet map + Firebase Hosting + Cloudflare Worker).
 

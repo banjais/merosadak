@@ -53,7 +53,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
       try {
         mediaRecorderRef.current.stop();
       } catch (e) {
-        console.warn('[Mero Sadak] MediaRecorder stop warning:', e);
+        console.warn('[MEROSADAK] MediaRecorder stop warning:', e);
       }
     }
     setIsRecording(false);
@@ -126,7 +126,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
           try {
             recognitionInstance.stop();
           } catch (e) {
-            console.warn('[Mero Sadak] SpeechRecognition stop warning:', e);
+            console.warn('[MEROSADAK] SpeechRecognition stop warning:', e);
           }
         }
 
@@ -235,7 +235,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-white text-base">Report Road Condition / Hazard</h3>
-              <p className="text-xs text-slate-400">Mero Sadak Roads Board Nepal Crowdsource Portal</p>
+              <p className="text-xs text-slate-400">MEROSADAK Roads Board Nepal Crowdsource Portal</p>
             </div>
           </div>
 
@@ -438,7 +438,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold transition shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2"
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                <span>{submitting ? 'Submitting to Roads Board...' : 'Submit Report to Mero Sadak'}</span>
+                <span>{submitting ? 'Submitting to Roads Board...' : 'Submit Report to MEROSADAK'}</span>
               </button>
             </div>
           </form>

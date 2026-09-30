@@ -1,4 +1,4 @@
-// Mero Sadak Nepal Highway GIS - Service Worker
+// MEROSADAK Nepal Highway GIS - Service Worker
 // Version 1.6.0 - Background Sync outbox + Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
 const SW_VERSION = '1.6.1';
@@ -139,7 +139,7 @@ self.addEventListener('install', (event) => {
       } catch (_) {}
     }));
 
-    console.log('[SW] Mero Sadak', SW_VERSION, 'installed');
+    console.log('[SW] MEROSADAK', SW_VERSION, 'installed');
   })());
 });
 
@@ -163,7 +163,7 @@ self.addEventListener('activate', (event) => {
         action: 'reload-recommended',
       });
     }
-    console.log('[SW] Mero Sadak', SW_VERSION, 'active — old caches purged');
+    console.log('[SW] MEROSADAK', SW_VERSION, 'active — old caches purged');
   })());
 });
 
@@ -185,7 +185,7 @@ self.addEventListener('fetch', (event) => {
         return networkRes;
       } catch {
         return new Response(JSON.stringify({
-          name: 'Mero Sadak', short_name: 'MeroSadak', start_url: '/', display: 'standalone',
+          name: 'MEROSADAK', short_name: 'MEROSADAK', start_url: '/', display: 'standalone',
           background_color: '#070f1e', theme_color: '#070f1e', icons: []
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
@@ -260,7 +260,7 @@ self.addEventListener('fetch', (event) => {
         return networkRes;
       } catch {
         return (await staticCache.match('/index.html')) || (await staticCache.match('/')) ||
-          new Response('Offline — open Mero Sadak once online to refresh the app shell.', {
+          new Response('Offline — open MEROSADAK once online to refresh the app shell.', {
             status: 503, headers: { 'Content-Type': 'text/plain' }
           });
       }

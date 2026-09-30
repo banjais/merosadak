@@ -1,5 +1,5 @@
 /**
- * Mero Sadak Worker — free-first APIs (DHM, Open-Meteo, Overpass via client, KV data)
+ * MEROSADAK Worker — free-first APIs (DHM, Open-Meteo, Overpass via client, KV data)
  */
 import { DHM_RAIN_API, DHM_THRESHOLDS, normalizeDhmRainfall } from "./dhm-rainfall";
 import {
@@ -119,7 +119,7 @@ async function verifyFirebaseIdentity(request: Request, env: Env): Promise<Verif
     const uid = account?.localId ?? "";
     const isGoogleAccount = account?.providerUserInfo?.some((provider) => provider.providerId === "google.com");
     if (!email || !uid || !account?.emailVerified || !isGoogleAccount) {
-      return jsonResponse(env, { error: "Use a verified Google account to access Mero Sadak." }, 403);
+      return jsonResponse(env, { error: "Use a verified Google account to access MEROSADAK." }, 403);
     }
     return { email, uid };
   } catch (error) {
@@ -394,7 +394,7 @@ async function handleDhmRainfall(url: URL, env: Env): Promise<Response> {
   const warningsOnly = url.searchParams.get("warnings") === "1";
   try {
     const res = await fetchWithTimeout(DHM_RAIN_API, {
-      headers: { Accept: "application/json", "User-Agent": "MeroSadak/1.0" },
+      headers: { Accept: "application/json", "User-Agent": "MEROSADAK/1.0" },
       timeoutMs: 12000,
     } as any);
     if (!res.ok) {

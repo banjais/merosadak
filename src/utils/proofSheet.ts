@@ -165,11 +165,11 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   const shortHost = origin.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
   doc.setProperties({
-    title: `Mero Sadak distance report: ${data.from} to ${data.to} (${id})`,
-    subject: 'Unofficial Mero Sadak report identifying its source and evidence level.',
-    author: 'Mero Sadak',
+    title: `MEROSADAK distance report: ${data.from} to ${data.to} (${id})`,
+    subject: 'Unofficial MEROSADAK report identifying its source and evidence level.',
+    author: 'MEROSADAK',
     keywords: `${id}, SNH 2022/23, Department of Roads, Government of Nepal`,
-    creator: 'Mero Sadak',
+    creator: 'MEROSADAK',
   });
 
   let y = 0;
@@ -209,7 +209,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  // This emblem is shown only on the distance report; Mero Sadak remains the report issuer.
+  // This emblem is shown only on the distance report; MEROSADAK remains the report issuer.
   if (governmentEmblem) {
     doc.addImage(governmentEmblem, 'PNG', M, 5, 15, 15);
   } else {
@@ -228,7 +228,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setTextColor(c[0], c[1], c[2]);
     doc.text(ascii(s), LX, LY + dy);
   };
-  line('Mero Sadak', 0, 11, 'bold', [255, 255, 255]);
+  line('MEROSADAK', 0, 11, 'bold', [255, 255, 255]);
   line('Nepal route and distance report', 5.2, 8, 'normal', [203, 213, 225]);
   line('Independent report; not issued by Government of Nepal or DoR', 10.4, 7.5, 'normal', [245, 158, 11]);
 
@@ -459,7 +459,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     ['DoR publication', res.evidenceLevel === 'published' ? `${DOR_DOCUMENT}, HMIS-ICT Unit, published June 2024` : 'No DoR-published distance for this city pair'],
     ['Snapshot', res.source === 'dor_snh' ? 'Data reflects the 2022/23 publication, not live road conditions.' : 'Computed route from archived road geometry; not a live road-status report.'],
     ['Dataset fingerprint', `SHA-256 (first 12): ${data.dataHash}`],
-    ['Prepared by', 'Mero Sadak (independent report; not issued by the Department of Roads).'],
+    ['Prepared by', 'MEROSADAK (independent report; not issued by the Department of Roads).'],
     ['Copyright', '(c) 2023 Department of Roads (source data). Reproduced for reference.'],
   ];
   src.forEach(([k, v]) => {
@@ -486,7 +486,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setFontSize(6.5);
     doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
     doc.text(ascii(`${id}  |  ref ${claim.h}  |  verify at ${shortHost}  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`), M, H - 10.5);
-    doc.text(ascii('Mero Sadak report. DoR is cited as a data source, not as the report issuer.'), M, H - 7);
+    doc.text(ascii('MEROSADAK report. DoR is cited as a data source, not as the report issuer.'), M, H - 7);
     doc.text(`Page ${p} of ${pages}`, W - M, H - 10.5, { align: 'right' });
   }
 
@@ -500,7 +500,7 @@ export async function generateProofSheet(data: ProofSheetData): Promise<void> {
     doc.save(`merosadak-proof-${safe(data.from)}-${safe(data.to)}-${proofId(claim)}.pdf`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[Mero Sadak] Proof sheet PDF export failed:', message);
+    console.error('[MEROSADAK] Proof sheet PDF export failed:', message);
     const alert = document.createElement('div');
     alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-red-900/95 text-red-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
     alert.textContent = 'PDF export failed. Try Print instead, or check your browser download settings.';

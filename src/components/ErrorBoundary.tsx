@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[Mero Sadak] Render error caught by boundary:', error, errorInfo);
+    console.error('[MEROSADAK] Render error caught by boundary:', error, errorInfo);
   }
 
   handleReset = () => {

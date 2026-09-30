@@ -1,4 +1,4 @@
-# Mero Sadak
+# MEROSADAK
 
 Static Nepal road-network map (Leaflet) on Firebase Hosting, with a Cloudflare
 Worker backend for anything that needs a paid/rate-limited key.

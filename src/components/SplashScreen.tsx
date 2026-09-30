@@ -152,7 +152,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
 
         {/* Title */}
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-display mb-1.5 splash-shimmer-text leading-none">
-          MERO SADAK
+          MEROSADAK
         </h1>
 
         {/* Nepali Subtitle */}

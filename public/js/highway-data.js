@@ -1,4 +1,4 @@
-/* Mero Sadak — Highway Data (ported from merosadak-reference)
+/* MEROSADAK — Highway Data (ported from merosadak-reference)
    Structured for minimal-size consumption with maximum information density.
    Used by index.html for highway layer rendering, safety segments, blackspot overlays. */
 

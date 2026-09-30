@@ -11,8 +11,8 @@ interface ControlPanelModalProps {
 
 const roleDescriptions: Record<AccessRole, string> = {
   SuperAdmin: 'Full access control. You can appoint or remove OfficeAdmin accounts.',
-  OfficeAdmin: 'Office account. You can view account analytics and submit road information to Mero Sadak’s Google Sheet.',
-  GeneralUser: 'Standard account. Sign in to use Mero Sadak with your Google account.',
+  OfficeAdmin: 'Office account. You can view account analytics and submit road information to MEROSADAK’s Google Sheet.',
+  GeneralUser: 'Standard account. Sign in to use MEROSADAK with your Google account.',
 };
 
 const emptyRoadEntry: SheetRoadEntry = {
@@ -141,7 +141,7 @@ export const ControlPanelModal: React.FC<ControlPanelModalProps> = ({ onClose, o
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">Mero Sadak</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">MEROSADAK</p>
             <h2 id="control-panel-title" className="mt-1 text-xl font-black text-white">Control Panel</h2>
           </div>
           <button
@@ -242,7 +242,7 @@ export const ControlPanelModal: React.FC<ControlPanelModalProps> = ({ onClose, o
               <section className="mt-5 rounded-xl border border-slate-700 bg-slate-950/40 p-4">
                 <div>
                   <h3 className="flex items-center gap-2 text-sm font-bold text-white"><FileSpreadsheet className="h-4 w-4 text-emerald-300" /> Submit road information</h3>
-                  <p className="mt-1 text-[11px] text-slate-400">Entries are sent to the configured Mero Sadak Google Sheet, not the public DoR source sheet.</p>
+                  <p className="mt-1 text-[11px] text-slate-400">Entries are sent to the configured MEROSADAK Google Sheet, not the public DoR source sheet.</p>
                 </div>
                 {!accessProfile.sheetEntryEnabled && (
                   <p role="status" className="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-[11px] leading-relaxed text-amber-200">

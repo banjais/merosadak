@@ -51,7 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
           <div className="w-16 h-16 mx-auto bg-amber-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-amber-500/25">
             <ShieldCheck className="text-slate-950 w-8 h-8" strokeWidth={2} />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Mero Sadak</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight">MEROSADAK</h1>
           <p className="text-xs font-semibold text-slate-400 mt-1">Nepal National Highway Network &amp; GIS</p>
         </div>
 
@@ -73,7 +73,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
             </button>
 
             <p className="text-[10px] leading-relaxed text-slate-400 text-center">
-              Use any Google account, including Gmail or Google Workspace. Google handles sign-in; Mero Sadak never sees your password.
+              Use any Google account, including Gmail or Google Workspace. Google handles sign-in; MEROSADAK never sees your password.
             </p>
 
             <label className="flex items-center gap-2 cursor-pointer select-none">

@@ -1,4 +1,4 @@
-// util.js – shared utility functions for Merosadak app
+// util.js – shared utility functions for MEROSADAK
 
 // Mode handling
 function setMode(mode) {
@@ -174,7 +174,7 @@ function shareApp() {
   // Simple share using Web Share API if available
   if (navigator.share) {
     navigator.share({
-      title: 'Mero Sadak',
+      title: 'MEROSADAK',
       url: location.href
     }).catch(e => console.warn('Share failed', e));
   } else {

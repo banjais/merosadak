@@ -67,11 +67,11 @@ export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identit
   <div className="dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1">
     <img
       src={useGovernmentEmblem ? '/logo.jpeg' : '/logo.svg'}
-      alt={useGovernmentEmblem ? 'Government of Nepal emblem' : 'Mero Sadak logo'}
+      alt={useGovernmentEmblem ? 'Government of Nepal emblem' : 'MEROSADAK logo'}
       className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1 object-contain`}
     />
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-black text-white leading-tight">Mero Sadak</p>
+      <p className="text-sm font-black text-white leading-tight">MEROSADAK</p>
       <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
       <p className="text-[9px] text-amber-400 leading-tight">Independent report; not issued by the Department of Roads.</p>
     </div>

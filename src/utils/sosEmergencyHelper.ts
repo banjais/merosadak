@@ -226,7 +226,7 @@ export function generateFullSosMessage(options: GenerateSosMessageOptions): stri
     ``,
     `📞 *NEPAL HIGHWAY RESCUE HOTLINES*:`,
     `• Police: 100 | Traffic: 103 | Tourist Police: 1144 | Ambulance: 102 | APF Rescue: 1114`,
-    `[Generated via Mero Sadak Nepal Highway SOS]`
+    `[Generated via MEROSADAK Nepal Highway SOS]`
   ];
 
   return lines.filter((l) => l !== '').join('\n');

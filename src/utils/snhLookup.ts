@@ -348,7 +348,7 @@ export function getSourceDescription(source: DataSourceType): string {
     case 'dor_snh':
       return 'DoR Statistics of National Highway 2022/23. Only a pair with a table/page citation is a distance published by DoR.';
     case 'dor_geojson':
-      return 'Distance computed over archived DoR highway geometry. It is derived by Mero Sadak and is not a DoR-published city-pair figure.';
+      return 'Distance computed over archived DoR highway geometry. It is derived by MEROSADAK and is not a DoR-published city-pair figure.';
     case 'estimate_aerial':
       return 'Aerial line-of-sight distance (geodesic great circle). No surveyed corridor data available.';
     default:
@@ -375,8 +375,8 @@ export function lookupGeoJsonRouteDistance(
       table: 'Computed shortest path over archived highway geometry',
     },
     note: route.inferredConnectorKm > 0
-      ? `Derived by Mero Sadak over DoR archive geometry; DoR does not publish this pair. ${route.inferredConnectorKm.toFixed(1)} km uses inferred access or network-join connectors.`
-      : 'Derived route computed by Mero Sadak over DoR archive geometry; DoR does not publish this city-pair figure.',
+      ? `Derived by MEROSADAK over DoR archive geometry; DoR does not publish this pair. ${route.inferredConnectorKm.toFixed(1)} km uses inferred access or network-join connectors.`
+      : 'Derived route computed by MEROSADAK over DoR archive geometry; DoR does not publish this city-pair figure.',
     highwaysUsed: route.highwaysUsed,
     inferredConnectorKm: route.inferredConnectorKm,
   };

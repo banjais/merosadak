@@ -277,7 +277,7 @@ function AppContent() {
       });
 
       if (hasNetworkError) {
-        console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
+        console.log('[MEROSADAK] Network unreachable. Checking offline local bundle...');
         try {
           const offlineBundle = getStoredOfflineBundle();
           if (offlineBundle) {
@@ -288,7 +288,7 @@ function AppContent() {
             if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
           }
         } catch (offlineErr) {
-          console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);
+          console.warn('[MEROSADAK] Offline bundle fallback failed:', offlineErr);
         }
       }
       setIsAppReady(true);
@@ -576,7 +576,7 @@ function AppContent() {
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-base font-black tracking-tight text-white font-display">MERO SADAK</span>
+                  <span className="text-base font-black tracking-tight text-white font-display">MEROSADAK</span>
                   <span className="px-1.5 py-0.2 text-[9px] font-extrabold accent-bg accent-text accent-border border rounded">
                     मेरो सडक
                   </span>

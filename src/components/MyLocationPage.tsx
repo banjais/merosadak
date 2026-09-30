@@ -425,7 +425,7 @@ export const MyLocationPage: React.FC<{
             </div>
             <div>
               <h1 className="text-sm font-semibold accent-text tracking-wider">
-                MERO SADAK
+                MEROSADAK
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">
                 My Location

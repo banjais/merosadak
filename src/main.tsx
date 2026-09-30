@@ -11,7 +11,7 @@ if (typeof window !== 'undefined') {
   setupOutboxOnlineListener();
   void setupAutomaticUpdates();
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('[Mero Sadak] Unhandled promise rejection:', event.reason);
+    console.error('[MEROSADAK] Unhandled promise rejection:', event.reason);
   });
 }
 

@@ -1,5 +1,5 @@
 /**
- * Create a Cloudflare KV namespace for Mero Sadak data.
+ * Create a Cloudflare KV namespace for MEROSADAK data.
  *
  * Usage:
  *   node worker/setup-kv.js --token <CLOUDFLARE_API_TOKEN> --account <CLOUDFLARE_ACCOUNT_ID>

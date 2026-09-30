@@ -1,4 +1,4 @@
-/* Mero Sadak — Route Analysis & Alternative Routes
+/* MEROSADAK — Route Analysis & Alternative Routes
    Implements reference's multi-edge graph pathfinding with safety-weighted scoring.
    Computes up to 3 alternative routes with segment-level safety breakdowns. */
 

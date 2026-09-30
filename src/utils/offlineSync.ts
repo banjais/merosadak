@@ -1,4 +1,4 @@
-// Mero Sadak Nepal GIS - Offline Mountain Synchronization & Service Worker Bridge
+// MEROSADAK Nepal GIS - Offline Mountain Synchronization & Service Worker Bridge
 import { HighwaySegment } from '../types';
 import { getApiUrl } from './apiConfig';
 import { registerServiceWorkerWithAutoUpdate } from './appUpdate';

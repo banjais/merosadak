@@ -83,7 +83,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
               <FileText className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">MERO SADAK</h1>
+              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">MEROSADAK</h1>
               <p className="text-xl font-black text-white font-display">Data Sources & Certification</p>
             </div>
           </div>
@@ -119,7 +119,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               This statement documents the data provenance for all distance figures shown in the
-              Mero Sadak distance calculator. It identifies which data is copied verbatim from
+              MEROSADAK distance calculator. It identifies which data is copied verbatim from
               the Department of Roads publication, which is derived from it, and which is
               sourced elsewhere.
             </p>
@@ -245,7 +245,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
             <div className="border-t border-slate-700 pt-6 space-y-6">
               <div>
                 <div className="text-xs text-slate-500 mb-1">Prepared by:</div>
-                <div className="font-bold text-white">Mero Sadak Nepal Development Team</div>
+                <div className="font-bold text-white">MEROSADAK Nepal Development Team</div>
               </div>
               <div className="flex items-end justify-end gap-8">
                 <div className="text-center">

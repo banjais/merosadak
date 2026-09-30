@@ -275,7 +275,7 @@ export function UnifiedRouteReport({
           <div className="min-w-0 flex items-center gap-3">
             <img
               src="/logo.svg"
-              alt="Mero Sadak logo"
+              alt="MEROSADAK logo"
               className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 object-contain shadow-lg shadow-slate-950/30"
             />
             <div>

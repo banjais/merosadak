@@ -28,7 +28,7 @@ function doPost(event) {
 
     const properties = PropertiesService.getScriptProperties();
     const spreadsheetId = properties.getProperty('SPREADSHEET_ID');
-    const sheetName = properties.getProperty('SHEET_NAME') || 'Mero Sadak Entries';
+    const sheetName = properties.getProperty('SHEET_NAME') || 'MEROSADAK Entries';
     if (!spreadsheetId) return jsonResponse({ ok: false, error: 'Spreadsheet is not configured' });
 
     const lock = LockService.getScriptLock();
@@ -50,7 +50,7 @@ function doPost(event) {
 
     return jsonResponse({ ok: true, sheetName: sheetName });
   } catch (error) {
-    console.error('Mero Sadak sheet entry failed:', error);
+    console.error('MEROSADAK sheet entry failed:', error);
     return jsonResponse({ ok: false, error: 'Could not append entry' });
   }
 }

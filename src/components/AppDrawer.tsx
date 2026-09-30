@@ -193,7 +193,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
               </svg>
             </div>
             <div>
-              <span className="font-black text-sm tracking-tight text-white font-display">Merosadak</span>
+              <span className="font-black text-sm tracking-tight text-white font-display">MEROSADAK</span>
             </div>
           </div>
           <button
@@ -248,7 +248,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-secondary truncate">merosadak</span>
+              <span className="text-[11px] font-medium text-secondary truncate">MEROSADAK</span>
             </div>
             {loading ? (
               <span className="text-[10px] text-muted shrink-0">Authenticating...</span>

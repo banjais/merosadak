@@ -112,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       },
       (error) => {
-        console.error('[Mero Sadak] Auth state subscription failed:', error);
+        console.error('[MEROSADAK] Auth state subscription failed:', error);
         setUser(null);
         setLoading(false);
         setRedirectError(friendlyAuthError(authErrorCode(error)));
@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await getRedirectResult(auth);
       } catch (error) {
-        console.error('[Mero Sadak] Google sign-in redirect failed:', error);
+        console.error('[MEROSADAK] Google sign-in redirect failed:', error);
         if (cancelled) return;
         setRedirectError(friendlyAuthError(authErrorCode(error)));
       } finally {
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       setRedirectFlag(null)
-      console.error('[Mero Sadak] loginWithGoogle failed:', error);
+      console.error('[MEROSADAK] loginWithGoogle failed:', error);
       throw new Error(friendlyAuthError(authErrorCode(error)), { cause: error });
     }
   }, []);
@@ -190,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signOut(auth);
     } catch (error) {
-      console.error('[Mero Sadak] Logout failed:', error);
+      console.error('[MEROSADAK] Logout failed:', error);
     }
   }, []);
 

@@ -66,7 +66,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <div className="text-xs font-semibold accent-text tracking-wider">MERO SADAK</div>
+            <div className="text-xs font-semibold accent-text tracking-wider">MEROSADAK</div>
             <div className="text-lg font-black text-white">Check a printed proof sheet</div>
           </div>
         </div>
@@ -121,7 +121,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs text-slate-300 leading-relaxed">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">What this check means</div>
           <p>
-            This page checks the figure against the cited SNH table or computes it again over archived DoR highway geometry. A published badge means the exact pair appears in the named table; an archive-route badge means Mero Sadak computed the path and DoR did not publish that pair. It cannot confirm who issued the paper.
+            This page checks the figure against the cited SNH table or computes it again over archived DoR highway geometry. A published badge means the exact pair appears in the named table; an archive-route badge means MEROSADAK computed the path and DoR did not publish that pair. It cannot confirm who issued the paper.
           </p>
           <p>
             Data source: <strong>{DOR_PUBLISHER}</strong>.{' '}
@@ -132,7 +132,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
         </section>
 
         <button onClick={onClose} className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm transition">
-          Open Mero Sadak
+          Open MEROSADAK
         </button>
       </main>
     </div>

@@ -23,7 +23,7 @@ const WEATHER_CACHE_TTL_MS = 60 * 1000; // 1 minute cache to avoid rate limits
 
 /**
  * Maps WMO Weather Interpretation Codes (used by Open-Meteo & DHM global station feeds)
- * to Mero Sadak mountain road conditions and road grip status.
+ * to MEROSADAK mountain road conditions and road grip status.
  */
 function mapWmoCodeToHighwayCondition(wmoCode: number, tempC: number, windSpeedKmh: number): {
   condition: HighwayWeatherNode['condition'];
@@ -164,7 +164,7 @@ function extractAndParseJson(text: string): any | null {
   try {
     return JSON.parse(trimmed);
   } catch (e) {
-    console.warn('[Mero Sadak] JSON direct parse failed:', (e as Error).message);
+    console.warn('[MEROSADAK] JSON direct parse failed:', (e as Error).message);
   }
 
   // 2. Strip standard markdown code blocks
@@ -176,7 +176,7 @@ function extractAndParseJson(text: string): any | null {
   try {
     return JSON.parse(unmarkdown);
   } catch (e) {
-    console.warn('[Mero Sadak] JSON markdown-stripped parse failed:', (e as Error).message);
+    console.warn('[MEROSADAK] JSON markdown-stripped parse failed:', (e as Error).message);
   }
 
   // 3. Extract the outermost JSON object { ... }
@@ -187,13 +187,13 @@ function extractAndParseJson(text: string): any | null {
     try {
       return JSON.parse(jsonCandidate);
     } catch (e) {
-      console.warn('[Mero Sadak] JSON object extraction parse failed:', (e as Error).message);
+      console.warn('[MEROSADAK] JSON object extraction parse failed:', (e as Error).message);
       // Try stripping trailing commas before } or ]
       try {
         const cleanedCommas = jsonCandidate.replace(/,\s*([\]}])/g, '$1');
         return JSON.parse(cleanedCommas);
       } catch (e2) {
-        console.warn('[Mero Sadak] JSON comma-cleaned parse failed:', (e2 as Error).message);
+        console.warn('[MEROSADAK] JSON comma-cleaned parse failed:', (e2 as Error).message);
       }
     }
   }
@@ -206,12 +206,12 @@ function extractAndParseJson(text: string): any | null {
     try {
       return JSON.parse(arrayCandidate);
     } catch (e) {
-      console.warn('[Mero Sadak] JSON array extraction parse failed:', (e as Error).message);
+      console.warn('[MEROSADAK] JSON array extraction parse failed:', (e as Error).message);
       try {
         const cleanedCommas = arrayCandidate.replace(/,\s*([\]}])/g, '$1');
         return JSON.parse(cleanedCommas);
       } catch (e2) {
-        console.warn('[Mero Sadak] JSON array comma-cleaned parse failed:', (e2 as Error).message);
+        console.warn('[MEROSADAK] JSON array comma-cleaned parse failed:', (e2 as Error).message);
       }
     }
   }
@@ -283,13 +283,13 @@ async function startServer() {
       );
       res.status(upstream.status).type('application/json').send(await upstream.text());
     } catch (error) {
-      console.error('[Mero Sadak] Access-control API proxy failed:', error);
+      console.error('[MEROSADAK] Access-control API proxy failed:', error);
       res.status(502).json({ error: 'Could not reach the access-control service.' });
     }
   });
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'Mero Sadak Highway & Route Optimization Engine' });
+    res.json({ status: 'ok', service: 'MEROSADAK Highway & Route Optimization Engine' });
   });
 
   // Highways directory endpoint
@@ -485,7 +485,7 @@ async function startServer() {
     res.sendFile(path.join(process.cwd(), 'public', 'sw.js'));
   });
 
-  // Submit crowdsourced Mero Sadak report
+  // Submit crowdsourced MEROSADAK report
   app.post('/api/submit-report', (req, res) => {
     const { highwayCode, location, incidentType, severity, description, reporterName, contactNumber } = req.body;
     if (!location || !description) {
@@ -585,7 +585,7 @@ async function startServer() {
         });
       }
 
-      const prompt = `You are the AI routing assistant for Nepal Highway GIS (Mero Sadak).
+      const prompt = `You are the AI routing assistant for Nepal Highway GIS (MEROSADAK).
 Parse the following user query into structured route parameters for Nepal highways:
 "${query}"
 
@@ -643,7 +643,7 @@ Return a valid JSON object matching:
         });
       }
 
-      const prompt = `You are the chief highway safety and terrain navigation advisor for the Department of Roads, Nepal and Mero Sadak.
+      const prompt = `You are the chief highway safety and terrain navigation advisor for the Department of Roads, Nepal and MEROSADAK.
 Analyze this planned trip in Nepal:
 - Origin: ${origin}
 - Destination: ${destination}
@@ -872,7 +872,7 @@ Return a valid JSON object with the following fields:
         return res.json({ tripPlan: generateFallbackTripPlan() });
       }
 
-      const prompt = `You are the ultimate AI Highway Trip Assistant & Travel Concierge for Nepal highways (Mero Sadak).
+      const prompt = `You are the ultimate AI Highway Trip Assistant & Travel Concierge for Nepal highways (MEROSADAK).
 A traveler is taking a trip with the following route parameters:
 - Origin: ${origin} (District: ${originDistrict || 'Unknown'})
 - Destination: ${destination} (District: ${destinationDistrict || 'Unknown'})
@@ -946,7 +946,7 @@ Generate between 3 to 5 realistic, high-quality, geographically authentic stops 
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Mero Sadak Highway Server running on http://localhost:${PORT}`);
+    console.log(`MEROSADAK Highway Server running on http://localhost:${PORT}`);
   });
 }
 

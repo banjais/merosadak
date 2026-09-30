@@ -457,7 +457,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   const handleCopyReceipt = () => {
     const fromName = origin?.name || 'Origin';
     const toName = destination?.name || 'Destination';
-    const receiptText = `🚗 MERO SADAK NEPAL - TRIP EXPENSE ESTIMATE
+    const receiptText = `🚗 MEROSADAK NEPAL - TRIP EXPENSE ESTIMATE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Route: ${fromName} ➔ ${toName}
 Distance: ${calculation.effectiveDistance} km (${isRoundTrip ? 'Round-Trip' : 'One-Way'})
@@ -474,7 +474,7 @@ ${includeMeals ? `• Highway Dhaba & Meals: Rs. ${calculation.totalMealsNpr.toL
 🛣️ Cost per KM: Rs. ${calculation.costPerKm} / km
 🌱 Est. CO2: ${calculation.totalCo2Kg} kg
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Generated via Mero Sadak Nepal Highway GIS`;
+Generated via MEROSADAK Nepal Highway GIS`;
 
     navigator.clipboard.writeText(receiptText);
     setCopiedReceipt(true);
