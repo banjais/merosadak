@@ -208,13 +208,13 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition text-left group touch-target ${
+                  className={`w-full flex items-center justify-start gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition text-left group touch-target ${
                     isActive
                       ? item.activeBg
                       : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5">
+                  <div className="flex min-w-0 flex-1 items-center space-x-2.5 text-left">
                     <div className={`p-1 rounded-lg ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
@@ -223,7 +223,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       <span className="text-[9px] text-tertiary font-normal">{item.subtitle}</span>
                     </div>
                   </div>
-                  <ChevronRight className={`w-3 h-3 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                  <ChevronRight className={`ml-auto h-3 w-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
                 </button>
               );
             })}
