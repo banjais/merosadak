@@ -15,6 +15,10 @@ const TYPE_PRIORITY: Record<string, number> = {
   'Rural Municipality': 4,
 };
 
+const CITY_SEARCH_ALIASES: Record<string, string[]> = {
+  attariya: ['attaria'],
+};
+
 export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -22,16 +26,27 @@ export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
     return [];
   }
 
+  const nameMatchesQuery = (city: CityNode) => {
+    const normalizedName = city.name.toLowerCase();
+    return normalizedName.includes(normalizedQuery) ||
+      (CITY_SEARCH_ALIASES[normalizedName] || []).some((alias) => alias.includes(normalizedQuery));
+  };
+  const isExactNameMatch = (city: CityNode) => {
+    const normalizedName = city.name.toLowerCase();
+    return normalizedName === normalizedQuery ||
+      (CITY_SEARCH_ALIASES[normalizedName] || []).includes(normalizedQuery);
+  };
+
   return cities
     .filter((city) =>
-      city.name.toLowerCase().includes(normalizedQuery) ||
+      nameMatchesQuery(city) ||
       city.district.toLowerCase().includes(normalizedQuery) ||
       city.province.toLowerCase().includes(normalizedQuery) ||
       city.nepaliName.toLowerCase().includes(normalizedQuery)
     )
     .sort((a, b) => {
-      const aExact = a.name.toLowerCase() === normalizedQuery ? 0 : 1;
-      const bExact = b.name.toLowerCase() === normalizedQuery ? 0 : 1;
+      const aExact = isExactNameMatch(a) ? 0 : 1;
+      const bExact = isExactNameMatch(b) ? 0 : 1;
       if (aExact !== bExact) return aExact - bExact;
       const aInDistrict = a.district.toLowerCase() === normalizedQuery ? 0 : 1;
       const bInDistrict = b.district.toLowerCase() === normalizedQuery ? 0 : 1;

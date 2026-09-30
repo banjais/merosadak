@@ -613,6 +613,52 @@
 .dense-text { font-size: 0.8rem; line-height: 1.35; }
 .dense-text-sm { font-size: 0.7rem; line-height: 1.3; }
 
+/* Keep the complete primary menu visible without scrolling the drawer. */
+.app-drawer-content {
+  overflow: hidden;
+}
+
+.app-drawer-menu {
+  gap: clamp(2px, 0.45vh, 5px);
+}
+
+.app-drawer-item {
+  min-height: 0;
+  padding-block: clamp(4px, 0.7vh, 8px);
+  gap: clamp(8px, 2vh, 12px);
+}
+
+@media (max-height: 680px) {
+  .app-drawer-header {
+    padding-block: 0.45rem;
+  }
+
+  .app-drawer-content {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .app-drawer-route-label {
+    display: none;
+  }
+
+  .app-drawer-item {
+    padding-block: 2px;
+    font-size: 0.8rem;
+  }
+
+  .app-drawer-item > div > div:last-child > span:last-child {
+    display: none;
+  }
+
+  .app-drawer > div:last-child {
+    padding: 0.45rem 0.65rem;
+  }
+
+  .app-drawer-version {
+    margin-top: 0.25rem;
+  }
+}
+
 /* ===== PULL-TO-REFRESH ===== */
 @media (prefers-reduced-motion: reduce) {
   .ptr-progress-ring {

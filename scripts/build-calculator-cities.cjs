@@ -119,7 +119,7 @@ const CITY_TO_DISTRICT = {
   'narayangadh': 'Chitwan',
   'narayan ghad': 'Chitwan',
   'kohalpur': 'Chitwan',
-  'attaria': 'Kathmandu',
+  'attaria': 'Kailali',
   'dhunche': 'Rasuwa',
   'kamalamai': 'Sindhuli',
   'bhimeshwar': 'Rasuwa',

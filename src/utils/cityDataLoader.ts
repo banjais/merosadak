@@ -43,6 +43,11 @@ const DISTRICT_PROVINCE_MAP: Record<string, string> = {
   Doti: 'Sudurpashchim', Kailali: 'Sudurpashchim', Kanchanpur: 'Sudurpashchim',
 };
 
+const CITY_NAME_ALIASES: Record<string, { name: string; district: string }> = {
+  attaria: { name: 'Attariya', district: 'Kailali' },
+  nijgadh: { name: 'Nijgadh', district: 'Bara' },
+};
+
 function stringValue(item: Record<string, unknown>, keys: string[]): string {
   for (const key of keys) {
     const value = item[key];
@@ -65,7 +70,9 @@ function normalizeName(name: string): string {
 
 function toCityNode(item: Record<string, unknown>, index: number, source: string, cityType?: string): CityNode {
   const rawName = stringValue(item, ['name', 'Palika', 'palika', 'hqCity']) || 'Unknown';
-  const name = normalizeName(rawName);
+  const normalizedName = normalizeName(rawName);
+  const cityAlias = CITY_NAME_ALIASES[normalizedName.toLowerCase()];
+  const name = cityAlias?.name || normalizedName;
   const lat = numberValue(item, ['lat', 'latitude']);
   const lng = numberValue(item, ['lng', 'longitude']);
   let connectedHighwaysValue = item.connectedHighways;
@@ -78,13 +85,13 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
     if (singleHighway) connectedHighways = [singleHighway];
   }
 
-  const district = stringValue(item, ['district', 'District']);
+  const district = cityAlias?.district || stringValue(item, ['district', 'District']);
   const provinceFromData = stringValue(item, ['province', 'Province']);
   const province = DISTRICT_PROVINCE_MAP[district] || provinceFromData;
 
   return {
     id: stringValue(item, ['id']) || `${source}-${index}`,
-    name: rawName,
+    name: cityAlias?.name || normalizedName,
     nepaliName: stringValue(item, ['nepaliName', 'nepali_name']),
     district,
     province,

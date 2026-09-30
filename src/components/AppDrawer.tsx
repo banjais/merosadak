@@ -184,8 +184,8 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         onClick={onClose}
       />
 
-      <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
-        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+      <aside className="app-drawer fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
+        <div className="app-drawer-header p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10">
               <svg viewBox="0 0 24 24" width="18" height="18">
@@ -207,14 +207,14 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-paddle">
+        <div className="app-drawer-content flex-1 min-h-0 flex flex-col p-3">
           {routeLabel && (
-            <p className="text-[10px] text-emerald-400/90 px-2 font-medium truncate" title={routeLabel || undefined}>
+            <p className="app-drawer-route-label text-[10px] text-emerald-400/90 px-2 pb-2 font-medium truncate" title={routeLabel || undefined}>
               {routeLabel}
             </p>
           )}
 
-          <div className="space-y-1">
+          <div className="app-drawer-menu flex min-h-0 flex-1 flex-col justify-evenly gap-1">
             {drawerMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -222,7 +222,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center justify-start gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition text-left group touch-target ${
+                  className={`app-drawer-item w-full flex min-h-0 flex-1 items-center justify-start gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition text-left group touch-target ${
                     isActive
                       ? item.activeBg
                       : 'text-slate-300 hover:text-white hover:bg-slate-900'
@@ -270,7 +270,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
               </button>
             )}
           </div>
-          <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="app-drawer-version mt-2 flex items-center justify-between gap-2">
             <span className="text-[9px] font-mono text-muted">v2.4.0</span>
             {user?.email && (
               <span className="text-[9px] text-muted truncate max-w-[60%]">{user.email}</span>
