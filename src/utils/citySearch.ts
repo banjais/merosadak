@@ -2,10 +2,17 @@ import { CityNode } from '../types';
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 
 const TYPE_PRIORITY: Record<string, number> = {
-  'Metropolitan City': 0,
-  'Sub-Metropolitan': 1,
-  'Municipality': 2,
-  'Rural Municipality': 3,
+  Airport: 0,
+  'Bus Station': 1,
+  'Highway Town': 2,
+  'Highway Node': 2,
+  Published: 2,
+  'Tourist Place': 3,
+  Temple: 3,
+  'Metropolitan City': 4,
+  'Sub-Metropolitan': 4,
+  Municipality: 4,
+  'Rural Municipality': 4,
 };
 
 export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
@@ -26,11 +33,17 @@ export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
       const aExact = a.name.toLowerCase() === normalizedQuery ? 0 : 1;
       const bExact = b.name.toLowerCase() === normalizedQuery ? 0 : 1;
       if (aExact !== bExact) return aExact - bExact;
+      const aInDistrict = a.district.toLowerCase() === normalizedQuery ? 0 : 1;
+      const bInDistrict = b.district.toLowerCase() === normalizedQuery ? 0 : 1;
+      if (aInDistrict !== bInDistrict) return aInDistrict - bInDistrict;
       const aPriority = TYPE_PRIORITY[a.cityType ?? ''] ?? 4;
       const bPriority = TYPE_PRIORITY[b.cityType ?? ''] ?? 4;
       if (aPriority !== bPriority) return aPriority - bPriority;
-      if (a.isMajorHub !== b.isMajorHub) return b.isMajorHub ? 1 : -1;
-      return 0;
+      if (a.connectedHighways.length !== b.connectedHighways.length) {
+        return b.connectedHighways.length - a.connectedHighways.length;
+      }
+      if (a.isMajorHub !== b.isMajorHub) return a.isMajorHub ? -1 : 1;
+      return a.name.localeCompare(b.name);
     })
     .slice(0, limit);
 };
@@ -79,7 +92,7 @@ export async function searchCitiesWithGeocode(
       name: first.name || normalizedQuery,
       nepaliName: '',
       district: '',
-      province: 'Bagmati',
+      province: '',
       cityType: 'Geocoded',
       lat,
       lng,

@@ -80,15 +80,16 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
 
   const district = stringValue(item, ['district', 'District']);
   const provinceFromData = stringValue(item, ['province', 'Province']);
-  const province = DISTRICT_PROVINCE_MAP[district] || provinceFromData || 'Bagmati';
+  const province = DISTRICT_PROVINCE_MAP[district] || provinceFromData;
 
   return {
     id: stringValue(item, ['id']) || `${source}-${index}`,
-    name,
+    name: rawName,
     nepaliName: stringValue(item, ['nepaliName', 'nepali_name']),
     district,
     province,
     cityType,
+    shortName: stringValue(item, ['shortName', 'code']) || undefined,
     lat,
     lng,
     elevationM: numberValue(item, ['elevationM', 'elevation']),
@@ -348,6 +349,7 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
               connectedHighways,
               highwayCode: existing.highwayCode || city.highwayCode || connectedHighways[0],
               cityType: existing.cityType || city.cityType,
+              shortName: existing.shortName || city.shortName,
             };
             continue;
           }

@@ -233,6 +233,7 @@ export interface CityNode {
   province: string;
   cityType?: string;
   type?: string;
+  shortName?: string;
   lat: number;
   lng: number;
   elevationM: number;
