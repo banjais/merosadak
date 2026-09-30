@@ -264,7 +264,7 @@ async function startServer() {
 
   // API Routes
   app.all('/api/access/:resource', async (req, res) => {
-    if (req.params.resource !== 'profile' && req.params.resource !== 'office-admins') {
+    if (!['profile', 'office-admins', 'analytics', 'sheet-entry'].includes(req.params.resource)) {
       return res.status(404).json({ error: 'Access-control endpoint not found.' });
     }
     try {

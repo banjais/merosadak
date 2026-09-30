@@ -2,7 +2,16 @@
  * Mero Sadak Worker — free-first APIs (DHM, Open-Meteo, Overpass via client, KV data)
  */
 import { DHM_RAIN_API, DHM_THRESHOLDS, normalizeDhmRainfall } from "./dhm-rainfall";
-import { normalizeAccountEmail, SUPER_ADMIN_EMAIL, type AccessRole, type OfficeAdmin } from "../../shared/accessControl";
+import {
+  normalizeAccountEmail,
+  SUPER_ADMIN_EMAIL,
+  type AccessAnalytics,
+  type AccessAnalyticsDay,
+  type AccessRole,
+  type OfficeAdmin,
+  type SheetRoadEntry,
+  type SheetSubmissionReceipt,
+} from "../../shared/accessControl";
 
 export interface Env {
   TOMTOM_API_KEY: string;
@@ -16,6 +25,8 @@ export interface Env {
   UPSTASH_REDIS_REST_TOKEN: string;
   ALLOWED_ORIGIN: string;
   FIREBASE_API_KEY: string;
+  GOOGLE_SHEETS_WEB_APP_URL?: string;
+  GOOGLE_SHEETS_WRITE_TOKEN?: string;
   DATA: KVNamespace;
 }
 
@@ -32,6 +43,14 @@ function jsonResponse(env: Env, body: unknown, status = 200, headers: Record<str
     status,
     headers: { "Content-Type": "application/json", ...corsHeaders(env), ...headers },
   });
+}
+
+function logAccessError(event: string, error?: unknown): void {
+  console.error(JSON.stringify({
+    component: "access-control",
+    event,
+    errorType: error instanceof Error ? error.name : undefined,
+  }));
 }
 
 async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit & { timeoutMs?: number }): Promise<Response> {
@@ -57,6 +76,7 @@ async function readJsonData<T>(env: Env, key: string, fallback: T): Promise<T> {
 
 interface VerifiedIdentity {
   email: string;
+  uid: string;
 }
 
 async function verifyFirebaseIdentity(request: Request, env: Env): Promise<VerifiedIdentity | Response> {
@@ -64,7 +84,7 @@ async function verifyFirebaseIdentity(request: Request, env: Env): Promise<Verif
   const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return jsonResponse(env, { error: "Sign-in required" }, 401);
   if (!env.FIREBASE_API_KEY) {
-    console.error("[Mero Sadak] Firebase identity verification is not configured.");
+    logAccessError("firebase_identity_not_configured");
     return jsonResponse(env, { error: "Sign-in services are unavailable" }, 503);
   }
 
@@ -82,26 +102,28 @@ async function verifyFirebaseIdentity(request: Request, env: Env): Promise<Verif
       return jsonResponse(env, { error: "Your sign-in has expired. Please sign in again." }, 401);
     }
     if (!response.ok) {
-      console.error("[Mero Sadak] Firebase identity verification returned", response.status);
+      console.error(JSON.stringify({ component: "access-control", event: "firebase_identity_unavailable", status: response.status }));
       return jsonResponse(env, { error: "Could not verify your sign-in. Please try again." }, 503);
     }
 
     const result = await response.json<{
       users?: Array<{
         email?: string;
+        localId?: string;
         emailVerified?: boolean;
         providerUserInfo?: Array<{ providerId?: string }>;
       }>;
     }>();
     const account = result.users?.[0];
     const email = account?.email ? normalizeAccountEmail(account.email) : "";
+    const uid = account?.localId ?? "";
     const isGoogleAccount = account?.providerUserInfo?.some((provider) => provider.providerId === "google.com");
-    if (!email || !account?.emailVerified || !isGoogleAccount) {
+    if (!email || !uid || !account?.emailVerified || !isGoogleAccount) {
       return jsonResponse(env, { error: "Use a verified Google account to access Mero Sadak." }, 403);
     }
-    return { email };
+    return { email, uid };
   } catch (error) {
-    console.error("[Mero Sadak] Firebase identity verification failed:", error);
+    logAccessError("firebase_identity_verification_failed", error);
     return jsonResponse(env, { error: "Could not verify your sign-in. Please try again." }, 503);
   }
 }
@@ -138,18 +160,186 @@ function roleForEmail(email: string, officeAdmins: OfficeAdmin[]): AccessRole {
   return "GeneralUser";
 }
 
+async function recordAccountActivity(env: Env, uid: string, role: AccessRole): Promise<void> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uid));
+  const accountHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const today = new Date().toISOString().slice(0, 10);
+  await env.DATA.put(`access-activity:${today}:${accountHash}`, "", {
+    expirationTtl: 60 * 24 * 60 * 60,
+    metadata: { role },
+  });
+}
+
 async function handleAccessProfile(request: Request, env: Env): Promise<Response> {
   const identity = await verifyFirebaseIdentity(request, env);
   if (identity instanceof Response) return identity;
   try {
     const officeAdmins = await getOfficeAdmins(env);
+    const role = roleForEmail(identity.email, officeAdmins);
+    try {
+      await recordAccountActivity(env, identity.uid, role);
+    } catch (error) {
+      logAccessError("account_activity_write_failed", error);
+    }
     return jsonResponse(env, {
       email: identity.email,
-      role: roleForEmail(identity.email, officeAdmins),
+      role,
+      sheetEntryEnabled: Boolean(env.GOOGLE_SHEETS_WEB_APP_URL && env.GOOGLE_SHEETS_WRITE_TOKEN),
     }, 200, { "Cache-Control": "no-store" });
   } catch (error) {
-    console.error("[Mero Sadak] Failed to read access roles:", error);
+    logAccessError("access_role_read_failed", error);
     return jsonResponse(env, { error: "Could not load account permissions. Please try again." }, 503);
+  }
+}
+
+async function handleAccessAnalytics(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (identity instanceof Response) return identity;
+  try {
+    const officeAdmins = await getOfficeAdmins(env);
+    if (roleForEmail(identity.email, officeAdmins) === "GeneralUser") {
+      return jsonResponse(env, { error: "Analytics are available to OfficeAdmin and SuperAdmin accounts." }, 403);
+    }
+
+    const periodDays = 30;
+    const start = new Date();
+    start.setUTCDate(start.getUTCDate() - (periodDays - 1));
+    const startDate = start.toISOString().slice(0, 10);
+    const dayMap = new Map<string, AccessAnalyticsDay>();
+    const latestRoleByAccount = new Map<string, { date: string; role: AccessRole }>();
+    let cursor: string | undefined;
+
+    do {
+      const page = await env.DATA.list<{ role?: unknown }>({
+        prefix: "access-activity:",
+        limit: 1000,
+        ...(cursor ? { cursor } : {}),
+      });
+      for (const { name, metadata } of page.keys) {
+        const match = /^access-activity:(\d{4}-\d{2}-\d{2}):([a-f\d]{64})$/.exec(name);
+        if (!match || match[1] < startDate) continue;
+        const date = match[1];
+        const role = metadata?.role;
+        if (role !== "SuperAdmin" && role !== "OfficeAdmin" && role !== "GeneralUser") {
+          logAccessError("account_activity_invalid_role_metadata");
+          continue;
+        }
+        const accountHash = match[2];
+        let day = dayMap.get(date);
+        if (!day) {
+          day = { date, total: 0, generalUsers: 0, officeAdmins: 0, superAdmins: 0 };
+          dayMap.set(date, day);
+        }
+        day.total += 1;
+        if (role === "GeneralUser") day.generalUsers += 1;
+        else if (role === "OfficeAdmin") day.officeAdmins += 1;
+        else day.superAdmins += 1;
+
+        const latest = latestRoleByAccount.get(accountHash);
+        if (!latest || date > latest.date) latestRoleByAccount.set(accountHash, { date, role });
+      }
+      cursor = "cursor" in page ? page.cursor : undefined;
+    } while (cursor);
+
+    const counts = { generalUsers: 0, officeAdmins: 0, superAdmins: 0 };
+    for (const { role } of latestRoleByAccount.values()) {
+      if (role === "GeneralUser") counts.generalUsers += 1;
+      else if (role === "OfficeAdmin") counts.officeAdmins += 1;
+      else counts.superAdmins += 1;
+    }
+    const daily = Array.from({ length: periodDays }, (_, index) => {
+      const date = new Date(start);
+      date.setUTCDate(start.getUTCDate() + index);
+      const key = date.toISOString().slice(0, 10);
+      return dayMap.get(key) ?? { date: key, total: 0, generalUsers: 0, officeAdmins: 0, superAdmins: 0 };
+    });
+    const analytics: AccessAnalytics = {
+      periodDays,
+      uniqueAccounts: latestRoleByAccount.size,
+      ...counts,
+      daily,
+      note: "Counts are based on signed-in account activity and may take time to appear due to KV propagation.",
+    };
+    return jsonResponse(env, analytics, 200, { "Cache-Control": "no-store" });
+  } catch (error) {
+    logAccessError("account_analytics_read_failed", error);
+    return jsonResponse(env, { error: "Could not load account analytics. Please try again." }, 503);
+  }
+}
+
+const SHEET_ENTRY_MAX_LENGTH = 500;
+
+function validateSheetEntry(body: unknown): SheetRoadEntry | null {
+  if (!body || typeof body !== "object") return null;
+  const values = body as Record<string, unknown>;
+  const fields: Array<keyof SheetRoadEntry> = ["highwayCode", "highwayName", "district", "location", "status", "notes"];
+  const entry = {} as SheetRoadEntry;
+  for (const field of fields) {
+    if (typeof values[field] !== "string") return null;
+    const value = values[field].trim();
+    if (value.length > SHEET_ENTRY_MAX_LENGTH) return null;
+    entry[field] = value;
+  }
+  if (!entry.highwayCode || !entry.highwayName || !entry.district || !entry.location || !entry.status || !entry.notes) {
+    return null;
+  }
+  return entry;
+}
+
+async function handleGoogleSheetEntry(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (identity instanceof Response) return identity;
+  try {
+    const officeAdmins = await getOfficeAdmins(env);
+    const role = roleForEmail(identity.email, officeAdmins);
+    if (role === "GeneralUser") {
+      return jsonResponse(env, { error: "Only OfficeAdmin and SuperAdmin accounts can submit sheet data." }, 403);
+    }
+    if (!env.GOOGLE_SHEETS_WEB_APP_URL || !env.GOOGLE_SHEETS_WRITE_TOKEN) {
+      logAccessError("google_sheets_receiver_not_configured");
+      return jsonResponse(env, { error: "Google Sheets data entry is not configured yet." }, 503);
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json<unknown>();
+    } catch {
+      return jsonResponse(env, { error: "Request body must be valid JSON." }, 400);
+    }
+    const entry = validateSheetEntry(body);
+    if (!entry) {
+      return jsonResponse(env, { error: "Complete every field using no more than 500 characters per field." }, 400);
+    }
+
+    const submittedAt = new Date().toISOString();
+    const response = await fetchWithTimeout(env.GOOGLE_SHEETS_WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token: env.GOOGLE_SHEETS_WRITE_TOKEN,
+        entry: {
+          ...entry,
+          submittedAt,
+          submittedBy: identity.email,
+          submittedByRole: role,
+        },
+      }),
+      timeoutMs: 12000,
+    });
+    if (!response.ok) {
+      console.error(JSON.stringify({ component: "access-control", event: "google_sheets_receiver_unavailable", status: response.status }));
+      return jsonResponse(env, { error: "The Google Sheet could not accept this entry. Please try again." }, 502);
+    }
+    const result = await response.json<{ ok?: boolean; sheetName?: string }>();
+    if (result.ok !== true || typeof result.sheetName !== "string") {
+      logAccessError("google_sheets_invalid_receipt");
+      return jsonResponse(env, { error: "The Google Sheet did not confirm the entry. Please try again." }, 502);
+    }
+    const receipt: SheetSubmissionReceipt = { submittedAt, sheetName: result.sheetName };
+    return jsonResponse(env, receipt, 201, { "Cache-Control": "no-store" });
+  } catch (error) {
+    logAccessError("google_sheets_entry_failed", error);
+    return jsonResponse(env, { error: "Could not submit data to Google Sheets. Please try again." }, 502);
   }
 }
 
@@ -195,7 +385,7 @@ async function handleOfficeAdmins(request: Request, env: Env): Promise<Response>
     await env.DATA.put("access-control:office-admins", JSON.stringify(updatedAdmins));
     return jsonResponse(env, { officeAdmins: updatedAdmins }, 200, { "Cache-Control": "no-store" });
   } catch (error) {
-    console.error("[Mero Sadak] OfficeAdmin management failed:", error);
+    logAccessError("office_admin_management_failed", error);
     return jsonResponse(env, { error: "Could not update OfficeAdmin accounts. Please try again." }, 503);
   }
 }
@@ -503,6 +693,12 @@ export default {
     }
     if (url.pathname === "/api/access/profile" && request.method === "GET") {
       return handleAccessProfile(request, env);
+    }
+    if (url.pathname === "/api/access/analytics" && request.method === "GET") {
+      return handleAccessAnalytics(request, env);
+    }
+    if (url.pathname === "/api/access/sheet-entry" && request.method === "POST") {
+      return handleGoogleSheetEntry(request, env);
     }
     if (url.pathname === "/api/access/office-admins" && (request.method === "GET" || request.method === "POST")) {
       return handleOfficeAdmins(request, env);

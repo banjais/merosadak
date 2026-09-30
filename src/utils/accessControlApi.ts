@@ -1,5 +1,11 @@
 import type { User } from 'firebase/auth';
-import type { AccessProfile, OfficeAdmin } from '../../shared/accessControl';
+import type {
+  AccessAnalytics,
+  AccessProfile,
+  OfficeAdmin,
+  SheetRoadEntry,
+  SheetSubmissionReceipt,
+} from '../../shared/accessControl';
 import { fetchJson } from './apiConfig';
 
 function withAuthorization(user: User, init: RequestInit = {}): Promise<RequestInit> {
@@ -21,6 +27,24 @@ export async function fetchOfficeAdmins(user: User): Promise<OfficeAdmin[]> {
     '/api/access/office-admins',
     await withAuthorization(user)
   ).then(({ officeAdmins }) => officeAdmins);
+}
+
+export async function fetchAccessAnalytics(user: User): Promise<AccessAnalytics> {
+  return fetchJson<AccessAnalytics>(
+    '/api/access/analytics',
+    await withAuthorization(user)
+  );
+}
+
+export async function submitRoadEntry(user: User, entry: SheetRoadEntry): Promise<SheetSubmissionReceipt> {
+  return fetchJson<SheetSubmissionReceipt>(
+    '/api/access/sheet-entry',
+    await withAuthorization(user, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    })
+  );
 }
 
 export async function updateOfficeAdmin(

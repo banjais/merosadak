@@ -4,6 +4,19 @@ compatibility_date = "2025-09-26"
 workers_dev = true
 preview_urls = false
 
+[observability]
+enabled = true
+redact_query_string = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01
+
 [[kv_namespaces]]
 binding = "DATA"
 id = "e196f41c0a924657a99decf54d016f87"
@@ -22,6 +35,8 @@ FIREBASE_API_KEY = "AIzaSyADzQbCTo5_0p3WnUUFlO8kHTrK4BWHic0"
 #   WAZE_FEED_URL
 #   UPSTASH_REDIS_REST_URL
 #   UPSTASH_REDIS_REST_TOKEN
+#   GOOGLE_SHEETS_WEB_APP_URL
+#   GOOGLE_SHEETS_WRITE_TOKEN
 #
 # Optional free / generous free-tier APIs (see worker/.env.example):
 #   OPENROUTESERVICE_API_KEY   # routing + elevation alternative
