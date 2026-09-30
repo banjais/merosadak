@@ -1595,7 +1595,7 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 @media print {
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 1in 12mm 12mm;
   }
 
   /* Hide everything except the report */
@@ -1605,6 +1605,9 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   #route-report,
   #route-report * {
     visibility: visible;
+  }
+  .distance-calculator-report-heading {
+    display: none !important;
   }
   /* Fallback: hide common chrome */
   .navbar,

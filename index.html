@@ -6,11 +6,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#070f1e">
     <meta name="app-version" content="2.1.0">
-    <meta name="app-build" content="20260922-pwa-auto">
+    <meta name="app-build" content="__APP_BUILD__">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/logo.svg" type="image/svg+xml">
-    <link rel="alternate icon" href="/logo.svg" sizes="512x512" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/logo.svg">
+    <link rel="icon" href="/logo.svg?v=__APP_BUILD__" type="image/svg+xml">
+    <link rel="alternate icon" href="/logo.svg?v=__APP_BUILD__" sizes="512x512" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/logo.svg?v=__APP_BUILD__">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MEROSADAK">
@@ -55,9 +55,10 @@
         }).catch(function () {});
         // Drop legacy cache buckets without user action
         if ('caches' in window) {
+          var activeCaches = ['mero-sadak-static-v5', 'mero-sadak-tiles-v5', 'mero-sadak-data-v6'];
           caches.keys().then(function (keys) {
             keys.forEach(function (k) {
-              if (k.indexOf('mero-sadak-') === 0 && k.indexOf('-v5') === -1) {
+              if (k.indexOf('mero-sadak-') === 0 && activeCaches.indexOf(k) === -1) {
                 caches.delete(k);
               }
             });
@@ -76,4 +77,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

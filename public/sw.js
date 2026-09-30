@@ -1,8 +1,8 @@
 // MEROSADAK Nepal Highway GIS - Service Worker
-// Version 1.6.0 - Background Sync outbox + Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
+// Version 1.7.0 - Automatic deployment refresh with offline-safe shell and assets
 
-const SW_VERSION = '1.6.1';
-const APP_BUILD = '20260929-no-distance-matrix';
+const SW_VERSION = '1.7.0';
+const APP_BUILD = '__APP_BUILD__';
 const CACHE_NAMES = {
   STATIC: 'mero-sadak-static-v5',
   TILES: 'mero-sadak-tiles-v5',
@@ -13,9 +13,7 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/assets/icons/icon-192.png',
-  '/assets/icons/icon-512.png',
-  '/assets/icons/apple-touch-icon.png',
+  '/logo.svg?v=__APP_BUILD__',
 ];
 
 const STATIC_DATA_URLS = [
@@ -93,6 +91,22 @@ function isManifestRequest(url) {
   }
 }
 
+function isAppIconRequest(url) {
+  try {
+    return new URL(url).pathname === '/logo.svg';
+  } catch {
+    return false;
+  }
+}
+
+function isFingerprintAsset(url) {
+  try {
+    return /-[A-Za-z0-9_-]{8,}\.(js|css)$/i.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
 function isNavigationRequest(request) {
   return request.mode === 'navigate' || (request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html'));
 }
@@ -116,7 +130,7 @@ self.addEventListener('install', (event) => {
 
     await Promise.allSettled(PRECACHE_ASSETS.map(async (url) => {
       try {
-        const res = await fetch(url, { credentials: 'same-origin' });
+        const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
         if (res.ok) await staticCache.put(url, res);
       } catch (e) {
         console.warn('[SW] precache skip', url);
@@ -177,17 +191,33 @@ self.addEventListener('fetch', (event) => {
   if (isManifestRequest(request.url)) {
     event.respondWith((async () => {
       const staticCache = await caches.open(CACHE_NAMES.STATIC);
-      const cached = await staticCache.match(request);
-      if (cached) return cached;
       try {
-        const networkRes = await fetch(request);
+        const networkRes = await fetch(request, { cache: 'no-store' });
         if (networkRes.ok) await staticCache.put(request, networkRes.clone());
         return networkRes;
       } catch {
+        const cached = await staticCache.match(request);
+        if (cached) return cached;
         return new Response(JSON.stringify({
           name: 'MEROSADAK', short_name: 'MEROSADAK', start_url: '/', display: 'standalone',
           background_color: '#070f1e', theme_color: '#070f1e', icons: []
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
+    return;
+  }
+
+  if (isAppIconRequest(request.url) && url.origin === self.location.origin) {
+    event.respondWith((async () => {
+      const staticCache = await caches.open(CACHE_NAMES.STATIC);
+      try {
+        const networkRes = await fetch(request, { cache: 'no-store' });
+        if (networkRes.ok) await putIfUsable(staticCache, request, networkRes);
+        return networkRes;
+      } catch {
+        const cached = await staticCache.match(request);
+        if (cached) return cached;
+        return new Response('', { status: 504, statusText: 'Icon Offline' });
       }
     })());
     return;
@@ -255,7 +285,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith((async () => {
       const staticCache = await caches.open(CACHE_NAMES.STATIC);
       try {
-        const networkRes = await fetch(request);
+        const networkRes = await fetch(request, { cache: 'no-store' });
         if (networkRes.ok) await putIfUsable(staticCache, '/index.html', networkRes);
         return networkRes;
       } catch {
@@ -271,15 +301,20 @@ self.addEventListener('fetch', (event) => {
   if (url.origin === self.location.origin) {
     event.respondWith((async () => {
       const staticCache = await caches.open(CACHE_NAMES.STATIC);
-      const cached = await staticCache.match(request);
-      const networkPromise = fetch(request).then(async (res) => {
-        if (res.ok) await putIfUsable(staticCache, request, res);
-        return res;
-      }).catch(() => null);
-      if (cached) { networkPromise.catch(() => {}); return cached; }
-      const networkRes = await networkPromise;
-      if (networkRes) return networkRes;
-      return new Response('', { status: 504, statusText: 'Offline' });
+      if (isFingerprintAsset(request.url)) {
+        const cached = await staticCache.match(request);
+        if (cached) return cached;
+      }
+
+      try {
+        const networkRes = await fetch(request, { cache: 'no-store' });
+        if (networkRes.ok) await putIfUsable(staticCache, request, networkRes);
+        return networkRes;
+      } catch {
+        const cached = await staticCache.match(request);
+        if (cached) return cached;
+        return new Response('', { status: 504, statusText: 'Offline' });
+      }
     })());
   }
 });

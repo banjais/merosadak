@@ -1,7 +1,6 @@
 {
   "version": "2.1.0",
-  "build": "20260922-pwa-auto",
-  "sw": "1.6.0",
-  "releasedAt": "2026-09-22T13:15:00+05:45",
-  "notes": "Background Sync outbox for failed API POSTs (road reports)"
+  "build": "__APP_BUILD__",
+  "sw": "1.7.0",
+  "releasedAt": "__RELEASED_AT__"
 }

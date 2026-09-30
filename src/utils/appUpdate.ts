@@ -6,12 +6,14 @@
  * content and JS always update without the user clearing cache manually.
  */
 
-export const CLIENT_APP_BUILD = '20260922-pwa-auto';
 export const CLIENT_APP_VERSION = '2.1.0';
 
-const STORAGE_BUILD_KEY = 'merosadak_app_build';
 const STORAGE_RELOAD_GUARD = 'merosadak_sw_reload_at';
 const RELOAD_COOLDOWN_MS = 15_000;
+
+function getPageBuild(): string {
+  return document.querySelector<HTMLMetaElement>('meta[name="app-build"]')?.content || '';
+}
 
 function canReloadNow(): boolean {
   try {
@@ -28,7 +30,7 @@ async function purgeLegacyCaches(): Promise<void> {
   if (!('caches' in window)) return;
   try {
     const keys = await caches.keys();
-    const keepPrefix = ['mero-sadak-static-v5', 'mero-sadak-tiles-v5', 'mero-sadak-data-v5'];
+    const keepPrefix = ['mero-sadak-static-v5', 'mero-sadak-tiles-v5', 'mero-sadak-data-v6'];
     await Promise.all(
       keys
         .filter((k) => {
@@ -127,19 +129,13 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
       void checkRemoteVersionAndRefresh();
     });
 
-    // Compare remote version.json vs last seen build
+    // Compare the deployment marker with the HTML currently running
     await checkRemoteVersionAndRefresh();
 
     // Drop any leftover v1–v4 caches from this client
     await purgeLegacyCaches();
 
-    try {
-      localStorage.setItem(STORAGE_BUILD_KEY, CLIENT_APP_BUILD);
-    } catch {
-      /* ignore */
-    }
-
-    console.log('[MEROSADAK] Auto-update armed — build', CLIENT_APP_BUILD);
+    console.log('[MEROSADAK] Automatic updates armed — build', getPageBuild());
     return !!navigator.serviceWorker.controller || !!registration.active;
   } catch (error) {
     console.warn('[MEROSADAK] Auto-update setup failed:', error);
@@ -148,8 +144,8 @@ export async function setupAutomaticUpdates(): Promise<boolean> {
 }
 
 /**
- * Fetch /version.json (never cached long-term). If the server build is newer,
- * purge caches and reload so browser + installed PWA pick up the latest assets.
+ * Compare the current HTML build with the uncached deployment marker and
+ * reload automatically if Hosting has already released a newer version.
  */
 export async function checkRemoteVersionAndRefresh(): Promise<void> {
   if (typeof window === 'undefined') return;
@@ -158,42 +154,14 @@ export async function checkRemoteVersionAndRefresh(): Promise<void> {
     if (!res.ok) return;
     const remote = (await res.json()) as { build?: string; version?: string; sw?: string };
     const remoteBuild = remote.build || remote.version || '';
-    if (!remoteBuild) return;
+    const pageBuild = getPageBuild();
+    if (!remoteBuild || !pageBuild || remoteBuild === pageBuild) return;
 
-    let localBuild = '';
-    try {
-      localBuild = localStorage.getItem(STORAGE_BUILD_KEY) || '';
-    } catch {
-      localBuild = '';
-    }
-
-    // First visit: just store
-    if (!localBuild) {
-      try {
-        localStorage.setItem(STORAGE_BUILD_KEY, remoteBuild);
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-
-    if (remoteBuild !== localBuild && remoteBuild !== CLIENT_APP_BUILD) {
-      console.log('[MEROSADAK] New version detected', localBuild, '→', remoteBuild);
+    if (remoteBuild !== pageBuild) {
+      console.log('[MEROSADAK] New version detected', pageBuild, '→', remoteBuild);
       await purgeLegacyCaches();
-      try {
-        localStorage.setItem(STORAGE_BUILD_KEY, remoteBuild);
-      } catch {
-        /* ignore */
-      }
       if (canReloadNow()) {
         window.location.reload();
-      }
-    } else if (remoteBuild !== localBuild) {
-      // Align stored build with what we ship in this bundle
-      try {
-        localStorage.setItem(STORAGE_BUILD_KEY, CLIENT_APP_BUILD);
-      } catch {
-        /* ignore */
       }
     }
   } catch {

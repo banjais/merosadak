@@ -324,7 +324,7 @@ export function UnifiedRouteReport({
       <div className="card card-elevated mt-4 p-4 sm:p-5">
         {distanceCalculatorMode ? (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div className="distance-calculator-report-heading flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div className="flex min-w-0 items-center gap-3">
                 <img src="/logo.jpeg" alt="Government of Nepal emblem" className="h-11 w-11 shrink-0 object-contain" />
                 <div className="min-w-0">
