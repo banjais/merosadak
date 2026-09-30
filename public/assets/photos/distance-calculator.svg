@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" fill="none">
+  <defs>
+    <linearGradient id="background" x1="95" y1="24" x2="1088" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F1B2D"/>
+      <stop offset="1" stop-color="#101827"/>
+    </linearGradient>
+    <linearGradient id="route" x1="300" y1="228" x2="886" y2="145" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34D399"/>
+      <stop offset="1" stop-color="#FBBF24"/>
+    </linearGradient>
+    <filter id="glow" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="440" rx="28" fill="url(#background)"/>
+  <g stroke="#314155" stroke-width="3" opacity=".52">
+    <path d="M-25 95c131 46 185-47 325-8s183 112 327 70 208-99 341-50 177 21 257-8"/>
+    <path d="M-40 310c160-31 232 31 360-4s172-112 314-93 225 97 352 73 176-84 258-45"/>
+    <path d="M173-25c31 93 6 156 57 222s23 143 57 268M1007-30c-42 81-24 150-70 206s-22 132-67 272"/>
+    <path d="M-20 190c127 16 198-40 318-13s226 82 348 34 213-71 338-37 169 47 246 22"/>
+  </g>
+  <g fill="#26384B" opacity=".82">
+    <path d="M106 138c28-24 68-26 89-8 17 15 13 40-12 51-33 14-74 4-85-15-5-9-2-20 8-28Z"/>
+    <path d="M1004 269c23-22 67-28 94-13 20 11 20 33 1 48-25 20-75 23-99 5-14-10-12-27 4-40Z"/>
+    <path d="M523 65c20-13 51-13 67-1 13 10 9 25-8 34-22 11-56 8-67-6-7-8-4-19 8-27Z"/>
+  </g>
+  <path d="M291 264c64-99 142-108 204-61s95 65 145 18 111-92 173-63 74 15 111-51" stroke="#38BDF8" stroke-width="22" stroke-linecap="round" opacity=".18" filter="url(#glow)"/>
+  <path d="M291 264c64-99 142-108 204-61s95 65 145 18 111-92 173-63 74 15 111-51" stroke="url(#route)" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 17"/>
+  <g transform="translate(282 222)">
+    <path d="M34 76C23 62 0 37 0 23a34 34 0 1 1 68 0C68 37 45 62 34 76Z" fill="#10B981"/>
+    <circle cx="34" cy="23" r="11" fill="#0F1B2D"/>
+    <circle cx="34" cy="23" r="5" fill="#D1FAE5"/>
+  </g>
+  <g transform="translate(873 63)">
+    <path d="M34 76C23 62 0 37 0 23a34 34 0 1 1 68 0C68 37 45 62 34 76Z" fill="#F59E0B"/>
+    <circle cx="34" cy="23" r="11" fill="#0F1B2D"/>
+    <circle cx="34" cy="23" r="5" fill="#FEF3C7"/>
+  </g>
+  <g font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+    <rect x="244" y="326" width="712" height="72" rx="18" fill="#0B1220" stroke="#334155" stroke-width="2"/>
+    <path d="M290 362h95m-95-10v20m24-14v8m24-14v20m24-14v8m24-14v20" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+    <text x="424" y="371" fill="#CBD5E1" font-size="21" font-weight="650" letter-spacing="2">ROUTE DISTANCE</text>
+    <path d="M788 350h1m23 0h1m23 0h1m23 0h1m23 0h1" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+    <text x="888" y="371" fill="#F8FAFC" font-size="20" font-weight="750" text-anchor="end">KM</text>
+  </g>
+</svg>
