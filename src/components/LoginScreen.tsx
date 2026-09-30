@@ -72,6 +72,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
               <span>Sign in with Google</span>
             </button>
 
+            <p className="text-[10px] leading-relaxed text-slate-400 text-center">
+              Use any Google account, including Gmail or Google Workspace. Google handles sign-in; Mero Sadak never sees your password.
+            </p>
+
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -89,11 +93,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-800">
-              <p className="text-[10px] text-slate-500 text-center font-medium">
-                Google sign-in uses your existing Mero Sadak Firebase project.
-              </p>
-            </div>
           </div>
         </div>
 
