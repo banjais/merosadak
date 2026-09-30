@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useHaptic } from './hooks/useHaptic';
 import { useTextScale } from './hooks/useTextScale';
 import { RoutePlanner } from './components/RoutePlanner';
 import { InteractiveMap } from './components/InteractiveMap';
 import { HighwayDirectory } from './components/HighwayDirectory';
+import { HighwayDirectoryPage } from './components/HighwayDirectoryPage';
+import { DistanceCalculatorPage } from './components/DistanceCalculatorPage';
+import { DataSourcesPage } from './components/DataSourcesPage';
+import { MyLocationPage } from './components/MyLocationPage';
+import { ProofVerifyPage } from './components/ProofVerifyPage';
 import { RoadReportModal } from './components/RoadReportModal';
 import { parseProofFromSearch, ProofClaim } from './utils/proofLinks';
 import { PullToRefresh } from './components/PullToRefresh';
@@ -25,14 +30,6 @@ import { SplashScreen } from './components/SplashScreen';
 import { ArchiveTray } from './components/ArchiveTray';
 import { getStoredOfflineBundle } from './utils/offlineSync';
 
-// Secondary pages are rarely opened and dominate the bundle. Loading them on
-// demand keeps the first paint small; the Suspense fallbacks below cover the
-// brief gap while a chunk is fetched.
-const HighwayDirectoryPage = lazy(() => import('./components/HighwayDirectoryPage').then((m) => ({ default: m.HighwayDirectoryPage })));
-const DistanceCalculatorPage = lazy(() => import('./components/DistanceCalculatorPage').then((m) => ({ default: m.DistanceCalculatorPage })));
-const DataSourcesPage = lazy(() => import('./components/DataSourcesPage').then((m) => ({ default: m.DataSourcesPage })));
-const MyLocationPage = lazy(() => import('./components/MyLocationPage').then((m) => ({ default: m.MyLocationPage })));
-const ProofVerifyPage = lazy(() => import('./components/ProofVerifyPage').then((m) => ({ default: m.ProofVerifyPage })));
 import { fetchJson } from './utils/apiConfig';
 import {
   RoutePlanResult,
@@ -72,15 +69,6 @@ import {
   Settings,
 } from 'lucide-react';
 
-/** Placeholder while a lazily-loaded page chunk is fetched. */
-const PageLoadingFallback: React.FC<{ label: string }> = ({ label }) => (
-  <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-8">
-    <div className="flex items-center gap-3 text-sm text-slate-400">
-      <span className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-      <span>{label}</span>
-    </div>
-  </div>
-);
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CardArchiveProvider } from './context/CardArchiveContext';
 
@@ -793,47 +781,43 @@ function AppContent() {
       </header>
       )}
 
-      {/* Lazily-loaded secondary pages. The fallback matches the app shell so
-          the transition does not flash a different background. */}
-      <Suspense fallback={<PageLoadingFallback label="Loading Distance Calculator…" />}>
-        {isDistanceCalculatorOpen && (
-          <DistanceCalculatorPage
-            onBack={() => setIsDistanceCalculatorOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
-        )}
+      {isDistanceCalculatorOpen && (
+        <DistanceCalculatorPage
+          onBack={() => setIsDistanceCalculatorOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
+        />
+      )}
 
-        {proofClaim && <ProofVerifyPage claim={proofClaim} onClose={() => setProofClaim(null)} />}
+      {proofClaim && <ProofVerifyPage claim={proofClaim} onClose={() => setProofClaim(null)} />}
 
-        {isMyLocationOpen && (
-          <MyLocationPage
-            onBack={() => setIsMyLocationOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
-        )}
+      {isMyLocationOpen && (
+        <MyLocationPage
+          onBack={() => setIsMyLocationOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
+        />
+      )}
 
-        {isDataSourcesOpen && (
-          <DataSourcesPage
-            onBack={() => setIsDataSourcesOpen(false)}
-          />
-        )}
+      {isDataSourcesOpen && (
+        <DataSourcesPage
+          onBack={() => setIsDataSourcesOpen(false)}
+        />
+      )}
 
-        {isHighwayInfoOpen && (
-          <HighwayDirectoryPage
-            onBack={() => setIsHighwayInfoOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
-        )}
-      </Suspense>
+      {isHighwayInfoOpen && (
+        <HighwayDirectoryPage
+          onBack={() => setIsHighwayInfoOpen(false)}
+          textScale={textScale}
+          onTextScaleChange={setTextScale}
+          accentColor={accentColor}
+          onAccentColorChange={handleAccentColor}
+        />
+      )}
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
