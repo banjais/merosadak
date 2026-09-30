@@ -193,7 +193,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-paddle">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-4 scrollbar-paddle">
           {routeLabel && (
             <p className="text-[10px] text-emerald-400/90 px-2 font-medium truncate" title={routeLabel || undefined}>
               {routeLabel}
@@ -208,22 +208,22 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition text-left group touch-target ${
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded-xl text-sm font-semibold transition text-left group ${
                     isActive
                       ? item.activeBg
                       : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5">
-                    <div className={`p-1 rounded-lg ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
-                    <div>
-                      <span className="block font-bold">{item.label}</span>
-                      <span className="text-[9px] text-tertiary font-normal">{item.subtitle}</span>
+                    <div className="min-w-0">
+                      <span className="block font-bold truncate">{item.label}</span>
+                      <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
                     </div>
                   </div>
-                  <ChevronRight className={`w-3 h-3 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                  <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
                 </button>
               );
             })}
