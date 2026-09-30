@@ -18,9 +18,6 @@ import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
 
 function getCityPlaceType(city: CityNode): string {
-  if (city.district && city.name.trim().toLowerCase() === city.district.trim().toLowerCase()) {
-    return 'City reference point';
-  }
   if (city.cityType === 'Geocoded') return 'Map search result';
   return city.cityType || 'Mapped place';
 }
@@ -36,7 +33,7 @@ function getCityAreaLabel(city: CityNode): string {
   if (!city.district) return 'Administrative area not verified';
   const area = `${city.district} District`;
   if (city.name.trim().toLowerCase() === city.district.trim().toLowerCase()) {
-    return `${area} · one point, not district-wide`;
+    return `${area} · mapped point only`;
   }
   return city.province ? `${area} · ${city.province} Province` : area;
 }
