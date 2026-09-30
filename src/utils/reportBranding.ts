@@ -9,10 +9,10 @@ export const DOR_BRANDING = {
   line3: 'Department of Roads',
 } as const;
 
-export const DOR_REPORT_TITLE = 'Nepal Route and Distance Report (Independent)';
+export const DOR_REPORT_TITLE = 'Nepal Route and Distance Report';
 
 export const DOR_REPORT_NOTE =
-  'Sources may include DoR publications, archived road data and mapped estimates. This report is not issued or endorsed by the Department of Roads.';
+  'Distance figures use available DoR publications, archived road data, or mapped coordinates. The source and calculation method for each result are listed below.';
 
 /** Nepali (Devanagari) rendering of the same letterhead. */
 export const DOR_BRANDING_NE = {

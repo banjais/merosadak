@@ -1596,6 +1596,14 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 .distance-calculator-print-summary {
   display: none;
 }
+.distance-calculator-basis {
+  margin-top: 10px;
+  color: #cbd5e1;
+  font-size: 11px;
+}
+.distance-calculator-basis strong {
+  color: #94a3b8;
+}
 
 @media print {
   @page {
@@ -1625,6 +1633,16 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
     color: #0f172a !important;
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  .distance-calculator-basis {
+    margin: 0 0 10px;
+    color: #334155 !important;
+    font-size: 9pt;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .distance-calculator-basis strong {
+    color: #0f172a !important;
   }
   .distance-calculator-place,
   .distance-calculator-print-distance {

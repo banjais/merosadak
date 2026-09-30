@@ -13,9 +13,12 @@ import {
   Download,
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
-import { EvidenceLevel, SNHCitation, getSourceDescription, getSourceLabel } from '../utils/snhLookup';
+import { EvidenceLevel, LinkChainEntry, SNHCitation, getSourceDescription, getSourceLabel } from '../utils/snhLookup';
 import { summarizeRouteHighways } from '../utils/routeHighwaySummary';
 import { getRoadSurfaceLabel, ROAD_SURFACE_CONDITION_NOTE } from '../utils/roadSurfaceLabels';
+import { getDistanceMethodLabel } from '../utils/distanceMethod';
+import { PAVEMENT_RECORD_NOTE, summarizePavementTypes } from '../utils/pavementSummary';
+import { getDistanceRouteHighways, getHighwayCountLabel, getShortestRouteStatus } from '../utils/routeEvidenceSummary';
 import { DorLetterhead } from './DorLetterhead';
 import { ReportIdentity, formatReportTimestampParts } from '../utils/reportBranding';
 
@@ -32,6 +35,8 @@ export interface UnifiedRouteReportProps {
   distanceCitation?: SNHCitation | null;
   distanceNote?: string | null;
   distanceHighways?: string[];
+  distanceInferredConnectorKm?: number;
+  distanceLinkChain?: LinkChainEntry[];
   sourceControl?: React.ReactNode;
   vehicleLabel?: string;
   preferenceLabel?: string;
@@ -55,11 +60,11 @@ export interface UnifiedRouteReportProps {
 }
 
 const evidenceLabels: Record<ReportEvidenceLevel, string> = {
-  published: 'DoR-published (SNH)',
-  link_sum: 'DoR archive link-sum (derived)',
-  geodesic: 'DoR archive route (derived)',
-  estimate: 'Unverified aerial estimate',
-  route_graph: 'Route planner GIS',
+  published: 'DoR-published',
+  link_sum: 'Combined DoR links',
+  geodesic: 'Derived from DoR geometry',
+  estimate: 'Aerial estimate',
+  route_graph: 'Route-planner GIS',
 };
 
 const evidenceColors: Record<ReportEvidenceLevel, [number, number, number]> = {
@@ -125,6 +130,8 @@ export function UnifiedRouteReport({
   distanceCitation,
   distanceNote,
   distanceHighways = [],
+  distanceInferredConnectorKm,
+  distanceLinkChain = [],
   sourceControl,
   vehicleLabel,
   preferenceLabel,
@@ -165,6 +172,13 @@ export function UnifiedRouteReport({
   const fuelQuantity = route.evEstimate?.kwhRequired ?? route.fuelEstimate.liters;
   const surfaces = [...new Set(route.steps.map((step) => step.surface))];
   const highwaySegments = useMemo(() => summarizeRouteHighways(route.steps), [route.steps]);
+  const pavementMix = useMemo(() => summarizePavementTypes(distanceLinkChain), [distanceLinkChain]);
+  const distanceRouteHighways = useMemo(
+    () => getDistanceRouteHighways(distanceHighways, distanceLinkChain),
+    [distanceHighways, distanceLinkChain]
+  );
+  const hasDistinctPlannerRoute = highwaySegments.length > 0 && hasDistinctRouteDistance;
+  const shortestRouteStatus = getShortestRouteStatus(distanceEvidence);
   const cautionKm = route.statusSummary.cautionKm;
   const obstructedKm = route.statusSummary.obstructedKm;
   const sourceLabel = distanceSourceLabel || getSourceLabel(distanceSource as 'dor_snh' | 'dor_geojson' | 'estimate_aerial');
@@ -191,16 +205,8 @@ export function UnifiedRouteReport({
     ? 'Aerial estimate'
     : distanceEvidence === 'published'
       ? 'Published distance'
-      : 'Derived distance';
-  const distanceMethod = distanceEvidence === 'published'
-    ? 'DoR SNH 2022/23 · Published'
-    : distanceEvidence === 'link_sum'
-      ? 'DoR highway links · Link-sum'
-      : distanceEvidence === 'geodesic'
-        ? 'DoR highway GIS · Derived route'
-        : distanceEvidence === 'estimate'
-          ? 'Coordinates · Aerial estimate'
-          : 'Route planner GIS · Derived route';
+      : 'Distance';
+  const distanceMethod = getDistanceMethodLabel(distanceEvidence);
   const printExportMenu = (
     <div className="relative" ref={printMenuRef}>
       <button
@@ -329,17 +335,12 @@ export function UnifiedRouteReport({
                   <div className="truncate text-sm font-bold text-white">
                     {route.origin.name} <ArrowRight className="mx-1 inline h-3.5 w-3.5 text-emerald-400" /> {route.destination.name}
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xl font-black text-emerald-300 font-display">
-                    {distanceLabel}: {formatNumber(distanceKm, 1)} km
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-black text-emerald-300 font-display">
+                    {formatNumber(distanceKm, 1)} km
+                    <EvidenceBadge level={distanceEvidence} />
                   </div>
                 </div>
               </div>
-              {hasDistinctRouteDistance && (
-                <div className="text-right">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">GIS route length</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-100">{formatNumber(routeDistance, 1)} km</div>
-                </div>
-              )}
             </div>
 
             <div className="distance-calculator-print-summary">
@@ -362,55 +363,72 @@ export function UnifiedRouteReport({
                 <Route aria-hidden="true" />
                 <div>
                   <span>{distanceLabel}</span>
-                  <strong>{formatNumber(distanceKm, 2)} km</strong>
+                  <strong>{formatNumber(distanceKm, 1)} km</strong>
                 </div>
               </div>
             </div>
 
-            {highwaySegments.length > 0 && (
+            <p className="distance-calculator-basis">
+              <strong>Calculation method:</strong> {distanceMethod}
+            </p>
+
+            {(distanceLinkChain.length > 0 || highwaySegments.length > 0 || distanceRouteHighways.length > 0 || (distanceInferredConnectorKm ?? 0) > 0) && (
               <div className="border-b border-slate-800 py-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route highway</div>
-                <div className="mt-2 space-y-2">
-                  {highwaySegments.map((segment, index) => (
-                    <div key={`${segment.highwayCode}-${segment.highwayName}-${segment.surface}-${index}`} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-slate-800 pt-2 first:border-t-0 first:pt-0">
-                      <div className="min-w-0">
-                        <span className="text-[11px] font-semibold text-slate-100">{segment.highwayName}</span>
-                        <span className="ml-2 font-mono text-[10px] text-cyan-300">{segment.highwayCode}</span>
-                        {segment.roadClass.toLowerCase() !== 'national highway' && (
-                          <span className="ml-2 text-[10px] capitalize text-slate-400">{segment.roadClass}</span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-300">
-                        {getRoadSurfaceLabel(segment.surface)} · {formatNumber(segment.distanceKm, 1)} km
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route &amp; Road Record</div>
+                {distanceRouteHighways.length > 0 && (
+                  <p className="mt-2 text-[11px] text-slate-200">
+                    <span className="text-slate-400">
+                      {distanceLinkChain.length
+                        ? `DoR link segments (${getHighwayCountLabel(distanceRouteHighways)}):`
+                        : `${getHighwayCountLabel(distanceRouteHighways)}:`}
+                    </span>
+                    {!distanceLinkChain.length && <> {distanceRouteHighways.join(' → ')}</>}
+                  </p>
+                )}
+                {distanceLinkChain.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {distanceLinkChain.map((segment, index) => (
+                      <p key={`${segment.code}-${segment.name}-${index}`} className="text-[11px] text-slate-200">
+                        <span className="font-mono text-cyan-300">{segment.code}</span> · {segment.name} · {formatNumber(segment.lengthKm, 1)} km
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {(distanceInferredConnectorKm ?? 0) > 0 && (
+                  <p className="mt-1 text-[11px] text-slate-200">
+                    <span className="text-slate-400">Inferred access/network connectors:</span>{' '}
+                    {formatNumber(distanceInferredConnectorKm ?? 0, 1)} km combined
+                  </p>
+                )}
+                <p className="mt-1 text-[11px] text-slate-200">
+                  <span className="text-slate-400">Shortest route:</span> {shortestRouteStatus}
+                </p>
+                {distanceLinkChain.length > 0 && pavementMix.length > 0 && (
+                  <>
+                    <p className="mt-1 text-[11px] text-slate-200">
+                      <span className="text-slate-400">Recorded pavement (DoR SNH 2022/23):</span>{' '}
+                      {pavementMix.map((item) => `${item.type} ${formatNumber(item.distanceKm, 1)} km`).join(' · ')}
+                    </p>
+                    <p className="mt-1 text-[10px] text-slate-500">{PAVEMENT_RECORD_NOTE}</p>
+                  </>
+                )}
+                {hasDistinctPlannerRoute && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Route-planner context only: {formatNumber(routeDistance, 1)} km; not the distance basis above.
+                  </p>
+                )}
               </div>
             )}
 
-            <div className="pt-4">
-              <div className="text-[11px] text-slate-300">
-                <span className="font-semibold text-slate-400">Source: </span>
-                <SourceLink
-                  label={distanceEvidence === 'published'
-                    ? 'DoR SNH 2022/23'
-                    : distanceEvidence === 'link_sum'
-                      ? 'DoR highway link inventory'
-                      : distanceEvidence === 'geodesic'
-                        ? 'DoR highway GIS'
-                        : distanceEvidence === 'estimate'
-                          ? 'Origin/destination coordinates'
-                          : 'Route planner GIS'}
-                  href={sourceUrl}
-                />
-                <span className="text-slate-400"> · {distanceMethod}</span>
+            <div className="border-t border-slate-800 pt-4">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Source &amp; Methodology</h2>
+              <div className="mt-2 grid gap-1 text-[11px] text-slate-300">
+                <p>
+                  <span className="font-semibold text-slate-400">Source: </span>
+                  <SourceLink label={sourceLabel} href={sourceUrl} />
+                </p>
               </div>
-              {highwaySegments.length > 0 && (
-                <p className="mt-1 text-[10px] text-slate-500">{ROAD_SURFACE_CONDITION_NOTE}</p>
-              )}
-              {citationText && <p className="mt-2 text-[10px] text-slate-500">{citationText}</p>}
-              {distanceHighways.length > 0 && highwaySegments.length === 0 && <p className="mt-2 text-[10px] text-cyan-300">Route: {distanceHighways.join(' → ')}</p>}
+              {citationText && <p className="mt-1 text-[10px] text-slate-500">Citation: {citationText}</p>}
               {distanceNote && <p className="mt-2 text-[10px] text-amber-300/90"><Info className="mr-1 inline-block h-3 w-3 align-[-2px]" />{distanceNote}</p>}
             </div>
           </>

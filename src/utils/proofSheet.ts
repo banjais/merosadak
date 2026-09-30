@@ -3,7 +3,9 @@ import { DistanceWithSource, getEvidenceLevelLabel, getEvidenceLevelColor, getSo
 import { RouteHighwaySummary } from './routeHighwaySummary';
 import QRCode from 'qrcode';
 import { DOR_BRANDING, DOR_REPORT_NOTE, DOR_REPORT_TITLE, formatReportTimestampParts } from './reportBranding';
-import { getRoadSurfaceLabel, ROAD_SURFACE_CONDITION_NOTE } from './roadSurfaceLabels';
+import { getDistanceMethodLabel } from './distanceMethod';
+import { PAVEMENT_RECORD_NOTE, summarizePavementTypes } from './pavementSummary';
+import { getDistanceRouteHighways, getHighwayCountLabel, getShortestRouteStatus } from './routeEvidenceSummary';
 import {
   DOR_DOCUMENT,
   DOR_PUBLISHER,
@@ -166,6 +168,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   const FOOTER_TOP = H - 20;
 
   const res = data.lookupResult;
+  const inferredConnectorKm = res.inferredConnectorKm ?? 0;
   const sourceUrl = res.source === 'dor_geojson'
     ? 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement'
     : res.source === 'dor_snh'
@@ -230,7 +233,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, W, 38, 'F');
 
-  // The emblem identifies the cited public agency, not the report issuer.
+  // The emblem and agency names identify the site context; sources are detailed below.
   if (governmentEmblem) {
     doc.addImage(governmentEmblem, 'PNG', M, 5, 15, 15);
   } else {
@@ -252,6 +255,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   line(DOR_BRANDING.line1, 0, 8.5, 'bold', [255, 255, 255]);
   line(DOR_BRANDING.line2, 4.4, 7.5, 'normal', [203, 213, 225]);
   line(DOR_BRANDING.line3, 8.5, 7.5, 'normal', [203, 213, 225]);
+  doc.link(LX, LY + 5.3, doc.getTextWidth(ascii(DOR_BRANDING.line3)), 3.5, { url: DOR_SOURCE_URL });
 
   // Right side: reference code, print stamp, and the signed-in user.
   const stamp = formatReportTimestampParts(printedAt);
@@ -268,11 +272,12 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   if (data.issuedToName) rightLine(data.issuedToName, 19, 7.5, 'bold', [255, 255, 255]);
   if (data.issuedToEmail) rightLine(data.issuedToEmail, 23.5, 7, 'normal', [148, 163, 184]);
 
+  line(DOR_REPORT_TITLE, 13, 7, 'bold', [255, 255, 255]);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.2);
+  doc.setFontSize(5.8);
   doc.setTextColor(203, 213, 225);
-  const headerNote = doc.splitTextToSize(ascii(`${DOR_REPORT_TITLE} - ${DOR_REPORT_NOTE}`), W - M * 2) as string[];
-  doc.text(headerNote, M, 32);
+  const headerNote = doc.splitTextToSize(ascii(DOR_REPORT_NOTE), 98) as string[];
+  doc.text(headerNote, LX, LY + 16.5);
 
   // Document title follows the agency attribution and independence note.
   y = 45;
@@ -301,14 +306,8 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.text(fromLines, fromX, y);
   doc.text(toLines, toX, y);
   y += Math.max(fromLines.length, toLines.length) * 4.5 + 2;
-  const coordinateText = (point?: { lat: number; lng: number }) => point
-    ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
-    : 'Unavailable';
-  text(`Origin: ${coordinateText(data.fromCoordinates)}`, M, 7, 'normal', MUTED);
-  text(`Destination: ${coordinateText(data.toCoordinates)}`, M + 92, 7, 'normal', MUTED);
-  y += 6;
   drawDistanceRuler(doc, M + 1, y - 5, INK);
-  text(`${res.distanceKm.toFixed(2)} km`, M + 11, 26, 'bold', INK);
+  text(`${res.distanceKm.toFixed(1)} km`, M + 11, 26, 'bold', INK);
 
   const col = getEvidenceLevelColor(res.evidenceLevel);
   const badge = getEvidenceLevelLabel(res.evidenceLevel);
@@ -321,93 +320,71 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
   doc.text(ascii(badge), W - M - bw / 2, y - 2.2, { align: 'center' });
   y += 6;
 
-  // ---------------- source citation
-  heading('DISTANCE BASIS AND SOURCE');
   const cit = res.citation;
-  const lines: string[] = [
-    `Evidence type: ${getEvidenceLevelLabel(res.evidenceLevel)}`,
-    `Data source: ${getSourceLabel(res.source)}`,
-    `Document: ${cit?.document || getSourceLabel(res.source)}`,
-    `Table: ${cit?.table || (res.evidenceLevel === 'published' ? DOR_DOCUMENT : 'No published city-pair table')}${cit?.row ? `, row ${cit.row}` : ''}`,
-  ];
-  if (sourceUrl) lines.push(`Source URL: ${sourceUrl}`);
-  if (cit?.printedPage || cit?.pdfPage) {
-    lines.push(`Page: ${cit?.printedPage ? `printed p.${cit.printedPage}` : ''}${cit?.printedPage && cit?.pdfPage ? ' / ' : ''}${cit?.pdfPage ? `PDF file p.${cit.pdfPage}` : ''}`);
-  }
-  if (cit?.via) lines.push(`Route basis: ${cit.via}`);
-  if (res.highwaysUsed?.length) lines.push(`Highways in computed route: ${res.highwaysUsed.join(' -> ')}`);
-  lines.forEach((l) => {
-    ensure(4.6);
-    text(l, M, 8.5, 'normal', INK);
-    y += 4.6;
-  });
+  text(`Calculation method: ${getDistanceMethodLabel(res.evidenceLevel)}`, M, 8, 'normal', INK);
+  y += 6;
+  const coordinateText = (point?: { lat: number; lng: number }) => point
+    ? `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`
+    : 'Unavailable';
+  text(`Origin: ${coordinateText(data.fromCoordinates)}`, M, 7, 'normal', MUTED);
+  text(`Destination: ${coordinateText(data.toCoordinates)}`, M + 92, 7, 'normal', MUTED);
+  y += 6;
 
-  if (data.routeHighways?.length) {
-    heading('ROUTE PLANNER GIS PATH - CONTEXT ONLY');
-    wrapped(`This separate GIS route is shown for context. It is not a segment-by-segment verification or breakdown of the selected distance. ${ROAD_SURFACE_CONDITION_NOTE}`, 7.5, 'italic', MUTED, 3.5);
-    data.routeHighways.forEach((segment, index) => {
-      const roadClass = segment.roadClass.toLowerCase() === 'national highway' ? '' : ` - ${segment.roadClass}`;
-      const description = `${index + 1}. ${segment.highwayName} (${segment.highwayCode})${roadClass} - ${getRoadSurfaceLabel(segment.surface)} - ${segment.distanceKm.toFixed(1)} km`;
-      const wrapped = doc.splitTextToSize(ascii(description), W - M * 2);
-      ensure(wrapped.length * 4.2);
-      wrapped.forEach((line: string) => {
-        text(line, M, 8, 'normal', INK);
-        y += 4.2;
-      });
-    });
-  }
-
-  // ---------------- link chain
-  if (res.linkChain && res.linkChain.length > 0) {
-    heading('LINK-BY-LINK BREAKDOWN');
-    heading('PUBLISHED LINK BREAKDOWN');
-    const cSeg = M;
-    const cCode = M + 9;
-    const cName = M + 37;
-    const cPavement = W - M - 39;
-    const cKm = W - M;
-    const header = () => {
-      text('#', cSeg, 7, 'bold', MUTED);
-      text('Link code', cCode, 7, 'bold', MUTED);
-      text('Link / segment', cName, 7, 'bold', MUTED);
-      text('Pavement', cPavement, 7, 'bold', MUTED);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text('km', cKm, y, { align: 'right' });
-      y += 2;
-      doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
-      doc.line(M, y, W - M, y);
-      y += 3.6;
-    };
-    ensure(14);
-    header();
-    res.linkChain.forEach((e, i) => {
-      if (y + 4.2 > FOOTER_TOP) {
-        doc.addPage();
-        y = M + 4;
-        header();
+  const distanceRouteHighways = getDistanceRouteHighways(res.highwaysUsed || [], res.linkChain || []);
+  const plannerRouteHighways = data.routeHighways || [];
+  const hasDistinctPlannerRoute = plannerRouteHighways.length > 0
+    && Math.abs(plannerRouteHighways.reduce((total, segment) => total + segment.distanceKm, 0) - res.distanceKm) >= 0.05;
+  if (res.linkChain?.length || data.routeHighways?.length || distanceRouteHighways.length || (res.inferredConnectorKm ?? 0) > 0) {
+    heading('ROUTE & ROAD RECORD');
+    if (distanceRouteHighways.length) {
+      if (res.linkChain?.length) {
+        wrapped(`DoR link segments (${getHighwayCountLabel(distanceRouteHighways)}):`, 8, 'normal', INK, 4.2);
+      } else {
+        wrapped(`${getHighwayCountLabel(distanceRouteHighways)}: ${distanceRouteHighways.join(' -> ')}`, 8, 'normal', INK, 4.2);
       }
-      text(String(i + 1), cSeg, 7.5, 'normal', INK);
-      text(e.code, cCode, 7.5, 'normal', INK);
-      text(e.name.length > 44 ? e.name.slice(0, 42) + '...' : e.name, cName, 7.5, 'normal', INK);
-      text(e.pavementType.length > 18 ? `${e.pavementType.slice(0, 16)}...` : e.pavementType, cPavement, 7, 'normal', INK);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(INK[0], INK[1], INK[2]);
-      doc.text(e.lengthKm.toFixed(2), cKm, y, { align: 'right' });
-      y += 4.2;
-    });
-    const total = res.linkChain.reduce((s, e) => s + e.lengthKm, 0);
-    ensure(8);
-    doc.setDrawColor(RULE[0], RULE[1], RULE[2]);
-    doc.line(M, y - 1.5, W - M, y - 1.5);
-    y += 2;
-    text('TOTAL OF LISTED LINKS', cName, 7.5, 'bold', INK);
-    doc.setFont('helvetica', 'bold');
-    doc.text(total.toFixed(2), cKm, y, { align: 'right' });
-    y += 5;
+    }
+    if (res.linkChain?.length) {
+      res.linkChain.forEach((segment) => {
+        wrapped(`${segment.code} - ${segment.name} - ${segment.lengthKm.toFixed(1)} km`, 7.5, 'normal', INK, 3.8);
+      });
+    }
+    if (inferredConnectorKm > 0) {
+      wrapped(`Inferred access/network connectors: ${inferredConnectorKm.toFixed(1)} km combined`, 7.5, 'normal', INK, 4.2);
+    }
+    wrapped(`Shortest route: ${getShortestRouteStatus(res.evidenceLevel)}`, 7.5, 'normal', INK, 4.2);
+    if (res.linkChain?.length) {
+      const pavementMix = summarizePavementTypes(res.linkChain);
+      if (pavementMix.length) {
+        const mix = `Recorded pavement (DoR SNH 2022/23): ${pavementMix.map((item) => `${item.type} ${item.distanceKm.toFixed(1)} km`).join(' - ')}`;
+        wrapped(mix, 7.5, 'normal', INK, 4.2);
+        wrapped(PAVEMENT_RECORD_NOTE, 7, 'italic', MUTED, 3.4);
+      }
+    }
+    if (hasDistinctPlannerRoute) {
+      const plannerDistanceKm = plannerRouteHighways.reduce((total, segment) => total + segment.distanceKm, 0);
+      wrapped(
+        `Route-planner context only: ${plannerDistanceKm.toFixed(1)} km; not the distance basis above.`,
+        7,
+        'italic',
+        MUTED,
+        3.5
+      );
+    }
   }
+
+  // ---------------- concise sources and citation
+  heading('SOURCE & METHODOLOGY');
+  const sourceLines = [
+    `Source: ${getSourceLabel(res.source)}`,
+    cit ? `Citation: ${cit.document}, ${cit.table}${cit.row ? `, row ${cit.row}` : ''}${cit.printedPage ? `, p. ${cit.printedPage}` : ''}` : '',
+    sourceUrl ? `Source URL: ${sourceUrl}` : '',
+  ].filter(Boolean);
+  sourceLines.forEach((line) => {
+    const sourceLinesWrapped = doc.splitTextToSize(ascii(line), W - M * 2) as string[];
+    ensure(sourceLinesWrapped.length * 4.2);
+    doc.text(sourceLinesWrapped, M, y);
+    y += sourceLinesWrapped.length * 4.2;
+  });
 
   // ---------------- notes and cautions
   if (res.note) {
@@ -502,7 +479,7 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     ['DoR publication', res.evidenceLevel === 'published' ? `${DOR_DOCUMENT}, HMIS-ICT Unit, published June 2024` : 'No DoR-published distance for this city pair'],
     ['Snapshot', res.source === 'dor_snh' ? 'Data reflects the 2022/23 publication, not live road conditions.' : 'Computed route from archived road geometry; not a live road-status report.'],
     ['Dataset fingerprint', `SHA-256 (first 12): ${data.dataHash}`],
-    ['Prepared by', 'MEROSADAK (independent report; not issued by the Department of Roads).'],
+    ['Prepared by', 'MEROSADAK Distance Calculator.'],
     ['Copyright', '(c) 2023 Department of Roads (source data). Reproduced for reference.'],
   ];
   src.forEach(([k, v]) => {
@@ -528,8 +505,13 @@ export async function buildProofSheet(data: ProofSheetData): Promise<{ doc: jsPD
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text(ascii(`${id}  |  ref ${claim.h}  |  https://dor.gov.np  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`), M, H - 10.5);
-    doc.text(ascii('MEROSADAK report. DoR is cited as a data source, not as the report issuer.'), M, H - 7);
+    const footerPrefix = `${id}  |  ref ${claim.h}  |  DoR `;
+    const footerUrl = DOR_SOURCE_URL.replace(/^https?:\/\//, '');
+    const footerSuffix = `  |  source ${sourceUrl ? sourceUrl.replace('https://', '') : 'aerial estimate'}`;
+    doc.text(ascii(`${footerPrefix}${footerUrl}${footerSuffix}`), M, H - 10.5);
+    const linkX = M + doc.getTextWidth(ascii(footerPrefix));
+    doc.link(linkX, H - 13.3, doc.getTextWidth(ascii(footerUrl)), 3.5, { url: DOR_SOURCE_URL });
+    doc.text(ascii('Generated by MEROSADAK Distance Calculator; see the cited source and calculation method above.'), M, H - 7);
     doc.text(`Page ${p} of ${pages}`, W - M, H - 10.5, { align: 'right' });
   }
 

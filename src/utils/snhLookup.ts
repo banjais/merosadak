@@ -374,9 +374,7 @@ export function lookupGeoJsonRouteDistance(
       document: 'Department of Roads highway archive',
       table: 'Computed shortest path over archived highway geometry',
     },
-    note: route.inferredConnectorKm > 0
-      ? `Derived by MEROSADAK over DoR archive geometry; DoR does not publish this pair. ${route.inferredConnectorKm.toFixed(1)} km uses inferred access or network-join connectors.`
-      : 'Derived route computed by MEROSADAK over DoR archive geometry; DoR does not publish this city-pair figure.',
+    note: 'Derived by MEROSADAK over DoR archive geometry; DoR does not publish this city-pair figure.',
     highwaysUsed: route.highwaysUsed,
     inferredConnectorKm: route.inferredConnectorKm,
   };

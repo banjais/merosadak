@@ -1,5 +1,6 @@
 import React from 'react';
 import { DOR_BRANDING, DOR_REPORT_NOTE, DOR_REPORT_TITLE, ReportIdentity, ReportTimestamp } from '../utils/reportBranding';
+import { DOR_SOURCE_URL } from '../utils/proofLinks';
 
 /**
  * Stylised national emblem of Nepal: the two pennons, the Himalayan range and
@@ -75,7 +76,14 @@ export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identit
         <>
           <p className="text-[10px] font-bold text-white leading-tight">{DOR_BRANDING.line1}</p>
           <p className="text-[10px] font-semibold text-slate-200 leading-tight">{DOR_BRANDING.line2}</p>
-          <p className="text-[10px] font-semibold text-slate-200 leading-tight">{DOR_BRANDING.line3}</p>
+          <a
+            href={DOR_SOURCE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-[10px] font-semibold text-slate-200 leading-tight hover:text-cyan-300 hover:underline"
+          >
+            {DOR_BRANDING.line3}
+          </a>
           <p className="mt-1 text-[9px] font-semibold text-slate-300 leading-tight">{DOR_REPORT_TITLE}</p>
           <p className="max-w-2xl text-[9px] text-amber-400 leading-tight">{DOR_REPORT_NOTE}</p>
         </>
