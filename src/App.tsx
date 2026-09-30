@@ -16,6 +16,7 @@ import { PreTripModal } from './components/PreTripModal';
 import { ShareTripModal } from './components/ShareTripModal';
 import { AppDrawer } from './components/AppDrawer';
 import { LoginScreen } from './components/LoginScreen';
+import { ControlPanelModal } from './components/ControlPanelModal';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
@@ -112,6 +113,7 @@ function AppContent() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDistanceCalculatorOpen, setIsDistanceCalculatorOpen] = useState(false);
   const [isDataSourcesOpen, setIsDataSourcesOpen] = useState(false);
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   // A scanned proof-sheet QR opens ?proof=1&...; read it before the init effect strips the query string
   const [proofClaim, setProofClaim] = useState<ProofClaim | null>(() =>
     typeof window !== 'undefined' ? parseProofFromSearch(window.location.search) : null
@@ -543,6 +545,7 @@ function AppContent() {
         }}
         onOpenDistanceCalculator={() => setIsDistanceCalculatorOpen(true)}
         onOpenDataSources={() => setIsDataSourcesOpen(true)}
+        onOpenControlPanel={() => setIsControlPanelOpen(true)}
         onOpenTollModal={() => setIsTollModalOpen(true)}
         onOpenSosModal={() => setIsSosModalOpen(true)}
         onOpenPreTripModal={() => setIsPreTripModalOpen(true)}
@@ -1038,6 +1041,13 @@ function AppContent() {
           routePlan={activeRoute}
           vehicle={plannerVehicle}
           preference={plannerPref}
+        />
+      )}
+
+      {isControlPanelOpen && (
+        <ControlPanelModal
+          onClose={() => setIsControlPanelOpen(false)}
+          onSignIn={() => setIsLoginModalOpen(true)}
         />
       )}
 

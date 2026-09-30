@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
   User,
   onAuthStateChanged,
@@ -10,10 +10,16 @@ import {
   browserSessionPersistence,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
+import type { AccessProfile } from '../../shared/accessControl';
+import { fetchAccessProfile } from '../utils/accessControlApi';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  accessProfile: AccessProfile | null;
+  accessLoading: boolean;
+  accessError: string | null;
+  refreshAccessProfile: () => Promise<void>;
   redirectError: string | null;
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
@@ -24,6 +30,10 @@ interface AuthContextType {
 const defaultAuthContext: AuthContextType = {
   user: null,
   loading: false,
+  accessProfile: null,
+  accessLoading: false,
+  accessError: null,
+  refreshAccessProfile: async () => {},
   redirectError: null,
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
@@ -85,7 +95,11 @@ function setRedirectFlag(value: string | null) {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessProfile, setAccessProfile] = useState<AccessProfile | null>(null);
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [accessError, setAccessError] = useState<string | null>(null);
   const [redirectError, setRedirectError] = useState<string | null>(null);
+  const accessRequestRef = useRef(0);
 
   useEffect(() => {
     // The second callback is the error handler. Without it an auth-init or
@@ -130,6 +144,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const refreshAccessProfile = useCallback(async () => {
+    const requestId = ++accessRequestRef.current;
+    if (!user) {
+      setAccessProfile(null);
+      setAccessError(null);
+      setAccessLoading(false);
+      return;
+    }
+    setAccessLoading(true);
+    setAccessError(null);
+    try {
+      const profile = await fetchAccessProfile(user);
+      if (requestId === accessRequestRef.current) setAccessProfile(profile);
+    } catch (error) {
+      if (requestId === accessRequestRef.current) {
+        setAccessProfile(null);
+        const apiError = error as Error & { data?: { error?: string } };
+        setAccessError(apiError.data?.error || apiError.message || 'Could not load account permissions.');
+      }
+    } finally {
+      if (requestId === accessRequestRef.current) setAccessLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void refreshAccessProfile();
+  }, [refreshAccessProfile]);
+
   const clearRedirectError = useCallback(() => setRedirectError(null), []);
 
   const loginWithGoogle = useCallback(async (rememberMe = false) => {
@@ -153,7 +195,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, clearRedirectError, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      accessProfile,
+      accessLoading,
+      accessError,
+      refreshAccessProfile,
+      redirectError,
+      clearRedirectError,
+      loginWithGoogle,
+      logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );

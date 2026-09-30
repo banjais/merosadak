@@ -263,6 +263,31 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes
+  app.all('/api/access/:resource', async (req, res) => {
+    if (req.params.resource !== 'profile' && req.params.resource !== 'office-admins') {
+      return res.status(404).json({ error: 'Access-control endpoint not found.' });
+    }
+    try {
+      const headers = new Headers();
+      const authorization = req.get('authorization');
+      if (authorization) headers.set('Authorization', authorization);
+      if (req.method === 'POST') headers.set('Content-Type', 'application/json');
+
+      const upstream = await fetch(
+        `https://merosadak.banjays.workers.dev/api/access/${req.params.resource}`,
+        {
+          method: req.method,
+          headers,
+          body: req.method === 'POST' ? JSON.stringify(req.body) : undefined,
+        }
+      );
+      res.status(upstream.status).type('application/json').send(await upstream.text());
+    } catch (error) {
+      console.error('[Mero Sadak] Access-control API proxy failed:', error);
+      res.status(502).json({ error: 'Could not reach the access-control service.' });
+    }
+  });
+
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'Mero Sadak Highway & Route Optimization Engine' });
   });

@@ -2,6 +2,7 @@
  * Mero Sadak Worker — free-first APIs (DHM, Open-Meteo, Overpass via client, KV data)
  */
 import { DHM_RAIN_API, DHM_THRESHOLDS, normalizeDhmRainfall } from "./dhm-rainfall";
+import { normalizeAccountEmail, SUPER_ADMIN_EMAIL, type AccessRole, type OfficeAdmin } from "../../shared/accessControl";
 
 export interface Env {
   TOMTOM_API_KEY: string;
@@ -14,6 +15,7 @@ export interface Env {
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
   ALLOWED_ORIGIN: string;
+  FIREBASE_API_KEY: string;
   DATA: KVNamespace;
 }
 
@@ -21,7 +23,7 @@ function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
   };
 }
 
@@ -50,6 +52,151 @@ async function readJsonData<T>(env: Env, key: string, fallback: T): Promise<T> {
     return JSON.parse(raw) as T;
   } catch {
     return fallback;
+  }
+}
+
+interface VerifiedIdentity {
+  email: string;
+}
+
+async function verifyFirebaseIdentity(request: Request, env: Env): Promise<VerifiedIdentity | Response> {
+  const authorization = request.headers.get("Authorization");
+  const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return jsonResponse(env, { error: "Sign-in required" }, 401);
+  if (!env.FIREBASE_API_KEY) {
+    console.error("[Mero Sadak] Firebase identity verification is not configured.");
+    return jsonResponse(env, { error: "Sign-in services are unavailable" }, 503);
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_API_KEY)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: token }),
+        timeoutMs: 8000,
+      }
+    );
+    if (response.status === 400 || response.status === 401) {
+      return jsonResponse(env, { error: "Your sign-in has expired. Please sign in again." }, 401);
+    }
+    if (!response.ok) {
+      console.error("[Mero Sadak] Firebase identity verification returned", response.status);
+      return jsonResponse(env, { error: "Could not verify your sign-in. Please try again." }, 503);
+    }
+
+    const result = await response.json<{
+      users?: Array<{
+        email?: string;
+        emailVerified?: boolean;
+        providerUserInfo?: Array<{ providerId?: string }>;
+      }>;
+    }>();
+    const account = result.users?.[0];
+    const email = account?.email ? normalizeAccountEmail(account.email) : "";
+    const isGoogleAccount = account?.providerUserInfo?.some((provider) => provider.providerId === "google.com");
+    if (!email || !account?.emailVerified || !isGoogleAccount) {
+      return jsonResponse(env, { error: "Use a verified Google account to access Mero Sadak." }, 403);
+    }
+    return { email };
+  } catch (error) {
+    console.error("[Mero Sadak] Firebase identity verification failed:", error);
+    return jsonResponse(env, { error: "Could not verify your sign-in. Please try again." }, 503);
+  }
+}
+
+async function getOfficeAdmins(env: Env): Promise<OfficeAdmin[]> {
+  const stored = await env.DATA.get("access-control:office-admins");
+  if (!stored) return [];
+  const parsed: unknown = JSON.parse(stored);
+  if (!Array.isArray(parsed)) {
+    throw new Error("Stored office administrator list is invalid.");
+  }
+  const officeAdmins: OfficeAdmin[] = [];
+  for (const entry of parsed) {
+    if (
+      !entry || typeof entry !== "object" ||
+      typeof entry.email !== "string" ||
+      typeof entry.addedAt !== "string" ||
+      typeof entry.addedBy !== "string"
+    ) {
+      throw new Error("Stored office administrator list is invalid.");
+    }
+    const email = normalizeAccountEmail(entry.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email === normalizeAccountEmail(SUPER_ADMIN_EMAIL)) {
+      throw new Error("Stored office administrator email is invalid.");
+    }
+    officeAdmins.push({ email, addedAt: entry.addedAt, addedBy: entry.addedBy });
+  }
+  return officeAdmins;
+}
+
+function roleForEmail(email: string, officeAdmins: OfficeAdmin[]): AccessRole {
+  if (email === normalizeAccountEmail(SUPER_ADMIN_EMAIL)) return "SuperAdmin";
+  if (officeAdmins.some((officeAdmin) => officeAdmin.email === email)) return "OfficeAdmin";
+  return "GeneralUser";
+}
+
+async function handleAccessProfile(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (identity instanceof Response) return identity;
+  try {
+    const officeAdmins = await getOfficeAdmins(env);
+    return jsonResponse(env, {
+      email: identity.email,
+      role: roleForEmail(identity.email, officeAdmins),
+    }, 200, { "Cache-Control": "no-store" });
+  } catch (error) {
+    console.error("[Mero Sadak] Failed to read access roles:", error);
+    return jsonResponse(env, { error: "Could not load account permissions. Please try again." }, 503);
+  }
+}
+
+async function handleOfficeAdmins(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (identity instanceof Response) return identity;
+  if (identity.email !== normalizeAccountEmail(SUPER_ADMIN_EMAIL)) {
+    return jsonResponse(env, { error: "Only the SuperAdmin can manage OfficeAdmin accounts." }, 403);
+  }
+
+  try {
+    const officeAdmins = await getOfficeAdmins(env);
+    if (request.method === "GET") {
+      return jsonResponse(env, { officeAdmins }, 200, { "Cache-Control": "no-store" });
+    }
+    if (request.method !== "POST") {
+      return jsonResponse(env, { error: "Method not allowed" }, 405);
+    }
+
+    let body: { action?: unknown; email?: unknown };
+    try {
+      body = await request.json<{ action?: unknown; email?: unknown }>();
+    } catch {
+      return jsonResponse(env, { error: "Request body must be valid JSON." }, 400);
+    }
+    const email = typeof body.email === "string" ? normalizeAccountEmail(body.email) : "";
+    if (body.action !== "add" && body.action !== "remove") {
+      return jsonResponse(env, { error: "Choose whether to add or remove an OfficeAdmin." }, 400);
+    }
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return jsonResponse(env, { error: "Enter a valid email address." }, 400);
+    }
+    if (email === normalizeAccountEmail(SUPER_ADMIN_EMAIL)) {
+      return jsonResponse(env, { error: "The SuperAdmin account cannot be changed from this list." }, 400);
+    }
+
+    const updatedAdmins = body.action === "add"
+      ? officeAdmins.some((officeAdmin) => officeAdmin.email === email)
+        ? officeAdmins
+        : [...officeAdmins, { email, addedAt: new Date().toISOString(), addedBy: identity.email }]
+      : officeAdmins.filter((officeAdmin) => officeAdmin.email !== email);
+    updatedAdmins.sort((a, b) => a.email.localeCompare(b.email));
+    await env.DATA.put("access-control:office-admins", JSON.stringify(updatedAdmins));
+    return jsonResponse(env, { officeAdmins: updatedAdmins }, 200, { "Cache-Control": "no-store" });
+  } catch (error) {
+    console.error("[Mero Sadak] OfficeAdmin management failed:", error);
+    return jsonResponse(env, { error: "Could not update OfficeAdmin accounts. Please try again." }, 503);
   }
 }
 
@@ -353,6 +500,12 @@ export default {
 
     if (url.pathname === "/health" || url.pathname === "/api/health") {
       return jsonResponse(env, { ok: true, service: "merosadak", free: ["dhm", "open-meteo"] });
+    }
+    if (url.pathname === "/api/access/profile" && request.method === "GET") {
+      return handleAccessProfile(request, env);
+    }
+    if (url.pathname === "/api/access/office-admins" && (request.method === "GET" || request.method === "POST")) {
+      return handleOfficeAdmins(request, env);
     }
     if (url.pathname === "/api/dhm-rainfall" && request.method === "GET") {
       return handleDhmRainfall(url, env);

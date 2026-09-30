@@ -14,6 +14,7 @@ import {
   ChevronRight,
   FileText,
   LocateFixed,
+  ShieldCheck,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +28,7 @@ interface AppDrawerProps {
   onOpenTravelSteps?: () => void;
   onOpenDistanceCalculator: () => void;
   onOpenDataSources?: () => void;
+  onOpenControlPanel: () => void;
   onOpenTollModal: () => void;
   onOpenSosModal: () => void;
   onOpenPreTripModal: () => void;
@@ -52,6 +54,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenTravelSteps,
   onOpenDistanceCalculator,
   onOpenDataSources,
+  onOpenControlPanel,
   onOpenTollModal,
   onOpenSosModal,
   onOpenPreTripModal,
@@ -160,6 +163,17 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenDataSources?.(); onClose(); },
+    },
+    {
+      id: 'control-panel',
+      label: 'Control Panel',
+      subtitle: 'Account role & admin access',
+      icon: ShieldCheck,
+      color: 'accent-text',
+      activeColor: 'accent-bg text-slate-950',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg text-slate-950',
+      onClick: () => { onOpenControlPanel(); onClose(); },
     },
   ];
 
