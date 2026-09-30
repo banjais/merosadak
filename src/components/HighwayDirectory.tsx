@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Highway, RoadIncident, UserRoadReport } from '../types';
-import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS, INITIAL_USER_REPORTS } from '../data/nepalHighwaysData';
+import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
 import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
@@ -42,6 +42,79 @@ import {
   Wrench,
   X
 } from 'lucide-react';
+
+/**
+ * Match strength for the directory search, best first. A query like "landslide"
+ * hits segment free text, which must never outrank a highway whose name or code
+ * the user actually typed.
+ */
+/** How many segments a corridor card shows before the user asks for the rest. */
+const SEGMENT_PREVIEW_LIMIT = 8;
+
+/** How many toll plazas a corridor card shows before the user asks for the rest. */
+const TOLL_PREVIEW_LIMIT = 4;
+
+/** Obstruction first, then roadwork, then caution, then clear. */
+const SEGMENT_URGENCY: Record<string, number> = {
+  obstruction: 3,
+  roadwork: 2,
+  caution: 1,
+  open: 0,
+};
+
+const HIGHWAY_NO_MATCH = -1;const HIGHWAY_MATCH_CODE_EXACT = 0;
+const HIGHWAY_MATCH_CODE_PREFIX = 1;
+const HIGHWAY_MATCH_NAME_PREFIX = 2;
+const HIGHWAY_MATCH_NAME_CONTAINS = 3;
+const HIGHWAY_MATCH_ROUTE_OR_ENDPOINT = 4;
+const HIGHWAY_MATCH_NEPALI_NAME = 5;
+const HIGHWAY_MATCH_ADMIN_AREA = 6;
+const HIGHWAY_MATCH_SEGMENT_TEXT = 7;
+
+function scoreHighwayMatch(
+  hw: Highway,
+  analysis: HighwayRealtimeAnalysis | undefined,
+  q: string
+): number {
+  const code = (hw.code || '').toLowerCase();
+  const name = (hw.name || '').toLowerCase();
+
+  if (code === q) return HIGHWAY_MATCH_CODE_EXACT;
+  if (code.startsWith(q)) return HIGHWAY_MATCH_CODE_PREFIX;
+  if (name.startsWith(q)) return HIGHWAY_MATCH_NAME_PREFIX;
+  if (name.includes(q)) return HIGHWAY_MATCH_NAME_CONTAINS;
+  if (
+    (hw.startPoint && hw.startPoint.toLowerCase().includes(q)) ||
+    (hw.endPoint && hw.endPoint.toLowerCase().includes(q)) ||
+    (hw.route && hw.route.toLowerCase().includes(q))
+  ) {
+    return HIGHWAY_MATCH_ROUTE_OR_ENDPOINT;
+  }
+  if (hw.nepaliName && hw.nepaliName.toLowerCase().includes(q)) {
+    return HIGHWAY_MATCH_NEPALI_NAME;
+  }
+  if (
+    (hw.districts && hw.districts.some((d) => d.toLowerCase().includes(q))) ||
+    (hw.provinces && hw.provinces.some((p) => p.toLowerCase().includes(q))) ||
+    (hw.divisions && hw.divisions.some((div) => div.toLowerCase().includes(q)))
+  ) {
+    return HIGHWAY_MATCH_ADMIN_AREA;
+  }
+  if (
+    analysis &&
+    (analysis.statusLabel.toLowerCase().includes(q) ||
+      analysis.segments.some(
+        (s) =>
+          s.from.toLowerCase().includes(q) ||
+          s.to.toLowerCase().includes(q) ||
+          (s.currentIssue && s.currentIssue.toLowerCase().includes(q))
+      ))
+  ) {
+    return HIGHWAY_MATCH_SEGMENT_TEXT;
+  }
+
+  return HIGHWAY_NO_MATCH;
+}
 
 function deriveRoadType(highway: Highway): string {
   const surfaces = new Set<string>();
@@ -94,8 +167,8 @@ interface HighwayDirectoryProps {
 export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   onSelectHighwayOnMap,
   onPlanTripForHighway,
-  liveIncidents = LIVE_ROAD_INCIDENTS,
-  userReports = INITIAL_USER_REPORTS,
+  liveIncidents = [],
+  userReports = [],
   routeHighwayCodes = [],
   filterToRouteOnly = false,
 }) => {
@@ -117,6 +190,11 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   // rendered through a map callback where hooks are not allowed.
   const [deckIndex, setDeckIndex] = useState(0);
   const [quickOverlayFor, setQuickOverlayFor] = useState<string | null>(null);
+  // Long per-highway lists start collapsed: a driver opening a corridor needs the
+  // sections that are blocked or under repair first, not all of them at once.
+  const [showAllSegments, setShowAllSegments] = useState(false);
+  const [showAllTolls, setShowAllTolls] = useState(false);
+  const [showAllLinks, setShowAllLinks] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -223,43 +301,46 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
     return { open, roadwork, obstruction, caution };
   }, [highwayAnalyses]);
 
-  const filteredHighways = highways.filter((hw) => {
+  const filteredHighways = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    const key = (hw.id || hw.code).toLowerCase();
-    const analysis = highwayAnalyses.get(key);
 
-    const matchesSearch =
-      !q ||
-      hw.name.toLowerCase().includes(q) ||
-      hw.code.toLowerCase().includes(q) ||
-      (hw.nepaliName && hw.nepaliName.includes(q)) ||
-      (hw.startPoint && hw.startPoint.toLowerCase().includes(q)) ||
-      (hw.endPoint && hw.endPoint.toLowerCase().includes(q)) ||
-      (hw.route && hw.route.toLowerCase().includes(q)) ||
-      (analysis && analysis.statusLabel.toLowerCase().includes(q)) ||
-      (analysis && analysis.segments.some((s) => s.from.toLowerCase().includes(q) || s.to.toLowerCase().includes(q) || (s.currentIssue && s.currentIssue.toLowerCase().includes(q)))) ||
-      (hw.districts && hw.districts.some((d) => d.toLowerCase().includes(q))) ||
-      (hw.provinces && hw.provinces.some((p) => p.toLowerCase().includes(q))) ||
-      (hw.divisions && hw.divisions.some((div) => div.toLowerCase().includes(q)));
+    const kept = highways.filter((hw) => {
+      const key = (hw.id || hw.code).toLowerCase();
+      const analysis = highwayAnalyses.get(key);
 
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (analysis && analysis.realtimeStatus === statusFilter);
+      const matchesStatus = statusFilter === 'all' || (analysis && analysis.realtimeStatus === statusFilter);
+      const matchesTerrain = terrainFilter === 'all' || hw.terrainType === terrainFilter;
+      const matchesRoute =
+        !isFilterRouteOnly ||
+        routeHighwayCodes.length === 0 ||
+        routeHighwayCodes.some(
+          (code) => code && code.split('/').some((c) => c.trim().toLowerCase() === (hw.code || hw.id).toLowerCase())
+        );
 
-    const matchesTerrain = terrainFilter === 'all' || hw.terrainType === terrainFilter;
+      return matchesStatus && matchesTerrain && matchesRoute && !isHighwayArchived(key, 'highway');
+    });
 
-    const matchesRoute =
-      !isFilterRouteOnly ||
-      routeHighwayCodes.length === 0 ||
-      routeHighwayCodes.some(
-        (code) => code && code.split('/').some((c) => c.trim().toLowerCase() === (hw.code || hw.id).toLowerCase())
-      );
+    // With no query there is nothing to rank: the corpus order is the browse order.
+    if (!q) return kept;
 
-    const highwayKey = (hw.id || hw.code).toLowerCase();
-    const matchesArchive = !isHighwayArchived(highwayKey, 'highway');
+    // Otherwise rank by how strong the match is, so an exact code or a name
+    // prefix always floats above a hit buried in segment free text.
+    const scored = kept
+      .map((hw) => ({ hw, rank: scoreHighwayMatch(hw, highwayAnalyses.get((hw.id || hw.code).toLowerCase()), q) }))
+      .filter((entry) => entry.rank !== HIGHWAY_NO_MATCH)
+      .sort((a, b) => a.rank - b.rank || (a.hw.code || '').localeCompare(b.hw.code || ''));
 
-    return matchesSearch && matchesStatus && matchesTerrain && matchesRoute && matchesArchive;
-  });
+    return scored.map((entry) => entry.hw);
+  }, [
+    highways,
+    highwayAnalyses,
+    searchQuery,
+    statusFilter,
+    terrainFilter,
+    isFilterRouteOnly,
+    routeHighwayCodes,
+    isHighwayArchived,
+  ]);
 
   // Keep the deck inside the filtered set (filters shrink/grow the list)
   const safeDeckIndex = filteredHighways.length === 0
@@ -470,7 +551,11 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             const highwayKey = (highway.id || highway.code).toLowerCase();
             const isExpanded = (expandedHighwayId || '').toLowerCase() === highwayKey;
             const analysis = highwayAnalyses.get(highwayKey) || analyzeHighwayRealtimeStatus(highway, incidents, reports);
-            const segments = analysis.segments;
+            // Problems first, so the capped preview is the part a driver needs.
+            const segments = [...analysis.segments].sort(
+              (a, b) => SEGMENT_URGENCY[b.realtimeStatusType ?? 'open'] - SEGMENT_URGENCY[a.realtimeStatusType ?? 'open']
+            );
+            const visibleSegments = showAllSegments ? segments : segments.slice(0, SEGMENT_PREVIEW_LIMIT);
             const snhLookup = snhReference ? lookupSNHDistance(highway.startPoint, highway.endPoint, snhReference) : null;
 
             // NOTE: swipe gestures are handled by the parent deck (3D horizontal
@@ -786,24 +871,36 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                        );
                      })()}
 
-                     {/* Link Codes */}
-                     {highway.segmentLinks && highway.segmentLinks.length > 0 && (
-                       <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Corridor Link Codes</div>
-                         <div className="flex flex-wrap gap-1.5">
-                            {highway.segmentLinks.slice(0, 20).map((link) => (
-                              <span key={link.linkCode} className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-300" title={`${link.linkName || link.linkCode} (${link.linkLenKm || 0} km)`}>
-                                {link.linkCode}
-                              </span>
-                            ))}
-                           {highway.segmentLinks.length > 20 && (
-                             <span className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] text-slate-400">
-                               +{highway.segmentLinks.length - 20} more
-                             </span>
-                           )}
-                         </div>
-                       </div>
-                     )}
+                      {/* Link Codes */}
+                      {highway.segmentLinks && highway.segmentLinks.length > 0 && (
+                        <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowAllLinks((previous) => !previous);
+                            }}
+                            className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                          >
+                            <span>Corridor Link Codes ({highway.segmentLinks.length})</span>
+                            <span className="text-slate-400">{showAllLinks ? 'Hide' : 'Show'}</span>
+                          </button>
+                          {showAllLinks && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {highway.segmentLinks.slice(0, 30).map((link) => (
+                                <span key={link.linkCode} className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-300" title={`${link.linkName || link.linkCode} (${link.linkLenKm || 0} km)`}>
+                                  {link.linkCode}
+                                </span>
+                              ))}
+                              {highway.segmentLinks.length > 30 && (
+                                <span className="px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-[10px] text-slate-400">
+                                  +{highway.segmentLinks.length - 30} more
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     {highway.nepaliName && (
                       <div className="text-xs text-slate-500 italic">{highway.nepaliName}</div>
                     )}
@@ -824,7 +921,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                             </span>
                           </div>
                           <div className="space-y-2">
-                            {tollPlazas.map((plaza) => {
+                            {(showAllTolls ? tollPlazas : tollPlazas.slice(0, TOLL_PREVIEW_LIMIT)).map((plaza) => {
                               const isDirectional = plaza.directional;
                               const rates = isDirectional ? plaza.rates.entry || plaza.rates.single : plaza.rates.single;
                               return (
@@ -874,6 +971,20 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                               );
                             })}
                           </div>
+                          {tollPlazas.length > TOLL_PREVIEW_LIMIT && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowAllTolls((previous) => !previous);
+                              }}
+                              className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300"
+                            >
+                              {showAllTolls
+                                ? 'Show fewer plazas'
+                                : `Show all ${tollPlazas.length} plazas`}
+                            </button>
+                          )}
                           <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
                             <span>Source: Roads Board Nepal Gazette</span>
                             <a
@@ -952,7 +1063,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800/50">
-                            {segments.map((seg, idx) => {
+                            {visibleSegments.map((seg, idx) => {
                               let statusPillClass = 'bg-emerald-950/80 text-emerald-300 border-emerald-700/80';
                               let statusIcon = '🟢';
                               if (seg.realtimeStatusType === 'obstruction') {
@@ -1109,11 +1220,25 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                                   <td className="py-2 px-3 text-slate-400 text-[11px]">{link.divName || 'DoR'}</td>
                                 </tr>
                               ))}
-                            </tbody>
-                          </table>
-                        </div>
+                          </tbody>
+                        </table>
                       </div>
-                    )}
+                      {segments.length > SEGMENT_PREVIEW_LIMIT && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowAllSegments((previous) => !previous);
+                          }}
+                          className="w-full text-[10px] font-bold text-cyan-400 hover:text-cyan-300"
+                        >
+                          {showAllSegments
+                            ? 'Show fewer segments'
+                            : `Show all ${segments.length} segments`}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                     {/* Action Buttons: Show on Map & Plan Route */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 gap-cards-sm">

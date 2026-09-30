@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Highway, RoadIncident } from '../types';
-import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
+import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadSNHReference, lookupSNHDistance, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
 import {
   Route,
@@ -64,7 +64,7 @@ function findHighway(code: string): Highway | undefined {
 
 export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
   routeHighwayCodes,
-  incidents = LIVE_ROAD_INCIDENTS,
+  incidents = [],
   onViewHighwayOnMap,
   onOpenHighwayDirectory,
 }) => {

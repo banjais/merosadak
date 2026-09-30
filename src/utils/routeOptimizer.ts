@@ -1431,7 +1431,11 @@ export function findRouteByPreference(
   vehicle: VehicleType = 'car',
   penalizedEdgeIds: Set<string> = new Set<string>(),
   overrideMetadata?: { name?: string; badge?: string; color?: string; viaHighlights?: string },
-  terrainFilters: TerrainFilterOptions = {}
+  terrainFilters: TerrainFilterOptions = {},
+  // Live incidents are supplied by the caller from the live feed. Defaulting to
+  // empty keeps route scoring honest: with no feed, nothing is re-routed around
+  // an incident we cannot actually see.
+  liveIncidents: RoadIncident[] = []
 ): RoutePlanResult | null {
   const origin = CITIES_AND_JUNCTIONS.find((c) => c.id === originId);
   const destination = CITIES_AND_JUNCTIONS.find((c) => c.id === destinationId);
@@ -1591,7 +1595,7 @@ export function findRouteByPreference(
         } else if (edge.status === 'closed') {
           edgeWeight *= 60.0;
         }
-        const hasLiveIncident = LIVE_ROAD_INCIDENTS.some(inc => 
+        const hasLiveIncident = liveIncidents.some(inc =>
           (inc.highwayCode === edge.highwayCode || inc.locationName.toLowerCase().includes(edge.highwayName.toLowerCase())) &&
           (inc.type === 'landslide' || inc.type === 'fallen_rocks' || inc.type === 'flood' || inc.severity === 'severe')
         );
@@ -1754,7 +1758,7 @@ export function findRouteByPreference(
   const tollVehicleCategory = mapVehicleToTollCategory(vehicle);
   const totalTollCost = calculateTollCost(highwayCodesOnPath, tollVehicleCategory, origin, destination);
 
-  const incidentsOnRoute = LIVE_ROAD_INCIDENTS.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
+  const incidentsOnRoute = liveIncidents.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
 
   const elevationsOnRoute = [origin.elevationM, destination.elevationM, ...edgesOnPath.map((e) => e.elevationGain + origin.elevationM)];
   const maxElevationM = Math.max(...elevationsOnRoute);
@@ -1873,7 +1877,8 @@ export function findAllRouteOptions(
   originId: string,
   destinationId: string,
   vehicle: VehicleType = 'car',
-  terrainFilters: TerrainFilterOptions = {}
+  terrainFilters: TerrainFilterOptions = {},
+  liveIncidents: RoadIncident[] = []
 ): RoutePlanResult[] {
   const options: RoutePlanResult[] = [];
   const seenEdgeFingerprints = new Set<string>();
@@ -1888,7 +1893,7 @@ export function findAllRouteOptions(
     name: 'Express Corridor (Fastest)',
     badge: '🚀 Fastest',
     color: '#38bdf8'
-  }, terrainFilters);
+  }, terrainFilters, liveIncidents);
   if (fastest) {
     options.push(fastest);
     seenEdgeFingerprints.add(getFingerprint(fastest));
@@ -1899,7 +1904,7 @@ export function findAllRouteOptions(
     name: 'Direct Distance (Shortest)',
     badge: '📏 Shortest',
     color: '#10b981'
-  }, terrainFilters);
+  }, terrainFilters, liveIncidents);
   if (shortest) {
     const fp = getFingerprint(shortest);
     if (!seenEdgeFingerprints.has(fp)) {
@@ -1913,7 +1918,7 @@ export function findAllRouteOptions(
     name: 'Scenic Ridge & Passes',
     badge: '🏔️ Most Scenic',
     color: '#a855f7'
-  }, terrainFilters);
+  }, terrainFilters, liveIncidents);
   if (scenic) {
     const fp = getFingerprint(scenic);
     if (!seenEdgeFingerprints.has(fp)) {
@@ -1927,7 +1932,7 @@ export function findAllRouteOptions(
     name: 'Paved & Safety-Prioritized',
     badge: '🛡️ Safest Surface',
     color: '#f59e0b'
-  }, terrainFilters);
+  }, terrainFilters, liveIncidents);
   if (safest) {
     const fp = getFingerprint(safest);
     if (!seenEdgeFingerprints.has(fp)) {
@@ -1954,7 +1959,7 @@ export function findAllRouteOptions(
       name: 'Alternative Highway Bypass',
       badge: '🔄 Alternative',
       color: '#c084fc'
-    }, terrainFilters);
+    }, terrainFilters, liveIncidents);
     if (alternative) {
       const fp = getFingerprint(alternative);
       if (!seenEdgeFingerprints.has(fp)) {
@@ -1970,7 +1975,7 @@ export function findAllRouteOptions(
       name: 'EV Fast-Charging Network',
       badge: '⚡ EV Priority',
       color: '#06b6d4'
-    }, terrainFilters);
+    }, terrainFilters, liveIncidents);
     if (evRoute) {
       const fp = getFingerprint(evRoute);
       if (!seenEdgeFingerprints.has(fp)) {
@@ -2098,7 +2103,8 @@ export function findOptimizedRoute(
   vehicle: VehicleType = 'car',
   terrainFilters: TerrainFilterOptions = {},
   originNode?: CityNode,
-  destinationNode?: CityNode
+  destinationNode?: CityNode,
+  liveIncidents: RoadIncident[] = []
 ): RoutePlanResult | null {
   // Resolve routing graph nodes. User-selected places that are not in the
   // curated junction graph are snapped for pathfinding only — the report must
@@ -2129,7 +2135,7 @@ export function findOptimizedRoute(
     };
   };
 
-  const allOptions = findAllRouteOptions(routingOriginId, routingDestId, vehicle, terrainFilters);
+  const allOptions = findAllRouteOptions(routingOriginId, routingDestId, vehicle, terrainFilters, liveIncidents);
   if (allOptions.length === 0) {
     let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === routingOriginId);
     let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === routingDestId);
@@ -2253,7 +2259,7 @@ export function findOptimizedRoute(
   // Find matching option for current preference, or default to fastest
   let selected = allOptions.find(opt => opt.preference === preference);
   if (!selected) {
-    selected = findRouteByPreference(routingOriginId, routingDestId, preference, vehicle, new Set(), undefined, terrainFilters) || allOptions[0];
+    selected = findRouteByPreference(routingOriginId, routingDestId, preference, vehicle, new Set(), undefined, terrainFilters, liveIncidents) || allOptions[0];
   }
 
   // Attach all available route options to the result for easy toggling

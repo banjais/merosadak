@@ -14,8 +14,8 @@
     "electricity": "kWh"
   },
   "regions": "Kathmandu, Pokhara, Dipayal",
-  "lastUpdated": "2026-09-30T05:59:16.022Z",
-  "fetchedAt": "2026-09-30T05:59:16.022Z",
-  "nextUpdate": "2026-10-01T05:59:16.022Z",
+  "lastUpdated": "2026-09-30T12:57:36.381Z",
+  "fetchedAt": "2026-09-30T12:57:36.381Z",
+  "nextUpdate": "2026-10-01T12:57:36.381Z",
   "note": "Rates effective from midnight NST. VAT inclusive. Prices may vary by region within 15km of depot."
 }

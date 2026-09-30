@@ -12,7 +12,7 @@ import {
   Highway,
   RoadIncident,
 } from '../types';
-import { NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
+import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
@@ -95,7 +95,15 @@ import {
 import { fetchJson } from '../utils/apiConfig';
 import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { filterCities } from '../utils/citySearch';
+import { CitySuggestionDropdown } from './CityResultRow';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
+
+/**
+ * How many place suggestions a picker shows. A focused list beats a long one:
+ * ranked matches land in the first few rows, and anything deeper is reachable
+ * by typing more characters.
+ */
+const CITY_SUGGESTION_LIMIT = 8;
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -117,6 +125,11 @@ interface RoutePlannerProps {
   onOpenPreTrip?: () => void;
   /** App language for speech recognition and labels. */
   uiLanguage?: 'EN' | 'NE';
+  /**
+   * Incidents from the live feed. Routes are never decorated with placeholder
+   * reports: with no feed, the planner simply plans against the road network.
+   */
+  liveIncidents?: RoadIncident[];
 }
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
@@ -173,6 +186,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   onShareTrip,
   onOpenPreTrip,
   uiLanguage = 'EN',
+  liveIncidents = [],
 }) => {
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
@@ -466,9 +480,27 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [originCity?.name, destCity?.name]);
 
-  // Filter cities for search dropdowns
-  const filteredOriginCities = filterCities(allCities, originSearchQuery);
-  const filteredDestCities = filterCities(allCities, destSearchQuery);
+  // Filter cities for search dropdowns. Memoized because this scans the whole
+  // merged corpus; each picker excludes the place already chosen in the other
+  // field so the user cannot plan Kathmandu -> Kathmandu.
+  const filteredOriginCities = useMemo(
+    () => filterCities(allCities, originSearchQuery, CITY_SUGGESTION_LIMIT, {
+      excludeIds: destId ? new Set([destId]) : undefined,
+    }),
+    [allCities, originSearchQuery, destId]
+  );
+  const filteredDestCities = useMemo(
+    () => filterCities(allCities, destSearchQuery, CITY_SUGGESTION_LIMIT, {
+      excludeIds: originId ? new Set([originId]) : undefined,
+    }),
+    [allCities, destSearchQuery, originId]
+  );
+  const filteredSingleCities = useMemo(
+    () => filterCities(allCities, singleSearchQuery, CITY_SUGGESTION_LIMIT, {
+      excludeIds: originId ? new Set([originId]) : undefined,
+    }),
+    [allCities, singleSearchQuery, originId]
+  );
 
   const handleSelectOrigin = (city: CityNode) => {
     setOriginId(city.id);
@@ -503,7 +535,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
     setIsCalculating(true);
     setTimeout(() => {
-      const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined);
+      const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined, liveIncidents);
       // Respect the chosen preference, but never present a straight-line
       // approximation as a road distance.
       const resolved = plan ? pickVerifiedRoute(plan) : null;
@@ -1388,38 +1420,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
 
             {/* Destination Autocomplete Suggestions Dropdown */}
-            {isSingleDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
-                {filterCities(allCities, singleSearchQuery).map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setDestId(c.id);
-                      setSingleSearchQuery(c.name);
-                      setDestSearchQuery(c.name);
-                      setIsSingleDropdownOpen(false);
-                      setUserPickedDestination(true);
-                      if (hasCalculated) setNeedsRecalculation(true);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="text-xs font-bold text-white group-hover:text-emerald-300">
-                        {c.name}
-                        {c.cityType && (
-                          <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
-                            {c.cityType}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {c.district} District • {c.province} Province
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+              {isSingleDropdownOpen && (
+                <CitySuggestionDropdown
+                  query={singleSearchQuery}
+                  results={filteredSingleCities}
+                  onSelect={(city) => {
+                    setDestId(city.id);
+                    setSingleSearchQuery(city.name);
+                    setDestSearchQuery(city.name);
+                    setIsSingleDropdownOpen(false);
+                    setUserPickedDestination(true);
+                    if (hasCalculated) setNeedsRecalculation(true);
+                  }}
+                />
+              )}
           </div>
         ) : (
           /* DUAL FROM & TO SEARCH BARS */
@@ -1479,35 +1493,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {isOriginDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
-                  {filteredOriginCities.length > 0 ? (
-                    filteredOriginCities.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleSelectOrigin(c)}
-                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
-                            {c.name}
-                            {c.cityType && (
-                              <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
-                                {c.cityType}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-slate-400 truncate">
-                            {c.district} District • {c.province} Province
-                           </div>
-                         </div>
-                       </button>
-                     ))
-                   ) : (
-                     <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
-                   )}
-                 </div>
-               )}
+                <CitySuggestionDropdown
+                  query={originSearchQuery}
+                  results={filteredOriginCities}
+                  onSelect={handleSelectOrigin}
+                />
+              )}
              </div>
 
              {/* SWAP BUTTON */}
@@ -1577,35 +1568,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {isDestDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
-                  {filteredDestCities.length > 0 ? (
-                    filteredDestCities.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleSelectDestination(c)}
-                        className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition flex items-center justify-between group"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
-                            {c.name}
-                            {c.cityType && (
-                              <span className="ml-1.5 text-[9px] font-normal px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block align-middle">
-                                {c.cityType}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-slate-400 truncate">
-                            {c.district} District • {c.province} Province
-                           </div>
-                         </div>
-                       </button>
-                     ))
-                   ) : (
-                     <div className="px-4 py-6 text-center text-xs text-slate-500">No matching locations found</div>
-                   )}
-                 </div>
-                )}
+                <CitySuggestionDropdown
+                  query={destSearchQuery}
+                  results={filteredDestCities}
+                  onSelect={handleSelectDestination}
+                />
+              )}
               </div>
             </div>
           )}
@@ -2284,7 +2252,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <div className="space-y-3">
                   <RouteHighwayInfoPanel
                     routeHighwayCodes={routePlan.steps.map((s) => s.highwayCode).filter(Boolean)}
-                    incidents={[...routePlan.incidentsOnRoute, ...LIVE_ROAD_INCIDENTS]}
+                    incidents={routePlan.incidentsOnRoute}
                     onViewHighwayOnMap={onViewHighwayOnMap}
                     onOpenHighwayDirectory={onOpenHighwayDirectory}
                   />
@@ -2298,7 +2266,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <RouteAheadFeed
                       routePlan={routePlan}
                       mode={travelerMode}
-                      extraIncidents={LIVE_ROAD_INCIDENTS}
+                      extraIncidents={liveIncidents}
                       onViewOnMap={onViewOnMap}
                     />
                   </ErrorBoundary>

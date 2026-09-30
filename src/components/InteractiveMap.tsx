@@ -10,7 +10,6 @@ import {
 } from '../types';
 import {
   NEPAL_HIGHWAYS,
-  LIVE_ROAD_INCIDENTS,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
 import { getHighwayEnrichment } from '../utils/geoUtils';
@@ -840,8 +839,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     if (activeLayer !== 'incidents') return;
 
-    const incidentsList =
-      liveIncidents && liveIncidents.length > 0 ? liveIncidents : LIVE_ROAD_INCIDENTS;
+    // No seed fallback: with no live feed the incidents layer is simply empty
+    // rather than showing sample reports as if they were real pins.
+    const incidentsList = liveIncidents ?? [];
 
     incidentsList.forEach((inc) => {
       const isCritical = inc.severity === 'critical' || inc.severity === 'severe';

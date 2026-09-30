@@ -45,11 +45,6 @@ import {
   RouteSimulationControls,
 } from './types';
 import {
-  LIVE_ROAD_INCIDENTS,
-  INITIAL_USER_REPORTS,
-  HIGHWAY_WEATHER_NODES,
-  HIGHWAY_POIS,
-  TRAFFIC_CORRIDORS,
   CITIES_AND_JUNCTIONS,
 } from './data/nepalHighwaysData';
 import { getNearestRoutingCity } from './utils/cityDataLoader';
@@ -91,6 +86,18 @@ interface LiveFeedResponse {
   weatherNodes?: any[];
   pois?: HighwayPOI[];
   corridors?: TrafficCorridor[];
+}
+
+/**
+ * Feeds report time either as a real timestamp or as prose ("35 minutes ago").
+ * `new Date('35 minutes ago')` is an Invalid Date, so guard the parse and fall
+ * back to showing the raw string rather than rendering a broken date.
+ */
+function formatIncidentTime(value?: string): string {
+  if (!value) return 'Time not stated';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
 }
 
 function AppContent() {
@@ -158,12 +165,16 @@ function AppContent() {
   // Offline context
   const { isOnline, cacheStats, setIsOfflineManagerOpen } = useOffline();
 
-  // Data states
-  const [incidents, setIncidents] = useState<RoadIncident[]>(LIVE_ROAD_INCIDENTS);
-  const [userReports, setUserReports] = useState<UserRoadReport[]>(INITIAL_USER_REPORTS);
-  const [weatherNodes, setWeatherNodes] = useState<any[]>(HIGHWAY_WEATHER_NODES);
-  const [pois, setPois] = useState<HighwayPOI[]>(HIGHWAY_POIS);
-  const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>(TRAFFIC_CORRIDORS);
+  // Data states. These start EMPTY on purpose: the previous seed values were
+  // sample reports that stayed on screen whenever the live feed was unreachable,
+  // so a dead network looked like five real DoR-verified incidents.
+  const [incidents, setIncidents] = useState<RoadIncident[]>([]);
+  const [userReports, setUserReports] = useState<UserRoadReport[]>([]);
+  const [weatherNodes, setWeatherNodes] = useState<any[]>([]);
+  const [pois, setPois] = useState<HighwayPOI[]>([]);
+  const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>([]);
+  /** Null until the first attempt resolves; false once a feed is known unreachable. */
+  const [isLiveFeedReachable, setIsLiveFeedReachable] = useState<boolean | null>(null);
 
   // Focus on map target - initialize with user's GPS location if available
   const [focusedTarget, setFocusedTarget] = useState<{
@@ -285,6 +296,8 @@ function AppContent() {
           setTrafficCorridors(data.corridors);
         }
       });
+
+      setIsLiveFeedReachable(!hasNetworkError);
 
       if (hasNetworkError) {
         console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
@@ -615,10 +628,13 @@ function AppContent() {
                 aria-controls="header-notifications-dropdown"
               >
                 <Bell className="w-5 h-5" />
-                {incidents.length > 0 && (
+                {isLiveFeedReachable !== false && incidents.length > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-500 text-white font-black text-[9px] rounded-full flex items-center justify-center ring-2 ring-slate-900 animate-pulse">
                     {incidents.length}
                   </span>
+                )}
+                {isLiveFeedReachable === false && (
+                  <span className="absolute -top-1 -right-1 w-[9px] h-[9px] bg-amber-500 rounded-full ring-2 ring-slate-900" />
                 )}
               </button>
 
@@ -648,15 +664,23 @@ function AppContent() {
                         </div>
                       </div>
                       <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
-                        LIVE SYNC
+                        {isLiveFeedReachable === false ? 'OFFLINE' : 'LIVE SYNC'}
                       </span>
                     </div>
 
                     <div className="max-h-80 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                      {incidents.length === 0 ? (
+                      {isLiveFeedReachable === false ? (
+                        <div className="py-6 text-center text-slate-400 text-xs">
+                          <AlertTriangle className="w-6 h-6 mx-auto mb-1.5 text-amber-400 opacity-80" />
+                          <span>
+                            Road alert feed is unreachable. No current status can be shown — check
+                            connectivity before relying on this screen.
+                          </span>
+                        </div>
+                      ) : incidents.length === 0 ? (
                         <div className="py-6 text-center text-slate-400 text-xs">
                           <CheckCheck className="w-6 h-6 mx-auto mb-1.5 text-emerald-400 opacity-80" />
-                          <span>All monitored highway corridors are currently clear!</span>
+                          <span>The live feed reported no road incidents.</span>
                         </div>
                       ) : (
                         incidents.slice(0, 6).map((inc) => (
@@ -717,8 +741,12 @@ function AppContent() {
                             </div>
 
                             <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-tertiary">
-                              <span>Reported by {inc.source || 'Community'}</span>
-                              <span className="font-mono text-tertiary">{inc.reportedAt ? new Date(inc.reportedAt).toLocaleString() : ''}</span>
+                              <span>
+                                {inc.source ? `Reported by ${inc.source}` : 'Source not stated'}
+                              </span>
+                              <span className="font-mono text-tertiary">
+                                {formatIncidentTime(inc.reportedAt)}
+                              </span>
                             </div>
                           </div>
                         ))
@@ -851,6 +879,7 @@ function AppContent() {
             onShareTrip={() => setIsShareModalOpen(true)}
             onOpenPreTrip={() => setIsPreTripModalOpen(true)}
             uiLanguage={language}
+            liveIncidents={incidents}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);

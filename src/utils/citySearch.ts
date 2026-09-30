@@ -8,31 +8,82 @@ const TYPE_PRIORITY: Record<string, number> = {
   'Rural Municipality': 3,
 };
 
-export const filterCities = (cities: CityNode[], query: string, limit = 20) => {
+/**
+ * Match quality, best first. A province or district hit is a weak signal that
+ * pulls in every other settlement in that region, so it ranks below any hit on
+ * the place name itself.
+ */
+const MATCH_EXACT_NAME = 0;
+const MATCH_NAME_PREFIX = 1;
+const MATCH_NAME_CONTAINS = 2;
+const MATCH_WORD_PREFIX = 3;
+const MATCH_NEPALI_NAME = 4;
+const MATCH_DISTRICT = 5;
+const MATCH_PROVINCE = 6;
+const NO_MATCH = -1;
+
+const scoreCity = (city: CityNode, normalizedQuery: string): number => {
+  const name = city.name.toLowerCase();
+  if (name === normalizedQuery) return MATCH_EXACT_NAME;
+  if (name.startsWith(normalizedQuery)) return MATCH_NAME_PREFIX;
+  if (name.includes(normalizedQuery)) return MATCH_NAME_CONTAINS;
+  // "muglin narayanghat" should still surface Mugling before Hetauda.
+  if (name.split(/[\s/,()-]+/).some((word) => word.startsWith(normalizedQuery))) {
+    return MATCH_WORD_PREFIX;
+  }
+  if (city.nepaliName && city.nepaliName.toLowerCase().includes(normalizedQuery)) {
+    return MATCH_NEPALI_NAME;
+  }
+  if (city.district && city.district.toLowerCase().includes(normalizedQuery)) {
+    return MATCH_DISTRICT;
+  }
+  if (city.province && city.province.toLowerCase().includes(normalizedQuery)) {
+    return MATCH_PROVINCE;
+  }
+  return NO_MATCH;
+};
+
+export interface FilterCitiesOptions {
+  /** Places to skip, e.g. the endpoint already chosen in the other field. */
+  excludeIds?: Set<string>;
+}
+
+/**
+ * Rank city candidates for an autocomplete. Results are ordered by match
+ * strength first, so a name hit always outranks a province-wide sweep, and the
+ * list is capped by default so a broad query never dumps the whole corpus.
+ */
+export const filterCities = (
+  cities: CityNode[],
+  query: string,
+  limit = 8,
+  options: FilterCitiesOptions = {}
+) => {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!normalizedQuery) {
     return [];
   }
 
-  return cities
-    .filter((city) =>
-      city.name.toLowerCase().includes(normalizedQuery) ||
-      city.district.toLowerCase().includes(normalizedQuery) ||
-      city.province.toLowerCase().includes(normalizedQuery) ||
-      city.nepaliName.toLowerCase().includes(normalizedQuery)
-    )
-    .sort((a, b) => {
-      const aExact = a.name.toLowerCase() === normalizedQuery ? 0 : 1;
-      const bExact = b.name.toLowerCase() === normalizedQuery ? 0 : 1;
-      if (aExact !== bExact) return aExact - bExact;
-      const aPriority = TYPE_PRIORITY[a.cityType ?? ''] ?? 4;
-      const bPriority = TYPE_PRIORITY[b.cityType ?? ''] ?? 4;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-      if (a.isMajorHub !== b.isMajorHub) return b.isMajorHub ? 1 : -1;
-      return 0;
-    })
-    .slice(0, limit);
+  const scored: Array<{ city: CityNode; rank: number; match: number }> = [];
+
+  for (const city of cities) {
+    if (options.excludeIds?.has(city.id)) continue;
+    const match = scoreCity(city, normalizedQuery);
+    if (match === NO_MATCH) continue;
+    scored.push({ city, rank: TYPE_PRIORITY[city.cityType ?? ''] ?? 4, match });
+  }
+
+  scored.sort((a, b) => {
+    if (a.match !== b.match) return a.match - b.match;
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    if (a.city.isMajorHub !== b.city.isMajorHub) return a.city.isMajorHub ? -1 : 1;
+    // Prefer the most specific place: "Pokhara" before "Pokhara Metropolitan Ward 3".
+    if (a.city.name.length !== b.city.name.length) return a.city.name.length - b.city.name.length;
+    return a.city.name.localeCompare(b.city.name);
+  });
+
+  return scored.slice(0, limit).map((entry) => entry.city);
 };
 
 const GEOCODE_CACHE = new Map<string, CityNode | null>();
@@ -40,7 +91,7 @@ const GEOCODE_CACHE = new Map<string, CityNode | null>();
 export async function searchCitiesWithGeocode(
   cities: CityNode[],
   query: string,
-  limit = 20
+  limit = 8
 ): Promise<CityNode[]> {
   const normalizedQuery = query.trim();
   if (!normalizedQuery) return [];
@@ -79,10 +130,13 @@ export async function searchCitiesWithGeocode(
       name: first.name || normalizedQuery,
       nepaliName: '',
       district: '',
-      province: 'Bagmati',
+      // Nominatim does not return a Nepal province in a shape we can trust, so
+      // leave it blank rather than asserting a wrong one.
+      province: '',
       cityType: 'Geocoded',
       lat,
       lng,
+      // Unknown elevation must stay 0 so callers can detect and hide it.
       elevationM: 0,
       isMajorHub: false,
       connectedHighways: [],
@@ -155,8 +209,8 @@ export function filterHighwayJunctions(query: string, limit = 10): HighwayJuncti
 export function filterCitiesWithJunctions(
   cities: CityNode[],
   query: string,
-  cityLimit = 15,
-  junctionLimit = 5
+  cityLimit = 8,
+  junctionLimit = 4
 ) {
   const cityResults = filterCities(cities, query, cityLimit);
   const junctionResults = filterHighwayJunctions(query, junctionLimit);
