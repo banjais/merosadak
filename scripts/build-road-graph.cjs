@@ -235,11 +235,27 @@ function loadExtraCities(entries, filePath, sourceLabel, mapper) {
     }
 
     const added = [];
+    let nullCoords = 0;
     for (const item of items) {
       const city = mapper(item);
       if (!city || !city.name) continue;
-      if (!city.lat || !city.lng) continue;
-      if (isNaN(city.lat) || isNaN(city.lng)) continue;
+      // Reject null/undefined/0 coordinates. Three palika rows ship as null
+      // (Binayee Tribeni, Musikot, Rolpa) and a truthiness test would let a
+      // non-null NaN through to produce a 9,000 km connector to nowhere.
+      const lat = Number(city.lat);
+      const lng = Number(city.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+        nullCoords++;
+        console.warn(`  ${sourceLabel}: ${city.name} has no usable coordinates, skipped`);
+        continue;
+      }
+      city.lat = lat;
+      city.lng = lng;
+      if (lat < 26 || lat > 31 || lng < 79 || lng > 89) {
+        nullCoords++;
+        console.warn(`  ${sourceLabel}: ${city.name} at ${lat},${lng} is outside Nepal, skipped`);
+        continue;
+      }
       // Same coordinates as an already-loaded place: record it as an alias and
       // carry it along rather than dropping it. DoR labels one physical junction
       // several ways ("Aaptari" / "Aptari"), and a dropped entry would make that
@@ -270,8 +286,8 @@ function loadExtraCities(entries, filePath, sourceLabel, mapper) {
       });
       added.push(city.name);
     }
-    if (added.length > 0) {
-      console.log(`  ${sourceLabel}: ${added.length} extra cities loaded`);
+    if (added.length > 0 || nullCoords > 0) {
+      console.log(`  ${sourceLabel}: ${added.length} extra cities loaded${nullCoords ? `, ${nullCoords} rejected as unusable coordinates` : ''}`);
     }
   } catch (e) {
     console.warn(`  ${sourceLabel}: error reading - ${e.message}`);

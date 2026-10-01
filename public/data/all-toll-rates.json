@@ -4,9 +4,9 @@
   "sourceLabel": "Roads Board Nepal - Nepal Gazette Notices",
   "currency": "NPR",
   "unit": "per single entry",
-  "lastUpdated": "2026-10-01T14:00:12.262Z",
-  "fetchedAt": "2026-10-01T14:00:12.262Z",
-  "nextUpdate": "2026-10-31T14:00:12.262Z",
+  "lastUpdated": "2026-10-01T14:05:56.068Z",
+  "fetchedAt": "2026-10-01T14:05:56.068Z",
+  "nextUpdate": "2026-10-31T14:05:56.068Z",
   "note": "Rates from Nepal Gazette notices published by Roads Board Nepal. Vehicle categories: car (car/jeep/van), suv_4wd (SUV/pickup), motorbike, bus_truck (bus/truck), electric_vehicle. Rates may vary by plaza. Update when new Gazette is published.",
   "tollPlazas": [
     {

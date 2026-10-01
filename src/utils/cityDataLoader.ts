@@ -63,6 +63,38 @@ function normalizeName(name: string): string {
   return name.replace(/\s*\([^)]*\)\s*/g, '').trim();
 }
 
+/**
+ * Builds a place id matching the one scripts/build-road-graph.cjs assigns. The
+ * graph keys highway links by id, so the two schemes must agree or every lookup
+ * silently falls back to name matching — which picks the wrong place wherever
+ * names repeat, and palika has 24 such names (four separate "Tribeni", three
+ * "Annapurna", two "Kalika").
+ *
+ * Only palika appends the district, mirroring the graph builder; the other
+ * sources are keyed by name alone.
+ */
+const SOURCE_ID_PREFIX: Record<string, string> = {
+  cities: 'city',
+  palika: 'pal',
+  'district-hqs': 'dhq',
+  'district-centroids': 'dcentroid',
+  towns: 'gtown',
+};
+
+/** Sources whose graph id appends the district to disambiguate duplicate names. */
+const DISTRICT_SCOPED_SOURCES = new Set(['palika']);
+
+function buildPlaceId(source: string, name: string, district: string, index: number): string {
+  const key = source.replace(/-\d+$/, '');
+  const prefix = SOURCE_ID_PREFIX[key] ?? key;
+  if (name === 'Unknown') return `${source}-${index}`;
+  const slug = name.toLowerCase().replace(/\s+/g, '-');
+  if (district && DISTRICT_SCOPED_SOURCES.has(key)) {
+    return `${prefix}-${slug}-${district.toLowerCase()}`;
+  }
+  return `${prefix}-${slug}`;
+}
+
 function toCityNode(item: Record<string, unknown>, index: number, source: string, cityType?: string): CityNode {
   const rawName = stringValue(item, ['name', 'Palika', 'palika', 'hqCity']) || 'Unknown';
   const name = normalizeName(rawName);
@@ -90,7 +122,9 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
   const province = DISTRICT_PROVINCE_MAP[district] || provinceFromData || 'Bagmati';
 
   return {
-    id: stringValue(item, ['id']) || `${source}-${index}`,
+    // A positional id like "palika-412" shifts whenever an upstream file gains a
+    // row, which silently breaks the road graph's id-keyed link lookup.
+    id: stringValue(item, ['id']) || buildPlaceId(source, name, district, index),
     name,
     nepaliName: stringValue(item, ['nepaliName', 'nepali_name']),
     district,
@@ -115,6 +149,10 @@ function asObjectArray(value: unknown): Record<string, unknown>[] {
 function isValidCity(city: CityNode): boolean {
   return (
     city.name !== 'Unknown' &&
+    // Upstream files carry null coordinates for a few rows (Binayee Tribeni,
+    // Musikot, Rolpa in palika-coords.json). Number.isFinite rejects null, which
+    // keeps those places out of search and routing instead of placing them at
+    // 0,0 off the coast of West Africa.
     Number.isFinite(city.lat) &&
     Number.isFinite(city.lng) &&
     city.lat >= 26 &&
