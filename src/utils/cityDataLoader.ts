@@ -72,7 +72,14 @@ function toCityNode(item: Record<string, unknown>, index: number, source: string
   let connectedHighways = Array.isArray(connectedHighwaysValue)
     ? connectedHighwaysValue.filter((value): value is string => typeof value === 'string')
     : [];
-  // geojson-town-coords.json uses a single "highway" field (e.g. "NH77")
+  // geojson-town-coords.json carries a "highways" array, since a town extracted
+  // from a junction link can sit on more than one national highway.
+  if (connectedHighways.length === 0 && Array.isArray(item.highways)) {
+    connectedHighways = (item.highways as unknown[]).filter(
+      (value): value is string => typeof value === 'string'
+    );
+  }
+  // Older/other sources use a single "highway" field (e.g. "NH77")
   if (connectedHighways.length === 0) {
     const singleHighway = stringValue(item, ['highway', 'highwayCode']);
     if (singleHighway) connectedHighways = [singleHighway];
@@ -285,7 +292,7 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
     { url: '/data/district-hqs.json', grouped: false, key: 'district-hqs' },
     { url: '/data/district-centroids.json', grouped: false, key: 'district-centroids' },
     { url: '/data/calculator-cities.json', grouped: true, key: 'cities', filterInfra: true },
-    { url: '/data/geojson-town-coords.json', grouped: true, key: 'towns', cityType: 'Highway Town' },
+    { url: '/data/geojson-town-coords.json', keys: ['towns'], key: 'towns', cityType: 'Highway Town' },
     { url: '/data/airports.json', grouped: false, key: 'airports', cityType: 'Airport' },
     { url: '/data/temples.json', grouped: false, key: 'temples', cityType: 'Temple' },
     { url: '/data/tourist-places.json', grouped: false, key: 'tourist', cityType: 'Tourist Place' },
@@ -298,9 +305,17 @@ export async function loadExpandedCities(): Promise<CityNode[]> {
       if (!res.ok) continue;
       const data: unknown = await res.json();
       const nonGroupedItems = asObjectArray(data);
+      const explicitKeys = (source as { keys?: string[] }).keys;
       const datasets: { items: Record<string, unknown>[]; cityType?: string }[] = Array.isArray(data)
         ? [{ items: data, cityType: source.cityType }]
-        : source.grouped
+        : explicitKeys
+          ? explicitKeys.flatMap((key) => {
+              // Read named arrays only, so a sibling index (e.g. byHighway) is
+              // never mistaken for a list of places.
+              const items = asObjectArray((data as Record<string, unknown>)[key]);
+              return items.length === 0 ? [] : [{ items, cityType: source.cityType }];
+            })
+          : source.grouped
           ? Object.entries(data as Record<string, unknown[]>).flatMap(([key, value]) => {
               const items = asObjectArray(value);
               if (items.length === 0) return [];

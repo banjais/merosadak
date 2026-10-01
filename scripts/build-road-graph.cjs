@@ -121,6 +121,13 @@ const DISTRICT_CENTROIDS_FILE = path.join(__dirname, '..', 'public', 'data', 'di
 // Maximum additional cities to load from external sources to avoid bloating the graph
 const EXTRA_CITY_SNAP_MAX_KM = 25; // only near-snap (not inject) for external cities
 
+/**
+ * Alternate spellings that resolve to the same surveyed point, e.g. DoR writes
+ * one junction as both "Aaptari" and "Aptari". Populated while loading extra
+ * cities, then applied to the snap maps so every spelling routes.
+ */
+const cityAliases = {};
+
 function loadCityNodes() {
   const src = fs.readFileSync(CITY_DATA_FILE, 'utf8');
   const block = src.match(/CITIES_AND_JUNCTIONS[\s\S]*?=\s*\[([\s\S]*?)\n\];/);
@@ -179,12 +186,16 @@ function loadCityNodes() {
     };
   });
 
+  // Keep the highway each town was surveyed on. Unlike the curated list this is
+  // derived from the link endpoint that produced the coordinate, so it stays
+  // consistent with the geometry instead of a hand-maintained field.
   loadExtraCities(entries, GEO_TOWN_COORDS_FILE, 'geojson_town', (item) => {
     return {
-      id: `gtown-${item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      id: item.id || `gtown-${String(item.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name: item.name,
       lat: item.lat,
       lng: item.lng,
+      highways: Array.isArray(item.highways) ? item.highways.filter((h) => typeof h === 'string') : [],
     };
   });
 
@@ -197,7 +208,7 @@ function loadCityNodes() {
     };
   });
 
-  return entries;
+  return { entries, aliases: cityAliases };
 }
 
 function loadExtraCities(entries, filePath, sourceLabel, mapper) {
@@ -229,9 +240,34 @@ function loadExtraCities(entries, filePath, sourceLabel, mapper) {
       if (!city || !city.name) continue;
       if (!city.lat || !city.lng) continue;
       if (isNaN(city.lat) || isNaN(city.lng)) continue;
-      if (entries.some(e => e.lat === city.lat && e.lng === city.lng)) continue;
+      // Same coordinates as an already-loaded place: record it as an alias and
+      // carry it along rather than dropping it. DoR labels one physical junction
+      // several ways ("Aaptari" / "Aptari"), and a dropped entry would make that
+      // spelling unroutable and invisible to search.
+      const samePoint = entries.find((e) => e.lat === city.lat && e.lng === city.lng);
+      if (samePoint) {
+        cityAliases[city.id] = samePoint.id;
+        entries.push({
+          id: city.id,
+          name: city.name,
+          lat: city.lat,
+          lng: city.lng,
+          highways: city.highways || [],
+          aliasOf: samePoint.id,
+          source: sourceLabel,
+        });
+        added.push(city.name);
+        continue;
+      }
       if (entries.some(e => e.id === city.id)) continue;
-      entries.push({ id: city.id, name: city.name, lat: city.lat, lng: city.lng, highways: [], source: sourceLabel });
+      entries.push({
+        id: city.id,
+        name: city.name,
+        lat: city.lat,
+        lng: city.lng,
+        highways: city.highways || [],
+        source: sourceLabel,
+      });
       added.push(city.name);
     }
     if (added.length > 0) {
@@ -344,7 +380,7 @@ function main() {
   console.log(`Total network length — as stored in graph edges (should match, scaled): ${totalChainKm.toFixed(0)} km`);
 
   // ---- snap cities (or inject missing nodes onto nearest highway) ----
-  const cities = loadCityNodes();
+  const { entries: cities, aliases } = loadCityNodes();
   const citySnap = {};
   const citySnapByName = {};
   /** Per-city link facts derived from the built graph, not from curated claims. */
@@ -384,6 +420,18 @@ function main() {
     }
   }
   console.log(`Cities: ${snappedNear} near-snap, ${injected} injected, ${unsnapped} still missing / ${cities.length}`);
+
+  // Alias spellings share the snap of the place they duplicate, so a user who
+  // types one of DoR's alternative names still routes to the same junction.
+  const aliasEntries = Object.entries(aliases);
+  for (const [aliasId, targetId] of aliasEntries) {
+    const targetNode = citySnap[targetId];
+    if (targetNode === undefined) continue;
+    citySnap[aliasId] = targetNode;
+    const alias = cities.find((c) => c.id === aliasId);
+    if (alias?.name) citySnapByName[alias.name.toLowerCase()] = targetNode;
+  }
+  console.log(`Aliases mapped to an existing junction: ${aliasEntries.length}`);
 
   // ---- automatic endpoint joins (close geometry gaps between surveyed links) ----
   function nodeDegree(id) {
@@ -635,13 +683,22 @@ function highwaysWithinRadius(la, ln, radiusKm) {
 }
 
 const cityLinks = {};
+const cityLinksById = {};
+/** Resolves a place id through its alias chain to the entry that was snapped. */
+function resolveId(cityId) {
+  let id = cityId;
+  for (let hop = 0; hop < 4 && aliases[id] && citySnap[aliases[id]] !== undefined; hop += 1) {
+    id = aliases[id];
+  }
+  return id;
+}
 for (const city of cities) {
-  const nodeId = citySnap[city.id];
+  const resolvedId = resolveId(city.id);
+  const nodeId = citySnap[resolvedId];
   if (nodeId === undefined) continue;
-  const meta = cityMeta[city.id] || { accessKm: null, onNetwork: false };
+  const meta = cityMeta[resolvedId] || { accessKm: null, onNetwork: false };
   const linked = [...highwaysWithinRadius(city.lat, city.lng, HIGHWAY_TOUCH_KM)].sort();
-  const key = city.name ? city.name.toLowerCase() : city.id;
-  cityLinks[key] = {
+  const link = {
     highways: linked,
     accessKm: meta.accessKm,
     onNetwork: meta.onNetwork,
@@ -650,6 +707,11 @@ for (const city of cities) {
     // a hand-written highway list.
     claimedHighways: (city.highways || []).slice().sort(),
   };
+  // Keyed by id as well as name: two places can share a name (Gaur, Birtamod),
+  // and a name-keyed map would let one overwrite the other.
+  cityLinksById[city.id] = link;
+  const key = city.name ? city.name.toLowerCase() : city.id;
+  if (!cityLinks[key]) cityLinks[key] = link;
 }
 
 const out = {
@@ -659,6 +721,7 @@ const out = {
     citySnap,
     citySnapByName,
     cityLinks,
+    cityLinksById,
     stats: {
       generatedAt: new Date().toISOString(),
       files: files.length,
@@ -667,6 +730,7 @@ const out = {
       citiesTotal: cities.length,
       citySnapByNameEntries: Object.keys(citySnapByName).length,
       cityLinksEntries: Object.keys(cityLinks).length,
+      cityLinksByIdEntries: Object.keys(cityLinksById).length,
       citiesOnHighway: Object.values(cityLinks).filter((l) => l.onNetwork).length,
       citiesNeedingAccess: Object.values(cityLinks).filter((l) => !l.onNetwork).length,
       citiesWithNoHighway: Object.values(cityLinks).filter((l) => l.highways.length === 0).length,

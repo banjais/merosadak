@@ -8,7 +8,10 @@ interface RoadGraph {
   highways: string[];
   citySnap: Record<string, number>;
   citySnapByName: Record<string, number>;
+  /** Keyed by normalized place name; first writer wins when names collide. */
   cityLinks?: Record<string, CityLink>;
+  /** Keyed by place id, so two places sharing a name stay distinct. */
+  cityLinksById?: Record<string, CityLink>;
   stats: Record<string, unknown>;
 }
 
@@ -28,10 +31,29 @@ export interface CityLink {
 /** Radius used by the graph builder when deciding which highways touch a place. */
 export const HIGHWAY_TOUCH_KM = 5;
 
-export function getCityLink(name: string): CityLink | null {
-  const links = graph?.cityLinks;
-  if (!links) return null;
-  return links[name.trim().toLowerCase()] ?? null;
+/**
+ * Looks up a place's highway link, preferring the id so that two places sharing
+ * a name (Gaur, Birtamod) do not report each other's highways.
+ */
+export function getCityLink(nameOrCity: string | { id?: string; name: string }): CityLink | null {
+  if (!graph) return null;
+  const byId = graph.cityLinksById;
+  if (byId && typeof nameOrCity === 'object' && nameOrCity.id) {
+    const hit = byId[nameOrCity.id];
+    if (hit) return hit;
+  }
+  const name = typeof nameOrCity === 'string' ? nameOrCity : nameOrCity.name;
+  const key = name.trim().toLowerCase();
+  return graph.cityLinks?.[key] ?? null;
+}
+
+/**
+ * Every place the graph knows about on a given highway, ordered as in the
+ * source. Used by corridor search: typing "NH44" should list the settlements
+ * that highway actually serves, not just the junctions with curated codes.
+ */
+export function getHighwayPlaceCount(): number {
+  return Object.keys(graph?.cityLinksById ?? graph?.cityLinks ?? {}).length;
 }
 
 export interface RoadGraphRoute {

@@ -17,7 +17,7 @@ const MAX_HIGHWAY_CHIPS = 2;
 export const formatCityHighwayCodes = (city: CityNode): string[] => {
   // Prefer the surveyed graph: it knows every highway within reach of the place,
   // where the curated list is a hand-written subset that can contradict it.
-  const link = getCityLink(city.name);
+  const link = getCityLink(city);
   if (link && link.highways.length > 0) return link.highways;
   const codes = [...(city.connectedHighways ?? []), city.highwayCode].filter(
     (code): code is string => Boolean(code)
@@ -30,7 +30,7 @@ export const formatCityHighwayCodes = (city: CityNode): string[] => {
  * data for it, so callers can fall back to plain display.
  */
 export function getCityAccessNote(city: CityNode): string | null {
-  const link = getCityLink(city.name);
+  const link = getCityLink(city);
   if (!link || link.onNetwork || link.accessKm == null) return null;
   return `${link.accessKm} km access to highway`;
 }
@@ -80,6 +80,14 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
   );
 };
 
+interface HighwayGroup {
+  code: string;
+  name: string;
+  route: string;
+  placeCount: number;
+  places: CityNode[];
+}
+
 interface CitySuggestionDropdownProps {
   query: string;
   results: CityNode[];
@@ -93,6 +101,14 @@ interface CitySuggestionDropdownProps {
    * list of near-identical names.
    */
   groupByDistrict?: boolean;
+  /**
+   * Highways matching a code query, shown as a "places on this highway" block
+   * above the district groups. Selecting a highway is what makes the long list
+   * of small corridor towns reachable without typing a name.
+   */
+  highwayGroups?: HighwayGroup[];
+  /** Called when a highway heading is picked, to load its corridor places. */
+  onSelectHighway?: (code: string) => void;
 }
 
 interface DistrictGroup {
@@ -161,38 +177,83 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   onSelect,
   isSearchingMaps = false,
   groupByDistrict = false,
+  highwayGroups = [],
+  onSelectHighway,
 }) => {
   const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
+  const showHighwayBlock = highwayGroups.length > 0;
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-72 overflow-y-auto space-y-1">
-      {isSearchingMaps ? (
+      {isSearchingMaps && !showHighwayBlock ? (
         <div className="px-4 py-6 text-center text-xs text-slate-400">Searching maps…</div>
-      ) : results.length > 0 ? (
-        groupByDistrict ? (
-          groups.map((group) => (
-            <div key={group.label} className="mb-1 last:mb-0">
-              <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-slate-950/95 backdrop-blur px-3 pb-1 pt-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 truncate">
-                  {group.label}
-                </span>
-                <span className="shrink-0 text-[9px] text-slate-500">
-                  {group.highwayCount} {group.highwayCount === 1 ? 'highway' : 'highways'}
+      ) : results.length > 0 || showHighwayBlock ? (
+        <>
+          {showHighwayBlock && (
+            <div className="mb-1">
+              <div className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur px-3 pb-1 pt-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Places on this highway
                 </span>
               </div>
               <div className="space-y-1">
-                {group.places.map((city) => (
-                  <CityResultRow key={city.id} city={city} onSelect={onSelect} />
+                {highwayGroups.map((highway) => (
+                  <div key={highway.code} className="rounded-xl border border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={() => onSelectHighway?.(highway.code)}
+                      className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 transition"
+                    >
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                          {highway.code}
+                        </span>
+                        <span className="text-xs font-bold text-white truncate">{highway.name}</span>
+                        <span className="text-[9px] text-slate-500 shrink-0 ml-auto">
+                          {highway.placeCount} places
+                        </span>
+                      </div>
+                      {highway.route && (
+                        <div className="text-[10px] text-slate-400 mt-0.5 truncate">{highway.route}</div>
+                      )}
+                    </button>
+                    {highway.places.length > 0 && (
+                      <div className="px-1 pb-1">
+                        {highway.places.map((city) => (
+                          <CityResultRow key={city.id} city={city} onSelect={onSelect} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
-          ))
-        ) : (
-          results.map((city) => <CityResultRow key={city.id} city={city} onSelect={onSelect} />)
-        )
+          )}
+          {results.length > 0 && (groupByDistrict ? (
+            groups.map((group) => (
+              <div key={group.label} className="mb-1 last:mb-0">
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-slate-950/95 backdrop-blur px-3 pb-1 pt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 truncate">
+                    {group.label}
+                  </span>
+                  <span className="shrink-0 text-[9px] text-slate-500">
+                    {group.highwayCount} {group.highwayCount === 1 ? 'highway' : 'highways'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {group.places.map((city) => (
+                    <CityResultRow key={city.id} city={city} onSelect={onSelect} />
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            results.map((city) => <CityResultRow key={city.id} city={city} onSelect={onSelect} />)
+          ))}
+        </>
       ) : query.trim().length < 2 ? (
         <div className="px-4 py-6 text-center text-xs text-slate-500">
-          Type at least 2 characters to search Nepali places
+          Type at least 2 characters to search Nepali places, or a highway code like NH01
         </div>
       ) : (
         <div className="px-4 py-6 text-center text-xs text-slate-500">

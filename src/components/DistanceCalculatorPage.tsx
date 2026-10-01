@@ -5,6 +5,14 @@ import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities, searchCitiesWithGeocode } from '../utils/citySearch';
+import {
+  isHighwayQuery,
+  getHighwayPlaces,
+  highwayPlaceToCityNode,
+  searchHighways,
+  preloadHighwayCatalogue,
+  getHighwayCatalogue,
+} from '../utils/highwayCatalogue';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
@@ -130,6 +138,35 @@ function getCityHighwayLabel(city: CityNode): string {
   return [...new Set([...(city.connectedHighways || []), city.highwayCode].filter((code): code is string => Boolean(code)))].join(' · ');
 }
 
+interface HighwaySuggestionGroup {
+  code: string;
+  name: string;
+  route: string;
+  placeCount: number;
+  places: CityNode[];
+}
+
+/** How many corridor places to list under an expanded highway heading. */
+const CORRIDOR_PREVIEW_LIMIT = 6;
+
+/**
+ * Turns a highway-code query into the "places on this highway" block. Returns an
+ * empty list for anything that is not a highway code so ordinary name search is
+ * unaffected.
+ */
+function buildHighwayGroups(query: string): HighwaySuggestionGroup[] {
+  if (!isHighwayQuery(query)) return [];
+  return searchHighways(query).map((highway) => ({
+    code: highway.code,
+    name: highway.name,
+    route: highway.route,
+    placeCount: highway.placeCount,
+    places: getHighwayPlaces(highway.code)
+      .slice(0, CORRIDOR_PREVIEW_LIMIT)
+      .map((place, index) => highwayPlaceToCityNode(place, index)),
+  }));
+}
+
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
   textScale?: TextScale;
@@ -161,6 +198,22 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     loadExpandedCities()
       .then((cities) => setAllCities(cities.length > 0 ? cities : CITIES_AND_JUNCTIONS))
       .catch(() => setAllCities(CITIES_AND_JUNCTIONS));
+  }, []);
+
+  // The corridor catalogue is what makes "NH01" or "Bharatpur area" resolvable,
+  // so load it alongside the place list and re-render once both are in.
+  const [catalogueVersion, setCatalogueVersion] = useState(0);
+  const [highwayCount, setHighwayCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    preloadHighwayCatalogue().then(() => {
+      if (cancelled) return;
+      setCatalogueVersion((version) => version + 1);
+      setHighwayCount(getHighwayCatalogue().length);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -272,6 +325,23 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     });
     return geocodedDest ? [geocodedDest, ...local.filter((c) => c.id !== geocodedDest.id)] : local;
   }, [allCities, destSearch, geocodedDest, originId]);
+
+  /**
+   * A highway code ("NH01", "NH44") is not a place name, so it is answered from
+   * the corridor catalogue instead of the city list. The first match is expanded
+   * into the places that highway actually serves; the rest stay collapsed so a
+   * partial "NH4" still shows the likely intended corridor first.
+   */
+  const originHighwayGroups = useMemo(
+    () => buildHighwayGroups(originSearch),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [originSearch, catalogueVersion]
+  );
+  const destHighwayGroups = useMemo(
+    () => buildHighwayGroups(destSearch),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [destSearch, catalogueVersion]
+  );
 
   const swapCities = () => {
     const temp = originId;
@@ -524,6 +594,14 @@ Not an official Department of Roads document.`;
                   <span className="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
                     {allCities.length} searchable places
                   </span>
+                  {highwayCount > 0 && (
+                    <span
+                      className="text-[10px] font-mono px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                      title="Type a highway code such as NH01 to list the places on that corridor"
+                    >
+                      {highwayCount} highways · try NH01
+                    </span>
+                  )}
                   <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
                     DoR SNH + highway archive
                   </span>
@@ -577,6 +655,7 @@ Not an official Department of Roads document.`;
                       results={filteredOriginCities}
 isSearchingMaps={geocodingOrigin}
                           groupByDistrict
+                          highwayGroups={originHighwayGroups}
                           onSelect={(city) => handleSelectOrigin(city.id)}
                     />
                   )}
@@ -630,6 +709,7 @@ isSearchingMaps={geocodingOrigin}
                       results={filteredDestCities}
 isSearchingMaps={geocodingDest}
                           groupByDistrict
+                          highwayGroups={destHighwayGroups}
                           onSelect={(city) => handleSelectDest(city.id)}
                     />
                   )}
