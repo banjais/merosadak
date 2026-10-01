@@ -575,8 +575,9 @@ Not an official Department of Roads document.`;
                     <CitySuggestionDropdown
                       query={originSearch}
                       results={filteredOriginCities}
-                      isSearchingMaps={geocodingOrigin}
-                      onSelect={(city) => handleSelectOrigin(city.id)}
+isSearchingMaps={geocodingOrigin}
+                          groupByDistrict
+                          onSelect={(city) => handleSelectOrigin(city.id)}
                     />
                   )}
                 </div>
@@ -627,8 +628,9 @@ Not an official Department of Roads document.`;
                     <CitySuggestionDropdown
                       query={destSearch}
                       results={filteredDestCities}
-                      isSearchingMaps={geocodingDest}
-                      onSelect={(city) => handleSelectDest(city.id)}
+isSearchingMaps={geocodingDest}
+                          groupByDistrict
+                          onSelect={(city) => handleSelectDest(city.id)}
                     />
                   )}
                 </div>

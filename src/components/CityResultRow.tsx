@@ -69,6 +69,69 @@ interface CitySuggestionDropdownProps {
   onSelect: (city: CityNode) => void;
   /** A geocode lookup for the typed query is in flight. */
   isSearchingMaps?: boolean;
+  /**
+   * Group results under a district heading and surface how many highways each
+   * district's places join. A route is defined by the highways it connects, so
+   * this answers "which of these can I actually leave from" faster than a flat
+   * list of near-identical names.
+   */
+  groupByDistrict?: boolean;
+}
+
+interface DistrictGroup {
+  label: string;
+  places: CityNode[];
+  /** Distinct highway codes across the group's places. */
+  highwayCount: number;
+}
+
+/** Geocoded hits carry no real district; give them their own bucket. */
+const MAP_MATCH_LABEL = 'Map match';
+
+/** Orders buckets so real districts lead and the geocode fallback sinks. */
+function districtRank(label: string): number {
+  if (label === MAP_MATCH_LABEL) return 1;
+  return 0;
+}
+
+/**
+ * Within a district the places that join more highways come first: a
+ * four-highway junction is a better route endpoint than a hamlet on one road.
+ */
+function byHighwayCountThenName(a: CityNode, b: CityNode): number {
+  const diff = formatCityHighwayCodes(b).length - formatCityHighwayCodes(a).length;
+  if (diff !== 0) return diff;
+  return a.name.localeCompare(b.name);
+}
+
+export function groupResultsByDistrict(results: CityNode[]): DistrictGroup[] {
+  const groups = new Map<string, DistrictGroup>();
+
+  for (const city of results) {
+    const raw = (city.district || '').trim();
+    const label = !raw || raw === 'Geocoded' ? MAP_MATCH_LABEL : raw;
+    let group = groups.get(label);
+    if (!group) {
+      group = { label, places: [], highwayCount: 0 };
+      groups.set(label, group);
+    }
+    group.places.push(city);
+  }
+
+  for (const group of groups.values()) {
+    group.places.sort(byHighwayCountThenName);
+    const codes = new Set<string>();
+    for (const place of group.places) {
+      for (const code of formatCityHighwayCodes(place)) codes.add(code);
+    }
+    group.highwayCount = codes.size;
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    const rank = districtRank(a.label) - districtRank(b.label);
+    if (rank !== 0) return rank;
+    return a.label.localeCompare(b.label);
+  });
 }
 
 /**
@@ -80,20 +143,45 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   results,
   onSelect,
   isSearchingMaps = false,
-}) => (
-  <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-60 overflow-y-auto space-y-1">
-    {isSearchingMaps ? (
-      <div className="px-4 py-6 text-center text-xs text-slate-400">Searching maps…</div>
-    ) : results.length > 0 ? (
-      results.map((city) => <CityResultRow key={city.id} city={city} onSelect={onSelect} />)
-    ) : query.trim().length < 2 ? (
-      <div className="px-4 py-6 text-center text-xs text-slate-500">
-        Type at least 2 characters to search Nepali places
-      </div>
-    ) : (
-      <div className="px-4 py-6 text-center text-xs text-slate-500">
-        No matching locations found
-      </div>
-    )}
-  </div>
-);
+  groupByDistrict = false,
+}) => {
+  const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-72 overflow-y-auto space-y-1">
+      {isSearchingMaps ? (
+        <div className="px-4 py-6 text-center text-xs text-slate-400">Searching maps…</div>
+      ) : results.length > 0 ? (
+        groupByDistrict ? (
+          groups.map((group) => (
+            <div key={group.label} className="mb-1 last:mb-0">
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-slate-950/95 backdrop-blur px-3 pb-1 pt-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 truncate">
+                  {group.label}
+                </span>
+                <span className="shrink-0 text-[9px] text-slate-500">
+                  {group.highwayCount} {group.highwayCount === 1 ? 'highway' : 'highways'}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {group.places.map((city) => (
+                  <CityResultRow key={city.id} city={city} onSelect={onSelect} />
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          results.map((city) => <CityResultRow key={city.id} city={city} onSelect={onSelect} />)
+        )
+      ) : query.trim().length < 2 ? (
+        <div className="px-4 py-6 text-center text-xs text-slate-500">
+          Type at least 2 characters to search Nepali places
+        </div>
+      ) : (
+        <div className="px-4 py-6 text-center text-xs text-slate-500">
+          No matching locations found
+        </div>
+      )}
+    </div>
+  );
+};
