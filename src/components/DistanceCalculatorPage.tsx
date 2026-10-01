@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, calculateDirectDistanceKm, pickRouteByCertification } from '../utils/routeOptimizer';
+import { findOptimizedRoute, pickRouteByCertification } from '../utils/routeOptimizer';
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities, searchCitiesWithGeocode } from '../utils/citySearch';
 import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupSNHDistance, lookupDistanceWithFallback, computeLinkSumDistance, getSourceLabel, getSourceDescription, getEvidenceLevelLabel, getEvidenceLevelColor, lookupGeoJsonRouteDistance, DistanceLookupResult, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
+import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
 import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, Loader2, X } from 'lucide-react';
@@ -14,6 +14,7 @@ import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
 import { RouteLineDrawing } from './RouteLineDrawing';
+import { RouteMapView } from './RouteMapView';
 
 import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
@@ -41,15 +42,9 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
   const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
     {
       value: 'dor_snh',
-      label: 'DOR-SNH / DOR-Archives',
+      label: 'DoR sources (SNH + highway archive)',
       url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'DoR Statistics of National Highway 2022/23 published distances + surveyed highway network (NH01–NH80)',
-    },
-    {
-      value: 'dor_geojson',
-      label: 'DOR Highway Network',
-      url: 'https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement',
-      description: 'DoR GeoJSON highway geometry — route computed along surveyed road graph',
+      description: 'Uses a published SNH pair when available; otherwise computes a route from archived DoR highway geometry.',
     },
     {
       value: 'estimate_aerial',
@@ -127,6 +122,10 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
   );
 }
 
+function getCityHighwayLabel(city: CityNode): string {
+  return [...new Set([...(city.connectedHighways || []), city.highwayCode].filter((code): code is string => Boolean(code)))].join(' · ');
+}
+
 interface DistanceCalculatorPageProps {
   onBack?: () => void;
   textScale?: TextScale;
@@ -150,30 +149,13 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
-  const [snhLookupResult, setSnhLookupResult] = useState<DistanceLookupResult | null>(null);
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
   const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('dor_snh');
-  const [calculatorCoverage, setCalculatorCoverage] = useState<{ total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number }; highwayCoverage?: { totalCities: number; citiesOnHighway: number } } | null>(null);
 
   useEffect(() => {
     loadExpandedCities()
       .then((cities) => setAllCities(cities.length > 0 ? cities : CITIES_AND_JUNCTIONS))
       .catch(() => setAllCities(CITIES_AND_JUNCTIONS));
-  }, []);
-
-  useEffect(() => {
-    fetch('/data/calculator-cities.json')
-      .then(res => res.json())
-      .then(data => {
-         if (data && typeof data.total === 'number') {
-          setCalculatorCoverage({
-            total: data.total,
-            publishedDistanceCoverage: data.publishedDistanceCoverage || { totalPublishedCities: 0, coveredCities: 0 },
-            highwayCoverage: data.highwayCoverage || { totalCities: 0, citiesOnHighway: 0 },
-          });
-        }
-      })
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -297,13 +279,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     },
     [originId, destId, roadGraphVersion, origin, destination]
   );
-  const aerialDistance = useMemo(
-    () => origin && destination
-      ? calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng)
-      : 0,
-    [origin, destination]
-  );
-
   const displayedDistance = useMemo(() => {
     if (!origin || !destination) return 0;
     if (!distanceWithSource) return 0;
@@ -319,92 +294,37 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setSelectedDataSource(source);
     if (!origin || !destination) return;
 
-    if (source === 'dor_snh') {
-      const pub = lookupSNHDistance(origin.name, destination.name, snhReference);
-      if (pub) {
-        setDistanceWithSource({
-          distanceKm: pub.distanceKm,
-          evidenceLevel: 'published',
-          source: 'dor_snh',
-          citation: pub.citation,
-          linkChain: pub.linkChain,
-          publishedDistanceKm: pub.publishedDistanceKm,
-        });
-      } else {
-        // Keep selection; show no published figure for this pair
-        setDistanceWithSource(null);
-      }
-      return;
-    }
-
-    if (source === 'dor_geojson') {
-      const geoRoute = lookupGeoJsonRouteDistance(origin.id, destination.id);
-      if (geoRoute && geoRoute.distanceKm > 0) {
-        setDistanceWithSource(geoRoute);
-      } else {
-        const linkSum = computeLinkSumDistance(origin.name, destination.name, snhReference);
-        if (linkSum && linkSum.distanceKm > 0) {
-          setDistanceWithSource({
-            distanceKm: linkSum.distanceKm,
-            evidenceLevel: 'link_sum',
-            source: 'dor_snh',
-            citation: linkSum.citation,
-            linkChain: linkSum.linkChain,
-            isUncertain: linkSum.isUncertain,
-            note: linkSum.note,
-            publishedDistanceKm: linkSum.publishedDistanceKm,
-          });
-        } else {
-          setDistanceWithSource(null);
-        }
-      }
-      return;
-    }
-
     if (source === 'estimate_aerial') {
-      // Prefer live highway graph route km, then SNH link-chain sum
-      const graphKm = routeResult?.totalDistanceKm;
-      const certified = routeResult?.roadTierBreakdown?.certifiedPercent ?? 0;
-      const isAerialRoute =
-        routeResult?.routeBadge?.includes('Approximate') ||
-        routeResult?.routeName?.toLowerCase().includes('aerial') ||
-        certified <= 0;
-
-      if (graphKm && graphKm > 0 && !isAerialRoute) {
-        setDistanceWithSource({
-          distanceKm: graphKm,
-          evidenceLevel: 'link_sum',
-          source: 'dor_snh',
-          note: 'Distance along DoR highway network graph',
-        });
-        return;
-      }
-
-      const linkSum = computeLinkSumDistance(origin.name, destination.name, snhReference);
-      if (linkSum && linkSum.distanceKm > 0) {
-        setDistanceWithSource({
-          distanceKm: linkSum.distanceKm,
-          evidenceLevel: 'link_sum',
-          source: 'dor_snh',
-          citation: linkSum.citation,
-          linkChain: linkSum.linkChain,
-          isUncertain: linkSum.isUncertain,
-          note: linkSum.note,
-          publishedDistanceKm: linkSum.publishedDistanceKm,
-        });
-        return;
-      }
-
-      setDistanceWithSource(null);
+      setDistanceWithSource({
+        ...estimateDistance(origin.lat, origin.lng, destination.lat, destination.lng),
+        source: 'estimate_aerial',
+      });
+      return;
     }
+
+    const result = lookupDistanceWithFallback(
+      origin.name,
+      destination.name,
+      origin.id,
+      destination.id,
+      origin.lat,
+      origin.lng,
+      destination.lat,
+      destination.lng,
+      snhReference
+    );
+    setDistanceWithSource(result);
+    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
   };
 
   useEffect(() => {
-    if (origin && destination && snhReference) {
-      const lookup = lookupSNHDistance(origin.name, destination.name, snhReference);
-      setSnhLookupResult(lookup);
+    if (!origin || !destination) {
+      setDistanceWithSource(null);
+      setSelectedDataSource('dor_snh');
+      return;
+    }
 
-      const result = lookupDistanceWithFallback(
+    const result = lookupDistanceWithFallback(
         origin.name,
         destination.name,
         origin.id,
@@ -415,46 +335,8 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
         destination.lng,
         snhReference
       );
-      setDistanceWithSource(result);
-
-      if (result) {
-        setSelectedDataSource(result.source);
-      } else {
-        setSelectedDataSource('dor_snh');
-      }
-    } else if (!origin || !destination) {
-      setSnhLookupResult(null);
-      setDistanceWithSource(null);
-    } else if (origin && destination) {
-      const graphKm = routeResult?.totalDistanceKm;
-      const certified = routeResult?.roadTierBreakdown?.certifiedPercent ?? 0;
-      const isAerialRoute =
-        routeResult?.routeBadge?.includes('Approximate') ||
-        routeResult?.routeName?.toLowerCase().includes('aerial') ||
-        certified <= 0;
-
-      if (graphKm && graphKm > 0 && !isAerialRoute) {
-        setDistanceWithSource({
-          distanceKm: graphKm,
-          evidenceLevel: 'link_sum',
-          source: 'dor_snh',
-          note: 'Distance along DoR highway network graph',
-        });
-      } else {
-        const directDist = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
-        setDistanceWithSource({
-          distanceKm: directDist,
-          evidenceLevel: 'estimate',
-          source: 'estimate_aerial',
-          citation: {
-            document: 'Geodesic Great Circle Calculation',
-            table: 'Aerial Line-of-Sight',
-          },
-          isUncertain: true,
-          note: 'Aerial distance only. No published DoR corridor data available for this city pair. Use for rough reference only — road distance will be longer, especially in mountain terrain.',
-        });
-      }
-    }
+    setDistanceWithSource(result);
+    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
   }, [origin, destination, snhReference, routeResult]);
 
   const handleSelectOrigin = (cityId: string) => {
@@ -489,7 +371,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const handleExportProofSheet = useCallback(async () => {
     if (!origin || !destination || !distanceWithSource) return;
-    const dataHash = snhReference ? (await sha256Hex(JSON.stringify(snhReference))).slice(0, 12) : 'unavailable';
+    const sourceData = distanceWithSource.source === 'dor_geojson'
+      ? await fetch('/data/road-graph.json').then((response) => response.ok ? response.text() : '').catch(() => '')
+      : distanceWithSource.source === 'dor_snh'
+        ? JSON.stringify(snhReference || '')
+        : `unverified-aerial:${origin.lat},${origin.lng}:${destination.lat},${destination.lng}`;
+    const dataHash = sourceData ? (await sha256Hex(sourceData)).slice(0, 12) : 'unavailable';
     await generateProofSheet({
       from: origin.name,
       to: destination.name,
@@ -504,14 +391,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   }, [origin, destination, distanceWithSource, snhReference, user]);
 
   const handleShareReport = useCallback(async () => {
-    if (!user) {
-      const alert = document.createElement('div');
-      alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
-      alert.textContent = 'Sign in to share trip reports.';
-      document.body.appendChild(alert);
-      setTimeout(() => alert.remove(), 4000);
-      return;
-    }
     if (!origin || !destination || !routeResult) return;
 
     const durationFormatted = `${Math.floor(routeResult.estimatedTimeMinutes / 60)}h ${routeResult.estimatedTimeMinutes % 60}m`;
@@ -526,8 +405,12 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 ⏱️ Duration: ~${durationFormatted}
 📊 Source: ${sourceLabel}
 ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
+${distanceWithSource?.citation ? `📚 Citation: ${distanceWithSource.citation.document}, ${distanceWithSource.citation.table}${distanceWithSource.citation.printedPage ? `, p. ${distanceWithSource.citation.printedPage}` : ''}` : ''}
+${distanceWithSource?.highwaysUsed?.length ? `🛣️ Highways: ${distanceWithSource.highwaysUsed.join(' → ')}` : ''}
+${distanceWithSource?.note ? `📝 Note: ${distanceWithSource.note}` : ''}
+${distanceWithSource?.evidenceLevel !== 'published' ? '⚠️ This distance is computed from source data and is not a DoR-published city-pair figure.' : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🇳🇵 Generated via Mero Sadak Nepal Highway GIS`;
+Generated by Mero Sadak. Not issued by the Department of Roads.`;
 
     if (navigator.share) {
       try {
@@ -544,25 +427,13 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
     await navigator.clipboard.writeText(shareText);
   }, [origin, destination, routeResult, displayedDistance, distanceWithSource]);
 
-  const requireSignIn = useCallback((action: string) => {
-    if (user) return true;
-    const alert = document.createElement('div');
-    alert.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-amber-900/95 text-amber-100 px-4 py-2 rounded-lg shadow-2xl text-sm font-bold';
-    alert.textContent = `Sign in to ${action} reports.`;
-    document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 4000);
-    return false;
-  }, [user]);
-
   const handlePrintReport = useCallback(async () => {
-    if (!requireSignIn('print')) return;
     window.print();
-  }, [requireSignIn]);
+  }, []);
 
   const handleDownloadReport = useCallback(async () => {
-    if (!requireSignIn('download')) return;
     await handleExportProofSheet();
-  }, [handleExportProofSheet, requireSignIn]);
+  }, [handleExportProofSheet]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -579,12 +450,12 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
             </button>
           )}
           <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md">
-                <Calculator className="w-5 h-5 accent-text" />
+            <div className="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-700/90 shadow-lg shadow-slate-950/30 overflow-hidden flex items-center justify-center">
+              <img src="/logo.svg" alt="Mero Sadak logo" className="h-10 w-10 object-cover" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold accent-text tracking-wider">
-                MERO SADAK
+              <h1 className="text-[10px] font-semibold accent-text tracking-[0.2em] uppercase">
+                Mero Sadak
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">
                 Distance Calculator
@@ -633,26 +504,18 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-bold text-white">Distance Calculator</h2>
                   <span className="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                    {allCities.length} cities
+                    {allCities.length} searchable places
                   </span>
-                   {calculatorCoverage && (
-                     <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
-                       {calculatorCoverage.publishedDistanceCoverage.coveredCities}/{calculatorCoverage.publishedDistanceCoverage.totalPublishedCities} published
-                     </span>
-                   )}
-                   {calculatorCoverage?.highwayCoverage && (
-                     <span className="text-[10px] font-mono px-2 py-1 rounded bg-cyan-900/40 text-cyan-300 border border-cyan-700/50">
-                       {calculatorCoverage.highwayCoverage.citiesOnHighway}/{calculatorCoverage.highwayCoverage.totalCities} on highway
-                     </span>
-                   )}
+                  <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
+                    DoR SNH + highway archive
+                  </span>
                   {distanceWithSource && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
-                      distanceWithSource.evidenceLevel === 'published' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :
-                      distanceWithSource.evidenceLevel === 'link_sum' ? 'border-blue-500/30 bg-blue-500/10 text-blue-300' :
-                      'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                        distanceWithSource.evidenceLevel === 'published' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :
+                        distanceWithSource.evidenceLevel === 'estimate' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' :
+                        'border-blue-500/30 bg-blue-500/10 text-blue-300'
                     }`}>
-                      {distanceWithSource.evidenceLevel === 'published' ? 'DoR Published' :
-                       distanceWithSource.evidenceLevel === 'link_sum' ? 'Link-Sum' : 'Estimate'}
+                        {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
                     </span>
                   )}
                 </div>
@@ -707,9 +570,9 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
                                 {city.name}
-                                {city.highwayCode && (
+                                {getCityHighwayLabel(city) && (
                                   <span className="ml-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-block align-middle">
-                                    {city.highwayCode}
+                                    {getCityHighwayLabel(city)}
                                   </span>
                                 )}
                                 {city.cityType && (
@@ -795,9 +658,9 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
                                 {city.name}
-                                {city.highwayCode && (
+                                {getCityHighwayLabel(city) && (
                                   <span className="ml-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 inline-block align-middle">
-                                    {city.highwayCode}
+                                    {getCityHighwayLabel(city)}
                                   </span>
                                 )}
                                 {city.cityType && (
@@ -842,6 +705,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                 </div>
               )}
 
+              {/* Animated origin → destination route sketch, then the Map option */}
               <RouteLineDrawing
                 pathCoordinates={routeResult.pathCoordinates}
                 origin={{
@@ -858,6 +722,21 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                 onChangeLocation={handleChangeLocation}
               />
 
+              <RouteMapView
+                pathCoordinates={routeResult.pathCoordinates}
+                origin={{
+                  lat: origin?.lat ?? 0,
+                  lng: origin?.lng ?? 0,
+                  label: origin?.name || 'Origin',
+                }}
+                destination={{
+                  lat: destination?.lat ?? 0,
+                  lng: destination?.lng ?? 0,
+                  label: destination?.name || 'Destination',
+                }}
+                isAerial={Boolean(routeResult.__aerialWarning)}
+              />
+
               <UnifiedRouteReport
               route={routeResult}
               distanceKm={displayedDistance}
@@ -865,6 +744,7 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               distanceEvidence={distanceWithSource?.evidenceLevel || 'route_graph'}
               distanceCitation={distanceWithSource?.citation || null}
               distanceNote={distanceWithSource?.note || null}
+              distanceHighways={distanceWithSource?.highwaysUsed || []}
               sourceControl={
                 <DataSourceSelector
                   selectedSource={selectedDataSource}
@@ -877,7 +757,6 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
               onShare={handleShareReport}
               onDownloadReport={handleDownloadReport}
               userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
-              calculatorCoverage={calculatorCoverage}
             />
           </>
           )}
