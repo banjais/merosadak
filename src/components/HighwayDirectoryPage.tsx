@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ArrowLeft, Route, Settings, Settings2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Route, Settings2 } from 'lucide-react';
 import { HighwayDirectory } from './HighwayDirectory';
-import { Full3DPhoto } from './Full3DPhoto';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { TextScale } from '../hooks/useTextScale';
 
@@ -24,37 +23,41 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Page Header */}
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
-              title="Back to Main App"
+              className="rounded-xl border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              title="Back to main app"
+              aria-label="Back"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow">
-              <Route className="w-5 h-5 logo-icon" />
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 shadow-lg shadow-emerald-500/5">
+              <Route className="h-5 w-5 text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold accent-text tracking-wider">
-                MERO SADAK
-              </h1>
-              <p className="text-xl font-black tracking-tight text-white font-display">
-                Highway Directory
-              </p>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Mero Sadak
+              </div>
+              <h1 className="text-lg font-black tracking-tight text-white">Highway Directory</h1>
             </div>
           </div>
-          {/* Settings Menu */}
-          <div className="relative ml-auto">
-            <SettingsButton
-              isOpen={isSettingsOpen}
-              onOpenChange={setIsSettingsOpen}
-            />
+
+          <div className="ml-auto relative">
+            <button
+              type="button"
+              onClick={() => setIsSettingsOpen((open) => !open)}
+              className="rounded-xl border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              title="Adjust view"
+              aria-label="Open settings"
+            >
+              <Settings2 className="h-4 w-4" />
+            </button>
 
             <SettingsMenu
               isOpen={isSettingsOpen}
@@ -71,20 +74,14 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 overflow-y-auto scrollbar-paddle">
-        <div className="space-y-6">
-          <HighwayDirectory />
-          {/* 3D Parallax Photo - Nepal Highway Scenery at bottom of page */}
-          <div className="card p-0 overflow-hidden h-80">
-            <Full3DPhoto
-              photoUrl="/assets/photos/nepal-highway-photo.svg"
-              depthMapUrl="/assets/photos/nepal-highway-depth.svg"
-              width={4}
-              height={2.5}
-            />
-          </div>
+      <main className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto px-4 py-4 scrollbar-paddle">
+        <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-3">
+          <p className="text-sm text-slate-300">
+            Nepal national highway corridors, condition summaries, and route context.
+          </p>
         </div>
+
+        <HighwayDirectory />
       </main>
     </div>
   );
