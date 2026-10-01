@@ -690,6 +690,7 @@ isSearchingMaps={geocodingOrigin}
                           groupByDistrict
                           highwayGroups={originHighwayGroups}
                           totalMatches={originMatchCount}
+                          showTouchLegend
                           onSelect={(city) => handleSelectOrigin(city.id)}
                     />
                   )}
@@ -745,6 +746,7 @@ isSearchingMaps={geocodingDest}
                           groupByDistrict
                           highwayGroups={destHighwayGroups}
                           totalMatches={destMatchCount}
+                          showTouchLegend
                           onSelect={(city) => handleSelectDest(city.id)}
                     />
                   )}

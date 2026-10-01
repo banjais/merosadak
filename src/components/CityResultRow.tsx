@@ -1,6 +1,6 @@
 import React from 'react';
 import { CityNode } from '../types';
-import { getCityLink } from '../utils/roadGraphRouter';
+import { getCityLink, HIGHWAY_TOUCH_KM } from '../utils/roadGraphRouter';
 
 /**
  * One autocomplete row, shared by every place picker so the planner, the
@@ -26,13 +26,64 @@ export const formatCityHighwayCodes = (city: CityNode): string[] => {
 };
 
 /**
+ * How a place meets the highway network, as one of three states a driver can act
+ * on. "on_highway" means the place sits on surveyed carriageway and routes
+ * entirely over DoR geometry; "access" means a connector of a known length is
+ * inferred to reach a highway; "off_corridor" means no highway is within reach,
+ * so any route to it is mostly access road. "unknown" is reserved for a place
+ * with no graph data at all, which must not be presented as either.
+ */
+export type HighwayTouchStatus = 'on_highway' | 'access' | 'off_corridor' | 'unknown';
+
+export interface CityHighwayStatus {
+  status: HighwayTouchStatus;
+  /** Short badge text, e.g. "On highway" or "2.4 km access". */
+  label: string;
+  /** Tailwind classes for the badge. */
+  className: string;
+  accessKm: number | null;
+}
+
+const STATUS_STYLES: Record<HighwayTouchStatus, string> = {
+  on_highway: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+  access: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+  off_corridor: 'bg-slate-800 text-slate-400 border-slate-700',
+  unknown: 'bg-slate-800/60 text-slate-500 border-slate-800',
+};
+
+export function getCityHighwayStatus(city: CityNode): CityHighwayStatus {
+  const link = getCityLink(city);
+
+  if (!link) {
+    return { status: 'unknown', label: 'No route data', className: STATUS_STYLES.unknown, accessKm: null };
+  }
+  if (link.onNetwork) {
+    return { status: 'on_highway', label: 'On highway', className: STATUS_STYLES.on_highway, accessKm: 0 };
+  }
+  if (link.highways.length === 0) {
+    return {
+      status: 'off_corridor',
+      label: link.accessKm != null ? `No highway within ${HIGHWAY_TOUCH_KM} km` : 'Not on a corridor',
+      className: STATUS_STYLES.off_corridor,
+      accessKm: link.accessKm,
+    };
+  }
+  return {
+    status: 'access',
+    label: link.accessKm != null ? `${link.accessKm} km access` : 'Access road',
+    className: STATUS_STYLES.access,
+    accessKm: link.accessKm,
+  };
+}
+
+/**
  * How the place reaches the highway network. Null when the graph has no link
  * data for it, so callers can fall back to plain display.
  */
 export function getCityAccessNote(city: CityNode): string | null {
-  const link = getCityLink(city);
-  if (!link || link.onNetwork || link.accessKm == null) return null;
-  return `${link.accessKm} km access to highway`;
+  const status = getCityHighwayStatus(city);
+  if (status.status !== 'access' || status.accessKm == null) return null;
+  return `${status.accessKm} km access to highway`;
 }
 
 interface CityResultRowProps {
@@ -45,13 +96,16 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
   const shownCodes = codes.slice(0, MAX_HIGHWAY_CHIPS);
   const hiddenCodeCount = codes.length - shownCodes.length;
   const locality = [city.district, city.province].filter(Boolean).join(' • ');
-  const accessNote = getCityAccessNote(city);
-  const secondLine = [locality, accessNote].filter(Boolean).join(' • ');
+  const touch = getCityHighwayStatus(city);
+  // The badge already carries the access figure, so the sub-line keeps locality
+  // only and does not repeat "km access" twice.
+  const secondLine = locality;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(city)}
+      title={`${city.name}: ${touch.label}`}
       className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition group"
     >
       <div className="flex items-center gap-1.5 flex-wrap">
@@ -63,6 +117,9 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
             {city.cityType}
           </span>
         )}
+        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${touch.className}`}>
+          {touch.label}
+        </span>
         {shownCodes.map((code) => (
           <span
             key={code}
@@ -109,8 +166,13 @@ interface CitySuggestionDropdownProps {
   highwayGroups?: HighwayGroup[];
   /** Called when a highway heading is picked, to load its corridor places. */
   onSelectHighway?: (code: string) => void;
-  /** Total places matching, so a capped list can report what is hidden. */
+  /** Total matches, so a capped list can report what is hidden. */
   totalMatches?: number;
+  /**
+   * One-line key for the touch badges. Without it the four states are guesswork,
+   * which is the whole reason they are colour-coded.
+   */
+  showTouchLegend?: boolean;
 }
 
 interface DistrictGroup {
@@ -118,6 +180,9 @@ interface DistrictGroup {
   places: CityNode[];
   /** Distinct highway codes across the group's places. */
   highwayCount: number;
+  /** Places sitting directly on a highway, vs reached over access road. */
+  onHighwayCount: number;
+  accessCount: number;
 }
 
 /** Geocoded hits carry no real district; give them their own bucket. */
@@ -147,7 +212,7 @@ export function groupResultsByDistrict(results: CityNode[]): DistrictGroup[] {
     const label = !raw || raw === 'Geocoded' ? MAP_MATCH_LABEL : raw;
     let group = groups.get(label);
     if (!group) {
-      group = { label, places: [], highwayCount: 0 };
+      group = { label, places: [], highwayCount: 0, onHighwayCount: 0, accessCount: 0 };
       groups.set(label, group);
     }
     group.places.push(city);
@@ -158,6 +223,9 @@ export function groupResultsByDistrict(results: CityNode[]): DistrictGroup[] {
     const codes = new Set<string>();
     for (const place of group.places) {
       for (const code of formatCityHighwayCodes(place)) codes.add(code);
+      const touch = getCityHighwayStatus(place);
+      if (touch.status === 'on_highway') group.onHighwayCount += 1;
+      else if (touch.status === 'access') group.accessCount += 1;
     }
     group.highwayCount = codes.size;
   }
@@ -182,6 +250,7 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   highwayGroups = [],
   onSelectHighway,
   totalMatches,
+  showTouchLegend = false,
 }) => {
   const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
   const showHighwayBlock = highwayGroups.length > 0;
@@ -190,6 +259,23 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-72 overflow-y-auto space-y-1">
+      {showTouchLegend && query.trim().length >= 1 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-1.5 pb-2 border-b border-slate-800/80 text-[9px] text-slate-500">
+          <span className="uppercase tracking-[0.12em] font-bold">Highway</span>
+          <span className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-sm border ${STATUS_STYLES.on_highway}`} />
+            sits on a highway
+          </span>
+          <span className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-sm border ${STATUS_STYLES.access}`} />
+            access road to reach one
+          </span>
+          <span className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-sm border ${STATUS_STYLES.off_corridor}`} />
+            none within {HIGHWAY_TOUCH_KM} km
+          </span>
+        </div>
+      )}
       {isSearchingMaps && !showHighwayBlock ? (
         <div className="px-4 py-6 text-center text-xs text-slate-400">Searching maps…</div>
       ) : results.length > 0 || showHighwayBlock ? (
@@ -242,8 +328,15 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
                   <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 truncate">
                     {group.label}
                   </span>
-                  <span className="shrink-0 text-[9px] text-slate-500">
-                    {group.highwayCount} {group.highwayCount === 1 ? 'highway' : 'highways'}
+                  <span className="shrink-0 text-[9px] text-slate-500 flex items-center gap-2">
+                    <span title="Places in this district that sit directly on a highway">
+                      <span className="text-emerald-400 font-bold">{group.onHighwayCount}</span> on hwy
+                    </span>
+                    {group.accessCount > 0 && (
+                      <span title="Places reached over an inferred access road">
+                        <span className="text-sky-400 font-bold">{group.accessCount}</span> access
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="space-y-1">
