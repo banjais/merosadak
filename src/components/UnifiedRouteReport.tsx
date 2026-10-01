@@ -173,6 +173,68 @@ function SourceLink({ label, href }: { label: string; href?: string }) {
   );
 }
 
+function HighwayBreakdownList({ route }: { route: RoutePlanResult }) {
+  const groups = useMemo(() => {
+    const map = new Map<string, { code: string; name: string; totalKm: number; segments: { label: string; distanceKm: number }[] }>();
+
+    route.steps.forEach((step) => {
+      const code = step.highwayCode || 'Local road';
+      const key = code;
+      const existing = map.get(key) ?? {
+        code,
+        name: step.highwayName || code,
+        totalKm: 0,
+        segments: [],
+      };
+
+      existing.totalKm += step.distanceKm;
+      existing.segments.push({
+        label: step.instruction || `${step.highwayCode || 'Road'} section`,
+        distanceKm: step.distanceKm,
+      });
+      map.set(key, existing);
+    });
+
+    return [...map.values()].sort((a, b) => b.totalKm - a.totalKm);
+  }, [route.steps]);
+
+  if (!groups.length) return null;
+
+  const totalRouteKm = groups.reduce((sum, group) => sum + group.totalKm, 0);
+
+  return (
+    <div className="border-t border-slate-800 pt-3">
+      <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-200">
+        <span>Highway breakdown</span>
+        <span className="text-[10px] text-cyan-300">{formatNumber(totalRouteKm, 1)} km total</span>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {groups.map((group) => (
+          <div key={group.code} className="rounded-xl border border-slate-800 bg-slate-950/60 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-cyan-300">{group.code}</div>
+                <div className="truncate text-[11px] text-slate-200">{group.name}</div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-300">{formatNumber(group.totalKm, 1)} km</span>
+            </div>
+
+            <div className="mt-2 space-y-1.5">
+              {group.segments.map((segment, idx) => (
+                <div key={`${group.code}-${idx}`} className="flex items-center justify-between gap-3 text-[10px] text-slate-300">
+                  <span className="min-w-0 flex-1 truncate">{segment.label}</span>
+                  <span className="shrink-0 text-slate-400">{formatNumber(segment.distanceKm, 1)} km</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function UnifiedRouteReport({
   route,
   distanceKm,
@@ -289,10 +351,7 @@ export function UnifiedRouteReport({
               <ChevronDown className={`h-3 w-3 transition-transform ${printMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {printMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-full mt-1 z-50 min-w-[190px] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl"
-              >
+              <div role="menu" className="absolute right-0 top-full mt-1 z-50 min-w-[190px] overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl">
                 <button
                   type="button"
                   role="menuitem"
@@ -328,7 +387,7 @@ export function UnifiedRouteReport({
             <button
               type="button"
               onClick={onChangeLocation}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition hover:border-slate-500 hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
             >
               <MapPin className="h-3.5 w-3.5" />
               Change
@@ -347,7 +406,7 @@ export function UnifiedRouteReport({
             <span className="text-3xl font-black text-emerald-400 font-display">{formatNumber(distanceKm, 1)}</span>
             <span className="pb-1 text-sm text-slate-400">km</span>
           </div>
-          </div>
+        </div>
 
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Travel time</div>
@@ -400,7 +459,7 @@ export function UnifiedRouteReport({
                   <span className="min-w-0 flex-1 text-[11px] text-slate-200">{step.instruction}</span>
                   <span className="text-[10px] text-slate-400">{formatNumber(step.distanceKm, 1)} km</span>
                   {step.certificationBadge && (
-                    <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold ${step.roadClassification === 'national_highway' ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400' : step.roadClassification === 'provincial_feeder' ? 'border-blue-500/25 bg-blue-500/10 text-blue-400' : 'border-amber-500/25 bg-amber-500/10 text-amber-400'}`}>
+                    <span className={`rounded border px-1.5 py-0.5 text-[9px] font-bold ${step.roadClassification === 'national_highway' ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300'}`}>
                       {step.certificationBadge}
                     </span>
                   )}
@@ -409,10 +468,12 @@ export function UnifiedRouteReport({
             </div>
           </div>
 
+          <HighwayBreakdownList route={route} />
+
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-600 hover:bg-slate-900 card card-interactive"
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-left text-xs font-bold text-slate-200 transition hover:border-slate-700"
             aria-expanded={expanded}
           >
             <span className="inline-flex items-center gap-2">
@@ -475,7 +536,7 @@ export function UnifiedRouteReport({
 
               <div className="border-t border-slate-800 pt-3">
                 <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Pair verification</div>
-                <div className="mt-1 text-slate-300">{distanceEvidence === 'published' ? 'This exact place pair has a DoR-published SNH citation.' : 'No DoR-published distance is available for this pair; the evidence badge identifies the computed route or estimate.'}</div>
+                <div className="mt-1 text-slate-300">{distanceEvidence === 'published' ? 'This exact place pair has a DoR-published SNH citation.' : 'No DoR-published distance is available for this city pair; the app uses route geometry or aerial fallback.'}</div>
               </div>
             </div>
           </div>
@@ -519,7 +580,7 @@ export function UnifiedRouteReport({
             {distanceSource === 'dor_geojson' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
           </div>
         </div>
-        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged into one certified value.</p>
+        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged; the report states the source used and the roughness/uncertainty of the result.</p>
       </footer>
     </section>
   );
