@@ -108,7 +108,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
     },
     {
       id: 'distance',
-      label: 'Distance',
+      label: 'Distance Calculator',
       subtitle: 'Exact inter-city highway km',
       icon: Calculator,
       color: 'accent-text',

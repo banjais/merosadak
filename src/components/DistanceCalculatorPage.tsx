@@ -13,7 +13,7 @@ import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, Ex
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
-import { Full3DPhoto } from './Full3DPhoto';
+import { RouteLineDrawing } from './RouteLineDrawing';
 
 import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
@@ -842,15 +842,21 @@ ${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
                 </div>
               )}
 
-              {/* 3D Parallax Photo - Nepal Highway Scenery */}
-              <div className="card p-0 overflow-hidden h-80">
-                <Full3DPhoto
-                  photoUrl="/assets/photos/nepal-highway-photo.svg"
-                  depthMapUrl="/assets/photos/nepal-highway-depth.svg"
-                  width={4}
-                  height={2.5}
-                />
-              </div>
+              <RouteLineDrawing
+                pathCoordinates={routeResult.pathCoordinates}
+                origin={{
+                  lat: origin?.lat ?? 0,
+                  lng: origin?.lng ?? 0,
+                  label: origin?.name || 'Origin',
+                }}
+                destination={{
+                  lat: destination?.lat ?? 0,
+                  lng: destination?.lng ?? 0,
+                  label: destination?.name || 'Destination',
+                }}
+                isAerial={Boolean(routeResult.__aerialWarning)}
+                onChangeLocation={handleChangeLocation}
+              />
 
               <UnifiedRouteReport
               route={routeResult}
