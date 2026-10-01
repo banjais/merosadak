@@ -67,6 +67,8 @@ export function distanceToHighwayGeometry(
  */
 export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
+  // Guard non-finite input rather than propagating NaN into every distance.
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return NaN;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -75,7 +77,10 @@ export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: nu
       Math.cos(lat2 * (Math.PI / 180)) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  // Floating-point error can push `a` a hair above 1 for near-antipodal points,
+  // which makes sqrt(1 - a) NaN and poisons the whole calculation.
+  const clampedA = Math.min(1, Math.max(0, a));
+  const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
   return R * c;
 }
 

@@ -1,3 +1,5 @@
+import type { RouteDistanceBreakdown } from './utils/roadGraphRouter';
+
 export type RoadStatusType = 'clear' | 'caution' | 'obstructed' | 'closed';
 
 export type SurfaceType = 'asphalt_excellent' | 'blacktopped_fair' | 'gravel' | 'under_construction' | 'offroad_mud';
@@ -354,6 +356,11 @@ export interface RoutePlanResult {
     communityKm: number;
     certifiedPercent: number;
   };
+  /**
+   * Splits `totalDistanceKm` into surveyed highway geometry and the synthetic
+   * edges around it, so a reported total is never mistaken for chainage.
+   */
+  distanceBreakdown?: RouteDistanceBreakdown;
   estimatedTimeMinutes: number;
   roadConditionScore: number; // 0 - 100
   safetyIndex: RouteSafetyIndex;

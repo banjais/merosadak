@@ -5,6 +5,7 @@ import {
   getNOCFuelRate,
   getFuelRateLabel,
   getFuelName,
+  estimateEvKwh,
 } from '../utils/vehicleConfigs';
 import {
   ShieldCheck,
@@ -80,7 +81,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
 
   const calculateCost = (route: RoutePlanResult) => {
     if (isEV) {
-      const kwh = route.evEstimate?.kwhRequired || Math.round((route.totalDistanceKm / 6.2) * 10) / 10;
+      const kwh = route.evEstimate?.kwhRequired || estimateEvKwh(route.totalDistanceKm);
       return Math.round(kwh * 15) + (route.totalTollCostNpr || 0);
     }
     return route.fuelEstimate.costNpr + (route.totalTollCostNpr || 0);

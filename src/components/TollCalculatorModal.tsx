@@ -25,6 +25,16 @@ interface TollRates {
   sourceLabel?: string;
 }
 
+interface TollRatesPayload {
+  rates?: { entry: TollRates['entry']; exit: TollRates['exit'] };
+  entry?: TollRates['entry'];
+  exit?: TollRates['exit'];
+  prohibitedVehicles?: string[];
+  lastUpdated?: string;
+  source?: string;
+  sourceLabel?: string;
+}
+
 interface TollCalculatorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,9 +58,22 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
       try {
         const res = await fetch('/api/toll-rates');
         if (!res.ok) throw new Error('Failed to fetch toll rates');
-        const data = await res.json();
+        const data: TollRatesPayload = await res.json();
+        // The API returns { tunnel, rates: { entry, exit }, ... }. Older
+        // payloads put entry/exit at the top level. Normalise both, and treat a
+        // missing section as a failure rather than rendering `undefined`.
+        const entry = data.rates?.entry ?? data.entry;
+        const exit = data.rates?.exit ?? data.exit;
+        if (!entry || !exit) throw new Error('Toll rate payload missing entry/exit rates');
         if (!cancelled) {
-          setTollRates(data);
+          setTollRates({
+            entry,
+            exit,
+            prohibitedVehicles: data.prohibitedVehicles ?? [],
+            lastUpdated: data.lastUpdated,
+            source: data.source,
+            sourceLabel: data.sourceLabel,
+          });
         }
       } catch (err) {
         if (!cancelled) {

@@ -61,12 +61,16 @@ export function calculateSegmentSafety(params: {
   else if (surface === 'gravel') baseRoadQuality = 55;
   else if (surface === 'offroad_mud') baseRoadQuality = 32;
 
-  // Status adjustment
-  if (status === 'caution') baseRoadQuality *= 0.84;
-  else if (status === 'obstructed') baseRoadQuality *= 0.55;
-  else if (status === 'closed') baseRoadQuality *= 0.15;
+  // Status adjustment is applied ONCE, to whichever base is used. It used to be
+  // applied to `baseRoadQuality` and then discarded whenever a corridor profile
+  // existed, so a `closed` or `obstructed` segment with a profile scored as
+  // though it were clear (88 instead of 13 for the ktm-nbz corridor).
+  let roadQualityBase = profile?.roadQualityScore ?? baseRoadQuality;
+  if (status === 'caution') roadQualityBase *= 0.9;
+  else if (status === 'obstructed') roadQualityBase *= 0.55;
+  else if (status === 'closed') roadQualityBase *= 0.15;
 
-  const roadQualityScore = profile?.roadQualityScore ? Math.round(profile.roadQualityScore * (status === 'caution' ? 0.9 : 1)) : Math.round(baseRoadQuality);
+  const roadQualityScore = Math.max(0, Math.min(100, Math.round(roadQualityBase)));
 
   // 2. Historical Accident Risk & Score
   let accidentRiskLevel: AccidentRiskLevel = profile?.baseAccidentRisk || 'moderate';

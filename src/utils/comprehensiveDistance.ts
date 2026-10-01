@@ -1,4 +1,4 @@
-import { RoadGraphRoute } from './roadGraphRouter';
+import { RoadGraphRoute, type RouteDistanceBreakdown } from './roadGraphRouter';
 import { findRoadGraphRoute } from './roadGraphRouter';
 
 interface SNHDistance {
@@ -16,6 +16,7 @@ interface UnifiedDistanceResult {
   aerialDistanceKm?: number;
   pathCoordinates?: [number, number][];
   highwaysUsed?: string[];
+  distanceBreakdown?: RouteDistanceBreakdown;
   metadata?: {
     dorSource?: 'road_graph' | 'dor_snh';
     snhTable?: string;
@@ -60,6 +61,7 @@ export async function findUnifiedRoute(
       roadGraphRoute: roadRoute,
       pathCoordinates: roadRoute.pathCoordinates,
       highwaysUsed: roadRoute.highwaysUsed,
+      distanceBreakdown: roadRoute.distanceBreakdown,
       metadata: { dorSource: 'road_graph' },
     };
   }

@@ -35,8 +35,17 @@ function generate24HourProfile(
 
     const travelTimeMinutes = Math.round(freeFlowMinutes * factor);
     const delayMinutes = Math.max(0, travelTimeMinutes - freeFlowMinutes);
-    const avgSpeedKmh = Math.max(8, Math.round((distanceKm / (travelTimeMinutes / 60))));
-    const congestionIndex = Math.min(100, Math.round(((travelTimeMinutes - freeFlowMinutes) / freeFlowMinutes) * 100 * 1.6));
+    // Guard the hour divisor: a zero/negative time would yield Infinity, and the
+    // old floor of 8 reported 8 km/h for a 0 km corridor.
+    const hoursTravelled = travelTimeMinutes / 60;
+    const avgSpeedKmh =
+      hoursTravelled > 0 && distanceKm > 0
+        ? Math.max(1, Math.round(distanceKm / hoursTravelled))
+        : 0;
+    const congestionIndex =
+      freeFlowMinutes > 0
+        ? Math.min(100, Math.max(0, Math.round(((travelTimeMinutes - freeFlowMinutes) / freeFlowMinutes) * 100 * 1.6)))
+        : 0;
 
     const ampm = h === 0 ? '12 AM' : h === 12 ? '12 PM' : h > 12 ? `${h - 12} PM` : `${h} AM`;
 

@@ -25,6 +25,12 @@ export interface VehicleCalcConfig {
   mileageKmPerUnit: number;
   fuelCostPerUnit: number;
   speedMultiplier: number;
+  /**
+   * Average sustained speed in km/h on a national highway. This is a SPEED and
+   * must never be derived from `mileageKmPerUnit`, which is fuel economy
+   * (km per litre / km per kWh) and is dimensionally unrelated.
+   */
+  avgSpeedKmh: number;
 }
 
 export const VEHICLE_UI_CONFIGS: VehicleUIConfig[] = [
@@ -35,13 +41,45 @@ export const VEHICLE_UI_CONFIGS: VehicleUIConfig[] = [
   { type: 'electric_vehicle', label: 'Electric Vehicle', shortName: 'EV', icon: Zap, desc: 'Battery electric vehicle' },
 ];
 
+/**
+ * Real-world EV consumption in km per kWh. Defined once here because it was
+ * hardcoded as 6.2 in nine places while this config said 6.5, so the KPI and
+ * the fuel estimator card disagreed on the same screen.
+ */
+export const EV_KM_PER_KWH = 6.5;
+
+/** Assumed usable battery capacity in kWh, used for the state-of-charge estimate. */
+export const EV_BATTERY_KWH = 50;
+
 export const VEHICLE_CALC_CONFIGS: Record<VehicleType, VehicleCalcConfig> = {
-  car: { mileageKmPerUnit: 14, fuelCostPerUnit: 175, speedMultiplier: 1.0 },
-  suv_4wd: { mileageKmPerUnit: 10, fuelCostPerUnit: 158, speedMultiplier: 1.05 },
-  motorbike: { mileageKmPerUnit: 35, fuelCostPerUnit: 175, speedMultiplier: 1.12 },
-  bus_truck: { mileageKmPerUnit: 4.5, fuelCostPerUnit: 158, speedMultiplier: 0.75 },
-  electric_vehicle: { mileageKmPerUnit: 6.5, fuelCostPerUnit: 15, speedMultiplier: 1.0 },
+  car: { mileageKmPerUnit: 14, fuelCostPerUnit: 175, speedMultiplier: 1.0, avgSpeedKmh: 55 },
+  suv_4wd: { mileageKmPerUnit: 10, fuelCostPerUnit: 158, speedMultiplier: 1.05, avgSpeedKmh: 48 },
+  motorbike: { mileageKmPerUnit: 35, fuelCostPerUnit: 175, speedMultiplier: 1.12, avgSpeedKmh: 50 },
+  bus_truck: { mileageKmPerUnit: 4.5, fuelCostPerUnit: 158, speedMultiplier: 0.75, avgSpeedKmh: 40 },
+  electric_vehicle: { mileageKmPerUnit: EV_KM_PER_KWH, fuelCostPerUnit: 15, speedMultiplier: 1.0, avgSpeedKmh: 50 },
 };
+
+/** kWh needed to cover `distanceKm`, guarded against non-positive input. */
+export function estimateEvKwh(distanceKm: number): number {
+  if (!(distanceKm > 0)) return 0;
+  return Math.round((distanceKm / EV_KM_PER_KWH) * 10) / 10;
+}
+
+/** State-of-charge used for `distanceKm`, as a percentage of EV_BATTERY_KWH. */
+export function estimateEvBatteryPercent(distanceKm: number): number {
+  if (!(distanceKm > 0)) return 0;
+  return Math.round(((distanceKm / EV_KM_PER_KWH) / EV_BATTERY_KWH) * 100);
+}
+
+/**
+ * Estimated travel minutes for a distance, from a real average speed.
+ * Guarded so a non-positive distance or speed can never yield Infinity.
+ */
+export function estimateMinutesFromSpeed(distanceKm: number, type: VehicleType): number {
+  const speed = VEHICLE_CALC_CONFIGS[type]?.avgSpeedKmh ?? VEHICLE_CALC_CONFIGS.car.avgSpeedKmh;
+  if (!(distanceKm > 0) || !(speed > 0)) return 0;
+  return Math.max(1, Math.round((distanceKm / speed) * 60));
+}
 
 export const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: string; desc: string }[] = [
   { pref: 'fastest', icon: '⚡', label: 'Fastest', desc: 'Shortest travel time' },

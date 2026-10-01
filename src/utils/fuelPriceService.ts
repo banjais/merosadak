@@ -90,6 +90,18 @@ export function getMinutesSinceLastCheck(): number {
   return Math.floor((Date.now() - lastChecked) / 60000);
 }
 
+/**
+ * Human-readable age of the last price check.
+ * `getMinutesSinceLastCheck()` returns Infinity when the timestamp is missing,
+ * so callers must guard the non-finite case: `Infinity < 1` is false, and a raw
+ * template would render "Infinity min ago".
+ */
+export function formatLastChecked(minutes: number | undefined): string {
+  if (minutes === undefined || !Number.isFinite(minutes)) return 'unknown';
+  if (minutes < 1) return 'just now';
+  return `${Math.round(minutes)} min ago`;
+}
+
 export function getEffectiveFuelRate(
   vehicleType: string,
   prices: FuelRateConfig | null = cachedPrices

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findOptimizedRoute, pickRouteByCertification } from '../utils/routeOptimizer';
-import { preloadRoadGraph } from '../utils/roadGraphRouter';
+import { preloadRoadGraph, findRoadGraphAlternatives } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities, searchCitiesWithGeocode, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
@@ -17,7 +17,7 @@ import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, X, MapPin } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, X, MapPin, Layers } from 'lucide-react';
 import { CitySuggestionDropdown } from './CityResultRow';
 import { HighwayBrowser } from './HighwayBrowser';
 
@@ -268,6 +268,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const roadGraphLoadedRef = useRef(false);
   const [roadGraphVersion, setRoadGraphVersion] = useState(0);
+  const [altSelected, setAltSelected] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -388,6 +389,29 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     },
     [originId, destId, roadGraphVersion, origin, destination]
   );
+  // Real k-shortest alternatives on the surveyed graph (not preference
+  // re-weightings). Aerial pairs have no surveyed corridor to branch from.
+  const graphAlternatives = useMemo(() => {
+    if (!(originId && destId && originId !== destId)) return [];
+    if (routeResult?.__aerialWarning) return [];
+    return findRoadGraphAlternatives(originId, destId, 3);
+  }, [originId, destId, roadGraphVersion, routeResult]);
+
+  // Keep the selection valid when the pair or option count changes.
+  useEffect(() => {
+    setAltSelected(0);
+  }, [originId, destId]);
+
+  const activeAlternative = graphAlternatives[altSelected] ?? null;
+
+  // Only override the drawn route when the user picked a non-default option.
+  const drawnPathCoordinates =
+    altSelected > 0 && activeAlternative ? activeAlternative.pathCoordinates : routeResult?.pathCoordinates ?? [];
+  const drawnDistanceKm =
+    altSelected > 0 && activeAlternative ? activeAlternative.distanceKm : null;
+  const drawnHighways =
+    altSelected > 0 && activeAlternative ? activeAlternative.highwaysUsed : distanceWithSource?.highwaysUsed ?? [];
+
   const displayedDistance = useMemo(() => {
     if (!origin || !destination) return 0;
     if (!distanceWithSource) return 0;
@@ -665,15 +689,10 @@ Not an official Department of Roads document.`;
                 </div>
               </div>
               {highwayCount > 0 && (
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] text-slate-300">
-                      Don&apos;t know the place name, or which road serves it?
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">
-                      Browse all {highwayCount} national highways and pick a place on the one you want.
-                    </p>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[11px] text-slate-400">
+                    Not sure of the place name? Search it, or pick any town along the {highwayCount} national highways.
+                  </p>
                   <button
                     type="button"
                     onClick={() => setBrowserOpen(true)}
@@ -806,7 +825,7 @@ isSearchingMaps={geocodingDest}
 
               {/* Animated origin → destination route sketch, then the Map option */}
               <RouteLineDrawing
-                pathCoordinates={routeResult.pathCoordinates}
+                pathCoordinates={drawnPathCoordinates}
                 origin={{
                   lat: origin?.lat ?? 0,
                   lng: origin?.lng ?? 0,
@@ -848,7 +867,7 @@ isSearchingMaps={geocodingDest}
                       <X className="h-4 w-4" />
                     </button>
                     <RouteMapView
-                      pathCoordinates={routeResult.pathCoordinates}
+                      pathCoordinates={drawnPathCoordinates}
                       origin={{
                         lat: origin?.lat ?? 0,
                         lng: origin?.lng ?? 0,
@@ -865,14 +884,65 @@ isSearchingMaps={geocodingDest}
                 </div>
               )}
 
+              {graphAlternatives.length >= 1 && (
+                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    <Layers className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>Alternative routes</span>
+                    <span className="ml-auto normal-case tracking-normal font-mono text-slate-500">
+                      {graphAlternatives.length} surveyed paths
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {graphAlternatives.map((alt, idx) => {
+                      const selected = idx === altSelected;
+                      const deltaKm = Math.round((alt.distanceKm - graphAlternatives[0].distanceKm) * 10) / 10;
+                      const highways = alt.highwaysUsed.join(' → ') || 'Local road network';
+                      return (
+                        <button
+                          key={`${idx}-${alt.highwaysUsed.join('>')}`}
+                          type="button"
+                          onClick={() => setAltSelected(idx)}
+                          aria-pressed={selected}
+                          className={`w-full flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                            selected
+                              ? 'border-cyan-500/60 bg-cyan-500/10'
+                              : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                          }`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block text-sm font-bold text-white">
+                              {idx === 0 ? 'Shortest' : `Alternative ${idx}`}
+                              {deltaKm > 0 && (
+                                <span className="ml-2 text-[11px] font-semibold text-amber-400">+{deltaKm.toFixed(1)} km</span>
+                              )}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[11px] text-cyan-300">{highways}</span>
+                          </span>
+                          <span className="shrink-0 text-base font-bold text-white">{alt.distanceKm.toFixed(1)} km</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {graphAlternatives.length === 1 && (
+                    <p className="mt-3 text-[11px] text-slate-500">
+                      The surveyed network has a single corridor for this pair — no bypass is mapped.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <UnifiedRouteReport
+              showCostMetrics={false}
               route={routeResult}
-              distanceKm={displayedDistance}
+              distanceKm={drawnDistanceKm ?? displayedDistance}
               distanceSource={displayedSource}
               distanceEvidence={distanceWithSource?.evidenceLevel || 'route_graph'}
               distanceCitation={distanceWithSource?.citation || null}
               distanceNote={distanceWithSource?.note || null}
-              distanceHighways={distanceWithSource?.highwaysUsed || []}
+              distanceHighways={drawnHighways}
               sourceControl={
                 <DataSourceSelector
                   selectedSource={selectedDataSource}

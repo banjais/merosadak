@@ -26,21 +26,31 @@ export const CarbonFootprintCard: React.FC<CarbonFootprintCardProps> = ({
 }) => {
   const [showComparison, setShowComparison] = useState(false);
 
+  /**
+   * Climb load factor, used by EVERY figure in this card. It used to be applied
+   * only to the headline total, so the sedan baseline, the comparison list and
+   * the header badge each disagreed with one another on the same screen.
+   * ICE vehicles carry a 6% penalty per 1000 m of gain, EVs 2.5%.
+   */
+  const climbMultiplierFor = (type: VehicleType) =>
+    1 + (elevationGainM / 1000) * (type === 'electric_vehicle' ? 0.025 : 0.06);
+
   // Calculate CO2 emissions
   const emissionData = useMemo(() => {
     const baseFactor = CO2_FACTORS[vehicleType]?.gramsPerKm || 142;
-    // Elevation gain increases fuel burn / electricity load (~5% per 1000m climb for ICE, ~2% for EV)
-    const climbMultiplier = 1 + (elevationGainM / 1000) * (vehicleType === 'electric_vehicle' ? 0.025 : 0.06);
-    
+    const climbMultiplier = climbMultiplierFor(vehicleType);
+
     const totalGrams = distanceKm * baseFactor * climbMultiplier;
     const totalKg = Math.round((totalGrams / 1000) * 10) / 10;
-    
+
     // Mature trees needed to absorb this CO2 for 1 year (approx 21.7 kg CO2 per mature tree per year)
     const treesNeeded = Math.max(1, Math.ceil(totalKg / 21.7));
 
-    // Equivalent miles in standard petrol car for comparison
+    // Sedan baseline, climb-adjusted to match the subject so the saving is
+    // genuinely like-for-like.
     const petrolFactor = CO2_FACTORS['car'].gramsPerKm;
-    const equivalentPetrolKg = Math.round(((distanceKm * petrolFactor) / 1000) * 10) / 10;
+    const equivalentPetrolKg =
+      Math.round(((distanceKm * petrolFactor * climbMultiplierFor('car')) / 1000) * 10) / 10;
     const savingsKg = Math.max(0, Math.round((equivalentPetrolKg - totalKg) * 10) / 10);
 
     return {
@@ -153,7 +163,7 @@ export const CarbonFootprintCard: React.FC<CarbonFootprintCardProps> = ({
             {(Object.keys(CO2_FACTORS) as VehicleType[]).map((vKey) => {
               const vInfo = CO2_FACTORS[vKey];
               const VIcon = vInfo.icon;
-              const vGrams = distanceKm * vInfo.gramsPerKm;
+              const vGrams = distanceKm * vInfo.gramsPerKm * climbMultiplierFor(vKey);
               const vKg = Math.round((vGrams / 1000) * 10) / 10;
               const isSelected = vKey === vehicleType;
 
@@ -182,7 +192,7 @@ export const CarbonFootprintCard: React.FC<CarbonFootprintCardProps> = ({
 
                   <div className="text-right">
                     <div className="font-black font-mono text-emerald-400">{vKg} kg CO₂</div>
-                    <div className="text-[10px] text-slate-500">~{Math.ceil(vKg / 21.7)} trees offset</div>
+                    <div className="text-[10px] text-slate-500">~{Math.max(1, Math.ceil(vKg / 21.7))} trees offset</div>
                   </div>
                 </div>
               );

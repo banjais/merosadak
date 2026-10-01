@@ -652,7 +652,7 @@ export const TravelStepsGuide: React.FC<TravelStepsGuideProps> = ({
                   {activeRouteSummary.originName} ➔ {activeRouteSummary.destinationName}
                 </span>
                 <span className="text-amber-400 font-mono">
-                  {activeRouteSummary.distanceKm} km • {Math.round(activeRouteSummary.durationMinutes / 60)}h{' '}
+                  {activeRouteSummary.distanceKm} km • {Math.floor(activeRouteSummary.durationMinutes / 60)}h{' '}
                   {activeRouteSummary.durationMinutes % 60}m
                 </span>
               </div>

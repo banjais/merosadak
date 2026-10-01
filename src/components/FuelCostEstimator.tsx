@@ -119,6 +119,8 @@ interface TollItem {
   name: string;
   location: string;
   baseCostNpr: number;
+  /** Gazette rate for every vehicle class, so comparisons need no multiplier. */
+  ratesByVehicle?: Partial<Record<VehicleType, number>>;
   enabled: boolean;
   notes: string;
 }
@@ -162,6 +164,8 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     location: string;
     highwayCode: string;
     baseCostNpr: number;
+    /** Gazette rate for every vehicle class, so comparisons need no multiplier. */
+    ratesByVehicle: Partial<Record<VehicleType, number>>;
     enabled: boolean;
     notes: string;
     directional: boolean;
@@ -194,6 +198,9 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
         location: plaza.location,
         highwayCode: plaza.highwayCode,
         baseCostNpr: baseCost,
+        // The gazette already publishes a rate per vehicle class. Storing the
+        // whole table means a second multiplier is never applied to it.
+        ratesByVehicle: { ...rates },
         enabled: true,
         notes: plaza.gazetteRef || `Rate for ${vehicleType}`,
         directional: plaza.directional,
@@ -279,9 +286,9 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
 
   // Sync mountain gradient if elevation changes
   useEffect(() => {
-    if (elevationGainM > 400) {
-      setIncludeMountainGradient(true);
-    }
+    // Must also clear: this used to latch on, so recalculating a flatter route
+    // kept the +12% hill-climb surcharge applied for the rest of the session.
+    setIncludeMountainGradient(elevationGainM > 400);
   }, [elevationGainM]);
 
   // Toggle toll item
@@ -330,11 +337,12 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     const totalFuelVolume = effectiveDistance / effectiveMileage;
     const totalFuelCostNpr = Math.round(totalFuelVolume * customFuelRate);
 
-    // 2. Toll Calculation (adjusted by vehicle type tariff multiplier)
-    const tollMultiplier = currentBenchmark.tollMultiplier;
+    // 2. Toll Calculation. `baseCostNpr` is already the gazette rate for the
+    // selected vehicle class, so no vehicle multiplier is applied here —
+    // doing so double-counted the class and overcharged buses/SUVs by up to 180%.
     const totalTollsNpr = tolls.reduce((sum, item) => {
       if (!item.enabled) return sum;
-      const rateForVehicle = Math.round(item.baseCostNpr * tollMultiplier);
+      const rateForVehicle = item.ratesByVehicle?.[vehicleType] ?? item.baseCostNpr;
       return sum + rateForVehicle * multiplier;
     }, 0);
 
@@ -412,10 +420,11 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
       const volume = effectiveDist / effMileage;
       const fuelCost = Math.round(volume * b.defaultRateNpr);
 
-      // Vehicle toll multiplier
+      // Toll for THIS vehicle class, straight from the gazette rate table.
       const tollCost = tolls.reduce((sum, item) => {
         if (!item.enabled) return sum;
-        return sum + Math.round(item.baseCostNpr * b.tollMultiplier) * multiplier;
+        const rate = item.ratesByVehicle?.[vKey] ?? item.baseCostNpr;
+        return sum + rate * multiplier;
       }, 0);
 
       const emergencyCost = emergencyServices.reduce((sum, item) => {

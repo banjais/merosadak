@@ -120,14 +120,15 @@ export const RouteTerrainAndTrafficAnalysis: React.FC<RouteTerrainAndTrafficAnal
     // Approximate total descent based on ascent & net change
     const elevationLoss = Math.max(0, elevationGain - netAltDiff);
 
-    // Average climb gradient across ascending sections
-    const avgClimbGradePercent = Math.min(
-      15,
-      Math.max(0.5, (elevationGain / totalDistMeters) * 100 * 2.2)
-    );
+    // True average climb gradient: ascent over horizontal distance. No 2.2x
+    // inflation, no 0.5% floor on a flat route, and no 15% ceiling hiding a
+    // genuine 30% climb — the real figure is shown, including 0 for flat.
+    const avgClimbGradePercent = (elevationGain / totalDistMeters) * 100;
 
-    // Max gradient estimation based on corridor terrain
-    let maxGradientPercent = 5.2;
+    // Corridor terrain class, keyed on altitude and ascent. This is a TYPICAL
+    // grade for the corridor, not a measurement of this route, so it is only
+    // ever labelled with "~".
+    let corridorTypicalGradePercent = 5.2;
     let difficultyTier: 'Grade I - Lowland Plain' | 'Grade II - Rolling Hill' | 'Grade III - Steep Canyon' | 'Grade IV - High Alpine Pass' =
       'Grade II - Rolling Hill';
     let difficultyScore = 50; // out of 100
@@ -136,29 +137,29 @@ export const RouteTerrainAndTrafficAnalysis: React.FC<RouteTerrainAndTrafficAnal
 
     if (maxAlt > 2200 || elevationGain > 2000) {
       difficultyTier = 'Grade IV - High Alpine Pass';
-      maxGradientPercent = 8.8;
+      corridorTypicalGradePercent = 8.8;
       difficultyScore = 92;
       difficultyColor = 'rose';
     } else if (maxAlt > 1400 || elevationGain > 1100) {
       difficultyTier = 'Grade III - Steep Canyon';
-      maxGradientPercent = 7.4;
+      corridorTypicalGradePercent = 7.4;
       difficultyScore = 74;
       difficultyColor = 'amber';
     } else if (elevationGain > 400) {
       difficultyTier = 'Grade II - Rolling Hill';
-      maxGradientPercent = 5.5;
+      corridorTypicalGradePercent = 5.5;
       difficultyScore = 52;
       difficultyColor = 'cyan';
     } else {
       difficultyTier = 'Grade I - Lowland Plain';
-      maxGradientPercent = 3.2;
+      corridorTypicalGradePercent = 3.2;
       difficultyScore = 28;
       difficultyColor = 'emerald';
     }
 
     return {
       avgClimbGradePercent: Math.round(avgClimbGradePercent * 10) / 10,
-      maxGradientPercent: Math.round(maxGradientPercent * 10) / 10,
+      maxGradientPercent: Math.round(corridorTypicalGradePercent * 10) / 10,
       elevationGain,
       elevationLoss,
       originAlt,

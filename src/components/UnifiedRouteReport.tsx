@@ -59,6 +59,11 @@ export interface UnifiedRouteReportProps {
    * sits inside a planner card — avoids a card nested inside a card.
    */
   embedded?: boolean;
+  /**
+   * Distance calculator shows distance only — no fuel cost, no tolls.
+   * Route planner keeps cost metrics for drivers. Defaults to true.
+   */
+  showCostMetrics?: boolean;
   showElevationProfile?: boolean;
   simulationControls?: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
@@ -255,6 +260,7 @@ export function UnifiedRouteReport({
   onChangeLocation,
   userIdentity,
   embedded = false,
+  showCostMetrics = true,
   showElevationProfile,
   simulationControls,
   onViewOnMap,
@@ -303,6 +309,25 @@ export function UnifiedRouteReport({
         ? undefined
         : undefined);
   const sourceDescription = distanceSourceDescription || getSourceDescription(distanceSource as 'dor_snh' | 'dor_geojson' | 'estimate_aerial');
+
+  // The reported total includes synthetic access and network-join edges, so the
+  // surveyed share is what can honestly be called mapped highway geometry.
+  const distanceParts = useMemo(() => {
+    const b = route.distanceBreakdown;
+    if (!b) return null;
+    const parts = [
+      { label: 'Origin access', km: b.originAccessKm, tone: 'text-amber-300' },
+      { label: 'Surveyed highway', km: b.surveyedKm, tone: 'text-emerald-400' },
+      { label: 'Network join', km: b.networkJoinKm, tone: 'text-cyan-300' },
+      { label: 'Destination access', km: b.destAccessKm, tone: 'text-amber-300' },
+    ];
+    const sum = parts.reduce((acc, p) => acc + p.km, 0);
+    if (!(sum > 0)) return null;
+    return parts;
+  }, [route.distanceBreakdown]);
+  const surveyedSharePercent = distanceParts
+    ? Math.round((distanceParts[1].km / distanceParts.reduce((acc, p) => acc + p.km, 0)) * 100)
+    : null;
 
   const citationText = useMemo(() => {
     if (!distanceCitation) return '';
@@ -396,7 +421,7 @@ export function UnifiedRouteReport({
         </div>
       </header>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={`mt-4 grid gap-3 sm:grid-cols-2 ${showCostMetrics ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
         <div className="card card-elevated card-interactive p-3.5">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
             <span>Distance</span>
@@ -414,11 +439,13 @@ export function UnifiedRouteReport({
           <p className="mt-2 text-[11px] text-slate-400">Estimated driving time by selected route profile.</p>
         </div>
 
+        {showCostMetrics && (
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Cost</div>
           <div className="mt-3 text-2xl font-black text-amber-400 font-display">NPR {fuelCost.toLocaleString('en-US')}</div>
           <p className="mt-2 text-[11px] text-slate-400">~{formatNumber(fuelQuantity, 1)} {fuelUnit} • Tolls separate</p>
         </div>
+        )}
 
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Safety</div>
@@ -492,9 +519,27 @@ export function UnifiedRouteReport({
                   <div className="border-t border-slate-800 pt-3">
                     <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-200">
                       <span>Road classification</span>
-                      <span className="text-emerald-400">{route.roadTierBreakdown.certifiedPercent}% mapped to DoR highway geometry</span>
+                      <span className="text-emerald-400">{surveyedSharePercent ?? route.roadTierBreakdown.certifiedPercent}% mapped to DoR highway geometry</span>
                     </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${route.roadTierBreakdown.certifiedPercent}%` }} /></div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${surveyedSharePercent ?? route.roadTierBreakdown.certifiedPercent}%` }} /></div>
+                  </div>
+                )}
+
+                {distanceParts && (
+                  <div className="border-t border-slate-800 pt-3">
+                    <div className="text-xs font-semibold text-slate-200">Distance composition</div>
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      {distanceParts.map((part) => (
+                        <div key={part.label} className="flex items-baseline justify-between gap-2 text-[10px]">
+                          <span className="text-slate-500">{part.label}</span>
+                          <span className={`font-bold ${part.tone}`}>{formatNumber(part.km, 1)} km</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[10px] text-slate-500">
+                      Only surveyed highway geometry is DoR chainage. Access and join segments are
+                      straight-line connectors Mero Sadak adds to reach a place off the mapped network.
+                    </p>
                   </div>
                 )}
 
@@ -505,7 +550,7 @@ export function UnifiedRouteReport({
                   {distanceNote && <div className="mt-2 text-[10px] text-amber-300/90"><Info className="inline-block h-3 w-3 align-[-2px] mr-1" />{distanceNote}</div>}
                 </div>
 
-                {route.totalTollCostNpr > 0 && (
+                {showCostMetrics && route.totalTollCostNpr > 0 && (
                   <div className="border-t border-slate-800 pt-3">
                     <div className="text-xs font-semibold text-slate-200">Toll estimate</div>
                     <div className="mt-2 text-lg font-black text-cyan-300 font-display">NPR {route.totalTollCostNpr.toLocaleString()}</div>

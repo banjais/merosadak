@@ -2,7 +2,7 @@ import { CityNode, RoutePlanResult, VehicleType, RoutePreference, RoadIncident, 
 import { CITIES_AND_JUNCTIONS, NEPAL_HIGHWAYS, LIVE_ROAD_INCIDENTS } from '../data/nepalHighwaysData';
 import { calculateSegmentSafety, calculateRouteSafetyIndex } from './safetyIndexCalculator';
 import { preloadRoadGraph, findRoadGraphRoute, getRoadGraph } from './roadGraphRouter';
-import { getVehicleCalcConfig } from './vehicleConfigs';
+import { getVehicleCalcConfig, estimateMinutesFromSpeed, estimateEvKwh, estimateEvBatteryPercent } from './vehicleConfigs';
 import { getEffectiveFuelRate } from './fuelPriceService';
 import { calculateTollCost, mapVehicleToTollCategory } from './tollRates.client';
 import { findUnifiedRouteSync } from './comprehensiveDistance';
@@ -1241,7 +1241,7 @@ function buildAerialRouteResult(
 ): RoutePlanResult {
   const aerialKm = calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng);
   const vehicleConfig = getVehicleCalcConfig(vehicle);
-  const estimatedMinutes = Math.round((aerialKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+  const estimatedMinutes = estimateMinutesFromSpeed(aerialKm, vehicle);
   const fuelLiters = Math.round((aerialKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
 
   return {
@@ -1285,9 +1285,9 @@ function buildAerialRouteResult(
       avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
-      kwhRequired: Math.round((aerialKm / 6.2) * 10) / 10,
+      kwhRequired: estimateEvKwh(aerialKm),
       recommendedChargingStops: [],
-      batteryUsagePercent: Math.round(((aerialKm / 6.2) / 50) * 100)
+      batteryUsagePercent: estimateEvBatteryPercent(aerialKm)
     },
     totalTollCostNpr: 0,
     elevationGainM: Math.abs(destination.elevationM - origin.elevationM),
@@ -1331,7 +1331,7 @@ function buildRoadGraphRouteResult(
 
   const aerialKm = Math.round(calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) * 10) / 10;
   const vehicleConfig = getVehicleCalcConfig(vehicle);
-  const estimatedMinutes = Math.round((real.distanceKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+  const estimatedMinutes = estimateMinutesFromSpeed(real.distanceKm, vehicle);
   const fuelLiters = Math.round((real.distanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
   const highwaysLabel = real.highwaysUsed.filter((h) => h && h !== 'undefined').join(' → ') || 'Local road network';
 
@@ -1357,6 +1357,7 @@ function buildRoadGraphRouteResult(
       communityKm: 0,
       certifiedPercent: 100
     },
+    distanceBreakdown: real.distanceBreakdown,
     estimatedTimeMinutes: estimatedMinutes,
     roadConditionScore: 0,
     safetyIndex: {
@@ -1378,9 +1379,9 @@ function buildRoadGraphRouteResult(
       avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
     },
     evEstimate: {
-      kwhRequired: Math.round((real.distanceKm / 6.2) * 10) / 10,
+      kwhRequired: estimateEvKwh(real.distanceKm),
       recommendedChargingStops: [],
-      batteryUsagePercent: Math.round(((real.distanceKm / 6.2) / 50) * 100)
+      batteryUsagePercent: estimateEvBatteryPercent(real.distanceKm)
     },
     totalTollCostNpr: 0,
     elevationGainM: Math.abs(destination.elevationM - origin.elevationM),
@@ -1663,6 +1664,11 @@ export function findRouteByPreference(
     else if (edge.status === 'caution') cautionKm += edge.distanceKm;
     else obstructedKm += edge.distanceKm;
 
+    // Cumulative ascent at MILESTONE resolution: edges carry only a signed net
+    // change between two city altitudes plus lat/lng intermediates, with no
+    // per-point elevation. Climb inside a net-descending edge is therefore not
+    // recoverable here, so this is a floor and never an overstatement. The
+    // interpolated figure shown by the elevation profile chart is higher.
     if (edge.elevationGain > 0) totalElevationGainM += edge.elevationGain;
 
     if (idx === 0) {
@@ -1726,7 +1732,9 @@ export function findRouteByPreference(
     else if (s.roadClassification === 'community_track') communityKm += s.distanceKm;
     else localKm += s.distanceKm;
   });
-  const certifiedPercent = totalDistanceKm > 0 ? Math.round((highwayKm / totalDistanceKm) * 100) : 100;
+  // A zero-length route has no surveyed corridor, so it must not claim 100%
+  // certified — that made `isAerialRoute` classify it as verified.
+  const certifiedPercent = totalDistanceKm > 0 ? Math.round((highwayKm / totalDistanceKm) * 100) : 0;
   const roadTierBreakdown = {
     highwayKm: Math.round(highwayKm * 10) / 10,
     provincialKm: Math.round(provincialKm * 10) / 10,
@@ -1744,7 +1752,7 @@ export function findRouteByPreference(
   const fuelCostNpr = Math.round(fuelLiters * getEffectiveFuelRate(vehicle));
 
   // EV Calculations
-  const evKwhRequired = Math.round((totalDistanceKm / 6.2) * 10) / 10;
+  const evKwhRequired = estimateEvKwh(totalDistanceKm);
   const recommendedChargers: EVCharger[] = [];
 
   const highwayCodesOnPath = Array.from(new Set(edgesOnPath.map((e) => e.highwayCode.split('/')[0])));
@@ -1760,8 +1768,19 @@ export function findRouteByPreference(
 
   const incidentsOnRoute = liveIncidents.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
 
-  const elevationsOnRoute = [origin.elevationM, destination.elevationM, ...edgesOnPath.map((e) => e.elevationGain + origin.elevationM)];
-  const maxElevationM = Math.max(...elevationsOnRoute);
+  // Altitude is a RUNNING total: each edge's signed gain is added to the
+  // altitude reached by the previous edge, not to the origin altitude. Adding
+  // every net change to the origin never reaches an intermediate summit and
+  // reports maxElevationM as the origin altitude on any climb-then-descend.
+  const elevationsOnRoute: number[] = [origin.elevationM];
+  let runningElevation = origin.elevationM;
+  for (const e of edgesOnPath) {
+    runningElevation += e.elevationGain;
+    elevationsOnRoute.push(runningElevation);
+  }
+  // The destination's surveyed altitude is authoritative where we have it.
+  elevationsOnRoute.push(destination.elevationM);
+  const maxElevationM = Math.max(origin.elevationM, destination.elevationM, ...elevationsOnRoute);
 
   const scenicRating = calculateRouteScenicRating(highwayCodesOnPath);
 
@@ -2170,7 +2189,7 @@ export function findOptimizedRoute(
         // Convert unified result to RoutePlanResult
         const aerialKm = Math.round(calculateDirectDistanceKm(origin.lat, origin.lng, destination.lat, destination.lng) * 10) / 10;
         const vehicleConfig = getVehicleCalcConfig(vehicle);
-        const estimatedMinutes = Math.round((unified.distanceKm / (vehicleConfig.mileageKmPerUnit * 0.6)) * 60);
+        const estimatedMinutes = estimateMinutesFromSpeed(unified.distanceKm, vehicle);
         const fuelLiters = Math.round((unified.distanceKm / vehicleConfig.mileageKmPerUnit) * 10) / 10;
         const highwaysLabel = unified.highwaysUsed?.filter((h) => h && h !== 'undefined').join(' → ') || 'Local road network';
         const isAerial = unified.source === 'aerial';
@@ -2195,6 +2214,7 @@ export function findOptimizedRoute(
             communityKm: 0,
             certifiedPercent: isAerial ? 0 : 100
           },
+          distanceBreakdown: isAerial ? undefined : unified.distanceBreakdown,
           estimatedTimeMinutes: estimatedMinutes,
           roadConditionScore: 0,
           safetyIndex: {
@@ -2218,9 +2238,9 @@ export function findOptimizedRoute(
             avgMileageKmPerLiter: vehicleConfig.mileageKmPerUnit
           },
           evEstimate: {
-            kwhRequired: Math.round((unified.distanceKm / 6.2) * 10) / 10,
+            kwhRequired: estimateEvKwh(unified.distanceKm),
             recommendedChargingStops: [],
-            batteryUsagePercent: Math.round(((unified.distanceKm / 6.2) / 50) * 100)
+            batteryUsagePercent: estimateEvBatteryPercent(unified.distanceKm)
           },
           totalTollCostNpr: 0,
           elevationGainM: Math.abs(destination.elevationM - origin.elevationM),

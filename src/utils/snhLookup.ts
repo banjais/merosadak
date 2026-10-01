@@ -1,5 +1,5 @@
 import type { CityNode } from '../types';
-import { findRoadGraphRoute, isRoadGraphReady } from './roadGraphRouter';
+import { findRoadGraphRoute, isRoadGraphReady, type RouteDistanceBreakdown } from './roadGraphRouter';
 
 export type EvidenceLevel = 'published' | 'link_sum' | 'geodesic' | 'estimate';
 
@@ -184,8 +184,12 @@ export function computeLinkSumDistance(
   const toEnd = destMatches[0];
 
   const links = ref.links;
-  const originIdx = links.findIndex((l) => l.name.toLowerCase().includes(fromEnd.toLowerCase()));
-  const destIdx = links.findIndex((l) => l.name.toLowerCase().includes(toEnd.toLowerCase()));
+  // Re-locate by the SAME exact-equality rule used above. A substring lookup
+  // could resolve to a different, earlier link ("Mugling Bridge" instead of
+  // "Mugling") and then sum the wrong span of the corridor.
+  const normName = (s: string) => s.toLowerCase().replace(/\s+/g, ' ');
+  const originIdx = links.findIndex((l) => normName(l.name) === normName(fromEnd));
+  const destIdx = links.findIndex((l) => normName(l.name) === normName(toEnd));
 
   if (originIdx === -1 || destIdx === -1) return null;
 
@@ -267,20 +271,22 @@ export function traceKathmanduToGulariya(ref?: SNHReferenceData | null): Distanc
 
   return {
     distanceKm: 543.4,
-    evidenceLevel: 'published',
-    citation: {
-      document: 'SNH 2022/23',
-      table: 'Table 6',
-      row: 59,
-      printedPage: 12,
-      pdfPage: 22,
-      via: 'via NH17 Prithvi Highway',
-    },
+    // Provenance, not authority: when the direct published lookup fails, 543.4
+    // is reached by subtraction (SNH total minus the Table 4 segments), so it
+    // must not be labelled 'published'. Labelling it published with a specific
+    // table/page citation presented a hardcoded constant as a DoR figure.
+    evidenceLevel: published ? 'published' : 'estimate',
+    citation: published
+      ? published.citation
+      : {
+          document: 'SNH 2022/23',
+          table: 'Table 4 + published route total (derived, not a direct citation)',
+        },
     publishedDistanceKm: 543.4,
     linkChain: chain,
     note,
     unreconciledGapKm: gapFromLinkChain,
-    isUncertain: linkChainConflict,
+    isUncertain: linkChainConflict || !published,
   };
 }
 
@@ -328,6 +334,7 @@ export interface DistanceWithSource {
   publishedDistanceKm?: number;
   highwaysUsed?: string[];
   inferredConnectorKm?: number;
+  distanceBreakdown?: RouteDistanceBreakdown;
 }
 
 export function getSourceLabel(source: DataSourceType): string {
@@ -379,6 +386,7 @@ export function lookupGeoJsonRouteDistance(
       : 'Derived route computed by Mero Sadak over DoR archive geometry; DoR does not publish this city-pair figure.',
     highwaysUsed: route.highwaysUsed,
     inferredConnectorKm: route.inferredConnectorKm,
+    distanceBreakdown: route.distanceBreakdown,
   };
 }
 

@@ -91,9 +91,10 @@ import {
   getVehicleUIConfig,
   formatPreference,
   PREFERENCE_CONFIGS,
+  EV_KM_PER_KWH,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
-import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
+import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, formatLastChecked, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { filterCities, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
 import { CitySuggestionDropdown } from './CityResultRow';
 import { HighwayBrowser } from './HighwayBrowser';
@@ -377,7 +378,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       ? 35.0
       : initialVehicle === 'bus_truck'
       ? 4.5
-      : 6.2; // km/kWh for EV
+      : EV_KM_PER_KWH;
   });
   const [efficiencyUnit, setEfficiencyUnit] = useState<'km_l' | 'mpg' | 'l_100km'>('km_l');
 
@@ -392,7 +393,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         ? 35.0
         : vehicle === 'bus_truck'
         ? 4.5
-        : 6.2;
+        : EV_KM_PER_KWH;
     setCustomMileageKmL(defaultVal);
   }, [vehicle]);
 
@@ -408,6 +409,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     const price = fuelPrices ? getEffectiveFuelRate(vehicle, fuelPrices) : getNOCFuelRate(vehicle);
     return Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0);
   }, [routePlan, customMileageKmL, fuelPrices, vehicle]);
+
+  // Highway codes covered by the route, used to look up the toll plazas the
+  // route actually passes. Without this the fuel estimator showed Rs 0 in tolls
+  // because it had no codes to search with.
+  const routeHighwayCodes = useMemo(() => {
+    if (!routePlan) return [];
+    const codes = new Set<string>();
+    for (const step of routePlan.steps ?? []) {
+      const code = step.highwayCode;
+      if (code && code !== 'AERIAL' && code !== 'undefined') codes.add(code);
+    }
+    return Array.from(codes);
+  }, [routePlan]);
 
 
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
@@ -689,12 +703,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   // Device Geolocation Auto-Detection
-  const handleDetectDeviceLocation = useCallback(async () => {
+  // keepMenuOpen: when true (My Location card click), refresh GPS but leave
+  // the "Change Origin" dropdown visible so the user can still switch origin.
+  const handleDetectDeviceLocation = useCallback(async (keepMenuOpen: boolean = false) => {
     if (!navigator.geolocation) {
       setOriginSelected(false);
       setOriginId('');
       setDetectedLocation(null);
-      setIsLocationMenuOpen(false);
+      if (!keepMenuOpen) setIsLocationMenuOpen(false);
       return;
     }
 
@@ -710,6 +726,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           setLocationPermissionDenied(false);
         } else if (permissionStatus.state === 'denied') {
           setLocationPermissionDenied(true);
+          if (!keepMenuOpen) setIsLocationMenuOpen(false);
           return;
         }
 
@@ -757,20 +774,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setGpsOriginCityId('');
             setGpsOriginDistanceKm(null);
           }
-          setOriginSelected(true);
-          setIsLocationMenuOpen(false);
+setOriginSelected(true);
+          if (!keepMenuOpen) setIsLocationMenuOpen(false);
           setLocationPermissionDenied(false);
         },
        (err) => {
-          setOriginSelected(false);
-          setOriginId('');
-          setGpsOriginCityId('');
-          setGpsOriginDistanceKm(null);
-          setGpsNearestJunction(null);
-          setGpsNearestHighway(null);
-          setDetectedLocation(null);
-          setLocationPermissionDenied(true);
-          setIsLocationMenuOpen(false);
+         setOriginSelected(false);
+         setOriginId('');
+         setGpsOriginCityId('');
+         setGpsOriginDistanceKm(null);
+         setGpsNearestJunction(null);
+         setGpsNearestHighway(null);
+         setDetectedLocation(null);
+         setLocationPermissionDenied(true);
+         if (!keepMenuOpen) setIsLocationMenuOpen(false);
        },
        { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
     );
@@ -1215,7 +1232,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <span className="text-slate-300 truncate">
                 Fuel prices last checked{' '}
                 <span className="font-semibold text-emerald-400">
-                  {getMinutesSinceLastCheck() < 1 ? 'just now' : `${getMinutesSinceLastCheck()} min ago`}
+                  {formatLastChecked(getMinutesSinceLastCheck())}
                 </span>
                 {isPriceStale() && (
                   <span className="ml-1 text-amber-400">(stale)</span>
@@ -1320,17 +1337,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       )}
 
       {/* 1. MY LOCATION CARD - Always visible */}
-      <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
+      <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div
             onClick={() => {
               if (isCustomLocationMode) {
                 setLocationMode('my_location');
                 closeAllMenus(null);
+                handleDetectDeviceLocation(true);
                 return;
               }
+              // Two tasks at once: refresh My Location and keep the
+              // "Change Origin" dropdown visible.
               closeAllMenus('location');
-              setIsLocationMenuOpen(!isLocationMenuOpen);
+              setIsLocationMenuOpen(true);
+              handleDetectDeviceLocation(true);
             }}
             id="btn-my-location-toggle"
             className={`flex items-center space-x-3 group select-none rounded-xl px-3 py-2 border transition min-w-0 flex-1 cursor-pointer ${
@@ -1698,15 +1719,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
           {/* Browse by highway — for users who know the road, not the town */}
           {deckId === 'search' && !hasCalculated && highwayCount > 0 && (
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] text-slate-300">
-                  Don&apos;t know the place name, or which road serves it?
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-500">
-                  Browse all {highwayCount} national highways and pick a place on the one you want.
-                </p>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[11px] text-slate-400">
+                Not sure of the place name? Search it, or pick any town along the {highwayCount} national highways.
+              </p>
               <button
                 type="button"
                 onClick={() => setIsBrowserOpen(true)}
@@ -2272,6 +2288,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     origin={routePlan.origin}
                     destination={routePlan.destination}
                     defaultTollCost={routePlan.totalTollCostNpr}
+                    highwayCodes={routeHighwayCodes}
                     fuelPrices={fuelPrices}
                     onVehicleChange={(newV) => setVehicle(newV)}
                   />

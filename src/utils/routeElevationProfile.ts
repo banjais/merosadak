@@ -166,9 +166,12 @@ export function buildRouteElevationProfile(
     const stepDist = step.distanceKm || 1;
     const stepElevChange = step.elevationChangeM || 0;
     currentStepDist += stepDist;
+    // Floor at 0 m, not 60 m. Nepal's lowest inhabited point is ~59 m, so a 60 m
+    // floor was only ever a safety margin, but it corrupted genuinely low routes
+    // by flattening them (a 20->30 m route collapsed to a constant 30 m).
     currentStepElev = clamp(
       currentStepElev + stepElevChange,
-      60,
+      0,
       maxElev + 100
     );
     milestones.push({
@@ -248,6 +251,9 @@ export function buildRouteElevationProfile(
   let lowestElev = Infinity;
   let peakIndex = 0;
   let valleyIndex = 0;
+  // Exact (unrounded) previous sample, used only for the grade denominator.
+  let lastSampleDistExact: number | null = null;
+  let prevElevationExact = 0;
 
   for (let i = 0; i <= targetSamples; i++) {
     const sampleDist = (i / targetSamples) * totalDist;
@@ -264,8 +270,10 @@ export function buildRouteElevationProfile(
 
     const segmentSpan = nextM.distance - prevM.distance || 0.001;
     const t = clamp((sampleDist - prevM.distance) / segmentSpan, 0, 1);
-    const smoothT = (1 - Math.cos(t * Math.PI)) / 2;
-    let interpElev = prevM.elevation + (nextM.elevation - prevM.elevation) * smoothT;
+    // Linear between surveyed milestone altitudes. A cosine ease-in-out here
+    // peaked at (pi/2)x the true slope, so a uniform 12.5% climb was reported
+    // as 19.7% — it invented curvature that made the maximum grade wrong.
+    let interpElev = prevM.elevation + (nextM.elevation - prevM.elevation) * t;
 
     if (segmentSpan > 12) {
       interpElev +=
@@ -273,17 +281,26 @@ export function buildRouteElevationProfile(
         (Math.abs(nextM.elevation - prevM.elevation) * 0.06 + 8);
     }
 
-    interpElev = Math.round(clamp(interpElev, 60, maxElev));
+    // Floor at 0 m. The old clamp(v, 60, maxElev) collapsed every sample to
+    // maxElev whenever the route stayed below 60 m, flattening the profile.
+    interpElev = Math.round(clamp(interpElev, Math.min(0, maxElev), maxElev));
+
+    // The stored `distance` is rounded to 0.1 km for display, but the grade
+    // denominator must use the TRUE sample spacing. Using the rounded value
+    // made every ~0.178 km sample read as 0.1 or 0.2 km, so roughly half the
+    // intervals reported a halved denominator and double the real grade.
+    const sampleDistRounded = Math.round(sampleDist * 10) / 10;
 
     let grade = 0;
-    if (rawPoints.length > 0) {
-      const prevP = rawPoints[rawPoints.length - 1];
-      const dDistKm = sampleDist - prevP.distance;
-      const dElevM = interpElev - prevP.elevation;
+    if (lastSampleDistExact !== null) {
+      const dDistKm = sampleDist - lastSampleDistExact;
+      const dElevM = interpElev - prevElevationExact;
       if (dDistKm > 0) {
         grade = Math.round((dElevM / (dDistKm * 1000)) * 100 * 10) / 10;
       }
     }
+    lastSampleDistExact = sampleDist;
+    prevElevationExact = interpElev;
 
     if (interpElev > highestElev) {
       highestElev = interpElev;
@@ -300,7 +317,7 @@ export function buildRouteElevationProfile(
     const isSteepDescent = grade <= -steepThreshold;
 
     rawPoints.push({
-      distance: Math.round(sampleDist * 10) / 10,
+      distance: sampleDistRounded,
       elevation: interpElev,
       grade,
       stepIndex: prevM.stepIndex,
@@ -367,58 +384,71 @@ export function buildRouteElevationProfile(
     else highPassDistKm += segDist;
   }
 
-  const identifiedZones: SteepHazardZone[] = [];
+const identifiedZones: SteepHazardZone[] = [];
   let currentCluster: RouteElevationProfilePoint[] = [];
+
+  // Extracted so the same logic can flush the final cluster below; a steep run
+  // that reaches the last sample used to be discarded entirely.
+  const flushCluster = () => {
+    if (currentCluster.length < 2) {
+      currentCluster = [];
+      return;
+    }
+    const first = currentCluster[0];
+    const last = currentCluster[currentCluster.length - 1];
+    const lengthKm = Math.round((last.distance - first.distance) * 10) / 10;
+    const elevDiff = last.elevation - first.elevation;
+    const maxG = Math.max(...currentCluster.map((p) => Math.abs(p.grade)));
+    const avgG =
+      Math.round(
+        (currentCluster.reduce((acc, p) => acc + p.grade, 0) / currentCluster.length) * 10
+      ) / 10;
+    const midPt = currentCluster[Math.floor(currentCluster.length / 2)];
+    const isExtreme = maxG >= 10;
+    const direction = elevDiff >= 0 ? 'climb' : 'descent';
+    let title = first.instruction || 'Mountain Pass Sector';
+    if (title.length > 38) title = title.substring(0, 35) + '...';
+
+    identifiedZones.push({
+      id: `zone-${first.distance}-${last.distance}`,
+      title,
+      highwayCode: first.highwayCode,
+      startKm: first.distance,
+      endKm: last.distance,
+      lengthKm: Math.max(0.5, lengthKm),
+      startElevation: first.elevation,
+      endElevation: last.elevation,
+      elevationDiff: Math.round(elevDiff),
+      avgGrade: Math.abs(avgG),
+      maxGrade: Math.round(maxG * 10) / 10,
+      direction,
+      severity: isExtreme ? 'extreme' : 'steep',
+      lat: midPt.lat,
+      lng: midPt.lng,
+      vehicleAdvice:
+        direction === 'climb'
+          ? isExtreme
+            ? 'Extreme climb (>10%): Shift to 1st/2nd gear. Monitor engine coolant and EV battery draw.'
+            : `Steep climb (>${steepThreshold}%): Downshift to 2nd gear. Turn off AC if engine strains.`
+          : isExtreme
+            ? 'Critical descent: Severe risk of brake fluid boiling! Mandatory low-gear engine braking.'
+            : 'Steep downhill: Downshift to engine brake. Avoid riding footbrake.',
+    });
+
+    currentCluster = [];
+  };
+
   rawPoints.forEach((pt) => {
     if (Math.abs(pt.grade) >= steepThreshold - 0.5) {
       currentCluster.push(pt);
       return;
     }
-
-    if (currentCluster.length >= 2) {
-      const first = currentCluster[0];
-      const last = currentCluster[currentCluster.length - 1];
-      const lengthKm = Math.round((last.distance - first.distance) * 10) / 10;
-      const elevDiff = last.elevation - first.elevation;
-      const maxG = Math.max(...currentCluster.map((p) => Math.abs(p.grade)));
-      const avgG =
-        Math.round(
-          (currentCluster.reduce((acc, p) => acc + p.grade, 0) / currentCluster.length) * 10
-        ) / 10;
-      const midPt = currentCluster[Math.floor(currentCluster.length / 2)];
-      const isExtreme = maxG >= 10;
-      const direction = elevDiff >= 0 ? 'climb' : 'descent';
-      let title = first.instruction || 'Mountain Pass Sector';
-      if (title.length > 38) title = title.substring(0, 35) + '...';
-
-      identifiedZones.push({
-        id: `zone-${first.distance}-${last.distance}`,
-        title,
-        highwayCode: first.highwayCode,
-        startKm: first.distance,
-        endKm: last.distance,
-        lengthKm: Math.max(0.5, lengthKm),
-        startElevation: first.elevation,
-        endElevation: last.elevation,
-        elevationDiff: Math.round(elevDiff),
-        avgGrade: Math.abs(avgG),
-        maxGrade: Math.round(maxG * 10) / 10,
-        direction,
-        severity: isExtreme ? 'extreme' : 'steep',
-        lat: midPt.lat,
-        lng: midPt.lng,
-        vehicleAdvice:
-          direction === 'climb'
-            ? isExtreme
-              ? 'Extreme climb (>10%): Shift to 1st/2nd gear. Monitor engine coolant and EV battery draw.'
-              : `Steep climb (>${steepThreshold}%): Downshift to 2nd gear. Turn off AC if engine strains.`
-            : isExtreme
-              ? 'Critical descent: Severe risk of brake fluid boiling! Mandatory low-gear engine braking.'
-              : 'Steep downhill: Downshift to engine brake. Avoid riding footbrake.',
-      });
-    }
-    currentCluster = [];
+    flushCluster();
   });
+
+  // Tail flush: a climb or descent running into the destination is still a
+  // hazard sector.
+  flushCluster();
 
   const totalAltitudeDist = lowlandDistKm + midHillDistKm + highPassDistKm || 1;
   return {

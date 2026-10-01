@@ -419,6 +419,21 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
     );
   };
 
+  // Hook must sit above the `if (!route)` guard: a useMemo below an early
+  // return makes React throw "Rendered fewer hooks than expected" the first
+  // time activeRoute transitions null -> route.
+  const simCurrentPosition = useMemo(
+    () =>
+      route
+        ? getRouteElevationPosition(
+            elevationPoints,
+            simulationControls.progressKm,
+            route
+          )
+        : null,
+    [elevationPoints, route, simulationControls.progressKm]
+  );
+
   if (!route) {
     return null;
   }
@@ -427,16 +442,6 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
   const totalDistanceKm =
     route.totalDistanceKm ||
     (elevationPoints.length > 0 ? elevationPoints[elevationPoints.length - 1].distance : 10);
-
-  const simCurrentPosition = useMemo(
-    () =>
-      getRouteElevationPosition(
-        elevationPoints,
-        simulationControls.progressKm,
-        route
-      ),
-    [elevationPoints, route, simulationControls.progressKm]
-  );
 
   // Standard Y-axis bounds
   const minElevVal = Math.max(0, Math.floor(stats.minElevation / 100) * 100 - 100);
