@@ -8,7 +8,30 @@ interface RoadGraph {
   highways: string[];
   citySnap: Record<string, number>;
   citySnapByName: Record<string, number>;
+  cityLinks?: Record<string, CityLink>;
   stats: Record<string, unknown>;
+}
+
+/**
+ * A place's link to the highway network, derived from the surveyed graph rather
+ * than from a hand-written highway list. `highways` is every national highway
+ * within HIGHWAY_TOUCH_KM of the place; `accessKm` is the inferred access
+ * connector length when the place does not sit on a highway itself.
+ */
+export interface CityLink {
+  highways: string[];
+  accessKm: number | null;
+  onNetwork: boolean;
+  claimedHighways?: string[];
+}
+
+/** Radius used by the graph builder when deciding which highways touch a place. */
+export const HIGHWAY_TOUCH_KM = 5;
+
+export function getCityLink(name: string): CityLink | null {
+  const links = graph?.cityLinks;
+  if (!links) return null;
+  return links[name.trim().toLowerCase()] ?? null;
 }
 
 export interface RoadGraphRoute {

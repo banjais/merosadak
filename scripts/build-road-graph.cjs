@@ -347,6 +347,8 @@ function main() {
   const cities = loadCityNodes();
   const citySnap = {};
   const citySnapByName = {};
+  /** Per-city link facts derived from the built graph, not from curated claims. */
+  const cityMeta = {};
   let snappedNear = 0;
   let injected = 0;
   let unsnapped = 0;
@@ -363,6 +365,7 @@ function main() {
     if (bestId >= 0 && bestDist <= CITY_SNAP_MAX_KM) {
       citySnap[city.id] = bestId;
       if (city.name) citySnapByName[city.name.toLowerCase()] = bestId;
+      cityMeta[city.id] = { accessKm: 0, onNetwork: true };
       snappedNear++;
     } else if (bestId >= 0 && bestDist <= CITY_INJECT_MAX_KM) {
       const cityNodeId = snapper.nodes.length;
@@ -371,6 +374,8 @@ function main() {
       addEdge(cityNodeId, bestId, accessKm, JOIN_HWY_IDX);
       citySnap[city.id] = cityNodeId;
       if (city.name) citySnapByName[city.name.toLowerCase()] = cityNodeId;
+      // The city is not on a highway; it reaches one over inferred access.
+      cityMeta[city.id] = { accessKm, onNetwork: false };
       injected++;
       console.log(`  city ${city.id} injected @ ${accessKm}km access → node ${bestId}`);
     } else {
@@ -565,12 +570,95 @@ function main() {
     return Array.from(seen.values()).map((e) => [e.to, e.d, e.h]);
   });
 
-  const out = {
+  // Highways actually incident on each node. A city connector stub carries only
+// h = -1 edges, so walk past those to the highway node it reaches.
+const nodeHighways = new Map();
+for (let id = 0; id < adjacency2.length; id++) {
+  const list = adjacency2[id];
+  for (const [, , h] of list) {
+    if (h === JOIN_HWY_IDX) continue;
+    let set = nodeHighways.get(id);
+    if (!set) { set = new Set(); nodeHighways.set(id, set); }
+    set.add(highwayList[h]);
+  }
+}
+
+// A connector stub is one hop from its highway node; resolve through it.
+function highwaysForCity(nodeId, depth = 0) {
+  const direct = nodeHighways.get(nodeId);
+  if (direct && direct.size) return direct;
+  if (depth > 2) return new Set();
+  const out = new Set();
+  for (const [to, , h] of adjacency2[nodeId] || []) {
+    if (h === JOIN_HWY_IDX) {
+      for (const code of highwaysForCity(to, depth + 1)) out.add(code);
+    }
+  }
+  return out;
+}
+
+// Nearest-single-highway under-reports badly: a metro centroid sits ~1 km from
+// whatever road happens to be closest, which hides the other corridors that
+// actually serve it (Kathmandu reads as ring-road-only). What a driver means by
+// "highways touching this city" is every highway within reach of it, so collect
+// them all inside a touch radius instead of taking the minimum.
+const HIGHWAY_TOUCH_KM = 5;
+const CELL_DEG = HIGHWAY_TOUCH_KM / 111.32;
+const touchGrid = new Map();
+for (const [nodeId, codes] of nodeHighways) {
+  if (!codes.size) continue;
+  const [la, ln] = snapper.nodes[nodeId];
+  const key = `${Math.floor(la / CELL_DEG)}:${Math.floor(ln / CELL_DEG)}`;
+  let bucket = touchGrid.get(key);
+  if (!bucket) { bucket = []; touchGrid.set(key, bucket); }
+  bucket.push(nodeId);
+}
+
+function highwaysWithinRadius(la, ln, radiusKm) {
+  const found = new Set();
+  const latSpan = Math.ceil(radiusKm / 111.32 / CELL_DEG) + 1;
+  const baseRow = Math.floor(la / CELL_DEG);
+  const baseCol = Math.floor(ln / CELL_DEG);
+  for (let r = -latSpan; r <= latSpan; r++) {
+    for (let c = -latSpan; c <= latSpan; c++) {
+      const bucket = touchGrid.get(`${baseRow + r}:${baseCol + c}`);
+      if (!bucket) continue;
+      for (const nodeId of bucket) {
+        const n = snapper.nodes[nodeId];
+        if (haversineKm([la, ln], n) <= radiusKm) {
+          for (const code of nodeHighways.get(nodeId)) found.add(code);
+        }
+      }
+    }
+  }
+  return found;
+}
+
+const cityLinks = {};
+for (const city of cities) {
+  const nodeId = citySnap[city.id];
+  if (nodeId === undefined) continue;
+  const meta = cityMeta[city.id] || { accessKm: null, onNetwork: false };
+  const linked = [...highwaysWithinRadius(city.lat, city.lng, HIGHWAY_TOUCH_KM)].sort();
+  const key = city.name ? city.name.toLowerCase() : city.id;
+  cityLinks[key] = {
+    highways: linked,
+    accessKm: meta.accessKm,
+    onNetwork: meta.onNetwork,
+    // Where the curated dataset and the surveyed graph disagree, keep both so
+    // the UI can show the graph as authoritative rather than silently trusting
+    // a hand-written highway list.
+    claimedHighways: (city.highways || []).slice().sort(),
+  };
+}
+
+const out = {
     nodes: snapper.nodes.map((n) => [Math.round(n[0] * 100000) / 100000, Math.round(n[1] * 100000) / 100000]),
     adjacency: adjacency2,
     highways: highwayList,
     citySnap,
     citySnapByName,
+    cityLinks,
     stats: {
       generatedAt: new Date().toISOString(),
       files: files.length,
@@ -578,6 +666,10 @@ function main() {
       citiesSnapped: Object.keys(citySnap).length,
       citiesTotal: cities.length,
       citySnapByNameEntries: Object.keys(citySnapByName).length,
+      cityLinksEntries: Object.keys(cityLinks).length,
+      citiesOnHighway: Object.values(cityLinks).filter((l) => l.onNetwork).length,
+      citiesNeedingAccess: Object.values(cityLinks).filter((l) => !l.onNetwork).length,
+      citiesWithNoHighway: Object.values(cityLinks).filter((l) => l.highways.length === 0).length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
       distanceBasis: 'DoR link_len-scaled highway geometry; inferred access and component connectors are included and tagged as non-highway edges',

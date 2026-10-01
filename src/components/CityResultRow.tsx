@@ -1,5 +1,6 @@
 import React from 'react';
 import { CityNode } from '../types';
+import { getCityLink } from '../utils/roadGraphRouter';
 
 /**
  * One autocomplete row, shared by every place picker so the planner, the
@@ -14,11 +15,25 @@ import { CityNode } from '../types';
 const MAX_HIGHWAY_CHIPS = 2;
 
 export const formatCityHighwayCodes = (city: CityNode): string[] => {
+  // Prefer the surveyed graph: it knows every highway within reach of the place,
+  // where the curated list is a hand-written subset that can contradict it.
+  const link = getCityLink(city.name);
+  if (link && link.highways.length > 0) return link.highways;
   const codes = [...(city.connectedHighways ?? []), city.highwayCode].filter(
     (code): code is string => Boolean(code)
   );
   return [...new Set(codes)];
 };
+
+/**
+ * How the place reaches the highway network. Null when the graph has no link
+ * data for it, so callers can fall back to plain display.
+ */
+export function getCityAccessNote(city: CityNode): string | null {
+  const link = getCityLink(city.name);
+  if (!link || link.onNetwork || link.accessKm == null) return null;
+  return `${link.accessKm} km access to highway`;
+}
 
 interface CityResultRowProps {
   city: CityNode;
@@ -30,6 +45,8 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
   const shownCodes = codes.slice(0, MAX_HIGHWAY_CHIPS);
   const hiddenCodeCount = codes.length - shownCodes.length;
   const locality = [city.district, city.province].filter(Boolean).join(' • ');
+  const accessNote = getCityAccessNote(city);
+  const secondLine = [locality, accessNote].filter(Boolean).join(' • ');
 
   return (
     <button
@@ -58,7 +75,7 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
           <span className="text-[9px] text-slate-500">+{hiddenCodeCount}</span>
         )}
       </div>
-      {locality && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{locality}</div>}
+      {secondLine && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{secondLine}</div>}
     </button>
   );
 };
