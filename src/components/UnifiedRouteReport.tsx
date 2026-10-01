@@ -263,18 +263,15 @@ export function UnifiedRouteReport({
       <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex items-center gap-3">
-          <img src="/logo.svg" alt="Mero Sadak logo" className="h-12 w-12 rounded-2xl border border-slate-700 bg-slate-950/70 p-1.5 shadow-lg shadow-slate-950/30" />
-          <div>
-            <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
-              <span className="truncate">{route.origin.name}</span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span className="truncate">{route.destination.name}</span>
-            </div>
-            <p className="mt-1 text-[11px] text-slate-400">
-              {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
-            </p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-base font-black font-display text-white">
+            <span className="truncate">{route.origin.name}</span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-emerald-400" />
+            <span className="truncate">{route.destination.name}</span>
           </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {[vehicleLabel, preferenceLabel].filter(Boolean).join(' · ')}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -350,8 +347,7 @@ export function UnifiedRouteReport({
             <span className="text-3xl font-black text-emerald-400 font-display">{formatNumber(distanceKm, 1)}</span>
             <span className="pb-1 text-sm text-slate-400">km</span>
           </div>
-          <p className="mt-2 text-[11px] text-slate-400">Reference basis: {evidenceLabels[distanceEvidence] || distanceEvidence}</p>
-        </div>
+          </div>
 
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Travel time</div>
@@ -376,14 +372,7 @@ export function UnifiedRouteReport({
         <div className="space-y-4">
           <div className="card card-elevated p-4">
             <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route overview</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-lg font-black text-white font-display">
-                  <span>{route.origin.name}</span>
-                  <ArrowRight className="h-4 w-4 text-emerald-400" />
-                  <span>{route.destination.name}</span>
-                </div>
-              </div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Route overview</div>
               <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase text-emerald-300">
                 {evidenceLabels[distanceEvidence] || distanceEvidence}
               </div>
@@ -450,7 +439,6 @@ export function UnifiedRouteReport({
 
                 <div className="border-t border-slate-800 pt-3">
                   <div className="text-xs font-semibold text-slate-200">Source and citation</div>
-                  <div className="mt-2 text-[11px] text-slate-400">{sourceLabel}</div>
                   {citationText && <div className="mt-1 text-[10px] text-slate-500">{citationText}</div>}
                   {distanceHighways.length > 0 && <div className="mt-2 text-[10px] text-cyan-300">Route highways: {distanceHighways.join(' → ')}</div>}
                   {distanceNote && <div className="mt-2 text-[10px] text-amber-300/90"><Info className="inline-block h-3 w-3 align-[-2px] mr-1" />{distanceNote}</div>}
@@ -482,7 +470,7 @@ export function UnifiedRouteReport({
 
               <div className="border-t border-slate-800 pt-3">
                 <div className="text-[10px] uppercase tracking-[0.12em] text-slate-500">Evidence</div>
-                <div className="mt-1 flex items-center gap-2"><EvidenceBadge level={distanceEvidence} /><span className="text-slate-300">{evidenceLabels[distanceEvidence]}</span></div>
+                <div className="mt-1"><EvidenceBadge level={distanceEvidence} /></div>
               </div>
 
               <div className="border-t border-slate-800 pt-3">

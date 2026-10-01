@@ -169,9 +169,7 @@ export const RouteMapView: React.FC<RouteMapViewProps> = ({
       />
       <div className="border-t border-slate-800 px-4 py-2.5">
         <p className="text-[10px] text-tertiary">
-          {isAerial
-            ? 'Map shows a straight-line approximation'
-            : 'Map shows the surveyed highway corridor'}
+          {isAerial ? 'Straight-line approximation' : 'Surveyed highway corridor'}
         </p>
       </div>
     </div>
