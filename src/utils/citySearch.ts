@@ -1,5 +1,6 @@
 import { CityNode } from '../types';
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
+import { getCityLink } from './roadGraphRouter';
 
 const TYPE_PRIORITY: Record<string, number> = {
   'Metropolitan City': 0,
@@ -21,6 +22,17 @@ const MATCH_NEPALI_NAME = 4;
 const MATCH_DISTRICT = 5;
 const MATCH_PROVINCE = 6;
 const NO_MATCH = -1;
+
+/**
+ * How many highways a place joins, preferring the surveyed graph over the
+ * curated list. Kept local rather than imported from the row component so this
+ * module stays free of React.
+ */
+function highwayCountFor(city: CityNode): number {
+  const link = getCityLink(city);
+  if (link && link.highways.length > 0) return link.highways.length;
+  return new Set([...(city.connectedHighways ?? []), city.highwayCode].filter(Boolean)).size;
+}
 
 const scoreCity = (city: CityNode, normalizedQuery: string): number => {
   const name = city.name.toLowerCase();
@@ -48,6 +60,23 @@ export interface FilterCitiesOptions {
   excludeIds?: Set<string>;
 }
 
+/** Every place a query matches, ignoring the display cap. */
+export function countCityMatches(
+  cities: CityNode[],
+  query: string,
+  options: FilterCitiesOptions = {}
+): number {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return 0;
+
+  let count = 0;
+  for (const city of cities) {
+    if (options.excludeIds?.has(city.id)) continue;
+    if (scoreCity(city, normalizedQuery) !== NO_MATCH) count += 1;
+  }
+  return count;
+}
+
 /**
  * Rank city candidates for an autocomplete. Results are ordered by match
  * strength first, so a name hit always outranks a province-wide sweep, and the
@@ -65,17 +94,26 @@ export const filterCities = (
     return [];
   }
 
-  const scored: Array<{ city: CityNode; rank: number; match: number }> = [];
+  const scored: Array<{ city: CityNode; rank: number; match: number; highways: number }> = [];
 
   for (const city of cities) {
     if (options.excludeIds?.has(city.id)) continue;
     const match = scoreCity(city, normalizedQuery);
     if (match === NO_MATCH) continue;
-    scored.push({ city, rank: TYPE_PRIORITY[city.cityType ?? ''] ?? 4, match });
+    scored.push({
+      city,
+      rank: TYPE_PRIORITY[city.cityType ?? ''] ?? 4,
+      match,
+      // Places that join a real highway are the ones a driver can actually
+      // depart from, so they lead within a match tier. Counted from the
+      // surveyed graph, with the curated list as the fallback.
+      highways: highwayCountFor(city),
+    });
   }
 
   scored.sort((a, b) => {
     if (a.match !== b.match) return a.match - b.match;
+    if (a.highways !== b.highways) return b.highways - a.highways;
     if (a.rank !== b.rank) return a.rank - b.rank;
     if (a.city.isMajorHub !== b.city.isMajorHub) return a.city.isMajorHub ? -1 : 1;
     // Prefer the most specific place: "Pokhara" before "Pokhara Metropolitan Ward 3".

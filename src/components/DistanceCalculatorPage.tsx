@@ -4,7 +4,7 @@ import { findOptimizedRoute, pickRouteByCertification } from '../utils/routeOpti
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
-import { filterCities, searchCitiesWithGeocode } from '../utils/citySearch';
+import { filterCities, searchCitiesWithGeocode, countCityMatches } from '../utils/citySearch';
 import {
   isHighwayQuery,
   getHighwayPlaces,
@@ -132,6 +132,18 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
       )}
     </div>
   );
+}
+
+/**
+ * A one-character query like "a" is a prefix scan over ~2,400 places, so it gets
+ * a wider result window than a specific query. The cap still keeps the dropdown
+ * scrollable rather than dumping the whole country.
+ */
+function suggestionLimitFor(query: string): number {
+  const length = query.trim().length;
+  if (length <= 1) return 24;
+  if (length === 2) return 16;
+  return CITY_SUGGESTION_LIMIT;
 }
 
 function getCityHighwayLabel(city: CityNode): string {
@@ -275,6 +287,15 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     };
   }, []);
 
+  /**
+   * Nominatim fallback for a place the local corpus has never heard of. Gated to
+   * 3+ characters so a single keystroke does not fire a network request, and
+   * skipped for highway codes, which are answered from the corridor catalogue
+   * instead of a map lookup.
+   */
+  const shouldGeocode = (query: string) =>
+    query.trim().length >= 3 && !isHighwayQuery(query);
+
   useEffect(() => {
     const query = originSearch.trim();
     // Keep the current geocoded pick while the field still shows its name.
@@ -282,6 +303,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       setGeocodingOrigin(false);
       return;
     }
+    if (!shouldGeocode(query)) { setGeocodedOrigin(null); setGeocodingOrigin(false); return; }
     if (filterCities(allCities, query).length > 0) { setGeocodedOrigin(null); setGeocodingOrigin(false); return; }
     let cancelled = false;
     setGeocodingOrigin(true);
@@ -300,6 +322,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       setGeocodingDest(false);
       return;
     }
+    if (!shouldGeocode(query)) { setGeocodedDest(null); setGeocodingDest(false); return; }
     if (filterCities(allCities, query).length > 0) { setGeocodedDest(null); setGeocodingDest(false); return; }
     let cancelled = false;
     setGeocodingDest(true);
@@ -314,17 +337,27 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const filteredOriginCities = useMemo(() => {
     // Skip the counterpart endpoint so a zero-distance pair cannot be picked.
-    const local = filterCities(allCities, originSearch, CITY_SUGGESTION_LIMIT, {
+    const local = filterCities(allCities, originSearch, suggestionLimitFor(originSearch), {
       excludeIds: destId ? new Set([destId]) : undefined,
     });
     return geocodedOrigin ? [geocodedOrigin, ...local.filter((c) => c.id !== geocodedOrigin.id)] : local;
   }, [allCities, originSearch, geocodedOrigin, destId]);
   const filteredDestCities = useMemo(() => {
-    const local = filterCities(allCities, destSearch, CITY_SUGGESTION_LIMIT, {
+    const local = filterCities(allCities, destSearch, suggestionLimitFor(destSearch), {
       excludeIds: originId ? new Set([originId]) : undefined,
     });
     return geocodedDest ? [geocodedDest, ...local.filter((c) => c.id !== geocodedDest.id)] : local;
   }, [allCities, destSearch, geocodedDest, originId]);
+
+  /** Total matches, so a capped list can say how many more there are. */
+  const originMatchCount = useMemo(
+    () => countCityMatches(allCities, originSearch, { excludeIds: destId ? new Set([destId]) : undefined }),
+    [allCities, originSearch, destId]
+  );
+  const destMatchCount = useMemo(
+    () => countCityMatches(allCities, destSearch, { excludeIds: originId ? new Set([originId]) : undefined }),
+    [allCities, destSearch, originId]
+  );
 
   /**
    * A highway code ("NH01", "NH44") is not a place name, so it is answered from
@@ -656,6 +689,7 @@ Not an official Department of Roads document.`;
 isSearchingMaps={geocodingOrigin}
                           groupByDistrict
                           highwayGroups={originHighwayGroups}
+                          totalMatches={originMatchCount}
                           onSelect={(city) => handleSelectOrigin(city.id)}
                     />
                   )}
@@ -710,6 +744,7 @@ isSearchingMaps={geocodingOrigin}
 isSearchingMaps={geocodingDest}
                           groupByDistrict
                           highwayGroups={destHighwayGroups}
+                          totalMatches={destMatchCount}
                           onSelect={(city) => handleSelectDest(city.id)}
                     />
                   )}

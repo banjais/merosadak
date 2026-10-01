@@ -109,6 +109,8 @@ interface CitySuggestionDropdownProps {
   highwayGroups?: HighwayGroup[];
   /** Called when a highway heading is picked, to load its corridor places. */
   onSelectHighway?: (code: string) => void;
+  /** Total places matching, so a capped list can report what is hidden. */
+  totalMatches?: number;
 }
 
 interface DistrictGroup {
@@ -179,9 +181,12 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   groupByDistrict = false,
   highwayGroups = [],
   onSelectHighway,
+  totalMatches,
 }) => {
   const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
   const showHighwayBlock = highwayGroups.length > 0;
+  const shownCount = results.length;
+  const hiddenCount = totalMatches != null ? Math.max(0, totalMatches - shownCount) : 0;
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-72 overflow-y-auto space-y-1">
@@ -229,7 +234,8 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
               </div>
             </div>
           )}
-          {results.length > 0 && (groupByDistrict ? (
+          {results.length > 0 &&
+            (groupByDistrict ? (
             groups.map((group) => (
               <div key={group.label} className="mb-1 last:mb-0">
                 <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-slate-950/95 backdrop-blur px-3 pb-1 pt-2">
@@ -249,11 +255,16 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
             ))
           ) : (
             results.map((city) => <CityResultRow key={city.id} city={city} onSelect={onSelect} />)
-          ))}
+            ))}
+          {hiddenCount > 0 && (
+            <div className="px-3 py-1.5 text-[10px] text-slate-500 text-center">
+              {hiddenCount} more {hiddenCount === 1 ? 'match' : 'matches'} — keep typing to narrow
+            </div>
+          )}
         </>
-      ) : query.trim().length < 2 ? (
+      ) : query.trim().length < 1 ? (
         <div className="px-4 py-6 text-center text-xs text-slate-500">
-          Type at least 2 characters to search Nepali places, or a highway code like NH01
+          Start typing a place name, or a highway code like NH01
         </div>
       ) : (
         <div className="px-4 py-6 text-center text-xs text-slate-500">
