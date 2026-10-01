@@ -63,11 +63,11 @@ interface DorLetterheadProps {
  */
 export const DorLetterhead: React.FC<DorLetterheadProps> = ({ timestamp, identity, compact }) => (
   <div className="dor-letterhead flex items-center gap-3 border-b border-slate-700 pb-3 mb-1">
-    <img src="/logo.svg" alt="Mero Sadak logo" className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 rounded-lg border border-slate-700 bg-slate-950 p-1`} />
+    <NepalEmblem className={`${compact ? 'h-9 w-9' : 'h-12 w-12'} shrink-0 text-slate-400`} />
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-black text-white leading-tight">Mero Sadak</p>
+      <p className="text-sm font-black text-white leading-tight">Highway Distance Service</p>
       <p className="text-[10px] text-slate-400 leading-tight">Nepal route and distance report</p>
-      <p className="text-[9px] text-amber-400 leading-tight">Independent report; not issued by the Department of Roads.</p>
+      <p className="text-[9px] text-amber-400 leading-tight">Independent computation. Not issued by the Department of Roads.</p>
     </div>
     <div className="text-right shrink-0">
       <p className="text-[9px] uppercase tracking-wider text-slate-500">Printed</p>
