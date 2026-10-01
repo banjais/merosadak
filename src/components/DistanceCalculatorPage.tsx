@@ -17,8 +17,9 @@ import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, X } from 'lucide-react';
+import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, X, MapPin } from 'lucide-react';
 import { CitySuggestionDropdown } from './CityResultRow';
+import { HighwayBrowser } from './HighwayBrowser';
 
 /** How many place suggestions a picker shows. See RoutePlanner for the rationale. */
 const CITY_SUGGESTION_LIMIT = 8;
@@ -205,6 +206,7 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
   const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('dor_snh');
   const [mapOpen, setMapOpen] = useState(false);
+  const [browserOpen, setBrowserOpen] = useState(false);
 
   useEffect(() => {
     loadExpandedCities()
@@ -478,6 +480,33 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [mapOpen]);
 
+  useEffect(() => {
+    if (!browserOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setBrowserOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [browserOpen]);
+
+  /**
+   * A place picked from the highway browser becomes the destination when the
+   * origin is already set, and the origin otherwise. That way browsing one
+   * corridor to learn the road still ends in a working origin/destination pair
+   * rather than a half-filled form.
+   */
+  const handleBrowserSelectPlace = (city: CityNode) => {
+    if (originId && originId !== city.id) {
+      setDestId(city.id);
+      setDestSearch(city.name);
+      setShowSearchBars(false);
+    } else {
+      setOriginId(city.id);
+      setOriginSearch(city.name);
+    }
+    setBrowserOpen(false);
+  };
+
   const handleChangeLocation = () => {
     setMapOpen(false);
     setOriginId('');
@@ -627,17 +656,9 @@ Not an official Department of Roads document.`;
                   <span className="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
                     {allCities.length} searchable places
                   </span>
-                  {highwayCount > 0 && (
-                    <span
-                      className="text-[10px] font-mono px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30"
-                      title="Type a highway code such as NH01 to list the places on that corridor"
-                    >
-                      {highwayCount} highways · try NH01
+                    <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
+                      DoR SNH + highway archive
                     </span>
-                  )}
-                  <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
-                    DoR SNH + highway archive
-                  </span>
                   {distanceWithSource && (
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
                         distanceWithSource.evidenceLevel === 'published' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :
@@ -649,9 +670,28 @@ Not an official Department of Roads document.`;
                   )}
                 </div>
               </div>
+              {highwayCount > 0 && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] text-slate-300">
+                      Don&apos;t know the place name, or which road serves it?
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-500">
+                      Browse all {highwayCount} national highways and pick a place on the one you want.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBrowserOpen(true)}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500/20"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Browse by highway
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                <div className="md:col-span-5 relative" ref={originSearchRef}>
-                  <div className="relative">
+                <div className="md:col-span-5 relative" ref={originSearchRef}>                  <div className="relative">
                     <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none">
                       <Search className="w-4 h-4" />
                     </div>
@@ -787,6 +827,14 @@ isSearchingMaps={geocodingDest}
                 onChangeLocation={handleChangeLocation}
                 onShowMap={() => setMapOpen(true)}
               />
+
+              {browserOpen && (
+                <HighwayBrowser
+                  cities={allCities}
+                  onSelectPlace={handleBrowserSelectPlace}
+                  onClose={() => setBrowserOpen(false)}
+                />
+              )}
 
               {mapOpen && (
                 <div
