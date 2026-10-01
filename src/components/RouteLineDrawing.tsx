@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Map as MapIcon } from 'lucide-react';
 
 /**
  * Animated origin -> destination route sketch.
@@ -22,6 +22,8 @@ interface RouteLineDrawingProps {
   /** Straight-line approximation rather than a surveyed corridor. */
   isAerial?: boolean;
   onChangeLocation?: () => void;
+  /** Opens the full map view on demand. */
+  onShowMap?: () => void;
 }
 
 const VIEW_W = 1000;
@@ -79,6 +81,7 @@ export const RouteLineDrawing: React.FC<RouteLineDrawingProps> = ({
   destination,
   isAerial = false,
   onChangeLocation,
+  onShowMap,
 }) => {
   const [progress, setProgress] = useState(0);
   const frameRef = useRef<number | null>(null);
@@ -136,7 +139,7 @@ export const RouteLineDrawing: React.FC<RouteLineDrawingProps> = ({
       <div className="relative bg-slate-950">
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          className="h-64 w-full sm:h-80"
+          className="h-32 w-full sm:h-40"
           role="img"
           aria-label={`Route from ${origin.label} to ${destination.label}`}
         >
@@ -262,16 +265,28 @@ export const RouteLineDrawing: React.FC<RouteLineDrawingProps> = ({
             {isAerial ? 'Aerial approximation' : 'Surveyed highway corridor'}
           </p>
         </div>
-        {onChangeLocation && (
-          <button
-            type="button"
-            onClick={onChangeLocation}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition hover:border-slate-500 hover:text-white"
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            Change
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {onShowMap && (
+            <button
+              type="button"
+              onClick={onShowMap}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-800/60 bg-cyan-950/40 px-2.5 py-1.5 text-[10px] font-bold text-cyan-300 transition hover:bg-cyan-900/40"
+            >
+              <MapIcon className="h-3.5 w-3.5" />
+              Map
+            </button>
+          )}
+          {onChangeLocation && (
+            <button
+              type="button"
+              onClick={onChangeLocation}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition hover:border-slate-500 hover:text-white"
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              Change
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
