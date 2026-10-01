@@ -3,8 +3,6 @@ import {
   X,
   Compass,
   AlertTriangle,
-  CloudFog,
-  Activity,
   MapPin,
   Route,
   Calculator,
@@ -12,8 +10,8 @@ import {
   HardDriveDownload,
   Database,
   ChevronRight,
-  FileText,
-  LocateFixed,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -22,8 +20,8 @@ import { RoutePlanResult } from '../types';
 interface AppDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-   activeTab?: ActiveFeatureType;
-   onNavigateTab: (tab: ActiveFeatureType) => void;
+  activeTab?: ActiveFeatureType;
+  onNavigateTab: (tab: ActiveFeatureType) => void;
   onOpenTravelSteps?: () => void;
   onOpenDistanceCalculator: () => void;
   onOpenDataSources?: () => void;
@@ -76,89 +74,52 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
     {
       id: 'route',
       label: 'Route Planner',
-      subtitle: 'Plan your next trip',
       icon: Compass,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onNavigateTab('route'); onClose(); },
     },
     {
-      id: 'myLocation',
-      label: 'My Location',
-      subtitle: 'GPS & nearby roads',
-      icon: LocateFixed,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
-      onClick: () => { onOpenMyLocation(); onClose(); },
-    },
-    {
       id: 'highways',
-      label: hasActiveRoute ? 'Route Highways' : 'Highway Info',
-      subtitle: hasActiveRoute ? 'On your route' : 'Highway directory',
+      label: 'Highway Info',
       icon: Route,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenHighwayInfo ? onOpenHighwayInfo() : onNavigateTab('highways'); onClose(); },
     },
     {
       id: 'distance',
       label: 'Distance Calculator',
-      subtitle: 'Exact inter-city highway km',
       icon: Calculator,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenDistanceCalculator(); onClose(); },
     },
     {
+      id: 'myLocation',
+      label: 'My Location',
+      icon: MapPin,
+      onClick: () => { onOpenMyLocation(); onClose(); },
+    },
+  ];
+
+  const additionalMenuItems = [
+    {
       id: 'tolls',
-      label: 'Nagdhunga Tunnel Tolls',
-      subtitle: 'Vehicle tariffs & bypass rates',
+      label: 'Tolls',
       icon: Coins,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenTollModal(); onClose(); },
     },
     {
       id: 'reports',
-      label: 'Reports & Hazards',
-      subtitle: hasActiveRoute ? 'Route-specific alerts' : 'Road hazard reporting',
+      label: 'Reports',
       icon: AlertTriangle,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenReportModal(); onClose(); },
     },
     {
       id: 'offline',
-      label: 'Offline GIS Bundle',
-      subtitle: 'Download for offline use',
+      label: 'Offline',
       icon: HardDriveDownload,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenOfflineManager(); onClose(); },
     },
     {
       id: 'datasources',
       label: 'Data Sources',
-      subtitle: 'DoR datasets & attribution',
       icon: Database,
-      color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
-      activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenDataSources?.(); onClose(); },
     },
   ];
@@ -178,28 +139,19 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#f59e0b" />
               </svg>
             </div>
-            <div>
-              <span className="font-black text-sm tracking-tight text-white font-display">Merosadak</span>
-            </div>
+            <span className="font-black text-sm tracking-tight text-white font-display">Merosadak</span>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition touch-target"
+            className="p-2 rounded-lg hover:bg-slate-800 transition"
             title="Close menu"
-            id="btn-close-drawer"
             aria-label="Close menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 text-slate-400" />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-4 scrollbar-paddle">
-          {routeLabel && (
-            <p className="text-[10px] text-emerald-400/90 px-2 font-medium truncate" title={routeLabel || undefined}>
-              {routeLabel}
-            </p>
-          )}
-
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-3 scrollbar-paddle">
           <div className="space-y-1">
             {drawerMenuItems.map((item) => {
               const Icon = item.icon;
@@ -208,60 +160,68 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded-xl text-sm font-semibold transition text-left group ${
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition text-left ${
                     isActive
-                      ? item.activeBg
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                       : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5 min-w-0">
-                    <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="block font-bold truncate">{item.label}</span>
-                      <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
-                    </div>
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </div>
-                  <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                  {isActive && <ChevronRight className="w-3 h-3 shrink-0 text-emerald-400" />}
                 </button>
               );
-            })}
+            })}}
+          </div>
+
+          <div className="border-t border-slate-800 pt-3">
+            <div className="text-[10px] font-semibold text-slate-400 px-2 mb-2 uppercase tracking-wider">More</div>
+            <div className="space-y-1">
+              {additionalMenuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={item.onClick}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition"
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <div className="p-3 border-t border-slate-800 bg-slate-900/60 text-xs text-tertiary">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-secondary truncate">DoR Nepal</span>
-            </div>
-            {loading ? (
-              <span className="text-[10px] text-muted shrink-0">Authenticating...</span>
-            ) : user ? (
+        <div className="p-3 border-t border-slate-800 bg-slate-900/60">
+          {loading ? (
+            <div className="text-[10px] text-slate-400 text-center py-2">Authenticating...</div>
+          ) : user ? (
+            <div className="space-y-2">
+              <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
               <button
                 onClick={logout}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition shrink-0"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-xs font-semibold"
                 title="Sign out"
               >
-                <span className="hidden sm:inline text-[10px] font-semibold">Sign out</span>
+                <LogOut className="w-3.5 h-3.5" />
+                Sign out
               </button>
-            ) : (
-              <button
-                onClick={onOpenLogin}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 transition shrink-0"
-                title="Sign in"
-              >
-                <span className="hidden sm:inline text-[10px] font-semibold">Sign in</span>
-              </button>
-            )}
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="text-[9px] font-mono text-muted">v2.4.0</span>
-            {user?.email && (
-              <span className="text-[9px] text-muted truncate max-w-[60%]">{user.email}</span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenLogin}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 transition text-xs font-semibold"
+              title="Sign in"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Sign in
+            </button>
+          )}
+          <div className="text-[9px] text-slate-500 text-center mt-2">v2.4.0</div>
         </div>
       </aside>
     </>

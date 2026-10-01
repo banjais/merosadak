@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus,
   ShieldAlert,
-  Sparkles,
   Route,
   Menu,
 } from 'lucide-react';
@@ -102,10 +101,11 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
             <button
               type="button"
               onClick={() => handleAction(onOpenSos)}
-              className="w-11 h-11 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-red-400/40 shadow-rose-600/30"
-              title="Emergency"
+              className="w-11 h-11 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-red-400/20"
+              title="Emergency SOS"
+              aria-label="Emergency SOS"
             >
-              <ShieldAlert className="w-5 h-5 animate-pulse" />
+              <ShieldAlert className="w-5 h-5" />
             </button>
             <button
               type="button"
@@ -121,15 +121,17 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
                   ? 'bg-emerald-500 text-slate-950 border-emerald-300 font-black shadow-emerald-500/40'
                   : 'bg-slate-900/95 text-emerald-400 border-slate-700 hover:bg-slate-800'
               }`}
-              title="Highways"
+              title="Highway Info"
+              aria-label="Highway Info"
             >
               <Route className="w-5 h-5" />
             </button>
             <button
               type="button"
               onClick={() => handleAction(onOpenDrawer)}
-              className="w-11 h-11 rounded-full bg-slate-900/95 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-indigo-500/40"
-              title="Menu"
+              className="w-11 h-11 rounded-full bg-slate-900/95 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-slate-700"
+              title="Main menu"
+              aria-label="Main menu"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -145,8 +147,8 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
             ? 'bg-slate-800 text-amber-400 border border-amber-500/50 rotate-45 shadow-amber-500/20'
             : 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 text-white hover:shadow-teal-500/30 hover:scale-105'
         }`}
-        title={isOpen ? 'Close menu' : 'Open Navigation & Travel Tools'}
-        aria-label="Toggle floating navigation menu"
+        title={isOpen ? 'Close menu' : 'Open menu'}
+        aria-label="Toggle navigation menu"
       >
         <Plus className="w-6 h-6 stroke-[2.8] transition-transform duration-300" />
       </button>
