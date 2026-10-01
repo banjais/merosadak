@@ -94,16 +94,56 @@ import {
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
-import { filterCities } from '../utils/citySearch';
+import { filterCities, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
 import { CitySuggestionDropdown } from './CityResultRow';
+import { HighwayBrowser } from './HighwayBrowser';
+import {
+  isHighwayQuery,
+  getHighwayPlaces,
+  highwayPlaceToCityNode,
+  searchHighways,
+  preloadHighwayCatalogue,
+  getHighwayCatalogue,
+} from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 
 /**
  * How many place suggestions a picker shows. A focused list beats a long one:
  * ranked matches land in the first few rows, and anything deeper is reachable
- * by typing more characters.
+ * by typing more characters. The window widens for 1-2 character queries, which
+ * are prefix scans over the whole corpus — shared with the distance calculator
+ * so the two surfaces cannot drift apart.
  */
 const CITY_SUGGESTION_LIMIT = 8;
+
+/** How many corridor places a highway code query previews. */
+const CORRIDOR_PREVIEW_LIMIT = 6;
+
+interface CorridorGroup {
+  code: string;
+  name: string;
+  route: string;
+  placeCount: number;
+  places: CityNode[];
+}
+
+/**
+ * Expands a highway-code query into the "places on this highway" block. Empty
+ * for anything that is not a highway code, so ordinary name search is
+ * unaffected. Kept beside the planner so both pickers behave identically.
+ */
+function buildCorridorGroups(query: string): CorridorGroup[] {
+  if (!isHighwayQuery(query)) return [];
+  return searchHighways(query).map((highway) => ({
+    code: highway.code,
+    name: highway.name,
+    route: highway.route,
+    placeCount: highway.placeCount,
+    places: getHighwayPlaces(highway.code)
+      .slice(0, CORRIDOR_PREVIEW_LIMIT)
+      .map((place, index) => highwayPlaceToCityNode(place, index)),
+  }));
+}
 
 interface RoutePlannerProps {
   initialOriginId?: string;
@@ -229,6 +269,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+  // Bumped once the corridor catalogue lands so highway-code queries recompute
+  // against real data rather than the empty pre-load state.
+  const [corridorVersion, setCorridorVersion] = useState(0);
+  const [highwayCount, setHighwayCount] = useState(0);
+  useEffect(() => {
+    preloadHighwayCatalogue().then(() => {
+      setCorridorVersion((version) => version + 1);
+      setHighwayCount(getHighwayCatalogue().length);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isBrowserOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsBrowserOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isBrowserOpen]);
   const [gpsOriginCityId, setGpsOriginCityId] = useState<string>('');
   const [gpsOriginDistanceKm, setGpsOriginDistanceKm] = useState<number | null>(null);
   const [gpsNearestJunction, setGpsNearestJunction] = useState<{
@@ -482,25 +542,67 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   // Filter cities for search dropdowns. Memoized because this scans the whole
   // merged corpus; each picker excludes the place already chosen in the other
-  // field so the user cannot plan Kathmandu -> Kathmandu.
+  // field so the user cannot plan Kathmandu -> Kathmandu. The limit widens for
+  // 1-2 character queries, and the totals let the dropdown say what it hid.
   const filteredOriginCities = useMemo(
-    () => filterCities(allCities, originSearchQuery, CITY_SUGGESTION_LIMIT, {
+    () => filterCities(allCities, originSearchQuery, citySuggestionLimit(originSearchQuery), {
       excludeIds: destId ? new Set([destId]) : undefined,
     }),
     [allCities, originSearchQuery, destId]
   );
   const filteredDestCities = useMemo(
-    () => filterCities(allCities, destSearchQuery, CITY_SUGGESTION_LIMIT, {
+    () => filterCities(allCities, destSearchQuery, citySuggestionLimit(destSearchQuery), {
       excludeIds: originId ? new Set([originId]) : undefined,
     }),
     [allCities, destSearchQuery, originId]
   );
   const filteredSingleCities = useMemo(
-    () => filterCities(allCities, singleSearchQuery, CITY_SUGGESTION_LIMIT, {
+    () => filterCities(allCities, singleSearchQuery, citySuggestionLimit(singleSearchQuery), {
       excludeIds: originId ? new Set([originId]) : undefined,
     }),
     [allCities, singleSearchQuery, originId]
   );
+  const originMatchCount = useMemo(
+    () => countCityMatches(allCities, originSearchQuery, { excludeIds: destId ? new Set([destId]) : undefined }),
+    [allCities, originSearchQuery, destId]
+  );
+  const destMatchCount = useMemo(
+    () => countCityMatches(allCities, destSearchQuery, { excludeIds: originId ? new Set([originId]) : undefined }),
+    [allCities, destSearchQuery, originId]
+  );
+  const singleMatchCount = useMemo(
+    () => countCityMatches(allCities, singleSearchQuery, { excludeIds: originId ? new Set([originId]) : undefined }),
+    [allCities, singleSearchQuery, originId]
+  );
+
+  /**
+   * A highway code ("NH01", "NH44") is answered from the corridor catalogue
+   * rather than the place list, so a user who knows the road but not the towns
+   * on it is not stuck.
+   */
+  const originHighwayGroups = useMemo(() => buildCorridorGroups(originSearchQuery), [originSearchQuery, corridorVersion]);
+  const destHighwayGroups = useMemo(() => buildCorridorGroups(destSearchQuery), [destSearchQuery, corridorVersion]);
+  const singleHighwayGroups = useMemo(() => buildCorridorGroups(singleSearchQuery), [singleSearchQuery, corridorVersion]);
+
+  /**
+   * A place picked from the highway browser fills the destination when the
+   * origin is already settled, and the origin otherwise, so browsing a corridor
+   * still ends in a usable pair.
+   */
+  const handleBrowserSelectPlace = (city: CityNode) => {
+    if (originId && originId !== city.id) {
+      setDestId(city.id);
+      setDestSearchQuery(city.name);
+      setSingleSearchQuery(city.name);
+      setUserPickedDestination(true);
+    } else {
+      setOriginId(city.id);
+      setOriginSearchQuery(city.name);
+      setOriginSelected(true);
+    }
+    setIsBrowserOpen(false);
+    if (hasCalculated) setNeedsRecalculation(true);
+  };
 
   const handleSelectOrigin = (city: CityNode) => {
     setOriginId(city.id);
@@ -1087,6 +1189,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   return (
     <div className="space-y-4">
+      {isBrowserOpen && (
+        <HighwayBrowser
+          cities={allCities}
+          onSelectPlace={handleBrowserSelectPlace}
+          onClose={() => setIsBrowserOpen(false)}
+        />
+      )}
       {/* AI Parsing Message Banner */}
       {aiParseMessage && (
         <div className="bg-cyan-950/90 border border-cyan-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-cyan-200 animate-fadeIn shadow-lg">
@@ -1432,6 +1541,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setUserPickedDestination(true);
                     if (hasCalculated) setNeedsRecalculation(true);
                   }}
+                  totalMatches={singleMatchCount}
+                  showTouchLegend
+                  highwayGroups={singleHighwayGroups}
                 />
               )}
           </div>
@@ -1497,6 +1609,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   query={originSearchQuery}
                   results={filteredOriginCities}
                   onSelect={handleSelectOrigin}
+                  totalMatches={originMatchCount}
+                  showTouchLegend
+                  highwayGroups={originHighwayGroups}
                 />
               )}
              </div>
@@ -1572,9 +1687,34 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   query={destSearchQuery}
                   results={filteredDestCities}
                   onSelect={handleSelectDestination}
+                  totalMatches={destMatchCount}
+                  showTouchLegend
+                  highwayGroups={destHighwayGroups}
                 />
               )}
               </div>
+            </div>
+          )}
+
+          {/* Browse by highway — for users who know the road, not the town */}
+          {deckId === 'search' && !hasCalculated && highwayCount > 0 && (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] text-slate-300">
+                  Don&apos;t know the place name, or which road serves it?
+                </p>
+                <p className="mt-0.5 text-[10px] text-slate-500">
+                  Browse all {highwayCount} national highways and pick a place on the one you want.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBrowserOpen(true)}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500/20"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                Browse by highway
+              </button>
             </div>
           )}
         </>)}

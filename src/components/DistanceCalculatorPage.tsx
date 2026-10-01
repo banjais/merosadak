@@ -4,7 +4,7 @@ import { findOptimizedRoute, pickRouteByCertification } from '../utils/routeOpti
 import { preloadRoadGraph } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
-import { filterCities, searchCitiesWithGeocode, countCityMatches } from '../utils/citySearch';
+import { filterCities, searchCitiesWithGeocode, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
 import {
   isHighwayQuery,
   getHighwayPlaces,
@@ -136,16 +136,10 @@ function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSou
 }
 
 /**
- * A one-character query like "a" is a prefix scan over ~2,400 places, so it gets
- * a wider result window than a specific query. The cap still keeps the dropdown
- * scrollable rather than dumping the whole country.
+ * A one-character query like "a" is a prefix scan over ~2,400 places, so the
+ * window widens with the query length. Shared with the route planner.
  */
-function suggestionLimitFor(query: string): number {
-  const length = query.trim().length;
-  if (length <= 1) return 24;
-  if (length === 2) return 16;
-  return CITY_SUGGESTION_LIMIT;
-}
+const suggestionLimitFor = citySuggestionLimit;
 
 function getCityHighwayLabel(city: CityNode): string {
   return [...new Set([...(city.connectedHighways || []), city.highwayCode].filter((code): code is string => Boolean(code)))].join(' · ');

@@ -60,9 +60,28 @@ export interface FilterCitiesOptions {
   excludeIds?: Set<string>;
 }
 
+/**
+ * How many suggestions a picker should show for a given query.
+ *
+ * A one- or two-character query is a prefix scan over the whole corpus, so a
+ * fixed small cap would hide most of what matched. The list still stays bounded
+ * — showing every match would bury the dropdown — and the caller reports the
+ * remainder so the user knows to keep typing. Shared by every place picker so
+ * the planner and the calculator cannot drift apart again.
+ */
+export const DEFAULT_CITY_SUGGESTION_LIMIT = 8;
+export const BROAD_QUERY_CITY_SUGGESTION_LIMIT = 16;
+export const VERY_BROAD_QUERY_CITY_SUGGESTION_LIMIT = 24;
+
+export function citySuggestionLimit(query: string): number {
+  const length = query.trim().length;
+  if (length <= 1) return VERY_BROAD_QUERY_CITY_SUGGESTION_LIMIT;
+  if (length === 2) return BROAD_QUERY_CITY_SUGGESTION_LIMIT;
+  return DEFAULT_CITY_SUGGESTION_LIMIT;
+}
+
 /** Every place a query matches, ignoring the display cap. */
-export function countCityMatches(
-  cities: CityNode[],
+export function countCityMatches(  cities: CityNode[],
   query: string,
   options: FilterCitiesOptions = {}
 ): number {
