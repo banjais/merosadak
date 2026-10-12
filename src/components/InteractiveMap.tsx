@@ -484,9 +484,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setGpsDetected(true);
       placeGpsMarker([latitude, longitude]);
       mapInstanceRef.current?.flyTo([latitude, longitude], 14, { duration: 1.5 });
-      setTimeout(() => {
-        mapInstanceRef.current?.fitBounds(NEPAL_BOUNDS, { padding: [20, 20], maxZoom: 8 });
-      }, 2000);
     };
 
     const handleError = () => {
@@ -593,6 +590,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     ) {
       return;
     }
+    setMapInteracted(true);
+    setMapActive(true);
     mapInstanceRef.current.flyTo([focusedTarget.lat, focusedTarget.lng], focusedTarget.zoom || 11, {
       duration: 1.2,
       easeLinearity: 0.25,
@@ -1293,7 +1292,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
    const handleMyLocation = () => {
     setMapInteracted(true);
+    setMapActive(true);
     if (gpsDetected) {
+      if (gpsCoords) {
+        mapInstanceRef.current?.flyTo([gpsCoords.lat, gpsCoords.lng], 14, { duration: 1.2 });
+      }
       setIsLocationDropdownOpen((open) => !open);
       if (!isLocationDropdownOpen) {
         setIsToolbarOpen(false);
