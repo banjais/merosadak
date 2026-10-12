@@ -746,8 +746,32 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         (pos) => {
           const { latitude, longitude } = pos.coords;
           setDetectedLocation({ lat: latitude, lng: longitude });
+          // Attempt reverse geocoding to get explicit city name (e.g., Lalitpur)
+          let cityIdFromAddress = null;
+          try {
+            const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`, {
+              headers: { 'Accept-Language': 'en' },
+            });
+            if (revRes.ok) {
+              const revData = await revRes.json();
+              const addr = revData.address || {};
+              const cityName = addr.city || addr.town || addr.village || addr.suburb || addr.state_district;
+              if (cityName) {
+                const match = allCitiesRef.current.find((c) => c.name.toLowerCase() === cityName.toLowerCase());
+                if (match) cityIdFromAddress = match.id;
+              }
+            }
+          } catch (e) {
+            console.error('Reverse geocode failed', e);
+          }
           const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-          if (result) {
+          const chosenCityId = cityIdFromAddress || (result ? result.city.id : '');
+if (cityIdFromAddress) {
+  setOriginId(cityIdFromAddress);
+  setGpsOriginCityId(cityIdFromAddress);
+  setGpsOriginDistanceKm(result ? result.distanceKm : null);
+}
+                     else if (result) {
             setOriginId(result.city.id);
             setGpsOriginCityId(result.city.id);
             setGpsOriginDistanceKm(result.distanceKm);

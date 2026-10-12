@@ -134,7 +134,7 @@ export const MyLocationPage: React.FC<{
 }> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald', onAccentColorChange }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('weather');
   const [showAllNearby, setShowAllNearby] = useState(false);
@@ -264,7 +264,30 @@ export const MyLocationPage: React.FC<{
     );
   }, []);
 
+  // Load cached location if available, otherwise request fresh location
   useEffect(() => {
+    const cached = sessionStorage.getItem('mero-sadak-gps');
+    if (cached) {
+      try {
+        const { lat, lng, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          setLocationInfo({
+            lat,
+            lng,
+            accuracy: null,
+            address: null,
+            formattedAddress: null,
+            nearestHighway: null,
+            nearestJunction: { city: null, distanceKm: null },
+          });
+          setLoading(false);
+          // Refresh in background to get up‑to‑date data
+          refreshLocation();
+          return;
+        }
+      } catch {}
+    }
+    // No valid cache, request fresh location
     refreshLocation();
   }, [refreshLocation]);
 
