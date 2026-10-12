@@ -1496,15 +1496,15 @@ setOriginSelected(true);
                 </span>
               </div>
               <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                {locationMode === 'my_location'
-                  ? (detectedLocation
-                      ? (gpsOriginCity
-                          ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''} · Active GPS`
-                          : `${detectedLocation.lat.toFixed(4)}°N, ${detectedLocation.lng.toFixed(4)}°E`)
-                      : (locationPermissionDenied ? 'GPS access blocked · Tap to retry' : 'Auto-detecting device position'))
-                  : (originCity
-                      ? `${originCity.district || ''}${originCity.district && originCity.province ? ' · ' : ''}${originCity.province || ''} · Selected origin`
-                      : 'Tap to select starting city or hub')}
+
+
+
+
+
+
+
+
+
               </div>
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
                 <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
