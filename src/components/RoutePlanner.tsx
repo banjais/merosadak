@@ -815,7 +815,8 @@ setOriginSelected(true);
             setOriginId(result.city.id);
             setGpsOriginCityId(result.city.id);
             setGpsOriginDistanceKm(result.distanceKm);
-
+            setOriginSearchQuery(result.city.name);
+            setSingleSearchQuery(result.city.name);
             const nearestJunction = findNearestHighwayJunction(latitude, longitude);
             if (nearestJunction.city && nearestJunction.distanceKm != null) {
               setGpsNearestJunction({
