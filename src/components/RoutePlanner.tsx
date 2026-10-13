@@ -743,7 +743,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
 
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           const { latitude, longitude } = pos.coords;
           setDetectedLocation({ lat: latitude, lng: longitude });
           // Attempt reverse geocoding to get explicit city name (e.g., Lalitpur)
