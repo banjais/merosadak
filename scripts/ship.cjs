@@ -1,10 +1,11 @@
 const { execSync } = require('child_process');
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
+const QUIET = true;
 const results = [];
 
 function run(name, cmd, options = {}) {
-  console.log(`\n[ship] ${name}...`);
+  if (!QUIET) console.log(`\n[ship] ${name}...`);
   try {
     execSync(cmd, {
       stdio: 'inherit',
@@ -76,7 +77,7 @@ try {
     execSync('git add -A -- .', { stdio: 'inherit', cwd: process.cwd(), env: process.env });
     hadStagedChanges = true;
   } catch (e) {
-    console.log('[ship] git add had nothing to stage, continuing...');
+    if (!QUIET) console.log('[ship] git add had nothing to stage, continuing...');
   }
 
   console.log('\n[ship] git commit...');
@@ -85,7 +86,7 @@ try {
     execSync('git commit -m "chore: ship - sync data + deploy worker + hosting"', { stdio: 'inherit', cwd: process.cwd(), env: process.env });
     hadCommit = true;
   } catch (e) {
-    console.log('[ship] nothing to commit, continuing...');
+    if (!QUIET) console.log('[ship] nothing to commit, continuing...');
   }
   results.push({ name: 'git add', status: hadStagedChanges ? 'ok' : 'skipped' });
   results.push({ name: 'git commit', status: hadCommit ? 'ok' : 'skipped' });
@@ -94,9 +95,9 @@ try {
   run('firebase deploy', 'npx --yes firebase-tools@15.30.2 deploy --only hosting --project sadak-sathi-3ab73 --non-interactive', { allowFailure: true });
 
   console.log('\n[ship] ✅ frontend hosted | backend deploys via GitHub Actions (CI/CD)');
-  console.log('[ship]    - Frontend: Firebase Hosting (dist/)');
-  console.log('[ship]    - Backend:  Cloud Run via Dockerfile (CI/CD workflow)');
-  console.log('[ship]    - Worker:  Cloudflare (separate workflow)');
+  if (!QUIET) console.log('[ship]    - Frontend: Firebase Hosting (dist/)');
+  if (!QUIET) console.log('[ship]    - Backend:  Cloud Run via Dockerfile (CI/CD workflow)');
+  if (!QUIET) console.log('[ship]    - Worker:  Cloudflare (separate workflow)');
 
   printReport();
 } catch {
