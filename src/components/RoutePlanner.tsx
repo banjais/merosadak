@@ -37,7 +37,6 @@ import {
   Clock,
   Sparkles,
   MapPin,
-  Car,
   Bike,
   Truck,
   Layers,
@@ -1416,68 +1415,6 @@ setOriginSelected(true);
       >
         {(deckId) => (
       <div className="space-y-3">
-        {/* Stepper UI removed for clean design */}
-      {deckId === 'search' && !hasCalculated && (
-        <div className="flex items-center justify-between gap-2 px-1">
-          {([
-            { step: 'origin', label: 'Origin', icon: LocateFixed },
-            { step: 'destination', label: 'Destination', icon: MapPin },
-            { step: 'vehicle', label: 'Vehicle', icon: Car },
-          ] as const).map(({ step, label, icon: Icon }, idx) => {
-            const stepOrder = ['origin', 'destination', 'vehicle'] as const;
-            const currentIdx = stepOrder.indexOf(routePlannerStep as 'origin' | 'destination' | 'vehicle');
-            const isActive = routePlannerStep === step;
-            const isCompleted = currentIdx > idx;
-            return (
-              <div key={step} className="flex items-center flex-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isCompleted || step === routePlannerStep) {
-                      setRoutePlannerStep(step);
-                      if (step === 'origin') {
-                        setLocationMode('custom_from_to');
-                        setTimeout(() => {
-                          originInputRef.current?.focus();
-                          setIsOriginDropdownOpen(true);
-                        }, 100);
-                      } else if (step === 'destination') {
-                        setTimeout(() => {
-                          if (locationMode === 'my_location') {
-                            singleSearchInputRef.current?.focus();
-                            setIsSingleDropdownOpen(true);
-                          } else {
-                            destInputRef.current?.focus();
-                            setIsDestDropdownOpen(true);
-                          }
-                        }, 100);
-                      }
-                    }
-                  }}
-                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition ${
-                    isActive
-                      ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/20'
-                      : isCompleted
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-400'
-                      : 'border-slate-700 bg-slate-950 text-slate-500'
-                  }`}
-                  title={label}
-                  aria-label={`${label} step${isCompleted ? ' (completed)' : ''}${isActive ? ' (current)' : ''}`}
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-                <div className="ml-2 hidden sm:block">
-                  <div className={`text-xs font-bold ${isActive ? 'text-white' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}>{label}</div>
-                </div>
-                {idx < 2 && (
-                  <div className={`flex-1 h-0.5 mx-2 rounded ${currentIdx > idx ? 'bg-emerald-500/60' : 'bg-slate-800'}`} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* 1. MY LOCATION CARD - Always visible */}
       <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1649,13 +1586,11 @@ setOriginSelected(true);
         </div>
       )}
 
-        {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
+         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
          {deckId === 'search' && !hasCalculated && (
            <>
 
-              Trip planner · mixed places (highway nodes + nearby towns). For official km only, use Distance.
-            </p>
-            {locationMode === 'my_location' ? (
+             {locationMode === 'my_location' ? (
           /* SINGLE SEARCH BAR with functional Mic and AI icons */
           <div className="space-y-2 relative" ref={singleSearchRef}>
             <div className="relative flex items-center">
