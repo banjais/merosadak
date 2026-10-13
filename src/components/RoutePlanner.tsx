@@ -1650,9 +1650,9 @@ setOriginSelected(true);
       )}
 
         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
-         {false && (
+         {deckId === 'search' && !hasCalculated && (
            <>
-            <p className="text-[10px] text-slate-500 px-0.5">
+
               Trip planner · mixed places (highway nodes + nearby towns). For official km only, use Distance.
             </p>
             {locationMode === 'my_location' ? (
