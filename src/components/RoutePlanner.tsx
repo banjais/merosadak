@@ -1416,7 +1416,7 @@ setOriginSelected(true);
       >
         {(deckId) => (
       <div className="space-y-3">
-      {/* Modern Stepper: Origin -> Destination -> Vehicle -> Results */}
+        {/* Stepper UI removed for clean design */}
       {deckId === 'search' && !hasCalculated && (
         <div className="flex items-center justify-between gap-2 px-1">
           {([
@@ -1666,7 +1666,7 @@ setOriginSelected(true);
               <input
                 ref={singleSearchInputRef}
                 type="text"
-                value={singleSearchQuery}
+
                 onChange={(e) => {
                   setSingleSearchQuery(e.target.value);
                   closeAllMenus('single');
@@ -1676,7 +1676,7 @@ setOriginSelected(true);
                   closeAllMenus('single');
                   setIsSingleDropdownOpen(true);
                 }}
-                placeholder={routePlannerStep === 'destination' ? 'Where to?' : 'Where to?'}
+                placeholder='Where to?'
                 className={`w-full rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
                   routePlannerStep === 'destination'
                     ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
