@@ -43,6 +43,16 @@ interface FuelCostEstimatorProps {
   destination?: CityNode;
   defaultTollCost?: number;
   fuelPrices?: FuelRateConfig | null;
+  /** Source + freshness metadata for the live fuel rates, so the cost card can
+      show where the price came from and when it was last checked. */
+  fuelPriceMetadata?: {
+    source?: string;
+    sourceLabel?: string;
+    lastUpdated?: string;
+    fetchedAt?: string;
+    nextUpdate?: string;
+    note?: string;
+  } | null;
   onVehicleChange?: (vehicle: VehicleType) => void;
   className?: string;
   highwayCodes?: string[]; // Highway codes traversed by the route
@@ -114,6 +124,22 @@ function getVehicleBenchmarks(prices?: FuelRateConfig | null): Record<VehicleTyp
   };
 }
 
+function formatDate(isoStr: string): string {
+  if (!isoStr) return '—';
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return isoStr;
+  }
+}
+
 interface TollItem {
   id: string;
   name: string;
@@ -123,6 +149,12 @@ interface TollItem {
   ratesByVehicle?: Partial<Record<VehicleType, number>>;
   enabled: boolean;
   notes: string;
+  /** Highway code the plaza sits on, e.g. NH01 — shown so the toll is traceable. */
+  highwayCode?: string;
+  /** Gazette / Cabinet Decision reference the published rate cites. */
+  gazetteRef?: string;
+  /** True when entry and exit carry different published rates. */
+  directional?: boolean;
 }
 
 interface EmergencyServiceItem {
@@ -143,6 +175,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   destination,
   defaultTollCost = 60,
   fuelPrices,
+  fuelPriceMetadata,
   onVehicleChange,
   className = '',
   highwayCodes = [],
@@ -169,6 +202,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     enabled: boolean;
     notes: string;
     directional: boolean;
+    gazetteRef?: string;
   }>>([]);
 
   // Initialize live toll plazas from highway codes
@@ -203,6 +237,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
         ratesByVehicle: { ...rates },
         enabled: true,
         notes: plaza.gazetteRef || `Rate for ${vehicleType}`,
+        gazetteRef: plaza.gazetteRef,
         directional: plaza.directional,
       };
     });
@@ -228,6 +263,9 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
         baseCostNpr: p.baseCostNpr,
         enabled: p.enabled,
         notes: p.notes,
+        highwayCode: p.highwayCode,
+        gazetteRef: p.gazetteRef,
+        directional: p.directional,
       }));
       // Add any additional fees that aren't already covered
       const additionalFees = prev.filter((t) => !liveItems.some((l) => l.id === t.id));
@@ -503,7 +541,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-white font-display">Total Trip Cost & Expense Estimator</h3>
+              <h3 className="text-sm font-bold text-white font-display">Total Trip Cost &amp; Expense Estimator</h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Fuel • Tolls • DOR Recovery
               </span>
@@ -512,9 +550,28 @@ Generated via Mero Sadak Nepal Highway GIS`;
               Estimates total highway journey budget including fuel/energy, tunnel tolls, and emergency roadside protection
             </p>
             {fuelPrices && (
-              <p className="text-[10px] text-emerald-400/80">
-                Fuel rates: NPR {fuelPrices.petrol}/L petrol · NPR {fuelPrices.diesel}/L diesel · NPR {fuelPrices.electricity}/kWh EV (live)
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                <span className="flex items-center space-x-1 text-amber-300">
+                  <Fuel className="w-3 h-3" />
+                  <span>Fuel rates live</span>
+                </span>
+                <span className="text-slate-400">
+                  Petrol Rs.{fuelPrices.petrol}/L · Diesel Rs.{fuelPrices.diesel}/L · EV Rs.{fuelPrices.electricity}/kWh
+                </span>
+                {fuelPriceMetadata && (
+                  <>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400">
+                      Source: {fuelPriceMetadata.sourceLabel || fuelPriceMetadata.source}
+                    </span>
+                    {fuelPriceMetadata.lastUpdated && (
+                      <span className="text-slate-500">
+                        · Updated {formatDate(fuelPriceMetadata.lastUpdated)}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -699,10 +756,20 @@ Generated via Mero Sadak Nepal Highway GIS`;
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-white">
               <Receipt className="w-4 h-4 text-cyan-400" />
-              <span>Highway Toll Plazas & Cess</span>
+              <span>Highway Toll Plazas &amp; Cess</span>
             </div>
             <span className="text-[10px] text-cyan-400 font-mono font-semibold">
               Total: Rs. {calculation.totalTollsNpr.toLocaleString()}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-800/60 pb-2">
+            <span className="flex items-center space-x-1">
+              <Info className="w-3 h-3 text-cyan-500" />
+              <span>Source: Road Board Nepal — Gazette / Cabinet Decision</span>
+            </span>
+            <span className="text-slate-500">
+              {tolls.filter((t) => t.enabled).length} active of {tolls.length} plazas
             </span>
           </div>
 
@@ -726,9 +793,35 @@ Generated via Mero Sadak Nepal Highway GIS`;
                       onChange={() => {}} // Handled by parent div
                       className="mt-0.5 w-3.5 h-3.5 rounded text-cyan-500 bg-slate-950 border-slate-700 pointer-events-none"
                     />
-                    <div>
-                      <div className="font-semibold text-slate-200">{toll.name}</div>
-                      <div className="text-[10px] text-slate-400">{toll.location} • {toll.notes}</div>
+<div>
+                      <div className="font-semibold text-slate-200 flex items-center space-x-1.5">
+                        <span>{toll.name}</span>
+                        {toll.highwayCode && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono">
+                            {toll.highwayCode}
+                          </span>
+                        )}
+                        {toll.directional && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-semibold">
+                            Directional
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {toll.location} • {toll.notes}
+                        {toll.gazetteRef && (
+                          <span> • Gazette {toll.gazetteRef}</span>
+                        )}
+                      </div>
+                      {toll.ratesByVehicle && Object.keys(toll.ratesByVehicle).length > 1 && (
+                        <div className="text-[9px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
+                          {Object.entries(toll.ratesByVehicle).map(([v, r]) => (
+                            <span key={v} className={v === vehicleType ? 'text-cyan-300 font-semibold' : ''}>
+                              {v}: Rs.{r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">

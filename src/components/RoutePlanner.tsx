@@ -1358,63 +1358,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
       )}
 
-      {/* Fuel Price Freshness Indicator */}
-      {hasCalculated && routePlan && (
-        <div className="flex items-center justify-between gap-2 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2 text-xs">
-          <div className="flex items-center space-x-2 min-w-0">
-            <Fuel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            {isLoadingPrices ? (
-              <span className="text-slate-400 animate-pulse">Checking fuel prices…</span>
-            ) : fuelPrices ? (
-              <span className="text-slate-300 truncate">
-                Fuel prices last checked{' '}
-                <span className="font-semibold text-emerald-400">
-                  {formatLastChecked(getMinutesSinceLastCheck())}
-                </span>
-                {isPriceStale() && (
-                  <span className="ml-1 text-amber-400">(stale)</span>
-                )}
-              </span>
-            ) : priceFetchError ? (
-              <span className="text-rose-400 truncate">Prices unavailable — using NOC defaults</span>
-            ) : (
-              <span className="text-slate-500">Loading fuel prices…</span>
-            )}
-          </div>
-          <button
-            onClick={async () => {
-              setIsLoadingPrices(true);
-              setPriceFetchError(null);
-              try {
-                const prices = await fetchFuelPrices();
-                setFuelPrices(prices);
-                setFuelPriceMetadata(getFuelPriceMetadata());
-                if (routePlan) {
-                  const updated = applyLiveFuelPrices(routePlan, vehicle, prices);
-                  setRoutePlan(updated);
-                  onRouteCalculated(updated);
-                }
-              } catch (err: any) {
-                setPriceFetchError(err?.message || 'Refresh failed');
-              } finally {
-                setIsLoadingPrices(false);
-              }
-            }}
-            disabled={isLoadingPrices}
-            className="flex items-center space-x-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition shrink-0"
-            title="Refresh fuel prices"
-            type="button"
-          >
-            {isLoadingPrices ? (
-              <span className="animate-spin inline-block w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
-            )}
-            <span>Refresh</span>
-          </button>
-        </div>
-      )}
-
       {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
       <PlannerDeck
         items={[
@@ -2499,6 +2442,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     defaultTollCost={routePlan.totalTollCostNpr}
                     highwayCodes={routeHighwayCodes}
                     fuelPrices={fuelPrices}
+                    fuelPriceMetadata={fuelPriceMetadata}
                     onVehicleChange={(newV) => setVehicle(newV)}
                   />
                   <CarbonFootprintCard
