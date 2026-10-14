@@ -109,6 +109,7 @@ import {
 } from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
+import { useDeviceLocation } from '../hooks/useDeviceLocation';
 
 /**
  * How many place suggestions a picker shows. A focused list beats a long one:
@@ -355,7 +356,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   } | null>(null);
   const [allCities, setAllCities] = useState<CityNode[]>([...CITIES_AND_JUNCTIONS, ...getCachedExpandedCities()]);
   const allCitiesRef = useRef(allCities);
-  const gpsAutoDetectAttemptedRef = useRef(false);
+  // Live values read inside applyGpsFix, which must stay stable (it is a
+  // dependency of the fix effect) while still seeing the current inputs.
+  const locationModeRef = useRef(locationMode);
+  /** Name the last GPS fix resolved to, so a follow-up fix can refresh it. */
+  const previousGpsNameRef = useRef<string>('');
 
   // Modern stepper: origin -> destination -> vehicle -> results
   type RoutePlannerStep = 'origin' | 'destination' | 'vehicle' | 'results';
@@ -394,6 +399,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isOriginDropdownOpen, setIsOriginDropdownOpen] = useState<boolean>(false);
   const [isDestDropdownOpen, setIsDestDropdownOpen] = useState<boolean>(false);
   const [showSearchPanel, setShowSearchPanel] = useState<boolean>(false);
+
+  // Mirrors of the fields applyGpsFix writes into, so it can tell a field the
+  // user typed in from one it filled itself. Kept in refs because applyGpsFix is
+  // a dependency of the fix effect and must not change identity per keystroke.
+  const originSearchQueryRef = useRef(originSearchQuery);
+  const singleSearchQueryRef = useRef(singleSearchQuery);
+  useEffect(() => {
+    locationModeRef.current = locationMode;
+    originSearchQueryRef.current = originSearchQuery;
+    singleSearchQueryRef.current = singleSearchQuery;
+  }, [locationMode, originSearchQuery, singleSearchQuery]);
 
   // AI Prompt Bar State
   const [isAiPromptOpen, setIsAiPromptOpen] = useState<boolean>(false);
@@ -751,23 +767,54 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
+  // One shared device watcher, for the whole app. Every fix re-resolves the
+  // "from" place, so the planner follows the user as they walk or drive instead
+  // of holding the position captured when the page opened.
+  const {
+    fix: liveFix,
+    watching: liveTracking,
+    accuracyLabel: liveAccuracy,
+    error: liveLocationError,
+    restart: restartTracking,
+    refresh: refreshTracking,
+    stop: stopTracking,
+  } = useDeviceLocation();
+
   /**
    * Apply one GPS fix to the planner: the raw coordinates, the nearest real
    * settlement as the "from" place, and the nearest surveyed highway junction.
    * Used by the auto-detect effect, by the cached fix it reuses, and by an
    * explicit refresh, so all three paths resolve the same way.
+   *
+   * Fixes arrive continuously now, so anything that writes into a text field has
+   * to be guarded: the search boxes belong to the user once they start typing,
+   * and a fix arriving every second must not erase what they typed. The origin
+   * fields also stay untouched in custom mode, where the user picked the "from"
+   * place by hand.
    */
   const applyGpsFix = useCallback((latitude: number, lng: number) => {
     if (!Number.isFinite(latitude) || !Number.isFinite(lng) || (latitude === 0 && lng === 0)) return;
     setDetectedLocation({ lat: latitude, lng });
 
     const result = findClosestCityFromCoords(latitude, lng, allCitiesRef.current);
+    const myLocationMode = locationModeRef.current === 'my_location';
+    const resolvedName = result?.city.name ?? '';
+
     if (result) {
-      setOriginId(result.city.id);
+      if (myLocationMode) setOriginId(result.city.id);
       setGpsOriginCityId(result.city.id);
       setGpsOriginDistanceKm(result.distanceKm);
-      setOriginSearchQuery(result.city.name);
-      setSingleSearchQuery(result.city.name);
+      // Only seed the boxes while they are empty (or still hold the previously
+      // resolved name), so a live fix never fights the user's typing.
+      if (myLocationMode && originSearchQueryRef.current.trim() === '') {
+        setOriginSearchQuery(resolvedName);
+      } else if (originSearchQueryRef.current === previousGpsNameRef.current) {
+        setOriginSearchQuery(resolvedName);
+      }
+      if (singleSearchQueryRef.current.trim() === '') {
+        setSingleSearchQuery(resolvedName);
+      }
+      previousGpsNameRef.current = resolvedName;
 
       const nearestJunction = findNearestHighwayJunction(latitude, lng);
       if (nearestJunction.city && nearestJunction.distanceKm != null) {
@@ -789,183 +836,84 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         });
       }
     } else {
-      setOriginId('');
       setGpsOriginCityId('');
       setGpsOriginDistanceKm(null);
+      if (myLocationMode) setOriginId('');
     }
     setOriginSelected(true);
   }, []);
 
-  // Device Geolocation Auto-Detection
-  // keepMenuOpen: when true (My Location card click), refresh GPS but leave
-  // the "Change Origin" dropdown visible so the user can still switch origin.
+  /**
+   * Ask for a fresh fix. The shared watcher delivers it through the effect that
+   * calls applyGpsFix, so the planner, the map and My Location all update from
+   * the same fix rather than each requesting its own.
+   * keepMenuOpen: when true (My Location card click), refresh GPS but leave the
+   * "Change Origin" dropdown visible so the user can still switch origin.
+   */
   const handleDetectDeviceLocation = useCallback(async (keepMenuOpen: boolean = false) => {
     if (!navigator.geolocation) {
-      setOriginSelected(false);
-      setOriginId('');
-      setDetectedLocation(null);
+      setLocationPermissionDenied(true);
       if (!keepMenuOpen) setIsLocationMenuOpen(false);
       return;
     }
 
-    let permissionState: string | null = null;
-    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
-      try {
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-        permissionState = permissionStatus.state;
-
-        if (permissionStatus.state === 'granted') {
-          setLocationPermissionDenied(false);
-        } else if (permissionStatus.state === 'prompt') {
-          setLocationPermissionDenied(false);
-        } else if (permissionStatus.state === 'denied') {
-          setLocationPermissionDenied(true);
-          if (!keepMenuOpen) setIsLocationMenuOpen(false);
-          return;
-        }
-
-        permissionStatus.onchange = () => {
-          if (permissionStatus.state === 'granted' && locationPermissionDenied) {
-            setLocationPermissionDenied(false);
-          }
-        };
-      } catch {
-        // Permissions API not supported
-      }
+    let denied = false;
+    try {
+      const status = await navigator.permissions.query({ name: 'geolocation' });
+      denied = status.state === 'denied';
+    } catch {
+      // Permissions API unsupported — let the geolocation call itself prompt.
     }
 
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          // Publish the fix so the map and My Location see the same position.
-          writeCachedGps(latitude, longitude);
-          // Attempt reverse geocoding to get explicit city name (e.g., Lalitpur)
-          let cityIdFromAddress: string | null = null;
-          try {
-            const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`, {
-              headers: { 'Accept-Language': 'en' },
-            });
-            if (revRes.ok) {
-              const revData = await revRes.json();
-              const addr = revData.address || {};
-              const cityName = addr.city || addr.town || addr.village || addr.suburb || addr.state_district;
-              if (cityName) {
-                // Only a real settlement may override the nearest-place match;
-                // a tourist spot returned by reverse geocoding is not an origin.
-                const match = allCitiesRef.current.find(
-                  (c) => c.name.toLowerCase() === cityName.toLowerCase() && isSettlementCity(c)
-                );
-                if (match) cityIdFromAddress = match.id;
-              }
-            }
-          } catch (e) {
-            console.error('Reverse geocode failed', e);
-          }
+    setLocationPermissionDenied(denied);
+    if (denied) {
+      if (!keepMenuOpen) setIsLocationMenuOpen(false);
+      return;
+    }
 
-          const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-          applyGpsFix(latitude, longitude);
-          // The reverse-geocode name wins only when it names a settlement that
-          // the corpus knows; otherwise the nearest-settlement match stands.
-          if (cityIdFromAddress) {
-            setOriginId(cityIdFromAddress);
-            setGpsOriginCityId(cityIdFromAddress);
-            setGpsOriginDistanceKm(result ? result.distanceKm : null);
-          } else if (!result) {
-            setOriginId('');
-            setGpsOriginCityId('');
-            setGpsOriginDistanceKm(null);
-          }
-
-          if (!keepMenuOpen) setIsLocationMenuOpen(false);
-          setLocationPermissionDenied(false);
-        },
-       (err) => {
-         setOriginSelected(false);
-         setOriginId('');
-         setGpsOriginCityId('');
-         setGpsOriginDistanceKm(null);
-         setGpsNearestJunction(null);
-         setGpsNearestHighway(null);
-         setDetectedLocation(null);
-         setLocationPermissionDenied(true);
-         if (!keepMenuOpen) setIsLocationMenuOpen(false);
-       },
-       { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
-    );
-  }, [locationPermissionDenied]);
+    restartTracking();
+    refreshTracking();
+    if (!keepMenuOpen) setIsLocationMenuOpen(false);
+  }, [restartTracking, refreshTracking]);
 
   // Auto-detect GPS on mount: ask permission if not yet decided.
   // Once detected, the GPS location is a permanent "fact" — it is not
   // cleared or overridden when the user picks a different "from" city.
   //
-  // The fix is shared with the map and My Location through the session-storage
-  // cache, so all three surfaces describe the same position. A cached fix is
-  // applied first so the planner matches what My Location already showed, then
-  // a fresh fix replaces it.
+  // The watcher is shared with the map and My Location, so all three surfaces
+  // describe the same position.
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    if (gpsAutoDetectAttemptedRef.current) return;
-
-    gpsAutoDetectAttemptedRef.current = true;
-
-    // A fix another surface already found is applied immediately so the planner
-    // agrees with My Location and the map before a new fix arrives.
-    const cached = readFreshCachedGps();
-    if (cached) applyGpsFix(cached.lat, cached.lng);
-
-    const tryAutoDetect = () => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          writeCachedGps(latitude, longitude);
-          applyGpsFix(latitude, longitude);
-        },
-        () => {
-          // Permission denied or error — user can still pick manually
-        },
-        { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
-      );
-    };
-
     // Wait for expanded cities (palikas, POIs, etc.) to load before GPS detection
     // so we match against the full dataset for better accuracy.
+    let cancelled = false;
     loadExpandedCities()
       .then((cities) => {
+        if (cancelled) return;
         allCitiesRef.current = cities;
         setAllCities(cities);
-        // The cached fix was matched against whatever was loaded at the time;
-        // re-resolve it now that the full corpus is in.
-        if (cached) applyGpsFix(cached.lat, cached.lng);
       })
       .catch(() => {
         // Fallback to cached cities
-      })
-      .finally(() => {
-        // Check existing permission state before prompting
-        if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
-          navigator.permissions
-            .query({ name: 'geolocation' })
-            .then((permissionStatus) => {
-              if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
-                tryAutoDetect();
-              }
-              // 'denied' — skip silent detection
-
-              permissionStatus.onchange = () => {
-                if (permissionStatus.state === 'granted') {
-                  tryAutoDetect();
-                }
-              };
-            })
-            .catch(() => {
-              tryAutoDetect();
-            });
-        } else {
-          // No Permissions API — direct call triggers browser prompt
-          tryAutoDetect();
-        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  // Re-resolve on every fix, so the planner follows the user as they move. The
+  // search boxes are only seeded while empty, so continuous fixes never erase
+  // what the user typed. Keyed on the fix timestamp so the same position is not
+  // re-applied when an unrelated state change re-runs this effect.
+  useEffect(() => {
+    if (liveFix) {
+      applyGpsFix(liveFix.lat, liveFix.lng);
+      return;
+    }
+    // No fix yet — reuse the last known one so the card is not blank.
+    const cached = readFreshCachedGps();
+    if (cached) applyGpsFix(cached.lat, cached.lng);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveFix?.timestamp, applyGpsFix]);
 
   // Voice Speech Recognition Handler
   const startVoiceRecognition = (target: 'single' | 'origin' | 'dest' | 'ai') => {
@@ -1525,10 +1473,22 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
               {detectedLocation && locationMode === 'my_location' && (
                 <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
+                    liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                  }`} />
+                  {liveTracking ? 'LIVE' : 'FIXED'}{' '}
                   {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
+                  {liveAccuracy && (
+                    <span className="text-slate-500"> · {liveAccuracy}</span>
+                  )}
                   {gpsNearestJunction?.name && (
                     <span className="text-slate-500"> · near {gpsNearestJunction.name}</span>
                   )}
+                </div>
+              )}
+              {locationMode === 'my_location' && liveLocationError && !detectedLocation && (
+                <div className="text-[10px] text-rose-400 font-medium truncate mt-0.5">
+                  Waiting for GPS — allow location access to follow your position
                 </div>
               )}
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
@@ -1552,6 +1512,32 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <Navigation className="w-3.5 h-3.5 text-cyan-400" />
               <span>Show on Map</span>
             </button>
+
+            {locationMode === 'my_location' && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (liveTracking) {
+                    stopTracking();
+                  } else {
+                    restartTracking();
+                  }
+                }}
+                className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
+                  liveTracking
+                    ? 'border-emerald-600/60 bg-emerald-950/80 text-emerald-300 hover:bg-emerald-900/70'
+                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+                title={liveTracking
+                  ? 'Stop following your position (saves battery)'
+                  : 'Start following your position again'}
+                id="btn-toggle-live-tracking"
+              >
+                <Crosshair className={`w-3.5 h-3.5 ${liveTracking ? 'animate-pulse text-emerald-400' : ''}`} />
+                <span>{liveTracking ? 'Live' : 'Paused'}</span>
+              </button>
+            )}
 
             {onOpenMyLocation && (
               <button

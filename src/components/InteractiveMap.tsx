@@ -12,6 +12,7 @@ import {
   NEPAL_HIGHWAYS,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
+import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { getHighwayEnrichment } from '../utils/geoUtils';
 import {
   CITY_HIGHWAY_TOUCH_DISTANCE_KM,
@@ -201,6 +202,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const [showMapStyle, setShowMapStyle] = useState(false);
   const [mapInteracted, setMapInteracted] = useState(false);
+  // While following, every new GPS fix keeps the camera centred on the user.
+  // A manual drag or zoom releases the camera but the position dot keeps
+  // updating, so the map always shows where the user actually is.
+  const [followMe, setFollowMe] = useState(true);
 
   const showBlackspots = false;
   const routeColorMode = 'safety' as const;
@@ -210,8 +215,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const mapStyleContainerRef = useRef<HTMLDivElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
 
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [gpsDetected, setGpsDetected] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationButtonRef = useRef<HTMLDivElement>(null);
   const changeDropdownRef = useRef<HTMLDivElement>(null);
@@ -220,7 +223,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Map activation state - controls when controls become visible
   const [mapActive, setMapActive] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
-  const [userLocationRequested, setUserLocationRequested] = useState(false);
 
   // Activate map when user interacts or location is detected
   const activateMap = useCallback(() => {
@@ -230,17 +232,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [mapActive]);
 
-  // Auto-detect user location on map load
-  useEffect(() => {
-    if (mapInitialized && !gpsDetected && !userLocationRequested) {
-      setUserLocationRequested(true);
-      // Small delay to ensure map is fully ready
-      const timer = setTimeout(() => {
-        detectGpsPosition();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [mapInitialized, gpsDetected, userLocationRequested]);
+  // One shared device watcher. The map, the planner and My Location all read
+  // this, so they cannot show different positions and the dot moves as the user
+  // walks or drives.
+  const { fix, watching, error: locationError, accuracyLabel, restart } = useDeviceLocation();
+
+  const gpsDetected = !!fix;
+  const gpsCoords = fix ? { lat: fix.lat, lng: fix.lng } : null;
 
   // Toggle layer with exclusive selection
   const handleToggleLayer = (layer: ActiveMapOverlayLayer) => {
@@ -464,74 +462,57 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }).addTo(map);
   }, []);
 
-  const detectGpsPosition = useCallback(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGpsCoords(null);
-      setGpsDetected(false);
+  /** Move the existing position dot instead of recreating it, so it tracks smoothly. */
+  const updateGpsMarker = useCallback((latLng: L.LatLngExpression) => {
+    if (!markerRef.current) {
+      placeGpsMarker(latLng);
       return;
     }
-
-    const handleSuccess = (position: GeolocationPosition) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        setGpsCoords(null);
-        setGpsDetected(false);
-        return;
-      }
-
-      setGpsCoords({ lat: latitude, lng: longitude });
-      setGpsDetected(true);
-      placeGpsMarker([latitude, longitude]);
-      mapInstanceRef.current?.flyTo([latitude, longitude], 14, { duration: 1.5 });
-    };
-
-    const handleError = () => {
-      setGpsCoords(null);
-      setGpsDetected(false);
-      if (markerRef.current && mapInstanceRef.current) {
-        mapInstanceRef.current.removeLayer(markerRef.current);
-        markerRef.current = null;
-      }
-    };
-
-    const geoOptions: PositionOptions = {
-      timeout: 8000,
-      maximumAge: 60000,
-      enableHighAccuracy: true,
-    };
-
-    // Check permission status explicitly.
-    // If "granted" — auto-detect silently.
-    // If "prompt" — getCurrentPosition shows the browser permission dialog.
-    // If "denied" — skip to avoid redundant error.
-    if (typeof navigator.permissions !== 'undefined' && navigator.permissions) {
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === 'granted') {
-            navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-          } else if (permissionStatus.state === 'prompt') {
-            navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-          }
-          // 'denied': no action — user previously denied.
-
-          permissionStatus.onchange = () => {
-            if (permissionStatus.state === 'granted') {
-              navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-            }
-          };
-        })
-        .catch(() => {
-          // Permissions API not supported — fall back to direct call which will
-          // trigger the browser prompt on first use.
-          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-        });
-    } else {
-      // No Permissions API — direct call triggers browser prompt.
-      navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-    }
+    markerRef.current.setLatLng(latLng);
   }, [placeGpsMarker]);
+
+  // Every fix updates the dot, and while following it also moves the camera.
+  // panTo with a short duration keeps the marker under the crosshair without the
+  // jarring 1.2s flyTo a one-shot detection used.
+  useEffect(() => {
+    if (!fix) return;
+    updateGpsMarker([fix.lat, fix.lng]);
+    if (!followMe) return;
+    mapInstanceRef.current?.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
+  }, [fix, followMe, updateGpsMarker]);
+
+  // Activate the map as soon as a position exists, so the controls appear
+  // without needing a tap.
+  useEffect(() => {
+    if (gpsDetected && !mapActive) setMapActive(true);
+  }, [gpsDetected, mapActive]);
+
+  // A manual drag or zoom hands the camera back to the user. The dot still
+  // tracks; only following stops.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const release = () => setFollowMe(false);
+    map.on('dragstart', release);
+    map.on('zoomstart', release);
+    return () => {
+      map.off('dragstart', release);
+      map.off('zoomstart', release);
+    };
+  }, [mapInitialized]);
+
+  const recenterOnMe = useCallback(() => {
+    setFollowMe(true);
+    if (fix) {
+      mapInstanceRef.current?.flyTo([fix.lat, fix.lng], 15, { duration: 0.9 });
+    } else {
+      restart();
+    }
+  }, [fix, restart]);
+
+  const detectGpsPosition = useCallback(() => {
+    restart();
+  }, [restart]);
 
   // Activate map when GPS is successfully detected
   useEffect(() => {
@@ -590,6 +571,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     ) {
       return;
     }
+    // Explicitly focusing a city or incident means the camera is no longer
+    // tracking the user, so following stops — the dot keeps updating.
+    setFollowMe(false);
     setMapInteracted(true);
     setMapActive(true);
     mapInstanceRef.current.flyTo([focusedTarget.lat, focusedTarget.lng], focusedTarget.zoom || 11, {
@@ -1294,9 +1278,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setMapInteracted(true);
     setMapActive(true);
     if (gpsDetected) {
-      if (gpsCoords) {
-        mapInstanceRef.current?.flyTo([gpsCoords.lat, gpsCoords.lng], 14, { duration: 1.2 });
-      }
+      // Re-engage following and snap to the current fix right now.
+      recenterOnMe();
       setIsLocationDropdownOpen((open) => !open);
       if (!isLocationDropdownOpen) {
         setIsToolbarOpen(false);
@@ -1347,13 +1330,26 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/20 hover:bg-emerald-900/90'
                 : 'bg-slate-950/90 hover:bg-slate-900 text-sky-300 border-sky-500/40'
             }`}
-            title={gpsDetected ? 'My Location detected' : 'My Location'}
+            title={gpsDetected
+              ? (followMe ? 'Following your live location' : 'My Location — tap to follow again')
+              : 'My Location'}
             aria-label={gpsDetected ? 'My Location detected' : 'Detect My Location'}
             aria-expanded={gpsDetected && isLocationDropdownOpen}
             id="btn-my-location-gps"
           >
             {gpsDetected ? <LocateFixed className="w-5 h-5" /> : <Locate className="w-5 h-5" />}
           </button>
+
+          {gpsDetected && accuracyLabel && (
+            <div className="absolute top-[52px] right-0 z-[999] rounded-full border border-emerald-500/30 bg-emerald-950/80 px-2 py-0.5 text-[9px] font-bold text-emerald-300 backdrop-blur-xl">
+              {watching ? 'LIVE' : 'FIXED'} {accuracyLabel}
+            </div>
+          )}
+          {!gpsDetected && locationError && (
+            <div className="absolute top-[52px] right-0 z-[999] max-w-[9rem] rounded-full border border-rose-500/30 bg-rose-950/80 px-2 py-0.5 text-[9px] font-bold text-rose-300 backdrop-blur-xl">
+              No GPS fix
+            </div>
+          )}
 
           {gpsDetected && isLocationDropdownOpen && (
             <div

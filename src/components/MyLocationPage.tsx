@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
    ArrowLeft, Route, Building, Mountain, LocateFixed, RotateCcw,
    AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
@@ -8,6 +8,7 @@ import {
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
+import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { CityNode } from '../types';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { TextScale } from '../hooks/useTextScale';
@@ -149,6 +150,11 @@ export const MyLocationPage: React.FC<{
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
+  // Last position the reverse geocode resolved, and the watcher's error kept in a
+  // ref so the effect below can read it without re-subscribing.
+  const lastGeocodedRef = useRef<{ lat: number; lng: number } | null>(null);
+  const locationErrorRef = useRef<unknown>(null);
+
   useEffect(() => {
     const fetchAll = async () => {
       const fetches = [
@@ -190,103 +196,103 @@ export const MyLocationPage: React.FC<{
     return () => { cancelled = true; };
   }, [locationInfo?.lat, locationInfo?.lng]);
 
-  const refreshLocation = useCallback(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
+  /**
+   * Derive everything this page shows from one fix. Cheap, synchronous parts
+   * (nearest highway, nearest junction) are recomputed on every fix so the page
+   * tracks the user in real time. The reverse-geocode call is rate-limited by
+   * Nominatim, so it only runs when the fix has moved far enough to change the
+   * address, or when there is no address yet.
+   */
+  const applyFix = useCallback((lat: number, lng: number, accuracy: number | null) => {
+    const highwayInfo = findNearestHighwayFromCoords(lat, lng);
+    const nearestHighway = highwayInfo
+      ? {
+          highway: { code: highwayInfo.highway?.code ?? '', name: highwayInfo.highway?.name ?? '' },
+          segment: highwayInfo.segment
+            ? { from: highwayInfo.segment.from, to: highwayInfo.segment.to }
+            : null,
+          distanceKm: highwayInfo.distanceKm,
+          nearestPoint: highwayInfo.nearestPoint,
+        }
+      : null;
+
+    const junctionInfo = findNearestHighwayJunction(lat, lng);
+
+    // Reuse the last address while the user stays on the same street, so the
+    // page does not fire a geocoding request on every GPS sample.
+    const previous = lastGeocodedRef.current;
+    const movedM = previous ? getDistanceKm(previous.lat, previous.lng, lat, lng) * 1000 : Infinity;
+    const needsAddress = movedM > 25 || !previous;
+
+    const base = {
+      lat,
+      lng,
+      accuracy,
+      nearestHighway,
+      nearestJunction: junctionInfo,
+    };
+
+    if (!needsAddress) {
+      setLocationInfo((prev) => ({
+        ...base,
+        address: prev?.address ?? null,
+        formattedAddress: prev?.formattedAddress ?? null,
+      }));
       return;
     }
-    setLoading(true);
-    setError(null);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
 
-        const highwayInfo = findNearestHighwayFromCoords(lat, lng);
-        const nearestHighway = highwayInfo
-          ? {
-              highway: { code: highwayInfo.highway?.code ?? '', name: highwayInfo.highway?.name ?? '' },
-              segment: highwayInfo.segment
-                ? { from: highwayInfo.segment.from, to: highwayInfo.segment.to }
-                : null,
-              distanceKm: highwayInfo.distanceKm,
-              nearestPoint: highwayInfo.nearestPoint,
-            }
-          : null;
+    lastGeocodedRef.current = { lat, lng };
+    setLocationInfo({ ...base, address: null, formattedAddress: null });
 
-        const junctionInfo = findNearestHighwayJunction(lat, lng);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: { 'Accept-Language': 'en' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const a = data.address || {};
+        const parts: string[] = [];
+        const localPlace = a.road || a.path || a.footway || a.pedestrian || a.neighbourhood || a.suburb || a.hamlet || a.village;
+        if (localPlace) parts.push(localPlace);
+        const city = a.city || a.town || a.municipality || a.county;
+        if (city) parts.push(city);
+        const district = a.district;
+        if (district && district !== city) parts.push(district);
+        const province = a.state || a.province;
+        if (province) parts.push(province);
+        const postcode = a.postcode;
+        if (postcode) parts.push(postcode);
+        const country = a.country;
+        if (country) parts.push(country);
+        setLocationInfo((prev) => (prev && prev.lat === lat && prev.lng === lng)
+          ? { ...prev, address: data.display_name ?? null, formattedAddress: parts.join(', ') || null }
+          : prev);
+      } catch (e) {
+        console.error('Failed to fetch address', e);
+      }
+    })();
 
-        let address = null;
-        let formattedAddress = null;
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-            headers: { 'Accept-Language': 'en' }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            address = data.display_name;
-            const a = data.address || {};
-            const parts: string[] = [];
-            const localPlace = a.road || a.path || a.footway || a.pedestrian || a.neighbourhood || a.suburb || a.hamlet || a.village;
-            if (localPlace) parts.push(localPlace);
-            const city = a.city || a.town || a.municipality || a.county;
-            if (city) parts.push(city);
-            const district = a.district;
-            if (district && district !== city) parts.push(district);
-            const province = a.state || a.province;
-            if (province) parts.push(province);
-            const postcode = a.postcode;
-            if (postcode) parts.push(postcode);
-            const country = a.country;
-            if (country) parts.push(country);
-            formattedAddress = parts.join(', ');
-          }
-        } catch (e) {
-          console.error("Failed to fetch address", e);
-        }
-
-        setLocationInfo((prev) => ({
-          lat,
-          lng,
-          accuracy,
-          address: address || prev?.address || null,
-          formattedAddress: formattedAddress || prev?.formattedAddress || null,
-          nearestHighway,
-          nearestJunction: junctionInfo,
-        }));
-        writeCachedGps(lat, lng);
-        setLoading(false);
-      },
-      (err) => {
-        setError('Failed to detect location. Please allow GPS permission and try again.');
-        setLoading(false);
-      },
-      { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
-    );
+    return () => { cancelled = true; };
   }, []);
 
-  // Load cached location if available, otherwise request fresh location
+  // One shared device watcher. This page no longer asks for its own position: it
+  // derives everything from the fix the watcher already produces, so it stays
+  // current as the user walks or drives and agrees with the map and planner.
+  const { fix, watching, accuracyLabel, refresh, restart, error: locationError } = useDeviceLocation();
+  locationErrorRef.current = locationError;
+
   useEffect(() => {
-    const cached = readFreshCachedGps();
-    if (cached) {
-      setLocationInfo({
-        lat: cached.lat,
-        lng: cached.lng,
-        accuracy: null,
-        address: null,
-        formattedAddress: null,
-        nearestHighway: null,
-        nearestJunction: { city: null, distanceKm: null },
-      });
+    if (!fix) {
+      if (!watching && locationError) setError('Failed to detect location. Please allow GPS permission and try again.');
       setLoading(false);
-      // Refresh in background to get up‑to‑date data
-      refreshLocation();
       return;
     }
-    // No valid cache, request fresh location
-    refreshLocation();
-  }, [refreshLocation]);
+    setError(null);
+    return applyFix(fix.lat, fix.lng, fix.accuracy);
+  }, [fix, watching, locationError, applyFix]);
 
   const metersToKm = (m: number | null) => {
     if (m === null) return '—';
@@ -544,7 +550,13 @@ export const MyLocationPage: React.FC<{
                       {locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
                     </h2>
                     <button
-                      onClick={refreshLocation}
+                      onClick={() => {
+                        // Force a fresh address on the current fix instead of
+                        // reusing the one already shown.
+                        lastGeocodedRef.current = null;
+                        refresh();
+                        restart();
+                      }}
                       className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white transition touch-target"
                       title="Refresh Location"
                       aria-label="Refresh location"
@@ -553,12 +565,21 @@ export const MyLocationPage: React.FC<{
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 ${
+                      watching ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${watching ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                      {watching ? 'LIVE' : 'PAUSED'}
+                      {accuracyLabel ? ` ${accuracyLabel}` : ''}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
                     <span className="bg-emerald-500/10 px-2 py-1 rounded-lg">
                       {formatDMS(locationInfo.lat, locationInfo.lng)}
                     </span>
-                    {locationInfo.accuracy && (
+                    {accuracyLabel && (
                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                        ± {Math.round(locationInfo.accuracy)}m
+                        {accuracyLabel}
                       </span>
                     )}
                     {locationInfo.nearestJunction.city && (

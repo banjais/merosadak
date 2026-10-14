@@ -177,7 +177,10 @@ function AppContent() {
   /** Null until the first attempt resolves; false once a feed is known unreachable. */
   const [isLiveFeedReachable, setIsLiveFeedReachable] = useState<boolean | null>(null);
 
-  // Focus on map target - initialize with user's GPS location if available
+  // Map focus target. Explicitly chosen places (a city, an incident) set this;
+  // the live GPS position is owned by InteractiveMap through the shared device
+  // watcher, so nothing here runs its own geolocation call. The cached fix only
+  // seeds the very first centring so the map opens where the user already is.
   const [focusedTarget, setFocusedTarget] = useState<{
     lat: number;
     lng: number;
@@ -185,7 +188,6 @@ function AppContent() {
     zoom?: number;
   } | null>(() => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
-      // Try to get cached GPS location for instant map centering
       const cached = readFreshCachedGps();
       if (cached) {
         return { lat: cached.lat, lng: cached.lng, title: 'Your Location', zoom: 12 };
@@ -199,29 +201,6 @@ function AppContent() {
   const [selectedWeatherId, setSelectedWeatherId] = useState<string | null>(null);
   const [selectedPOIId, setSelectedPOIId] = useState<string | null>(null);
   const [selectedTrafficId, setSelectedTrafficId] = useState<string | null>(null);
-
-  // Detect GPS early and cache for instant map centering
-  useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-    if (focusedTarget) return; // Already have location
-
-    const handleSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      const location = { lat: latitude, lng: longitude, title: 'Your Location', zoom: 12 };
-      setFocusedTarget(location);
-      writeCachedGps(latitude, longitude);
-    };
-
-    const handleError = () => {
-      // Keep default null, will show Nepal overview
-    };
-
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-      timeout: 8000,
-      maximumAge: 60000,
-      enableHighAccuracy: true
-    });
-  }, [focusedTarget]);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
