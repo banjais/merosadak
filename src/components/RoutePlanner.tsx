@@ -106,6 +106,7 @@ import {
   searchHighways,
   preloadHighwayCatalogue,
   getHighwayCatalogue,
+  describeHighwayCoverage,
 } from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
@@ -399,6 +400,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isOriginDropdownOpen, setIsOriginDropdownOpen] = useState<boolean>(false);
   const [isDestDropdownOpen, setIsDestDropdownOpen] = useState<boolean>(false);
   const [showSearchPanel, setShowSearchPanel] = useState<boolean>(false);
+
+  // How many places a search can actually return. Read from the live corpus so
+  // the hint under the search bar states a real number instead of a claim that
+  // may drift as data files are added.
+  const searchablePlaceCount = useMemo(
+    () => allCities.filter((city) => city.id && city.name).length,
+    [allCities],
+  );
 
   // Mirrors of the fields applyGpsFix writes into, so it can tell a field the
   // user typed in from one it filled itself. Kept in refs because applyGpsFix is
@@ -1466,10 +1475,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       ? (gpsOriginCity
                           ? (gpsOriginCity.district || gpsOriginCity.province
                               ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
-                              : 'Position detected')
-                          : 'Coordinates acquired')
-                      : 'Tap the card to set your origin')
-                  : 'Choose a "from" place to start planning'}
+                              : 'Nearest surveyed place')
+                          : 'Off the surveyed network')
+                      : 'Waiting for a GPS fix — your origin updates automatically')
+                  : 'Picked by you — tap the card to change it'}
               </div>
               {detectedLocation && locationMode === 'my_location' && (
                 <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
@@ -1486,9 +1495,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   )}
                 </div>
               )}
-              {locationMode === 'my_location' && liveLocationError && !detectedLocation && (
-                <div className="text-[10px] text-rose-400 font-medium truncate mt-0.5">
-                  Waiting for GPS — allow location access to follow your position
+              {locationMode === 'my_location' && !detectedLocation && (
+                <div className={`text-[10px] font-medium truncate mt-0.5 ${
+                  liveLocationError ? 'text-rose-400' : 'text-slate-500'
+                }`}>
+                  {liveLocationError
+                    ? 'Location blocked — allow GPS access, or pick an origin below'
+                    : 'Looking for a GPS signal…'}
                 </div>
               )}
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
@@ -1595,8 +1608,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <span className="text-[10px] text-emerald-400 font-normal">(Active)</span>
                   )}
                 </div>
-                <div className="text-[11px] text-slate-400 truncate">
-                  {locationPermissionDenied ? 'GPS blocked · Tap to retry' : 'Set origin to real-time position'}
+                <div className="text-[11px] text-slate-400">
+                  {locationPermissionDenied
+                    ? 'GPS blocked — allow it in your browser, then tap to retry'
+                    : 'Follows your live position as the origin'}
                 </div>
               </div>
             </button>
@@ -1638,11 +1653,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
          {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
          {deckId === 'search' && !hasCalculated && (
-           <>
-
-             {locationMode === 'my_location' ? (
-          /* SINGLE SEARCH BAR with functional Mic and AI icons */
-          <div className="space-y-2 relative" ref={singleSearchRef}>
+            locationMode === 'my_location' ? (
+              /* SINGLE SEARCH BAR with functional Mic and AI icons */
+              <div className="space-y-2 relative" ref={singleSearchRef}>
             <div className="relative flex items-center">
               <div className="absolute left-3.5 text-slate-400 pointer-events-none">
                 <Search className="w-4 h-4 text-emerald-400" />
@@ -1663,7 +1676,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 }}
                 placeholder='Where to?'
                 className={`w-full rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                  routePlannerStep === 'destination'
+                  destId
                     ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
                     : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
                 }`}
@@ -1689,7 +1702,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
                   }`}
-                  title="Voice Search Destination (English / Nepali phonetics)"
+                  title="Voice search destination — English (en-US) or Nepali (ne-NP)"
                   id="btn-voice-search-single"
                 >
                   <Mic className="w-4 h-4 text-emerald-400" />
@@ -1757,10 +1770,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      closeAllMenus('origin');
                      setIsOriginDropdownOpen(true);
                    }}
-                   placeholder={routePlannerStep === 'origin' ? 'Where are you starting from?' : 'From where?'}
+                   placeholder='From where?'
                    autoComplete="off"
                    className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                     routePlannerStep === 'origin'
+                     originId
                        ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
                        : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
                    }`}
@@ -1835,10 +1848,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                      closeAllMenus('dest');
                      setIsDestDropdownOpen(true);
                    }}
-                      placeholder={routePlannerStep === 'destination' ? 'Where do you want to go?' : 'Where to?'}
+                      placeholder='Where to?'
                       autoComplete="off"
                       className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                        routePlannerStep === 'destination'
+                        destId
                           ? 'bg-slate-950 border-2 border-cyan-500/60 focus:border-cyan-400'
                           : 'bg-slate-950 border border-slate-800 focus:border-cyan-500'
                       }`}
@@ -1880,13 +1893,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
               </div>
             </div>
-          )}
+          ))}
 
           {/* Browse by highway — for users who know the road, not the town */}
-          {deckId === 'search' && !hasCalculated && highwayCount > 0 && (
+          {deckId === 'search' && !hasCalculated && (
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[11px] text-slate-400">
-                Not sure of the place name? Search it, or pick any town along the {highwayCount} national highways.
+                {searchablePlaceCount > 0
+                  ? `Searching ${searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.`
+                  : 'Search cities, palikas and highway towns. One letter is enough to start.'}
+                {highwayCount > 0 && (
+                  <> Or browse towns on the {describeHighwayCoverage().toLowerCase()}.</>
+                )}
               </p>
               <button
                 type="button"
@@ -1898,7 +1916,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </button>
             </div>
           )}
-        </>)}
 
          {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
         {deckId === 'search' && !hasCalculated && isAiPromptOpen && (

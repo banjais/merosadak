@@ -12,6 +12,7 @@ import {
   searchHighways,
   preloadHighwayCatalogue,
   getHighwayCatalogue,
+  describeHighwayCoverage,
 } from '../utils/highwayCatalogue';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
@@ -691,7 +692,12 @@ Not an official Department of Roads document.`;
               {highwayCount > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[11px] text-slate-400">
-                    Not sure of the place name? Search it, or pick any town along the {highwayCount} national highways.
+                    {allCities.length > 0
+                      ? `Searching ${allCities.length.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.`
+                      : 'Search cities, palikas and highway towns. One letter is enough to start.'}
+                    {highwayCount > 0 && (
+                      <> Or browse towns on the {describeHighwayCoverage().toLowerCase()}.</>
+                    )}
                   </p>
                   <button
                     type="button"

@@ -4,6 +4,7 @@ import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
 import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
+import { describeHighwayCoverage } from '../utils/highwayCatalogue';
 import { getTollPlazasForHighway } from '../utils/tollRates.client';
 import { PlannerDeck } from './PlannerDeck';
 import { useCardArchive } from '../context/CardArchiveContext';
@@ -367,10 +368,11 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
           </span>
           </div>
           <h2 className="text-2xl font-bold text-white tracking-tight mt-1 font-display">
-            Nepal 79 National Highways Directory
+            Nepal National Highways Directory
           </h2>
           <p className="text-sm text-secondary mt-1 max-w-2xl">
-            Live segment passability, real-time roadwork notices, active landslide obstructions, and DoR surveyed chainage links across all 79 national highways (NNH01–NH80).
+            Live segment passability, real-time roadwork notices, active landslide obstructions, and DoR surveyed chainage links across{" "}
+            {describeHighwayCoverage().toLowerCase()} (NH01–NH80).
           </p>
         </div>
 
@@ -436,7 +438,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
           <input
             id="input-highway-search"
             type="text"
-            placeholder="Search by code (e.g. NNH01, NNH17, NH04), name (Prithvi, Postal), district, segment, issue..."
+            placeholder="Search by code (e.g. NH01, NH17, NH04), name (Prithvi, Postal), district, segment, issue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"

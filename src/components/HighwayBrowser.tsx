@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { MapPin, Search, X } from 'lucide-react';
 import { CityNode } from '../types';
-import { getHighwayCatalogue, getHighwayPlaces } from '../utils/highwayCatalogue';
+import {
+  getHighwayCatalogue,
+  getHighwayPlaces,
+  describeHighwayCoverage,
+  NATIONAL_HIGHWAY_TOTAL,
+  UNSURVEYED_HIGHWAY_CODES,
+} from '../utils/highwayCatalogue';
 import { CityResultRow } from './CityResultRow';
 
 interface HighwayBrowserProps {
@@ -115,7 +121,10 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({ cities, onSelect
             />
           </div>
           <div className="mt-2 text-[10px] text-slate-500">
-            {filtered.length} of {catalogue.length} national highways
+            {filtered.length} of {catalogue.length} highways with mapped geometry
+            {catalogue.length < NATIONAL_HIGHWAY_TOTAL && (
+              <> · {describeHighwayCoverage()}, {UNSURVEYED_HIGHWAY_CODES.join(', ')} not yet surveyed</>
+            )}
           </div>
         </div>
 

@@ -1,11 +1,31 @@
 // Corridor search over the surveyed road graph: which places a national
 // highway actually serves, and how each of them sits on that corridor.
 //
-// The catalogue is built from DoR link endpoints, so it covers every one of the
-// 80 national highways rather than only the junctions somebody hand-listed.
+// The catalogue is built from DoR link endpoints, so it covers every highway we
+// hold geometry for — which is not every highway Nepal numbers. See
+// describeHighwayCoverage() before stating any count in the UI: saying "79
+// national highways" implies the country has 79, when it has 80 and NH27 is
+// simply unsurveyed in this archive.
 
 import { CityNode } from '../types';
 import { getRoadGraph, CityLink, HIGHWAY_TOUCH_KM } from './roadGraphRouter';
+
+/** Nepal numbers its national highways NH01–NH80. */
+export const NATIONAL_HIGHWAY_TOTAL = 80;
+
+/** Numbered highways with no geometry in the DoR archive we hold. */
+export const UNSURVEYED_HIGHWAY_CODES = ['NH27'];
+
+/**
+ * Honest one-liner for UI copy: how much of the national network is actually
+ * mapped here, derived from the live catalogue rather than a hardcoded number.
+ */
+export function describeHighwayCoverage(): string {
+  const mapped = getHighwayCatalogue().length;
+  const missing = NATIONAL_HIGHWAY_TOTAL - mapped;
+  if (missing <= 0) return `All ${mapped} national highways mapped`;
+  return `${mapped} of ${NATIONAL_HIGHWAY_TOTAL} national highways mapped`;
+}
 
 export interface HighwayCatalogueEntry {
   code: string;
