@@ -1664,7 +1664,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <input
                 ref={singleSearchInputRef}
                 type="text"
-
+                autoComplete="off"
                 onChange={(e) => {
                   setSingleSearchQuery(e.target.value);
                   closeAllMenus('single');
@@ -1936,6 +1936,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <div className="flex items-center space-x-2">
               <input
                 type="text"
+                autoComplete="off"
                 value={aiPromptText}
                 onChange={(e) => setAiPromptText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleExecuteAiPrompt()}
