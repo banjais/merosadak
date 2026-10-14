@@ -1985,110 +1985,88 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </button>
             </div>
           )}
-          {sections.isExpanded('results') && (
-         <div
-           id="route-results-panel"
-           key={`route-results-panel-${calcKey}-${routePlan.id}`}
-           className="p-3 sm:p-4 space-y-2.5 sm:space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full"
-        >
-           {/* Header Summary & Expand/Reduce + Map Actions */}
-           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
-             <div className="min-w-0 flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleEditLocations}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition shadow-sm"
-                title="Change route origin or destination"
-                id="btn-change-location-results"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Change Location</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleNewRoute}
-                className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition shadow-sm"
-                title="Plan a new route"
-                id="btn-new-route-results"
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">New Route</span>
-              </button>
-              <div className="flex items-center space-x-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => onViewOnMap?.({ lat: routePlan.origin.lat, lng: routePlan.origin.lng, title: routePlan.origin.name, zoom: 13 })}
-                  className="text-sm sm:text-base font-black text-white font-display truncate hover:text-emerald-400 transition cursor-pointer text-left"
-                  title={`View ${routePlan.origin.name} on map`}
-                >
-                  {routePlan.origin.name}
-                </button>
-                <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => onViewOnMap?.({ lat: routePlan.destination.lat, lng: routePlan.destination.lng, title: routePlan.destination.name, zoom: 13 })}
-                  className="text-sm sm:text-base font-black text-white font-display truncate hover:text-cyan-400 transition cursor-pointer text-left"
-                  title={`View ${routePlan.destination.name} on map`}
-                >
-                  {routePlan.destination.name}
-                </button>
-              </div>
+{sections.isExpanded('results') && (
+          <div
+            id="route-results-panel"
+            key={`route-results-panel-${calcKey}-${routePlan.id}`}
+            className="p-3 sm:p-4 space-y-2.5 sm:space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full"
+         >
+            {/* Actions only — the route summary (from → to, distance, time, cost,
+                safety) lives in UnifiedRouteReport below, so repeating it here
+                doubled every metric on the report. */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-800 pb-3">
+              <div className="min-w-0 flex items-center gap-2 flex-wrap">
+               <button
+                 type="button"
+                 onClick={handleEditLocations}
+                 className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition shadow-sm"
+                 title="Change route origin or destination"
+                 id="btn-change-location-results"
+               >
+                 <Edit3 className="w-3.5 h-3.5" />
+                 <span>Change Location</span>
+               </button>
+               <button
+                 type="button"
+                 onClick={handleNewRoute}
+                 className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition shadow-sm"
+                 title="Plan a new route"
+                 id="btn-new-route-results"
+               >
+                 <ArrowUpDown className="w-3.5 h-3.5" />
+                 <span className="hidden sm:inline">New Route</span>
+               </button>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-              {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} •{' '}
-              <span className="capitalize">{preference.replace('_', ' ')}</span> priority
-            </p>
-          </div>
+            <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+              {/* Expand / Reduce Report Button */}
+              <button
+                type="button"
+                onClick={() => setIsReportExpanded(!isReportExpanded)}
+                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+                title={isReportExpanded ? "Reduce Report" : "Expand Full Report"}
+              >
+                {isReportExpanded ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px]">Reduce</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px]">Expand</span>
+                  </>
+                )}
+              </button>
 
-          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
-            {/* Expand / Reduce Report Button */}
-            <button
-              type="button"
-              onClick={() => setIsReportExpanded(!isReportExpanded)}
-              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
-              title={isReportExpanded ? "Reduce Report" : "Expand Full Report"}
-            >
-              {isReportExpanded ? (
-                <>
-                  <ChevronUp className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-[11px]">Reduce</span>
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-[11px]">Expand</span>
-                </>
-              )}
-            </button>
+              {/* View/Full Map Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onToggleMapFull) {
+                    onToggleMapFull();
+                  } else if (onViewOnMap) {
+                    onViewOnMap();
+                  }
+                  const mapElem = document.getElementById('nepal-gis-canvas');
+                  if (mapElem) {
+                    mapElem.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+                title={isMapFull ? "Reduce Map View" : "Full Map View"}
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
+              </button>
 
-            {/* View/Full Map Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (onToggleMapFull) {
-                  onToggleMapFull();
-                } else if (onViewOnMap) {
-                  onViewOnMap();
-                }
-                const mapElem = document.getElementById('nepal-gis-canvas');
-                if (mapElem) {
-                  mapElem.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
-              title={isMapFull ? "Reduce Map View" : "Full Map View"}
-            >
-              <Navigation className="w-3.5 h-3.5" />
-              <span className="text-[11px]">{isMapFull ? 'Reduce Map' : 'Full Map'}</span>
-            </button>
-
-            <button
-              onClick={() => onShareTrip?.()}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
-              title="Share this trip"
-            >
-              <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-            </button>
+              <button
+                onClick={() => onShareTrip?.()}
+                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition"
+                title="Share this trip"
+              >
+                <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+              </button>
+            </div>
           </div>
 
           {/* PRIMARY ACTION ROW: the one thing most people want right after a route is found,
