@@ -5,9 +5,7 @@ import {
    UtensilsCrossed, Compass, Shield, Landmark, Info, CloudSun, CloudRain,
    CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell,
 } from 'lucide-react';
-import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
-import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { CityNode } from '../types';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';

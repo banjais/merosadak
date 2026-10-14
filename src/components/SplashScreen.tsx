@@ -6,17 +6,15 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady = false }) => {
-  const [progress, setProgress] = useState(0);
+const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('Initializing Map, Routes & Live Data…');
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const [showContent, setShowContent] = useState(false);
   const intervalRef = useRef<number | null>(null);
-  const hideTimeoutRef = useRef<number | null>(null);
+  const hideTimeoutRef = useRef<number | null>( null);
   const progressRef = useRef(0);
   const hasFinishedRef = useRef(false);
   const isMountedRef = useRef(true);
-  const startTimeRef = useRef(Date.now());
 
   const clearTimers = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -39,30 +37,23 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
       if (!isMountedRef.current) return;
       setIsHidden(true);
       if (onFinished) onFinished();
-    }, 700);
+    }, 400);
   }, [clearTimers, onFinished]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    startTimeRef.current = Date.now();
-
-    const timer = window.setTimeout(() => {
-      setShowContent(true);
-    }, 150);
-
-    return () => {
-      window.clearTimeout(timer);
-      isMountedRef.current = false;
-    };
+    return () => { isMountedRef.current = false; };
   }, []);
 
+  // The shell is a brand moment, not a loading gate. The app renders its real
+  // content underneath from the start (data states begin empty), so the splash
+  // must never hold the page hostage while a feed is in flight. It fades after
+  // a short, fixed window regardless of readiness.
   useEffect(() => {
-    if (hasFinishedRef.current || intervalRef.current !== null) return;
-
     let currentPct = progressRef.current;
     intervalRef.current = window.setInterval(() => {
       const increment = Math.floor(Math.random() * 8) + 4;
-      currentPct = Math.min(100, currentPct + increment);
+      currentPct = Math.min(99, currentPct + increment);
       progressRef.current = currentPct;
       setProgress(currentPct);
 
@@ -73,41 +64,27 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinished, isReady 
       } else if (currentPct < 85) {
         setStatusText('Syncing Live Incidents, Weather & Traffic…');
       } else {
-        setStatusText('Loading map……');
-      }
-
-      if (currentPct >= 100) {
-        if (intervalRef.current !== null) {
-          window.clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        const elapsed = Date.now() - startTimeRef.current;
-        const minDisplayTime = 3200;
-        const remainingDelay = Math.max(0, minDisplayTime - elapsed);
-        if (remainingDelay > 0) {
-          setTimeout(finishSplash, remainingDelay);
-        } else {
-          finishSplash();
-        }
+        setStatusText('Finishing load…');
       }
     }, 220);
 
+    const timer = window.setTimeout(() => finishSplash(), 1400);
+
     return () => {
+      window.clearTimeout(timer);
       if (intervalRef.current !== null) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      if (!hasFinishedRef.current) {
-        clearTimers();
-      }
     };
-  }, [clearTimers, finishSplash]);
+  }, [finishSplash]);
 
+  // The app no longer waits on this shell, so an `isReady` flag arriving late
+  // is a no-op rather than something that can re-trigger the fade.
   useEffect(() => {
-    if (isReady && progress >= 100 && !hasFinishedRef.current) {
-      finishSplash();
-    }
-  }, [isReady, progress, finishSplash]);
+    if (!isReady || hasFinishedRef.current) return;
+    finishSplash();
+  }, [isReady, finishSplash]);
 
   if (isHidden) return null;
 

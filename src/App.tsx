@@ -791,44 +791,55 @@ function AppContent() {
       )}
 
       {/* Lazily-loaded secondary pages. The fallback matches the app shell so
-          the transition does not flash a different background. */}
-      <Suspense fallback={<PageLoadingFallback label="Loading Distance Calculator…" />}>
+          the transition does not flash a different background. Each page gets
+          its own label — the old single fallback said "Loading Distance
+          Calculator" for every one of them, so opening the Highway Directory
+          or My Location read as if the distance tool were opening. */}
+      <Suspense fallback={<PageLoadingFallback label="Loading page…" />}>
         {isDistanceCalculatorOpen && (
-          <DistanceCalculatorPage
-            onBack={() => setIsDistanceCalculatorOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
+          <Suspense fallback={<PageLoadingFallback label="Loading Distance Calculator…" />}>
+            <DistanceCalculatorPage
+              onBack={() => setIsDistanceCalculatorOpen(false)}
+              textScale={textScale}
+              onTextScaleChange={setTextScale}
+              accentColor={accentColor}
+              onAccentColorChange={handleAccentColor}
+            />
+          </Suspense>
         )}
 
         {proofClaim && <ProofVerifyPage claim={proofClaim} onClose={() => setProofClaim(null)} />}
 
         {isMyLocationOpen && (
-          <MyLocationPage
-            onBack={() => setIsMyLocationOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
+          <Suspense fallback={<PageLoadingFallback label="Loading My Location…" />}>
+            <MyLocationPage
+              onBack={() => setIsMyLocationOpen(false)}
+              textScale={textScale}
+              onTextScaleChange={setTextScale}
+              accentColor={accentColor}
+              onAccentColorChange={handleAccentColor}
+            />
+          </Suspense>
         )}
 
         {isDataSourcesOpen && (
-          <DataSourcesPage
-            onBack={() => setIsDataSourcesOpen(false)}
-          />
+          <Suspense fallback={<PageLoadingFallback label="Loading Data Sources…" />}>
+            <DataSourcesPage
+              onBack={() => setIsDataSourcesOpen(false)}
+            />
+          </Suspense>
         )}
 
         {isHighwayInfoOpen && (
-          <HighwayDirectoryPage
-            onBack={() => setIsHighwayInfoOpen(false)}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            accentColor={accentColor}
-            onAccentColorChange={handleAccentColor}
-          />
+          <Suspense fallback={<PageLoadingFallback label="Loading Highway Directory…" />}>
+            <HighwayDirectoryPage
+              onBack={() => setIsHighwayInfoOpen(false)}
+              textScale={textScale}
+              onTextScaleChange={setTextScale}
+              accentColor={accentColor}
+              onAccentColorChange={handleAccentColor}
+            />
+          </Suspense>
         )}
       </Suspense>
 
