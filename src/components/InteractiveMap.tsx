@@ -201,7 +201,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [showLegend, setShowLegend] = useState(false);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
   const [showMapStyle, setShowMapStyle] = useState(false);
-  const [mapInteracted, setMapInteracted] = useState(false);
   // While following, every new GPS fix keeps the camera centred on the user.
   // A manual drag or zoom releases the camera but the position dot keeps
   // updating, so the map always shows where the user actually is.
@@ -220,9 +219,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
-  // Map activation state - controls when controls become visible
-  const [mapActive, setMapActive] = useState(false);
+  // Map activation state - controls when controls become visible. The controls
+  // start visible: hiding them behind a click meant desktop users who never
+  // tapped the canvas saw a dimmed map with no zoom, layers, or GPS button.
+  const [mapActive, setMapActive] = useState(true);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [mapInteracted, setMapInteracted] = useState(false);
 
   // Activate map when user interacts or location is detected
   const activateMap = useCallback(() => {
