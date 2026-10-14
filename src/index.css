@@ -1389,7 +1389,6 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 .card-3d-inner { position: relative; z-index: 1; }
 
 .swipe-card {
-  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -1401,13 +1400,28 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
   cursor: grabbing;
 }
 
+/* touch-action only applies to touch devices. On desktop it intercepts the
+   mouse wheel and kills page scroll, so leave the default there. */
+@media (pointer: coarse) {
+  .swipe-card {
+    touch-action: pan-y;
+  }
+}
+
 /* ===== REELS-STYLE 3D CARD STACK ===== */
+/* touch-action only applies to touch devices. On desktop it intercepts the
+   mouse wheel and kills page scroll, so leave the default there. */
+@media (pointer: coarse) {
+  .reel-stack {
+    touch-action: pan-y;
+  }
+}
+
 .reel-stack {
   position: relative;
   width: 100%;
   perspective: 1200px;
   perspective-origin: 50% 40%;
-  touch-action: pan-y;
   min-height: 12rem;
 }
 
