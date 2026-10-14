@@ -113,10 +113,15 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({ cities, onSelect
             </div>
             <input
               type="text"
+              name="merosadak-highway-filter"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Filter highways, e.g. NH01, Mahendra, Pokhara"
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              inputMode="text"
               className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 pl-10 pr-3.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
             />
           </div>

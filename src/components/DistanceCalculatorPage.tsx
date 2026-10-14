@@ -716,6 +716,7 @@ Not an official Department of Roads document.`;
                     </div>
                     <input
                       type="text"
+                      name="merosadak-dc-origin"
                       ref={originInputRef}
                       value={originSearch}
                       onChange={(event) => {
@@ -728,6 +729,10 @@ Not an official Department of Roads document.`;
                       }}
                       placeholder="Search origin..."
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      inputMode="text"
                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                     />
                     {originSearch && originId && (
@@ -773,6 +778,7 @@ isSearchingMaps={geocodingOrigin}
                     <input
                       ref={destInputRef}
                       type="text"
+                      name="merosadak-dc-dest"
                       value={destSearch}
                       onChange={(event) => {
                         setDestSearch(event.target.value);
@@ -784,6 +790,10 @@ isSearchingMaps={geocodingOrigin}
                       }}
                       placeholder="Search destination..."
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      inputMode="text"
                        className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl pl-10 pr-3.5 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium"
                     />
                     {destSearch && destId && (

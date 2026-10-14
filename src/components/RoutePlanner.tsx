@@ -1664,7 +1664,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <input
                 ref={singleSearchInputRef}
                 type="text"
+                name="merosadak-single-dest"
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                inputMode="text"
                 onChange={(e) => {
                   setSingleSearchQuery(e.target.value);
                   closeAllMenus('single');
@@ -1758,6 +1763,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                  <input
                    id="input-from-origin"
                    type="text"
+                   name="merosadak-origin"
                    ref={originInputRef}
                    value={originSearchQuery}
                    onChange={(e) => {
@@ -1772,6 +1778,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                    }}
                    placeholder='From where?'
                    autoComplete="off"
+                   autoCorrect="off"
+                   autoCapitalize="off"
+                   spellCheck="false"
+                   inputMode="text"
                    className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
                      originId
                        ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
@@ -1837,6 +1847,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   ref={destInputRef}
                   id="input-to-dest"
                   type="text"
+                  name="merosadak-dest"
                   value={destSearchQuery}
                    onChange={(e) => {
                      setDestSearchQuery(e.target.value);
@@ -1850,6 +1861,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                    }}
                       placeholder='Where to?'
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      inputMode="text"
                       className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
                         destId
                           ? 'bg-slate-950 border-2 border-cyan-500/60 focus:border-cyan-400'
@@ -1936,7 +1951,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <div className="flex items-center space-x-2">
               <input
                 type="text"
+                name="merosadak-ai-prompt"
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
                 value={aiPromptText}
                 onChange={(e) => setAiPromptText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleExecuteAiPrompt()}
