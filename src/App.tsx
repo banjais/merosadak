@@ -44,6 +44,7 @@ import {
   RoutePreference,
   RouteSimulationControls,
 } from './types';
+import { readFreshCachedGps, writeCachedGps } from './utils/gpsLocation';
 import {
   CITIES_AND_JUNCTIONS,
 } from './data/nepalHighwaysData';
@@ -185,16 +186,10 @@ function AppContent() {
   } | null>(() => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
       // Try to get cached GPS location for instant map centering
-      try {
-        const cached = sessionStorage.getItem('mero-sadak-gps');
-        if (cached) {
-          const { lat, lng, timestamp } = JSON.parse(cached);
-          // Use cached location if less than 5 minutes old
-          if (Date.now() - timestamp < 5 * 60 * 1000) {
-            return { lat, lng, title: 'Your Location', zoom: 12 };
-          }
-        }
-      } catch { /* ignore */ }
+      const cached = readFreshCachedGps();
+      if (cached) {
+        return { lat: cached.lat, lng: cached.lng, title: 'Your Location', zoom: 12 };
+      }
     }
     return null;
   });
@@ -209,20 +204,18 @@ function AppContent() {
   useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     if (focusedTarget) return; // Already have location
-    
+
     const handleSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
       const location = { lat: latitude, lng: longitude, title: 'Your Location', zoom: 12 };
       setFocusedTarget(location);
-      try {
-        sessionStorage.setItem('mero-sadak-gps', JSON.stringify({ lat: latitude, lng: longitude, timestamp: Date.now() }));
-      } catch { /* ignore */ }
+      writeCachedGps(latitude, longitude);
     };
-    
+
     const handleError = () => {
       // Keep default null, will show Nepal overview
     };
-    
+
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
       timeout: 8000,
       maximumAge: 60000,

@@ -108,6 +108,7 @@ import {
   getHighwayCatalogue,
 } from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
+import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
 
 /**
  * How many place suggestions a picker shows. A focused list beats a long one:
@@ -185,20 +186,67 @@ const getCityType = (city: CityNode): string => {
   return city.isMajorHub ? 'Municipality' : 'Rural Municipality';
 };
 
-const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[]): { city: CityNode; distanceKm: number } | null => {
-  if (!cities || cities.length === 0) {
-    return null;
-  }
-  let closestCity = cities[0];
+/**
+ * City types that name a real settlement you can route *from*. The expanded
+ * corpus also carries temples, tourist places, airports and bus stations; those
+ * are destinations, so snapping a GPS fix to "Kathmandu Durbar Square" produced
+ * a place the user was not actually standing in. Curated junctions have no
+ * cityType, so an unset type counts as a settlement.
+ */
+const SETTLEMENT_CITY_TYPES = new Set([
+  'metropolitan city',
+  'sub-metropolitan',
+  'sub metropolitan',
+  'municipality',
+  'rural municipality',
+  'highway town',
+  'city',
+  'town',
+  'village',
+]);
+
+const isSettlementCity = (city: CityNode): boolean => {
+  if (!city.cityType) return true;
+  return SETTLEMENT_CITY_TYPES.has(city.cityType.trim().toLowerCase());
+};
+
+/**
+ * Nearest entry in `cities` to a fix, optionally restricted to settlements.
+ * Returns null when the list is empty or nothing qualifies.
+ */
+const findNearestCity = (
+  lat: number,
+  lng: number,
+  cities: CityNode[],
+  predicate?: (city: CityNode) => boolean
+): { city: CityNode; distanceKm: number } | null => {
+  let closestCity: CityNode | null = null;
   let minDistKm = Infinity;
-  cities.forEach((city) => {
+  for (const city of cities) {
+    if (predicate && !predicate(city)) continue;
     const d = getDistanceKm(city.lat, city.lng, lat, lng);
     if (d < minDistKm) {
       minDistKm = d;
       closestCity = city;
     }
-  });
-  return { city: closestCity, distanceKm: minDistKm };
+  }
+  return closestCity ? { city: closestCity, distanceKm: minDistKm } : null;
+};
+
+/**
+ * The place a GPS fix should read as. Prefers the nearest real settlement, then
+ * the nearest surveyed highway junction, and only then anything else. This keeps
+ * the planner's "My Location" describing where the user is instead of whichever
+ * attraction happens to sit closest.
+ */
+const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[]): { city: CityNode; distanceKm: number } | null => {
+  if (!cities || cities.length === 0) {
+    return null;
+  }
+  return (
+    findNearestCity(lat, lng, cities, isSettlementCity) ||
+    findNearestCity(lat, lng, cities)
+  );
 };
 
 type DetailModuleTab =
@@ -703,6 +751,51 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
+  /**
+   * Apply one GPS fix to the planner: the raw coordinates, the nearest real
+   * settlement as the "from" place, and the nearest surveyed highway junction.
+   * Used by the auto-detect effect, by the cached fix it reuses, and by an
+   * explicit refresh, so all three paths resolve the same way.
+   */
+  const applyGpsFix = useCallback((latitude: number, lng: number) => {
+    if (!Number.isFinite(latitude) || !Number.isFinite(lng) || (latitude === 0 && lng === 0)) return;
+    setDetectedLocation({ lat: latitude, lng });
+
+    const result = findClosestCityFromCoords(latitude, lng, allCitiesRef.current);
+    if (result) {
+      setOriginId(result.city.id);
+      setGpsOriginCityId(result.city.id);
+      setGpsOriginDistanceKm(result.distanceKm);
+      setOriginSearchQuery(result.city.name);
+      setSingleSearchQuery(result.city.name);
+
+      const nearestJunction = findNearestHighwayJunction(latitude, lng);
+      if (nearestJunction.city && nearestJunction.distanceKm != null) {
+        setGpsNearestJunction({
+          name: nearestJunction.city.name,
+          distanceKm: nearestJunction.distanceKm,
+          connectedHighways: nearestJunction.city.connectedHighways,
+        });
+      }
+
+      const nearestHighway = findNearestHighwayFromCoords(latitude, lng);
+      if (nearestHighway) {
+        setGpsNearestHighway({
+          code: nearestHighway.highway!.code,
+          name: nearestHighway.highway!.name,
+          from: nearestHighway.segment!.from,
+          to: nearestHighway.segment!.to,
+          distanceKm: nearestHighway.distanceKm!,
+        });
+      }
+    } else {
+      setOriginId('');
+      setGpsOriginCityId('');
+      setGpsOriginDistanceKm(null);
+    }
+    setOriginSelected(true);
+  }, []);
+
   // Device Geolocation Auto-Detection
   // keepMenuOpen: when true (My Location card click), refresh GPS but leave
   // the "Change Origin" dropdown visible so the user can still switch origin.
@@ -744,9 +837,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
-          setDetectedLocation({ lat: latitude, lng: longitude });
+          // Publish the fix so the map and My Location see the same position.
+          writeCachedGps(latitude, longitude);
           // Attempt reverse geocoding to get explicit city name (e.g., Lalitpur)
-          let cityIdFromAddress = null;
+          let cityIdFromAddress: string | null = null;
           try {
             const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`, {
               headers: { 'Accept-Language': 'en' },
@@ -756,50 +850,32 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               const addr = revData.address || {};
               const cityName = addr.city || addr.town || addr.village || addr.suburb || addr.state_district;
               if (cityName) {
-                const match = allCitiesRef.current.find((c) => c.name.toLowerCase() === cityName.toLowerCase());
+                // Only a real settlement may override the nearest-place match;
+                // a tourist spot returned by reverse geocoding is not an origin.
+                const match = allCitiesRef.current.find(
+                  (c) => c.name.toLowerCase() === cityName.toLowerCase() && isSettlementCity(c)
+                );
                 if (match) cityIdFromAddress = match.id;
               }
             }
           } catch (e) {
             console.error('Reverse geocode failed', e);
           }
+
           const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-          const chosenCityId = cityIdFromAddress || (result ? result.city.id : '');
-if (cityIdFromAddress) {
-  setOriginId(cityIdFromAddress);
-  setGpsOriginCityId(cityIdFromAddress);
-  setGpsOriginDistanceKm(result ? result.distanceKm : null);
-}
-                     else if (result) {
-            setOriginId(result.city.id);
-            setGpsOriginCityId(result.city.id);
-            setGpsOriginDistanceKm(result.distanceKm);
-
-            const nearestJunction = findNearestHighwayJunction(latitude, longitude);
-            if (nearestJunction.city && nearestJunction.distanceKm != null) {
-              setGpsNearestJunction({
-                name: nearestJunction.city.name,
-                distanceKm: nearestJunction.distanceKm,
-                connectedHighways: nearestJunction.city.connectedHighways,
-              });
-            }
-
-            const nearestHighway = findNearestHighwayFromCoords(latitude, longitude);
-            if (nearestHighway) {
-              setGpsNearestHighway({
-                code: nearestHighway.highway!.code,
-                name: nearestHighway.highway!.name,
-                from: nearestHighway.segment!.from,
-                to: nearestHighway.segment!.to,
-                distanceKm: nearestHighway.distanceKm!,
-              });
-            }
-          } else {
+          applyGpsFix(latitude, longitude);
+          // The reverse-geocode name wins only when it names a settlement that
+          // the corpus knows; otherwise the nearest-settlement match stands.
+          if (cityIdFromAddress) {
+            setOriginId(cityIdFromAddress);
+            setGpsOriginCityId(cityIdFromAddress);
+            setGpsOriginDistanceKm(result ? result.distanceKm : null);
+          } else if (!result) {
             setOriginId('');
             setGpsOriginCityId('');
             setGpsOriginDistanceKm(null);
           }
-setOriginSelected(true);
+
           if (!keepMenuOpen) setIsLocationMenuOpen(false);
           setLocationPermissionDenied(false);
         },
@@ -821,51 +897,28 @@ setOriginSelected(true);
   // Auto-detect GPS on mount: ask permission if not yet decided.
   // Once detected, the GPS location is a permanent "fact" — it is not
   // cleared or overridden when the user picks a different "from" city.
+  //
+  // The fix is shared with the map and My Location through the session-storage
+  // cache, so all three surfaces describe the same position. A cached fix is
+  // applied first so the planner matches what My Location already showed, then
+  // a fresh fix replaces it.
   useEffect(() => {
     if (!navigator.geolocation) return;
     if (gpsAutoDetectAttemptedRef.current) return;
-    if (detectedLocation) return;
 
     gpsAutoDetectAttemptedRef.current = true;
+
+    // A fix another surface already found is applied immediately so the planner
+    // agrees with My Location and the map before a new fix arrives.
+    const cached = readFreshCachedGps();
+    if (cached) applyGpsFix(cached.lat, cached.lng);
 
     const tryAutoDetect = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          setDetectedLocation({ lat: latitude, lng: longitude });
-          const result = findClosestCityFromCoords(latitude, longitude, allCitiesRef.current);
-          if (result) {
-            setOriginId(result.city.id);
-            setGpsOriginCityId(result.city.id);
-            setGpsOriginDistanceKm(result.distanceKm);
-            setOriginSearchQuery(result.city.name);
-            setSingleSearchQuery(result.city.name);
-            const nearestJunction = findNearestHighwayJunction(latitude, longitude);
-            if (nearestJunction.city && nearestJunction.distanceKm != null) {
-              setGpsNearestJunction({
-                name: nearestJunction.city.name,
-                distanceKm: nearestJunction.distanceKm,
-                connectedHighways: nearestJunction.city.connectedHighways,
-              });
-            }
-
-            const nearestHighway = findNearestHighwayFromCoords(latitude, longitude);
-            if (nearestHighway) {
-              setGpsNearestHighway({
-                code: nearestHighway.highway!.code,
-                name: nearestHighway.highway!.name,
-                from: nearestHighway.segment!.from,
-                to: nearestHighway.segment!.to,
-                distanceKm: nearestHighway.distanceKm!,
-              });
-            }
-          } else {
-            setOriginId('');
-            setGpsOriginCityId('');
-            setGpsOriginDistanceKm(null);
-          }
-          setOriginSelected(true);
-          setIsLocationMenuOpen(false);
+          writeCachedGps(latitude, longitude);
+          applyGpsFix(latitude, longitude);
         },
         () => {
           // Permission denied or error — user can still pick manually
@@ -880,6 +933,9 @@ setOriginSelected(true);
       .then((cities) => {
         allCitiesRef.current = cities;
         setAllCities(cities);
+        // The cached fix was matched against whatever was loaded at the time;
+        // re-resolve it now that the full corpus is in.
+        if (cached) applyGpsFix(cached.lat, cached.lng);
       })
       .catch(() => {
         // Fallback to cached cities
@@ -1457,16 +1513,24 @@ setOriginSelected(true);
                 </span>
               </div>
               <div className="text-[11px] text-slate-400 truncate mt-0.5">
-
-
-
-
-
-
-
-
-
+                {locationMode === 'my_location'
+                  ? (detectedLocation
+                      ? (gpsOriginCity
+                          ? (gpsOriginCity.district || gpsOriginCity.province
+                              ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
+                              : 'Position detected')
+                          : 'Coordinates acquired')
+                      : 'Tap the card to set your origin')
+                  : 'Choose a "from" place to start planning'}
               </div>
+              {detectedLocation && locationMode === 'my_location' && (
+                <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
+                  {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
+                  {gpsNearestJunction?.name && (
+                    <span className="text-slate-500"> · near {gpsNearestJunction.name}</span>
+                  )}
+                </div>
+              )}
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
                 <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
                   Near {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away

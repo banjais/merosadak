@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
+import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
 import { CityNode } from '../types';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
 import { TextScale } from '../hooks/useTextScale';
@@ -254,6 +255,7 @@ export const MyLocationPage: React.FC<{
           nearestHighway,
           nearestJunction: junctionInfo,
         }));
+        writeCachedGps(lat, lng);
         setLoading(false);
       },
       (err) => {
@@ -266,26 +268,21 @@ export const MyLocationPage: React.FC<{
 
   // Load cached location if available, otherwise request fresh location
   useEffect(() => {
-    const cached = sessionStorage.getItem('mero-sadak-gps');
+    const cached = readFreshCachedGps();
     if (cached) {
-      try {
-        const { lat, lng, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 5 * 60 * 1000) {
-          setLocationInfo({
-            lat,
-            lng,
-            accuracy: null,
-            address: null,
-            formattedAddress: null,
-            nearestHighway: null,
-            nearestJunction: { city: null, distanceKm: null },
-          });
-          setLoading(false);
-          // Refresh in background to get up‑to‑date data
-          refreshLocation();
-          return;
-        }
-      } catch {}
+      setLocationInfo({
+        lat: cached.lat,
+        lng: cached.lng,
+        accuracy: null,
+        address: null,
+        formattedAddress: null,
+        nearestHighway: null,
+        nearestJunction: { city: null, distanceKm: null },
+      });
+      setLoading(false);
+      // Refresh in background to get up‑to‑date data
+      refreshLocation();
+      return;
     }
     // No valid cache, request fresh location
     refreshLocation();
