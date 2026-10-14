@@ -670,7 +670,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
    */
   const originHighwayGroups = useMemo(() => buildCorridorGroups(originSearchQuery), [originSearchQuery, corridorVersion]);
   const destHighwayGroups = useMemo(() => buildCorridorGroups(destSearchQuery), [destSearchQuery, corridorVersion]);
-  const singleHighwayGroups = useMemo(() => buildCorridorGroups(singleSearchQuery), [singleSearchQuery, corridorVersion]);
 
   /**
    * A place picked from the highway browser fills the destination when the
@@ -1677,8 +1676,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     if (hasCalculated) setNeedsRecalculation(true);
                   }}
                   totalMatches={singleMatchCount}
-                  showTouchLegend
-                  highwayGroups={singleHighwayGroups}
                 />
               )}
           </div>
