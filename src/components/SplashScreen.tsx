@@ -68,7 +68,7 @@ const [progress, setProgress] = useState(0);
       }
     }, 220);
 
-    const timer = window.setTimeout(() => finishSplash(), 1400);
+    const timer = window.setTimeout(() => finishSplash(), 700);
 
     return () => {
       window.clearTimeout(timer);
