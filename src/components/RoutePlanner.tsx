@@ -1567,24 +1567,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <span className="hidden sm:inline">Info</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLocationMenuOpen((prev) => !prev);
-              }}
-              className="px-3 py-2 rounded-xl border border-emerald-500/40 bg-emerald-950/60 hover:bg-emerald-900/70 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-              title="Change location options"
-              id="btn-change-location-header"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-              <span>Change</span>
-            </button>
           </div>
         </div>
 
-        {/* Location Dropdown Options Menu */}
+        {/* Location Dropdown Options Menu — the only place to change origin.
+           The card header itself (ChevronDown) opens it, so the separate
+           "Change" button is gone: one entry point, clean UI. */}
         {isLocationMenuOpen && (
           <div className="mt-3.5 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
             <button
@@ -1599,7 +1587,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                 locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
               }`}>
-                <LocateFixed className="w-4 h-4" />
+                <ArrowUpDown className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-white flex items-center gap-1.5">
@@ -1626,7 +1614,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               }`}
             >
               <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4" />
+                <ArrowUpDown className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-white flex items-center gap-1.5">
