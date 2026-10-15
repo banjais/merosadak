@@ -1363,29 +1363,47 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       <div className="space-y-3">
       {/* 1. MY LOCATION CARD - Always visible */}
       <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div
-            onClick={() => setIsLocationMenuOpen((prev) => !prev)}
-            id="btn-my-location-toggle"
-            className="flex items-center space-x-3 group select-none rounded-2xl px-3.5 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
-            title="Click to view location options or change origin"
-            role="button"
-            aria-expanded={isLocationMenuOpen}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
-              (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
-            }`}>
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Location icon — separate from the text, so it can switch live
+                tracking on its own while the text still opens the menu. */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (locationMode === 'my_location') {
+                  if (liveTracking) stopTracking();
+                  else restartTracking();
+                }
+                setIsLocationMenuOpen((prev) => !prev);
+              }}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
+                (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
+                  : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}
+              title={locationMode === 'my_location'
+                ? (liveTracking ? 'Stop following your position (saves battery)' : 'Start following your position')
+                : 'Open location options'}
+              id="btn-my-location-icon"
+            >
               {locationMode === 'my_location' && detectedLocation ? (
-                <LocateFixed className="w-5 h-5 text-emerald-400" />
+                <LocateFixed className={`w-5 h-5 ${liveTracking ? 'animate-pulse text-emerald-400' : 'text-emerald-400'}`} />
               ) : originCity ? (
                 <MapPin className="w-5 h-5 text-emerald-400" />
               ) : (
                 <Crosshair className="w-5 h-5 text-slate-400" />
               )}
-            </div>
-            <div className="min-w-0 flex-1">
+            </button>
+
+            <div
+              onClick={() => setIsLocationMenuOpen((prev) => !prev)}
+              id="btn-my-location-toggle"
+              className="flex items-center space-x-3 group select-none rounded-2xl px-3.5 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
+              title="Click to view location options or change origin"
+              role="button"
+              aria-expanded={isLocationMenuOpen}
+            >
+              <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-white truncate">
                   {locationMode === 'my_location'
@@ -1458,32 +1476,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               >
                 <Navigation className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Show on Map</span>
-              </button>
-            )}
-
-            {locationMode === 'my_location' && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (liveTracking) {
-                    stopTracking();
-                  } else {
-                    restartTracking();
-                  }
-                }}
-                className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
-                  liveTracking
-                    ? 'border-emerald-600/60 bg-emerald-950/80 text-emerald-300 hover:bg-emerald-900/70'
-                    : 'border-slate-600 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-                title={liveTracking
-                  ? 'Stop following your position (saves battery)'
-                  : 'Start following your position again'}
-                id="btn-toggle-live-tracking"
-              >
-                <Crosshair className={`w-3.5 h-3.5 ${liveTracking ? 'animate-pulse text-emerald-400' : ''}`} />
-                <span>{liveTracking ? 'Live' : 'Paused'}</span>
               </button>
             )}
 
