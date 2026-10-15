@@ -1575,6 +1575,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
       </div>
 
+      {/* Search coverage banner — one running line on the plain area, shared by
+          every dropdown, so the count is seen once and never repeated per box. */}
+      {deckId === 'search' && !hasCalculated && (
+        <div className="text-center text-[11px] text-slate-400 py-1">
+          Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+        </div>
+      )}
+
       {speechTranscriptNotice && (
         <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2">
           <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />

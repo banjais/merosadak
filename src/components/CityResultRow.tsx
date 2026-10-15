@@ -265,16 +265,6 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-[900] max-h-72 overflow-y-auto">
-      {searchablePlaceCount != null && searchablePlaceCount > 0 && (
-        <div className="px-3 pt-2 pb-1.5 text-[10px] text-slate-500 border-b border-slate-800/80">
-          Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. One letter is enough to start.
-        </div>
-      )}
-      {query.trim().length < 1 && (
-        <div className="px-4 pt-2 pb-1 text-center text-[11px] text-slate-400">
-          Start typing a place name — cities and palikas
-        </div>
-      )}
       {query.trim().length >= 1 && showTouchLegend && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-1.5 pb-2 border-b border-slate-800/80 text-[9px] text-slate-500">
           <span className="uppercase tracking-[0.12em] font-bold">Highway</span>
