@@ -237,7 +237,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // One shared device watcher. The map, the planner and My Location all read
   // this, so they cannot show different positions and the dot moves as the user
   // walks or drives.
-  const { fix, watching, error: locationError, accuracyLabel, restart } = useDeviceLocation();
+  const { fix, error: locationError, restart } = useDeviceLocation();
 
   const gpsDetected = !!fix;
   const gpsCoords = fix ? { lat: fix.lat, lng: fix.lng } : null;
@@ -1342,11 +1342,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {gpsDetected ? <LocateFixed className="w-5 h-5" /> : <Locate className="w-5 h-5" />}
           </button>
 
-          {gpsDetected && accuracyLabel && (
-            <div className="absolute top-[52px] right-0 z-[999] rounded-full border border-emerald-500/30 bg-emerald-950/80 px-2 py-0.5 text-[9px] font-bold text-emerald-300 backdrop-blur-xl">
-              {watching ? 'LIVE' : 'FIXED'} {accuracyLabel}
-            </div>
-          )}
           {!gpsDetected && locationError && (
             <div className="absolute top-[52px] right-0 z-[999] max-w-[9rem] rounded-full border border-rose-500/30 bg-rose-950/80 px-2 py-0.5 text-[9px] font-bold text-rose-300 backdrop-blur-xl">
               No GPS fix
