@@ -275,19 +275,14 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
           will-change: transform;
         }
       `}</style>
-      {query.trim().length < 1 && (
-        <div className="px-4 pt-2 pb-1 text-center text-[11px] text-slate-400">
-          Start typing a place name, or a highway code like NH01
-        </div>
-      )}
       {searchablePlaceCount != null && searchablePlaceCount > 0 && (
-        <div className="overflow-hidden whitespace-nowrap border-y border-slate-800/60 bg-slate-950/60">
+        <div className="overflow-hidden whitespace-nowrap border-b border-slate-800/60 bg-slate-950/60">
           <div className="mero-marquee-track inline-flex">
             <span className="px-3 text-[10px] text-slate-500">
-              Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
+              Start typing a place name, or a highway code like NH01 · Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
             </span>
             <span className="px-3 text-[10px] text-slate-500">
-              Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
+              Start typing a place name, or a highway code like NH01 · Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
             </span>
           </div>
         </div>
