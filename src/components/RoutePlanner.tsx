@@ -1827,9 +1827,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           ))}
 
-          {/* Browse by highway — for users who know the road, not the town */}
-          {deckId === 'search' && !hasCalculated && (
-            <div className="flex flex-wrap items-center gap-2">
+          {/* Browse by highway — for users who know the road, not the town.
+              Not tied to the search deck: it stays in reach even while the map
+              is being inspected, so the hint is never hidden behind a deck
+              switch. */}
+          <div className="flex flex-wrap items-center gap-2">
               <p className="text-[11px] text-slate-400">
                 {searchablePlaceCount > 0
                   ? `Searching ${searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.`
@@ -1843,14 +1845,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 onClick={() => setIsBrowserOpen(true)}
                 className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500/20"
               >
-                <MapPin className="w-3.5 h-3.5" />
+<MapPin className="w-3.5 h-3.5" />
                 Browse by highway
               </button>
             </div>
-          )}
 
-         {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
-        {deckId === 'search' && !hasCalculated && isAiPromptOpen && (
+          {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
+          {deckId === 'search' && !hasCalculated && isAiPromptOpen && (
           <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
