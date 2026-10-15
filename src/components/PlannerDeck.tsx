@@ -1,6 +1,5 @@
 import React, { useCallback, useRef } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/haptic';
 
 const SWIPE_DISTANCE = 72;
@@ -79,40 +78,6 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({ items, activeId, onCha
 
   return (
     <div className="reel-stack reel-stack--tall">
-      {/* Card switcher */}
-      <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
-        <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          <span className="shrink-0 text-slate-300">
-            {activeIndex + 1}/{items.length}
-          </span>
-          <span className="max-w-[12rem] truncate font-semibold normal-case tracking-normal text-slate-400">
-            {active.label}
-          </span>
-        </div>
-        {items.length > 1 && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              aria-label="Previous section"
-              onClick={() => goTo(activeIndex - 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
-              disabled={activeIndex === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next section"
-              onClick={() => goTo(activeIndex + 1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
-              disabled={activeIndex === items.length - 1}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
       <div className="reel-stack-stage">
         <motion.div
           className="reel-card-slot is-active"

@@ -1348,14 +1348,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           onClose={() => setIsBrowserOpen(false)}
         />
       )}
-      {/* AI Parsing Message Banner */}
-      {aiParseMessage && (
-        <div className="bg-cyan-950/90 border border-cyan-500/50 p-3 rounded-2xl flex items-center space-x-2 text-xs text-cyan-200 animate-fadeIn shadow-lg">
-          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-          <span className="font-medium">{aiParseMessage}</span>
-        </div>
-      )}
-
       {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
       <PlannerDeck
         items={[
