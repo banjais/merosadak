@@ -267,12 +267,12 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-[900] max-h-72 overflow-y-auto">
       {searchablePlaceCount != null && searchablePlaceCount > 0 && (
         <div className="px-3 pt-2 pb-1.5 text-[10px] text-slate-500 border-b border-slate-800/80">
-          Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
+          Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. One letter is enough to start.
         </div>
       )}
       {query.trim().length < 1 && (
         <div className="px-4 pt-2 pb-1 text-center text-[11px] text-slate-400">
-          Start typing a place name, or a highway code like NH01
+          Start typing a place name — cities and palikas
         </div>
       )}
       {query.trim().length >= 1 && showTouchLegend && (
