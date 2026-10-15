@@ -1456,16 +1456,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
           {/* Quick Action Buttons on Location Card */}
           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            <button
-              type="button"
-              onClick={handleShowLocationOnMap}
-              className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-              title="Show location on map"
-              id="btn-show-location-map"
-            >
-              <Navigation className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Show on Map</span>
-            </button>
+            {hasCalculated && (
+              <button
+                type="button"
+                onClick={handleShowLocationOnMap}
+                className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                title="Show location on map"
+                id="btn-show-location-map"
+              >
+                <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Show on Map</span>
+              </button>
+            )}
 
             {locationMode === 'my_location' && (
               <button
