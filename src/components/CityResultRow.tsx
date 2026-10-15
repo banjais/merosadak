@@ -359,11 +359,7 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
         <div className="px-4 py-2 text-center text-xs text-slate-500">
           Start typing a place name, or a highway code like NH01
         </div>
-      ) : (
-        <div className="px-4 py-2 text-center text-xs text-slate-500">
-          No matching locations found
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };

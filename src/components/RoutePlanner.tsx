@@ -819,9 +819,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       } else if (originSearchQueryRef.current === previousGpsNameRef.current) {
         setOriginSearchQuery(resolvedName);
       }
-      if (singleSearchQueryRef.current.trim() === '') {
-        setSingleSearchQuery(resolvedName);
-      }
+      // The destination box is the user's to type into. A live GPS fix must
+      // never seed it, otherwise the dropdown's "start typing" hint and the
+      // clear button both appear before the user has done anything.
       previousGpsNameRef.current = resolvedName;
 
       const nearestJunction = findNearestHighwayJunction(latitude, lng);
@@ -1716,30 +1716,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                        : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
                    }`}
                 />
-                 <button
-                  onClick={() => startVoiceRecognition('origin')}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
-                    listeningTarget === 'origin'
-                      ? 'bg-rose-500 text-white animate-pulse'
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                  }`}
-                  title="Voice input for Origin"
-                  aria-label="Voice input for origin"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-                {(originSearchQuery || originId) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleClearOrigin(); }}
-                    className="absolute right-11 top-1/2 -translate-y-1/2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition touch-target"
-                    title="Clear origin"
-                    aria-label="Clear origin"
-                    type="button"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+<button
+                   onClick={() => startVoiceRecognition('origin')}
+                   className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
+                     listeningTarget === 'origin'
+                       ? 'bg-rose-500 text-white animate-pulse'
+                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                   }`}
+                   title="Voice input for Origin"
+                   aria-label="Voice input for origin"
+                 >
+                   <Mic className="w-4 h-4" />
+                 </button>
+               </div>
 
               {isOriginDropdownOpen && (
                 <CitySuggestionDropdown
