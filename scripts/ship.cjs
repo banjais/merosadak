@@ -64,7 +64,9 @@ try {
   run('git rebase', 'git rebase --autostash origin/main', { allowFailure: true });
 
   run('deploy worker', 'npm run worker:deploy', { allowFailure: true });
-  run('sync:data', 'npm run sync:data', { allowFailure: true });
+  // Changed-only sync: Cloudflare's free KV tier caps writes at 1,000/day, so
+  // re-uploading all ~19 keys on every push burned the quota and failed CI.
+  run('sync:data', 'node worker/sync-data-changed.js', { allowFailure: true });
   run('sync:fuel', 'npm run sync:fuel', { allowFailure: true });
   run('sync:tolls', 'npm run sync:tolls', { allowFailure: true });
   run('sync:all-tolls', 'npm run sync:all-tolls', { allowFailure: true });
