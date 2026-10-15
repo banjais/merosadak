@@ -1412,6 +1412,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         : 'My Location (GPS)')
                     : (originCity ? originCity.name : 'Choose Origin Location')}
                 </span>
+                {onOpenMyLocation && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenMyLocation();
+                    }}
+                    className="shrink-0 text-sky-400 hover:text-sky-300 transition"
+                    title="Location details & nearby facilities"
+                    id="btn-location-info"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider shrink-0 ${
                   locationMode === 'my_location'
                     ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
@@ -1476,22 +1490,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               >
                 <Navigation className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Show on Map</span>
-              </button>
-            )}
-
-            {onOpenMyLocation && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenMyLocation();
-                }}
-                className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-                title="Location details & nearby facilities"
-                id="btn-location-info"
-              >
-                <Info className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline">Info</span>
               </button>
             )}
           </div>
