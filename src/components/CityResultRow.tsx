@@ -152,6 +152,11 @@ interface CitySuggestionDropdownProps {
   /** A geocode lookup for the typed query is in flight. */
   isSearchingMaps?: boolean;
   /**
+   * Total searchable places in the live corpus, shown as a running banner so the
+   * dropdown says what it is searching over even before the user types.
+   */
+  searchablePlaceCount?: number;
+  /**
    * Group results under a district heading and surface how many highways each
    * district's places join. A route is defined by the highways it connects, so
    * this answers "which of these can I actually leave from" faster than a flat
@@ -250,6 +255,7 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   highwayGroups = [],
   onSelectHighway,
   totalMatches,
+  searchablePlaceCount,
   showTouchLegend = false,
 }) => {
   const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
@@ -259,6 +265,11 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[900] max-h-64 overflow-y-auto space-y-1">
+      {searchablePlaceCount != null && searchablePlaceCount > 0 && (
+        <div className="px-3 pt-2 pb-1.5 text-[10px] text-slate-500 border-b border-slate-800/80">
+          Searching {searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.
+        </div>
+      )}
       {showTouchLegend && query.trim().length >= 1 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-1.5 pb-2 border-b border-slate-800/80 text-[9px] text-slate-500">
           <span className="uppercase tracking-[0.12em] font-bold">Highway</span>

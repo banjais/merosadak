@@ -106,7 +106,6 @@ import {
   searchHighways,
   preloadHighwayCatalogue,
   getHighwayCatalogue,
-  describeHighwayCoverage,
 } from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
@@ -1667,6 +1666,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <CitySuggestionDropdown
                   query={singleSearchQuery}
                   results={filteredSingleCities}
+                  searchablePlaceCount={searchablePlaceCount}
                   onSelect={(city) => {
                     setDestId(city.id);
                     setSingleSearchQuery(city.name);
@@ -1734,6 +1734,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <CitySuggestionDropdown
                   query={originSearchQuery}
                   results={filteredOriginCities}
+                  searchablePlaceCount={searchablePlaceCount}
                   onSelect={handleSelectOrigin}
                   totalMatches={originMatchCount}
                   showTouchLegend
@@ -1813,10 +1814,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 )}
               </div>
 
-              {isDestDropdownOpen && (
+{isDestDropdownOpen && (
                 <CitySuggestionDropdown
                   query={destSearchQuery}
                   results={filteredDestCities}
+                  searchablePlaceCount={searchablePlaceCount}
                   onSelect={handleSelectDestination}
                   totalMatches={destMatchCount}
                   showTouchLegend
@@ -1827,28 +1829,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           ))}
 
+{/* The "Searching N places …" banner and the "Start typing a place
+              name, or a highway code like NH01" hint live inside each dropdown
+              (CitySuggestionDropdown), so they appear with the search bar and
+              disappear together when a selection is made. */}
+
           {/* Browse by highway — for users who know the road, not the town.
-              Not tied to the search deck: it stays in reach even while the map
-              is being inspected, so the hint is never hidden behind a deck
-              switch. */}
-          <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[11px] text-slate-400">
-                {searchablePlaceCount > 0
-                  ? `Searching ${searchablePlaceCount.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.`
-                  : 'Search cities, palikas and highway towns. One letter is enough to start.'}
-                {highwayCount > 0 && (
-                  <> Or browse towns on the {describeHighwayCoverage().toLowerCase()}.</>
-                )}
-              </p>
+              Kept outside the dropdown so it stays in reach even while the map
+              is being inspected. */}
+          {highwayCount > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <button
                 type="button"
                 onClick={() => setIsBrowserOpen(true)}
                 className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500/20"
               >
-<MapPin className="w-3.5 h-3.5" />
+                <MapPin className="w-3.5 h-3.5" />
                 Browse by highway
               </button>
             </div>
+          )}
 
           {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
           {deckId === 'search' && !hasCalculated && isAiPromptOpen && (

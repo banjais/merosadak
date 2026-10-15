@@ -12,7 +12,6 @@ import {
   searchHighways,
   preloadHighwayCatalogue,
   getHighwayCatalogue,
-  describeHighwayCoverage,
 } from '../utils/highwayCatalogue';
 import { formatDistanceKm } from '../utils/formatDistance';
 import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
@@ -690,15 +689,7 @@ Not an official Department of Roads document.`;
                 </div>
               </div>
               {highwayCount > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[11px] text-slate-400">
-                    {allCities.length > 0
-                      ? `Searching ${allCities.length.toLocaleString('en-US')} places — cities, palikas and highway towns. One letter is enough to start.`
-                      : 'Search cities, palikas and highway towns. One letter is enough to start.'}
-                    {highwayCount > 0 && (
-                      <> Or browse towns on the {describeHighwayCoverage().toLowerCase()}.</>
-                    )}
-                  </p>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <button
                     type="button"
                     onClick={() => setBrowserOpen(true)}
@@ -746,16 +737,17 @@ Not an official Department of Roads document.`;
                       </button>
                     )}
                   </div>
-                  {originDropdownOpen && (
+{originDropdownOpen && (
                     <CitySuggestionDropdown
                       query={originSearch}
                       results={filteredOriginCities}
-isSearchingMaps={geocodingOrigin}
-                          groupByDistrict
-                          highwayGroups={originHighwayGroups}
-                          totalMatches={originMatchCount}
-                          showTouchLegend
-                          onSelect={(city) => handleSelectOrigin(city.id)}
+                      searchablePlaceCount={allCities.length}
+                      isSearchingMaps={geocodingOrigin}
+                      groupByDistrict
+                      highwayGroups={originHighwayGroups}
+                      totalMatches={originMatchCount}
+                      showTouchLegend
+                      onSelect={(city) => handleSelectOrigin(city.id)}
                     />
                   )}
                 </div>
@@ -807,16 +799,17 @@ isSearchingMaps={geocodingOrigin}
                       </button>
                     )}
                   </div>
-                  {destDropdownOpen && (
+{destDropdownOpen && (
                     <CitySuggestionDropdown
                       query={destSearch}
                       results={filteredDestCities}
-isSearchingMaps={geocodingDest}
-                          groupByDistrict
-                          highwayGroups={destHighwayGroups}
-                          totalMatches={destMatchCount}
-                          showTouchLegend
-                          onSelect={(city) => handleSelectDest(city.id)}
+                      searchablePlaceCount={allCities.length}
+                      isSearchingMaps={geocodingDest}
+                      groupByDistrict
+                      highwayGroups={destHighwayGroups}
+                      totalMatches={destMatchCount}
+                      showTouchLegend
+                      onSelect={(city) => handleSelectDest(city.id)}
                     />
                   )}
                 </div>
