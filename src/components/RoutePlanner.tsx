@@ -1887,7 +1887,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 value={aiPromptText}
                 onChange={(e) => setAiPromptText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleExecuteAiPrompt()}
-                placeholder="e.g. Scenic motorcycle trip from Kathmandu to Pokhara avoiding steep climbs..."
+                placeholder="Describe your route, e.g. scenic ride avoiding steep climbs"
                 className="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
               />
               <button
