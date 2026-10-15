@@ -258,7 +258,7 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   const hiddenCount = totalMatches != null ? Math.max(0, totalMatches - shownCount) : 0;
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[9999] max-h-72 overflow-y-auto space-y-1">
+    <div className="absolute top-full left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-2 z-[900] max-h-64 overflow-y-auto space-y-1">
       {showTouchLegend && query.trim().length >= 1 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-1.5 pb-2 border-b border-slate-800/80 text-[9px] text-slate-500">
           <span className="uppercase tracking-[0.12em] font-bold">Highway</span>
@@ -356,11 +356,11 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
           )}
         </>
       ) : query.trim().length < 1 ? (
-        <div className="px-4 py-6 text-center text-xs text-slate-500">
+        <div className="px-4 py-2 text-center text-xs text-slate-500">
           Start typing a place name, or a highway code like NH01
         </div>
       ) : (
-        <div className="px-4 py-6 text-center text-xs text-slate-500">
+        <div className="px-4 py-2 text-center text-xs text-slate-500">
           No matching locations found
         </div>
       )}
