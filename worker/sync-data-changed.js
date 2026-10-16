@@ -84,6 +84,41 @@ function cfApi(token, accountId, namespaceId, method, pathSuffix, body) {
   });
 }
 
+/**
+ * Raw GET that returns the response body as-is. Cloudflare KV stores
+ * `.sha256` digest values as plain text (not JSON-wrapped), so GETting them
+ * back yields a bare hex string that `JSON.parse` rejects.
+ */
+function getRaw(token, accountId, namespaceId, pathSuffix) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.cloudflare.com',
+      path: `/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}${pathSuffix}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
+        if (res.statusCode === 404) {
+          resolve(null);
+          return;
+        }
+        if (res.statusCode >= 400) {
+          reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 function putKey(token, accountId, namespaceId, key, value) {
   return cfApi(token, accountId, namespaceId, 'PUT', `/values/${encodeURIComponent(key)}`, value);
 }
@@ -144,7 +179,7 @@ async function main() {
     // Read the stored digest to decide whether the file actually changed.
     let storedDigest = null;
     try {
-      storedDigest = await cfApi(token, accountId, namespaceId, 'GET', `/values/${encodeURIComponent(digestKey)}`);
+      storedDigest = await getRaw(token, accountId, namespaceId, `/values/${encodeURIComponent(digestKey)}`);
       if (typeof storedDigest === 'string') storedDigest = storedDigest.trim();
     } catch (e) {
       // 404 / not found is fine — the digest has never been written.
