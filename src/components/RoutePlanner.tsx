@@ -1617,7 +1617,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
                   }`}
-                  title="Voice search destination — English (en-US) or Nepali (ne-NP)"
+                  title="Voice search"
                   id="btn-voice-search-single"
                 >
                   <Mic className="w-4 h-4 text-emerald-400" />
@@ -1634,7 +1634,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-md shadow-cyan-500/10'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
                   }`}
-                  title="AI Smart Route & Natural Language Query Assistant"
+                  title="AI assistant"
                   id="btn-ai-prompt-single"
                 >
                   <Sparkles className="w-4 h-4 text-cyan-400" />
@@ -1646,6 +1646,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     type="button"
                     onClick={() => setIsBrowserOpen(true)}
                     className="p-1.5 rounded-lg border text-xs transition bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700"
+                    title="Browse by highway"
                     id="btn-browse-highway-single"
                   >
                     <MapPin className="w-4 h-4 text-amber-400" />
