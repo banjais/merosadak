@@ -1407,7 +1407,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     ? (detectedLocation
                         ? (gpsOriginCity ? gpsOriginCity.name : 'GPS Location Acquired')
                         : 'My Location (GPS)')
-                    : (originCity ? originCity.name : 'Choose Origin Location')}
+                    : (originCity ? originCity.name : 'My Location')}
                 </span>
                 {onOpenMyLocation && (
                   <button
@@ -1423,13 +1423,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <Info className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider shrink-0 ${
-                  locationMode === 'my_location'
-                    ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-sky-950/70 text-sky-400 border border-sky-500/30'
-                }`}>
-                  {locationMode === 'my_location' ? 'GPS' : 'Custom'}
-                </span>
               </div>
               <div className="text-[11px] text-slate-400 truncate mt-0.5">
                 {locationMode === 'my_location'
