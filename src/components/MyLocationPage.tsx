@@ -781,12 +781,6 @@ export const MyLocationPage: React.FC<{
                       </p>
                     )}
                   </div>
-                  <div className="ml-auto text-right pl-2 border-l border-slate-800 shrink-0">
-                    <p className="text-[10px] text-slate-500 uppercase">Distance</p>
-                    <p className="text-sm font-bold text-cyan-300">
-                      {metersToKm(locationInfo.nearestHighway.distanceKm !== null ? (locationInfo.nearestHighway.distanceKm ?? 0) * 1000 : null)}
-                    </p>
-                  </div>
                 </div>
               )}
 
