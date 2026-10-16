@@ -1640,17 +1640,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </button>
 
-                {/* Browse by Highway Button — same style as the Voice and AI icons */}
+                {/* Browse by Highway Button — same round style as the Voice and AI icons */}
                 {highwayCount > 0 && (
                   <button
                     type="button"
                     onClick={() => setIsBrowserOpen(true)}
                     className="p-1.5 rounded-lg border text-xs transition bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700"
-                    title="Browse routes by highway"
                     id="btn-browse-highway-single"
                   >
                     <MapPin className="w-4 h-4 text-amber-400" />
-                    <span className="text-[10px] font-bold ml-1">Browse by highway</span>
                   </button>
                 )}
               </div>
