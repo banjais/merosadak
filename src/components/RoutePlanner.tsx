@@ -1554,14 +1554,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
       </div>
 
-      {/* Search coverage banner — one running line on the plain area, shared by
-          every dropdown, so the count is seen once and never repeated per box. */}
-      {deckId === 'search' && !hasCalculated && (
-        <div className="text-center text-[11px] text-slate-400 py-1">
-          Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
-        </div>
-      )}
-
       {speechTranscriptNotice && (
         <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2">
           <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
@@ -1647,6 +1639,20 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 >
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                 </button>
+
+                {/* Browse by Highway Button — same style as the Voice and AI icons */}
+                {highwayCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsBrowserOpen(true)}
+                    className="p-1.5 rounded-lg border text-xs transition bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700"
+                    title="Browse routes by highway"
+                    id="btn-browse-highway-single"
+                  >
+                    <MapPin className="w-4 h-4 text-amber-400" />
+                    <span className="text-[10px] font-bold ml-1">Browse by highway</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1818,26 +1824,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           ))}
 
-{/* The "Searching N places …" banner and the "Start typing a place
+      {/* Search coverage banner — one running line on the plain area, shared by
+          every dropdown, so the count is seen once and never repeated per box. */}
+      {deckId === 'search' && !hasCalculated && (
+        <div className="text-center text-[11px] text-slate-400 py-1">
+          Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+        </div>
+      )}
+
+      {/* The "Searching N places …" banner and the "Start typing a place
               name, or a highway code like NH01" hint live inside each dropdown
               (CitySuggestionDropdown), so they appear with the search bar and
               disappear together when a selection is made. */}
-
-          {/* Browse by highway — for users who know the road, not the town.
-              Kept outside the dropdown so it stays in reach even while the map
-              is being inspected. */}
-          {highwayCount > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => setIsBrowserOpen(true)}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-300 transition hover:bg-amber-500/20"
-              >
-                <MapPin className="w-3.5 h-3.5" />
-                Browse by highway
-              </button>
-            </div>
-          )}
 
           {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
           {deckId === 'search' && !hasCalculated && isAiPromptOpen && (

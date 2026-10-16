@@ -268,12 +268,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setIsLocationDropdownOpen(false);
   };
 
-   const handleToggleMapStyle = () => {
+  const handleToggleMapStyle = () => {
     if (showMapStyle) {
       setShowMapStyle(false);
       return;
     }
 
+    // Accordion: opening the map-style (basemap) selector closes the overlay
+    // layer toolbar so basemap and overlay controls stay independent.
     setShowMapStyle(true);
     closeLayerToolbar();
     setIsLocationDropdownOpen(false);
@@ -386,9 +388,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       attributionControl: false,
     });
 
-    if (!focusedTarget) {
-      map.fitBounds(NEPAL_BOUNDS, { padding: [0, 0], maxZoom: 8 });
-    }
+    // Do not force whole-of-Nepal bounds on first load. Open at the focused
+    // target (cached user location / chosen city) when present, otherwise at
+    // the default Nepal centre. The live GPS fix effect pans the camera to the
+    // user's actual position once it resolves (followMe is on by default), so
+    // the first load shows the user's area rather than the entire country.
 
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);
@@ -1408,7 +1412,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             type="button"
             ref={mapStyleToggleRef}
             onClick={handleToggleMapStyle}
-            className={`absolute top-3 right-16 z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+            className={`absolute top-3 right-28 z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
             title="Map Style"
             id="btn-map-style-toggle"
             aria-label="Toggle map style"
@@ -1423,7 +1427,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <button
             type="button"
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="absolute top-3 right-[9.5rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            className="absolute top-3 right-[14rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
             title="Zoom Out"
             aria-label="Zoom out"
           >
@@ -1432,7 +1436,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <button
             type="button"
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="absolute top-3 right-[12rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            className="absolute top-3 right-[16.5rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
             title="Zoom In"
             aria-label="Zoom in"
           >
@@ -1519,8 +1523,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </div>
       )}
 
-      {/* Toolbar toggle button - hidden until user interacts with map */}
-      {mapInteracted && (
+      {/* Layer toolbar toggle - always available while the map is active */}
+      {mapActive && (
       <button
         type="button"
         ref={toolbarToggleRef}

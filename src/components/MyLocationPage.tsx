@@ -539,28 +539,13 @@ export const MyLocationPage: React.FC<{
                </div>
              )}
 
-             {/* Address Card */}
-             <div className="card card-elevated p-5">
+             <div className="card card-elevated p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <h2 className="text-2xl font-black text-white leading-tight">
                       {locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
                     </h2>
-                    <button
-                      onClick={() => {
-                        // Force a fresh address on the current fix instead of
-                        // reusing the one already shown.
-                        lastGeocodedRef.current = null;
-                        refresh();
-                        restart();
-                      }}
-                      className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white transition touch-target"
-                      title="Refresh Location"
-                      aria-label="Refresh location"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 ${
@@ -592,7 +577,6 @@ export const MyLocationPage: React.FC<{
                   <LocateFixed className="w-5 h-5 text-emerald-400" />
                 </div>
               </div>
-            </div>
 
              {/* Tab Navigation - small buttons */}
             <nav className="flex flex-wrap gap-2" aria-label="Location information tabs">
@@ -619,8 +603,7 @@ export const MyLocationPage: React.FC<{
               ))}
             </nav>
 
-             {/* Content Card */}
-             <div className="card card-elevated p-5 overflow-hidden min-h-[120px]">
+
               {activeTab === 'weather' && (
                 weather ? (
                   <div className="space-y-3">
