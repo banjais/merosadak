@@ -1346,7 +1346,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             aria-expanded={gpsDetected && isLocationDropdownOpen}
             id="btn-my-location-gps"
           >
-            {gpsDetected ? <LocateFixed className="w-5 h-5" /> : <Locate className="w-5 h-5" />}
+            {gpsDetected ? <LocateFixed className="w-4 h-4" /> : <Locate className="w-4 h-4" />}
           </button>
 
           {!gpsDetected && locationError && (
@@ -1382,7 +1382,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'standard' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Standard"
           >
-            <MapIcon className="w-4 h-4" />
+            <MapIcon className="w-3 h-3" />
           </button>
           <button
             type="button"
@@ -1390,7 +1390,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'satellite' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Satellite"
           >
-            <Globe className="w-4 h-4" />
+            <Globe className="w-3 h-3" />
           </button>
           <button
             type="button"
@@ -1398,7 +1398,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === 'terrain' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="Terrain"
           >
-            <Mountain className="w-4 h-4" />
+            <Mountain className="w-3 h-3" />
           </button>
           <button
             type="button"
@@ -1406,7 +1406,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${mapStyle === '3d' ? 'bg-accent-bg accent-text accent-border shadow-md' : 'text-slate-400 hover:text-white'}`}
             title="3D Terrain"
           >
-            <Box className="w-4 h-4" />
+            <Box className="w-3 h-3" />
           </button>
 </div>
       )}
@@ -1420,7 +1420,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             id="btn-map-style-toggle"
             aria-label="Toggle map style"
           >
-            <Globe className="w-5 h-5" />
+            <Globe className="w-3 h-3" />
           </button>
       )}
 
@@ -1434,7 +1434,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Zoom Out"
             aria-label="Zoom out"
           >
-            <ZoomOut className="w-5 h-5" />
+            <ZoomOut className="w-4 h-4" />
           </button>
           <button
             type="button"
@@ -1443,7 +1443,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Zoom In"
             aria-label="Zoom in"
           >
-            <ZoomIn className="w-5 h-5" />
+            <ZoomIn className="w-4 h-4" />
           </button>
         </>
       )}
@@ -1462,7 +1462,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Highways"
             id="toggle-layer-highways"
           >
-            <Route className="w-4 h-4" />
+            <Route className="w-3 h-3" />
               <span className="text-[10px] font-bold">Highways</span>
           </button>
           <button
@@ -1476,7 +1476,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Incidents"
             id="toggle-layer-incidents"
           >
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-3 h-3" />
               <span className="text-[10px] font-bold">Incidents</span>
           </button>
           <button
@@ -1490,7 +1490,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Cities"
             id="toggle-layer-cities"
           >
-            <Building className="w-4 h-4" />
+            <Building className="w-3 h-3" />
               <span className="text-[10px] font-bold">Cities</span>
           </button>
           {hasAlternatives && (
@@ -1505,7 +1505,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               title="Alternatives"
               id="toggle-layer-alternatives"
             >
-              <Repeat className="w-4 h-4" />
+              <Repeat className="w-3 h-3" />
               <span className="text-[10px] font-bold">Alternatives</span>
             </button>
           )}
@@ -1520,7 +1520,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             title="Legend"
             id="toggle-map-legend"
           >
-            <Info className="w-4 h-4" />
+            <Info className="w-3 h-3" />
               <span className="text-[10px] font-bold">Legend</span>
           </button>
         </div>
