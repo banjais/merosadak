@@ -68,7 +68,6 @@ import {
   Wrench,
   Leaf,
   Shield,
-  LocateFixed,
   Receipt,
   Scale,
   Milestone,
@@ -1365,7 +1364,22 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div
-              onClick={() => setIsLocationMenuOpen((prev) => !prev)}
+              onClick={() => {
+                setLocationMode('my_location');
+                setOriginId('');
+                setOriginSearchQuery('');
+                setDestId('');
+                setDestSearchQuery('');
+                setSingleSearchQuery('');
+                setRoutePlan(null);
+                setHasCalculated(false);
+                setNeedsRecalculation(false);
+                setDeckActive('search');
+                setRoutePlannerStep('origin');
+                setActiveModuleTab('none');
+                setIsLocationMenuOpen(false);
+                onRouteClear?.();
+              }}
               id="btn-my-location-toggle"
               className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
               title="Change Location"
@@ -1393,7 +1407,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 id="btn-my-location-icon"
               >
                 {locationMode === 'my_location' && detectedLocation ? (
-                  <LocateFixed className={`w-5 h-5 ${liveTracking ? 'animate-pulse text-emerald-400' : 'text-emerald-400'}`} />
+                  <MapPin className="w-5 h-5 text-emerald-400" />
                 ) : originCity ? (
                   <MapPin className="w-5 h-5 text-emerald-400" />
                 ) : (
@@ -1401,7 +1415,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 )}
 </button>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-white truncate">
                   {locationMode === 'my_location'
                     ? (detectedLocation
@@ -1409,32 +1423,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         : 'My Location (GPS)')
                     : (originCity ? originCity.name : 'My Location')}
                 </span>
-                {onOpenMyLocation && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenMyLocation();
-                    }}
-                    className="shrink-0 text-sky-400 hover:text-sky-300 transition"
-                    title="Location details & nearby facilities"
-                    id="btn-location-info"
-                  >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
-              <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                {locationMode === 'my_location'
-                  ? (detectedLocation
-                      ? (gpsOriginCity
-                          ? (gpsOriginCity.district || gpsOriginCity.province
-                              ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
-                              : 'Nearest surveyed place')
-                          : 'Off the surveyed network')
-                      : 'Waiting for a GPS fix — your origin updates automatically')
-                  : 'Picked by you — tap the card to change it'}
-              </div>
+                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                  {locationMode === 'my_location'
+                    ? (detectedLocation
+                        ? (gpsOriginCity
+                            ? (gpsOriginCity.district || gpsOriginCity.province
+                                ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
+                                : 'Nearest surveyed place')
+                            : 'Off the surveyed network')
+                        : 'Waiting for a GPS fix — your origin updates automatically')
+                    : 'Back to the current location'}
+                </div>
               {detectedLocation && locationMode === 'my_location' && (
                 <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
                   <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
