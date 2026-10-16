@@ -2194,7 +2194,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <button
                     key={tab}
                     type="button"
-                    onClick={() => handleToggleModuleTab(tab)}
+                    onClick={() => {
+                      if (tab === 'highway_info') {
+                        onOpenHighwayDirectory?.();
+                      } else {
+                        handleToggleModuleTab(tab);
+                      }
+                    }}
                     aria-pressed={activeModuleTab === tab}
                     className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition inline-flex items-center gap-1 ${
                       activeModuleTab === tab
