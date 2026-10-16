@@ -478,16 +478,6 @@ function AppContent() {
     );
   };
 
-  const resetMapView = () => {
-    setFocusedTarget({
-      lat: 28.3949,
-      lng: 84.124,
-      title: 'Nepal Overview',
-      zoom: 7,
-    });
-  };
-
-
   useEffect(() => {
     if (!isAppReady) return;
     const timer = window.setTimeout(() => {
@@ -550,19 +540,13 @@ function AppContent() {
           <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="btn-glass p-2 rounded-xl touch-target"
+            className="btn-glass p-2 rounded-xl touch-target flex items-center space-x-2"
             title="Menu"
             id="btn-header-menu"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
-          </button>
-
-            <div
-              className="flex items-center space-x-2.5 cursor-pointer group select-none"
-              onClick={resetMapView}
-              title="Reset map"
-            >
+            <div className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-accent-border transition">
                 <svg viewBox="0 0 24 24" width="22" height="22">
                   <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
@@ -580,6 +564,7 @@ function AppContent() {
                 </div>
               </div>
             </div>
+          </button>
           </div>
 
           {/* Right Header Controls: Notifications Bell, Fullscreen Maximize, Language Toggle & Emergency SOS */}
