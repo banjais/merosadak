@@ -1846,11 +1846,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             </div>
           ))}
 
-      {/* Search coverage banner — one running line on the plain area, shared by
-          every dropdown, so the count is seen once and never repeated per box. */}
+      {/* Search coverage banner — continuous full-width marquee, one line at a time,
+          shared by every dropdown so the count is seen once and never repeated. */}
       {deckId === 'search' && !hasCalculated && (
-        <div className="text-center text-[11px] text-slate-400 py-1">
-          Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+        <div className="w-full bg-slate-900/40 border-b border-slate-800 py-1.5 overflow-hidden">
+          <div className="flex items-center justify-center gap-8 px-4 animate-marquee">
+            <span className="text-[11px] text-slate-400 whitespace-nowrap">
+              Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+            </span>
+            <span className="text-[11px] text-slate-400 whitespace-nowrap">
+              Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+            </span>
+          </div>
         </div>
       )}
 
