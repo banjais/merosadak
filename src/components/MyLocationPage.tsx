@@ -548,15 +548,6 @@ export const MyLocationPage: React.FC<{
                     </h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 ${
-                      watching ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${watching ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-                      {watching ? 'LIVE' : 'PAUSED'}
-                      {accuracyLabel ? ` ${accuracyLabel}` : ''}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
                     <span className="bg-emerald-500/10 px-2 py-1 rounded-lg">
                       {formatDMS(locationInfo.lat, locationInfo.lng)}
                     </span>
@@ -572,6 +563,17 @@ export const MyLocationPage: React.FC<{
                       </span>
                     )}
                   </div>
+                  {locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
+                      <span className="bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center space-x-1">
+                        <Route className="w-3 h-3" />
+                        <span>
+                          Near {locationInfo.nearestHighway.highway.code} ({locationInfo.nearestHighway.highway.name}){' '}
+                          {(locationInfo.nearestHighway.distanceKm ?? 0).toFixed(2)} km away
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
