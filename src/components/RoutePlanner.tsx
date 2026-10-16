@@ -1520,7 +1520,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <div className="mt-3.5 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
             <button
               type="button"
-              onClick={handleSwitchToGps}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSwitchToGps();
+              }}
               className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left ${
                 locationMode === 'my_location'
                   ? 'border-emerald-500/50 bg-emerald-950/30 text-white'
@@ -1549,7 +1552,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             <button
               type="button"
-              onClick={handleSwitchToCustomOrigin}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSwitchToCustomOrigin();
+              }}
               className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left ${
                 locationMode === 'custom_from_to'
                   ? 'border-sky-500/50 bg-sky-950/30 text-white'
