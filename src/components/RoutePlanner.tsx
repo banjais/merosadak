@@ -1368,7 +1368,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               onClick={() => setIsLocationMenuOpen((prev) => !prev)}
               id="btn-my-location-toggle"
               className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
-              title="Click to view location options or change origin"
+              title="Change Location"
               role="button"
               aria-expanded={isLocationMenuOpen}
             >
