@@ -252,6 +252,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setActiveLayer('none');
     setShowLegend(false);
     layersRef.current.highways.clearLayers();
+    layersRef.current.cities.clearLayers();
     layersRef.current.incidents.clearLayers();
     layersRef.current.alternatives.clearLayers();
   };
@@ -873,9 +874,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
-    if (activeLayer !== 'cities') return;
     const citiesGroup = layersRef.current.cities;
     citiesGroup.clearLayers();
+
+    if (activeLayer !== 'cities') return;
 
     const routeCityIds = new Set<string>();
     const routeCoordinates = activeRoute?.pathCoordinates || [];
@@ -1293,6 +1295,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         setShowLegend(false);
         setShowMapStyle(false);
         layersRef.current.highways.clearLayers();
+        layersRef.current.cities.clearLayers();
         layersRef.current.incidents.clearLayers();
         layersRef.current.alternatives.clearLayers();
       }
