@@ -1506,7 +1506,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
           {/* Quick Action Buttons on Location Card */}
           <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            {hasCalculated && (
+            {!hasCalculated && (
               <button
                 type="button"
                 onClick={handleShowLocationOnMap}
