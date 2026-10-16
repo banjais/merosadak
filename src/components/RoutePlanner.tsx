@@ -1471,7 +1471,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               )}
             </div>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            <ChevronDown
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLocationMenuOpen((prev) => !prev);
+              }}
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
           </div>
 
           {/* Quick Action Buttons on Location Card */}
