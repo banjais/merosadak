@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-   ArrowLeft, Route, Building, Mountain, LocateFixed, RotateCcw,
+   ArrowLeft, Route, Building, Mountain, LocateFixed,
    AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
    UtensilsCrossed, Compass, Shield, Landmark, Info, CloudSun, CloudRain,
    CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell,
@@ -572,9 +572,6 @@ export const MyLocationPage: React.FC<{
                       </span>
                     )}
                   </div>
-                </div>
-                <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <LocateFixed className="w-5 h-5 text-emerald-400" />
                 </div>
               </div>
 
