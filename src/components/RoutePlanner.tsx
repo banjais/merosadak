@@ -1382,26 +1382,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div
               onClick={() => {
-                setLocationMode('my_location');
-                setIsLocationMenuOpen(false);
-                setOriginId('');
-                setOriginSearchQuery('');
-                setDestId('');
-                setDestSearchQuery('');
-                setSingleSearchQuery('');
-                if (hasCalculated) {
-                  setHasCalculated(false);
-                  setDeckActive('search');
-                  setRoutePlan(null);
-                  setActiveModuleTab('none');
-                  onRouteClear?.();
-                }
-                setRoutePlannerStep('destination');
-                handleDetectDeviceLocation(false);
-                setTimeout(() => {
-                  singleSearchInputRef.current?.focus();
-                  setIsSingleDropdownOpen(true);
-                }, 150);
+                setIsLocationMenuOpen((prev) => !prev);
               }}
               id="btn-my-location-toggle"
               className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
@@ -1417,7 +1398,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     if (liveTracking) stopTracking();
                     else restartTracking();
                   }
-                  setIsLocationMenuOpen((prev) => !prev);
                 }}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
                   (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
@@ -1488,12 +1468,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               )}
             </div>
-            <ChevronDown
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLocationMenuOpen((prev) => !prev);
-              }}
-              className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
           </div>
 
           {/* Quick Action Buttons on Location Card */}
