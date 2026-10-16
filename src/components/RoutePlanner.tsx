@@ -30,6 +30,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import {
   Compass,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   ShieldAlert,
   Zap,
@@ -1179,6 +1180,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }, 150);
   };
 
+  const handleReturnToDefault = () => {
+    setLocationMode('my_location');
+    setIsLocationMenuOpen(false);
+    if (hasCalculated) {
+      setHasCalculated(false);
+      setDeckActive('search');
+      setRoutePlan(null);
+      setActiveModuleTab('none');
+      onRouteClear?.();
+    }
+    setRoutePlannerStep('destination');
+    handleDetectDeviceLocation(false);
+    setTimeout(() => {
+      singleSearchInputRef.current?.focus();
+      setIsSingleDropdownOpen(true);
+    }, 150);
+  };
+
   const handleEditLocations = () => {
     setHasCalculated(false);
     setDeckActive('search');
@@ -1382,11 +1401,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div
               onClick={() => {
-                setIsLocationMenuOpen((prev) => !prev);
+                if (locationMode === 'custom_from_to') {
+                  handleReturnToDefault();
+                } else {
+                  setIsLocationMenuOpen((prev) => !prev);
+                }
               }}
               id="btn-my-location-toggle"
               className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
-              title="Change Location"
+              title={locationMode === 'custom_from_to' ? 'Return to default' : 'Change Location'}
               role="button"
               aria-expanded={isLocationMenuOpen}
             >
@@ -1468,7 +1491,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 </div>
               )}
             </div>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            {locationMode === 'custom_from_to' ? (
+              <ArrowLeft
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReturnToDefault();
+                }}
+                className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer group-hover:text-emerald-400`}
+              />
+            ) : (
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            )}
           </div>
 
           {/* Quick Action Buttons on Location Card */}
@@ -1488,10 +1521,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         </div>
 
-        {/* Location Dropdown Options Menu — the only place to change origin.
-           The card header itself (ChevronDown) opens it, so the separate
-           "Change" button is gone: one entry point, clean UI. */}
-        {isLocationMenuOpen && (
+        {/* Location Dropdown Options Menu — only shown in my_location mode.
+           In custom_from_to mode, the card shows a return icon instead. */}
+        {locationMode === 'my_location' && isLocationMenuOpen && (
           <div className="mt-3.5 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
             <button
               type="button"
@@ -1499,11 +1531,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 e.stopPropagation();
                 handleSwitchToGps();
               }}
-              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left ${
-                locationMode === 'my_location'
-                  ? 'border-emerald-500/50 bg-emerald-950/30 text-white'
-                  : 'border-slate-800 hover:border-emerald-500/30 bg-slate-950/80 hover:bg-slate-800/80'
-              }`}
+              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-emerald-500/50 bg-emerald-950/30 text-white`}
             >
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                 locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
@@ -1531,11 +1559,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 e.stopPropagation();
                 handleSwitchToCustomOrigin();
               }}
-              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left ${
-                locationMode === 'custom_from_to'
-                  ? 'border-sky-500/50 bg-sky-950/30 text-white'
-                  : 'border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80'
-              }`}
+              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80`}
             >
               <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
                 <ArrowUpDown className="w-4 h-4" />
@@ -1543,9 +1567,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <div className="min-w-0">
                 <div className="text-sm font-bold text-white flex items-center gap-1.5">
                   <span>Change Origin City / Hub</span>
-                  {locationMode === 'custom_from_to' && (
-                    <span className="text-[10px] text-sky-400 font-normal">(Active)</span>
-                  )}
                 </div>
                 <div className="text-[11px] text-slate-400 truncate">
                   Type origin &amp; destination manually
