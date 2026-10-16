@@ -536,22 +536,41 @@ function AppContent() {
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
       <header className="header-glass sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
-          {/* Left: Menu Button, App Logo, Header & Sub-header */}
+          {/* Left: Hamburger Menu Button, App Logo, Header & Sub-header */}
           <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="btn-glass p-2 rounded-xl touch-target flex items-center space-x-1.5"
-            title="Menu"
-            id="btn-header-menu"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5" />
-            <div className="w-7 h-7 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-accent-border transition">
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
-              </svg>
+            {/* Hamburger Menu Button */}
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              className="btn-glass p-2 rounded-xl touch-target"
+              title="Menu"
+              id="btn-header-menu"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* App Logo - static background element */}
+            <div
+              className="flex items-center space-x-2.5"
+              aria-hidden="true"
+            >
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-accent-border transition">
+                <svg viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-base font-black tracking-tight text-white font-display">MERO SADAK</span>
+                  <span className="px-1.5 py-0.2 text-[9px] font-extrabold accent-bg accent-text accent-border border rounded">
+                    मेरो सडक
+                  </span>
+                </div>
+                <div className="text-[9px] accent-text-dim font-semibold uppercase tracking-wider truncate">
+                  Routes · alerts · weather
+                </div>
+              </div>
             </div>
-          </button>
           </div>
 
           {/* Right Header Controls: Notifications Bell, Fullscreen Maximize, Language Toggle & Emergency SOS */}
