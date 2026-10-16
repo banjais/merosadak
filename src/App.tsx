@@ -593,7 +593,7 @@ function AppContent() {
                     ? 'bg-accent-bg accent-text accent-border shadow-md shadow-black/10'
                     : 'bg-slate-800/90 hover:bg-slate-700 accent-text border-slate-700/80'
                 }`}
-                title="Road Alerts & Notifications"
+                title="Alerts"
                 id="btn-header-notifications"
                 aria-label="Road alerts and notifications"
                 aria-expanded={isNotificationsOpen}
@@ -733,7 +733,7 @@ function AppContent() {
                         }}
                         className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
                       >
-                        <span>Open Road Alerts Feed</span>
+                        <span>Open Alerts Feed</span>
                         <ArrowRight className="w-3.5 h-3.5 accent-text" />
                       </button>
                     </div>

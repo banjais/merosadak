@@ -164,7 +164,7 @@ export const VEHICLE_TIPS_DATA: Record<VehicleType, VehicleTipsConfig> = {
           'Standard sedans (150-170mm clearance) risk scraping oil sumps on unpaved detour gravel. Straddle ruts carefully and maintain low, steady momentum.',
         highwayCorridor: 'Prithvi Highway (NH04)',
         isPriority: true,
-        actionText: 'View Road Alerts',
+        actionText: 'View Alerts',
         actionTab: 'highways'
       },
       {
@@ -384,10 +384,10 @@ const TRAVEL_STEPS: TravelStep[] = [
   {
     step: 2,
     id: 'highways',
-    title: 'Check Road Alerts & Safety',
+    title: 'Check Alerts',
     subtitle: 'Verify active landslides, rockfall hazards, and highway blockages.',
     icon: AlertTriangle,
-    actionText: 'View Road Alerts Feed',
+    actionText: 'View Alerts Feed',
     checklist: [
       'Review DoR & Traffic Police verified incidents',
       'Check single-lane alternating sections',
