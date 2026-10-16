@@ -1334,7 +1334,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <button
             type="button"
             onClick={handleMyLocation}
-            className={`min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center backdrop-blur-xl border shadow-2xl shadow-black/50 transition ${
+            className={`w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-xl border shadow-2xl shadow-black/50 transition ${
               gpsDetected
                 ? 'bg-emerald-950/90 text-emerald-400 border-emerald-500/50 shadow-emerald-500/20 hover:bg-emerald-900/90'
                 : 'bg-slate-950/90 hover:bg-slate-900 text-sky-300 border-sky-500/40'
@@ -1415,7 +1415,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             type="button"
             ref={mapStyleToggleRef}
             onClick={handleToggleMapStyle}
-            className={`absolute top-3 right-28 z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
+            className={`absolute top-3 right-28 z-[1000] w-8 h-8 rounded-lg flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${showMapStyle ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/50 rotate-90' : 'bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white'}`}
             title="Map Style"
             id="btn-map-style-toggle"
             aria-label="Toggle map style"
@@ -1430,7 +1430,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <button
             type="button"
             onClick={() => mapInstanceRef.current?.zoomOut()}
-            className="absolute top-3 right-[14rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            className="absolute top-3 right-[14rem] z-[1000] w-8 h-8 rounded-lg flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
             title="Zoom Out"
             aria-label="Zoom out"
           >
@@ -1439,7 +1439,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <button
             type="button"
             onClick={() => mapInstanceRef.current?.zoomIn()}
-            className="absolute top-3 right-[16.5rem] z-[1000] min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
+            className="absolute top-3 right-[16.5rem] z-[1000] w-8 h-8 rounded-lg flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition bg-slate-950/90 text-slate-300 border-slate-800 hover:text-white hover:border-slate-600"
             title="Zoom In"
             aria-label="Zoom in"
           >
@@ -1532,7 +1532,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         type="button"
         ref={toolbarToggleRef}
         onClick={handleToggleToolbar}
-        className={`absolute top-3 right-16 z-[1000] w-9 h-9 rounded-full flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
+        className={`absolute top-3 right-16 z-[1000] w-8 h-8 rounded-lg flex items-center justify-center shadow-2xl shadow-black/50 backdrop-blur-xl border transition ${
           isToolbarOpen
             ? 'bg-accent-bg accent-text accent-border shadow-black/10'
             : 'bg-slate-950/90 accent-text border-slate-800 hover:border-slate-600'
