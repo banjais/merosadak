@@ -547,10 +547,8 @@ export const MyLocationPage: React.FC<{
                </div>
              )}
 
-              <div className="card card-elevated p-5 space-y-4">
-               <div className="flex items-start justify-between">
-                 <div className="space-y-1">
-                   <div className="flex items-center space-x-2">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
                      <h2 className="text-2xl font-black text-white leading-tight">
                        {locationInfo.localArea || locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
                      </h2>
@@ -577,32 +575,13 @@ export const MyLocationPage: React.FC<{
                          <span>{locationInfo.nearestJunction.city.district}</span>
                        </span>
                      ))}
-                   </div>
-                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                     <span className="bg-emerald-500/10 px-2 py-1 rounded-lg">
-                       {formatDMS(locationInfo.lat, locationInfo.lng)}
-                     </span>
-                     {accuracyLabel && (
-                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                         {accuracyLabel}
-                       </span>
-                     )}
-                   </div>
-                   {locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code && (
-                     <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                       <span className="bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center space-x-1">
-                         <Route className="w-3 h-3" />
-                         <span>
-                           {locationInfo.nearestHighway.highway.code} ({locationInfo.nearestHighway.highway.name}),{' '}
-                           {(locationInfo.nearestHighway.distanceKm ?? 0).toFixed(2)} km away
-                         </span>
-                       </span>
-                     </div>
-                   )}
-                </div>
-              </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
+                  {formatDMS(locationInfo.lat, locationInfo.lng)}
+                    </div>
+                  </div>
 
-             {/* Tab Navigation - small buttons */}
+              {/* Tab Navigation - small buttons */}
             <nav className="flex flex-wrap gap-2" aria-label="Location information tabs">
               {tabs.map((tab) => (
                 <button
@@ -880,8 +859,7 @@ export const MyLocationPage: React.FC<{
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
       </main>
     </div>
   );
