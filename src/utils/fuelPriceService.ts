@@ -111,9 +111,9 @@ export function getEffectiveFuelRate(
     if (vehicleType === 'suv_4wd' || vehicleType === 'bus_truck') return prices.diesel;
     return prices.petrol;
   }
-  if (vehicleType === 'electric_vehicle') return 15;
-  if (vehicleType === 'suv_4wd' || vehicleType === 'bus_truck') return 158;
-  return 175;
+  if (vehicleType === 'electric_vehicle') return NOC_FUEL_RATES.electricity;
+  if (vehicleType === 'suv_4wd' || vehicleType === 'bus_truck') return NOC_FUEL_RATES.diesel;
+  return NOC_FUEL_RATES.petrol;
 }
 
 export async function refreshFuelPrices(): Promise<FuelRateConfig | null> {

@@ -69,13 +69,14 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
     return `${origin}${pathname}?${params.toString()}`;
   }, [routePlan, vehicle, preference]);
 
-  // Total estimated trip cost (fuel + tolls + emergency assistance baseline)
+  // Total estimated trip cost. Default is fuel/energy + tolls exactly as the
+  // report shows them — no invented flat toll or assistance fee. A custom total
+  // (from the Cost & eco calculator) replaces it and is labelled as such.
+  const usingCustomCost = !!(customTripCost && customTripCost > 0);
+  const costBasisLabel = usingCustomCost ? 'as calculated in Cost & eco' : 'Fuel/energy + tolls';
   const estimatedTotalCost = useMemo(() => {
     if (customTripCost && customTripCost > 0) return customTripCost;
-    const fuelCost = routePlan.fuelEstimate?.costNpr || 0;
-    const tollCost = routePlan.totalTollCostNpr || 60;
-    const emergencyAssist = 350; // default recovery standby
-    return fuelCost + tollCost + emergencyAssist;
+    return (routePlan.fuelEstimate?.costNpr || 0) + (routePlan.totalTollCostNpr || 0);
   }, [customTripCost, routePlan]);
 
   const durationFormatted = useMemo(() => {
@@ -97,14 +98,14 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
 📏 Distance: ${routePlan.totalDistanceKm} km
 ⏱️ Duration: ${durationFormatted} (including caution buffers)
 🚗 Vehicle: ${vehicleName}
-💰 Total Est. Trip Cost: Rs. ${estimatedTotalCost.toLocaleString()} (Fuel, Tolls & Roadside Assistance)
+💰 Total Est. Trip Cost: Rs. ${estimatedTotalCost.toLocaleString()} (${costBasisLabel})
 🛡️ Road Safety Score: ${routePlan.roadConditionScore}/100
 🏔️ Climb: +${routePlan.elevationGainM}m (~${avgGrade}% grade, Peak: ${routePlan.maxElevationM}m ASL)
 ⚠️ Active Advisories: ${routePlan.incidentsOnRoute.length} incident(s) reported
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔗 Live Map & Navigation: ${shareableUrl}
 🇳🇵 Generated via Mero Sadak Nepal Highway GIS`;
-  }, [routePlan, vehicleName, durationFormatted, estimatedTotalCost, shareableUrl]);
+  }, [routePlan, vehicleName, durationFormatted, estimatedTotalCost, costBasisLabel, shareableUrl]);
 
   if (!isOpen) return null;
 
@@ -250,6 +251,7 @@ export const ShareTripModal: React.FC<ShareTripModalProps> = ({
                 <div className="text-base font-black text-amber-300 font-display mt-0.5">
                   Rs. {estimatedTotalCost.toLocaleString()}
                 </div>
+                <div className="text-[9px] text-slate-500 mt-0.5">{costBasisLabel}</div>
               </div>
 
               {/* Elevation Gain & Climb Grade */}

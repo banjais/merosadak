@@ -7,9 +7,13 @@ export interface FuelRateConfig {
   electricity: number;
 }
 
+// Offline fallback only. Live prices come from /api/fuel-prices (NOC retail
+// price); these are used when that fails, and the report says so. Snapshot of
+// the NOC rates in public/data/fuel-prices.json — refresh when NOC revises.
+export const NOC_FUEL_RATES_AS_OF = '2026-10-16';
 export const NOC_FUEL_RATES: FuelRateConfig = {
-  petrol: 175,
-  diesel: 158,
+  petrol: 197,
+  diesel: 195,
   electricity: 15,
 };
 
@@ -52,11 +56,11 @@ export const EV_KM_PER_KWH = 6.5;
 export const EV_BATTERY_KWH = 50;
 
 export const VEHICLE_CALC_CONFIGS: Record<VehicleType, VehicleCalcConfig> = {
-  car: { mileageKmPerUnit: 14, fuelCostPerUnit: 175, speedMultiplier: 1.0, avgSpeedKmh: 55 },
-  suv_4wd: { mileageKmPerUnit: 10, fuelCostPerUnit: 158, speedMultiplier: 1.05, avgSpeedKmh: 48 },
-  motorbike: { mileageKmPerUnit: 35, fuelCostPerUnit: 175, speedMultiplier: 1.12, avgSpeedKmh: 50 },
-  bus_truck: { mileageKmPerUnit: 4.5, fuelCostPerUnit: 158, speedMultiplier: 0.75, avgSpeedKmh: 40 },
-  electric_vehicle: { mileageKmPerUnit: EV_KM_PER_KWH, fuelCostPerUnit: 15, speedMultiplier: 1.0, avgSpeedKmh: 50 },
+  car: { mileageKmPerUnit: 14, fuelCostPerUnit: NOC_FUEL_RATES.petrol, speedMultiplier: 1.0, avgSpeedKmh: 55 },
+  suv_4wd: { mileageKmPerUnit: 10, fuelCostPerUnit: NOC_FUEL_RATES.diesel, speedMultiplier: 1.05, avgSpeedKmh: 48 },
+  motorbike: { mileageKmPerUnit: 35, fuelCostPerUnit: NOC_FUEL_RATES.petrol, speedMultiplier: 1.12, avgSpeedKmh: 50 },
+  bus_truck: { mileageKmPerUnit: 4.5, fuelCostPerUnit: NOC_FUEL_RATES.diesel, speedMultiplier: 0.75, avgSpeedKmh: 40 },
+  electric_vehicle: { mileageKmPerUnit: EV_KM_PER_KWH, fuelCostPerUnit: NOC_FUEL_RATES.electricity, speedMultiplier: 1.0, avgSpeedKmh: 50 },
 };
 
 /** kWh needed to cover `distanceKm`, guarded against non-positive input. */
@@ -90,9 +94,9 @@ export const PREFERENCE_CONFIGS: { pref: RoutePreference; icon: string; label: s
 ];
 
 export const FUEL_RATE_LABELS = {
-  petrol: 'Rs 175/L',
-  diesel: 'Rs 158/L',
-  electricity: 'Rs 15/kWh',
+  petrol: `Rs ${NOC_FUEL_RATES.petrol}/L`,
+  diesel: `Rs ${NOC_FUEL_RATES.diesel}/L`,
+  electricity: `Rs ${NOC_FUEL_RATES.electricity}/kWh`,
 };
 
 // Backward compatibility aliases

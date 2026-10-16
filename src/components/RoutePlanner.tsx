@@ -94,6 +94,8 @@ import {
   EV_KM_PER_KWH,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
+import { NOC_FUEL_RATES_AS_OF } from '../utils/vehicleConfigs';
+import type { ReportFuelBasis } from './UnifiedRouteReport';
 import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, formatLastChecked, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { filterCities, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
 import { CitySuggestionDropdown } from './CityResultRow';
@@ -1308,6 +1310,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
   }, [fuelPrices, routePlan, vehicle]);
 
+  // What the report's fuel/energy figure was priced with, so the report can state it.
+  const buildFuelBasis = (): ReportFuelBasis => {
+    const isEv = vehicle === 'electric_vehicle';
+    const usingDefaults = !fuelPrices || !fuelPriceMetadata;
+    return {
+      fuelName: isEv ? 'Electricity' : vehicle === 'suv_4wd' || vehicle === 'bus_truck' ? 'Diesel' : 'Petrol',
+      ratePerUnit: getEffectiveFuelRate(vehicle, fuelPrices),
+      unit: isEv ? 'kWh' : 'L',
+      sourceLabel: fuelPriceMetadata?.sourceLabel || fuelPriceMetadata?.source,
+      lastUpdated: fuelPriceMetadata?.lastUpdated,
+      usingDefaults,
+      fallbackAsOf: NOC_FUEL_RATES_AS_OF,
+    };
+  };
+
   // Recalculate route fuel costs with fresh prices
   const applyLiveFuelPrices = (plan: RoutePlanResult, vehicleType: VehicleType, prices: FuelRateConfig): RoutePlanResult => {
     const effectiveRate = (v: VehicleType): number => {
@@ -2130,6 +2147,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onPrint={() => window.print()}
                   onShare={() => onShareTrip?.()}
                   userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  fuelBasis={buildFuelBasis()}
                   embedded
                   showElevationProfile
                   simulationControls={simulationControls}

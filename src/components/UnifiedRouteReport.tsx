@@ -33,6 +33,17 @@ import { ReportIdentity, formatReportTimestamp } from '../utils/reportBranding';
 
 export type ReportEvidenceLevel = EvidenceLevel | 'route_graph';
 
+/** What the fuel/energy figure in the report was priced with, so it can be stated next to the number. */
+export interface ReportFuelBasis {
+  fuelName: string;          // e.g. "Petrol", "Diesel", "Electricity"
+  ratePerUnit: number;       // NPR per litre / kWh actually used
+  unit: 'L' | 'kWh';
+  sourceLabel?: string;      // e.g. "Nepal Oil Corporation - Retail Selling Price"
+  lastUpdated?: string;      // ISO date of the published price
+  usingDefaults: boolean;    // live price unavailable; built-in fallback rate used
+  fallbackAsOf?: string;     // date of the built-in fallback snapshot
+}
+
 export interface UnifiedRouteReportProps {
   route: RoutePlanResult;
   distanceKm: number;
@@ -64,6 +75,8 @@ export interface UnifiedRouteReportProps {
    * Route planner keeps cost metrics for drivers. Defaults to true.
    */
   showCostMetrics?: boolean;
+  /** Pricing basis for the fuel/energy cost, shown beside the figure. */
+  fuelBasis?: ReportFuelBasis;
   showElevationProfile?: boolean;
   simulationControls?: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
@@ -261,6 +274,7 @@ export function UnifiedRouteReport({
   userIdentity,
   embedded = false,
   showCostMetrics = true,
+  fuelBasis,
   showElevationProfile,
   simulationControls,
   onViewOnMap,
@@ -286,6 +300,53 @@ export function UnifiedRouteReport({
     document.addEventListener('mousedown', onPointerDown);
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [printMenuOpen]);
+  // Toll basis: which plazas are on this route and what each charges for this
+  // vehicle and direction. Mirrors calculateTollCost so the lines add up to the total.
+  const tollBasis = useMemo(() => {
+    const codes = Array.from(new Set((route.steps || []).map((st) => st.highwayCode?.split('/')[0]).filter(Boolean) as string[]));
+    const plazas = Array.from(new Map(codes.flatMap((c) => getTollPlazasForHighway(c)).map((pl) => [pl.id, pl])).values());
+    const entering = isEnteringKathmandu(route.origin, route.destination);
+    const items = plazas.map((pl) => {
+      const rates = pl.directional
+        ? (entering === false ? pl.rates.exit || pl.rates.entry : pl.rates.entry) || pl.rates.single
+        : pl.rates.single;
+      const barred = route.vehicle === 'motorbike' && !!pl.prohibitedVehicles?.some((v) => /two-wheel/i.test(v));
+      return {
+        id: pl.id,
+        name: pl.name,
+        costNpr: rates?.[route.vehicle] ?? 0,
+        direction: pl.directional ? (entering === false ? 'leaving Kathmandu Valley' : 'entering Kathmandu Valley') : null,
+        gazetteRef: pl.gazetteRef,
+        barred,
+      };
+    });
+    const itemisedTotal = items.reduce((acc, it) => acc + it.costNpr, 0);
+    return { items, itemisedTotal };
+  }, [route]);
+  const fuelAgeDays = fuelBasis?.lastUpdated
+    ? Math.floor((Date.now() - new Date(fuelBasis.lastUpdated).getTime()) / 86400000)
+    : null;
+  const fuelDateLabel = fuelBasis?.lastUpdated
+    ? new Date(fuelBasis.lastUpdated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
+  // Advisories that apply to this trip, summarised here so the report doesn't
+  // depend on opening another tab to learn them. Detail stays in Timeline / Ahead.
+  const tripNotes = useMemo(() => {
+    const notes: { tone: 'amber' | 'red' | 'slate'; text: string }[] = [];
+    const rank: Record<string, number> = { minor: 1, moderate: 2, severe: 3, high: 3, critical: 4 };
+    const inc = route.incidentsOnRoute || [];
+    if (inc.length > 0) {
+      const worst = inc.reduce((a, b) => ((rank[b.severity] || 0) > (rank[a.severity] || 0) ? b : a));
+      notes.push({
+        tone: (rank[worst.severity] || 0) >= 3 ? 'red' : 'amber',
+        text: `${inc.length} active road advisor${inc.length === 1 ? 'y' : 'ies'} on this route — most serious: ${worst.title} (${worst.locationName}).`,
+      });
+    }
+    const warned = Array.from(new Set((route.steps || []).map((st) => st.warning).filter(Boolean) as string[]));
+    warned.slice(0, 3).forEach((w) => notes.push({ tone: 'amber', text: w }));
+    if (warned.length > 3) notes.push({ tone: 'slate', text: `+${warned.length - 3} more route warnings in the Trip plan.` });
+    return notes;
+  }, [route]);
   const routeDistance = route.totalDistanceKm;
   const aerialDistance = route.aerialDistanceKm || 0;
   const detourPercent = aerialDistance > 0
@@ -441,9 +502,16 @@ export function UnifiedRouteReport({
 
         {showCostMetrics && (
         <div className="card card-elevated card-interactive p-3.5">
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Cost</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{fuelBasis?.unit === 'kWh' ? 'Energy cost' : 'Fuel cost'}</div>
           <div className="mt-3 text-2xl font-black text-amber-400 font-display">NPR {fuelCost.toLocaleString('en-US')}</div>
-          <p className="mt-2 text-[11px] text-slate-400">~{formatNumber(fuelQuantity, 1)} {fuelUnit} • Tolls separate</p>
+          <p className="mt-2 text-[11px] text-slate-400">
+            ~{formatNumber(fuelQuantity, 1)} {fuelUnit}{fuelBasis ? ` × NPR ${fuelBasis.ratePerUnit}/${fuelBasis.unit} (${fuelBasis.fuelName})` : ''}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {tollBasis.items.length === 0
+              ? 'No toll plazas on this route'
+              : `+ Tolls NPR ${route.totalTollCostNpr.toLocaleString('en-US')} (${tollBasis.items.length} plaza${tollBasis.items.length === 1 ? '' : 's'})`}
+          </p>
         </div>
         )}
 
@@ -453,6 +521,56 @@ export function UnifiedRouteReport({
           <p className="mt-2 text-[11px] text-slate-400">{route.statusSummary.clearKm} km corridor is in clear condition.</p>
         </div>
       </div>
+
+      {(showCostMetrics || tripNotes.length > 0) && (
+        <div className="mt-3 card p-3.5 space-y-2 text-[11px]" aria-label="Cost basis and trip notes">
+          {showCostMetrics && fuelBasis && (
+            <div className="flex items-start gap-2 text-slate-300">
+              <Fuel className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <div>
+                <span className="font-semibold text-slate-100">Fuel price:</span>{' '}
+                {fuelBasis.fuelName} NPR {fuelBasis.ratePerUnit}/{fuelBasis.unit}
+                {fuelBasis.usingDefaults
+                  ? <span className="text-amber-300"> — live price unavailable, using the built-in NOC rate{fuelBasis.fallbackAsOf ? ` of ${fuelBasis.fallbackAsOf}` : ''}. Actual cost may differ.</span>
+                  : <span className="text-slate-400"> — {fuelBasis.sourceLabel || 'Nepal Oil Corporation'}{fuelDateLabel ? `, published ${fuelDateLabel}` : ''}.</span>}
+                {!fuelBasis.usingDefaults && fuelAgeDays !== null && fuelAgeDays > 7 && (
+                  <span className="text-amber-300"> Price is {fuelAgeDays} days old; NOC may have revised it.</span>
+                )}
+              </div>
+            </div>
+          )}
+          {showCostMetrics && (
+            <div className="flex items-start gap-2 text-slate-300">
+              <CreditCard className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+              <div className="min-w-0">
+                <span className="font-semibold text-slate-100">Tolls:</span>{' '}
+                {tollBasis.items.length === 0 ? (
+                  <span className="text-slate-400">no toll plazas on the highways this route uses.</span>
+                ) : (
+                  <ul className="mt-1 space-y-1">
+                    {tollBasis.items.map((it) => (
+                      <li key={it.id} className="text-slate-400">
+                        <span className="text-slate-200">{it.name}</span>
+                        {it.direction ? ` (${it.direction})` : ''}: {it.barred ? 'not permitted for two-wheelers' : `NPR ${it.costNpr}`}
+                        <span className="text-slate-500"> — {it.gazetteRef}</span>
+                      </li>
+                    ))}
+                    {tollBasis.itemisedTotal !== route.totalTollCostNpr && (
+                      <li className="text-amber-300">Listed plazas add to NPR {tollBasis.itemisedTotal}; the trip total above uses NPR {route.totalTollCostNpr}.</li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+          {tripNotes.map((n, i) => (
+            <div key={i} className={`flex items-start gap-2 ${n.tone === 'red' ? 'text-red-300' : n.tone === 'amber' ? 'text-amber-300' : 'text-slate-400'}`}>
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{n.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
         <div className="space-y-4">
