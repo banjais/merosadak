@@ -15,6 +15,10 @@ interface MyLocationInfo {
   lat: number;
   lng: number;
   accuracy: number | null;
+  localArea?: string | null;
+  municipality?: string | null;
+  district?: string | null;
+  province?: string | null;
   nearestHighway: {
     highway: { code: string; name: string };
     segment: { from: string; to: string } | null;
@@ -235,12 +239,16 @@ export const MyLocationPage: React.FC<{
         ...base,
         address: prev?.address ?? null,
         formattedAddress: prev?.formattedAddress ?? null,
+        localArea: prev?.localArea ?? null,
+        municipality: prev?.municipality ?? null,
+        district: prev?.district ?? null,
+        province: prev?.province ?? null,
       }));
       return;
     }
 
     lastGeocodedRef.current = { lat, lng };
-    setLocationInfo({ ...base, address: null, formattedAddress: null });
+    setLocationInfo({ ...base, address: null, formattedAddress: null, localArea: null, municipality: null, district: null, province: null });
 
     let cancelled = false;
     void (async () => {
@@ -266,7 +274,7 @@ export const MyLocationPage: React.FC<{
         const country = a.country;
         if (country) parts.push(country);
         setLocationInfo((prev) => (prev && prev.lat === lat && prev.lng === lng)
-          ? { ...prev, address: data.display_name ?? null, formattedAddress: parts.join(', ') || null }
+          ? { ...prev, address: data.display_name ?? null, formattedAddress: parts.join(', ') || null, localArea: localPlace ?? null, municipality: city ?? null, district: district ?? null, province: province ?? null }
           : prev);
       } catch (e) {
         console.error('Failed to fetch address', e);
@@ -539,41 +547,58 @@ export const MyLocationPage: React.FC<{
                </div>
              )}
 
-             <div className="card card-elevated p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-2xl font-black text-white leading-tight">
-                      {locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
-                    </h2>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                    <span className="bg-emerald-500/10 px-2 py-1 rounded-lg">
-                      {formatDMS(locationInfo.lat, locationInfo.lng)}
-                    </span>
-                    {accuracyLabel && (
-                      <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                        {accuracyLabel}
-                      </span>
-                    )}
-                    {locationInfo.nearestJunction.city && (
-                      <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg flex items-center space-x-1">
-                        <Building className="w-3 h-3" />
-                        <span>{locationInfo.nearestJunction.city.district} • {locationInfo.nearestJunction.city.province}</span>
-                      </span>
-                    )}
-                  </div>
-                  {locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code && (
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                      <span className="bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center space-x-1">
-                        <Route className="w-3 h-3" />
-                        <span>
-                          Near {locationInfo.nearestHighway.highway.code} ({locationInfo.nearestHighway.highway.name}){' '}
-                          {(locationInfo.nearestHighway.distanceKm ?? 0).toFixed(2)} km away
-                        </span>
-                      </span>
-                    </div>
-                  )}
+              <div className="card card-elevated p-5 space-y-4">
+               <div className="flex items-start justify-between">
+                 <div className="space-y-1">
+                   <div className="flex items-center space-x-2">
+                     <h2 className="text-2xl font-black text-white leading-tight">
+                       {locationInfo.localArea || locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
+                     </h2>
+                   </div>
+                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 mt-1">
+                     {locationInfo.municipality && (
+                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                         {locationInfo.municipality}
+                       </span>
+                     )}
+                     {locationInfo.district && locationInfo.district !== locationInfo.municipality && (
+                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                         {locationInfo.district}
+                       </span>
+                     )}
+                     {locationInfo.province && (
+                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                         {locationInfo.province}
+                       </span>
+                     )}
+                     {(!locationInfo.municipality && locationInfo.nearestJunction.city?.district && (
+                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg flex items-center space-x-1">
+                         <Building className="w-3 h-3" />
+                         <span>{locationInfo.nearestJunction.city.district}</span>
+                       </span>
+                     ))}
+                   </div>
+                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
+                     <span className="bg-emerald-500/10 px-2 py-1 rounded-lg">
+                       {formatDMS(locationInfo.lat, locationInfo.lng)}
+                     </span>
+                     {accuracyLabel && (
+                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                         {accuracyLabel}
+                       </span>
+                     )}
+                   </div>
+                   {locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code && (
+                     <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
+                       <span className="bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center space-x-1">
+                         <Route className="w-3 h-3" />
+                         <span>
+                           {locationInfo.nearestHighway.highway.code} ({locationInfo.nearestHighway.highway.name}),{' '}
+                           {(locationInfo.nearestHighway.distanceKm ?? 0).toFixed(2)} km away
+                         </span>
+                       </span>
+                     </div>
+                   )}
                 </div>
               </div>
 
