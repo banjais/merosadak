@@ -752,7 +752,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setLocationMode('my_location');
       setShowSearchPanel(false);
       setNeedsRecalculation(false);
-      setIsReportExpanded(true);
+      setIsReportExpanded(false);
       setCalcKey((k) => k + 1);
       setAiCustomAdvisory(null);
       setIsCalculating(false);
@@ -2124,6 +2124,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           {/* EXPANDED FULL REPORT CONTENT */}
           {isReportExpanded && (
             <>
+              {/* Route alternatives toggle (when alternatives exist) */}
+              {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setResultsViewMode(resultsViewMode === 'overview' ? 'comparison' : 'overview')}
+                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    resultsViewMode === 'comparison'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
+                      : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
+                  }`}
+                  title="Toggle route alternatives comparison"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>{resultsViewMode === 'overview' ? 'Compare' : 'Overview'}</span>
+                  <span className="text-[10px] opacity-70">({routePlan.allRouteOptions.length} routes)</span>
+                </button>
+              )}
+
               {/* DEDICATED COMPARISON VIEW IF ACTIVE */}
               {resultsViewMode === 'comparison' && (
                 <RouteComparisonView
@@ -2140,11 +2158,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 />
               )}
 
-          {/* STANDARD TRIP OVERVIEW CONTENT */}
-          {resultsViewMode === 'overview' && (
-            <>
-               {/* ROUTE CALCULATION SUMMARY & STRUCTURED VEHICLE FUEL COST BREAKDOWN */}
-               <UnifiedRouteReport
+              {/* STANDARD TRIP OVERVIEW CONTENT */}
+              {resultsViewMode === 'overview' && (
+                <UnifiedRouteReport
                   route={routePlan}
                   distanceKm={routePlan.totalDistanceKm}
                   distanceSource="dor_gis_route"
@@ -2162,40 +2178,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   simulationControls={simulationControls}
                   onViewOnMap={onViewOnMap}
                 />
-
-           
-              {/* Route Alternatives Toggle (show when alternatives exist) */}
-              {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setResultsViewMode(resultsViewMode === 'overview' ? 'comparison' : 'overview')}
-                  className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    (resultsViewMode as 'overview' | 'comparison') === 'comparison'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
-                      : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
-                  }`}
-                  title="Toggle route alternatives comparison"
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>{(resultsViewMode as 'overview' | 'comparison') === 'overview' ? 'Compare' : 'Overview'}</span>
-                  <span className="text-[10px] opacity-70">
-                    ({routePlan.allRouteOptions.length} routes)
-                  </span>
-                </button>
-              )}{/* Multi-Route Alternatives (If available) */}
-          {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
-            <RouteOptionsSelector
-              activePlan={routePlan}
-              allOptions={routePlan.allRouteOptions}
-              selectedRouteId={routePlan.id}
-              vehicle={vehicle}
-              onSelectRoute={(opt) => {
-                setRoutePlan(opt);
-                setPreference(opt.preference);
-                onRouteCalculated(opt);
-              }}
-              onViewOnMap={onViewOnMap}
-            />
+              )}
+            </>
           )}
 
           {/* 6. Mode first, then along-route modules (driver vs passenger). */}
@@ -2572,10 +2556,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
               </div>
             )}
-          </>
-        )}
-      </>
-    )}
           </div>
         )}
         </div>
