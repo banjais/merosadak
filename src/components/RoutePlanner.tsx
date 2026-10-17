@@ -2041,6 +2041,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
                   <span>{routePlan.roadConditionScore}</span>
                 </span>
+                <span className="flex items-center space-x-1 text-purple-400 font-bold" title="Peak Elevation">
+                  <Mountain className="w-3 h-3 text-purple-400 shrink-0" />
+                  <span>{routePlan.maxElevationM}m peak</span>
+                </span>
               </div>
             </div>
 
