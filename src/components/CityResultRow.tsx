@@ -6,13 +6,9 @@ import { getCityLink, HIGHWAY_TOUCH_KM } from '../utils/roadGraphRouter';
  * One autocomplete row, shared by every place picker so the planner, the
  * distance calculator and any future surface render identical results.
  *
- * Deliberately narrow: name, settlement type, at most two highway codes and the
- * district. Elevation is omitted because it is 0 for geocoded places and reads
- * as "0m ASL" when the real figure is simply unknown.
+ * Deliberately narrow: name + elevation, highway touch status, then the
+ * district/province address on the last line. Plain (no boxy borders).
  */
-
-/** Cap the highway chip so a junction on four highways does not wrap the row. */
-const MAX_HIGHWAY_CHIPS = 2;
 
 export const formatCityHighwayCodes = (city: CityNode): string[] => {
   // Prefer the surveyed graph: it knows every highway within reach of the place,
@@ -92,47 +88,32 @@ interface CityResultRowProps {
 }
 
 export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) => {
-  const codes = formatCityHighwayCodes(city);
-  const shownCodes = codes.slice(0, MAX_HIGHWAY_CHIPS);
-  const hiddenCodeCount = codes.length - shownCodes.length;
-  const locality = [city.district, city.province].filter(Boolean).join(' • ');
   const touch = getCityHighwayStatus(city);
-  // The badge already carries the access figure, so the sub-line keeps locality
-  // only and does not repeat "km access" twice.
-  const secondLine = locality;
+  const codes = formatCityHighwayCodes(city);
+  const elevation = city.elevationM != null && city.elevationM > 0 ? ` ${city.elevationM}m` : '';
+  const locality = [city.district, city.province].filter(Boolean).join(' • ');
 
   return (
     <button
       type="button"
       onClick={() => onSelect(city)}
       title={`${city.name}: ${touch.label}`}
-      className="w-full px-3 py-2 rounded-xl text-left hover:bg-slate-900 border border-transparent hover:border-slate-800 transition group"
+      className="w-full px-3 py-2.5 text-left hover:bg-slate-900/60 border-b border-slate-800/50 last:border-b-0 transition group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40"
     >
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">
-          {city.name}
-        </span>
-        {city.cityType && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-            {city.cityType}
+      <div className="text-sm font-bold text-white truncate group-hover:text-emerald-300">
+        {city.name}{elevation}
+      </div>
+      <div className={`text-[10px] font-medium mt-0.5 truncate ${touch.className}`}>
+        {touch.label}
+        {codes.length > 0 && (
+          <span className="ml-1.5 text-[9px] text-slate-400 opacity-80 font-mono">
+            {codes.join(' • ')}
           </span>
-        )}
-        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${touch.className}`}>
-          {touch.label}
-        </span>
-        {shownCodes.map((code) => (
-          <span
-            key={code}
-            className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30"
-          >
-            {code}
-          </span>
-        ))}
-        {hiddenCodeCount > 0 && (
-          <span className="text-[9px] text-slate-500">+{hiddenCodeCount}</span>
         )}
       </div>
-      {secondLine && <div className="text-[10px] text-slate-400 mt-0.5 truncate">{secondLine}</div>}
+      {locality && (
+        <div className="text-[10px] text-slate-500 mt-0.5 truncate">{locality}</div>
+      )}
     </button>
   );
 };
