@@ -89,9 +89,14 @@ export function countCityMatches(  cities: CityNode[],
   if (!normalizedQuery) return 0;
 
   let count = 0;
+  const seenNames = new Set<string>();
   for (const city of cities) {
     if (options.excludeIds?.has(city.id)) continue;
-    if (scoreCity(city, normalizedQuery) !== NO_MATCH) count += 1;
+    if (scoreCity(city, normalizedQuery) === NO_MATCH) continue;
+    const nameKey = city.name.trim().toLowerCase();
+    if (seenNames.has(nameKey)) continue;
+    seenNames.add(nameKey);
+    count += 1;
   }
   return count;
 }
@@ -140,7 +145,19 @@ export const filterCities = (
     return a.city.name.localeCompare(b.city.name);
   });
 
-  return scored.slice(0, limit).map((entry) => entry.city);
+  // Deduplicate by city name (case-insensitive): keep only the best-ranked
+  // entry per name so "Banepa" shows once with district+province, not twice
+  // under two district spellings.
+  const seenNames = new Set<string>();
+  const uniqueScored: typeof scored = [];
+  for (const entry of scored) {
+    const key = entry.city.name.trim().toLowerCase();
+    if (seenNames.has(key)) continue;
+    seenNames.add(key);
+    uniqueScored.push(entry);
+  }
+
+  return uniqueScored.slice(0, limit).map((entry) => entry.city);
 };
 
 const GEOCODE_CACHE = new Map<string, CityNode | null>();
