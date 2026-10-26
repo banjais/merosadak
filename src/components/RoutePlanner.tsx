@@ -1961,31 +1961,46 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </header>
           {/* Reduced view: keep the key numbers visible without expanding */}
           {!sections.isExpanded('results') && (
-            <div className="px-3 sm:px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-300 animate-fadeIn">
-              <span className="flex items-center gap-1 text-white font-bold">
-                <Compass className="h-3.5 w-3.5 text-emerald-400" />
-                {routePlan.totalDistanceKm} km
-              </span>
-              <span className="flex items-center gap-1 text-cyan-400 font-bold">
-                <Clock className="h-3.5 w-3.5 text-cyan-400" />
-                {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
-              </span>
-              <span className="flex items-center gap-1 text-amber-300 font-bold">
-                <Fuel className="h-3.5 w-3.5 text-amber-400" />
-                Rs {estimatedTripCostNpr.toLocaleString()}
-              </span>
-              <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                {routePlan.roadConditionScore}
-              </span>
-              <button
-                type="button"
-                onClick={() => sections.setExpanded('results', true)}
-                className="ml-auto text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
-              >
-                <span>Expand</span>
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
+            <div className="px-3 sm:px-4 py-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-300 animate-fadeIn">
+                <span className="flex items-center gap-1 text-white font-bold">
+                  <Compass className="h-3.5 w-3.5 text-emerald-400" />
+                  {routePlan.totalDistanceKm} km
+                </span>
+                <span className="flex items-center gap-1 text-cyan-400 font-bold">
+                  <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                  {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+                </span>
+                <span className="flex items-center gap-1 text-amber-300 font-bold">
+                  <Fuel className="h-3.5 w-3.5 text-amber-400" />
+                  Rs {estimatedTripCostNpr.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                  {routePlan.roadConditionScore}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => sections.setExpanded('results', true)}
+                  className="ml-auto text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
+                >
+                  <span>Expand</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="px-3 sm:px-4 py-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTravelPlanView('steps');
+                    setActiveModuleTab('travel_plan');
+                  }}
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>Start Trip</span>
+                </button>
+              </div>
             </div>
           )}
 {sections.isExpanded('results') && (
