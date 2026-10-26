@@ -157,7 +157,33 @@ export const filterCities = (
     uniqueScored.push(entry);
   }
 
-  return uniqueScored.slice(0, limit).map((entry) => entry.city);
+  // Suppress suffixed variants (e.g. "Pokhara Bus Park") when the base city
+  // ("Pokhara") is already in the results — the plain city is what a driver
+  // wants to depart from, not an internal bus-park landmark.
+  const CITY_SUFFIXES = [
+    ' bus park', ' bus station', ' bus stand', ' station', ' chowk',
+    ' bazar', ' bazaar', ' pul', ' bridge', ' terminal', ' parking',
+  ];
+  const stripSuffix = (name: string): string => {
+    const lower = name.toLowerCase();
+    for (const suffix of CITY_SUFFIXES) {
+      if (lower.endsWith(suffix)) {
+        return name.slice(0, -suffix.length).trim();
+      }
+    }
+    return name;
+  };
+  const baseNames = new Set(uniqueScored.map((e) => e.city.name.trim().toLowerCase()));
+  const finalScored: typeof scored = [];
+  for (const entry of uniqueScored) {
+    const base = stripSuffix(entry.city.name).trim().toLowerCase();
+    if (base !== entry.city.name.trim().toLowerCase() && baseNames.has(base)) {
+      continue;
+    }
+    finalScored.push(entry);
+  }
+
+  return finalScored.slice(0, limit).map((entry) => entry.city);
 };
 
 const GEOCODE_CACHE = new Map<string, CityNode | null>();
