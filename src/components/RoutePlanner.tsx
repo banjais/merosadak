@@ -542,7 +542,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   // Collapsible / reorderable planner sections (order + state persist)
   const PLANNER_SECTION_IDS = ['search', 'results'] as string[];
-  const sections = usePlannerSections(PLANNER_SECTION_IDS, ['search', 'results']);
+  const sections = usePlannerSections(PLANNER_SECTION_IDS, ['search']);
   const sectionIndex = (id: string) => sections.state.order.indexOf(id);
   const sectionMoveUp = (id: string) => (sectionIndex(id) > 0 ? () => sections.move(id, -1) : undefined);
   const sectionMoveDown = (id: string) =>
