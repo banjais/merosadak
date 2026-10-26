@@ -173,9 +173,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
         <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shadow-amber-500/10">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow">
               <svg viewBox="0 0 24 24" width="18" height="18">
-                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" fill="#f59e0b" />
+                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
               </svg>
             </div>
             <div>

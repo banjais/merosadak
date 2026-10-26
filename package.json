@@ -12,6 +12,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit && cd worker && npm ci --legacy-peer-deps && cd .. && tsc --noEmit -p worker/tsconfig.json",
     "ship": "node scripts/ship.cjs",
+    "icons:generate": "node scripts/generate-brand-icons.cjs",
     "sync:data": "node worker/sync-data.js",
     "sync:fuel": "npx tsx scripts/sync-fuel-prices.ts",
     "sync:tolls": "npx tsx scripts/sync-toll-rates.ts",

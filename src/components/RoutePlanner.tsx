@@ -1931,7 +1931,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           <header className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
             <button
               type="button"
-              onClick={() => sections.toggle('results')}
+              onClick={() => {
+                const willExpand = !sections.isExpanded('results');
+                sections.toggle('results');
+                setIsReportExpanded(willExpand);
+              }}
               aria-expanded={sections.isExpanded('results')}
               className="flex min-w-0 flex-1 items-center gap-2 text-left group"
             >
@@ -1980,7 +1984,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </span>
               <button
                 type="button"
-                onClick={() => sections.setExpanded('results', true)}
+                onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
                 className="ml-auto text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
               >
                 <span>Expand</span>
