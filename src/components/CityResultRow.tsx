@@ -90,8 +90,15 @@ interface CityResultRowProps {
 export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) => {
   const touch = getCityHighwayStatus(city);
   const codes = formatCityHighwayCodes(city);
+  const primaryCode = codes[0];
   const elevation = city.elevationM != null && city.elevationM > 0 ? ` ${city.elevationM}m` : '';
   const locality = [city.district, city.province].filter(Boolean).join(' • ');
+  const highwayNote =
+    touch.status === 'on_highway'
+      ? ` — ${touch.label}${primaryCode ? ` ${primaryCode}` : ''}`
+      : touch.status === 'access'
+        ? ` — ${touch.label}${primaryCode ? ` ${primaryCode}` : ''}`
+        : ` — ${touch.label}`;
 
   return (
     <button
@@ -103,14 +110,7 @@ export const CityResultRow: React.FC<CityResultRowProps> = ({ city, onSelect }) 
       <div className="text-sm font-bold text-white truncate group-hover:text-emerald-300">
         {city.name}{elevation}
       </div>
-      <div className={`text-[10px] font-medium mt-0.5 truncate ${touch.className}`}>
-        {touch.label}
-        {codes.length > 0 && (
-          <span className="ml-1.5 text-[9px] text-slate-400 opacity-80 font-mono">
-            {codes.join(' • ')}
-          </span>
-        )}
-      </div>
+      <div className={`text-[10px] font-medium mt-0.5 truncate ${touch.className}`}>{highwayNote}</div>
       {locality && (
         <div className="text-[10px] text-slate-500 mt-0.5 truncate">{locality}</div>
       )}
