@@ -1195,16 +1195,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   };
 
   const handleEditLocations = () => {
+    setRoutePlan(null);
     setHasCalculated(false);
     setDeckActive('search');
     setLocationMode('custom_from_to');
-    if (routePlan) {
-      setOriginId(routePlan.origin.id);
-      setOriginSearchQuery(routePlan.origin.name);
-      setDestId(routePlan.destination.id);
-      setDestSearchQuery(routePlan.destination.name);
-    }
-    setRoutePlannerStep('destination');
+    setOriginId('');
+    setOriginSearchQuery('');
+    setDestId('');
+    setDestSearchQuery('');
+    setSingleSearchQuery('');
+    setRoutePlannerStep('origin');
+    setActiveModuleTab('none');
+    setStartTripClicked(false);
+    setIsReportExpanded(false);
+    sections.setExpanded('results', false);
+    onRouteClear?.();
     setTimeout(() => {
       destInputRef.current?.focus();
     }, 150);
