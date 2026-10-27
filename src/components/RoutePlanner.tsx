@@ -15,12 +15,11 @@ import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
 import { RouteComparisonView } from './RouteComparisonView';
-import { RouteAheadFeed } from './RouteAheadFeed';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
 import { TripSummary } from './planner/TripSummary';
 import { TripTabs, type TripTab, type TripTabItem } from './planner/TripTabs';
-import { ItineraryPanel, type ItineraryView } from './planner/ItineraryPanel';
+import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
 import { CostsPanel } from './planner/CostsPanel';
 import {
@@ -486,8 +485,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
 
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
-  const [activeTab, setActiveTab] = useState<TripTab>('ahead');
-  const [travelPlanView, setTravelPlanView] = useState<ItineraryView>('timeline');
+  const [activeTab, setActiveTab] = useState<TripTab>('journey');
   // Calculation animation key for smooth CSS fade-in transitions
   const [calcKey, setCalcKey] = useState<number>(0);
 
@@ -705,7 +703,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(resolved);
       }
       setHasCalculated(true);
-      setActiveTab('ahead');
+      setActiveTab('journey');
       setTripStarted(false);
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
@@ -1151,7 +1149,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) {
       setHasCalculated(false);
       setRoutePlan(null);
-      setActiveTab('ahead');
+      setActiveTab('journey');
       onRouteClear?.();
     }
     setRoutePlannerStep('destination');
@@ -1172,7 +1170,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setRoutePlannerStep('origin');
-    setActiveTab('ahead');
+    setActiveTab('journey');
     setTripStarted(false);
     onRouteClear?.();
     setTimeout(() => {
@@ -1190,7 +1188,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestId('');
     setDestSearchQuery('');
     setSingleSearchQuery('');
-    setActiveTab('ahead');
+    setActiveTab('journey');
     onRouteClear?.();
     setTimeout(() => {
       originInputRef.current?.focus();
@@ -1200,7 +1198,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   // Driver-only tabs disappear for passengers; fall back to one they still have.
   useEffect(() => {
-    if (travelerMode === 'passenger') setActiveTab((prev) => (prev === 'costs' ? 'ahead' : prev));
+    if (travelerMode === 'passenger') setActiveTab((prev) => (prev === 'costs' ? 'journey' : prev));
   }, [travelerMode]);
 
   // Auto-calculate route when both origin and destination are selected
@@ -1325,8 +1323,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // One tab bar for everything after a route exists. Driver-only and
   // alternatives tabs appear only when they have something to show.
   const tripTabs: TripTabItem[] = [
-    { id: 'ahead', label: 'Ahead', Icon: Navigation, badge: routePlan?.incidentsOnRoute?.length },
-    { id: 'itinerary', label: 'Itinerary', Icon: Milestone },
+    { id: 'journey', label: 'Journey', Icon: Route, badge: routePlan?.incidentsOnRoute?.length },
     { id: 'insights', label: 'Insights', Icon: Sparkles },
     ...(travelerMode === 'driver' ? [{ id: 'costs' as const, label: 'Costs', Icon: Flame }] : []),
     ...(routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1
@@ -1767,8 +1764,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               onEdit={handleEditLocations}
               onStart={() => {
                 setTripStarted(true);
-                setTravelPlanView('steps');
-                setActiveTab('itinerary');
+                setActiveTab('journey');
                 onViewOnMap?.();
               }}
               onShowOnMap={() => onViewOnMap?.()}
@@ -1777,26 +1773,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             />
 
             <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
-              {activeTab === 'ahead' && (
+              {activeTab === 'journey' && (
                 <ErrorBoundary
                   fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
                 >
-                  <RouteAheadFeed
-                    routePlan={routePlan}
+                  <JourneyPanel
+                    route={routePlan}
+                    vehicle={vehicle}
                     mode={travelerMode}
                     extraIncidents={liveIncidents}
                     onViewOnMap={onViewOnMap}
                   />
                 </ErrorBoundary>
-              )}
-              {activeTab === 'itinerary' && (
-                <ItineraryPanel
-                  route={routePlan}
-                  vehicle={vehicle}
-                  view={travelPlanView}
-                  onViewChange={setTravelPlanView}
-                  onViewOnMap={onViewOnMap}
-                />
               )}
               {activeTab === 'insights' && (
                 <InsightsPanel
@@ -1835,7 +1823,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setRoutePlan(opt);
                     setPreference(opt.preference);
                     onRouteCalculated(opt);
-                    setActiveTab('ahead');
+                    setActiveTab('journey');
                   }}
                   onViewOnMap={onViewOnMap}
                 />

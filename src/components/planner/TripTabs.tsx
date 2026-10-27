@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 
-export type TripTab = 'ahead' | 'itinerary' | 'insights' | 'costs' | 'routes' | 'report';
+export type TripTab = 'journey' | 'insights' | 'costs' | 'routes' | 'report';
 
 export interface TripTabItem {
   id: TripTab;
