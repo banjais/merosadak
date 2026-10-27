@@ -545,12 +545,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Collapsible / reorderable planner sections (order + state persist)
   const PLANNER_SECTION_IDS = ['search', 'results'] as string[];
   const sections = usePlannerSections(PLANNER_SECTION_IDS, ['search']);
-  const sectionIndex = (id: string) => sections.state.order.indexOf(id);
-  const sectionMoveUp = (id: string) => (sectionIndex(id) > 0 ? () => sections.move(id, -1) : undefined);
-  const sectionMoveDown = (id: string) =>
-    sectionIndex(id) >= 0 && sectionIndex(id) < sections.state.order.length - 1
-      ? () => sections.move(id, 1)
-      : undefined;
 
   // Reels-style deck: which planner card is in front
   const [deckActive, setDeckActive] = useState<'search' | 'results' | 'vehicle'>('search');
@@ -1949,20 +1943,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <ChevronDown className="h-4 w-4" />
               </span>
             </button>
-            <div className="flex shrink-0 items-center gap-1">
-              {sectionMoveUp('results') && (
-                <button type="button" onClick={sectionMoveUp('results')} title="Move results up" aria-label="Move results up"
-                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                  <ArrowUp className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {sectionMoveDown('results') && (
-                <button type="button" onClick={sectionMoveDown('results')} title="Move results down" aria-label="Move results down"
-                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                  <ArrowDown className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
           </header>
           {/* Collapsed view: short description once + Expand button */}
           {!sections.isExpanded('results') && (
