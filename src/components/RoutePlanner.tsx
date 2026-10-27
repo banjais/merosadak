@@ -1487,7 +1487,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
                 <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
-                  Near {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
+                  {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
                 </div>
               )}
             </div>
@@ -1855,7 +1855,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
             </span>
             <span className="text-[11px] text-slate-400 whitespace-nowrap">
-              Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+              Type a highway code like NH01 to browse towns on that route.
             </span>
           </div>
         </div>

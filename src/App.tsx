@@ -561,13 +561,13 @@ function AppContent() {
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-base font-black tracking-tight text-white font-display">MERO SADAK</span>
+                  <span className="text-base font-black tracking-tight text-white font-display">Mero Sadak</span>
                   <span className="px-1.5 py-0.2 text-[9px] font-extrabold accent-bg accent-text accent-border border rounded">
                     मेरो सडक
                   </span>
                 </div>
-                <div className="text-[9px] accent-text-dim font-semibold uppercase tracking-wider truncate">
-                  Routes · alerts · weather
+                <div className="text-[9px] accent-text-dim font-semibold tracking-wider truncate">
+                  Highway Routes · Road Alerts · Travel Info
                 </div>
               </div>
             </div>

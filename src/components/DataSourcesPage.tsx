@@ -83,7 +83,7 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onBack }) => {
               <FileText className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">MERO SADAK</h1>
+              <h1 className="text-sm font-semibold text-slate-400 tracking-wider">Mero Sadak</h1>
               <p className="text-xl font-black text-white font-display">Data Sources & Certification</p>
             </div>
           </div>

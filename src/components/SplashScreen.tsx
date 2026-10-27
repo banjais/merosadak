@@ -129,7 +129,7 @@ const [progress, setProgress] = useState(0);
 
         {/* Title */}
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-display mb-1.5 splash-shimmer-text leading-none">
-          MERO SADAK
+          Mero Sadak
         </h1>
 
         {/* Nepali Subtitle */}

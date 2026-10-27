@@ -66,7 +66,7 @@ export const ProofVerifyPage: React.FC<Props> = ({ claim, onClose }) => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <div className="text-xs font-semibold accent-text tracking-wider">MERO SADAK</div>
+            <div className="text-xs font-semibold accent-text tracking-wider">Mero Sadak</div>
             <div className="text-lg font-black text-white">Check a printed proof sheet</div>
           </div>
         </div>

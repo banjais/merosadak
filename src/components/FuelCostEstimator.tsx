@@ -504,7 +504,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   const handleCopyReceipt = () => {
     const fromName = origin?.name || 'Origin';
     const toName = destination?.name || 'Destination';
-    const receiptText = `🚗 MERO SADAK NEPAL - TRIP EXPENSE ESTIMATE
+    const receiptText = `🚗 Mero Sadak Nepal - Trip Expense Estimate
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Route: ${fromName} ➔ ${toName}
 Distance: ${calculation.effectiveDistance} km (${isRoundTrip ? 'Round-Trip' : 'One-Way'})

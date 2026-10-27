@@ -127,7 +127,7 @@ function getWeatherIconBg(code: number): string {
   return 'bg-slate-500/20';
 }
 
-type TabType = 'weather' | 'incidents' | 'emergency' | 'tourist' | 'landmarks' | 'highway';
+type TabType = 'weather' | 'incidents' | 'emergency' | 'airport' | 'bus_station' | 'temple' | 'tourist_place' | 'tourist' | 'landmarks' | 'highway';
 
 export const MyLocationPage: React.FC<{
   onBack: () => void;
@@ -147,6 +147,7 @@ export const MyLocationPage: React.FC<{
   const [incidents, setIncidents] = useState<any[]>([]);
   const [airports, setAirports] = useState<any[]>([]);
   const [busStations, setBusStations] = useState<any[]>([]);
+  const [temples, setTemples] = useState<any[]>([]);
   const [landmarks, setLandmarks] = useState<any[]>([]);
   const [pois, setPois] = useState<any[]>([]);
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -164,6 +165,7 @@ export const MyLocationPage: React.FC<{
         fetch('/data/incidents.json').then(r => r.json()).then(setIncidents).catch(() => []),
         fetch('/data/airports.json').then(r => r.json()).then(setAirports).catch(() => []),
         fetch('/data/bus-stations.json').then(r => r.json()).then(setBusStations).catch(() => []),
+        fetch('/data/temples.json').then(r => r.json()).then(setTemples).catch(() => []),
         fetch('/data/landmarks.json').then(r => r.json()).then(setLandmarks).catch(() => []),
         fetch('/data/pois.json').then(r => r.json()).then(setPois).catch(() => []),
       ];
@@ -306,6 +308,62 @@ export const MyLocationPage: React.FC<{
     return `${(m / 1000).toFixed(2)} km`;
   };
 
+  const nearbyAirports = useMemo(() => {
+    if (!locationInfo || airports.length === 0) return [];
+    return airports
+      .map((a: any) => {
+        if (a.lat == null || a.lng == null) return null;
+        const d = getDistanceKm(locationInfo.lat, locationInfo.lng, a.lat, a.lng);
+        const cfg = getConfig('airport');
+        return { id: a.code || `air-${a.name}`, name: a.name, category: 'Airport', subcategory: a.type || a.district, lat: a.lat, lng: a.lng, distanceKm: d, icon: cfg.icon, color: cfg.color };
+      })
+      .filter(Boolean)
+      .filter((item) => item.distanceKm <= 25)
+      .sort((a: any, b: any) => a.distanceKm - b.distanceKm);
+  }, [locationInfo?.lat, locationInfo?.lng, airports]);
+
+  const nearbyBusStations = useMemo(() => {
+    if (!locationInfo || busStations.length === 0) return [];
+    return busStations
+      .map((b: any) => {
+        if (b.lat == null || b.lng == null) return null;
+        const d = getDistanceKm(locationInfo.lat, locationInfo.lng, b.lat, b.lng);
+        const cfg = getConfig('bus_station');
+        return { id: b.id || `bus-${b.name}`, name: b.name, category: 'Bus Station', subcategory: b.location || b.district, lat: b.lat, lng: b.lng, distanceKm: d, icon: cfg.icon, color: cfg.color };
+      })
+      .filter(Boolean)
+      .filter((item) => item.distanceKm <= 25)
+      .sort((a: any, b: any) => a.distanceKm - b.distanceKm);
+  }, [locationInfo?.lat, locationInfo?.lng, busStations]);
+
+  const nearbyTemples = useMemo(() => {
+    if (!locationInfo || temples.length === 0) return [];
+    return temples
+      .map((t: any) => {
+        if (t.lat == null || t.lng == null) return null;
+        const d = getDistanceKm(locationInfo.lat, locationInfo.lng, t.lat, t.lng);
+        const cfg = getConfig('temple');
+        return { id: t.id || `temple-${t.name}`, name: t.name, category: 'Temple', subcategory: t.location || t.district, lat: t.lat, lng: t.lng, distanceKm: d, icon: cfg.icon, color: cfg.color };
+      })
+      .filter(Boolean)
+      .filter((item) => item.distanceKm <= 25)
+      .sort((a: any, b: any) => a.distanceKm - b.distanceKm);
+  }, [locationInfo?.lat, locationInfo?.lng, temples]);
+
+  const nearbyTouristPlaces = useMemo(() => {
+    if (!locationInfo || touristPlaces.length === 0) return [];
+    return touristPlaces
+      .map((t: any) => {
+        if (t.lat == null || t.lng == null) return null;
+        const d = getDistanceKm(locationInfo.lat, locationInfo.lng, t.lat, t.lng);
+        const cfg = getConfig(t.type || 'tourist');
+        return { id: t.id || `tour-${t.name}`, name: t.name, category: 'Tourist Place', subcategory: t.type || t.district, lat: t.lat, lng: t.lng, distanceKm: d, icon: cfg.icon, color: cfg.color };
+      })
+      .filter(Boolean)
+      .filter((item) => item.distanceKm <= 25)
+      .sort((a: any, b: any) => a.distanceKm - b.distanceKm);
+  }, [locationInfo?.lat, locationInfo?.lng, touristPlaces]);
+
   const nearbyLandmarks = useMemo(() => {
     if (!locationInfo) return [];
 
@@ -315,20 +373,6 @@ export const MyLocationPage: React.FC<{
       const d = getDistanceKm(locationInfo.lat, locationInfo.lng, lat, lng);
       items.push({ id, name, category, subcategory, lat, lng, distanceKm: d, icon, color });
     };
-
-    airports.forEach((a: any) => {
-      if (a.lat != null && a.lng != null) {
-        const cfg = getConfig('airport');
-        addItem(a.code || `air-${a.name}`, a.name, 'Airport', a.type || a.district, a.lat, a.lng, cfg.icon, cfg.color);
-      }
-    });
-
-    busStations.forEach((b: any) => {
-      if (b.lat != null && b.lng != null) {
-        const cfg = getConfig('bus_station');
-        addItem(b.id || `bus-${b.name}`, b.name, 'Bus Station', b.location || b.district, b.lat, b.lng, cfg.icon, cfg.color);
-      }
-    });
 
     pois.forEach((p: any) => {
       if (p.lat != null && p.lng != null) {
@@ -345,13 +389,6 @@ export const MyLocationPage: React.FC<{
       }
     });
 
-    touristPlaces.forEach((t: any) => {
-      if (t.lat != null && t.lng != null) {
-        const cfg = getConfig(t.type || 'tourist');
-        addItem(t.id || `tour-${t.name}`, t.name, 'Tourist Place', t.type || t.district, t.lat, t.lng, cfg.icon, cfg.color);
-      }
-    });
-
     const nearby = items.filter(item => item.distanceKm <= 25);
     const bestPerCategory: Record<string, NearbyItem> = {};
     for (const item of nearby) {
@@ -362,7 +399,7 @@ export const MyLocationPage: React.FC<{
     }
 
     return Object.values(bestPerCategory).sort((a, b) => a.distanceKm - b.distanceKm);
-  }, [locationInfo, airports, busStations, pois, landmarks, touristPlaces]);
+  }, [locationInfo, pois, landmarks]);
 
   const nearestTouristPlace = useMemo(() => {
     if (!locationInfo || touristPlaces.length === 0) return null;
@@ -428,8 +465,20 @@ export const MyLocationPage: React.FC<{
     tabs.push({ id: 'incidents', label: 'Incidents', icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />, count: nearbyIncidents.length });
   }
   tabs.push({ id: 'emergency', label: 'Emergency', icon: <Phone className="w-3.5 h-3.5 text-red-400" />, count: nearbyEmergency.length });
+  if (nearbyAirports.length > 0) {
+    tabs.push({ id: 'airport', label: 'Airport', icon: <Plane className="w-3.5 h-3.5 text-sky-400" />, count: nearbyAirports.length });
+  }
+  if (nearbyBusStations.length > 0) {
+    tabs.push({ id: 'bus_station', label: 'Bus Station', icon: <Bus className="w-3.5 h-3.5 text-amber-400" />, count: nearbyBusStations.length });
+  }
+  if (nearbyTemples.length > 0) {
+    tabs.push({ id: 'temple', label: 'Temple', icon: <Landmark className="w-3.5 h-3.5 text-amber-400" />, count: nearbyTemples.length });
+  }
+  if (nearbyTouristPlaces.length > 0) {
+    tabs.push({ id: 'tourist_place', label: 'Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" />, count: nearbyTouristPlaces.length });
+  }
   if (nearestTouristPlace) {
-    tabs.push({ id: 'tourist', label: 'Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" /> });
+    tabs.push({ id: 'tourist', label: 'Nearest Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" /> });
   }
   if (nearbyLandmarks.length > 0) {
     tabs.push({ id: 'landmarks', label: 'Landmarks', icon: <MapPin className="w-3.5 h-3.5 text-purple-400" />, count: nearbyLandmarks.length });
@@ -457,7 +506,7 @@ export const MyLocationPage: React.FC<{
             </div>
             <div>
               <h1 className="text-sm font-semibold accent-text tracking-wider">
-                MERO SADAK
+                Mero Sadak
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">
                 My Location
@@ -737,6 +786,102 @@ export const MyLocationPage: React.FC<{
                       {nearestTouristPlace.distanceKm.toFixed(2)} km
                     </p>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'airport' && nearbyAirports.length > 0 && (
+                <div className="space-y-2">
+                  {nearbyAirports.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.id} className="flex items-center space-x-3 bg-slate-950 p-3 rounded-xl">
+                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{item.category}{item.subcategory ? ` · ${item.subcategory}` : ''}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-white">
+                            {item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(2)} km`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {activeTab === 'bus_station' && nearbyBusStations.length > 0 && (
+                <div className="space-y-2">
+                  {nearbyBusStations.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.id} className="flex items-center space-x-3 bg-slate-950 p-3 rounded-xl">
+                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{item.category}{item.subcategory ? ` · ${item.subcategory}` : ''}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-white">
+                            {item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(2)} km`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {activeTab === 'temple' && nearbyTemples.length > 0 && (
+                <div className="space-y-2">
+                  {nearbyTemples.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.id} className="flex items-center space-x-3 bg-slate-950 p-3 rounded-xl">
+                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{item.category}{item.subcategory ? ` · ${item.subcategory}` : ''}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-white">
+                            {item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(2)} km`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {activeTab === 'tourist_place' && nearbyTouristPlaces.length > 0 && (
+                <div className="space-y-2">
+                  {nearbyTouristPlaces.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.id} className="flex items-center space-x-3 bg-slate-950 p-3 rounded-xl">
+                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{item.category}{item.subcategory ? ` · ${item.subcategory}` : ''}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-white">
+                            {item.distanceKm < 1 ? `${Math.round(item.distanceKm * 1000)} m` : `${item.distanceKm.toFixed(2)} km`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

@@ -23,6 +23,17 @@ const MATCH_DISTRICT = 5;
 const MATCH_PROVINCE = 6;
 const NO_MATCH = -1;
 
+/** Infrastructure / POI types that are not routeable settlements and should not
+ * appear in city search results for origin/destination planning. */
+const NON_SETTLEMENT_TYPES = new Set([
+  'airport',
+  'bus station',
+  'bus park',
+  'temple',
+  'tourist place',
+  'geocoded',
+]);
+
 /**
  * How many highways a place joins, preferring the surveyed graph over the
  * curated list. Kept local rather than imported from the row component so this
@@ -122,6 +133,11 @@ export const filterCities = (
 
   for (const city of cities) {
     if (options.excludeIds?.has(city.id)) continue;
+    // Skip infrastructure / POI entries — they are destinations of interest but
+    // not settlements a driver plans a route from or to in the city picker.
+    if (city.cityType && NON_SETTLEMENT_TYPES.has(city.cityType.trim().toLowerCase())) {
+      continue;
+    }
     const match = scoreCity(city, normalizedQuery);
     if (match === NO_MATCH) continue;
     scored.push({
@@ -169,7 +185,10 @@ export const filterCities = (
     const group = uniqueScored.filter((other) => {
       const oname = other.city.name.trim();
       if (oname === name) return true;
-      return name.startsWith(oname + ' ') || oname.startsWith(name + ' ');
+      const sameDistrict = entry.city.district === other.city.district;
+      if (!sameDistrict) return false;
+      return name.startsWith(oname + ' ') || oname.startsWith(name + ' ') ||
+             name.startsWith(oname) || oname.startsWith(name);
     });
     group.forEach((g) => processed.add(g.city.name.trim().toLowerCase()));
     // Pick the variant with the most highways, then best type priority.

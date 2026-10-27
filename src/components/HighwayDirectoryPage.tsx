@@ -44,7 +44,7 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
             </div>
             <div>
               <h1 className="text-sm font-semibold accent-text tracking-wider">
-                MERO SADAK
+                Mero Sadak
               </h1>
               <p className="text-xl font-black tracking-tight text-white font-display">
                 Highway Directory
