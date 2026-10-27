@@ -2008,38 +2008,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
             </div>
 
-            {/* 4. SECONDARY ACTIONS — hidden after Start Trip */}
-            {!startTripClicked && (
-            <div className="px-3 py-1 flex flex-wrap gap-2 text-[10px]">
-              <button
-                type="button"
-                onClick={handleEditLocations}
-                className="px-3 py-1.5 bg-slate-900/40 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-bold transition"
-                title="Change origin or destination"
-              >
-                <Edit3 className="w-3 h-3 shrink-0" />
-                <span className="ml-1">Change Location</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleNewRoute}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-bold transition"
-                title="Plan a new route"
-              >
-                <ArrowUpDown className="w-3 h-3 shrink-0" />
-                <span className="ml-1 hidden sm:inline">New Route</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onShareTrip?.()}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-bold transition"
-                title="Share this trip"
-              >
-                <Share2 className="w-3 h-3 text-emerald-400 shrink-0" />
-              </button>
-            </div>
-            )}
-
             {/* 5. EXPAND / REDUCE */}
             <button
               type="button"
