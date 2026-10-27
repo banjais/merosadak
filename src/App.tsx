@@ -852,6 +852,7 @@ function AppContent() {
             onOpenMyLocation={() => setIsMyLocationOpen(true)}
             onShareTrip={() => setIsShareModalOpen(true)}
             onOpenPreTrip={() => setIsPreTripModalOpen(true)}
+            onOpenSos={() => setIsSosModalOpen(true)}
             uiLanguage={language}
             liveIncidents={incidents}
             onViewOnMap={(target) => {

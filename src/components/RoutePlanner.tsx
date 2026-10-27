@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { PlannerDeck } from './PlannerDeck';
-import { usePlannerSections } from '../hooks/usePlannerSections';
 import {
   CityNode,
   RoutePlanResult,
@@ -16,17 +14,15 @@ import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
 import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
-import { FuelCostEstimator } from './FuelCostEstimator';
-import { FuelPriceCard } from './FuelPriceCard';
-import { TripAssistantPanel } from './TripAssistantPanel';
-import { RouteTerrainAndTrafficAnalysis } from './RouteTerrainAndTrafficAnalysis';
-import { RouteOptionsSelector } from './RouteOptionsSelector';
-import { CarbonFootprintCard } from './CarbonFootprintCard';
 import { RouteComparisonView } from './RouteComparisonView';
-import { RouteJunctionTimeline } from './RouteJunctionTimeline';
-import { RouteHighwayInfoPanel } from './RouteHighwayInfoPanel';
 import { RouteAheadFeed } from './RouteAheadFeed';
 import { ErrorBoundary } from './ErrorBoundary';
+import { PlaceField, FieldIconButton } from './planner/PlaceField';
+import { TripSummary } from './planner/TripSummary';
+import { TripTabs, type TripTab, type TripTabItem } from './planner/TripTabs';
+import { ItineraryPanel, type ItineraryView } from './planner/ItineraryPanel';
+import { InsightsPanel } from './planner/InsightsPanel';
+import { CostsPanel } from './planner/CostsPanel';
 import {
   Compass,
   ArrowRight,
@@ -169,6 +165,8 @@ interface RoutePlannerProps {
   onShareTrip?: () => void;
   /** Parent-owned pre-trip checklist modal. */
   onOpenPreTrip?: () => void;
+  /** Opens the emergency SOS modal. */
+  onOpenSos?: () => void;
   /** App language for speech recognition and labels. */
   uiLanguage?: 'EN' | 'NE';
   /**
@@ -252,17 +250,6 @@ const findClosestCityFromCoords = (lat: number, lng: number, cities: CityNode[])
   );
 };
 
-type DetailModuleTab =
-  | 'none'
-  | 'travel_plan'
-  | 'fuel_tolls'
-  | 'ai_advisory'
-  | 'sos'
-  | 'checklist'
-  | 'highway_info'
-  | 'ahead'
-  | 'distance_service';
-
 export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialOriginId = '',
   initialDestId = '',
@@ -279,6 +266,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   onOpenMyLocation,
   onShareTrip,
   onOpenPreTrip,
+  onOpenSos,
   uiLanguage = 'EN',
   liveIncidents = [],
 }) => {
@@ -289,9 +277,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [needsRecalculation, setNeedsRecalculation] = useState<boolean>(false);
   const [vehicle, setVehicle] = useState<VehicleType>(initialVehicle);
   const [preference, setPreference] = useState<RoutePreference>(initialPreference);
-  const [showVehicleOptions, setShowVehicleOptions] = useState<boolean>(false);
-  const [isReportExpanded, setIsReportExpanded] = useState<boolean>(false);
-  const [showVehiclePerformance, setShowVehiclePerformance] = useState<boolean>(false);
   const [terrainFilters, setTerrainFilters] = useState<TerrainFilterOptions>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -501,16 +486,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
 
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
-  const [activeModuleTab, setActiveModuleTab] = useState<DetailModuleTab>('none');
-  const [resultsViewMode, setResultsViewMode] = useState<'overview' | 'comparison'>('overview');
-  const [travelPlanView, setTravelPlanView] = useState<'timeline' | 'steps'>('timeline');
+  const [activeTab, setActiveTab] = useState<TripTab>('ahead');
+  const [travelPlanView, setTravelPlanView] = useState<ItineraryView>('timeline');
   // Calculation animation key for smooth CSS fade-in transitions
   const [calcKey, setCalcKey] = useState<number>(0);
 
   // Toggle for advanced fuel/efficiency settings
-  const [showAdvancedFuel, setShowAdvancedFuel] = useState<boolean>(false);
   // Once Start Trip is clicked, swap it for Expand and drop secondary actions.
-  const [startTripClicked, setStartTripClicked] = useState<boolean>(false);
+  const [tripStarted, setTripStarted] = useState<boolean>(false);
 
   // AI Custom Advisory states
   const [loadingAiAdvisory, setLoadingAiAdvisory] = useState<boolean>(false);
@@ -531,29 +514,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const aiPromptRef = useRef<HTMLDivElement>(null);
 
   // Close all dropdown menus, optionally keeping one open
-  const closeAllMenus = useCallback((keepOpen: 'location' | 'single' | 'origin' | 'dest' | 'ai' | 'vehicle' | null = null) => {
+  const closeAllMenus = useCallback((keepOpen: 'location' | 'single' | 'origin' | 'dest' | 'ai' | null = null) => {
     if (keepOpen !== 'location') setIsLocationMenuOpen(false);
     if (keepOpen !== 'single') setIsSingleDropdownOpen(false);
     if (keepOpen !== 'origin') setIsOriginDropdownOpen(false);
     if (keepOpen !== 'dest') setIsDestDropdownOpen(false);
     if (keepOpen !== 'ai') setIsAiPromptOpen(false);
-    if (keepOpen !== 'vehicle') setShowVehicleOptions(false);
   }, []);
 
   // Signed-in user, printed on the report letterhead
   const { user } = useAuth();
-
-  // Collapsible / reorderable planner sections (order + state persist)
-  const PLANNER_SECTION_IDS = ['search', 'results'] as string[];
-  const sections = usePlannerSections(PLANNER_SECTION_IDS, ['search']);
-
-  // Reels-style deck: which planner card is in front
-  const [deckActive, setDeckActive] = useState<'search' | 'results' | 'vehicle'>('search');
-  // Keep the deck pointing at something that actually exists
-  useEffect(() => {
-    if (hasCalculated && deckActive === 'search') setDeckActive('results');
-    if (!hasCalculated && deckActive !== 'search') setDeckActive('search');
-  }, [hasCalculated, deckActive]);
 
   // Get current city objects
   const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
@@ -735,7 +705,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(resolved);
       }
       setHasCalculated(true);
-      setActiveModuleTab('ahead');
+      setActiveTab('ahead');
+      setTripStarted(false);
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
       setSingleSearchQuery('');
@@ -749,7 +720,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setLocationMode('my_location');
       setShowSearchPanel(false);
       setNeedsRecalculation(false);
-      setIsReportExpanded(false);
       setCalcKey((k) => k + 1);
       setAiCustomAdvisory(null);
       setIsCalculating(false);
@@ -1147,7 +1117,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setIsLocationMenuOpen(false);
     if (hasCalculated) {
       setHasCalculated(false);
-      setDeckActive('search');
       setRoutePlan(null);
       onRouteClear?.();
     }
@@ -1164,7 +1133,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setIsLocationMenuOpen(false);
     if (hasCalculated) {
       setHasCalculated(false);
-      setDeckActive('search');
       setRoutePlan(null);
       onRouteClear?.();
     }
@@ -1182,9 +1150,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setIsLocationMenuOpen(false);
     if (hasCalculated) {
       setHasCalculated(false);
-      setDeckActive('search');
       setRoutePlan(null);
-      setActiveModuleTab('none');
+      setActiveTab('ahead');
       onRouteClear?.();
     }
     setRoutePlannerStep('destination');
@@ -1198,7 +1165,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const handleEditLocations = () => {
     setRoutePlan(null);
     setHasCalculated(false);
-    setDeckActive('search');
     setLocationMode('custom_from_to');
     setOriginId('');
     setOriginSearchQuery('');
@@ -1206,10 +1172,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setRoutePlannerStep('origin');
-    setActiveModuleTab('none');
-    setStartTripClicked(false);
-    setIsReportExpanded(false);
-    sections.setExpanded('results', false);
+    setActiveTab('ahead');
+    setTripStarted(false);
     onRouteClear?.();
     setTimeout(() => {
       destInputRef.current?.focus();
@@ -1220,14 +1184,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('origin');
     setHasCalculated(false);
     setRoutePlan(null);
-    setDeckActive('search');
     setLocationMode('custom_from_to');
     setOriginId('');
     setOriginSearchQuery('');
     setDestId('');
     setDestSearchQuery('');
     setSingleSearchQuery('');
-    setActiveModuleTab('none');
+    setActiveTab('ahead');
     onRouteClear?.();
     setTimeout(() => {
       originInputRef.current?.focus();
@@ -1235,43 +1198,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }, 150);
   };
 
-  // Toggle detail module tabs — click the active tab to close it, click a
-   // different tab to switch straight to it.
-  const handleToggleModuleTab = (tab: DetailModuleTab) => {
-    setActiveModuleTab((prev) => (prev === tab ? 'none' : tab));
-  };
-
-  // Ordered list of module tabs, used so mobile swipe-left/right can move
-  // between them in the same order they're laid out in the button grid.
-  const MODULE_TAB_ORDER: DetailModuleTab[] = [
-    'travel_plan', 'highway_info', 'distance_service', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos', 'ahead',
-  ];
+  // Driver-only tabs disappear for passengers; fall back to one they still have.
   useEffect(() => {
-    if (travelerMode === 'passenger') {
-      setActiveModuleTab((prev) => (prev === 'fuel_tolls' || prev === 'checklist' ? 'none' : prev));
-    }
+    if (travelerMode === 'passenger') setActiveTab((prev) => (prev === 'costs' ? 'ahead' : prev));
   }, [travelerMode]);
-  const swipeTouchStartX = useRef<number | null>(null);
-  const handleModuleSwipeStart = (e: React.TouchEvent) => {
-    swipeTouchStartX.current = e.touches[0].clientX;
-  };
-  const handleModuleSwipeEnd = (e: React.TouchEvent) => {
-    if (swipeTouchStartX.current === null) return;
-    const deltaX = e.changedTouches[0].clientX - swipeTouchStartX.current;
-    swipeTouchStartX.current = null;
-    const SWIPE_THRESHOLD_PX = 50;
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return;
-    // passengers have no vehicle tools, so swiping must not land on them
-    const order = MODULE_TAB_ORDER.filter((t) => travelerMode === 'driver' || (t !== 'fuel_tolls' && t !== 'checklist'));
-    setActiveModuleTab((prev) => {
-      const idx = order.indexOf(prev as DetailModuleTab);
-      if (idx === -1) return prev;
-      const nextIdx = deltaX < 0
-        ? Math.min(idx + 1, order.length - 1) // swipe left -> next
-        : Math.max(idx - 1, 0); // swipe right -> previous
-      return order[nextIdx];
-    });
-  };
 
   // Auto-calculate route when both origin and destination are selected
   // (removes the need to manually click "Calculate Route & Reports")
@@ -1376,6 +1306,35 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     return updatedPlan;
   };
 
+  const handleRefreshFuelPrices = async () => {
+    setPriceFetchError(null);
+    try {
+      const prices = await fetchFuelPrices();
+      setFuelPrices(prices);
+      setFuelPriceMetadata(getFuelPriceMetadata());
+      if (routePlan) {
+        const updated = applyLiveFuelPrices(routePlan, vehicle, prices);
+        setRoutePlan(updated);
+        onRouteCalculated(updated);
+      }
+    } catch (err: any) {
+      setPriceFetchError(err?.message || 'Refresh failed');
+    }
+  };
+
+  // One tab bar for everything after a route exists. Driver-only and
+  // alternatives tabs appear only when they have something to show.
+  const tripTabs: TripTabItem[] = [
+    { id: 'ahead', label: 'Ahead', Icon: Navigation, badge: routePlan?.incidentsOnRoute?.length },
+    { id: 'itinerary', label: 'Itinerary', Icon: Milestone },
+    { id: 'insights', label: 'Insights', Icon: Sparkles },
+    ...(travelerMode === 'driver' ? [{ id: 'costs' as const, label: 'Costs', Icon: Flame }] : []),
+    ...(routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1
+      ? [{ id: 'routes' as const, label: 'Routes', Icon: Layers, badge: routePlan.allRouteOptions.length }]
+      : []),
+    { id: 'report', label: 'Report', Icon: FileText },
+  ];
+
   return (
     <div className="space-y-4">
       {isBrowserOpen && (
@@ -1386,17 +1345,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         />
       )}
       {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
-      <PlannerDeck
-        items={[
-          { id: 'search', label: 'Search' },
-          ...(hasCalculated && routePlan
-            ? [{ id: 'results', label: 'Route' }, { id: 'vehicle', label: 'Vehicle & route' }]
-            : []),
-        ]}
-        activeId={deckActive}
-        onChange={(id) => setDeckActive(id as 'search' | 'results' | 'vehicle')}
-      >
-        {(deckId) => (
       <div className="space-y-3">
       {/* 1. MY LOCATION CARD - hidden once a route is calculated */}
       {!hasCalculated && (
@@ -1588,101 +1536,48 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
       )}
 
-         {/* 2. SEARCH INPUT BARS - Hidden after calculation */}
-         {deckId === 'search' && !hasCalculated && (
-            locationMode === 'my_location' ? (
-              /* SINGLE SEARCH BAR with functional Mic and AI icons */
-              <div className="space-y-2 relative" ref={singleSearchRef}>
-            <div className="relative flex items-center">
-              <div className="absolute left-3.5 text-slate-400 pointer-events-none">
-                <Search className="w-4 h-4 text-emerald-400" />
-              </div>
-
-              <input
-                ref={singleSearchInputRef}
-                type="text"
-                name="merosadak-single-dest"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                inputMode="text"
-                onChange={(e) => {
-                  setSingleSearchQuery(e.target.value);
-                  closeAllMenus('single');
-                  setIsSingleDropdownOpen(true);
-                }}
-                onFocus={() => {
-                  closeAllMenus('single');
-                  setIsSingleDropdownOpen(true);
-                }}
-                placeholder='Where to?'
-                className={`w-full rounded-xl pl-10 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                  destId
-                    ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
-                    : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
-                }`}
-              />
-
-              {/* Functional Microphone and AI Icon Action Buttons */}
-              <div className="absolute right-2 flex items-center space-x-1.5">
-                {singleSearchQuery && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSingleSearchQuery(''); }}
-                    className="p-1 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
-                    title="Clear"
-                    type="button"
+        {!hasCalculated &&
+          (locationMode === 'my_location' ? (
+            <PlaceField
+              id="single-dest"
+              containerRef={singleSearchRef}
+              inputRef={singleSearchInputRef}
+              placeholder="Where to?"
+              value={singleSearchQuery}
+              resolved={!!destId}
+              accent="emerald"
+              listening={listeningTarget === 'single'}
+              onChange={(v) => {
+                setSingleSearchQuery(v);
+                closeAllMenus('single');
+                setIsSingleDropdownOpen(true);
+              }}
+              onFocus={() => {
+                closeAllMenus('single');
+                setIsSingleDropdownOpen(true);
+              }}
+              onVoice={() => startVoiceRecognition('single')}
+              onClear={() => setSingleSearchQuery('')}
+              actions={
+                <>
+                  <FieldIconButton
+                    label="AI route planner"
+                    active={isAiPromptOpen}
+                    onClick={() => {
+                      closeAllMenus('ai');
+                      setIsAiPromptOpen(!isAiPromptOpen);
+                    }}
                   >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {/* Microphone Button */}
-                <button
-                  onClick={() => startVoiceRecognition('single')}
-                  className={`p-1.5 rounded-lg border text-xs transition ${
-                    listeningTarget === 'single'
-                      ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
-                  }`}
-                  title="Voice search"
-                  id="btn-voice-search-single"
-                >
-                  <Mic className="w-4 h-4 text-emerald-400" />
-                </button>
-
-                {/* AI Assistant Button */}
-                <button
-                  onClick={() => {
-                   closeAllMenus('ai');
-                   setIsAiPromptOpen(!isAiPromptOpen);
-                 }}
-                  className={`p-1.5 rounded-lg border text-xs transition ${
-                    isAiPromptOpen
-                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-md shadow-cyan-500/10'
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
-                  }`}
-                  title="AI assistant"
-                  id="btn-ai-prompt-single"
-                >
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                </button>
-
-                {/* Browse by Highway Button — same round style as the Voice and AI icons */}
-                {highwayCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsBrowserOpen(true)}
-                    className="p-1.5 rounded-lg border text-xs transition bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700"
-                    title="Browse by highway"
-                    id="btn-browse-highway-single"
-                  >
-                    <MapPin className="w-4 h-4 text-amber-400" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Destination Autocomplete Suggestions Dropdown */}
+                    <Sparkles className="h-4 w-4 text-cyan-400" />
+                  </FieldIconButton>
+                  {highwayCount > 0 && (
+                    <FieldIconButton label="Browse by highway" onClick={() => setIsBrowserOpen(true)}>
+                      <MapPin className="h-4 w-4 text-amber-400" />
+                    </FieldIconButton>
+                  )}
+                </>
+              }
+            >
               {isSingleDropdownOpen && (
                 <CitySuggestionDropdown
                   query={singleSearchQuery}
@@ -1699,160 +1594,92 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   totalMatches={singleMatchCount}
                 />
               )}
-          </div>
-        ) : (
-          /* DUAL FROM & TO SEARCH BARS */
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
-            {/* FROM (Origin) */}
-            <div className="md:col-span-5 space-y-1 relative" ref={originSearchRef}>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none">
-                  <Search className="w-4 h-4" />
-                </div>
-                 <input
-                   id="input-from-origin"
-                   type="text"
-                   name="merosadak-origin"
-                   ref={originInputRef}
-                   value={originSearchQuery}
-                   onChange={(e) => {
-                     setOriginSearchQuery(e.target.value);
-                     closeAllMenus('origin');
-                     setIsOriginDropdownOpen(true);
-                   }}
-                   onFocus={() => {
-                     setOriginSearchQuery('');
-                     closeAllMenus('origin');
-                     setIsOriginDropdownOpen(true);
-                   }}
-                   placeholder='From where?'
-                   autoComplete="off"
-                   autoCorrect="off"
-                   autoCapitalize="off"
-                   spellCheck="false"
-                   inputMode="text"
-                   className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                     originId
-                       ? 'bg-slate-950 border-2 border-emerald-500/60 focus:border-emerald-400'
-                       : 'bg-slate-950 border border-slate-800 focus:border-emerald-500'
-                   }`}
-                />
-<button
-                   onClick={() => startVoiceRecognition('origin')}
-                   className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
-                     listeningTarget === 'origin'
-                       ? 'bg-rose-500 text-white animate-pulse'
-                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                   }`}
-                   title="Voice input for Origin"
-                   aria-label="Voice input for origin"
-                 >
-                   <Mic className="w-4 h-4" />
-                 </button>
-               </div>
-
-              {isOriginDropdownOpen && (
-                <CitySuggestionDropdown
-                  query={originSearchQuery}
-                  results={filteredOriginCities}
-                  searchablePlaceCount={searchablePlaceCount}
-                  onSelect={handleSelectOrigin}
-                  totalMatches={originMatchCount}
-                  showTouchLegend
-                  highwayGroups={originHighwayGroups}
-                />
-              )}
-             </div>
-
-             {/* SWAP BUTTON */}
-            <div className="md:col-span-2 flex justify-center pt-1 md:pt-4">
-              <button
-                onClick={handleSwapLocations}
-                title="Swap Origin and Destination"
-                className="touch-target rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center transition shadow active:scale-95"
-                aria-label="Swap origin and destination"
+            </PlaceField>
+          ) : (
+            <div className="grid items-start gap-2 md:grid-cols-[1fr_auto_1fr]">
+              <PlaceField
+                id="from-origin"
+                containerRef={originSearchRef}
+                inputRef={originInputRef}
+                placeholder="From where?"
+                value={originSearchQuery}
+                resolved={!!originId}
+                accent="emerald"
+                listening={listeningTarget === 'origin'}
+                onChange={(v) => {
+                  setOriginSearchQuery(v);
+                  closeAllMenus('origin');
+                  setIsOriginDropdownOpen(true);
+                }}
+                onFocus={() => {
+                  setOriginSearchQuery('');
+                  closeAllMenus('origin');
+                  setIsOriginDropdownOpen(true);
+                }}
+                onVoice={() => startVoiceRecognition('origin')}
+                onClear={handleClearOrigin}
               >
-                <ArrowUpDown className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* TO (Destination) */}
-            <div className="md:col-span-5 space-y-1 relative" ref={destSearchRef}>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 pointer-events-none">
-                  <Search className="w-4 h-4" />
-                </div>
-                <input
-                  ref={destInputRef}
-                  id="input-to-dest"
-                  type="text"
-                  name="merosadak-dest"
-                  value={destSearchQuery}
-                   onChange={(e) => {
-                     setDestSearchQuery(e.target.value);
-                     closeAllMenus('dest');
-                     setIsDestDropdownOpen(true);
-                   }}
-                   onFocus={() => {
-                     setDestSearchQuery('');
-                     closeAllMenus('dest');
-                     setIsDestDropdownOpen(true);
-                   }}
-                      placeholder='Where to?'
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                      inputMode="text"
-                      className={`w-full rounded-xl pl-10 pr-10 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium ${
-                        destId
-                          ? 'bg-slate-950 border-2 border-cyan-500/60 focus:border-cyan-400'
-                          : 'bg-slate-950 border border-slate-800 focus:border-cyan-500'
-                      }`}
-                />
-                <button
-                  onClick={() => startVoiceRecognition('dest')}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-2 rounded-md transition touch-target ${
-                    listeningTarget === 'dest'
-                      ? 'bg-rose-500 text-white animate-pulse'
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                  }`}
-                  title="Voice input for Destination"
-                  aria-label="Voice input for destination"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
-                {(destSearchQuery || destId) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleClearDestination(); }}
-                    className="absolute right-11 top-1/2 -translate-y-1/2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition touch-target"
-                    title="Clear destination"
-                    aria-label="Clear destination"
-                    type="button"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                {isOriginDropdownOpen && (
+                  <CitySuggestionDropdown
+                    query={originSearchQuery}
+                    results={filteredOriginCities}
+                    searchablePlaceCount={searchablePlaceCount}
+                    onSelect={handleSelectOrigin}
+                    totalMatches={originMatchCount}
+                    showTouchLegend
+                    highwayGroups={originHighwayGroups}
+                  />
                 )}
-              </div>
-
-{isDestDropdownOpen && (
-                <CitySuggestionDropdown
-                  query={destSearchQuery}
-                  results={filteredDestCities}
-                  searchablePlaceCount={searchablePlaceCount}
-                  onSelect={handleSelectDestination}
-                  totalMatches={destMatchCount}
-                  showTouchLegend
-                  highwayGroups={destHighwayGroups}
-                />
-              )}
-              </div>
+              </PlaceField>
+              <button
+                type="button"
+                onClick={handleSwapLocations}
+                aria-label="Swap origin and destination"
+                title="Swap origin and destination"
+                className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
+              >
+                <ArrowUpDown className="h-5 w-5" />
+              </button>
+              <PlaceField
+                id="to-dest"
+                containerRef={destSearchRef}
+                inputRef={destInputRef}
+                placeholder="Where to?"
+                value={destSearchQuery}
+                resolved={!!destId}
+                accent="cyan"
+                listening={listeningTarget === 'dest'}
+                onChange={(v) => {
+                  setDestSearchQuery(v);
+                  closeAllMenus('dest');
+                  setIsDestDropdownOpen(true);
+                }}
+                onFocus={() => {
+                  setDestSearchQuery('');
+                  closeAllMenus('dest');
+                  setIsDestDropdownOpen(true);
+                }}
+                onVoice={() => startVoiceRecognition('dest')}
+                onClear={handleClearDestination}
+              >
+                {isDestDropdownOpen && (
+                  <CitySuggestionDropdown
+                    query={destSearchQuery}
+                    results={filteredDestCities}
+                    searchablePlaceCount={searchablePlaceCount}
+                    onSelect={handleSelectDestination}
+                    totalMatches={destMatchCount}
+                    showTouchLegend
+                    highwayGroups={destHighwayGroups}
+                  />
+                )}
+              </PlaceField>
             </div>
           ))}
 
       {/* Search coverage banner — continuous full-width marquee, one line at a time,
           shared by every dropdown so the count is seen once and never repeated. */}
-      {deckId === 'search' && !hasCalculated && (
+      {!hasCalculated && (
         <div className="w-full bg-slate-900/40 border-b border-slate-800 py-1.5 overflow-hidden">
           <div className="flex items-center justify-center gap-8 px-4 animate-marquee">
             <span className="text-[11px] text-slate-400 whitespace-nowrap">
@@ -1868,7 +1695,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               disappear together when a selection is made. */}
 
           {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
-          {deckId === 'search' && !hasCalculated && isAiPromptOpen && (
+          {!hasCalculated && isAiPromptOpen && (
           <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
               <div className="flex items-center space-x-1.5">
@@ -1925,693 +1752,121 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-       {deckId === 'results' && hasCalculated && routePlan && (
-          <div
-            id="route-results-panel"
-            key={`route-results-panel-${calcKey}-${routePlan.id}`}
-            className="p-3 sm:p-4 space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full"
-         >
-            {/* Collapsed state: short description + Expand button */}
-            {!sections.isExpanded('results') && (
-              <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-slate-900/30">
-                <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
-                  <div className="min-w-0 flex-1 items-center gap-2 text-left group">
-                    <Compass className="h-4 w-4 shrink-0 text-emerald-400" />
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400 font-mono">
-                      {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
-                    </span>
-                    <span className={`shrink-0 text-slate-400 transition group-hover:text-slate-200`}>
-                      <ChevronDown className="h-4 w-4" />
-                    </span>
-                  </div>
-                </div>
-                <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-[11px] font-mono text-slate-300 animate-fadeIn">
-                  <span className="flex items-center gap-1 text-slate-400">
-                    {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
-                    className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
-                  >
-                    <span>Expand</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-            {sections.isExpanded('results') && (
-              <>
-                {/* 1. ROUTE HEADER */}
-                <div className="flex items-center justify-between gap-3 px-3 py-3 border border-slate-800/50 bg-slate-900/30 rounded-2xl">
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">From</span>
-                    <span className="text-sm font-bold text-white truncate leading-tight">
-                      {routePlan.origin.name || routePlan.origin.id}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-600 shrink-0 self-start sm:self-center">→</span>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">To</span>
-                    <span className="text-sm font-bold text-white truncate leading-tight">
-                      {routePlan.destination.name || routePlan.destination.id}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleEditLocations}
-                    className="text-[9px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 px-2 py-1 rounded-md hover:bg-emerald-500/10 transition"
-                    title="Change origin or destination"
-                  >
-                    Change Location
-                  </button>
-                </div>
+        {hasCalculated && routePlan && (
+          <div key={`trip-${calcKey}-${routePlan.id}`} className="animate-fade-in-smooth space-y-3 p-3 sm:p-4">
+            <TripSummary
+              route={routePlan}
+              costNpr={estimatedTripCostNpr}
+              vehicle={vehicle}
+              preference={preference}
+              mode={travelerMode}
+              tripStarted={tripStarted}
+              onModeChange={setTravelerMode}
+              onVehicleChange={handleQuickVehicleSwitch}
+              onPreferenceChange={handleQuickPrefSwitch}
+              onEdit={handleEditLocations}
+              onStart={() => {
+                setTripStarted(true);
+                setTravelPlanView('steps');
+                setActiveTab('itinerary');
+                onViewOnMap?.();
+              }}
+              onShowOnMap={() => onViewOnMap?.()}
+              onShare={onShareTrip}
+              onOpenSos={onOpenSos}
+            />
 
-                {/* 2. KEY METRICS — one compact line */}
-                <div className="px-3 py-2 border-b border-slate-800/50 bg-slate-900/20 rounded-b-2xl overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-4 gap-y-2 text-xs font-mono">
-                    <span className="flex items-center space-x-1 text-white font-bold" title="Distance">
-                      <Compass className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>{routePlan.totalDistanceKm} km</span>
-                    </span>
-                    <span className="flex items-center space-x-1 text-cyan-400 font-bold" title="Time">
-                      <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
-                      <span>
-                        {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
-                        {routePlan.estimatedTimeMinutes % 60}m
-                      </span>
-                    </span>
-                    <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
-                      <Fuel className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span>Rs {estimatedTripCostNpr.toLocaleString()}</span>
-                    </span>
-                    <span className="flex items-center space-x-1 text-emerald-400 font-bold" title="Safety">
-                      <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>{routePlan.roadConditionScore}</span>
-                    </span>
-                    <span className="flex items-center space-x-1 text-purple-400 font-bold" title="Peak Elevation">
-                      <Mountain className="w-3 h-3 text-purple-400 shrink-0" />
-                      <span>{routePlan.maxElevationM}m peak</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3. PRIMARY ACTION */}
-                <div className="px-3 py-3">
-                  {startTripClicked ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsReportExpanded(false);
-                        sections.setExpanded('results', false);
-                      }}
-                      className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-500/30 hover:text-emerald-200 text-sm font-bold transition shadow-sm"
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                      <span>Collapse</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStartTripClicked(true);
-                        setTravelPlanView('steps');
-                        setActiveModuleTab('travel_plan');
-                      }}
-                      className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
-                      id="btn-start-trip"
-                    >
-                      <Navigation className="w-4 h-4" />
-                      <span>Start Trip</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* 5. EXPANDED FULL REPORT CONTENT (one view at a time) */}
-                {isReportExpanded && (
-                  <>
-                    {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setResultsViewMode(resultsViewMode === 'overview' ? 'comparison' : 'overview')
-                    }
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 ${
-                      resultsViewMode === 'comparison'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
-                        : 'bg-slate-800/40 text-slate-400 border border-slate-700/50 hover:text-slate-200'
-                    }`}
-                    title="Toggle route alternatives comparison"
-                  >
-                    <Layers className="w-3 h-3" />
-                    <span>{resultsViewMode === 'overview' ? 'Compare' : 'Overview'}</span>
-                    <span className="text-[10px] opacity-60">
-                      ({routePlan.allRouteOptions.length} routes)
-                    </span>
-                  </button>
-                )}
-
-                {resultsViewMode === 'comparison' && (
-                  <RouteComparisonView
-                    activePlan={routePlan}
-                    allOptions={routePlan.allRouteOptions || [routePlan]}
-                    selectedRouteId={routePlan.id}
-                    vehicle={vehicle}
-                    onSelectRoute={(opt) => {
-                      setRoutePlan(opt);
-                      setPreference(opt.preference);
-                      onRouteCalculated(opt);
-                    }}
+            <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
+              {activeTab === 'ahead' && (
+                <ErrorBoundary
+                  fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
+                >
+                  <RouteAheadFeed
+                    routePlan={routePlan}
+                    mode={travelerMode}
+                    extraIncidents={liveIncidents}
                     onViewOnMap={onViewOnMap}
                   />
-                )}
-
-                {resultsViewMode === 'overview' && (
-                  <UnifiedRouteReport
-                    route={routePlan}
-                    distanceKm={routePlan.totalDistanceKm}
-                    distanceSource="dor_gis_route"
-                    distanceEvidence="route_graph"
-                    distanceSourceUrl="https://dor.gov.np"
-                    distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
-                    vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
-                    preferenceLabel={preference.replace('_', ' ')}
-                    onPrint={() => window.print()}
-                    onShare={() => onShareTrip?.()}
-                    userIdentity={{
-                      name: user?.displayName || undefined,
-                      email: user?.email || undefined,
-                    }}
-                    fuelBasis={buildFuelBasis()}
-                    embedded
-                    showElevationProfile
-                    simulationControls={simulationControls}
-                    onViewOnMap={onViewOnMap}
-                  />
-                )}
-                </>
+                </ErrorBoundary>
               )}
-              </>
-            )}
-
-          <div className="pt-2 border-t border-slate-800 space-y-2">
-            <div className="flex flex-wrap items-center gap-2 justify-between">
-              <div className="inline-flex items-center rounded-xl border border-slate-800 bg-slate-950 p-0.5 text-[11px] font-bold">
-                <button
-                  type="button"
-                  onClick={() => setTravelerMode('driver')}
-                  aria-pressed={travelerMode === 'driver'}
-                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg transition ${
-                    travelerMode === 'driver'
-                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Driving</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTravelerMode('passenger')}
-                  aria-pressed={travelerMode === 'passenger'}
-                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg transition ${
-                    travelerMode === 'passenger'
-                      ? 'bg-emerald-500/20 text-emerald-300 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Passenger</span>
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5" id="route-detail-actions">
-              {([
-                { tab: 'ahead', label: 'Ahead', Icon: Navigation, show: true, tone: 'emerald' },
-                { tab: 'travel_plan', label: 'Trip plan', Icon: Milestone, show: true, tone: 'emerald' },
-                { tab: 'highway_info', label: 'Highways', Icon: Route, show: true, tone: 'cyan' },
-                { tab: 'distance_service', label: 'Distance Service', Icon: Compass, show: true, tone: 'purple' },
-                { tab: 'fuel_tolls', label: 'Cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
-                { tab: 'checklist', label: 'Checklist', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
-                { tab: 'ai_advisory', label: 'AI', Icon: Sparkles, show: true, tone: 'cyan' },
-                { tab: 'sos', label: 'SOS', Icon: PhoneCall, show: true, tone: 'red' },
-              ] as Array<{ tab: DetailModuleTab; label: string; Icon: React.ComponentType<{ className?: string }>; show: boolean; tone: string }>)
-                .filter((a) => a.show)
-                .map(({ tab, label, Icon, tone }) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => {
-                      if (tab === 'highway_info' || tab === 'distance_service') {
-                        onOpenHighwayDirectory?.();
-                      } else {
-                        handleToggleModuleTab(tab);
-                      }
-                    }}
-                    aria-pressed={activeModuleTab === tab}
-                    className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition inline-flex items-center gap-1 ${
-                      activeModuleTab === tab
-                        ? tone === 'red'
-                          ? 'bg-red-600/30 text-red-300 border-red-500'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60'
-                        : tone === 'red'
-                        ? 'bg-slate-950 hover:bg-slate-900 text-red-400 border-slate-800'
-                        : 'bg-slate-950 hover:bg-slate-900 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" />
-                    <span>{label}</span>
-                  </button>
-                ))}
-            </div>
+              {activeTab === 'itinerary' && (
+                <ItineraryPanel
+                  route={routePlan}
+                  vehicle={vehicle}
+                  view={travelPlanView}
+                  onViewChange={setTravelPlanView}
+                  onViewOnMap={onViewOnMap}
+                />
+              )}
+              {activeTab === 'insights' && (
+                <InsightsPanel
+                  route={routePlan}
+                  vehicle={vehicle}
+                  preference={preference}
+                  aiAdvisory={aiCustomAdvisory}
+                  loadingAdvisory={loadingAiAdvisory}
+                  onGenerateAdvisory={handleFetchAiAdvisory}
+                  onViewHighwayOnMap={onViewHighwayOnMap}
+                  onOpenHighwayDirectory={onOpenHighwayDirectory}
+                />
+              )}
+              {activeTab === 'costs' && travelerMode === 'driver' && (
+                <CostsPanel
+                  route={routePlan}
+                  vehicle={vehicle}
+                  highwayCodes={routeHighwayCodes}
+                  fuelPrices={fuelPrices}
+                  fuelPriceMetadata={fuelPriceMetadata}
+                  isLoadingPrices={isLoadingPrices}
+                  minutesSinceLastCheck={getMinutesSinceLastCheck()}
+                  isPriceStale={isPriceStale()}
+                  onRefreshPrices={handleRefreshFuelPrices}
+                  onVehicleChange={setVehicle}
+                  onOpenPreTrip={onOpenPreTrip}
+                />
+              )}
+              {activeTab === 'routes' && routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                <RouteComparisonView
+                  activePlan={routePlan}
+                  allOptions={routePlan.allRouteOptions}
+                  selectedRouteId={routePlan.id}
+                  vehicle={vehicle}
+                  onSelectRoute={(opt) => {
+                    setRoutePlan(opt);
+                    setPreference(opt.preference);
+                    onRouteCalculated(opt);
+                    setActiveTab('ahead');
+                  }}
+                  onViewOnMap={onViewOnMap}
+                />
+              )}
+              {activeTab === 'report' && (
+                <UnifiedRouteReport
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => onShareTrip?.()}
+                  userIdentity={{
+                    name: user?.displayName || undefined,
+                    email: user?.email || undefined,
+                  }}
+                  fuelBasis={buildFuelBasis()}
+                  embedded
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
+              )}
+            </TripTabs>
           </div>
-
-          {/* 7. DYNAMIC EXPANDED CONTENT AREA (Rendered ONLY when user clicks an option button!)
-              Swipeable on touch devices: swipe left/right to move to the next/previous module. */}
-          {activeModuleTab !== 'none' && (
-            <div
-              className="pt-3 border-t border-slate-800 space-y-4 animate-fadeIn"
-              onTouchStart={handleModuleSwipeStart}
-              onTouchEnd={handleModuleSwipeEnd}
-            >
-              {/* Module Header with Close Tab button */}
-              <div className="flex items-center justify-between bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800">
-                <div className="flex items-center space-x-2 text-xs font-bold text-white min-w-0">
-                  {activeModuleTab === 'travel_plan' && <span>Trip plan</span>}
-                  {activeModuleTab === 'fuel_tolls' && <span>Cost &amp; eco</span>}
-                  {activeModuleTab === 'ai_advisory' && <span>AI advisory</span>}
-                  {activeModuleTab === 'sos' && <span>Emergency SOS</span>}
-                  {activeModuleTab === 'checklist' && <span>Vehicle checklist</span>}
-                  {activeModuleTab === 'highway_info' && <span>Route highways</span>}
-                  {activeModuleTab === 'distance_service' && <span>Distance Service</span>}
-                  <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
-                </div>
-                <button
-                  onClick={() => setActiveModuleTab('none')}
-                  className="text-xs text-slate-400 hover:text-white flex items-center space-x-1 transition"
-                >
-                  <span>Close</span>
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* MODULE CONTENT: 1. Travel Plan */}
-              {activeModuleTab === 'travel_plan' && (
-                <div className="space-y-4">
-                  {/* View Mode Toggle: Junction Timeline vs Turn-by-Turn Steps */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-950/80 p-2 rounded-xl border border-slate-800 gap-2">
-                    <div className="text-xs font-bold text-slate-300 px-1 flex items-center space-x-1.5">
-                      <Milestone className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Itinerary Mode:</span>
-                    </div>
-                    <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setTravelPlanView('timeline')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition flex items-center space-x-1.5 ${
-                          travelPlanView === 'timeline'
-                            ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <Milestone className="w-3 h-3" />
-                        <span>Junction Timeline (ETAs)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTravelPlanView('steps')}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition flex items-center space-x-1.5 ${
-                          travelPlanView === 'steps'
-                            ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <Navigation className="w-3 h-3" />
-                        <span>Turn-by-Turn Steps</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {travelPlanView === 'timeline' ? (
-                    <RouteJunctionTimeline
-                      routePlan={routePlan}
-                      vehicle={vehicle}
-                      onViewOnMap={onViewOnMap}
-                    />
-                  ) : (
-                    <>
-                      {/* Turn-by-Turn Sequence */}
-                      <div className="space-y-2">
-                        {routePlan.steps.map((step, index) => (
-                          <div
-                            key={index}
-                            className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex items-start justify-between gap-2 text-xs"
-                          >
-                            <div className="flex items-start space-x-2.5">
-                              <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5 border border-emerald-500/40">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <div className="font-semibold text-white flex items-center flex-wrap gap-1.5">
-                                  <span>{step.instruction}</span>
-                                  {step.highwayCode && (
-                                    <span className="px-1.5 py-0.2 text-[9px] font-bold bg-slate-800 text-cyan-300 rounded border border-slate-700">
-                                      {step.highwayCode}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5 flex items-center flex-wrap gap-2">
-                                  <span className="capitalize">{step.surface.replace('_', ' ')}</span>
-                                  <span>•</span>
-                                  <span>{step.durationMinutes} mins drive</span>
-                                  {step.elevationChangeM !== 0 && (
-                                    <span className={step.elevationChangeM > 0 ? 'text-purple-400' : 'text-cyan-400'}>
-                                      • {step.elevationChangeM > 0 ? `+${step.elevationChangeM}m climb` : `${step.elevationChangeM}m descent`}
-                                    </span>
-                                  )}
-                                </div>
-                                {step.warning && (
-                                  <div className="text-amber-400 text-[10px] mt-1 flex items-center space-x-1">
-                                    <AlertTriangle className="w-3 h-3 shrink-0" />
-                                    <span>{step.warning}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <span className="font-bold text-slate-200 shrink-0">{step.distanceKm} km</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Terrain, gradient & time-of-day traffic analysis — folded in here
-                      (rather than its own tab) since it's part of planning the trip,
-                      and its live weather/POI/corridor/safety-score equivalents are
-                      already covered by the "Ahead" tab and the summary card above. */}
-                  <RouteTerrainAndTrafficAnalysis routePlan={routePlan} vehicle={vehicle} />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 6. Fuel & Tolls */}
-              {activeModuleTab === 'fuel_tolls' && (
-                <div className="space-y-4">
-                  <FuelPriceCard
-                    fuelPrices={fuelPrices}
-                    metadata={fuelPriceMetadata}
-                    isLoading={isLoadingPrices}
-                    onRefresh={async () => {
-                      setPriceFetchError(null);
-                      try {
-                        const prices = await fetchFuelPrices();
-                        setFuelPrices(prices);
-                        setFuelPriceMetadata(getFuelPriceMetadata());
-                        if (routePlan) {
-                          const updated = applyLiveFuelPrices(routePlan, vehicle, prices);
-                          setRoutePlan(updated);
-                          onRouteCalculated(updated);
-                        }
-                      } catch (err: any) {
-                        setPriceFetchError(err?.message || 'Refresh failed');
-                      }
-                    }}
-                    minutesSinceLastCheck={getMinutesSinceLastCheck()}
-                    isStale={isPriceStale()}
-                  />
-                  <FuelCostEstimator
-                    distanceKm={routePlan.totalDistanceKm}
-                    vehicleType={vehicle}
-                    elevationGainM={routePlan.elevationGainM}
-                    origin={routePlan.origin}
-                    destination={routePlan.destination}
-                    defaultTollCost={routePlan.totalTollCostNpr}
-                    highwayCodes={routeHighwayCodes}
-                    fuelPrices={fuelPrices}
-                    fuelPriceMetadata={fuelPriceMetadata}
-                    onVehicleChange={(newV) => setVehicle(newV)}
-                  />
-                  <CarbonFootprintCard
-                    distanceKm={routePlan.totalDistanceKm}
-                    vehicleType={vehicle}
-                    elevationGainM={routePlan.elevationGainM}
-                    onVehicleChange={(v) => setVehicle(v)}
-                  />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 7. AI Advisory */}
-              {activeModuleTab === 'ai_advisory' && (
-                <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 sm:p-5 rounded-2xl border border-emerald-500/30 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                    <div>
-                      <h4 className="text-sm font-bold text-white flex items-center space-x-2">
-                        <Sparkles className="w-4 h-4 text-emerald-400" />
-                        <span>Gemini AI Route &amp; Safety Advisory</span>
-                      </h4>
-                      <p className="text-[11px] text-slate-400">Real-time driving counsel for Nepal highways</p>
-                    </div>
-
-                    <button
-                      onClick={handleFetchAiAdvisory}
-                      disabled={loadingAiAdvisory}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5 shrink-0"
-                    >
-                      {loadingAiAdvisory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                      <span>{loadingAiAdvisory ? 'Analyzing...' : 'Generate New Advisory'}</span>
-                    </button>
-                  </div>
-
-                  {aiCustomAdvisory ? (
-                    <div className="space-y-3 text-xs">
-                      <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                        <span className="font-semibold text-emerald-400">Summary: </span>
-                        <span className="text-slate-200">{aiCustomAdvisory.summary}</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                          <div className="font-semibold text-slate-300 mb-1">Departure Window:</div>
-                          <div className="text-cyan-300 font-bold">{aiCustomAdvisory.bestDepartureWindow}</div>
-                          {aiCustomAdvisory.monsoonOrWeatherWarning && (
-                            <div className="text-amber-400 text-[11px] mt-1">⚠️ {aiCustomAdvisory.monsoonOrWeatherWarning}</div>
-                           )}
-                         </div>
-                       </div>
-                    </div>
-                  ) : routePlan.aiAdvisory ? (
-                    <div className="space-y-3 text-xs">
-                      <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-slate-200">
-                        {routePlan.aiAdvisory.summary}
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
-                        {routePlan.aiAdvisory.keyRecommendations.map((rec, i) => (
-                          <div key={i} className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
-                            ✓ {rec}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-slate-400 text-xs">
-                      Click &quot;Generate New Advisory&quot; to get specialized Gemini AI recommendations.
-                    </div>
-                  )}
-
-                  {/* Trip Assistant Stops & Eateries */}
-                  <TripAssistantPanel routePlan={routePlan} vehicle={vehicle} preference={preference} />
-                </div>
-              )}
-
-               {/* MODULE CONTENT: 8. SOS Emergency */}
-               {activeModuleTab === 'sos' && (
-                 <div className="bg-red-950/30 border border-red-900/60 p-4 rounded-2xl space-y-3">
-                   <div className="flex items-center space-x-2 text-rose-400 font-bold text-sm">
-                     <PhoneCall className="w-4 h-4 text-rose-500 animate-pulse" />
-                     <span>Emergency Hotlines</span>
-                   </div>
-                   <div className="grid grid-cols-3 gap-2.5">
-                     <a href="tel:100" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-rose-500/50 transition">
-                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Police</div>
-                       <div className="text-xl font-black text-rose-400 font-mono">100</div>
-                     </a>
-                     <a href="tel:103" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-amber-500/50 transition">
-                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Traffic</div>
-                       <div className="text-xl font-black text-amber-400 font-mono">103</div>
-                     </a>
-                     <a href="tel:1114" className="bg-slate-900/90 p-3 rounded-xl border border-red-900/40 text-center space-y-1 hover:border-cyan-500/50 transition">
-                       <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">APF Rescue</div>
-                       <div className="text-xl font-black text-cyan-400 font-mono">1114</div>
-                     </a>
-                   </div>
-                 </div>
-               )}
-
-              {/* MODULE CONTENT: 10. Checklist */}
-              {activeModuleTab === 'checklist' && (
-                <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
-                  <p className="text-xs text-slate-300">
-                    Pre-trip vehicle checklist opens in one place so it is not duplicated on this screen.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onOpenPreTrip?.()}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-950/40 px-3 py-2 text-xs font-bold text-amber-200 hover:bg-amber-900/50 transition"
-                  >
-                    <Wrench className="w-3.5 h-3.5" />
-                    Open full checklist
-                  </button>
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 11. Highway Info */}
-              {activeModuleTab === 'highway_info' && (
-                <div className="space-y-3">
-                  <RouteHighwayInfoPanel
-                    routeHighwayCodes={routePlan.steps.map((s) => s.highwayCode).filter(Boolean)}
-                    incidents={routePlan.incidentsOnRoute}
-                    onViewHighwayOnMap={onViewHighwayOnMap}
-                    onOpenHighwayDirectory={onOpenHighwayDirectory}
-                  />
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 11b. Distance Service */}
-              {activeModuleTab === 'distance_service' && (
-                <div className="space-y-3">
-                  <div className="bg-slate-900/30 border border-slate-800/50 rounded-xl p-3 sm:p-4">
-                    <div className="flex items-start gap-2 mb-2">
-                      <Compass className="w-4 h-4 text-purple-400 shrink-0" />
-                      <div>
-                        <div className="text-xs font-bold text-white uppercase tracking-wider">Highway Distance Service</div>
-                        <div className="text-[10px] text-slate-400">DoR Nepal Highway GIS route geometry and certified road network.</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-slate-400 uppercase text-[9px] tracking-wider">Distance source</span>
-                        <span className="text-slate-200 font-bold">dor_gis_route</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-slate-400 uppercase text-[9px] tracking-wider">Distance evidence</span>
-                        <span className="text-slate-200 font-bold">route_graph</span>
-                      </div>
-                    </div>
-                    <div className="mt-2">
-                      <a
-                        href="https://dor.gov.np"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-purple-400 hover:text-purple-300 underline hover:decoration-purple-500/50 transition"
-                      >
-                        Open DoR Nepal Highway GIS →
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* MODULE CONTENT: 12. Ahead on Route */}
-              {activeModuleTab === 'ahead' && (
-                <div className="space-y-3">
-                  <ErrorBoundary fallback={<div className="text-xs text-slate-500 px-1">Route information is temporarily unavailable.</div>}>
-                    <RouteAheadFeed
-                      routePlan={routePlan}
-                      mode={travelerMode}
-                      extraIncidents={liveIncidents}
-                      onViewOnMap={onViewOnMap}
-                    />
-                  </ErrorBoundary>
-                </div>
-              )}
-              </div>
-            )}
-        </div>
         )}
-
-
-
-         {deckId === 'vehicle' && hasCalculated && (
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => { closeAllMenus('vehicle'); setShowVehicleOptions(!showVehicleOptions); }}
-              className="w-full py-2 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-between transition group shadow-sm"
-            >
-              <div className="flex items-center space-x-2 min-w-0">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="font-bold text-slate-200 truncate">Vehicle &amp; Route</span>
-                <span className="text-[10px] text-emerald-400 font-mono hidden sm:inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName} • {preference.replace('_', ' ')}
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 text-slate-400 group-hover:text-white shrink-0 ml-2">
-                <span className="text-[10px] font-medium">{showVehicleOptions ? 'Hide' : 'Show'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showVehicleOptions ? 'rotate-180 text-emerald-400' : ''}`} />
-              </div>
-            </button>
-
-            {showVehicleOptions && (
-              <div className="mt-2.5 p-2.5 sm:p-3 bg-slate-950/90 border border-slate-800/90 rounded-xl space-y-2.5 animate-fadeIn">
-                <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Vehicle</span>
-                    <span className="text-emerald-400 text-[9px] font-mono">
-                      {VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-5 gap-1">
-                    {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => handleQuickVehicleSwitch(type)}
-                        title={`${shortName} - ${desc}`}
-                        className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
-                          vehicle === type
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 font-bold shadow-sm'
-                            : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 ${vehicle === type ? 'text-emerald-400' : 'text-slate-400'}`} />
-                        <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{shortName}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Route type</span>
-                    <span className="text-cyan-400 text-[9px] font-mono capitalize">
-                      {preference.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1">
-                    {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
-                      <button
-                        key={pref}
-                        type="button"
-                        onClick={() => handleQuickPrefSwitch(pref)}
-                        title={`${label} - ${desc}`}
-                        className={`py-1.5 px-0.5 rounded-lg border text-center transition flex flex-col items-center justify-center space-y-0.5 ${
-                          preference === pref
-                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 font-bold shadow-sm'
-                            : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
-                        }`}
-                      >
-                        <span className="text-[11px] leading-none">{icon}</span>
-                        <span className="text-[8px] sm:text-[9px] font-semibold leading-tight">{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                 </div>
-                </div>
-               )}
-             </div>
-           )}
-    </div>
-        )}
-      </PlannerDeck>
+      </div>
     </div>
   );
 };
