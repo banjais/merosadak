@@ -1920,111 +1920,142 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
         {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-       {deckId === 'results' && hasCalculated && routePlan && sections.isExpanded('results') && (
+       {deckId === 'results' && hasCalculated && routePlan && (
           <div
             id="route-results-panel"
             key={`route-results-panel-${calcKey}-${routePlan.id}`}
             className="p-3 sm:p-4 space-y-3 animate-fade-in-smooth transition-all duration-500 ease-out max-w-full"
          >
-            {/* 1. ROUTE HEADER */}
-            <div className="flex items-center justify-between gap-3 px-3 py-3 border border-slate-800/50 bg-slate-900/30 rounded-2xl">
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">From</span>
-                <span className="text-sm font-bold text-white truncate leading-tight">
-                  {routePlan.origin.name || routePlan.origin.id}
-                </span>
-              </div>
-              <span className="text-[10px] text-slate-600 shrink-0 self-start sm:self-center">→</span>
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">To</span>
-                <span className="text-sm font-bold text-white truncate leading-tight">
-                  {routePlan.destination.name || routePlan.destination.id}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleEditLocations}
-                className="text-[9px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 px-2 py-1 rounded-md hover:bg-emerald-500/10 transition"
-                title="Change origin or destination"
-              >
-                Change Location
-              </button>
-            </div>
-
-            {/* 2. KEY METRICS — one compact line */}
-            <div className="px-3 py-2 border-b border-slate-800/50 bg-slate-900/20 rounded-b-2xl overflow-hidden">
-              <div className="flex flex-wrap items-center gap-4 gap-y-2 text-xs font-mono">
-                <span className="flex items-center space-x-1 text-white font-bold" title="Distance">
-                  <Compass className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>{routePlan.totalDistanceKm} km</span>
-                </span>
-                <span className="flex items-center space-x-1 text-cyan-400 font-bold" title="Time">
-                  <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
-                  <span>
-                    {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
-                    {routePlan.estimatedTimeMinutes % 60}m
+            {/* Collapsed state: short description + Expand button */}
+            {!sections.isExpanded('results') && (
+              <div className="rounded-2xl overflow-hidden border border-slate-800/50 bg-slate-900/30">
+                <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
+                  <div className="min-w-0 flex-1 items-center gap-2 text-left group">
+                    <Compass className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400 font-mono">
+                      {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+                    </span>
+                    <span className={`shrink-0 text-slate-400 transition group-hover:text-slate-200`}>
+                      <ChevronDown className="h-4 w-4" />
+                    </span>
+                  </div>
+                </div>
+                <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-[11px] font-mono text-slate-300 animate-fadeIn">
+                  <span className="flex items-center gap-1 text-slate-400">
+                    {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
                   </span>
-                </span>
-                <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
-                  <Fuel className="w-3 h-3 text-amber-400 shrink-0" />
-                  <span>Rs {estimatedTripCostNpr.toLocaleString()}</span>
-                </span>
-                <span className="flex items-center space-x-1 text-emerald-400 font-bold" title="Safety">
-                  <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>{routePlan.roadConditionScore}</span>
-                </span>
-                <span className="flex items-center space-x-1 text-purple-400 font-bold" title="Peak Elevation">
-                  <Mountain className="w-3 h-3 text-purple-400 shrink-0" />
-                  <span>{routePlan.maxElevationM}m peak</span>
-                </span>
+                  <button
+                    type="button"
+                    onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
+                    className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
+                  >
+                    <span>Expand</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+            {sections.isExpanded('results') && (
+              <>
+                {/* 1. ROUTE HEADER */}
+                <div className="flex items-center justify-between gap-3 px-3 py-3 border border-slate-800/50 bg-slate-900/30 rounded-2xl">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">From</span>
+                    <span className="text-sm font-bold text-white truncate leading-tight">
+                      {routePlan.origin.name || routePlan.origin.id}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-600 shrink-0 self-start sm:self-center">→</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">To</span>
+                    <span className="text-sm font-bold text-white truncate leading-tight">
+                      {routePlan.destination.name || routePlan.destination.id}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleEditLocations}
+                    className="text-[9px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 px-2 py-1 rounded-md hover:bg-emerald-500/10 transition"
+                    title="Change origin or destination"
+                  >
+                    Change Location
+                  </button>
+                </div>
 
-            {/* 3. PRIMARY ACTION */}
-            <div className="px-3 py-3">
-              {startTripClicked ? (
-                <button
-                  type="button"
-                  onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
-                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-500/30 hover:text-emerald-200 text-sm font-bold transition shadow-sm"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                  <span>Expand</span>
-                </button>
-              ) : (
+                {/* 2. KEY METRICS — one compact line */}
+                <div className="px-3 py-2 border-b border-slate-800/50 bg-slate-900/20 rounded-b-2xl overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-4 gap-y-2 text-xs font-mono">
+                    <span className="flex items-center space-x-1 text-white font-bold" title="Distance">
+                      <Compass className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{routePlan.totalDistanceKm} km</span>
+                    </span>
+                    <span className="flex items-center space-x-1 text-cyan-400 font-bold" title="Time">
+                      <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
+                      <span>
+                        {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
+                        {routePlan.estimatedTimeMinutes % 60}m
+                      </span>
+                    </span>
+                    <span className="flex items-center space-x-1 text-amber-300 font-bold" title="Est. Cost">
+                      <Fuel className="w-3 h-3 text-amber-400 shrink-0" />
+                      <span>Rs {estimatedTripCostNpr.toLocaleString()}</span>
+                    </span>
+                    <span className="flex items-center space-x-1 text-emerald-400 font-bold" title="Safety">
+                      <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{routePlan.roadConditionScore}</span>
+                    </span>
+                    <span className="flex items-center space-x-1 text-purple-400 font-bold" title="Peak Elevation">
+                      <Mountain className="w-3 h-3 text-purple-400 shrink-0" />
+                      <span>{routePlan.maxElevationM}m peak</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. PRIMARY ACTION */}
+                <div className="px-3 py-3">
+                  {startTripClicked ? (
+                    <button
+                      type="button"
+                      onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
+                      className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-500/30 hover:text-emerald-200 text-sm font-bold transition shadow-sm"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                      <span>Expand</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStartTripClicked(true);
+                        setTravelPlanView('steps');
+                        setActiveModuleTab('travel_plan');
+                      }}
+                      className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
+                      id="btn-start-trip"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>Start Trip</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* 5. EXPAND / REDUCE */}
                 <button
                   type="button"
                   onClick={() => {
-                    setStartTripClicked(true);
-                    setTravelPlanView('steps');
-                    setActiveModuleTab('travel_plan');
+                    setIsReportExpanded(false);
+                    sections.setExpanded('results', false);
                   }}
-                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
-                  id="btn-start-trip"
+                  className="w-full px-3 py-2 bg-slate-800/50 hover:bg-slate-700 text-slate-200 border border-slate-700/50 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1"
                 >
-                  <Navigation className="w-4 h-4" />
-                  <span>Start Trip</span>
+                  <ChevronDown className="w-3 h-3 text-emerald-400" />
+                  <span>Collapse results</span>
                 </button>
-              )}
-            </div>
 
-            {/* 5. EXPAND / REDUCE */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsReportExpanded(false);
-                sections.setExpanded('results', false);
-              }}
-              className="w-full px-3 py-2 bg-slate-800/50 hover:bg-slate-700 text-slate-200 border border-slate-700/50 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1"
-            >
-              <ChevronDown className="w-3 h-3 text-emerald-400" />
-              <span>Collapse results</span>
-            </button>
-
-            {/* 6. EXPANDED FULL REPORT CONTENT (one view at a time) */}
-            {isReportExpanded && (
-              <>
-                {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                {/* 6. EXPANDED FULL REPORT CONTENT (one view at a time) */}
+                {isReportExpanded && (
+                  <>
+                    {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
                   <button
                     type="button"
                     onClick={() =>
@@ -2083,6 +2114,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     onViewOnMap={onViewOnMap}
                   />
                 )}
+                </>
+              )}
               </>
             )}
 
