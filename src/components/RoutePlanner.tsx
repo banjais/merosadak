@@ -260,7 +260,8 @@ type DetailModuleTab =
   | 'sos'
   | 'checklist'
   | 'highway_info'
-  | 'ahead';
+  | 'ahead'
+  | 'distance_service';
 
 export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   initialOriginId = '',
@@ -1243,7 +1244,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // Ordered list of module tabs, used so mobile swipe-left/right can move
   // between them in the same order they're laid out in the button grid.
   const MODULE_TAB_ORDER: DetailModuleTab[] = [
-    'travel_plan', 'highway_info', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos', 'ahead',
+    'travel_plan', 'highway_info', 'distance_service', 'fuel_tolls', 'checklist', 'ai_advisory', 'sos', 'ahead',
   ];
   useEffect(() => {
     if (travelerMode === 'passenger') {
@@ -2150,6 +2151,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 { tab: 'ahead', label: 'Ahead', Icon: Navigation, show: true, tone: 'emerald' },
                 { tab: 'travel_plan', label: 'Trip plan', Icon: Milestone, show: true, tone: 'emerald' },
                 { tab: 'highway_info', label: 'Highways', Icon: Route, show: true, tone: 'cyan' },
+                { tab: 'distance_service', label: 'Distance Service', Icon: Compass, show: true, tone: 'purple' },
                 { tab: 'fuel_tolls', label: 'Cost & eco', Icon: Flame, show: travelerMode === 'driver', tone: 'amber' },
                 { tab: 'checklist', label: 'Checklist', Icon: Wrench, show: travelerMode === 'driver', tone: 'amber' },
                 { tab: 'ai_advisory', label: 'AI', Icon: Sparkles, show: true, tone: 'cyan' },
@@ -2161,7 +2163,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     key={tab}
                     type="button"
                     onClick={() => {
-                      if (tab === 'highway_info') {
+                      if (tab === 'highway_info' || tab === 'distance_service') {
                         onOpenHighwayDirectory?.();
                       } else {
                         handleToggleModuleTab(tab);
@@ -2202,6 +2204,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {activeModuleTab === 'sos' && <span>Emergency SOS</span>}
                   {activeModuleTab === 'checklist' && <span>Vehicle checklist</span>}
                   {activeModuleTab === 'highway_info' && <span>Route highways</span>}
+                  {activeModuleTab === 'distance_service' && <span>Distance Service</span>}
                   <span className="inline sm:hidden text-slate-500 font-normal shrink-0">· swipe ⇆</span>
                 </div>
                 <button
@@ -2469,6 +2472,41 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     onViewHighwayOnMap={onViewHighwayOnMap}
                     onOpenHighwayDirectory={onOpenHighwayDirectory}
                   />
+                </div>
+              )}
+
+              {/* MODULE CONTENT: 11b. Distance Service */}
+              {activeModuleTab === 'distance_service' && (
+                <div className="space-y-3">
+                  <div className="bg-slate-900/30 border border-slate-800/50 rounded-xl p-3 sm:p-4">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Compass className="w-4 h-4 text-purple-400 shrink-0" />
+                      <div>
+                        <div className="text-xs font-bold text-white uppercase tracking-wider">Highway Distance Service</div>
+                        <div className="text-[10px] text-slate-400">DoR Nepal Highway GIS route geometry and certified road network.</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-slate-400 uppercase text-[9px] tracking-wider">Distance source</span>
+                        <span className="text-slate-200 font-bold">dor_gis_route</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-slate-400 uppercase text-[9px] tracking-wider">Distance evidence</span>
+                        <span className="text-slate-200 font-bold">route_graph</span>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <a
+                        href="https://dor.gov.np"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-purple-400 hover:text-purple-300 underline hover:decoration-purple-500/50 transition"
+                      >
+                        Open DoR Nepal Highway GIS →
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
 
