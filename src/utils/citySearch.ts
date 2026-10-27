@@ -157,6 +157,30 @@ export const filterCities = (
     uniqueScored.push(entry);
   }
 
+  // Collapse whole-word prefix variants: "Rampur Palpa" collapses to "Rampur"
+  // so a search for "Rampur" shows one entry, not one per district suffix.
+  // Among variants, keep the one connected to a highway (preferred by drivers).
+  // The kept entry's district/province still appear on line 2.
+  const collapsedScored: typeof scored = [];
+  const processed = new Set<string>();
+  for (const entry of uniqueScored) {
+    const name = entry.city.name.trim();
+    if (processed.has(name.toLowerCase())) continue;
+    const group = uniqueScored.filter((other) => {
+      const oname = other.city.name.trim();
+      if (oname === name) return true;
+      return name.startsWith(oname + ' ') || oname.startsWith(name + ' ');
+    });
+    group.forEach((g) => processed.add(g.city.name.trim().toLowerCase()));
+    // Pick the variant with the most highways, then best type priority.
+    group.sort((a, b) => {
+      if (a.highways !== b.highways) return b.highways - a.highways;
+      if (a.rank !== b.rank) return a.rank - b.rank;
+      return 0;
+    });
+    collapsedScored.push(group[0]);
+  }
+
   // Suppress suffixed variants (e.g. "Pokhara Bus Park") when the base city
   // ("Pokhara") is already in the results — the plain city is what a driver
   // wants to depart from, not an internal bus-park landmark.
@@ -173,9 +197,9 @@ export const filterCities = (
     }
     return name;
   };
-  const baseNames = new Set(uniqueScored.map((e) => e.city.name.trim().toLowerCase()));
+  const baseNames = new Set(collapsedScored.map((e) => e.city.name.trim().toLowerCase()));
   const finalScored: typeof scored = [];
-  for (const entry of uniqueScored) {
+  for (const entry of collapsedScored) {
     const base = stripSuffix(entry.city.name).trim().toLowerCase();
     if (base !== entry.city.name.trim().toLowerCase() && baseNames.has(base)) {
       continue;

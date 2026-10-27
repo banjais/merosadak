@@ -4207,13 +4207,15 @@
     },
     {
       "id": "gtown-kurgha-parbat",
-      "name": "Kurgha Parbat",
+      "name": "Kurgha",
       "lat": 28.139621,
       "lng": 83.642403,
       "highways": [
         "NH70"
       ],
-      "source": "geojson_endpoint"
+      "source": "geojson_endpoint",
+      "district": "Parbat",
+      "elevationM": 920
     },
     {
       "id": "gtown-kurtha",
@@ -5936,13 +5938,15 @@
     },
     {
       "id": "gtown-rampur-palpa",
-      "name": "Rampur Palpa",
+      "name": "Rampur",
       "lat": 27.860822,
       "lng": 83.88059,
       "highways": [
         "NH09"
       ],
-      "source": "geojson_endpoint"
+      "source": "geojson_endpoint",
+      "district": "Palpa",
+      "elevationM": 455
     },
     {
       "id": "gtown-ramri",
