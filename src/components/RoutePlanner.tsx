@@ -1919,48 +1919,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
 
-       {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-       {deckId === 'results' && hasCalculated && routePlan && (
-          <>
-          <div className="rounded-2xl overflow-hidden">
-           <header className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
-            <button
-              type="button"
-              onClick={() => {
-                const willExpand = !sections.isExpanded('results');
-                sections.toggle('results');
-                setIsReportExpanded(willExpand);
-              }}
-              aria-expanded={sections.isExpanded('results')}
-              className="flex min-w-0 flex-1 items-center gap-2 text-left group"
-            >
-              <Compass className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span className="shrink-0 text-xs font-black text-white font-display">Results</span>
-              <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400 font-mono">
-                {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m · {routePlan.origin.name} → {routePlan.destination.name}
-              </span>
-              <span className={`shrink-0 text-slate-400 transition group-hover:text-slate-200 ${sections.isExpanded('results') ? 'rotate-180' : ''}`}>
-                <ChevronDown className="h-4 w-4" />
-              </span>
-            </button>
-          </header>
-          {/* Collapsed view: short description once + Expand button */}
-          {!sections.isExpanded('results') && (
-            <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-[11px] font-mono text-slate-300 animate-fadeIn">
-              <span className="flex items-center gap-1 text-slate-400">
-                {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
-              </span>
-              <button
-                type="button"
-                onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
-                className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
-              >
-                <span>Expand</span>
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
-{sections.isExpanded('results') && (
+        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
+       {deckId === 'results' && hasCalculated && routePlan && sections.isExpanded('results') && (
           <div
             id="route-results-panel"
             key={`route-results-panel-${calcKey}-${routePlan.id}`}
@@ -2531,11 +2491,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
               </div>
             )}
-          </div>
-        )}
         </div>
-        </>
-       )}
+        )}
+
 
 
          {deckId === 'vehicle' && hasCalculated && (
