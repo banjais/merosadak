@@ -1854,9 +1854,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             <span className="text-[11px] text-slate-400 whitespace-nowrap">
               Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
             </span>
-            <span className="text-[11px] text-slate-400 whitespace-nowrap">
-              Type a highway code like NH01 to browse towns on that route.
-            </span>
           </div>
         </div>
       )}
