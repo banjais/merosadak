@@ -2016,11 +2016,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {startTripClicked ? (
                     <button
                       type="button"
-                      onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
+                      onClick={() => {
+                        setIsReportExpanded(false);
+                        sections.setExpanded('results', false);
+                      }}
                       className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-500/30 hover:text-emerald-200 text-sm font-bold transition shadow-sm"
                     >
-                      <ChevronDown className="w-4 h-4" />
-                      <span>Expand</span>
+                      <ChevronUp className="w-4 h-4" />
+                      <span>Collapse</span>
                     </button>
                   ) : (
                     <button
@@ -2039,20 +2042,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   )}
                 </div>
 
-                {/* 5. EXPAND / REDUCE */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsReportExpanded(false);
-                    sections.setExpanded('results', false);
-                  }}
-                  className="w-full px-3 py-2 bg-slate-800/50 hover:bg-slate-700 text-slate-200 border border-slate-700/50 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1"
-                >
-                  <ChevronDown className="w-3 h-3 text-emerald-400" />
-                  <span>Collapse results</span>
-                </button>
-
-                {/* 6. EXPANDED FULL REPORT CONTENT (one view at a time) */}
+                {/* 5. EXPANDED FULL REPORT CONTENT (one view at a time) */}
                 {isReportExpanded && (
                   <>
                     {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
