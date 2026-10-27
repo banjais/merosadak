@@ -219,10 +219,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
-  // Map activation state - controls when controls become visible. The controls
-  // start visible: hiding them behind a click meant desktop users who never
-  // tapped the canvas saw a dimmed map with no zoom, layers, or GPS button.
-  const [mapActive, setMapActive] = useState(true);
+  // Map activation state - controls when controls become visible. Starts
+  // inactive so the map is dimmed with no magnifier, map type, layers, or
+  // my-location icons until the user clicks the canvas.
+  const [mapActive, setMapActive] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
   const [mapInteracted, setMapInteracted] = useState(false);
 
@@ -488,12 +488,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     mapInstanceRef.current?.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
   }, [fix, followMe, updateGpsMarker]);
 
-  // Activate the map as soon as a position exists, so the controls appear
-  // without needing a tap.
-  useEffect(() => {
-    if (gpsDetected && !mapActive) setMapActive(true);
-  }, [gpsDetected, mapActive]);
-
   // A manual drag or zoom hands the camera back to the user. The dot still
   // tracks; only following stops.
   useEffect(() => {
@@ -520,13 +514,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const detectGpsPosition = useCallback(() => {
     restart();
   }, [restart]);
-
-  // Activate map when GPS is successfully detected
-  useEffect(() => {
-    if (gpsDetected && !mapActive) {
-      setMapActive(true);
-    }
-  }, [gpsDetected, mapActive]);
 
   // Update tile layer based on mapStyle
   useEffect(() => {
