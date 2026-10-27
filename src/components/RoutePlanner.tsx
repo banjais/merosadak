@@ -1922,10 +1922,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
        {/* 5. READY REPORTS IN A SHORT PLACE WITH MORE INFO (COMPACT BENTO DASHBOARD) */}
-       {deckId === 'results' && hasCalculated && routePlan && !sections.isExpanded('results') && (
-         <>
-         <div className="rounded-2xl overflow-hidden">
-          <header className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
+       {deckId === 'results' && hasCalculated && routePlan && (
+          <>
+          <div className="rounded-2xl overflow-hidden">
+           <header className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-slate-800/80">
             <button
               type="button"
               onClick={() => {
