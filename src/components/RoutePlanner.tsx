@@ -508,6 +508,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   // Toggle for advanced fuel/efficiency settings
   const [showAdvancedFuel, setShowAdvancedFuel] = useState<boolean>(false);
+  // Once Start Trip is clicked, swap it for Expand and drop secondary actions.
+  const [startTripClicked, setStartTripClicked] = useState<boolean>(false);
 
   // AI Custom Advisory states
   const [loadingAiAdvisory, setLoadingAiAdvisory] = useState<boolean>(false);
@@ -1396,7 +1398,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       >
         {(deckId) => (
       <div className="space-y-3">
-      {/* 1. MY LOCATION CARD - Always visible */}
+      {/* 1. MY LOCATION CARD - hidden once a route is calculated */}
+      {!hasCalculated && (
       <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div
@@ -1576,6 +1579,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {speechTranscriptNotice && (
         <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2">
@@ -1960,29 +1964,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               )}
             </div>
           </header>
-          {/* Reduced view: keep the key numbers visible without expanding */}
+          {/* Collapsed view: short description once + Expand button */}
           {!sections.isExpanded('results') && (
-            <div className="px-3 sm:px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-300 animate-fadeIn">
-              <span className="flex items-center gap-1 text-white font-bold">
-                <Compass className="h-3.5 w-3.5 text-emerald-400" />
-                {routePlan.totalDistanceKm} km
-              </span>
-              <span className="flex items-center gap-1 text-cyan-400 font-bold">
-                <Clock className="h-3.5 w-3.5 text-cyan-400" />
-                {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
-              </span>
-              <span className="flex items-center gap-1 text-amber-300 font-bold">
-                <Fuel className="h-3.5 w-3.5 text-amber-400" />
-                Rs {estimatedTripCostNpr.toLocaleString()}
-              </span>
-              <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                {routePlan.roadConditionScore}
+            <div className="px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 text-[11px] font-mono text-slate-300 animate-fadeIn">
+              <span className="flex items-center gap-1 text-slate-400">
+                {routePlan.origin.name} → {routePlan.destination.name} · {routePlan.totalDistanceKm} km · {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
               </span>
               <button
                 type="button"
                 onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
-                className="ml-auto text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
+                className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition"
               >
                 <span>Expand</span>
                 <ChevronDown className="h-3.5 w-3.5" />
@@ -2016,7 +2007,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 className="text-[9px] text-emerald-400 hover:text-emerald-300 font-bold shrink-0 px-2 py-1 rounded-md hover:bg-emerald-500/10 transition"
                 title="Change origin or destination"
               >
-                Change
+                Change Location
               </button>
             </div>
 
@@ -2051,21 +2042,34 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
             {/* 3. PRIMARY ACTION */}
             <div className="px-3 py-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setTravelPlanView('steps');
-                  setActiveModuleTab('travel_plan');
-                }}
-                className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
-                id="btn-start-trip"
-              >
-                <Navigation className="w-4 h-4" />
-                <span>Start Trip</span>
-              </button>
+              {startTripClicked ? (
+                <button
+                  type="button"
+                  onClick={() => { sections.setExpanded('results', true); setIsReportExpanded(true); }}
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-500/30 hover:text-emerald-200 text-sm font-bold transition shadow-sm"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  <span>Expand</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartTripClicked(true);
+                    setTravelPlanView('steps');
+                    setActiveModuleTab('travel_plan');
+                  }}
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-sm font-black shadow-lg shadow-emerald-500/25 transition"
+                  id="btn-start-trip"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>Start Trip</span>
+                </button>
+              )}
             </div>
 
-            {/* 4. SECONDARY ACTIONS */}
+            {/* 4. SECONDARY ACTIONS — hidden after Start Trip */}
+            {!startTripClicked && (
             <div className="px-3 py-1 flex flex-wrap gap-2 text-[10px]">
               <button
                 type="button"
@@ -2094,6 +2098,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <Share2 className="w-3 h-3 text-emerald-400 shrink-0" />
               </button>
             </div>
+            )}
 
             {/* 5. EXPAND / REDUCE */}
             <button
