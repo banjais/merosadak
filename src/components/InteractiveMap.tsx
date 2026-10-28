@@ -1260,13 +1260,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
    }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized]);
 
-  useEffect(() => {
-    if (activeRoute) {
-      setMapInteracted(true);
-      setMapActive(true);
-    }
-  }, [activeRoute]);
-
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
    const handleMyLocation = () => {
@@ -1306,8 +1299,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         onClick={activateMap}
       />
 
-      {/* Dimming overlay - shows when map is not active AND no route is shown */}
-      {(!mapActive && !activeRoute) && (
+      {/* Dimming overlay - shows when map is not active */}
+      {!mapActive && (
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-[500] pointer-events-none transition-opacity duration-500" />
       )}
 
