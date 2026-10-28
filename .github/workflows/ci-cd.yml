@@ -43,6 +43,8 @@ on:
 
 permissions:
   contents: read
+  deployments: write
+  pull-requests: write
 
 jobs:
   # ── Shared checks ───────────────────────────────────────────────────────────
