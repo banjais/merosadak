@@ -494,6 +494,42 @@ export function UnifiedRouteReport({
           </div>
         </div>
 
+        {/* Highway breakdown: origin access + surveyed highway + destination access */}
+        {distanceParts && (
+        <div className="card card-elevated card-interactive p-3.5">
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">Highway break-down</div>
+          <div className="grid grid-cols-2 gap-1.5 mb-2">
+            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">To highway</div>
+                <div className="text-xs font-bold text-amber-300">{formatNumber(distanceParts[0].km, 1)} km</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">On highway</div>
+                <div className="text-xs font-bold text-emerald-400">{formatNumber(distanceParts[1].km, 1)} km</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">From highway</div>
+                <div className="text-xs font-bold text-amber-300">{formatNumber(distanceParts[3].km, 1)} km</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+              <div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Total</div>
+                <div className="text-xs font-bold text-white">{formatNumber(distanceKm, 1)} km</div>
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-slate-400">
+            {formatNumber(distanceParts[1].km, 1)} km of surveyed highway ({surveyedSharePercent ?? 0}% of route). Remaining is local access from/to your location.
+          </p>
+        </div>
+        )}
+
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Travel time</div>
           <div className="mt-3 text-2xl font-black text-cyan-400 font-display">{formatDuration(route.estimatedTimeMinutes)}</div>

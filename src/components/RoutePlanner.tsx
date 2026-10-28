@@ -1394,7 +1394,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <span className="text-sm font-bold text-white truncate">
                   {locationMode === 'my_location'
                     ? (detectedLocation
-                        ? (gpsOriginCity ? gpsOriginCity.name : 'GPS Location Acquired')
+                        ? 'My Location'
                         : 'My Location (GPS)')
                     : (originCity ? originCity.name : 'My Location')}
                 </span>
@@ -1403,10 +1403,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {locationMode === 'my_location'
                     ? (detectedLocation
                         ? (gpsOriginCity
-                            ? (gpsOriginCity.district || gpsOriginCity.province
-                                ? `${gpsOriginCity.district || ''}${gpsOriginCity.district && gpsOriginCity.province ? ' · ' : ''}${gpsOriginCity.province || ''}`
-                                : 'Nearest surveyed place')
-                            : 'Off the surveyed network')
+                            ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
+                            : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
                         : 'Waiting for a GPS fix — your origin updates automatically')
                     : 'Back to the current location'}
                 </div>
@@ -1415,13 +1413,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
                     liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
                   }`} />
-                  {liveTracking ? 'LIVE' : 'FIXED'}{' '}
+                  {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
                   {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
                   {liveAccuracy && (
-                    <span className="text-slate-500"> · {liveAccuracy}</span>
+                    <span className="text-slate-500"> · ±{liveAccuracy}</span>
                   )}
                   {gpsNearestJunction?.name && (
-                    <span className="text-slate-500"> · near {gpsNearestJunction.name}</span>
+                    <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>
                   )}
                 </div>
               )}
