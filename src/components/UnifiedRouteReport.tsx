@@ -502,12 +502,26 @@ export function UnifiedRouteReport({
 
         {showCostMetrics && (
         <div className="card card-elevated card-interactive p-3.5">
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{fuelBasis?.unit === 'kWh' ? 'Energy cost' : 'Fuel cost'}</div>
-          <div className="mt-3 text-2xl font-black text-amber-400 font-display">NPR {fuelCost.toLocaleString('en-US')}</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-1">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{fuelBasis?.unit === 'kWh' ? 'Energy cost' : 'Fuel cost'}</div>
+              <div className="mt-3 text-2xl font-black text-amber-400 font-display">NPR {fuelCost.toLocaleString('en-US')}</div>
+              <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                ~{formatNumber(fuelQuantity, 1)} {fuelUnit} × NPR {fuelBasis?.ratePerUnit}/{fuelBasis?.unit} ({fuelBasis?.fuelName})
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Fuel price source</div>
+              <div className="text-[10px] text-emerald-400 font-medium">
+                {fuelBasis?.sourceLabel || 'Nepal Oil Corporation'}
+                {fuelDateLabel ? ` · ${fuelDateLabel}` : ''}
+              </div>
+              {fuelAgeDays !== null && fuelAgeDays > 7 && (
+                <div className="text-[9px] text-amber-300">Price {fuelAgeDays} days old</div>
+              )}
+            </div>
+          </div>
           <p className="mt-2 text-[11px] text-slate-400">
-            ~{formatNumber(fuelQuantity, 1)} {fuelUnit}{fuelBasis ? ` × NPR ${fuelBasis.ratePerUnit}/${fuelBasis.unit} (${fuelBasis.fuelName})` : ''}
-          </p>
-          <p className="mt-1 text-[11px] text-slate-400">
             {tollBasis.items.length === 0
               ? 'No toll plazas on this route'
               : `+ Tolls NPR ${route.totalTollCostNpr.toLocaleString('en-US')} (${tollBasis.items.length} plaza${tollBasis.items.length === 1 ? '' : 's'})`}
@@ -523,22 +537,7 @@ export function UnifiedRouteReport({
       </div>
 
       {(showCostMetrics || tripNotes.length > 0) && (
-        <div className="mt-3 card p-3.5 space-y-2 text-[11px]" aria-label="Cost basis and trip notes">
-          {showCostMetrics && fuelBasis && (
-            <div className="flex items-start gap-2 text-slate-300">
-              <Fuel className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-              <div>
-                <span className="font-semibold text-slate-100">Fuel price:</span>{' '}
-                {fuelBasis.fuelName} NPR {fuelBasis.ratePerUnit}/{fuelBasis.unit}
-                {fuelBasis.usingDefaults
-                  ? <span className="text-amber-300"> — live price unavailable, using the built-in NOC rate{fuelBasis.fallbackAsOf ? ` of ${fuelBasis.fallbackAsOf}` : ''}. Actual cost may differ.</span>
-                  : <span className="text-slate-400"> — {fuelBasis.sourceLabel || 'Nepal Oil Corporation'}{fuelDateLabel ? `, published ${fuelDateLabel}` : ''}.</span>}
-                {!fuelBasis.usingDefaults && fuelAgeDays !== null && fuelAgeDays > 7 && (
-                  <span className="text-amber-300"> Price is {fuelAgeDays} days old; NOC may have revised it.</span>
-                )}
-              </div>
-            </div>
-          )}
+        <div className="mt-3 card p-3.5 space-y-2 text-[11px]" aria-label="Trip notes">
           {showCostMetrics && (
             <div className="flex items-start gap-2 text-slate-300">
               <CreditCard className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
