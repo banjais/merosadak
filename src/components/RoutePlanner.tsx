@@ -492,6 +492,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // AI Custom Advisory states
   const [loadingAiAdvisory, setLoadingAiAdvisory] = useState<boolean>(false);
   const [aiCustomAdvisory, setAiCustomAdvisory] = useState<any | null>(null);
+  const [userEmotion, setUserEmotion] = useState<'calm' | 'urgent' | 'stressed' | 'tired' | 'anxious' | 'excited' | 'relaxed'>('calm');
 
   // Toast Feedback (share modal owned by App — no local ShareTripModal)
   const [trafficSyncedNotification, setTrafficSyncedNotification] = useState<boolean>(false);
@@ -986,7 +987,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       const data = await fetchJson<Record<string, any>>('/api/ai-smart-route-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: textToParse }),
+        body: JSON.stringify({ query: textToParse, userEmotion }),
       });
 
       if (data && data.destId) {
@@ -1038,6 +1039,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           timeHours: (routePlan.estimatedTimeMinutes / 60).toFixed(1),
           roadConditionScore: routePlan.roadConditionScore,
           incidents: routePlan.incidentsOnRoute,
+          userEmotion,
         }),
       });
       if (data.advisory) {

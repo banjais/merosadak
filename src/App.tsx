@@ -18,6 +18,7 @@ import { AppDrawer } from './components/AppDrawer';
 import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
+import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
@@ -201,6 +202,9 @@ function AppContent() {
   const [selectedWeatherId, setSelectedWeatherId] = useState<string | null>(null);
   const [selectedPOIId, setSelectedPOIId] = useState<string | null>(null);
   const [selectedTrafficId, setSelectedTrafficId] = useState<string | null>(null);
+
+  // AI Admin Command panel
+  const [isAdminCommandOpen, setIsAdminCommandOpen] = useState(false);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
@@ -768,12 +772,14 @@ function AppContent() {
                 showTextSize={true}
                 showAccentColor={true}
                 showSignOut={true}
+                showAdminCommand={true}
                 user={user}
                 onSignOut={logout}
                 textScale={textScale}
                 onTextScaleChange={setTextScale}
                 accentColor={accentColor}
                 onAccentColorChange={handleAccentColor}
+                onAdminCommand={() => setIsAdminCommandOpen(true)}
               />
             </div>
           </div>
@@ -1080,6 +1086,12 @@ function AppContent() {
             zoom: 13,
           });
         }}
+      />
+
+      {/* AI Admin Command Panel — update fuel, tolls, incidents via natural language */}
+      <AdminCommandPanel
+        isOpen={isAdminCommandOpen}
+        onClose={() => setIsAdminCommandOpen(false)}
       />
     </PullToRefresh>
   );

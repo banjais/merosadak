@@ -31,6 +31,11 @@ import {
   ChevronUp,
   Landmark,
   ShieldCheck,
+  Brain,
+  Heart,
+  Zap as ZapIcon,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 interface TripAssistantPanelProps {
@@ -94,6 +99,7 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
   const [queryLoading, setQueryLoading] = useState<boolean>(false);
   const [savedStopIds, setSavedStopIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [userEmotion, setUserEmotion] = useState<'calm' | 'urgent' | 'stressed' | 'tired' | 'anxious' | 'excited' | 'relaxed'>('calm');
 
   // Suggested prompt chips for instant assistance
   const quickQuestions = [
@@ -103,6 +109,29 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
     '🔌 EV Fast charger with pleasant dining nearby?',
     '🚗 Safe spot to let vehicle brakes cool down on switchbacks?',
   ];
+
+  const EMOTION_LABELS: Record<string, string> = {
+    calm: 'Calm & steady',
+    urgent: 'Urgent & fast',
+    stressed: 'Gentle & reassuring',
+    tired: 'Rest-focused',
+    anxious: 'Safety-first',
+    excited: 'Enthusiastic',
+    relaxed: 'Laid-back',
+  };
+
+  const emotionIconColor = (emotion: string): string => {
+    const colors: Record<string, string> = {
+      calm: 'text-slate-400',
+      urgent: 'text-rose-400',
+      stressed: 'text-amber-400',
+      tired: 'text-indigo-400',
+      anxious: 'text-purple-400',
+      excited: 'text-emerald-400',
+      relaxed: 'text-cyan-400',
+    };
+    return colors[emotion] || 'text-slate-400';
+  };
 
   // Fetch AI recommendations when route changes
   const fetchTripPlan = async (customQuestion?: string) => {
@@ -131,6 +160,7 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
             .filter((code, idx, arr) => code && arr.indexOf(code) === idx),
           focusFilter: activeCategoryFilter,
           customQuestion: customQuestion || undefined,
+          userEmotion,
         }),
       });
 
@@ -227,6 +257,24 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
           <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
           <span>{loading ? 'Curating Stops...' : 'Regenerate Suggestions'}</span>
         </button>
+
+        {/* Emotion selector */}
+        <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 shrink-0 self-start sm:self-auto">
+          <Brain className={`w-3 h-3 ${emotionIconColor(userEmotion)}`} />
+          <select
+            value={userEmotion}
+            onChange={(e) => setUserEmotion(e.target.value as any)}
+            className="bg-slate-900 border border-slate-700 text-slate-200 text-[9px] rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500"
+          >
+            <option value="calm">Calm</option>
+            <option value="urgent">Urgent</option>
+            <option value="stressed">Stressed</option>
+            <option value="tired">Tired</option>
+            <option value="anxious">Anxious</option>
+            <option value="excited">Excited</option>
+            <option value="relaxed">Relaxed</option>
+          </select>
+        </div>
       </div>
 
       {/* Loading Skeleton */}
@@ -523,7 +571,9 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>AI Concierge Response:</span>
                   </span>
-                  <span className="text-[10px] text-slate-500">Live Guidance</span>
+                  <span className={`text-[10px] font-bold ${emotionIconColor(userEmotion)}`}>
+                    {EMOTION_LABELS[userEmotion] || userEmotion}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">
                   {tripPlan.customAnswer}

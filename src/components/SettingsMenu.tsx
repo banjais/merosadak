@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Minimize, Maximize } from 'lucide-react';
+import { Sun, Moon, Minimize, Maximize, Sparkles } from 'lucide-react';
 import { TextScale } from '../hooks/useTextScale';
 
 interface SettingsMenuProps {
@@ -9,12 +9,14 @@ interface SettingsMenuProps {
   showTextSize?: boolean;
   showAccentColor?: boolean;
   showSignOut?: boolean;
+  showAdminCommand?: boolean;
   user?: { displayName?: string; email?: string } | null;
   onSignOut?: () => void;
   textScale?: TextScale;
   onTextScaleChange?: (scale: TextScale) => void;
   accentColor?: string;
   onAccentColorChange?: (color: string) => void;
+  onAdminCommand?: () => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -24,12 +26,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   showTextSize = false,
   showAccentColor = false,
   showSignOut = false,
+  showAdminCommand = false,
   user = null,
   onSignOut,
   textScale,
   onTextScaleChange,
   accentColor,
   onAccentColorChange,
+  onAdminCommand,
 }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
@@ -159,6 +163,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 <path d="M15.5 8.5l1.5 1.5-1.5 1.5" />
               </svg>
               Sign Out
+            </button>
+          </div>
+        )}
+
+        {showAdminCommand && onAdminCommand && (
+          <div className="border-t border-slate-800/60 mx-2 mb-2">
+            <button
+              onClick={() => { onAdminCommand(); handleOverlayClick(); }}
+              className="w-full flex items-center gap-2 py-1.5 px-1 text-[10px] font-semibold text-cyan-400/90 hover:text-cyan-300 hover:bg-cyan-500/5 rounded transition"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI Admin Command</span>
             </button>
           </div>
         )}

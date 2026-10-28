@@ -17,6 +17,169 @@ export interface Env {
   DATA: KVNamespace;
 }
 
+/* ==================== EMOTION DETECTION ==================== */
+type UserEmotion = 'calm' | 'urgent' | 'stressed' | 'tired' | 'anxious' | 'excited' | 'relaxed';
+
+const EMOTION_KEYWORDS: Record<UserEmotion, string[]> = {
+  calm: ['calm', 'relaxed', 'peaceful', 'chill', 'fine', 'okay', 'normal'],
+  urgent: ['urgent', 'rush', 'asap', 'immediately', 'now', 'quickly', 'fast', 'emergency'],
+  stressed: ['stress', 'stressed', 'overwhelmed', 'pressure', 'tense', 'worried about time'],
+  tired: ['tired', 'sleepy', 'exhausted', 'fatigue', 'rest', 'break', 'sleep'],
+  anxious: ['anxious', 'scared', 'afraid', 'nervous', 'dangerous', 'risky', 'unsafe', 'fear'],
+  excited: ['excited', 'amazing', 'great', 'awesome', 'love', 'fantastic', 'thrilled'],
+  relaxed: ['relax', 'chill', 'easy', 'slow', 'leisure', 'enjoy', 'cruise'],
+};
+
+function detectEmotion(text: string): UserEmotion {
+  const lower = text.toLowerCase();
+  let best: UserEmotion = 'calm';
+  let bestCount = 0;
+  for (const [emotion, keywords] of Object.entries(EMOTION_KEYWORDS)) {
+    let count = 0;
+    for (const kw of keywords) {
+      if (lower.includes(kw)) count++;
+    }
+    if (count > bestCount) {
+      bestCount = count;
+      best = emotion as UserEmotion;
+    }
+  }
+  return best;
+}
+
+function emotionTone(emotion: UserEmotion): string {
+  const tones: Record<UserEmotion, string> = {
+    calm: 'Speak in a steady, reassuring, balanced tone. Keep it clear and concise.',
+    urgent: 'Speak with urgency and brevity. Prioritize the fastest, safest route. Get to the point quickly.',
+    stressed: 'Speak gently and reassuringly. Acknowledge the pressure. Offer simple, calming guidance.',
+    tired: 'Speak warmly and encouragingly. Suggest rest stops, breaks, and shorter driving segments.',
+    anxious: 'Speak calmly and supportively. Emphasize safety, alternative routes, and emergency contacts.',
+    excited: 'Speak with enthusiasm and energy. Highlight scenic spots, local food, and fun experiences.',
+    relaxed: 'Speak in a laid-back, friendly tone. Suggest leisurely stops and scenic detours.',
+  };
+  return tones[emotion];
+}
+
+function buildSystemPrompt(role: string, context?: Record<string, any>, emotion?: UserEmotion): string {
+  const emotionLine = emotion ? `\nUser emotion detected: ${emotion}. ${emotionTone(emotion)}` : '';
+  const contextLine = context ? `\nRoute context: ${JSON.stringify(context)}` : '';
+  return `You are Mero Sadak AI — a Nepal highway travel assistant. ${role}.${emotionLine}${contextLine}
+
+Rules:
+- Always answer in the user's language (English or Nepali as appropriate).
+- Be helpful, safe, and accurate about Nepal highways, roads, fuel, tolls, and weather.
+- Never make up toll prices, fuel rates, or road conditions — say "unknown" if unsure.
+- Format responses as clean JSON when requested.
+- Keep responses practical and actionable for travelers on Nepal's highways.`;
+}
+
+/* ==================== KV DATA UPDATE HELPERS ==================== */
+
+async function updateFuelPrices(env: Env, updates: Record<string, number>): Promise<any> {
+  const current = await readJsonData<any>(env, "fuel-prices.json", { prices: {}, lastUpdated: new Date().toISOString() });
+  current.prices = { ...current.prices, ...updates };
+  current.lastUpdated = new Date().toISOString();
+  current.source = "admin-ai-command";
+  await env.DATA.put("fuel-prices.json", JSON.stringify(current));
+  return { updated: updates, saved: current };
+}
+
+async function updateTollRates(env: Env, updates: Record<string, any>): Promise<any> {
+  const current = await readJsonData<any>(env, "toll-rates.json", { tolls: [], lastUpdated: new Date().toISOString() });
+  current.tolls = updates.tolls || current.tolls;
+  current.lastUpdated = new Date().toISOString();
+  current.source = "admin-ai-command";
+  await env.DATA.put("toll-rates.json", JSON.stringify(current));
+  return { updated: updates.tolls, saved: current };
+}
+
+async function addIncident(env: Env, incident: any): Promise<any> {
+  const reports = await readJsonData<any[]>(env, "user-reports.json", []);
+  const newReport = {
+    id: `admin-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ...incident,
+    reporterId: "admin-ai",
+    upvotes: 0,
+    createdAt: new Date().toISOString(),
+    status: "active",
+    verified: true,
+  };
+  reports.unshift(newReport);
+  await env.DATA.put("user-reports.json", JSON.stringify(reports.slice(0, 500)));
+  return { added: newReport };
+}
+
+async function updateCityData(env: Env, updates: any[]): Promise<any> {
+  const current = await readJsonData<any[]>(env, "cities-and-junctions.json", []);
+  const merged = [...current, ...updates];
+  await env.DATA.put("cities-and-junctions.json", JSON.stringify(merged));
+  return { added: updates.length, total: merged.length };
+}
+
+/* ==================== ADMIN COMMAND PARSING ==================== */
+
+async function handleAiAdminCommand(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json<any>();
+    const { command, adminKey } = body;
+
+    if (!command || typeof command !== "string") {
+      return jsonResponse(env, { error: "Command string is required" }, 400);
+    }
+    if (!adminKey || adminKey !== env.DOR_GOOGLE_SHEET_URL) {
+      // Simple admin key check — in production use a proper secret
+      return jsonResponse(env, { error: "Admin authentication required" }, 403);
+    }
+    if (!env.GEMINI_API_KEY) {
+      return jsonResponse(env, { error: "AI service not configured" }, 503);
+    }
+
+    const emotion = detectEmotion(command);
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
+
+    const prompt = buildSystemPrompt(
+      "You are an admin data manager for Mero Sadak. Parse the admin's natural language command and return JSON with: action (update_fuel | update_tolls | add_incident | update_cities | unknown), details (structured data for the action), confirmation (human-readable summary). If unsure, set action to 'unknown'.",
+      { emotion },
+      emotion
+    );
+
+    const result = await model.generateContent(`${prompt}\n\nAdmin command: "${command}"`);
+    const text = result.response.text();
+
+    // Try to parse the AI's JSON response
+    let parsed: any = null;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+    } catch {}
+
+    // Execute the parsed action
+    let execution: any = { action: parsed?.action || 'unknown', details: parsed?.details || null };
+
+    if (parsed?.action === 'update_fuel' && parsed?.details) {
+      execution.result = await updateFuelPrices(env, parsed.details);
+    } else if (parsed?.action === 'update_tolls' && parsed?.details) {
+      execution.result = await updateTollRates(env, parsed.details);
+    } else if (parsed?.action === 'add_incident' && parsed?.details) {
+      execution.result = await addIncident(env, parsed.details);
+    } else if (parsed?.action === 'update_cities' && parsed?.details) {
+      execution.result = await updateCityData(env, parsed.details);
+    }
+
+    return jsonResponse(env, {
+      emotion,
+      aiResponse: text,
+      parsed,
+      execution,
+      confirmed: execution.action !== 'unknown',
+    });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "AI admin command failed", note: e?.message }, 500);
+  }
+}
+
 function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
@@ -233,10 +396,15 @@ async function handleAiSmartRouteQuery(request: Request, env: Env): Promise<Resp
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
-    const prompt = `You are a Nepal highway route planner. Parse the user's natural language query and return a JSON object with: origin, destination, vehicle (car/suv_4wd/electric_vehicle/bike), preference (fastest/shortest/scenic/safest/ev_optimized), and any terrain filters (avoidHighPasses, requirePavedOnly, avoidSteepGrades, avoidActiveLandslideZones, maxElevationM). Query: "${query}"`;
-    const result = await model.generateContent(prompt);
+    const emotion = detectEmotion(query);
+    const prompt = buildSystemPrompt(
+      "You are a Nepal highway route planner. Parse the user's natural language query and return a JSON object with: origin, destination, vehicle (car/suv_4wd/electric_vehicle/bike), preference (fastest/shortest/scenic/safest/ev_optimized), and any terrain filters (avoidHighPasses, requirePavedOnly, avoidSteepGrades, avoidActiveLandslideZones, maxElevationM).",
+      { emotion },
+      emotion
+    );
+    const result = await model.generateContent(`${prompt}\n\nQuery: "${query}"`);
     const text = result.response.text();
-    return jsonResponse(env, { parsed: text });
+    return jsonResponse(env, { parsed: text, emotion });
   } catch (e: any) {
     return jsonResponse(env, { error: "AI query failed", note: e?.message }, 500);
   }
@@ -245,17 +413,22 @@ async function handleAiSmartRouteQuery(request: Request, env: Env): Promise<Resp
 async function handleAiRouteAdvisor(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
-    const { origin, destination, routePlan } = body;
+    const { origin, destination, routePlan, userEmotion } = body;
     if (!env.GEMINI_API_KEY) {
       return jsonResponse(env, { error: "AI service not configured" }, 503);
     }
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
-    const prompt = `You are a Nepal highway expert. Provide a concise advisory for a trip from ${origin} to ${destination}. Route details: ${JSON.stringify(routePlan)}. Return JSON with: summary, riskLevel, keyRecommendations (array), monsoonOrWeatherWarning, bestDepartureWindow, emergencyContacts (array).`;
-    const result = await model.generateContent(prompt);
+    const emotion = userEmotion || detectEmotion(JSON.stringify({ origin, destination, routePlan }));
+    const prompt = buildSystemPrompt(
+      "You are a Nepal highway expert. Provide a concise safety advisory for a trip. Return JSON with: summary, riskLevel, keyRecommendations (array), monsoonOrWeatherWarning, bestDepartureWindow, emergencyContacts (array). Tailor your tone to the user's detected emotion.",
+      { origin, destination, routePlan },
+      emotion
+    );
+    const result = await model.generateContent(`${prompt}\n\nTrip from ${origin} to ${destination}. Route details: ${JSON.stringify(routePlan)}`);
     const text = result.response.text();
-    return jsonResponse(env, { advisory: text });
+    return jsonResponse(env, { advisory: text, emotion });
   } catch (e: any) {
     return jsonResponse(env, { error: "AI advisor failed", note: e?.message }, 500);
   }
@@ -264,7 +437,7 @@ async function handleAiRouteAdvisor(request: Request, env: Env): Promise<Respons
 async function handleAiTripAssistant(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
-    const { query, context } = body;
+    const { query, context, userEmotion } = body;
     if (!query || typeof query !== "string") {
       return jsonResponse(env, { error: "Query string is required" }, 400);
     }
@@ -274,10 +447,15 @@ async function handleAiTripAssistant(request: Request, env: Env): Promise<Respon
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
-    const prompt = `You are a Nepal trip planning assistant. Context: ${JSON.stringify(context || {})}. User query: "${query}". Provide helpful trip planning advice including routes, stops, fuel, weather, permits. Return JSON with response.`;
-    const result = await model.generateContent(prompt);
+    const emotion = userEmotion || detectEmotion(query);
+    const prompt = buildSystemPrompt(
+      "You are a Nepal trip planning assistant. Provide helpful trip planning advice including routes, stops, fuel, weather, permits. Return JSON with response. Tailor your tone to the user's detected emotion.",
+      { ...context, emotion },
+      emotion
+    );
+    const result = await model.generateContent(`${prompt}\n\nContext: ${JSON.stringify(context || {})}. User query: "${query}"`);
     const text = result.response.text();
-    return jsonResponse(env, { response: text });
+    return jsonResponse(env, { response: text, emotion });
   } catch (e: any) {
     return jsonResponse(env, { error: "AI assistant failed", note: e?.message }, 500);
   }
@@ -421,6 +599,9 @@ export default {
     }
     if (url.pathname === "/api/ai-trip-assistant" && request.method === "POST") {
       return handleAiTripAssistant(request, env);
+    }
+    if (url.pathname === "/api/ai-admin-command" && request.method === "POST") {
+      return handleAiAdminCommand(request, env);
     }
     if (url.pathname === "/api/submit-report" && request.method === "POST") {
       return handleSubmitReport(request, env);
