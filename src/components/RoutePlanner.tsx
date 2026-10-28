@@ -1752,66 +1752,98 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         {hasCalculated && routePlan && (
           <div key={`trip-${calcKey}-${routePlan.id}`} className="animate-fade-in-smooth space-y-3 p-3 sm:p-4">
-            {/* Compact short report header — quick glance, nothing else outside tabs */}
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-3 sm:p-4 backdrop-blur">
-              <div className="flex items-center gap-2 mb-2">
-                <MapPin className="h-4 w-4 shrink-0 text-emerald-400" />
-                <h2 className="min-w-0 truncate text-base font-bold leading-tight">
-                  {routePlan.origin.name || routePlan.origin.id}
-                  <span className="mx-1.5 text-slate-500">→</span>
-                  {routePlan.destination.name || routePlan.destination.id}
-                </h2>
-                <button
-                  type="button"
-                  onClick={handleEditLocations}
-                  className="flex shrink-0 items-center gap-1 rounded-xl border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[11px] font-bold text-slate-200 transition hover:bg-slate-700"
-                >
-                  <Pencil className="h-3 w-3" />
-                  <span>Change</span>
-                </button>
-              </div>
-              <div className={`grid gap-2 ${travelerMode === 'driver' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
-                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
-                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <Compass className={`h-3 w-3 ${travelerMode === 'driver' ? 'text-emerald-400' : 'text-cyan-400'}`} />
-                    <span className="truncate">Distance</span>
+            {/* 1. PROFESSIONAL REPORT HEADER */}
+            <section
+              className="rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-950/80 p-4 sm:p-6 backdrop-blur-md shadow-2xl"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/40">
+                    <MapPin className="h-5 w-5 text-emerald-400" />
                   </div>
-                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">{routePlan.totalDistanceKm} km</div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <h2 className="text-sm sm:text-base font-black text-white leading-tight">
+                      {routePlan.origin.name || routePlan.origin.id}
+                      <span className="mx-2 text-slate-500 text-xs">→</span>
+                      {routePlan.destination.name || routePlan.destination.id}
+                    </h2>
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span>
+                        {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
+                        {routePlan.estimatedTimeMinutes % 60}m drive
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
-                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <Clock className="h-3 w-3 text-cyan-400" />
-                    <span className="truncate">Time</span>
+                <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleEditLocations}
+                    className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl border border-slate-700 bg-slate-800/60 hover:bg-slate-700 text-sm font-bold text-slate-200 transition-all"
+                  >
+                    <Pencil className="h-3.5 w-3.5 shrink-0" />
+                    <span className="ml-1">Change location</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTripStarted(true);
+                      setActiveTab('journey');
+                      onViewOnMap?.();
+                    }}
+                    className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/25 transition-all"
+                  >
+                    <Navigation className="h-3.5 w-3.5 shrink-0" />
+                    <span className="ml-1">Go ahead</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Key metrics strip */}
+              <div className={`grid gap-3 ${travelerMode === 'driver' ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Compass className="h-3 w-3 text-emerald-400 shrink-0" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Distance</span>
                   </div>
-                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">
+                  <div className="font-mono text-lg font-bold text-white">{routePlan.totalDistanceKm} km</div>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-3 w-3 text-cyan-400 shrink-0" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Time</span>
+                  </div>
+                  <div className="font-mono text-lg font-bold text-white">
                     {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
                   </div>
                 </div>
                 {travelerMode === 'driver' && (
-                  <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
-                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      <Fuel className="h-3 w-3 text-amber-400" />
-                      <span className="truncate">Est. cost</span>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
                     </div>
-                    <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">
+                    <div className="font-mono text-lg font-bold text-white">
                       Rs {estimatedTripCostNpr.toLocaleString()}
                     </div>
                   </div>
                 )}
-                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
-                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                    <span className="truncate">Road score</span>
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Road score</span>
                   </div>
-                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">{routePlan.roadConditionScore}</div>
+                  <div className="font-mono text-lg font-bold text-white">{routePlan.roadConditionScore}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-2">
-                <Mountain className="h-3 w-3 text-purple-400" />
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50 text-[11px] text-slate-400 font-mono">
+                <Mountain className="h-3 w-3 text-purple-400 shrink-0" />
                 <span>Highest point {routePlan.maxElevationM} m</span>
               </div>
-            </div>
+            </section>
 
+            {/* 2. TABS — everything inside tabs only */}
             <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
               {activeTab === 'journey' && (
                 <>
