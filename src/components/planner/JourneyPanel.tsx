@@ -202,7 +202,16 @@ export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode
       etaMin: (e.alongKm / Math.max(route.totalDistanceKm, 1)) * route.estimatedTimeMinutes,
     }));
     const base: Row[] = filter === 'all' ? [...waypoints, ...feed] : feed;
-    return base.sort((a, b) => a.alongKm - b.alongKm || (a.type === 'waypoint' ? -1 : 1));
+    const sorted = base.sort((a, b) => a.alongKm - b.alongKm || (a.type === 'waypoint' ? -1 : 1));
+
+    // Deduplicate any repeated entries
+    const seen = new Set<string>();
+    return sorted.filter((row) => {
+      const key = row.type === 'waypoint' ? row.key : row.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [visible, waypoints, filter, route.totalDistanceKm, route.estimatedTimeMinutes]);
 
   const counts = useMemo(
@@ -277,9 +286,9 @@ export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode
           <div className="flex flex-wrap gap-1.5 text-xs" role="tablist" aria-label="Filter the corridor">
             {([
               ['all', 'Everything', visible.length + waypoints.length],
-              ['road', mode === 'driver' ? 'Hazards & delays' : 'Delays & alerts', counts.road],
+              ['road', 'Hazards & alerts', counts.road],
               ['weather', 'Weather', counts.weather],
-              ['stops', mode === 'driver' ? 'Fuel & stops' : 'Stops & terminals', counts.stops],
+              ['stops', 'Fuel & stops', counts.stops],
             ] as Array<[Filter, string, number]>).map(([key, label, n]) => (
               <button
                 key={key}
@@ -294,7 +303,7 @@ export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode
                 {label} <span className="opacity-70">{n}</span>
               </button>
             ))}
-            {hazards > 0 && mode === 'driver' && (
+            {hazards > 0 && (
               <span className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 font-bold text-amber-300">
                 {hazards} to watch
               </span>

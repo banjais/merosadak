@@ -191,31 +191,19 @@ export function useRouteFeed(
     if (!data || !idx) return [];
     const out: FeedEntry[] = [];
 
-    scopeToRoute<any>(data.blackspots, idx, (b) => (num(b?.lat) ? [b.lat, b.lng] : null), 6).forEach(({ item: b, alongKm, offKm }) => {
-      const risk = String(b.riskLevel || '').toLowerCase();
-      out.push({
-        id: `bs-${b.id}`,
-        group: 'road',
-        kind: 'blackspot',
-        audience: 'driver',
-        alongKm,
-        offKm,
-        title: b.name,
-        detail: trim(b.primaryCause, 130),
-        extra: b.safeDrivingAdvice ? `Advice: ${trim(b.safeDrivingAdvice, 150)}` : undefined,
-        severity: risk === 'high' || risk === 'critical' ? 'danger' : 'caution',
-        badge: 'Accident black spot',
-        lat: b.lat,
-        lng: b.lng,
-      });
-    });
-
-    const seen = new Set<string>();
+    const seenIncidentIds = new Set<string>();
+    const seenIncidentCoords = new Set<string>();
     const incidents = [...(route.incidentsOnRoute || []), ...(extraIncidents || [])].filter((i) => {
-      if (!i || seen.has(i.id)) return false;
-      seen.add(i.id);
+      if (!i) return false;
+      const coordKey = num(i.lat) && num(i.lng) ? `${i.lat.toFixed(2)}_${i.lng.toFixed(2)}` : null;
+      if (seenIncidentIds.has(i.id)) return false;
+      if (coordKey && seenIncidentCoords.has(coordKey)) return false;
+      seenIncidentIds.add(i.id);
+      if (coordKey) seenIncidentCoords.add(coordKey);
       return true;
     });
+
+    // 1. Live & DoR-verified incidents take priority
     scopeToRoute<any>(incidents, idx, (i) => (num(i?.lat) ? [i.lat, i.lng] : null), 8).forEach(({ item: i, alongKm, offKm }) => {
       out.push({
         id: `inc-${i.id}`,
@@ -231,6 +219,40 @@ export function useRouteFeed(
         badge: i.dorVerified ? 'DoR verified' : i.source ? String(i.source) : 'Reported',
         lat: i.lat,
         lng: i.lng,
+      });
+    });
+
+    // 2. Curated blackspots - deduplicate against live incidents at the same spot (~2 km)
+    scopeToRoute<any>(data.blackspots, idx, (b) => (num(b?.lat) ? [b.lat, b.lng] : null), 6).forEach(({ item: b, alongKm, offKm }) => {
+      const match = out.find(
+        (existing) =>
+          existing.group === 'road' &&
+          Math.abs(existing.alongKm - alongKm) < 2.0 &&
+          Math.abs(existing.lat - b.lat) < 0.02 &&
+          Math.abs(existing.lng - b.lng) < 0.02
+      );
+      if (match) {
+        if (!match.extra && b.safeDrivingAdvice) {
+          match.extra = `Advice: ${trim(b.safeDrivingAdvice, 140)}`;
+        }
+        return;
+      }
+
+      const risk = String(b.riskLevel || '').toLowerCase();
+      out.push({
+        id: `bs-${b.id}`,
+        group: 'road',
+        kind: 'blackspot',
+        audience: 'both',
+        alongKm,
+        offKm,
+        title: b.name,
+        detail: trim(b.primaryCause, 130),
+        extra: b.safeDrivingAdvice ? `Advice: ${trim(b.safeDrivingAdvice, 150)}` : undefined,
+        severity: risk === 'high' || risk === 'critical' ? 'danger' : 'caution',
+        badge: 'Accident black spot',
+        lat: b.lat,
+        lng: b.lng,
       });
     });
 
@@ -298,7 +320,7 @@ export function useRouteFeed(
         id: `poi-${p.id}`,
         group: 'stops',
         kind,
-        audience: kind === 'fuel' || kind === 'ev' || kind === 'toll' ? 'driver' : 'both',
+        audience: 'both',
         alongKm,
         offKm,
         title: p.name,
@@ -316,7 +338,7 @@ export function useRouteFeed(
         id: `bus-${b.id}`,
         group: 'stops',
         kind: 'bus',
-        audience: 'passenger',
+        audience: 'both',
         alongKm,
         offKm,
         title: b.name,
@@ -328,7 +350,16 @@ export function useRouteFeed(
       });
     });
 
-    return out.sort((a, b) => a.alongKm - b.alongKm);
+    // Final deduplication pass by unique ID and coordinate proximity
+    const seenIds = new Set<string>();
+    const uniqueOut: FeedEntry[] = [];
+    for (const entry of out) {
+      if (seenIds.has(entry.id)) continue;
+      seenIds.add(entry.id);
+      uniqueOut.push(entry);
+    }
+
+    return uniqueOut.sort((a, b) => a.alongKm - b.alongKm);
   }, [data, idx, weatherHits, live, route.incidentsOnRoute, extraIncidents, mode]);
 
   const latestUpdate = useMemo(() => {

@@ -4,9 +4,9 @@ Nepal road-travel PWA (Leaflet map + Firebase Hosting + Cloudflare Worker).
 
 ## Product rules
 - One share modal and one pre-trip checklist modal (owned by `App.tsx`).
-- After a route is calculated: KPI row → Driving/Passenger mode → module tabs.
+- After a route is calculated: KPI row → module tabs.
 - **Ahead** = ordered hazards/weather/stops along the route only.
-- **Cost & eco** = fuel/toll/carbon for drivers only.
+- **Cost & eco** = fuel/toll/carbon trip estimates.
 - Speech recognition language follows app `language` (`en-US` / `ne-NP`).
 - Do not hardcode Kathmandu→Pokhara when planning from a highway; resolve endpoint names to city ids.
 

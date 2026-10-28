@@ -1766,7 +1766,30 @@ export function findRouteByPreference(
   const tollVehicleCategory = mapVehicleToTollCategory(vehicle);
   const totalTollCost = calculateTollCost(highwayCodesOnPath, tollVehicleCategory, origin, destination);
 
-  const incidentsOnRoute = liveIncidents.filter((inc) => highwayCodesOnPath.includes(inc.highwayCode));
+  // Filter incidents that are genuinely along this route corridor and deduplicate
+  const seenIncidentKeys = new Set<string>();
+  const incidentsOnRoute = liveIncidents.filter((inc) => {
+    if (!inc || !highwayCodesOnPath.includes(inc.highwayCode)) return false;
+
+    // Deduplication key
+    const coordKey = inc.lat != null && inc.lng != null ? `${inc.lat.toFixed(3)}_${inc.lng.toFixed(3)}` : null;
+    const titleKey = inc.title ? inc.title.toLowerCase().trim() : '';
+    const key = inc.id || `${coordKey}_${titleKey}`;
+    if (seenIncidentKeys.has(key)) return false;
+    if (coordKey && seenIncidentKeys.has(coordKey)) return false;
+
+    // Only include incidents within proximity to the route geometry if pathCoordinates exist
+    if (pathCoordinates.length > 0 && typeof inc.lat === 'number' && typeof inc.lng === 'number') {
+      const isNear = pathCoordinates.some(([pLat, pLng]) => {
+        return Math.abs(pLat - inc.lat) < 0.25 && Math.abs(pLng - inc.lng) < 0.25;
+      });
+      if (!isNear) return false;
+    }
+
+    seenIncidentKeys.add(key);
+    if (coordKey) seenIncidentKeys.add(coordKey);
+    return true;
+  });
 
   // Altitude is a RUNNING total: each edge's signed gain is added to the
   // altitude reached by the previous edge, not to the origin altitude. Adding

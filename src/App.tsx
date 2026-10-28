@@ -909,8 +909,8 @@ function AppContent() {
           />
         </div>
 
-        {/* Driver / passenger trip strip — only when a route is active */}
-{!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
+        {/* Trip status strip — shown when map is full or planner is minimized */}
+        {isMapFull && !isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
           <TripStatusBar
             route={activeRoute}
             alertCount={activeRoute?.incidentsOnRoute?.length ?? incidents.length}
