@@ -359,7 +359,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, []);
 
   // Map Style: Standard, Satellite, Terrain
-  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial' | '3d'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial' | '3d'>('3d');
   const tileLayerRef = useRef<L.GridLayer | null>(null);
 
   // Initialize map
