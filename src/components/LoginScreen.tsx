@@ -8,22 +8,28 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
-  const { loginWithGoogle, loading, redirectError, clearRedirectError } = useAuth();
+  const { loginWithGoogle, loginWithGooglePopup, loading, redirectError, clearRedirectError } = useAuth();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleGoogleLogin = async () => {
     setError('');
-    // Drop any previous failure so a retry does not show a stale banner.
     clearRedirectError();
     setIsLoading(true);
     try {
-      await loginWithGoogle(rememberMe);
+      // Popup-based sign-in is more reliable in PWAs and mobile browsers.
+      await loginWithGooglePopup();
       onClose?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed.');
-      setIsLoading(false);
+    } catch (popupErr) {
+      // Popup blocked or failed — fall back to redirect-based sign-in.
+      try {
+        await loginWithGoogle(rememberMe);
+        onClose?.();
+      } catch (redirectErr) {
+        setError(redirectErr instanceof Error ? redirectErr.message : 'Google sign-in failed.');
+        setIsLoading(false);
+      }
     }
   };
 
@@ -85,7 +91,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
             {isLoading && (
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
                 <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                <span>Redirecting to Google...</span>
+                <span>Opening Google sign-in...</span>
               </div>
             )}
 

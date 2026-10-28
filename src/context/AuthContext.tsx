@@ -5,6 +5,7 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signOut,
+  signInWithPopup,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
@@ -18,6 +19,8 @@ interface AuthContextType {
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
+  /** Popup-based sign-in (more reliable in PWAs / mobile browsers). */
+  loginWithGooglePopup: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -27,6 +30,7 @@ const defaultAuthContext: AuthContextType = {
   redirectError: null,
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
+  loginWithGooglePopup: async () => {},
   logout: async () => {},
 };
 
@@ -112,6 +116,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let cancelled = false;
 
     const handleRedirectResult = async () => {
+      // Only process a redirect result if we actually redirected to Google.
+      // Calling getRedirectResult unconditionally on every mount can spuriously
+      // reset auth state on plain page loads.
+      try {
+        const flag = sessionStorage.getItem(REDIRECT_FLAG);
+        if (!flag) return;
+      } catch {
+        return;
+      }
+
       try {
         await getRedirectResult(auth);
       } catch (error) {
@@ -119,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (cancelled) return;
         setRedirectError(friendlyAuthError(authErrorCode(error)));
       } finally {
-        if (!cancelled) setRedirectFlag(null)
+        if (!cancelled) setRedirectFlag(null);
       }
     };
 
@@ -135,11 +149,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = useCallback(async (rememberMe = false) => {
     try {
       await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
-      setRedirectFlag('1')
+      setRedirectFlag('1');
       await signInWithRedirect(auth, googleProvider);
     } catch (error) {
-      setRedirectFlag(null)
+      setRedirectFlag(null);
       console.error('[Mero Sadak] loginWithGoogle failed:', error);
+      throw new Error(friendlyAuthError(authErrorCode(error)), { cause: error });
+    }
+  }, []);
+
+  const loginWithGooglePopup = useCallback(async () => {
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error('[Mero Sadak] Google sign-in popup failed:', error);
       throw new Error(friendlyAuthError(authErrorCode(error)), { cause: error });
     }
   }, []);
@@ -153,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, clearRedirectError, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
       {children}
     </AuthContext.Provider>
   );
