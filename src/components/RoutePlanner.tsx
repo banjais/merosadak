@@ -60,6 +60,7 @@ import {
   Radio,
   FileText,
   CloudSun,
+  Pencil,
   Flame,
   Wrench,
   Leaf,
@@ -1751,40 +1752,101 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         {hasCalculated && routePlan && (
           <div key={`trip-${calcKey}-${routePlan.id}`} className="animate-fade-in-smooth space-y-3 p-3 sm:p-4">
-            <TripSummary
-              route={routePlan}
-              costNpr={estimatedTripCostNpr}
-              vehicle={vehicle}
-              preference={preference}
-              mode={travelerMode}
-              tripStarted={tripStarted}
-              onModeChange={setTravelerMode}
-              onVehicleChange={handleQuickVehicleSwitch}
-              onPreferenceChange={handleQuickPrefSwitch}
-              onEdit={handleEditLocations}
-              onStart={() => {
-                setTripStarted(true);
-                setActiveTab('journey');
-                onViewOnMap?.();
-              }}
-              onShowOnMap={() => onViewOnMap?.()}
-              onShare={onShareTrip}
-              onOpenSos={onOpenSos}
-            />
+            {/* Compact short report header — quick glance, nothing else outside tabs */}
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-3 sm:p-4 backdrop-blur">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="h-4 w-4 shrink-0 text-emerald-400" />
+                <h2 className="min-w-0 truncate text-base font-bold leading-tight">
+                  {routePlan.origin.name || routePlan.origin.id}
+                  <span className="mx-1.5 text-slate-500">→</span>
+                  {routePlan.destination.name || routePlan.destination.id}
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleEditLocations}
+                  className="flex shrink-0 items-center gap-1 rounded-xl border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[11px] font-bold text-slate-200 transition hover:bg-slate-700"
+                >
+                  <Pencil className="h-3 w-3" />
+                  <span>Change</span>
+                </button>
+              </div>
+              <div className={`grid gap-2 ${travelerMode === 'driver' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <Compass className={`h-3 w-3 ${travelerMode === 'driver' ? 'text-emerald-400' : 'text-cyan-400'}`} />
+                    <span className="truncate">Distance</span>
+                  </div>
+                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">{routePlan.totalDistanceKm} km</div>
+                </div>
+                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <Clock className="h-3 w-3 text-cyan-400" />
+                    <span className="truncate">Time</span>
+                  </div>
+                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">
+                    {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+                  </div>
+                </div>
+                {travelerMode === 'driver' && (
+                  <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <Fuel className="h-3 w-3 text-amber-400" />
+                      <span className="truncate">Est. cost</span>
+                    </div>
+                    <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">
+                      Rs {estimatedTripCostNpr.toLocaleString()}
+                    </div>
+                  </div>
+                )}
+                <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                    <span className="truncate">Road score</span>
+                  </div>
+                  <div className="mt-0.5 truncate font-mono text-sm font-bold text-white">{routePlan.roadConditionScore}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-2">
+                <Mountain className="h-3 w-3 text-purple-400" />
+                <span>Highest point {routePlan.maxElevationM} m</span>
+              </div>
+            </div>
 
             <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
               {activeTab === 'journey' && (
-                <ErrorBoundary
-                  fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
-                >
-                  <JourneyPanel
+                <>
+                  <TripSummary
                     route={routePlan}
+                    costNpr={estimatedTripCostNpr}
                     vehicle={vehicle}
+                    preference={preference}
                     mode={travelerMode}
-                    extraIncidents={liveIncidents}
-                    onViewOnMap={onViewOnMap}
+                    tripStarted={tripStarted}
+                    onModeChange={setTravelerMode}
+                    onVehicleChange={handleQuickVehicleSwitch}
+                    onPreferenceChange={handleQuickPrefSwitch}
+                    onEdit={handleEditLocations}
+                    onStart={() => {
+                      setTripStarted(true);
+                      setActiveTab('journey');
+                      onViewOnMap?.();
+                    }}
+                    onShowOnMap={() => onViewOnMap?.()}
+                    onShare={onShareTrip}
+                    onOpenSos={onOpenSos}
                   />
-                </ErrorBoundary>
+                  <ErrorBoundary
+                    fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
+                  >
+                    <JourneyPanel
+                      route={routePlan}
+                      vehicle={vehicle}
+                      mode={travelerMode}
+                      extraIncidents={liveIncidents}
+                      onViewOnMap={onViewOnMap}
+                    />
+                  </ErrorBoundary>
+                </>
               )}
               {activeTab === 'insights' && (
                 <InsightsPanel
