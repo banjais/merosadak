@@ -469,3 +469,45 @@ export function getHighwayEnrichment(
     note,
   };
 }
+
+/**
+ * Computes how far along `pathCoordinates` (from its origin) the nearest point
+ * to `gpsLat/gpsLng` lies. Returns { distanceKm, nearestLat, nearestLng } where
+ * distanceKm is the cumulative route distance from path start to the nearest
+ * point, or null when the path is empty/invalid.
+ */
+export function getDistanceAlongPathToPoint(
+  gpsLat: number,
+  gpsLng: number,
+  pathCoordinates: [number, number][],
+): { distanceKm: number; nearestLat: number; nearestLng: number } | null {
+  if (!pathCoordinates || pathCoordinates.length < 2) return null;
+  if (!Number.isFinite(gpsLat) || !Number.isFinite(gpsLng)) return null;
+
+  let minDistKm = Infinity;
+  let nearestIndex = 0;
+  let nearestLat = pathCoordinates[0][0];
+  let nearestLng = pathCoordinates[0][1];
+
+  // Find the nearest path vertex to the GPS fix.
+  for (let i = 0; i < pathCoordinates.length; i++) {
+    const [plat, plng] = pathCoordinates[i];
+    const d = getDistanceKm(gpsLat, gpsLng, plat, plng);
+    if (d < minDistKm) {
+      minDistKm = d;
+      nearestIndex = i;
+      nearestLat = plat;
+      nearestLng = plng;
+    }
+  }
+
+  // Sum segment distances from path start to the nearest vertex.
+  let distanceKm = 0;
+  for (let i = 0; i < nearestIndex; i++) {
+    const [aLat, aLng] = pathCoordinates[i];
+    const [bLat, bLng] = pathCoordinates[i + 1];
+    distanceKm += getDistanceKm(aLat, aLng, bLat, bLng);
+  }
+
+  return { distanceKm: Math.round(distanceKm * 10) / 10, nearestLat, nearestLng };
+}

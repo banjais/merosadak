@@ -487,6 +487,16 @@ export interface ReminderItem {
   createdAt: string;
   active: boolean;
   dismissed: boolean;
+  /** Distance from route origin (km) at which this reminder should trigger. */
+  triggerAtKm?: number;
+  /** When true, trigger on arrival at destination regardless of distance. */
+  triggerOnArrival?: boolean;
+  /** Kilometers before destination to show a pre-arrival prompt. */
+  preArrivalKm?: number;
+  /** Whether this location-based reminder has already been triggered. */
+  triggered?: boolean;
+  /** ISO timestamp when the reminder was last triggered. */
+  triggeredAt?: string;
 }
 
 export interface EmergencyDispatchData {
