@@ -24,8 +24,8 @@
 
 /* ===== DESIGN TOKENS ===== */
 :root {
-  --surface-base: #0b0f19;
-  --surface-raised: #111827;
+  --surface-base: #111827;
+  --surface-raised: #1f2937;
   --surface-overlay: #1f2937;
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-default: rgba(255, 255, 255, 0.1);
@@ -49,7 +49,7 @@
 
 /* ===== HEADER GLASS ===== */
 .header-glass {
-  background: rgba(11, 15, 25, 0.85);
+  background: rgba(17, 24, 39, 0.85);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
@@ -78,7 +78,7 @@
 /* Base card: perspective container + depth shadow */
 .card {
   position: relative;
-  background: linear-gradient(145deg, #16202f 0%, #111827 60%, #0d1520 100%);
+  background: linear-gradient(145deg, #273549 0%, #1f2937 60%, #1f2937 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-3d);
@@ -163,7 +163,7 @@
 
 /* Elevated variant — primary content card */
 .card-elevated {
-  background: linear-gradient(145deg, #1c2840 0%, #131f30 50%, #0f1a28 100%);
+  background: linear-gradient(145deg, #374151 0%, #1f2937 50%, #1f2937 100%);
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow-3d);
 }
@@ -200,7 +200,7 @@
 
 /* Glass variant — used in overlays and panels */
 .card-glass {
-  background: rgba(13, 21, 32, 0.8);
+  background: rgba(31, 41, 55, 0.8);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.08);
