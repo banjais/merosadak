@@ -471,6 +471,24 @@ export type EmergencyDistressType =
   | 'medical'
   | 'general_rescue';
 
+export type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
+
+export interface ReminderItem {
+  id: string;
+  userId: string;
+  category: ReminderCategory;
+  title: string;
+  description: string;
+  suggestedTime?: string;
+  suggestedPlace?: string;
+  highwayCode?: string;
+  approxKmFromOrigin?: number;
+  routeId?: string;
+  createdAt: string;
+  active: boolean;
+  dismissed: boolean;
+}
+
 export interface EmergencyDispatchData {
   latitude: number;
   longitude: number;

@@ -32,6 +32,7 @@ const HighwayDirectoryPage = lazy(() => import('./components/HighwayDirectoryPag
 const DistanceCalculatorPage = lazy(() => import('./components/DistanceCalculatorPage').then((m) => ({ default: m.DistanceCalculatorPage })));
 const DataSourcesPage = lazy(() => import('./components/DataSourcesPage').then((m) => ({ default: m.DataSourcesPage })));
 const MyLocationPage = lazy(() => import('./components/MyLocationPage').then((m) => ({ default: m.MyLocationPage })));
+const ReminderServicePage = lazy(() => import('./components/ReminderServicePanel').then((m) => ({ default: m.ReminderServicePanel })));
 const ProofVerifyPage = lazy(() => import('./components/ProofVerifyPage').then((m) => ({ default: m.ProofVerifyPage })));
 import { fetchJson } from './utils/apiConfig';
 import {
@@ -132,6 +133,9 @@ function AppContent() {
   const [isMapFull, setIsMapFull] = useState(false);
   const [isHighwayInfoOpen, setIsHighwayInfoOpen] = useState(false);
   const [isMyLocationOpen, setIsMyLocationOpen] = useState(false);
+
+  // AI Reminder Service panel state
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
@@ -537,7 +541,7 @@ function AppContent() {
       />
 
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && !isReminderOpen && (
       <header className="header-glass sticky top-0 z-40 px-3 sm:px-5 py-2.5">
         <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
           {/* Left: Hamburger Menu Button, App Logo, Header & Sub-header */}
@@ -773,6 +777,7 @@ function AppContent() {
                 showAccentColor={true}
                 showSignOut={true}
                 showAdminCommand={true}
+                showReminderService={true}
                 user={user}
                 onSignOut={logout}
                 textScale={textScale}
@@ -780,6 +785,7 @@ function AppContent() {
                 accentColor={accentColor}
                 onAccentColorChange={handleAccentColor}
                 onAdminCommand={() => setIsAdminCommandOpen(true)}
+                onReminderService={() => setIsReminderOpen(true)}
               />
             </div>
           </div>
@@ -819,6 +825,18 @@ function AppContent() {
           </Suspense>
         )}
 
+        {isReminderOpen && (
+          <Suspense fallback={<PageLoadingFallback label="Loading AI Reminder Service…" />}>
+            <ReminderServicePage
+              onBack={() => setIsReminderOpen(false)}
+              routePlan={activeRoute}
+              userId="default-user"
+              vehicle={plannerVehicle}
+              preference={plannerPref}
+            />
+          </Suspense>
+        )}
+
         {isDataSourcesOpen && (
           <Suspense fallback={<PageLoadingFallback label="Loading Data Sources…" />}>
             <DataSourcesPage
@@ -841,7 +859,7 @@ function AppContent() {
       </Suspense>
 
       {/* Main Clean Map Canvas with Progressive Disclosure Floating Controls */}
-      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && (
+      {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && !isReminderOpen && (
         <main className="flex min-h-0 flex-1 w-full flex-col bg-slate-900">
         {/* Route Planner as Main Content */}
         <div className="flex-shrink-0 relative z-20 w-full bg-slate-900">

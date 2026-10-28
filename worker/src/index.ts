@@ -180,6 +180,131 @@ async function handleAiAdminCommand(request: Request, env: Env): Promise<Respons
   }
 }
 
+/* ==================== AI REMINDER SERVICE ==================== */
+
+type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
+
+interface ReminderItem {
+  id: string;
+  userId: string;
+  category: ReminderCategory;
+  title: string;
+  description: string;
+  suggestedTime?: string;      // ISO or relative like "2h before departure"
+  suggestedPlace?: string;
+  highwayCode?: string;
+  approxKmFromOrigin?: number;
+  routeId?: string;
+  createdAt: string;
+  active: boolean;
+  dismissed: boolean;
+}
+
+async function readReminders(env: Env, userId: string): Promise<ReminderItem[]> {
+  const all = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
+  return all.filter((r) => r.userId === userId);
+}
+
+async function saveReminders(env: Env, reminders: ReminderItem[]): Promise<void> {
+  await env.DATA.put("user-reminders.json", JSON.stringify(reminders));
+}
+
+async function handleAiReminder(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json<any>();
+    const { userId, input, routeContext, emotion } = body;
+
+    if (!userId || typeof userId !== "string") {
+      return jsonResponse(env, { error: "userId is required" }, 400);
+    }
+    if (!input || typeof input !== "string") {
+      return jsonResponse(env, { error: "input is required" }, 400);
+    }
+    if (!env.GEMINI_API_KEY) {
+      return jsonResponse(env, { error: "AI service not configured" }, 503);
+    }
+
+    const detectedEmotion = emotion || detectEmotion(input);
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
+
+    const prompt = buildSystemPrompt(
+      "You are Mero Sadak's AI Reminder Concierge. The user has shared a reminder request along with their route context. Generate 3-5 practical reminder suggestions as JSON array. Each reminder needs: id (unique), category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (ISO string or relative like '2h before departure'), suggestedPlace (place name or null), highwayCode (relevant highway or null), approxKmFromOrigin (number or null). Be specific to Nepal highways. Tailor tone to the user's emotion.",
+      { routeContext, emotion: detectedEmotion },
+      detectedEmotion
+    );
+
+    const result = await model.generateContent(`${prompt}\n\nUser input: "${input}"\nRoute context: ${JSON.stringify(routeContext || {})}`);
+    const text = result.response.text();
+
+    let suggestions: any[] = [];
+    try {
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) suggestions = JSON.parse(jsonMatch[0]);
+    } catch {}
+
+    // Normalize suggestions into ReminderItem shape
+    const now = new Date().toISOString();
+    const reminders: ReminderItem[] = suggestions.map((s, idx) => ({
+      id: `rem-${Date.now()}-${idx}`,
+      userId,
+      category: s.category || 'custom',
+      title: s.title || 'Reminder',
+      description: s.description || '',
+      suggestedTime: s.suggestedTime || null,
+      suggestedPlace: s.suggestedPlace || null,
+      highwayCode: s.highwayCode || null,
+      approxKmFromOrigin: s.approxKmFromOrigin || null,
+      routeId: routeContext?.routeId || null,
+      createdAt: now,
+      active: true,
+      dismissed: false,
+    }));
+
+    // Persist
+    const existing = await readReminders(env, userId);
+    const merged = [...existing, ...reminders];
+    await saveReminders(env, merged);
+
+    return jsonResponse(env, {
+      emotion: detectedEmotion,
+      aiResponse: text,
+      suggestions: reminders,
+      saved: reminders.length,
+      total: merged.length,
+    });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "AI reminder failed", note: e?.message }, 500);
+  }
+}
+
+async function handleListReminders(request: Request, env: Env): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    if (!userId) return jsonResponse(env, { error: "userId required" }, 400);
+    const reminders = await readReminders(env, userId);
+    return jsonResponse(env, { reminders, count: reminders.length });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "List reminders failed", note: e?.message }, 500);
+  }
+}
+
+async function handleDismissReminder(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json<any>();
+    const { userId, reminderId } = body;
+    if (!userId || !reminderId) return jsonResponse(env, { error: "userId and reminderId required" }, 400);
+    const all = await readReminders(env, userId);
+    const updated = all.map((r) => (r.id === reminderId ? { ...r, dismissed: true } : r));
+    await saveReminders(env, updated);
+    return jsonResponse(env, { ok: true });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Dismiss reminder failed", note: e?.message }, 500);
+  }
+}
+
 function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
@@ -602,6 +727,15 @@ export default {
     }
     if (url.pathname === "/api/ai-admin-command" && request.method === "POST") {
       return handleAiAdminCommand(request, env);
+    }
+    if (url.pathname === "/api/ai-reminder" && request.method === "POST") {
+      return handleAiReminder(request, env);
+    }
+    if (url.pathname === "/api/reminders" && request.method === "GET") {
+      return handleListReminders(request, env);
+    }
+    if (url.pathname === "/api/reminders/dismiss" && request.method === "POST") {
+      return handleDismissReminder(request, env);
     }
     if (url.pathname === "/api/submit-report" && request.method === "POST") {
       return handleSubmitReport(request, env);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Minimize, Maximize, Sparkles } from 'lucide-react';
+import { Sun, Moon, Minimize, Maximize, Sparkles, Clock } from 'lucide-react';
 import { TextScale } from '../hooks/useTextScale';
 
 interface SettingsMenuProps {
@@ -10,6 +10,7 @@ interface SettingsMenuProps {
   showAccentColor?: boolean;
   showSignOut?: boolean;
   showAdminCommand?: boolean;
+  showReminderService?: boolean;
   user?: { displayName?: string; email?: string } | null;
   onSignOut?: () => void;
   textScale?: TextScale;
@@ -17,6 +18,7 @@ interface SettingsMenuProps {
   accentColor?: string;
   onAccentColorChange?: (color: string) => void;
   onAdminCommand?: () => void;
+  onReminderService?: () => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -27,6 +29,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   showAccentColor = false,
   showSignOut = false,
   showAdminCommand = false,
+  showReminderService = false,
   user = null,
   onSignOut,
   textScale,
@@ -34,6 +37,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
   accentColor,
   onAccentColorChange,
   onAdminCommand,
+  onReminderService,
 }) => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
@@ -175,6 +179,18 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>AI Admin Command</span>
+            </button>
+          </div>
+        )}
+
+        {showReminderService && onReminderService && (
+          <div className="border-t border-slate-800/60 mx-2 mb-2">
+            <button
+              onClick={() => { onReminderService(); handleOverlayClick(); }}
+              className="w-full flex items-center gap-2 py-1.5 px-1 text-[10px] font-semibold text-indigo-400/90 hover:text-indigo-300 hover:bg-indigo-500/5 rounded transition"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>AI Reminder Service</span>
             </button>
           </div>
         )}
