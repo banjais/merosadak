@@ -12,8 +12,6 @@ import {
   Share2,
   ShieldCheck,
   SlidersHorizontal,
-  User,
-  Users,
 } from 'lucide-react';
 import type { RoutePlanResult, RoutePreference, VehicleType } from '../../types';
 import { PREFERENCE_CONFIGS, VEHICLE_CONFIGS } from '../../utils/vehicleConfigs';
@@ -27,7 +25,7 @@ interface TripSummaryProps {
   preference: RoutePreference;
   mode: TravelerMode;
   tripStarted: boolean;
-  onModeChange: (mode: TravelerMode) => void;
+  onModeChange?: (mode: TravelerMode) => void;
   onVehicleChange: (vehicle: VehicleType) => void;
   onPreferenceChange: (preference: RoutePreference) => void;
   onEdit: () => void;
@@ -120,27 +118,7 @@ export const TripSummary: React.FC<TripSummaryProps> = ({
         <span>Highest point {route.maxElevationM} m</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Travelling as" className="inline-flex rounded-xl border border-slate-800 bg-slate-950 p-0.5 text-[11px] font-bold">
-          {([
-            ['driver', 'Driving', User],
-            ['passenger', 'Passenger', Users],
-          ] as const).map(([id, label, Icon]) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={mode === id}
-              onClick={() => onModeChange(id)}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 transition ${
-                mode === id ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {label}
-            </button>
-          ))}
-        </div>
-        <button
+      <button
           type="button"
           aria-expanded={optionsOpen}
           onClick={() => setOptionsOpen((v) => !v)}
@@ -152,7 +130,6 @@ export const TripSummary: React.FC<TripSummaryProps> = ({
           </span>
           <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${optionsOpen ? 'rotate-180' : ''}`} />
         </button>
-      </div>
 
       {optionsOpen && (
         <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/80 p-3 animate-fadeIn">

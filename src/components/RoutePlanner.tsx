@@ -458,11 +458,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setCustomMileageKmL(defaultVal);
   }, [vehicle]);
 
-  // Who is using this trip plan: drives which tools/services are surfaced after a route is found.
-  // 'driver' shows vehicle-operating tools (fuel/toll cost, eco footprint, pre-trip checklist).
-  // 'passenger' hides those and keeps only what someone riding along actually needs.
-  const [travelerMode, setTravelerMode] = useState<'driver' | 'passenger'>('driver');
-
   const estimatedTripCostNpr = useMemo(() => {
     if (!routePlan) return 0;
     const effKmL = Math.max(1.0, customMileageKmL);
@@ -1197,11 +1192,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }, 150);
   };
 
-  // Driver-only tabs disappear for passengers; fall back to one they still have.
-  useEffect(() => {
-    if (travelerMode === 'passenger') setActiveTab((prev) => (prev === 'costs' ? 'journey' : prev));
-  }, [travelerMode]);
-
   // Auto-calculate route when both origin and destination are selected
   // (removes the need to manually click "Calculate Route & Reports")
   useEffect(() => {
@@ -1326,7 +1316,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const tripTabs: TripTabItem[] = [
     { id: 'journey', label: 'Journey', Icon: Route, badge: routePlan?.incidentsOnRoute?.length },
     { id: 'insights', label: 'Insights', Icon: Sparkles },
-    ...(travelerMode === 'driver' ? [{ id: 'costs' as const, label: 'Costs', Icon: Flame }] : []),
+    { id: 'costs', label: 'Costs', Icon: Flame },
     ...(routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1
       ? [{ id: 'routes' as const, label: 'Routes', Icon: Layers, badge: routePlan.allRouteOptions.length }]
       : []),
@@ -1799,7 +1789,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {/* Key metrics strip */}
-              <div className={`grid gap-3 ${travelerMode === 'driver' ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              <div className="grid gap-3 grid-cols-4">
                 <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Compass className="h-3 w-3 text-emerald-400 shrink-0" />
@@ -1816,17 +1806,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
                   </div>
                 </div>
-                {travelerMode === 'driver' && (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
-                    </div>
-                    <div className="font-mono text-lg font-bold text-white">
-                      Rs {estimatedTripCostNpr.toLocaleString()}
-                    </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
                   </div>
-                )}
+                  <div className="font-mono text-lg font-bold text-white">
+                    Rs {estimatedTripCostNpr.toLocaleString()}
+                  </div>
+                </div>
                 <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
@@ -1850,9 +1838,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     costNpr={estimatedTripCostNpr}
                     vehicle={vehicle}
                     preference={preference}
-                    mode={travelerMode}
+                    mode="driver"
                     tripStarted={tripStarted}
-                    onModeChange={setTravelerMode}
                     onVehicleChange={handleQuickVehicleSwitch}
                     onPreferenceChange={handleQuickPrefSwitch}
                     onEdit={handleEditLocations}
@@ -1871,7 +1858,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <JourneyPanel
                       route={routePlan}
                       vehicle={vehicle}
-                      mode={travelerMode}
+                      mode="driver"
                       extraIncidents={liveIncidents}
                       onViewOnMap={onViewOnMap}
                     />
@@ -1890,7 +1877,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onOpenHighwayDirectory={onOpenHighwayDirectory}
                 />
               )}
-              {activeTab === 'costs' && travelerMode === 'driver' && (
+              {activeTab === 'costs' && (
                 <CostsPanel
                   route={routePlan}
                   vehicle={vehicle}
