@@ -17,7 +17,7 @@ import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
 import { RouteComparisonView } from './RouteComparisonView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
-import { TripSummary } from './planner/TripSummary';
+import { TripOptions } from './planner/TripOptions';
 import { TripTabs, type TripTab, type TripTabItem } from './planner/TripTabs';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
@@ -1761,7 +1761,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       <Clock className="h-3 w-3 shrink-0" />
                       <span>
                         {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
-                        {routePlan.estimatedTimeMinutes % 60}m drive
+                        {Math.round(routePlan.estimatedTimeMinutes % 60)}m drive
                       </span>
                     </div>
                   </div>
@@ -1805,7 +1805,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Time</span>
                   </div>
                   <div className="font-mono text-lg font-bold text-white">
-                    {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {routePlan.estimatedTimeMinutes % 60}m
+                    {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {Math.round(routePlan.estimatedTimeMinutes % 60)}m
                   </div>
                 </div>
                 <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
@@ -1831,29 +1831,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
             </section>
 
+            <TripOptions
+              vehicle={vehicle}
+              preference={preference}
+              onVehicleChange={handleQuickVehicleSwitch}
+              onPreferenceChange={handleQuickPrefSwitch}
+              onShare={onShareTrip}
+              onOpenSos={onOpenSos}
+            />
+
             {/* 2. TABS — everything inside tabs only */}
             <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
               {activeTab === 'journey' && (
                 <>
-                  <TripSummary
-                    route={routePlan}
-                    costNpr={estimatedTripCostNpr}
-                    vehicle={vehicle}
-                    preference={preference}
-                    mode="driver"
-                    tripStarted={tripStarted}
-                    onVehicleChange={handleQuickVehicleSwitch}
-                    onPreferenceChange={handleQuickPrefSwitch}
-                    onEdit={handleEditLocations}
-                    onStart={() => {
-                      setTripStarted(true);
-                      setActiveTab('journey');
-                      onViewOnMap?.();
-                    }}
-                    onShowOnMap={() => onViewOnMap?.()}
-                    onShare={onShareTrip}
-                    onOpenSos={onOpenSos}
-                  />
                   <ErrorBoundary
                     fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
                   >
