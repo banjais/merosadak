@@ -69,6 +69,7 @@ import {
   Home,
   Activity,
   Settings,
+  MoreHorizontal,
 } from 'lucide-react';
 
 /** Placeholder while a lazily-loaded page chunk is fetched. */
@@ -764,43 +765,41 @@ function AppContent() {
 
 
 
-            {/* If user is signed in — professional avatar chip with role badge */}
-            {user && (
-              <>
-                <button
-                  onClick={() => setIsProfileOpen((prev) => !prev)}
-                  className="flex items-center gap-2 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50"
-                  title="Open profile menu"
-                  aria-label="Open profile menu"
-                >
-                  {/* Photo if available, else initials */}
-                  {user.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt="Profile"
-                      className="w-7 h-7 rounded-full border border-slate-700/50 object-cover bg-slate-800"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm">
-                      {(user.displayName || user.email || 'U')[0].toUpperCase()}
-                    </div>
-                  )}
-                  <span className="hidden sm:inline text-[10px] font-bold text-slate-200 truncate max-w-[72px]">
-                    {user.displayName || (user.email ? user.email.split('@')[0] : 'User')}
-                  </span>
-                  {userRole === 'superadmin' && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-rose-900/40 text-rose-400 text-[9px] font-bold border border-rose-500/40 shadow-sm">
-                      Super Admin
-                    </span>
-                  )}
-                  {userRole === 'OfficeAdmin' && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-cyan-900/40 text-cyan-400 text-[9px] font-bold border border-cyan-500/40 shadow-sm">
-                      Office Admin
-                    </span>
-                  )}
-                </button>
+            {/* Header right — exactly two buttons, always visible */}
+            <div className="flex items-center gap-1">
 
-                {/* Profile page panel */}
+              {/* Button 1: Profile — picture + name stacked below, three dots menu */}
+              <button
+                onClick={() => {
+                  if (user) setIsProfileOpen(true);
+                  else setIsLoginModalOpen(true);
+                }}
+                className="flex flex-col items-center gap-1 p-1 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
+                title="Open profile"
+                aria-label="Open profile"
+              >
+                {/* Real profile picture round button, else initials */}
+                {user && user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Profile"
+                    className="w-6 h-6 rounded-full border border-slate-700/50 object-cover bg-slate-800"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[10px] font-bold text-slate-950 shadow-sm">
+                    {user ? (user.displayName || user.email || 'U')[0].toUpperCase() : 'U'}
+                  </div>
+                )}
+                {/* Name stacked below */}
+                <span className="text-[10px] font-bold text-slate-200 truncate max-w-[64px] leading-none">
+                  {user ? (user.displayName || (user.email ? user.email.split('@')[0] : 'User')) : 'Sign in'}
+                </span>
+                {/* Three dots on profile button */}
+                <MoreHorizontal className="w-3 h-3 text-slate-400 mt-0.5" />
+              </button>
+
+              {/* Profile page panel (signed in) */}
+              {user && (
                 <ProfilePage
                   isOpen={isProfileOpen}
                   onClose={() => setIsProfileOpen(false)}
@@ -813,34 +812,34 @@ function AppContent() {
                   onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                   onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                 />
-              </>
-            )}
+              )}
 
-            {/* Three-dot Settings Menu */}
-            <div className="relative">
-              <SettingsButton
-                isOpen={isSettingsMenuOpen}
-                onOpenChange={setIsSettingsMenuOpen}
-                onSettingsClose={() => setIsNotificationsOpen(false)}
-              />
+              {/* Button 2: Settings three dots — always visible */}
+              <div className="relative">
+                <SettingsButton
+                  isOpen={isSettingsMenuOpen}
+                  onOpenChange={setIsSettingsMenuOpen}
+                  onSettingsClose={() => setIsNotificationsOpen(false)}
+                />
 
-              <SettingsMenu
-                isOpen={isSettingsMenuOpen}
-                onClose={() => setIsSettingsMenuOpen(false)}
-                onOpenChange={setIsSettingsMenuOpen}
-                showTextSize={true}
-                showAccentColor={true}
-                showSignOut={true}
-                showReminderService={true}
-                user={user}
-                onSignOut={logout}
-                textScale={textScale}
-                onTextScaleChange={setTextScale}
-                accentColor={accentColor}
-                onAccentColorChange={handleAccentColor}
-                onAdminCommand={() => setIsAdminCommandOpen(true)}
-                onReminderService={() => setIsReminderOpen(true)}
-              />
+                <SettingsMenu
+                  isOpen={isSettingsMenuOpen}
+                  onClose={() => setIsSettingsMenuOpen(false)}
+                  onOpenChange={setIsSettingsMenuOpen}
+                  showTextSize={true}
+                  showAccentColor={true}
+                  showSignOut={!!user}
+                  showReminderService={!!user}
+                  user={user}
+                  onSignOut={logout}
+                  textScale={textScale}
+                  onTextScaleChange={setTextScale}
+                  accentColor={accentColor}
+                  onAccentColorChange={handleAccentColor}
+                  onAdminCommand={() => setIsAdminCommandOpen(true)}
+                  onReminderService={() => setIsReminderOpen(true)}
+                />
+              </div>
             </div>
           </div>
         </div>
