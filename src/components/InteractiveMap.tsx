@@ -223,6 +223,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const legendRef = useRef<HTMLDivElement>(null);
   const arcGisFailRef = useRef(0);
   const osmFailRef = useRef(0);
+  const suppressRecenterRef = useRef(false);
 
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationButtonRef = useRef<HTMLDivElement>(null);
@@ -504,19 +505,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     mapInstanceRef.current?.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
   }, [fix, followMe, updateGpsMarker]);
 
-  // A manual drag or zoom hands the camera back to the user. The dot still
-  // tracks; only following stops.
+  // A manual drag hands the camera back to the user. The dot still tracks;
+  // only following stops. A zoom (mouse wheel or +/- buttons) recenters on the
+  // user's location while keeping the chosen zoom level.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    const release = () => setFollowMe(false);
-    map.on('dragstart', release);
-    map.on('zoomstart', release);
-    return () => {
-      map.off('dragstart', release);
-      map.off('zoomstart', release);
+    const releaseOnDrag = () => setFollowMe(false);
+    const recenterOnZoom = () => {
+      if (suppressRecenterRef.current) return;
+      setFollowMe(true);
+      if (fix) {
+        map.flyTo([fix.lat, fix.lng], map.getZoom(), {
+          animate: true,
+          duration: 0.35,
+          easeLinearity: 0.5,
+        });
+      }
     };
-  }, [mapInitialized]);
+    map.on('dragstart', releaseOnDrag);
+    map.on('zoomend', recenterOnZoom);
+    return () => {
+      map.off('dragstart', releaseOnDrag);
+      map.off('zoomend', recenterOnZoom);
+    };
+  }, [mapInitialized, fix]);
 
   const recenterOnMe = useCallback(() => {
     setFollowMe(true);
@@ -606,10 +619,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setFollowMe(false);
     setMapInteracted(true);
     setMapActive(true);
+    suppressRecenterRef.current = true;
     mapInstanceRef.current.flyTo([focusedTarget.lat, focusedTarget.lng], focusedTarget.zoom || 11, {
       duration: 1.2,
       easeLinearity: 0.25,
     });
+    // Allow zoom-to-user recentering again once the focus flight settles.
+    setTimeout(() => {
+      suppressRecenterRef.current = false;
+    }, 1400);
   }, [focusedTarget]);
 
   // Render All 79 Highways Layer (shows everywhere across Nepal when selected)
