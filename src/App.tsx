@@ -545,6 +545,7 @@ function AppContent() {
         onOpenSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
         onOpenAdminCommand={() => setIsAdminCommandOpen(true)}
         onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+        onOpenUserPanel={() => setIsProfileOpen(true)}
         user={user}
         userRole={userRole}
         incidentsCount={incidents.length}

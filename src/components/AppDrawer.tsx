@@ -15,6 +15,7 @@ import {
   LocateFixed,
   ShieldAlert,
   Sparkles,
+  User,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +41,7 @@ interface AppDrawerProps {
   onOpenSuperAdminPanel?: () => void;
   onOpenAdminCommand?: () => void;
   onOpenOfficeAdminPanel?: () => void;
+  onOpenUserPanel?: () => void;
   user?: { displayName?: string; email?: string } | null;
   userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   incidentsCount?: number;
@@ -70,6 +72,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenSuperAdminPanel,
   onOpenAdminCommand,
   onOpenOfficeAdminPanel,
+  onOpenUserPanel,
   user,
   userRole = 'GeneralUser',
   incidentsCount = 0,
@@ -278,6 +281,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
               >
                 <Activity className="w-3 h-3" />
                 <span className="hidden sm:inline text-[10px] font-semibold">Office Admin</span>
+              </button>
+            ) : user && userRole === 'GeneralUser' && onOpenUserPanel ? (
+              <button
+                onClick={() => { onOpenUserPanel(); onClose(); }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition shrink-0"
+                title="My Account"
+              >
+                <User className="w-3 h-3" />
+                <span className="hidden sm:inline text-[10px] font-semibold">My Account</span>
               </button>
             ) : user ? (
               <button
