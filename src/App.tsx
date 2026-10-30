@@ -20,7 +20,7 @@ import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminControlPanel } from './components/SuperAdminControlPanel';
-import { ProfileDropdown } from './components/ProfileDropdown';
+import { ProfilePage } from './components/ProfilePage';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
@@ -69,7 +69,6 @@ import {
   Home,
   Activity,
   Settings,
-  ShieldAlert,
 } from 'lucide-react';
 
 /** Placeholder while a lazily-loaded page chunk is fetched. */
@@ -216,8 +215,7 @@ function AppContent() {
   // Super Admin control panel (only visible to banjais@gmail.com)
   const [isSuperAdminPanelOpen, setIsSuperAdminPanelOpen] = useState(false);
 
-  // Profile dropdown (header avatar chip)
-  const profileAnchorRef = useRef<HTMLButtonElement>(null);
+  // Profile page panel (header avatar)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Initialize from URL search parameters or default route plan
@@ -768,7 +766,6 @@ function AppContent() {
             {user && (
               <>
                 <button
-                  ref={profileAnchorRef}
                   onClick={() => setIsProfileOpen((prev) => !prev)}
                   className="flex items-center gap-2 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50"
                   title="Open profile menu"
@@ -799,32 +796,20 @@ function AppContent() {
                       Office Admin
                     </span>
                   )}
-                  {isSuperAdmin && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsSuperAdminPanelOpen(true);
-                      }}
-                      className="p-1 rounded-lg text-slate-300 hover:text-accent-text hover:bg-slate-700/40 transition shrink-0"
-                      title="Super Admin Control Panel"
-                      aria-label="Open super admin control panel"
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5 text-accent-text" />
-                    </button>
-                  )}
                 </button>
 
-                {/* Profile dropdown menu */}
-                <ProfileDropdown
-                  anchorRef={profileAnchorRef}
+                {/* Profile page panel */}
+                <ProfilePage
+                  isOpen={isProfileOpen}
+                  onClose={() => setIsProfileOpen(false)}
                   userEmail={user.email || ''}
                   userRole={userRole}
                   isSuperAdmin={isSuperAdmin}
                   photoURL={user.photoURL ?? null}
-                  onClose={() => setIsProfileOpen(false)}
                   onSignOut={logout}
                   onAdminCommand={() => setIsAdminCommandOpen(true)}
                   onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+                  onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                 />
               </>
             )}
