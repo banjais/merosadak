@@ -1,12 +1,12 @@
 // Mero Sadak Nepal Highway GIS - Service Worker
 // Version 1.6.0 - Background Sync outbox + Hardened offline: opaque-safe tiles, richer data pack, shell+asset caching
 
-const SW_VERSION = '1.7.0';
-const APP_BUILD = '20261030-role-fix';
+const SW_VERSION = '1.8.0';
+const APP_BUILD = '20261030-network-first';
 const CACHE_NAMES = {
-  STATIC: 'mero-sadak-static-v6',
-  TILES: 'mero-sadak-tiles-v6',
-  DATA: 'mero-sadak-data-v7',
+  STATIC: 'mero-sadak-static-v7',
+  TILES: 'mero-sadak-tiles-v7',
+  DATA: 'mero-sadak-data-v8',
 };
 
 const PRECACHE_ASSETS = [
@@ -274,16 +274,19 @@ self.addEventListener('fetch', (event) => {
   if (url.origin === self.location.origin) {
     event.respondWith((async () => {
       const staticCache = await caches.open(CACHE_NAMES.STATIC);
-      const cached = await staticCache.match(request);
-      const networkPromise = fetch(request).then(async (res) => {
-        if (res.ok) await putIfUsable(staticCache, request, res);
-        return res;
-      }).catch(() => null);
-      if (cached) { networkPromise.catch(() => {}); return cached; }
-      const networkRes = await networkPromise;
-      if (networkRes) return networkRes;
-      return new Response('', { status: 504, statusText: 'Offline' });
+      // Network-first: always try the network first so every refresh/new tab
+      // gets the latest JS/CSS. Fall back to cache only when offline.
+      try {
+        const networkRes = await fetch(request);
+        if (networkRes.ok) await putIfUsable(staticCache, request, networkRes.clone());
+        return networkRes;
+      } catch {
+        const cached = await staticCache.match(request);
+        if (cached) return cached;
+        return new Response('', { status: 504, statusText: 'Offline' });
+      }
     })());
+    return;
   }
 });
 

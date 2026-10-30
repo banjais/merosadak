@@ -6,7 +6,7 @@
  * content and JS always update without the user clearing cache manually.
  */
 
-export const CLIENT_APP_BUILD = '20261030-sw-v6';
+export const CLIENT_APP_BUILD = '20261030-network-first';
 export const CLIENT_APP_VERSION = '2.1.0';
 
 const STORAGE_BUILD_KEY = 'merosadak_app_build';
@@ -28,7 +28,7 @@ async function purgeLegacyCaches(): Promise<void> {
   if (!('caches' in window)) return;
   try {
     const keys = await caches.keys();
-    const keepPrefix = ['mero-sadak-static-v6', 'mero-sadak-tiles-v6', 'mero-sadak-data-v7'];
+    const keepPrefix = ['mero-sadak-static-v7', 'mero-sadak-tiles-v7', 'mero-sadak-data-v8'];
     await Promise.all(
       keys
         .filter((k) => {

@@ -1,7 +1,7 @@
 {
   "version": "2.1.0",
-  "build": "20261030-sw-v6",
-  "sw": "1.7.0",
-  "releasedAt": "2026-10-30T08:15:00+05:45",
-  "notes": "Auto-update cache version fix — v6/v7 caches kept, v5 purged on refresh"
+  "build": "20261030-network-first",
+  "sw": "1.8.0",
+  "releasedAt": "2026-10-30T08:25:00+05:45",
+  "notes": "Network-first fetch for same-origin assets — latest JS/CSS served on every refresh/new tab across all browsers"
 }
