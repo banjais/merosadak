@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   BarChart3,
 } from 'lucide-react';
+import { PanelSettings } from './PanelSettings';
 
 interface ProfilePageProps {
   isOpen: boolean;
@@ -181,11 +182,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                     <span className="text-xs font-mono text-slate-400">Mero Sadak v2.4.0</span>
                   </div>
                 </div>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              {isSuperAdmin && onSuperAdminPanel && (
+              <PanelSettings className="mt-2" />
+
+              <div className="space-y-2">
+                {isSuperAdmin && onSuperAdminPanel && (
                 <button
                   onClick={() => { onClose(); onSuperAdminPanel(); }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-rose-900/20 hover:text-rose-300 transition border border-slate-800/60 rounded-xl"
@@ -215,14 +218,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   <ChevronRight className="w-3 h-3 text-cyan-600 shrink-0 ml-auto" />
                 </button>
               )}
-              <button
-                onClick={() => {}}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800/50 hover:text-white transition border border-slate-800/60 rounded-xl"
-              >
-                <Settings className="w-4 h-4 text-slate-500 shrink-0" />
-                <span className="font-medium">Settings</span>
-                <ChevronRight className="w-3 h-3 text-slate-600 shrink-0 ml-auto" />
-              </button>
               <button
                 onClick={() => { onClose(); onSignOut(); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-900/20 transition border border-slate-800/60 rounded-xl"

@@ -4,6 +4,11 @@
   html {
     font-size: clamp(14px, 0.85vw + 12px, 17px);
   }
+  /* Text size selector scales every rem-based font across the app */
+  html.text-scale-sm { font-size: 13px !important; }
+  html.text-scale-md { font-size: 15px !important; }
+  html.text-scale-lg { font-size: 17px !important; }
+  html.text-scale-xl { font-size: 19px !important; }
   html, body, #root {
     height: 100%;
     max-width: 100%;
