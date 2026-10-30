@@ -515,11 +515,22 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const map = mapInstanceRef.current;
     if (!map) return;
     const releaseOnDrag = () => setFollowMe(false);
+    // Zoom (wheel or +/-) smoothly recenters on the user's location while
+    // keeping the current zoom level — panTo is smooth, flyTo jumps.
+    const recenterOnZoom = () => {
+      if (suppressRecenterRef.current) return;
+      setFollowMe(true);
+      if (fix) {
+        map.panTo([fix.lat, fix.lng], { animate: true, duration: 0.5, easeLinearity: 0.4 });
+      }
+    };
     map.on('dragstart', releaseOnDrag);
+    map.on('zoomend', recenterOnZoom);
     return () => {
       map.off('dragstart', releaseOnDrag);
+      map.off('zoomend', recenterOnZoom);
     };
-  }, [mapInitialized]);
+  }, [mapInitialized, fix, suppressRecenterRef]);
 
   const recenterOnMe = useCallback(() => {
     setFollowMe(true);
