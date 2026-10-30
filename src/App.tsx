@@ -20,6 +20,7 @@ import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminControlPanel } from './components/SuperAdminControlPanel';
+import { ProfileDropdown } from './components/ProfileDropdown';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
@@ -214,6 +215,10 @@ function AppContent() {
 
   // Super Admin control panel (only visible to banjais@gmail.com)
   const [isSuperAdminPanelOpen, setIsSuperAdminPanelOpen] = useState(false);
+
+  // Profile dropdown (header avatar chip)
+  const profileAnchorRef = useRef<HTMLDivElement>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
@@ -756,34 +761,53 @@ function AppContent() {
 
             {/* If user is signed in — show avatar chip with role badge */}
             {user && (
-              <div className="flex items-center gap-1.5 px-2 py-1 accent-bg accent-border rounded-xl">
-                <div className="w-5 h-5 rounded-full accent-bg flex items-center justify-center text-[10px] font-black text-slate-950">
-                  {(user.displayName || user.email || 'U')[0].toUpperCase()}
+              <>
+                <div
+                  ref={profileAnchorRef}
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 px-2 py-1 accent-bg accent-border rounded-xl cursor-pointer"
+                  title="Open profile menu"
+                >
+                  <div className="w-5 h-5 rounded-full accent-bg flex items-center justify-center text-[10px] font-black text-slate-950">
+                    {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline text-[10px] font-bold accent-text max-w-[80px] truncate">
+                    {user.displayName || user.email?.split('@')[0]}
+                  </span>
+                  {userRole === 'superadmin' && (
+                    <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
+                      Super Admin
+                    </span>
+                  )}
+                  {userRole === 'OfficeAdmin' && (
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-900/30 text-cyan-400 text-[9px] font-bold border border-cyan-500/30">
+                      Office Admin
+                    </span>
+                  )}
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setIsSuperAdminPanelOpen(true)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-accent-text hover:bg-slate-700/40 transition shrink-0"
+                      title="Super Admin Control Panel"
+                      aria-label="Open super admin control panel"
+                    >
+                      <ShieldAlert className="w-4 h-4 text-accent-text" />
+                    </button>
+                  )}
                 </div>
-                <span className="hidden sm:inline text-[10px] font-bold accent-text max-w-[80px] truncate">
-                  {user.displayName || user.email?.split('@')[0]}
-                </span>
-                {userRole === 'superadmin' && (
-                  <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
-                    Super Admin
-                  </span>
-                )}
-                {userRole === 'OfficeAdmin' && (
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-900/30 text-cyan-400 text-[9px] font-bold border border-cyan-500/30">
-                    Office Admin
-                  </span>
-                )}
-                {isSuperAdmin && (
-                  <button
-                    onClick={() => setIsSuperAdminPanelOpen(true)}
-                    className="p-1.5 rounded-lg text-slate-300 hover:text-accent-text hover:bg-slate-700/40 transition shrink-0"
-                    title="Super Admin Control Panel"
-                    aria-label="Open super admin control panel"
-                  >
-                    <ShieldAlert className="w-4 h-4 text-accent-text" />
-                  </button>
-                )}
-              </div>
+
+                {/* Profile dropdown menu */}
+                <ProfileDropdown
+                  anchorRef={profileAnchorRef}
+                  userEmail={user.email || ''}
+                  userRole={userRole}
+                  isSuperAdmin={isSuperAdmin}
+                  onClose={() => setIsProfileOpen(false)}
+                  onSignOut={logout}
+                  onAdminCommand={() => setIsAdminCommandOpen(true)}
+                  onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+                />
+              </>
             )}
 
             {/* Three-dot Settings Menu */}
