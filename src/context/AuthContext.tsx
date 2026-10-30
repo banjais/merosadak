@@ -86,7 +86,7 @@ const OFFICE_ADMINS_KEY = 'mero-sadak-office-admins';
  * is GeneralUser. */
 function resolveUserRole(email: string | null): UserRole {
   if (!email) return 'GeneralUser';
-  if (email === 'banjais@gmail.com') return 'superadmin';
+  if (email === 'banjais@gmail.com' || email === 'banjays@gmail.com') return 'superadmin';
   try {
     const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
     if (raw) {
