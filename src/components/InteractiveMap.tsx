@@ -7,7 +7,12 @@ import {
   RoutePlanResult,
   KnownBlackspot,
   SegmentSafetyData,
+  RoadStatusType,
 } from '../types';
+import {
+  analyzeHighwayRealtimeStatus,
+  HighwayRealtimeStatusType,
+} from '../utils/highwayStatusHelper';
 import {
   NEPAL_HIGHWAYS,
 } from '../data/nepalHighwaysData';
@@ -646,15 +651,28 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     if (activeLayer !== 'highways') return;
 
+    const incidents = liveIncidents ?? [];
+
+    const statusToColor = (status: RoadStatusType): string => {
+      if (status === 'clear') return '#10b981';
+      if (status === 'caution') return '#f59e0b';
+      return '#ef4444'; // obstructed | closed
+    };
+
+    const realtimeToRoadStatus = (type: HighwayRealtimeStatusType): RoadStatusType => {
+      if (type === 'open') return 'clear';
+      if (type === 'caution' || type === 'roadwork') return 'caution';
+      return 'obstructed'; // obstruction | closed
+    };
+
     highwaysList.forEach((highway) => {
+      // Compute real-time segment status from live incidents so blocked /
+      // obstructed sectors shown in the alerts bell also appear red on the map
+      // instead of relying on the static bundled status only.
+      const analysis = analyzeHighwayRealtimeStatus(highway, incidents, []);
       const isSelected = activeHighwayInfo?.code === highway.code;
-      const color = isSelected
-        ? '#38bdf8'
-        : highway.overallStatus === 'clear'
-        ? '#10b981'
-        : highway.overallStatus === 'caution'
-        ? '#f59e0b'
-        : '#ef4444';
+      const selectedColor = '#38bdf8';
+      const overallColor = statusToColor(realtimeToRoadStatus(analysis.realtimeStatus));
       const weight = isSelected ? 3 : 2;
       const opacity = isSelected ? 1.0 : 0.85;
 
@@ -688,7 +706,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         highway.coordinates.forEach((lineCoords) => {
           if (!lineCoords || lineCoords.length < 2) return;
           const polyline = L.polyline(lineCoords, {
-            color,
+            color: isSelected ? selectedColor : overallColor,
             weight,
             opacity,
             lineJoin: 'round',
@@ -698,27 +716,46 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           highwaysGroup.addLayer(polyline);
         });
       } else if (highway.segments && highway.segments.length > 0) {
-        highway.segments.forEach((seg) => {
-          const segColor = isSelected
-            ? '#38bdf8'
-            : seg.status === 'clear'
-            ? '#10b981'
-            : seg.status === 'caution'
-            ? '#f59e0b'
-            : '#ef4444';
-          const polyline = L.polyline(seg.coordinates, {
-            color: segColor,
-            weight: isSelected ? 3 : seg.lanes >= 4 ? 3 : 2,
-            opacity,
-            lineJoin: 'round',
-            lineCap: 'round',
+        // Prefer real-time analysed segments (with live-incident status) when
+        // they carry coordinates; otherwise fall back to the static segment
+        // status so blocked sectors still render red.
+        const analysedSegs = analysis.segments.filter(
+          (s) => s.coordinates && s.coordinates.length >= 2
+        );
+        if (analysedSegs.length > 0) {
+          analysedSegs.forEach((seg) => {
+            const segColor = isSelected
+              ? selectedColor
+              : statusToColor(seg.status);
+            const polyline = L.polyline(seg.coordinates!, {
+              color: segColor,
+              weight: isSelected ? 3 : seg.lanes >= 4 ? 3 : 2,
+              opacity,
+              lineJoin: 'round',
+              lineCap: 'round',
+            });
+            bindHighwayEvents(polyline);
+            highwaysGroup.addLayer(polyline);
           });
-          bindHighwayEvents(polyline);
-          highwaysGroup.addLayer(polyline);
-        });
+        } else {
+          highway.segments.forEach((seg) => {
+            const segColor = isSelected
+              ? selectedColor
+              : statusToColor(seg.status);
+            const polyline = L.polyline(seg.coordinates, {
+              color: segColor,
+              weight: isSelected ? 3 : seg.lanes >= 4 ? 3 : 2,
+              opacity,
+              lineJoin: 'round',
+              lineCap: 'round',
+            });
+            bindHighwayEvents(polyline);
+            highwaysGroup.addLayer(polyline);
+          });
+        }
       }
     });
-  }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway]);
+  }, [activeLayer, highwaysList, activeHighwayInfo, onSelectHighway, liveIncidents]);
 
   // Render White Mask (covers everything OUTSIDE Nepal) and Nepal Border Outline
   useEffect(() => {
