@@ -12,12 +12,16 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
+export type UserRole = 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   redirectError: string | null;
   /** True only for the designated superadmin (banjais@gmail.com). */
   isSuperAdmin: boolean;
+  /** Resolved role for the signed-in user. */
+  userRole: UserRole;
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
@@ -31,6 +35,7 @@ const defaultAuthContext: AuthContextType = {
   loading: false,
   redirectError: null,
   isSuperAdmin: false,
+  userRole: 'GeneralUser',
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
   loginWithGooglePopup: async () => {},
@@ -74,6 +79,41 @@ const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 const REDIRECT_FLAG = 'merosadak_redirecting';
 
+const OFFICE_ADMINS_KEY = 'mero-sadak-office-admins';
+
+/** Resolve the user's role from email. superadmin is always banjais@gmail.com.
+ * OfficeAdmin emails are persisted in localStorage (seeded once). Everyone else
+ * is GeneralUser. */
+function resolveUserRole(email: string | null): UserRole {
+  if (!email) return 'GeneralUser';
+  if (email === 'banjais@gmail.com') return 'superadmin';
+  try {
+    const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.includes(email)) return 'OfficeAdmin';
+    }
+  } catch {
+    /* ignore malformed storage */
+  }
+  return 'GeneralUser';
+}
+
+/** Promote a user to OfficeAdmin (persisted in localStorage). */
+export function setOfficeAdmin(email: string) {
+  try {
+    const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    const admins = Array.isArray(list) ? list : [];
+    if (!admins.includes(email)) {
+      admins.push(email);
+      localStorage.setItem(OFFICE_ADMINS_KEY, JSON.stringify(admins));
+    }
+  } catch {
+    /* storage unavailable — role reverts to GeneralUser on reload */
+  }
+}
+
 /**
  * sessionStorage can throw on access, not just be undefined — blocked
  * third-party cookies, `dom.security.https_first`, sandboxed frames. A
@@ -94,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [redirectError, setRedirectError] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('GeneralUser');
 
   useEffect(() => {
     // The second callback is the error handler. Without it an auth-init or
@@ -104,7 +145,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (currentUser) => {
         setUser(currentUser);
         setLoading(false);
-        setIsSuperAdmin(currentUser?.email === 'banjais@gmail.com');
+        const role = resolveUserRole(currentUser?.email ?? null);
+        setUserRole(role);
+        setIsSuperAdmin(role === 'superadmin');
       },
       (error) => {
         console.error('[Mero Sadak] Auth state subscription failed:', error);
@@ -182,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
       {children}
     </AuthContext.Provider>
   );

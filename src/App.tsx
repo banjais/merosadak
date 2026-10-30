@@ -141,7 +141,7 @@ function AppContent() {
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
-  const { user, logout, redirectError, clearRedirectError, isSuperAdmin } = useAuth();
+  const { user, logout, redirectError, clearRedirectError, isSuperAdmin, userRole } = useAuth();
 
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
@@ -754,7 +754,7 @@ function AppContent() {
 
 
 
-            {/* If user is signed in — show avatar chip */}
+            {/* If user is signed in — show avatar chip with role badge */}
             {user && (
               <div className="flex items-center gap-1.5 px-2 py-1 accent-bg accent-border rounded-xl">
                 <div className="w-5 h-5 rounded-full accent-bg flex items-center justify-center text-[10px] font-black text-slate-950">
@@ -763,6 +763,16 @@ function AppContent() {
                 <span className="hidden sm:inline text-[10px] font-bold accent-text max-w-[80px] truncate">
                   {user.displayName || user.email?.split('@')[0]}
                 </span>
+                {userRole === 'superadmin' && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
+                    Super Admin
+                  </span>
+                )}
+                {userRole === 'OfficeAdmin' && (
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-900/30 text-cyan-400 text-[9px] font-bold border border-cyan-500/30">
+                    Office Admin
+                  </span>
+                )}
                 {isSuperAdmin && (
                   <button
                     onClick={() => setIsSuperAdminPanelOpen(true)}
