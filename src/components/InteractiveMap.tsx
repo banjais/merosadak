@@ -230,9 +230,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
-  // Tile provider fallback state. ArcGIS is the default; if its tiles fail
-  // repeatedly we fall back to OpenStreetMap so the map never shows blank.
-  const [tileProvider, setTileProvider] = useState<'arcgis' | 'osm' | 'none'>('arcgis');
+  // Tile provider fallback state. Starts at 'none' so the first load shows a
+  // transparent map (no base tiles, no blank screen). Tiles load only after the
+  // user clicks the canvas to activate the map.
+  const [tileProvider, setTileProvider] = useState<'arcgis' | 'osm' | 'none'>('none');
   const [tileError, setTileError] = useState(false);
   const tileFailCountRef = useRef(0);
 
@@ -243,12 +244,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [mapInitialized, setMapInitialized] = useState(false);
   const [mapInteracted, setMapInteracted] = useState(false);
 
-  // Activate map when user interacts or location is detected
+  // Activate map when user clicks the canvas. Loads base tiles and reveals the
+  // zoom / style / layers controls.
   const activateMap = useCallback(() => {
     setMapInteracted(true);
     if (!mapActive) {
       setMapActive(true);
     }
+    setTileProvider('arcgis');
   }, [mapActive]);
 
   // One shared device watcher. The map, the planner and My Location all read
@@ -552,6 +555,13 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
+
+    // 'none' = transparent map, no base tiles. Keep overlay layers (routes,
+    // incidents, cities) on a transparent background.
+    if (tileProvider === 'none') {
+      return;
     }
 
     // Pick URL by active provider. ArcGIS is primary; OSM is the no-key fallback.
@@ -616,9 +626,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
     // Explicitly focusing a city or incident means the camera is no longer
     // tracking the user, so following stops — the dot keeps updating.
+    // Fly to the target but keep the map transparent/inactive until the user
+    // clicks the canvas; controls only appear on click.
     setFollowMe(false);
-    setMapInteracted(true);
-    setMapActive(true);
     suppressRecenterRef.current = true;
     mapInstanceRef.current.flyTo([focusedTarget.lat, focusedTarget.lng], focusedTarget.zoom || 11, {
       duration: 1.2,
@@ -1344,7 +1354,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800/90 shadow-2xl bg-slate-950">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800/90 shadow-2xl">
       {/* Map Container */}
       <div
         ref={mapContainerRef}
@@ -1352,11 +1362,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         id="nepal-gis-canvas"
         onClick={activateMap}
       />
-
-      {/* Dimming overlay - shows when map is not active */}
-      {!mapActive && (
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-[500] pointer-events-none transition-opacity duration-500" />
-      )}
 
       {/* Map data unavailable overlay - shows when all tile providers fail */}
       {mapActive && tileError && (
