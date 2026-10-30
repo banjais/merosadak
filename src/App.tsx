@@ -22,7 +22,6 @@ import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminPanel } from './components/SuperAdminControlPanel';
 import { ProfilePage } from './components/ProfilePage';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
-import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
 import { ArchiveTray } from './components/ArchiveTray';
 import { getStoredOfflineBundle } from './utils/offlineSync';
@@ -70,7 +69,6 @@ import {
   Activity,
   Settings,
   MoreHorizontal,
-  MoreVertical,
 } from 'lucide-react';
 
 /** Placeholder while a lazily-loaded page chunk is fetched. */
@@ -149,7 +147,6 @@ function AppContent() {
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
   // is already false by the time getRedirectResult rejects. Without this the
@@ -766,41 +763,37 @@ function AppContent() {
 
 
 
-            {/* Header right — exactly two buttons */}
-            <div className="flex items-center gap-1">
+            {/* Header right — profile only (signed in). When not signed in nothing
+            is shown here: no sign-in button and no settings button. Settings live
+            inside the Profile page. */}
+            {user && (
+              <div className="flex items-center gap-1">
+                {/* Profile: round Gmail picture + username on the next line +
+                a Settings gear icon hinting that settings are inside the page. */}
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="flex flex-col items-center gap-1 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
+                  title="Open profile"
+                  aria-label="Open profile"
+                >
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt="Profile"
+                      className="w-7 h-7 rounded-full border border-slate-700/50 object-cover bg-slate-800"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm">
+                      {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-[10px] font-bold text-slate-200 truncate max-w-[60px] leading-none">
+                    {user.displayName || (user.email ? user.email.split('@')[0] : 'User')}
+                  </span>
+                  <Settings className="w-3 h-3 text-slate-400 mt-0.5" />
+                </button>
 
-              {/* Button 1: Profile — round picture + name below + vertical three dots */}
-              <button
-                onClick={() => {
-                  if (user) setIsProfileOpen(true);
-                  else setIsLoginModalOpen(true);
-                }}
-                className="flex flex-col items-center gap-1 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
-                title="Open profile"
-                aria-label="Open profile"
-              >
-                {/* Real profile picture round button, else initials */}
-                {user && user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt="Profile"
-                    className="w-7 h-7 rounded-full border border-slate-700/50 object-cover bg-slate-800"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm">
-                    {user ? (user.displayName || user.email || 'U')[0].toUpperCase() : 'U'}
-                  </div>
-                )}
-                {/* Name below — two lines total */}
-                <span className="text-[10px] font-bold text-slate-200 truncate max-w-[60px] leading-none">
-                  {user ? (user.displayName || (user.email ? user.email.split('@')[0] : 'User')) : 'Sign in'}
-                </span>
-                {/* Vertical three dots */}
-                <MoreVertical className="w-3 h-3 text-slate-400 mt-0.5" />
-              </button>
-
-              {/* Profile page panel (full page, signed in only) */}
-              {user && (
+                {/* Profile page panel (signed in only) — settings are inside. */}
                 <ProfilePage
                   isOpen={isProfileOpen}
                   onClose={() => setIsProfileOpen(false)}
@@ -813,36 +806,8 @@ function AppContent() {
                   onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                   onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                 />
-              )}
-
-              {/* Button 2: Settings three dots — hidden when signed in (content moved into profile panel) */}
-              {!user && (
-                <div className="relative">
-                  <SettingsButton
-                    isOpen={isSettingsMenuOpen}
-                    onOpenChange={setIsSettingsMenuOpen}
-                    onSettingsClose={() => setIsNotificationsOpen(false)}
-                  />
-
-                  <SettingsMenu
-                    isOpen={isSettingsMenuOpen}
-                    onClose={() => setIsSettingsMenuOpen(false)}
-                    onOpenChange={setIsSettingsMenuOpen}
-                    showTextSize={true}
-                    showAccentColor={true}
-                    showSignOut={false}
-                    showReminderService={false}
-                    user={null}
-                    onSignOut={logout}
-                    textScale={textScale}
-                    onTextScaleChange={setTextScale}
-                    accentColor={accentColor}
-                    onAdminCommand={() => setIsAdminCommandOpen(true)}
-                    onReminderService={() => setIsReminderOpen(true)}
-                  />
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
