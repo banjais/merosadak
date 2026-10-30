@@ -655,7 +655,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         : highway.overallStatus === 'caution'
         ? '#f59e0b'
         : '#ef4444';
-      const weight = isSelected ? 6 : 3.5;
+      const weight = isSelected ? 3 : 2;
       const opacity = isSelected ? 1.0 : 0.85;
 
       const bindHighwayEvents = (polyline: L.Polyline) => {
@@ -669,7 +669,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         );
 
         polyline.on('mouseover', function () {
-          this.setStyle({ weight: weight + 2.5, opacity: 1.0 });
+          this.setStyle({ weight: weight + 1, opacity: 1.0 });
         });
         polyline.on('mouseout', function () {
           this.setStyle({ weight, opacity });
@@ -708,7 +708,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             : '#ef4444';
           const polyline = L.polyline(seg.coordinates, {
             color: segColor,
-            weight: isSelected ? 6 : seg.lanes >= 4 ? 5 : 3.5,
+            weight: isSelected ? 3 : seg.lanes >= 4 ? 3 : 2,
             opacity,
             lineJoin: 'round',
             lineCap: 'round',
