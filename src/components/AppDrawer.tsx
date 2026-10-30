@@ -252,7 +252,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="text-[11px] font-medium text-secondary truncate">
-                {user ? user.email || 'Signed in user' : 'DoR Nepal'}
+                {user ? user.email || 'Signed in user' : 'Not signed in'}
               </span>
             </div>
             {loading ? (
