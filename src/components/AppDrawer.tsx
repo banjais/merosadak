@@ -270,6 +270,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 <ShieldAlert className="w-3 h-3" />
                 <span className="hidden sm:inline text-[10px] font-semibold">SuperAdmin</span>
               </button>
+            ) : user && userRole === 'OfficeAdmin' && onOpenOfficeAdminPanel ? (
+              <button
+                onClick={() => { onOpenOfficeAdminPanel(); onClose(); }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-cyan-900/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-900/40 hover:text-cyan-300 transition shrink-0"
+                title="Office Admin Panel"
+              >
+                <Activity className="w-3 h-3" />
+                <span className="hidden sm:inline text-[10px] font-semibold">Office Admin</span>
+              </button>
             ) : user ? (
               <button
                 onClick={logout}
