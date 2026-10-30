@@ -98,17 +98,19 @@ const OFFICE_ADMINS_KEY = 'mero-sadak-office-admins';
 
 /** Resolve the user's role from email. Checks Firestore roles first, then
  * hardcoded superadmin emails, then localStorage OfficeAdmins. Everyone else
- * is GeneralUser. */
+ * is GeneralUser. Comparison is case-insensitive to handle any provider
+ * casing variation. */
 function resolveUserRole(email: string | null, userRoles: Record<string, UserRole>): UserRole {
   if (!email) return 'GeneralUser';
-  if (email === 'banjais@gmail.com' || email === 'banjays@gmail.com') return 'superadmin';
-  const firestoreRole = userRoles[email];
+  const normalizedEmail = email.trim().toLowerCase();
+  if (normalizedEmail === 'banjais@gmail.com' || normalizedEmail === 'banjays@gmail.com') return 'superadmin';
+  const firestoreRole = userRoles[normalizedEmail] ?? userRoles[email];
   if (firestoreRole) return firestoreRole;
   try {
     const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
     if (raw) {
       const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.includes(email)) return 'OfficeAdmin';
+      if (Array.isArray(list) && list.some((e) => String(e).trim().toLowerCase() === normalizedEmail)) return 'OfficeAdmin';
     }
   } catch {
     /* ignore malformed storage */
