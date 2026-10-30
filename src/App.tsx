@@ -544,6 +544,11 @@ function AppContent() {
         onOpenOfflineManager={() => setIsOfflineManagerOpen(true)}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onOpenMyLocation={() => setIsMyLocationOpen(true)}
+        onOpenSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+        onOpenAdminCommand={() => setIsAdminCommandOpen(true)}
+        onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+        user={user}
+        userRole={userRole}
         incidentsCount={incidents.length}
         hasActiveRoute={!!activeRoute}
         routeLabel={activeRoute ? `${activeRoute.origin.name} → ${activeRoute.destination.name}` : null}

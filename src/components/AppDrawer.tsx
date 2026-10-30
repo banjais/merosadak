@@ -12,8 +12,9 @@ import {
   HardDriveDownload,
   Database,
   ChevronRight,
-  FileText,
   LocateFixed,
+  ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +37,11 @@ interface AppDrawerProps {
   onOpenLogin: () => void;
   onOpenHighwayInfo?: () => void;
   onOpenMyLocation: () => void;
+  onOpenSuperAdminPanel?: () => void;
+  onOpenAdminCommand?: () => void;
+  onOpenOfficeAdminPanel?: () => void;
+  user?: { displayName?: string; email?: string } | null;
+  userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   incidentsCount?: number;
   hasActiveRoute?: boolean;
   routeLabel?: string | null;
@@ -61,6 +67,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenLogin,
   onOpenHighwayInfo,
   onOpenMyLocation,
+  onOpenSuperAdminPanel,
+  onOpenAdminCommand,
+  onOpenOfficeAdminPanel,
+  user,
+  userRole = 'GeneralUser',
   incidentsCount = 0,
   hasActiveRoute = false,
   routeLabel = null,
@@ -68,7 +79,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   distanceCalcOrigin = null,
   distanceCalcDest = null,
 }) => {
-  const { user, loading, logout } = useAuth();
+  const { loading, logout } = useAuth();
 
   if (!isOpen) return null;
 
@@ -161,6 +172,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeIcon: 'accent-bg text-slate-950',
       onClick: () => { onOpenDataSources?.(); onClose(); },
     },
+    { role: 'superadmin', id: 'superadmin-panel', label: 'Super Admin Control Panel', subtitle: 'System-wide admin controls', icon: ShieldAlert, color: 'text-rose-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenSuperAdminPanel?.(); onClose(); } },
+    { role: 'superadmin', id: 'admin-command', label: 'AI Admin Command', subtitle: 'Update fuel, tolls, incidents via AI', icon: Sparkles, color: 'text-cyan-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenAdminCommand?.(); onClose(); } },
+    { role: 'OfficeAdmin', id: 'office-admin', label: 'Office Admin Panel', subtitle: 'Office-level administration', icon: Activity, color: 'text-cyan-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenOfficeAdminPanel?.(); onClose(); } },
   ];
 
   return (
@@ -201,32 +215,39 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           )}
 
           <div className="space-y-1">
-            {drawerMenuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={item.onClick}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded-xl text-sm font-semibold transition text-left group ${
-                    isActive
-                      ? item.activeBg
-                      : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5 min-w-0">
-                    <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
-                      <Icon className="w-3.5 h-3.5" />
+            {drawerMenuItems
+              .filter((item) => {
+                if (!item.role) return true;
+                if (item.role === 'superadmin') return userRole === 'superadmin';
+                if (item.role === 'OfficeAdmin') return userRole === 'OfficeAdmin' || userRole === 'superadmin';
+                return true;
+              })
+              .map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={item.onClick}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded-xl text-sm font-semibold transition text-left group ${
+                      isActive
+                        ? item.activeBg
+                        : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block font-bold truncate">{item.label}</span>
+                        <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <span className="block font-bold truncate">{item.label}</span>
-                      <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
-                    </div>
-                  </div>
-                  <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
-                </button>
-              );
-            })}
+                    <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                  </button>
+                );
+              })}
           </div>
         </div>
 
@@ -234,7 +255,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[11px] font-medium text-secondary truncate">DoR Nepal</span>
+              <span className="text-[11px] font-medium text-secondary truncate">
+                {user ? user.email || 'Signed in user' : 'DoR Nepal'}
+              </span>
             </div>
             {loading ? (
               <span className="text-[10px] text-muted shrink-0">Authenticating...</span>
@@ -258,8 +281,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="text-[9px] font-mono text-muted">v2.4.0</span>
-            {user?.email && (
-              <span className="text-[9px] text-muted truncate max-w-[60%]">{user.email}</span>
+            {user && userRole && (
+              <span className={`text-[9px] font-bold text-xs truncate max-w-[50%] ${userRole === 'superadmin' ? 'text-rose-400' : userRole === 'OfficeAdmin' ? 'text-cyan-400' : 'text-slate-400'}`}>
+                {userRole === 'superadmin' ? 'Super Admin' : userRole === 'OfficeAdmin' ? 'Office Admin' : 'General User'}
+              </span>
             )}
           </div>
         </div>
