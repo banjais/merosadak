@@ -82,7 +82,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   distanceCalcOrigin = null,
   distanceCalcDest = null,
 }) => {
-  const { loading, logout } = useAuth();
+  const { loading } = useAuth();
 
   if (!isOpen) return null;
 
@@ -257,40 +257,33 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </div>
             {loading ? (
               <span className="text-[10px] text-muted shrink-0">Authenticating...</span>
-            ) : user && userRole === 'superadmin' && onOpenSuperAdminPanel ? (
-              <button
-                onClick={() => { onOpenSuperAdminPanel(); onClose(); }}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-rose-900/20 text-rose-400 border border-rose-500/30 hover:bg-rose-900/40 hover:text-rose-300 transition shrink-0"
-                title="Super Admin Control Panel"
-              >
-                <ShieldAlert className="w-3 h-3" />
-                <span className="hidden sm:inline text-[10px] font-semibold">SuperAdmin</span>
-              </button>
-            ) : user && userRole === 'OfficeAdmin' && onOpenOfficeAdminPanel ? (
-              <button
-                onClick={() => { onOpenOfficeAdminPanel(); onClose(); }}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-cyan-900/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-900/40 hover:text-cyan-300 transition shrink-0"
-                title="Office Admin Panel"
-              >
-                <Activity className="w-3 h-3" />
-                <span className="hidden sm:inline text-[10px] font-semibold">Office Admin</span>
-              </button>
-            ) : user && userRole === 'GeneralUser' && onOpenUserPanel ? (
-              <button
-                onClick={() => { onOpenUserPanel(); onClose(); }}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition shrink-0"
-                title="My Account"
-              >
-                <User className="w-3 h-3" />
-                <span className="hidden sm:inline text-[10px] font-semibold">My Account</span>
-              </button>
             ) : user ? (
               <button
-                onClick={logout}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition shrink-0"
-                title="Sign out"
+                onClick={() => {
+                  if (userRole === 'superadmin' && onOpenSuperAdminPanel) onOpenSuperAdminPanel();
+                  if (userRole === 'OfficeAdmin' && onOpenOfficeAdminPanel) onOpenOfficeAdminPanel();
+                  if (userRole === 'GeneralUser' && onOpenUserPanel) onOpenUserPanel();
+                  onClose();
+                }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition shrink-0"
+                title="Open account panel"
               >
-                <span className="hidden sm:inline text-[10px] font-semibold">Sign out</span>
+                {userRole === 'superadmin' ? (
+                  <>
+                    <ShieldAlert className="w-3 h-3 text-rose-400" />
+                    <span className="hidden sm:inline text-[10px] font-semibold text-rose-400">SuperAdmin</span>
+                  </>
+                ) : userRole === 'OfficeAdmin' ? (
+                  <>
+                    <Activity className="w-3 h-3 text-cyan-400" />
+                    <span className="hidden sm:inline text-[10px] font-semibold text-cyan-400">Office Admin</span>
+                  </>
+                ) : (
+                  <>
+                    <User className="w-3 h-3 text-slate-400" />
+                    <span className="hidden sm:inline text-[10px] font-semibold">General User</span>
+                  </>
+                )}
               </button>
             ) : (
               <button
@@ -304,11 +297,6 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="text-[9px] font-mono text-muted">v2.4.0</span>
-            {user && userRole && (
-              <span className={`text-[9px] font-bold text-xs truncate max-w-[50%] ${userRole === 'superadmin' ? 'text-rose-400' : userRole === 'OfficeAdmin' ? 'text-cyan-400' : 'text-slate-400'}`}>
-                {userRole === 'superadmin' ? 'Super Admin' : userRole === 'OfficeAdmin' ? 'Office Admin' : 'General User'}
-              </span>
-            )}
           </div>
         </div>
       </aside>
