@@ -10,206 +10,226 @@ import {
   Mail,
   CheckCircle,
   RefreshCw,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 
-interface SuperAdminControlPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface SuperAdminPanelProps {
   userEmail: string;
+  onClose: () => void;
 }
 
-export const SuperAdminControlPanel: React.FC<SuperAdminControlPanelProps> = ({
-  isOpen,
-  onClose,
+export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   userEmail,
+  onClose,
 }) => {
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'settings'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'settings'>('dashboard');
 
-  if (!isOpen) return null;
+  const sections = [
+    { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
+    { id: 'settings' as const, label: 'System Settings', icon: Settings },
+  ];
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 sm:p-6">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 rounded-3xl shadow-2xl shadow-black/50 overflow-hidden animate-fadeIn flex flex-col h-[85vh] sm:h-[90vh] max-h-[700px]">
-        {/* Header */}
-        <div className="bg-slate-800/80 border-b border-slate-700/60 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-500/20">
-              <ShieldAlert className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white font-display tracking-tight">Super Admin Control Panel</h3>
-              <p className="text-[10px] text-slate-400 font-mono">{userEmail}</p>
-            </div>
+    <div className="flex flex-col h-full bg-slate-950 text-slate-100">
+      {/* Top bar */}
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shadow-md shadow-rose-500/20">
+            <ShieldAlert className="w-5 h-5" />
           </div>
+          <div>
+            <h3 className="text-sm font-bold text-white font-display tracking-tight">Super Admin Control Panel</h3>
+            <p className="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{userEmail}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-sm font-medium"
           >
-            <span className="sr-only">Close</span>
-            <span className="text-[10px]">✕</span>
+            Close Panel
+          </button>
+          <button
+            onClick={() => {}}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-900/20 text-rose-400 border border-rose-500/30 hover:bg-rose-900/40 hover:text-rose-300 transition text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign Out</span>
           </button>
         </div>
+      </header>
 
-        {/* Body */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar nav */}
-          <div className="w-64 border-r border-slate-800/60 bg-slate-950/60 flex flex-col">
-            <div className="px-4 py-3 border-b border-slate-800/40">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sections</p>
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-1 p-1">
-              {[
-                { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-                { id: 'users' as const, label: 'Users', icon: Users },
-                { id: 'settings' as const, label: 'System Settings', icon: Settings },
-              ].map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition rounded-l-xl ${
-                    activeSection === section.id
-                      ? 'bg-accent-bg text-slate-950 border-r-2 border-accent-border shadow-sm'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-                  }`}
-                >
-                  <section.icon className="w-4 h-4 shrink-0" />
-                  <span>{section.label}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mt-auto p-4 border-t border-slate-800/40">
-              <button
-                onClick={() => {}}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:bg-slate-800 hover:text-white transition text-sm font-medium"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-64 bg-slate-900/50 border-r border-slate-800 shrink-0 flex flex-col">
+          <div className="px-4 py-3 border-b border-slate-800">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sections</p>
           </div>
+          <div className="flex-1 overflow-y-auto p-1 space-y-0.5">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition rounded-lg ${
+                  activeSection === section.id
+                    ? 'bg-accent-bg text-slate-950 border-r-2 border-accent-border shadow-sm'
+                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                }`}
+              >
+                <section.icon className="w-4 h-4 shrink-0" />
+                <span>{section.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="p-4 border-t border-slate-800">
+            <p className="text-[10px] text-slate-500 font-mono">Mero Sadak v2.4.0</p>
+          </div>
+        </aside>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 bg-slate-950/40 custom-scrollbar">
-            {activeSection === 'dashboard' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { label: 'Active Incidents', value: '0', color: 'text-rose-400', bg: 'bg-rose-900/20', icon: AlertTriangle },
-                    { label: 'Signed-in Users', value: '1', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: Users },
-                    { label: 'Live Feeds', value: 'Online', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: BarChart3 },
-                    { label: 'System Status', value: 'Healthy', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: CheckCircle },
-                  ].map((card) => (
-                    <div key={card.label} className={card.bg + ' border border-slate-800/60 rounded-2xl p-4 flex flex-col'}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-slate-500">
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto bg-slate-950/40 custom-scrollbar p-6 lg:p-8">
+          {activeSection === 'dashboard' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { label: 'Active Incidents', value: '0', color: 'text-rose-400', bg: 'bg-rose-900/20', icon: AlertTriangle },
+                  { label: 'Signed-in Users', value: '1', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: Users },
+                  { label: 'Live Feeds', value: 'Online', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: BarChart3 },
+                  { label: 'System Status', value: 'Healthy', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: CheckCircle },
+                ].map((card) => (
+                  <div key={card.label} className={card.bg + ' border border-slate-800/60 rounded-2xl p-5 flex flex-col'}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 text-slate-500">
+                      <card.icon className="w-5 h-5" />
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{card.label}</p>
+                    <span className={`text-lg font-bold ${card.color}`}>{card.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-bold text-white">Superadmin Actions</h4>
+                  <button
+                    onClick={() => {}}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 transition"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Refresh Data
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">Superadmin account</p>
+                        <p className="text-[10px] text-slate-500 font-mono truncate">{userEmail}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                      Verified
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">AI Admin Command</p>
+                        <p className="text-[10px] text-slate-500">Update fuel, tolls, incidents via natural language</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'users' && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-white">Registered Users</h4>
+              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
+                <table className="w-full text-left text-[11px]">
+                  <thead className="bg-slate-950/50 border-b border-slate-800/60">
+                    <tr>
+                      <th className="px-4 py-3 text-slate-400 font-medium">Email</th>
+                      <th className="px-4 py-3 text-slate-400 font-medium">Role</th>
+                      <th className="px-4 py-3 text-slate-400 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-slate-800/40 hover:bg-slate-800/30 transition">
+                      <td className="px-4 py-3 text-slate-200 font-medium">{userEmail}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
+                          Super Admin
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[10px] text-slate-500">Only the superadmin ({userEmail}) appears here. Other users sign in with Google but have no admin privileges.</p>
+            </div>
+          )}
+
+          {activeSection === 'analytics' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { label: 'Routes Planned Today', value: '0', delta: '+0%', color: 'text-cyan-400', icon: Activity },
+                  { label: 'Reports Submitted', value: '0', delta: '+0%', color: 'text-amber-400', icon: AlertTriangle },
+                  { label: 'AI Commands Run', value: '0', delta: '+0%', color: 'text-emerald-400', icon: Sparkles },
+                ].map((card) => (
+                  <div key={card.label} className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5 flex flex-col">
+                    <div className="flex items-center justify-between">
+                      <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500">
                         <card.icon className="w-5 h-5" />
                       </div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{card.label}</p>
-                      <span className={`text-lg font-bold ${card.color}`}>{card.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-bold text-white">Superadmin Actions</h4>
-                    <button
-                      onClick={() => {}}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 transition"
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Refresh Data
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400">
-                          <Mail className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-200">Superadmin account</p>
-                          <p className="text-[10px] text-slate-500 font-mono">{userEmail}</p>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
-                        Verified
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${card.color} bg-${card.color === 'text-cyan-400' ? 'cyan' : card.color === 'text-amber-400' ? 'amber' : 'emerald'}-900/20`}>
+                        {card.delta}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-slate-400">
-                          <Settings className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-200">AI Admin Command</p>
-                          <p className="text-[10px] text-slate-500">Update fuel, tolls, incidents via natural language</p>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-3">{card.label}</p>
+                    <span className="text-2xl font-bold text-white mt-1">{card.value}</span>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'settings' && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-white">System Settings</h4>
+              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5 space-y-4">
+                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
+                  <p className="text-sm font-medium text-slate-200 mb-1">Authorized Domain</p>
+                  <p className="text-[10px] text-slate-500 font-mono break-all">merosadak.web.app</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
+                  <p className="text-sm font-medium text-slate-200 mb-1">App Version</p>
+                  <p className="text-[10px] text-slate-500 font-mono">v2.4.0</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
+                  <p className="text-sm font-medium text-slate-200 mb-1">Worker</p>
+                  <p className="text-[10px] text-slate-500 font-mono">merosadak.banjays.workers.dev</p>
                 </div>
               </div>
-            )}
-
-            {activeSection === 'users' && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-white">Registered Users</h4>
-                <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-slate-950/50 border-b border-slate-800/60">
-                      <tr>
-                        <th className="px-4 py-3 text-slate-400 font-medium">Email</th>
-                        <th className="px-4 py-3 text-slate-400 font-medium">Role</th>
-                        <th className="px-4 py-3 text-slate-400 font-medium">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-slate-800/40 hover:bg-slate-800/30 transition">
-                        <td className="px-4 py-3 text-slate-200 font-medium">{userEmail}</td>
-                        <td className="px-4 py-3">
-                          <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
-                            Super Admin
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[10px] text-slate-500">Only the superadmin ({userEmail}) appears here. Other users sign in with Google but have no admin privileges.</p>
-              </div>
-            )}
-
-            {activeSection === 'settings' && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-white">System Settings</h4>
-                <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5 space-y-4">
-                  <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
-                    <p className="text-sm font-medium text-slate-200 mb-1">Authorized Domain</p>
-                    <p className="text-[10px] text-slate-500 font-mono break-all">merosadak.web.app</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
-                    <p className="text-sm font-medium text-slate-200 mb-1">App Version</p>
-                    <p className="text-[10px] text-slate-500 font-mono">v2.4.0</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800/40">
-                    <p className="text-sm font-medium text-slate-200 mb-1">Worker</p>
-                    <p className="text-[10px] text-slate-500 font-mono">merosadak.banjays.workers.dev</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="border-t border-slate-800/40 bg-slate-900/40 px-6 py-3 text-[10px] text-slate-500">
-          Mero Sadak Super Admin • {new Date().toLocaleDateString()}
-        </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

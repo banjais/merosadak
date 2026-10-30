@@ -19,7 +19,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
-import { SuperAdminControlPanel } from './components/SuperAdminControlPanel';
+import { SuperAdminPanel } from './components/SuperAdminControlPanel';
 import { ProfilePage } from './components/ProfilePage';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
@@ -1165,10 +1165,9 @@ function AppContent() {
         onClose={() => setIsAdminCommandOpen(false)}
       />
 
-      {/* Super Admin Control Panel — only visible to banjais@gmail.com */}
-      {user && isSuperAdmin && (
-        <SuperAdminControlPanel
-          isOpen={isSuperAdminPanelOpen}
+      {/* Super Admin Panel — full page, only visible to superadmin */}
+      {user && isSuperAdmin && isSuperAdminPanelOpen && (
+        <SuperAdminPanel
           onClose={() => setIsSuperAdminPanelOpen(false)}
           userEmail={user.email || 'banjais@gmail.com'}
         />
