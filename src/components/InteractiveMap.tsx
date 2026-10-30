@@ -515,24 +515,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const map = mapInstanceRef.current;
     if (!map) return;
     const releaseOnDrag = () => setFollowMe(false);
-    const recenterOnZoom = () => {
-      if (suppressRecenterRef.current) return;
-      setFollowMe(true);
-      if (fix) {
-        map.flyTo([fix.lat, fix.lng], map.getZoom(), {
-          animate: true,
-          duration: 0.35,
-          easeLinearity: 0.5,
-        });
-      }
-    };
     map.on('dragstart', releaseOnDrag);
-    map.on('zoomend', recenterOnZoom);
     return () => {
       map.off('dragstart', releaseOnDrag);
-      map.off('zoomend', recenterOnZoom);
     };
-  }, [mapInitialized, fix]);
+  }, [mapInitialized]);
 
   const recenterOnMe = useCallback(() => {
     setFollowMe(true);
