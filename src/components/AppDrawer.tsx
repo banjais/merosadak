@@ -151,7 +151,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeColor: 'accent-bg text-slate-950',
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg text-slate-950',
-      onClick: () => { onOpenReportModal(); onClose(); },
+      onClick: () => {
+        if (!user) { onOpenLogin(); onClose(); return; }
+        onOpenReportModal(); onClose();
+      },
     },
     {
       id: 'offline',
