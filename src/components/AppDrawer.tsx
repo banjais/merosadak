@@ -227,7 +227,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   <button
                     key={item.id}
                     onClick={item.onClick}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded-xl text-sm font-semibold transition text-left group ${
+                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 min-h-9 rounded-xl text-xs font-medium transition text-left group ${
                       isActive
                         ? item.activeBg
                         : 'text-slate-300 hover:text-white hover:bg-slate-900'
@@ -235,10 +235,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   >
                     <div className="flex items-center space-x-2.5 min-w-0">
                       <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-3 h-3" />
                       </div>
                       <div className="min-w-0">
-                        <span className="block font-bold truncate">{item.label}</span>
+                        <span className="block text-xs font-medium truncate">{item.label}</span>
                         <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
                       </div>
                     </div>
