@@ -11,10 +11,11 @@ import {
 } from 'lucide-react';
 
 interface ProfileDropdownProps {
-  anchorRef: React.RefObject<HTMLDivElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | HTMLDivElement>;
   userEmail: string;
   userRole: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   isSuperAdmin: boolean;
+  photoURL?: string | null;
   onClose: () => void;
   onSignOut: () => void;
   onAdminCommand?: () => void;
@@ -26,6 +27,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   userEmail,
   userRole,
   isSuperAdmin,
+  photoURL,
   onClose,
   onSignOut,
   onAdminCommand,
@@ -55,10 +57,18 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-slate-800/60 bg-slate-900/80">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-accent-bg accent-border flex items-center justify-center text-slate-950 font-black text-sm">
-              {(userEmail || 'U')[0].toUpperCase()}
-            </div>
+            <div className="flex items-center gap-3">
+              {photoURL ? (
+                <img
+                  src={photoURL}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-2xl border border-slate-700/50 object-cover bg-slate-800"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-2xl bg-accent-bg accent-border flex items-center justify-center text-slate-950 font-black text-sm shadow-sm border border-slate-700/50">
+                  {userEmail ? userEmail[0].toUpperCase() : 'U'}
+                </div>
+              )}
             <div>
               <p className="text-sm font-bold text-white truncate">{userEmail}</p>
               <p className="text-[10px] text-slate-500 font-mono truncate">
