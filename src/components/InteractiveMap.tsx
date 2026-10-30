@@ -577,9 +577,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       url = `${baseArcGis}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
       maxZoom = 16;
     } else {
-      // '3d' default
-      url = `${baseArcGis}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
-      maxZoom = 16;
+      // '3d' default — shaded relief / topographic for a 3D terrain appearance
+      url = `${baseArcGis}/Canvas/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}`;
+      maxZoom = 19;
     }
 
     const onTileError = () => {
