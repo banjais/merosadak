@@ -10,7 +10,16 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  query,
+  where,
+  collection,
+} from 'firebase/firestore';
+import { auth, db, googleProvider } from '../firebase';
 
 export type UserRole = 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
 
@@ -18,10 +27,14 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   redirectError: string | null;
-  /** True only for the designated superadmin (banjais@gmail.com). */
+  /** True only for the designated superadmin (banjais@gmail.com / banjays@gmail.com). */
   isSuperAdmin: boolean;
   /** Resolved role for the signed-in user. */
   userRole: UserRole;
+  /** Map of email -> role loaded from Firestore. */
+  userRoles: Record<string, UserRole>;
+  /** Promote/demote a user's role (persisted to Firestore). */
+  setUserRole: (email: string, role: UserRole) => Promise<void>;
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
@@ -36,6 +49,8 @@ const defaultAuthContext: AuthContextType = {
   redirectError: null,
   isSuperAdmin: false,
   userRole: 'GeneralUser',
+  userRoles: {},
+  setUserRole: async () => {},
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
   loginWithGooglePopup: async () => {},
@@ -81,12 +96,14 @@ const REDIRECT_FLAG = 'merosadak_redirecting';
 
 const OFFICE_ADMINS_KEY = 'mero-sadak-office-admins';
 
-/** Resolve the user's role from email. superadmin is always banjais@gmail.com.
- * OfficeAdmin emails are persisted in localStorage (seeded once). Everyone else
+/** Resolve the user's role from email. Checks Firestore roles first, then
+ * hardcoded superadmin emails, then localStorage OfficeAdmins. Everyone else
  * is GeneralUser. */
-function resolveUserRole(email: string | null): UserRole {
+function resolveUserRole(email: string | null, userRoles: Record<string, UserRole>): UserRole {
   if (!email) return 'GeneralUser';
   if (email === 'banjais@gmail.com' || email === 'banjays@gmail.com') return 'superadmin';
+  const firestoreRole = userRoles[email];
+  if (firestoreRole) return firestoreRole;
   try {
     const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
     if (raw) {
@@ -99,7 +116,31 @@ function resolveUserRole(email: string | null): UserRole {
   return 'GeneralUser';
 }
 
-/** Promote a user to OfficeAdmin (persisted in localStorage). */
+/** Promote/demote a user's role — persisted to Firestore so it applies at
+ * sign-in on any device. Falls back to localStorage if Firestore is unavailable. */
+export async function setUserRole(email: string, role: UserRole) {
+  try {
+    await setDoc(doc(db, 'userRoles', email.toLowerCase()), { email, role, updatedAt: new Date().toISOString() });
+  } catch {
+    /* Firestore unavailable — persist to localStorage so it still works locally */
+    try {
+      const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      const admins = Array.isArray(list) ? list : [];
+      if (role === 'OfficeAdmin' || role === 'superadmin') {
+        if (!admins.includes(email)) admins.push(email);
+      } else {
+        const idx = admins.indexOf(email);
+        if (idx >= 0) admins.splice(idx, 1);
+      }
+      localStorage.setItem(OFFICE_ADMINS_KEY, JSON.stringify(admins));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+}
+
+/** Backward-compatible: promote a user to OfficeAdmin. */
 export function setOfficeAdmin(email: string) {
   try {
     const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
@@ -134,7 +175,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [redirectError, setRedirectError] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>('GeneralUser');
+  const [userRole, setUserRoleState] = useState<UserRole>('GeneralUser');
+  const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
+
+  // Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
+  // assignments made by the superadmin panel.
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'userRoles'), (snap) => {
+      const roles: Record<string, UserRole> = {};
+      snap.forEach((d) => {
+        const data = d.data() as { role?: UserRole };
+        if (data.role) roles[d.id] = data.role;
+      });
+      setUserRoles(roles);
+      // Re-resolve the signed-in user's role now that Firestore roles are loaded.
+      if (user) {
+        const role = resolveUserRole(user.email ?? null, roles);
+        setUserRoleState(role);
+        setIsSuperAdmin(role === 'superadmin');
+      }
+    });
+    return () => unsub();
+  }, [user]);
 
   useEffect(() => {
     // The second callback is the error handler. Without it an auth-init or
@@ -145,8 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (currentUser) => {
         setUser(currentUser);
         setLoading(false);
-        const role = resolveUserRole(currentUser?.email ?? null);
-        setUserRole(role);
+        const role = resolveUserRole(currentUser?.email ?? null, userRoles);
+        setUserRoleState(role);
         setIsSuperAdmin(role === 'superadmin');
       },
       (error) => {
@@ -158,7 +220,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     return unsubscribe;
-  }, []);
+  }, [userRoles]);
+
+  const setUserRoleFn = useCallback(async (email: string, role: UserRole) => {
+    await setUserRole(email, role);
+    // Refresh local state immediately so the panel reflects the change.
+    const updated = resolveUserRole(email, { ...userRoles, [email]: role });
+    if (email === user?.email) {
+      setUserRoleState(updated);
+      setIsSuperAdmin(updated === 'superadmin');
+    }
+  }, [user?.email, userRoles]);
 
   useEffect(() => {
     let cancelled = false;
@@ -225,7 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, userRoles, setUserRole: setUserRoleFn, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
       {children}
     </AuthContext.Provider>
   );

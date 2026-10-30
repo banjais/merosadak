@@ -12,7 +12,10 @@ import {
   RefreshCw,
   Activity,
   Sparkles,
+  ChevronDown,
+  User,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface SuperAdminPanelProps {
   userEmail: string;
@@ -23,6 +26,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   userEmail,
   onClose,
 }) => {
+  const { setUserRole, userRoles } = useAuth();
   const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'settings'>('dashboard');
 
   const sections = [
@@ -152,38 +156,70 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
             </div>
           )}
 
-          {activeSection === 'users' && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-white">Registered Users</h4>
-              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-[11px]">
-                  <thead className="bg-slate-950/50 border-b border-slate-800/60">
-                    <tr>
-                      <th className="px-4 py-3 text-slate-400 font-medium">Email</th>
-                      <th className="px-4 py-3 text-slate-400 font-medium">Role</th>
-                      <th className="px-4 py-3 text-slate-400 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-slate-800/40 hover:bg-slate-800/30 transition">
-                      <td className="px-4 py-3 text-slate-200 font-medium">{userEmail}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400 text-[9px] font-bold border border-rose-500/30">
-                          Super Admin
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            {activeSection === 'users' && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-white">Registered Users</h4>
+                <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-slate-950/50 border-b border-slate-800/60">
+                      <tr>
+                        <th className="px-4 py-3 text-slate-400 font-medium">Email</th>
+                        <th className="px-4 py-3 text-slate-400 font-medium">Role</th>
+                        <th className="px-4 py-3 text-slate-400 font-medium">Status</th>
+                        <th className="px-4 py-3 text-slate-400 font-medium text-right">Change Role</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { email: userEmail, role: 'superadmin' as const },
+                        ...Object.entries(userRoles).map(([email, role]) => ({ email, role })),
+                      ].filter((u, i, arr) => arr.findIndex((x) => x.email === u.email) === i).map((u) => (
+                        <tr
+                          key={u.email}
+                          className="border-t border-slate-800/40 hover:bg-slate-800/30 transition"
+                        >
+                          <td className="px-4 py-3 text-slate-200 font-medium truncate max-w-xs">{u.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                              u.role === 'superadmin'
+                                ? 'bg-rose-900/30 text-rose-400 border-rose-500/30'
+                                : u.role === 'OfficeAdmin'
+                                  ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/30'
+                                  : 'bg-slate-800/50 text-slate-300 border-slate-700/50'
+                            }`}>
+                              {u.role === 'superadmin' ? 'Super Admin' : u.role === 'OfficeAdmin' ? 'Office Admin' : 'General User'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <select
+                              value={u.role}
+                              onChange={(e) => setUserRole(u.email, e.target.value as 'superadmin' | 'OfficeAdmin' | 'GeneralUser')}
+                              className="bg-slate-800 border border-slate-700 text-[10px] text-slate-200 rounded px-2 py-1 focus:outline-none focus:border-accent-text"
+                            >
+                              <option value="GeneralUser">General User</option>
+                              <option value="OfficeAdmin">Office Admin</option>
+                              {u.email === userEmail ? (
+                                <option value="superadmin" disabled>Super Admin (self)</option>
+                              ) : (
+                                <option value="superadmin">Super Admin</option>
+                              )}
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Select a role from the dropdown to promote or demote a user. Changes persist to Firestore and apply at their next sign-in.
+                </p>
               </div>
-              <p className="text-[10px] text-slate-500">Only the superadmin ({userEmail}) appears here. Other users sign in with Google but have no admin privileges.</p>
-            </div>
-          )}
+            )}
 
           {activeSection === 'analytics' && (
             <div className="space-y-6">
