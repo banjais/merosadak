@@ -16,6 +16,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   redirectError: string | null;
+  /** True only for the designated superadmin (banjais@gmail.com). */
+  isSuperAdmin: boolean;
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
@@ -28,6 +30,7 @@ const defaultAuthContext: AuthContextType = {
   user: null,
   loading: false,
   redirectError: null,
+  isSuperAdmin: false,
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
   loginWithGooglePopup: async () => {},
@@ -90,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirectError, setRedirectError] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     // The second callback is the error handler. Without it an auth-init or
@@ -100,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (currentUser) => {
         setUser(currentUser);
         setLoading(false);
+        setIsSuperAdmin(currentUser?.email === 'banjais@gmail.com');
       },
       (error) => {
         console.error('[Mero Sadak] Auth state subscription failed:', error);
@@ -177,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
       {children}
     </AuthContext.Provider>
   );

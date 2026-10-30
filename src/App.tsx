@@ -19,6 +19,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
+import { SuperAdminControlPanel } from './components/SuperAdminControlPanel';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SettingsMenu, SettingsButton } from './components/SettingsMenu';
 import { SplashScreen } from './components/SplashScreen';
@@ -67,6 +68,7 @@ import {
   Home,
   Activity,
   Settings,
+  ShieldAlert,
 } from 'lucide-react';
 
 /** Placeholder while a lazily-loaded page chunk is fetched. */
@@ -139,7 +141,7 @@ function AppContent() {
 
   const { triggerLight: hapticLight } = useHaptic();
   const { textScale, setTextScale, highContrast, setHighContrast } = useTextScale();
-  const { user, logout, redirectError, clearRedirectError } = useAuth();
+  const { user, logout, redirectError, clearRedirectError, isSuperAdmin } = useAuth();
 
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
@@ -209,6 +211,9 @@ function AppContent() {
 
   // AI Admin Command panel
   const [isAdminCommandOpen, setIsAdminCommandOpen] = useState(false);
+
+  // Super Admin control panel (only visible to banjais@gmail.com)
+  const [isSuperAdminPanelOpen, setIsSuperAdminPanelOpen] = useState(false);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
@@ -758,6 +763,16 @@ function AppContent() {
                 <span className="hidden sm:inline text-[10px] font-bold accent-text max-w-[80px] truncate">
                   {user.displayName || user.email?.split('@')[0]}
                 </span>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => setIsSuperAdminPanelOpen(true)}
+                    className="p-1.5 rounded-lg text-slate-300 hover:text-accent-text hover:bg-slate-700/40 transition shrink-0"
+                    title="Super Admin Control Panel"
+                    aria-label="Open super admin control panel"
+                  >
+                    <ShieldAlert className="w-4 h-4 text-accent-text" />
+                  </button>
+                )}
               </div>
             )}
 
@@ -776,7 +791,7 @@ function AppContent() {
                 showTextSize={true}
                 showAccentColor={true}
                 showSignOut={true}
-                showAdminCommand={true}
+                showAdminCommand={isSuperAdmin}
                 showReminderService={true}
                 user={user}
                 onSignOut={logout}
@@ -1111,6 +1126,15 @@ function AppContent() {
         isOpen={isAdminCommandOpen}
         onClose={() => setIsAdminCommandOpen(false)}
       />
+
+      {/* Super Admin Control Panel — only visible to banjais@gmail.com */}
+      {user && isSuperAdmin && (
+        <SuperAdminControlPanel
+          isOpen={isSuperAdminPanelOpen}
+          onClose={() => setIsSuperAdminPanelOpen(false)}
+          userEmail={user.email || 'banjais@gmail.com'}
+        />
+      )}
     </PullToRefresh>
   );
 }
