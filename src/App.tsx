@@ -70,6 +70,7 @@ import {
   Activity,
   Settings,
   MoreHorizontal,
+  MoreVertical,
 } from 'lucide-react';
 
 /** Placeholder while a lazily-loaded page chunk is fetched. */
@@ -765,16 +766,16 @@ function AppContent() {
 
 
 
-            {/* Header right — exactly two buttons, always visible */}
+            {/* Header right — exactly two buttons */}
             <div className="flex items-center gap-1">
 
-              {/* Button 1: Profile — picture + name stacked below, three dots menu */}
+              {/* Button 1: Profile — round picture + name below + vertical three dots */}
               <button
                 onClick={() => {
                   if (user) setIsProfileOpen(true);
                   else setIsLoginModalOpen(true);
                 }}
-                className="flex flex-col items-center gap-1 p-1 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
+                className="flex flex-col items-center gap-1 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
                 title="Open profile"
                 aria-label="Open profile"
               >
@@ -783,22 +784,22 @@ function AppContent() {
                   <img
                     src={user.photoURL}
                     alt="Profile"
-                    className="w-6 h-6 rounded-full border border-slate-700/50 object-cover bg-slate-800"
+                    className="w-7 h-7 rounded-full border border-slate-700/50 object-cover bg-slate-800"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[10px] font-bold text-slate-950 shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm">
                     {user ? (user.displayName || user.email || 'U')[0].toUpperCase() : 'U'}
                   </div>
                 )}
-                {/* Name stacked below */}
-                <span className="text-[10px] font-bold text-slate-200 truncate max-w-[64px] leading-none">
+                {/* Name below — two lines total */}
+                <span className="text-[10px] font-bold text-slate-200 truncate max-w-[60px] leading-none">
                   {user ? (user.displayName || (user.email ? user.email.split('@')[0] : 'User')) : 'Sign in'}
                 </span>
-                {/* Three dots on profile button */}
-                <MoreHorizontal className="w-3 h-3 text-slate-400 mt-0.5" />
+                {/* Vertical three dots */}
+                <MoreVertical className="w-3 h-3 text-slate-400 mt-0.5" />
               </button>
 
-              {/* Profile page panel (signed in) */}
+              {/* Profile page panel (full page, signed in only) */}
               {user && (
                 <ProfilePage
                   isOpen={isProfileOpen}
@@ -814,32 +815,33 @@ function AppContent() {
                 />
               )}
 
-              {/* Button 2: Settings three dots — always visible */}
-              <div className="relative">
-                <SettingsButton
-                  isOpen={isSettingsMenuOpen}
-                  onOpenChange={setIsSettingsMenuOpen}
-                  onSettingsClose={() => setIsNotificationsOpen(false)}
-                />
+              {/* Button 2: Settings three dots — hidden when signed in (content moved into profile panel) */}
+              {!user && (
+                <div className="relative">
+                  <SettingsButton
+                    isOpen={isSettingsMenuOpen}
+                    onOpenChange={setIsSettingsMenuOpen}
+                    onSettingsClose={() => setIsNotificationsOpen(false)}
+                  />
 
-                <SettingsMenu
-                  isOpen={isSettingsMenuOpen}
-                  onClose={() => setIsSettingsMenuOpen(false)}
-                  onOpenChange={setIsSettingsMenuOpen}
-                  showTextSize={true}
-                  showAccentColor={true}
-                  showSignOut={!!user}
-                  showReminderService={!!user}
-                  user={user}
-                  onSignOut={logout}
-                  textScale={textScale}
-                  onTextScaleChange={setTextScale}
-                  accentColor={accentColor}
-                  onAccentColorChange={handleAccentColor}
-                  onAdminCommand={() => setIsAdminCommandOpen(true)}
-                  onReminderService={() => setIsReminderOpen(true)}
-                />
-              </div>
+                  <SettingsMenu
+                    isOpen={isSettingsMenuOpen}
+                    onClose={() => setIsSettingsMenuOpen(false)}
+                    onOpenChange={setIsSettingsMenuOpen}
+                    showTextSize={true}
+                    showAccentColor={true}
+                    showSignOut={false}
+                    showReminderService={false}
+                    user={null}
+                    onSignOut={logout}
+                    textScale={textScale}
+                    onTextScaleChange={setTextScale}
+                    accentColor={accentColor}
+                    onAdminCommand={() => setIsAdminCommandOpen(true)}
+                    onReminderService={() => setIsReminderOpen(true)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
