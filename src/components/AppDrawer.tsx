@@ -261,6 +261,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </div>
             {loading ? (
               <span className="text-[10px] text-muted shrink-0">Authenticating...</span>
+            ) : user && userRole === 'superadmin' && onOpenSuperAdminPanel ? (
+              <button
+                onClick={() => { onOpenSuperAdminPanel(); onClose(); }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-rose-900/20 text-rose-400 border border-rose-500/30 hover:bg-rose-900/40 hover:text-rose-300 transition shrink-0"
+                title="Super Admin Control Panel"
+              >
+                <ShieldAlert className="w-3 h-3" />
+                <span className="hidden sm:inline text-[10px] font-semibold">SuperAdmin</span>
+              </button>
             ) : user ? (
               <button
                 onClick={logout}
