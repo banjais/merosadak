@@ -89,9 +89,10 @@ function createNepalTileLayer(
   attribution: string,
   maxZoom: number,
   subdomains: string = 'abc',
+  onTileError?: () => void,
 ) {
   const LayerClass = L.GridLayer.extend({
-    options: { url, attribution, maxZoom, subdomains },
+    options: { url, attribution, maxZoom, subdomains, onTileError },
 
     createTile(coords: L.Coords) {
       const tileSize = this.getTileSize();
@@ -121,8 +122,15 @@ function createNepalTileLayer(
         img.style.height = '100%';
         img.style.opacity = '0';
         img.style.transition = 'opacity 0.3s ease';
+        let errorCount = 0;
         img.onload = () => { img.style.opacity = '1'; };
-        img.onerror = () => { img.style.opacity = '0'; };
+        img.onerror = () => {
+          errorCount += 1;
+          if (errorCount >= 3) {
+            this.options.onTileError?.();
+          }
+          img.style.opacity = '0';
+        };
         tile.appendChild(img);
       }
 
@@ -213,11 +221,19 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
   const mapStyleContainerRef = useRef<HTMLDivElement>(null);
   const legendRef = useRef<HTMLDivElement>(null);
+  const arcGisFailRef = useRef(0);
+  const osmFailRef = useRef(0);
 
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationButtonRef = useRef<HTMLDivElement>(null);
   const changeDropdownRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
+
+  // Tile provider fallback state. ArcGIS is the default; if its tiles fail
+  // repeatedly we fall back to OpenStreetMap so the map never shows blank.
+  const [tileProvider, setTileProvider] = useState<'arcgis' | 'osm' | 'none'>('arcgis');
+  const [tileError, setTileError] = useState(false);
+  const tileFailCountRef = useRef(0);
 
   // Map activation state - controls when controls become visible. Starts
   // inactive so the map is dimmed with no magnifier, map type, layers, or
@@ -515,7 +531,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     restart();
   }, [restart]);
 
-  // Update tile layer based on mapStyle
+  // Update tile layer based on mapStyle, with ArcGIS→OpenStreetMap fallback
+  // when tiles fail repeatedly. No CARTO (requires API key).
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
@@ -524,35 +541,54 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.removeLayer(tileLayerRef.current);
     }
 
-    // No CARTO (requires API key). No tile.openstreetmap.org (403 in production).
-    // Esri public ArcGIS Online tiles — no API key for standard basemap use.
-    let url =
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+    // Pick URL by active provider. ArcGIS is primary; OSM is the no-key fallback.
+    let url: string;
     let attribution = '';
     let maxZoom = 16;
     let subdomains = '';
 
-    if (mapStyle === 'satellite') {
-      url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const baseArcGis =
+      'https://server.arcgisonline.com/ArcGIS/rest/services';
+    if (tileProvider === 'osm') {
+      url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      attribution = '© OpenStreetMap contributors';
+      maxZoom = 19;
+      subdomains = 'abc';
+    } else if (mapStyle === 'satellite') {
+      url = `${baseArcGis}/World_Imagery/MapServer/tile/{z}/{y}/{x}`;
       maxZoom = 19;
     } else if (mapStyle === 'terrain') {
-      url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
+      url = `${baseArcGis}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`;
       maxZoom = 19;
     } else if (mapStyle === 'territorial') {
-      url =
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+      url = `${baseArcGis}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
       maxZoom = 16;
-    } else if (mapStyle === '3d') {
-      url =
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}';
-      maxZoom = 14;
+    } else {
+      // '3d' default
+      url = `${baseArcGis}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+      maxZoom = 16;
     }
 
-    const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains);
+    const onTileError = () => {
+      if (tileProvider === 'osm') {
+        osmFailRef.current += 1;
+        if (osmFailRef.current >= 6) {
+          setTileProvider('none');
+          setTileError(true);
+        }
+        return;
+      }
+      arcGisFailRef.current += 1;
+      if (arcGisFailRef.current >= 6) {
+        setTileProvider('osm');
+      }
+    };
+
+    const newLayer = createNepalTileLayer(url, attribution, maxZoom, subdomains, onTileError);
 
     newLayer.addTo(map);
     tileLayerRef.current = newLayer;
-  }, [mapStyle]);
+  }, [mapStyle, tileProvider]);
 
   // Handle focused target flight
   useEffect(() => {
@@ -1302,6 +1338,34 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       {/* Dimming overlay - shows when map is not active */}
       {!mapActive && (
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-[500] pointer-events-none transition-opacity duration-500" />
+      )}
+
+      {/* Map data unavailable overlay - shows when all tile providers fail */}
+      {mapActive && tileError && (
+        <div className="absolute inset-0 z-[600] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-6 shadow-2xl shadow-black/50 max-w-sm text-center animate-fadeIn">
+            <div className="w-10 h-10 rounded-full bg-rose-900/50 text-rose-400 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white mb-1">Map data unavailable</h4>
+            <p className="text-[11px] text-slate-400 mb-4">
+              Base map tiles could not be loaded. Highway routes, incidents, and
+              route lines still work — only the background map is missing.
+            </p>
+            <button
+              onClick={() => {
+                arcGisFailRef.current = 0;
+                osmFailRef.current = 0;
+                setTileProvider('arcgis');
+                setTileError(false);
+              }}
+              className="w-full py-2 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 mx-auto max-w-xs"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Retry map tiles</span>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* My Location GPS Button - only show when map is active */}
