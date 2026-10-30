@@ -37,7 +37,9 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100">
+    <div className="fixed inset-0 z-[700] flex flex-col bg-slate-950 text-slate-100">
+      {/* Backdrop dim */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       {/* Top bar */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
