@@ -829,7 +829,6 @@ function AppContent() {
                 showTextSize={true}
                 showAccentColor={true}
                 showSignOut={true}
-                showAdminCommand={isSuperAdmin}
                 showReminderService={true}
                 user={user}
                 onSignOut={logout}
