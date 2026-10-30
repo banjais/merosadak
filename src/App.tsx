@@ -548,6 +548,7 @@ function AppContent() {
         onOpenUserPanel={() => setIsProfileOpen(true)}
         user={user}
         userRole={userRole}
+        isSuperAdmin={isSuperAdmin}
         incidentsCount={incidents.length}
         hasActiveRoute={!!activeRoute}
         routeLabel={activeRoute ? `${activeRoute.origin.name} → ${activeRoute.destination.name}` : null}

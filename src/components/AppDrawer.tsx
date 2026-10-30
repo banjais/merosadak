@@ -44,6 +44,7 @@ interface AppDrawerProps {
   onOpenUserPanel?: () => void;
   user?: { displayName?: string; email?: string } | null;
   userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
+  isSuperAdmin?: boolean;
   incidentsCount?: number;
   hasActiveRoute?: boolean;
   routeLabel?: string | null;
@@ -75,6 +76,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenUserPanel,
   user,
   userRole = 'GeneralUser',
+  isSuperAdmin = false,
   incidentsCount = 0,
   hasActiveRoute = false,
   routeLabel = null,
@@ -268,7 +270,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition shrink-0"
                 title="Open account panel"
               >
-                {userRole === 'superadmin' ? (
+                {userRole === 'superadmin' || isSuperAdmin ? (
                   <>
                     <ShieldAlert className="w-3 h-3 text-rose-400" />
                     <span className="hidden sm:inline text-[10px] font-semibold text-rose-400">SuperAdmin</span>
