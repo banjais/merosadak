@@ -627,12 +627,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     ) {
       return;
     }
-    // Explicitly focusing a city or incident means the camera is no longer
+    // Explicitly focusing a city or destination means the camera is no longer
     // tracking the user, so following stops — the dot keeps updating.
-    // Fly to the target but keep the map transparent/inactive until the user
-    // clicks the canvas; controls only appear on click.
     setFollowMe(false);
     suppressRecenterRef.current = true;
+    // Activating the map here also loads the basemap tiles, so when the user
+    // picks a destination they immediately see the actual area (terrain /
+    // roads / labels) instead of a blank dark canvas. Without this, the map
+    // stayed dim and tile-less until the user clicked it.
+    if (!mapActive) setMapActive(true);
+    if (tileProvider === 'none') setTileProvider('arcgis');
     mapInstanceRef.current.flyTo([focusedTarget.lat, focusedTarget.lng], focusedTarget.zoom || 11, {
       duration: 1.2,
       easeLinearity: 0.25,
@@ -641,7 +645,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setTimeout(() => {
       suppressRecenterRef.current = false;
     }, 1400);
-  }, [focusedTarget]);
+  }, [focusedTarget, mapActive, tileProvider]);
 
   // Render All 79 Highways Layer (shows everywhere across Nepal when selected)
   useEffect(() => {

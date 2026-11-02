@@ -643,6 +643,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setDestSearchQuery(city.name);
       setSingleSearchQuery(city.name);
       setUserPickedDestination(true);
+      // No origin yet → fly the map to the destination so the user sees the
+      // actual area they are going to, not a whole-Nepal overview. When both
+      // ends are set, handleRouteCalculated already flies to the route.
+      if (!originId) {
+        onViewOnMap?.({
+          lat: city.lat,
+          lng: city.lng,
+          title: city.name,
+          zoom: 11,
+        });
+      }
     } else {
       setOriginId(city.id);
       setOriginSearchQuery(city.name);
@@ -667,6 +678,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setSingleSearchQuery(city.name);
     setUserPickedDestination(true);
     setIsDestDropdownOpen(false);
+    // When the destination is picked without an origin, fly the map to it so
+    // the user sees the area they are heading to, instead of a static
+    // whole-Nepal overview. Once both ends are set, the route calculation
+    // re-fits the map to the whole corridor.
+    if (!originId) {
+      onViewOnMap?.({
+        lat: city.lat,
+        lng: city.lng,
+        title: city.name,
+        zoom: 11,
+      });
+    }
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
@@ -957,6 +980,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             setUserPickedDestination(true);
             setIsSingleDropdownOpen(false);
             setIsDestDropdownOpen(false);
+            // Voice-search destination with no origin yet → fly the map to it,
+            // matching the typed-search behaviour.
+            if (!originId) {
+              onViewOnMap?.({
+                lat: matched.lat,
+                lng: matched.lng,
+                title: matched.name,
+                zoom: 11,
+              });
+            }
             if (hasCalculated) setNeedsRecalculation(true);
           } else if (target === 'origin') {
             setOriginId(matched.id);
@@ -1625,6 +1658,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setDestSearchQuery(city.name);
                     setIsSingleDropdownOpen(false);
                     setUserPickedDestination(true);
+                    // Single-field destination pick (no origin yet) → fly the
+                    // map to the chosen place so the user sees its area
+                    // instead of a static whole-Nepal overview.
+                    if (!originId) {
+                      onViewOnMap?.({
+                        lat: city.lat,
+                        lng: city.lng,
+                        title: city.name,
+                        zoom: 11,
+                      });
+                    }
                     if (hasCalculated) setNeedsRecalculation(true);
                   }}
                   totalMatches={singleMatchCount}
