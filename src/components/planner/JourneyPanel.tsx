@@ -32,6 +32,10 @@ interface JourneyPanelProps {
   mode: TravelerMode;
   extraIncidents?: RoadIncident[];
   onViewOnMap?: (target?: MapTarget) => void;
+  /** True when the host already shows the verdict's clear/caution/obstructed
+   * bar, so this panel does not print the same numbers twice. The listed
+   * delay estimate is unique to the journey view and always stays. */
+  hideStatusSummary?: boolean;
 }
 
 type Filter = 'all' | FeedGroup;
@@ -154,7 +158,7 @@ const ElevationStrip: React.FC<{ route: RoutePlanResult; pins: FeedEntry[] }> = 
   );
 };
 
-export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode, extraIncidents, onViewOnMap }) => {
+export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode, extraIncidents, onViewOnMap, hideStatusSummary = false }) => {
   const [view, setView] = useState<'corridor' | 'schedule'>('corridor');
   const [filter, setFilter] = useState<Filter>('all');
   const [departure, setDeparture] = useState<string>(defaultDeparture);
@@ -269,7 +273,7 @@ export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode
         <>
           <ElevationStrip route={route} pins={visible} />
 
-          {statusTotal > 0 && (
+          {statusTotal > 0 && !hideStatusSummary && (
             <div>
               <div className="flex h-2 overflow-hidden rounded-full bg-slate-800" aria-label="Road status along the route">
                 <div className="bg-emerald-500" style={{ width: `${(status.clearKm / statusTotal) * 100}%` }} />
@@ -281,6 +285,9 @@ export const JourneyPanel: React.FC<JourneyPanelProps> = ({ route, vehicle, mode
                 {delayMin > 0 && ` · listed delays about +${delayMin} min`}
               </div>
             </div>
+          )}
+          {hideStatusSummary && delayMin > 0 && (
+            <div className="text-[10px] text-slate-400">Listed delays about +{delayMin} min</div>
           )}
 
           <div className="flex flex-wrap gap-1.5 text-xs" role="tablist" aria-label="Filter the corridor">

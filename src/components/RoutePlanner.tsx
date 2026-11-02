@@ -18,19 +18,17 @@ import { RouteComparisonView } from './RouteComparisonView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
 import { TripOptions } from './planner/TripOptions';
-import { TripTabs, type TripTab, type TripTabItem } from './planner/TripTabs';
+import { RouteVerdict } from './planner/RouteVerdict';
+import { DetailSection } from './planner/DetailSection';
+import { RouteBlocksPanel } from './planner/RouteBlocksPanel';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
 import { CostsPanel } from './planner/CostsPanel';
 import {
-  Compass,
   ArrowRight,
   ArrowLeft,
-  ShieldCheck,
   ShieldAlert,
   Zap,
-  Mountain,
-  Clock,
   Sparkles,
   MapPin,
   Bike,
@@ -60,7 +58,6 @@ import {
   Radio,
   FileText,
   CloudSun,
-  Pencil,
   Flame,
   Wrench,
   Leaf,
@@ -491,7 +488,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
 
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
-  const [activeTab, setActiveTab] = useState<TripTab>('journey');
+  // Progressive disclosure: which detail sections are open. Defaults are
+  // computed per plan — the blocks section opens itself the moment anything on
+  // the route is not clear — and a fresh calculation resets every section, so
+  // each new search starts with the short verdict, never with stale panels.
+  type DetailSectionId = 'blocks' | 'journey' | 'insights' | 'costs' | 'routes' | 'report';
+  const [openSections, setOpenSections] = useState<Partial<Record<DetailSectionId, boolean>>>({});
+  const isOpen = useCallback((id: DetailSectionId, def: boolean) => openSections[id] ?? def, [openSections]);
+  const openSection = useCallback((id: DetailSectionId) => {
+    setOpenSections((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
+  const toggleSection = useCallback((id: DetailSectionId) => {
+    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
   // Calculation animation key for smooth CSS fade-in transitions
   const [calcKey, setCalcKey] = useState<number>(0);
 
@@ -728,7 +737,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(resolved);
       }
       setHasCalculated(true);
-      setActiveTab('journey');
+      setOpenSections({});
       setTripStarted(false);
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
@@ -1197,7 +1206,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) {
       setHasCalculated(false);
       setRoutePlan(null);
-      setActiveTab('journey');
+      setOpenSections({});
       onRouteClear?.();
     }
     setRoutePlannerStep('destination');
@@ -1218,7 +1227,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setRoutePlannerStep('origin');
-    setActiveTab('journey');
+    setOpenSections({});
     setTripStarted(false);
     onRouteClear?.();
     setTimeout(() => {
@@ -1236,7 +1245,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestId('');
     setDestSearchQuery('');
     setSingleSearchQuery('');
-    setActiveTab('journey');
+    setOpenSections({});
     onRouteClear?.();
     setTimeout(() => {
       originInputRef.current?.focus();
@@ -1363,17 +1372,47 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
   };
 
-  // One tab bar for everything after a route exists. Driver-only and
-  // alternatives tabs appear only when they have something to show.
-  const tripTabs: TripTabItem[] = [
-    { id: 'journey', label: 'Journey', Icon: Route, badge: routePlan?.incidentsOnRoute?.length },
-    { id: 'insights', label: 'Insights', Icon: Sparkles },
-    { id: 'costs', label: 'Costs', Icon: Flame },
-    ...(routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1
-      ? [{ id: 'routes' as const, label: 'Routes', Icon: Layers, badge: routePlan.allRouteOptions.length }]
-      : []),
-    { id: 'report', label: 'Report', Icon: FileText },
-  ];
+  // Short, one-line summaries for the detail section headers. These are what
+  // the user reads with every section still collapsed — the "short info" layer
+  // of the redesign, derived from the same plan the verdict uses.
+  const routeSegmentIssues = useMemo(
+    () => (routePlan ? (routePlan.steps ?? []).filter((s) => s.roadStatus && s.roadStatus !== 'clear').length : 0),
+    [routePlan],
+  );
+  const routeIncidentCount = routePlan?.incidentsOnRoute?.length ?? 0;
+  const routeHasIssues = routePlan
+    ? (routePlan.statusSummary?.obstructedKm ?? 0) > 0 ||
+      (routePlan.statusSummary?.cautionKm ?? 0) > 0 ||
+      routeSegmentIssues > 0 ||
+      routeIncidentCount > 0
+    : false;
+  const routeBlockHint = !routePlan
+    ? undefined
+    : routeHasIssues
+      ? [
+          routeSegmentIssues > 0 ? `${routeSegmentIssues} segment${routeSegmentIssues === 1 ? '' : 's'} not clear` : null,
+          routeIncidentCount > 0 ? `${routeIncidentCount} live report${routeIncidentCount === 1 ? '' : 's'}` : null,
+        ].filter(Boolean).join(' · ')
+      : 'All segments open · no live reports';
+  const viaLabel = useMemo(() => {
+    if (!routePlan) return '';
+    return (
+      // Some stored highlights already read "via X" — strip the prefix so the
+      // verdict card never prints "via via".
+      routePlan.viaHighlights?.replace(/^via\s+/i, '') ||
+      (routeHighwayCodes.length > 0 ? routeHighwayCodes.join(' · ') : '') ||
+      routePlan.routeBadge ||
+      routePlan.routeName ||
+      ''
+    );
+  }, [routePlan, routeHighwayCodes]);
+
+  // "Start trip" from the verdict: opens the live journey section and the map.
+  const handleStartTrip = () => {
+    setTripStarted(true);
+    openSection('journey');
+    onViewOnMap?.();
+  };
 
   return (
     <div className="space-y-4">
@@ -1790,94 +1829,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
         {hasCalculated && routePlan && (
           <div key={`trip-${calcKey}-${routePlan.id}`} className="animate-fade-in-smooth space-y-3 p-3 sm:p-4">
-            {/* 1. PROFESSIONAL REPORT HEADER */}
-            <section
-              className="rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-950/80 p-4 sm:p-6 backdrop-blur-md shadow-2xl"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/40">
-                    <MapPin className="h-5 w-5 text-emerald-400" />
-                  </div>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <h2 className="text-sm sm:text-base font-black text-white leading-tight">
-                      {routePlan.origin.name || routePlan.origin.id}
-                      <span className="mx-2 text-slate-500 text-xs">→</span>
-                      {routePlan.destination.name || routePlan.destination.id}
-                    </h2>
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      <span>
-                        {Math.floor(routePlan.estimatedTimeMinutes / 60)}h{' '}
-                        {Math.round(routePlan.estimatedTimeMinutes % 60)}m drive
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={handleEditLocations}
-                    className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl border border-slate-700 bg-slate-800/60 hover:bg-slate-700 text-sm font-bold text-slate-200 transition-all"
-                  >
-                    <Pencil className="h-3.5 w-3.5 shrink-0" />
-                    <span className="ml-1">Change location</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTripStarted(true);
-                      setActiveTab('journey');
-                      onViewOnMap?.();
-                    }}
-                    className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/25 transition-all"
-                  >
-                    <Navigation className="h-3.5 w-3.5 shrink-0" />
-                    <span className="ml-1">Go ahead</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Key metrics strip */}
-              <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Compass className="h-3 w-3 text-emerald-400 shrink-0" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Distance</span>
-                  </div>
-                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.totalDistanceKm} km</div>
-                </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="h-3 w-3 text-cyan-400 shrink-0" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Time</span>
-                  </div>
-                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">
-                    {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {Math.round(routePlan.estimatedTimeMinutes % 60)}m
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
-                  </div>
-                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">
-                    Rs {estimatedTripCostNpr.toLocaleString()}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Road score</span>
-                  </div>
-                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.roadConditionScore}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50 text-[11px] text-slate-400 font-mono">
-                <Mountain className="h-3 w-3 text-purple-400 shrink-0" />
-                <span>Highest point {routePlan.maxElevationM} m</span>
-              </div>
-            </section>
+            {/* 1. THE VERDICT — can I depart, is the road open? Short by design. */}
+            <RouteVerdict
+              plan={routePlan}
+              totalCostNpr={estimatedTripCostNpr}
+              viaLabel={viaLabel}
+              tripStarted={tripStarted}
+              onStartTrip={handleStartTrip}
+              onEdit={handleEditLocations}
+            />
 
             <TripOptions
               vehicle={vehicle}
@@ -1888,24 +1848,53 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               onOpenSos={onOpenSos}
             />
 
-            {/* 2. TABS — everything inside tabs only */}
-            <TripTabs tabs={tripTabs} active={activeTab} onChange={setActiveTab}>
-              {activeTab === 'journey' && (
-                <>
-                  <ErrorBoundary
-                    fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
-                  >
-                    <JourneyPanel
-                      route={routePlan}
-                      vehicle={vehicle}
-                      mode="driver"
-                      extraIncidents={liveIncidents}
-                      onViewOnMap={onViewOnMap}
-                    />
-                  </ErrorBoundary>
-                </>
-              )}
-              {activeTab === 'insights' && (
+            {/* 3. DETAILS ON DEMAND — every section starts collapsed and shows a
+               one-line hint; only the blocks section opens itself, and only
+               when the route actually has something to warn about. */}
+            <div className="space-y-2.5">
+              <DetailSection
+                id="blocks"
+                title="Blocks & alerts on route"
+                Icon={AlertTriangle}
+                tone="alert"
+                badge={routeSegmentIssues + routeIncidentCount}
+                hint={routeBlockHint}
+                open={isOpen('blocks', routeHasIssues)}
+                onToggle={() => toggleSection('blocks')}
+              >
+                <RouteBlocksPanel plan={routePlan} extraIncidents={liveIncidents} />
+              </DetailSection>
+
+              <DetailSection
+                id="journey"
+                title="Journey"
+                Icon={Route}
+                hint="Turn-by-turn, live road feed and elevation"
+                open={isOpen('journey', false)}
+                onToggle={() => toggleSection('journey')}
+              >
+                <ErrorBoundary
+                  fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
+                >
+                  <JourneyPanel
+                    route={routePlan}
+                    vehicle={vehicle}
+                    mode="driver"
+                    extraIncidents={liveIncidents}
+                    onViewOnMap={onViewOnMap}
+                    hideStatusSummary
+                  />
+                </ErrorBoundary>
+              </DetailSection>
+
+              <DetailSection
+                id="insights"
+                title="Insights"
+                Icon={Sparkles}
+                hint={`Road score ${routePlan.roadConditionScore} · high point ${routePlan.maxElevationM.toLocaleString()} m`}
+                open={isOpen('insights', false)}
+                onToggle={() => toggleSection('insights')}
+              >
                 <InsightsPanel
                   route={routePlan}
                   vehicle={vehicle}
@@ -1916,8 +1905,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onViewHighwayOnMap={onViewHighwayOnMap}
                   onOpenHighwayDirectory={onOpenHighwayDirectory}
                 />
-              )}
-              {activeTab === 'costs' && (
+              </DetailSection>
+
+              <DetailSection
+                id="costs"
+                title="Costs"
+                Icon={Flame}
+                hint={`Fuel Rs ${Math.max(estimatedTripCostNpr - (routePlan.totalTollCostNpr || 0), 0).toLocaleString()} · tolls Rs ${(routePlan.totalTollCostNpr || 0).toLocaleString()}`}
+                open={isOpen('costs', false)}
+                onToggle={() => toggleSection('costs')}
+              >
                 <CostsPanel
                   route={routePlan}
                   vehicle={vehicle}
@@ -1931,23 +1928,42 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onVehicleChange={setVehicle}
                   onOpenPreTrip={onOpenPreTrip}
                 />
+              </DetailSection>
+
+              {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                <DetailSection
+                  id="routes"
+                  title="Alternative routes"
+                  Icon={Layers}
+                  badge={routePlan.allRouteOptions.length}
+                  hint="Compare distance, time and road score"
+                  open={isOpen('routes', false)}
+                  onToggle={() => toggleSection('routes')}
+                >
+                  <RouteComparisonView
+                    activePlan={routePlan}
+                    allOptions={routePlan.allRouteOptions}
+                    selectedRouteId={routePlan.id}
+                    vehicle={vehicle}
+                    onSelectRoute={(opt) => {
+                      setRoutePlan(opt);
+                      setPreference(opt.preference);
+                      onRouteCalculated(opt);
+                      setOpenSections({});
+                    }}
+                    onViewOnMap={onViewOnMap}
+                  />
+                </DetailSection>
               )}
-              {activeTab === 'routes' && routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
-                <RouteComparisonView
-                  activePlan={routePlan}
-                  allOptions={routePlan.allRouteOptions}
-                  selectedRouteId={routePlan.id}
-                  vehicle={vehicle}
-                  onSelectRoute={(opt) => {
-                    setRoutePlan(opt);
-                    setPreference(opt.preference);
-                    onRouteCalculated(opt);
-                    setActiveTab('journey');
-                  }}
-                  onViewOnMap={onViewOnMap}
-                />
-              )}
-              {activeTab === 'report' && (
+
+              <DetailSection
+                id="report"
+                title="Trip report"
+                Icon={FileText}
+                hint="Printable and shareable summary"
+                open={isOpen('report', false)}
+                onToggle={() => toggleSection('report')}
+              >
                 <UnifiedRouteReport
                   route={routePlan}
                   distanceKm={routePlan.totalDistanceKm}
@@ -1969,8 +1985,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   simulationControls={simulationControls}
                   onViewOnMap={onViewOnMap}
                 />
-              )}
-            </TripTabs>
+              </DetailSection>
+            </div>
           </div>
         )}
       </div>
