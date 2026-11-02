@@ -769,7 +769,7 @@ export function UnifiedRouteReport({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Database className="h-3.5 w-3.5 text-cyan-500/80" />
-              <span className="font-semibold text-slate-300">DoR Nepal Highway GIS · {sourceLabel}</span>
+              <span className="font-semibold text-slate-300">DoR Nepal Highway GIS</span>
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">

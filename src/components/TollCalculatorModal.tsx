@@ -149,7 +149,6 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
                 <>
                   <br />
                   Last updated: {new Date(tollRates.lastUpdated).toLocaleDateString('en-NP', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  {tollRates.sourceLabel && <span className="ml-2"> · Source: {tollRates.sourceLabel}</span>}
                 </>
               )}
             </div>

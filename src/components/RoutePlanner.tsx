@@ -1397,7 +1397,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         ? (gpsOriginCity
                             ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
                             : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
-                        : 'Waiting for a GPS fix — your origin updates automatically')
+                        : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
                     : 'Back to the current location'}
                 </div>
               {detectedLocation && locationMode === 'my_location' && (
@@ -1415,13 +1415,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   )}
                 </div>
               )}
-              {locationMode === 'my_location' && !detectedLocation && (
-                <div className={`text-[10px] font-medium truncate mt-0.5 ${
-                  liveLocationError ? 'text-rose-400' : 'text-slate-500'
-                }`}>
-                  {liveLocationError
-                    ? 'Location blocked — allow GPS access, or pick an origin below'
-                    : 'Looking for a GPS signal…'}
+              {locationMode === 'my_location' && !detectedLocation && liveLocationError && (
+                <div className="text-[10px] font-medium truncate mt-0.5 text-rose-400">
+                  Location blocked — allow GPS access, or pick an origin below
                 </div>
               )}
               {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (

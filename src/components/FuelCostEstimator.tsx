@@ -124,22 +124,6 @@ function getVehicleBenchmarks(prices?: FuelRateConfig | null): Record<VehicleTyp
   };
 }
 
-function formatDate(isoStr: string): string {
-  if (!isoStr) return '—';
-  try {
-    const d = new Date(isoStr);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return isoStr;
-  }
-}
-
 interface TollItem {
   id: string;
   name: string;
@@ -553,24 +537,8 @@ Generated via Mero Sadak Nepal Highway GIS`;
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
                 <span className="flex items-center space-x-1 text-emerald-300">
                   <Fuel className="w-3 h-3" />
-                  <span>Fuel rates live</span>
+                  <span>Fuel rates live — see current prices above</span>
                 </span>
-                <span className="text-slate-400">
-                  Petrol Rs.{fuelPrices.petrol}/L · Diesel Rs.{fuelPrices.diesel}/L · EV Rs.{fuelPrices.electricity}/kWh
-                </span>
-                {fuelPriceMetadata && (
-                  <>
-                    <span className="text-slate-500">•</span>
-                    <span className="text-slate-400">
-                      Source: {fuelPriceMetadata.sourceLabel || fuelPriceMetadata.source}
-                    </span>
-                    {fuelPriceMetadata.lastUpdated && (
-                      <span className="text-slate-500">
-                        · Updated {formatDate(fuelPriceMetadata.lastUpdated)}
-                      </span>
-                    )}
-                  </>
-                )}
               </div>
             )}
           </div>
