@@ -1825,8 +1825,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.roadConditionScore}</div>
                 </div>
               </div>
-                </div>
-              </div>
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50 text-[11px] text-slate-400 font-mono">
                 <Mountain className="h-3 w-3 text-purple-400 shrink-0" />
                 <span>Highest point {routePlan.maxElevationM} m</span>
