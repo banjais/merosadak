@@ -15,6 +15,7 @@
     "icons:generate": "node scripts/generate-brand-icons.cjs",
     "sync:data": "node worker/sync-data.js",
     "sync:fuel": "npx tsx scripts/sync-fuel-prices.ts",
+    "sync:derived": "npx tsx scripts/generate-derived-data.ts",
     "sync:tolls": "npx tsx scripts/sync-toll-rates.ts",
     "sync:all-tolls": "npx tsx scripts/sync-all-toll-rates.ts",
     "sync:all-tolls:auto": "npx tsx scripts/auto-update-toll-rates.ts --auto",
