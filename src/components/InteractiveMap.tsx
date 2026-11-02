@@ -671,7 +671,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       // instead of relying on the static bundled status only.
       const analysis = analyzeHighwayRealtimeStatus(highway, incidents, []);
       const isSelected = activeHighwayInfo?.code === highway.code;
-      const selectedColor = '#38bdf8';
+      const selectedColor = '#22d3ee';
       const overallColor = statusToColor(realtimeToRoadStatus(analysis.realtimeStatus));
       const weight = isSelected ? 3 : 2;
       const opacity = isSelected ? 1.0 : 0.85;
@@ -812,10 +812,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
           const border = L.geoJSON(data, {
             style: {
-              color: '#b91c1c',
+              color: '#10b981',
               weight: 2.5,
               opacity: 0.9,
-              fillColor: '#7f1d1d',
+              fillColor: '#064e3b',
               fillOpacity: 0.08,
             },
             onEachFeature: (feature, layer) => {
@@ -885,9 +885,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         try {
           const geoJsonLayer = L.geoJSON(data, {
             style: {
-              color: '#f59e0b',
+              color: '#22d3ee',
               weight: 1.5,
-              opacity: 0.6,
+              opacity: 0.5,
               fill: false,
               dashArray: '4, 4',
             },
@@ -1218,7 +1218,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       routeGroup.addLayer(animatedFlow);
     } else {
       // Single unified route polyline
-      const activeColor = activeRoute.routeColor || '#38bdf8';
+      const activeColor = activeRoute.routeColor || '#34d399';
 
       const routeGlow = L.polyline(activeRoute.pathCoordinates, {
         color: activeColor,

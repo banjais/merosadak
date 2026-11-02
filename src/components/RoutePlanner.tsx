@@ -1791,38 +1791,40 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
 
               {/* Key metrics strip */}
-              <div className="grid gap-3 grid-cols-4">
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Compass className="h-3 w-3 text-emerald-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Distance</span>
                   </div>
-                  <div className="font-mono text-lg font-bold text-white">{routePlan.totalDistanceKm} km</div>
+                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.totalDistanceKm} km</div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="h-3 w-3 text-cyan-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Time</span>
                   </div>
-                  <div className="font-mono text-lg font-bold text-white">
+                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">
                     {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {Math.round(routePlan.estimatedTimeMinutes % 60)}m
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
                   </div>
-                  <div className="font-mono text-lg font-bold text-white">
+                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">
                     Rs {estimatedTripCostNpr.toLocaleString()}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Road score</span>
                   </div>
-                  <div className="font-mono text-lg font-bold text-white">{routePlan.roadConditionScore}</div>
+                  <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.roadConditionScore}</div>
+                </div>
+              </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50 text-[11px] text-slate-400 font-mono">

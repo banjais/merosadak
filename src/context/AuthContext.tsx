@@ -183,20 +183,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
   // assignments made by the superadmin panel.
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'userRoles'), (snap) => {
-      const roles: Record<string, UserRole> = {};
-      snap.forEach((d) => {
-        const data = d.data() as { role?: UserRole };
-        if (data.role) roles[d.id] = data.role;
-      });
-      setUserRoles(roles);
-      // Re-resolve the signed-in user's role now that Firestore roles are loaded.
-      if (user) {
-        const role = resolveUserRole(user.email ?? null, roles);
-        setUserRoleState(role);
-        setIsSuperAdmin(role === 'superadmin');
+    const unsub = onSnapshot(
+      collection(db, 'userRoles'),
+      (snap) => {
+        const roles: Record<string, UserRole> = {};
+        snap.forEach((d) => {
+          const data = d.data() as { role?: UserRole };
+          if (data.role) roles[d.id] = data.role;
+        });
+        setUserRoles(roles);
+        // Re-resolve the signed-in user's role now that Firestore roles are loaded.
+        if (user) {
+          const role = resolveUserRole(user.email ?? null, roles);
+          setUserRoleState(role);
+          setIsSuperAdmin(role === 'superadmin');
+        }
+      },
+      // Security rules commonly deny reads on `userRoles` for anonymous
+      // visitors. Treat a denied snapshot the same as "no roles" instead of
+      // letting Firebase flood the console with permission errors.
+      (error) => {
+        if (import.meta.env.DEV) {
+          console.debug('[Mero Sadak] userRoles unavailable (falling back to email heuristics):', error.code);
+        }
+        setUserRoles({});
       }
-    });
+    );
     return () => unsub();
   }, [user]);
 

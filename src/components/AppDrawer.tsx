@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Sparkles,
   User,
+  LogIn,
 } from 'lucide-react';
 import { ActiveFeatureType } from '../App';
 import { useAuth } from '../context/AuthContext';
@@ -182,10 +183,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         onClick={onClose}
       />
 
-      <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-slate-950 border-r border-slate-800 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
-        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+      <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-[#080d15] border-r border-slate-800/70 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
+        <div className="p-3 border-b border-slate-800/70 flex items-center justify-between bg-[#0c141d]/80">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow">
+            <div className="w-9 h-9 rounded-lg bg-[#0c141d] border border-emerald-500/30 flex items-center justify-center shadow-md logo-shadow">
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
               </svg>
@@ -227,29 +228,29 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   <button
                     key={item.id}
                     onClick={item.onClick}
-                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 min-h-9 rounded-xl text-xs font-medium transition text-left group ${
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 min-h-12 rounded-xl text-sm font-medium transition text-left group ${
                       isActive
                         ? item.activeBg
-                        : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className={`p-1 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900 ${item.color} group-hover:bg-slate-800`}`}>
-                        <Icon className="w-3 h-3" />
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className={`p-1.5 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900/70 ${item.color} group-hover:bg-slate-800/80`}`}>
+                        <Icon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <span className="block text-xs font-medium truncate">{item.label}</span>
-                        <span className="text-[9px] text-tertiary font-normal block truncate">{item.subtitle}</span>
+                        <span className="block text-[13px] font-medium truncate leading-tight">{item.label}</span>
+                        <span className="text-[10px] text-tertiary font-normal block truncate leading-tight mt-0.5">{item.subtitle}</span>
                       </div>
                     </div>
-                    <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
                   </button>
                 );
               })}
           </div>
         </div>
 
-        <div className="p-3 border-t border-slate-800 bg-slate-900/60 text-xs text-tertiary">
+        <div className="p-3 border-t border-slate-800/70 bg-[#0b111b]/80 text-xs text-tertiary">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -290,10 +291,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             ) : (
               <button
                 onClick={onOpenLogin}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 transition shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 min-h-10 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25 transition shrink-0"
                 title="Sign in"
               >
-                <span className="hidden sm:inline text-[10px] font-semibold">Sign in</span>
+                <LogIn className="w-3.5 h-3.5 shrink-0" />
+                <span className="sm:inline text-[11px] font-semibold">Sign in</span>
               </button>
             )}
           </div>

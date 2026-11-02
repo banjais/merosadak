@@ -128,7 +128,7 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
             <button
               type="button"
               onClick={() => handleAction(onOpenDrawer)}
-              className="w-11 h-11 rounded-full bg-slate-900/95 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-indigo-500/40"
+              className="w-11 h-11 rounded-full bg-slate-900/95 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition border border-cyan-500/40"
               title="Menu"
             >
               <Menu className="w-5 h-5" />
@@ -142,8 +142,8 @@ export const SpeedDialFab: React.FC<SpeedDialFabProps> = ({
         onClick={toggleFab}
         className={`w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform active:scale-90 ring-4 ring-slate-950/80 ${
           isOpen
-            ? 'bg-slate-800 text-amber-400 border border-amber-500/50 rotate-45 shadow-amber-500/20'
-            : 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 text-white hover:shadow-teal-500/30 hover:scale-105'
+            ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 rotate-45 shadow-emerald-500/20'
+            : 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 text-white hover:shadow-emerald-500/30 hover:scale-105'
         }`}
         title={isOpen ? 'Close menu' : 'Open Navigation & Travel Tools'}
         aria-label="Toggle floating navigation menu"
