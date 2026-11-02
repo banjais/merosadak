@@ -75,7 +75,7 @@ import {
 const PageLoadingFallback: React.FC<{ label: string }> = ({ label }) => (
   <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-8">
     <div className="flex items-center gap-3 text-sm text-slate-400">
-      <span className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <span className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       <span>{label}</span>
     </div>
   </div>
@@ -504,7 +504,7 @@ function AppContent() {
   return (
     <PullToRefresh
       onRefresh={fetchLiveFeeds}
-      className="h-full bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950"
+      className="h-full bg-[#060a10] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950"
     >
       {/* Animated Flash / Splash Screen */}
       <SplashScreen isReady={isAppReady} onFinished={() => setIsAppReady(true)} />
@@ -980,7 +980,7 @@ function AppContent() {
               {/* Panel Header */}
               <div className="px-4 py-3 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950/70">
                 <div className="flex items-center space-x-2.5">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
                     {activeFeature === 'steps' && <Sparkles className="w-4 h-4" />}
                     {activeFeature === 'highways' && <Route className="w-4 h-4" />}
                   </div>
