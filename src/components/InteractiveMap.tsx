@@ -814,6 +814,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           );
           maskGroup.addLayer(mask);
           mask.bringToBack();
+          // StrictMode dev double-mount can resolve two fetches in parallel;
+          // drop any earlier mask so a stale fill never sits under the live one.
+          if (outsideMaskRef.current && outsideMaskRef.current !== mask) {
+            maskGroup.removeLayer(outsideMaskRef.current);
+          }
           outsideMaskRef.current = mask;
 
           const border = L.geoJSON(data, {
