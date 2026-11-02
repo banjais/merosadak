@@ -121,12 +121,16 @@ function createNepalTileLayer(
           r: '',
         });
         const img = document.createElement('img');
-        img.src = tileUrl;
         img.alt = '';
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.opacity = '0';
-        img.style.transition = 'opacity 0.3s ease';
+        img.style.transition = 'opacity 0.25s ease';
+        // IMPORTANT: attach load + error handlers BEFORE assigning img.src.
+        // Browsers may fire load synchronously from cache, before a later
+        // onload assignment has a chance to run, leaving opacity stuck at 0
+        // (the symptom was: 45 "loaded" tiles reported by Leaflet but all
+        // visually blank because img.onload never ran to flip opacity to 1).
         let errorCount = 0;
         img.onload = () => { img.style.opacity = '1'; };
         img.onerror = () => {
@@ -136,6 +140,7 @@ function createNepalTileLayer(
           }
           img.style.opacity = '0';
         };
+        img.src = tileUrl;
         tile.appendChild(img);
       }
 

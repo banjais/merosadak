@@ -18,6 +18,7 @@ import { AppDrawer } from './components/AppDrawer';
 import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
+import { MyRouteFab } from './components/MyRouteFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminPanel } from './components/SuperAdminControlPanel';
 import { ProfilePage } from './components/ProfilePage';
@@ -67,7 +68,6 @@ import {
   RotateCcw,
   Home,
   Activity,
-  Settings,
   MoreHorizontal,
 } from 'lucide-react';
 
@@ -597,11 +597,11 @@ function AppContent() {
 
           {/* Right Header Controls: Notifications Bell, Fullscreen Maximize, Language Toggle & Emergency SOS */}
           <div className="flex items-center space-x-2 relative">
-            {/* Notification Bell & Dropdown */}
+            {/* Notification Bell & Dropdown — round style to match FAB / avatar */}
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className={`p-2 rounded-xl border text-xs font-semibold transition relative touch-target ${
+                className={`w-10 h-10 rounded-full border text-xs font-semibold transition relative touch-target flex items-center justify-center ${
                   isNotificationsOpen
                     ? 'bg-accent-bg accent-text accent-border shadow-md shadow-black/10'
                     : 'bg-slate-800/90 hover:bg-slate-700 accent-text border-slate-700/80'
@@ -765,14 +765,16 @@ function AppContent() {
 
             {/* Header right — profile only (signed in). When not signed in nothing
             is shown here: no sign-in button and no settings button. Settings live
-            inside the Profile page. */}
+            inside the Profile page. Redesigned to a single round avatar (40px)
+            with a subtle ring, matching Gmail/Google round style and the existing
+            FAB round UI. The username + Settings gear were dropped from the
+            header to keep the chrome minimal — both live in the Profile page
+            that opens on click. */}
             {user && (
               <div className="flex items-center gap-1">
-                {/* Profile: round Gmail picture + username on the next line +
-                a Settings gear icon hinting that settings are inside the page. */}
                 <button
                   onClick={() => setIsProfileOpen(true)}
-                  className="flex flex-col items-center gap-1 p-1.5 rounded-xl border cursor-pointer transition hover:bg-accent-bg/10 hover:border-accent-border/50 shrink-0"
+                  className="relative w-10 h-10 rounded-full border-2 border-slate-600/60 hover:border-accent-bg/70 cursor-pointer transition shrink-0 overflow-hidden shadow-md shadow-black/30 ring-1 ring-slate-700/40 hover:ring-accent-bg/30 group"
                   title="Open profile"
                   aria-label="Open profile"
                 >
@@ -780,17 +782,15 @@ function AppContent() {
                     <img
                       src={user.photoURL}
                       alt="Profile"
-                      className="w-7 h-7 rounded-full border border-slate-700/50 object-cover bg-slate-800"
+                      className="w-full h-full object-cover bg-slate-800"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-accent-bg accent-border flex items-center justify-center text-[11px] font-bold text-slate-950 shadow-sm">
+                    <div className="w-full h-full bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 flex items-center justify-center text-sm font-black text-white">
                       {(user.displayName || user.email || 'U')[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="text-[10px] font-bold text-slate-200 truncate max-w-[60px] leading-none">
-                    {user.displayName || (user.email ? user.email.split('@')[0] : 'User')}
-                  </span>
-                  <Settings className="w-3 h-3 text-slate-400 mt-0.5" />
+                  {/* Tiny status dot to signal "signed in, click to manage" */}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 group-hover:bg-emerald-300 transition" />
                 </button>
 
                 {/* Profile page panel (signed in only) — settings are inside. */}
@@ -961,6 +961,24 @@ function AppContent() {
           onOpenHighwayInfo={() => setIsHighwayInfoOpen(true)}
         />
 
+        {/* Left-Bottom "My Route" FAB — appears only when a route is planned.
+        Clicking it scrolls the planner verdict into view (the route summary
+        that lives below the fold). Sits on the left so it doesn't collide
+        with the right-side SpeedDialFab. */}
+        <MyRouteFab
+          route={activeRoute}
+          onClear={() => setActiveRoute(null)}
+          onClick={() => {
+            const verdict = document.getElementById('route-verdict');
+            if (verdict) {
+              verdict.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              // No verdict in DOM (e.g. the planner collapsed it): fall back
+              // to the main scroll container so the FAB is never a dead click.
+              document.querySelector('main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+        />
         {/* Feature Sliding Panel / Bottom Sheet (Progressive Disclosure - Only Shown When Clicked) */}
         {activeFeature && (
           <>

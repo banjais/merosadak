@@ -1833,7 +1833,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         )}
 
         {hasCalculated && routePlan && (
-          <div key={`trip-${calcKey}-${routePlan.id}`} className="animate-fade-in-smooth space-y-3 p-3 sm:p-4">
+          <div
+            key={`trip-${calcKey}-${routePlan.id}`}
+            id="route-verdict"
+            className="animate-fade-in-smooth space-y-3 p-3 sm:p-4"
+          >
             {/* 1. THE VERDICT — can I depart, is the road open? Short by design. */}
             <RouteVerdict
               plan={routePlan}
