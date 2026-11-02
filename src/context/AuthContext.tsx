@@ -203,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // visitors. Treat a denied snapshot the same as "no roles" instead of
       // letting Firebase flood the console with permission errors.
       (error) => {
-        if (import.meta.env.DEV) {
+        if (typeof console !== 'undefined') {
           console.debug('[Mero Sadak] userRoles unavailable (falling back to email heuristics):', error.code);
         }
         setUserRoles({});

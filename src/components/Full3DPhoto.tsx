@@ -118,7 +118,7 @@ export const Full3DPhoto: React.FC<Full3DPhotoProps> = ({
   }, [photoUrl]);
 
   return (
-    <div className={`relative w-full h-full ${className}`}>
+    <div className={`relative w-full h-full ${className}`} style={{ touchAction: 'pan-y' }}>
       {!loaded && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-800 rounded-lg">
           <div className="w-8 h-8 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
@@ -133,7 +133,6 @@ export const Full3DPhoto: React.FC<Full3DPhotoProps> = ({
         <Canvas
           camera={{ position: [0, 2, 5], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
-          style={{ touchAction: 'pan-y' }}
           onCreated={(state) => {
             state.gl.setClearColor(0x000000, 0);
           }}
