@@ -21,6 +21,7 @@ import { SpeedDialFab } from './components/SpeedDialFab';
 import { MyRouteFab } from './components/MyRouteFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminPanel } from './components/SuperAdminControlPanel';
+import { OfficeAdminPanel } from './components/OfficeAdminPanel';
 import { ProfilePage } from './components/ProfilePage';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SplashScreen } from './components/SplashScreen';
@@ -213,6 +214,11 @@ function AppContent() {
 
   // Super Admin control panel (only visible to banjais@gmail.com)
   const [isSuperAdminPanelOpen, setIsSuperAdminPanelOpen] = useState(false);
+
+  // Office Admin control panel — scoped to data input + data sources + settings
+  // (no user management, no analytics, no system config). Distinct from
+  // SuperAdminPanel so OfficeAdmins do not see SuperAdmin-only sections.
+  const [isOfficeAdminPanelOpen, setIsOfficeAdminPanelOpen] = useState(false);
 
   // Profile page panel (header avatar)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -807,7 +813,7 @@ function AppContent() {
                   onSignOut={logout}
                   onAdminCommand={() => setIsAdminCommandOpen(true)}
                   onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
-                  onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+                  onOpenOfficeAdminPanel={() => setIsOfficeAdminPanelOpen(true)}
                 />
               </div>
             )}
@@ -1158,6 +1164,16 @@ function AppContent() {
         <SuperAdminPanel
           onClose={() => setIsSuperAdminPanelOpen(false)}
           userEmail={user.email || 'banjais@gmail.com'}
+        />
+      )}
+
+      {/* Office Admin Panel — full page, only visible to OfficeAdmin role.
+      Scoped to Data Input + Data Sources + Settings (no user management,
+      no analytics, no system config). */}
+      {user && userRole === 'OfficeAdmin' && isOfficeAdminPanelOpen && (
+        <OfficeAdminPanel
+          onClose={() => setIsOfficeAdminPanelOpen(false)}
+          userEmail={user.email || ''}
         />
       )}
     </PullToRefresh>
