@@ -151,7 +151,6 @@ export const FuelPriceCard: React.FC<FuelPriceCardProps> = ({ fuelPrices, metada
             <span className="text-slate-500"> • Updated {formatDate(metadata.lastUpdated)}</span>
           ) : null}
         </span>
-        <span className="text-slate-500">{freshnessText}</span>
       </div>
 
       {/* Price Grid */}

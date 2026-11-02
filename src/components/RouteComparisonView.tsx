@@ -140,7 +140,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-0.5 text-[10px] font-black bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-emerald-300 border border-emerald-500/40 rounded-md uppercase tracking-wider flex items-center space-x-1.5 shadow-sm">
               <Scale className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Route Comparison &amp; Trade-off Engine</span>
+              <span>Route comparison</span>
             </span>
             <span className="text-xs text-slate-400 font-medium">
               Primary vs. {alternativeRoutes.length} Alternative{alternativeRoutes.length > 1 ? 's' : ''}
@@ -150,9 +150,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
             <span>Primary vs Alternative Route Comparison</span>
           </h3>
           <p className="text-xs text-slate-400 max-w-2xl">
-            Side-by-side analysis highlighting critical differences in <strong className="text-emerald-400 font-semibold">Safety</strong>,{' '}
-            <strong className="text-amber-400 font-semibold">Fuel &amp; Transit Cost</strong>, and{' '}
-            <strong className="text-purple-400 font-semibold">Scenic Value</strong>.
+            Safety, fuel cost and scenic value, side by side.
           </p>
         </div>
 

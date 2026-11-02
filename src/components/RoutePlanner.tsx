@@ -78,14 +78,6 @@ import { UnifiedRouteReport } from './UnifiedRouteReport';
 import {
   VEHICLE_CONFIGS,
   FuelRateConfig,
-  getNOCFuelRate,
-  getFuelRateLabel,
-  getFuelName,
-  FUEL_RATE_LABELS,
-  getVehicleUIConfig,
-  formatPreference,
-  PREFERENCE_CONFIGS,
-  EV_KM_PER_KWH,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
 import { NOC_FUEL_RATES_AS_OF } from '../utils/vehicleConfigs';
@@ -436,42 +428,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
   const [priceFetchError, setPriceFetchError] = useState<string | null>(null);
 
-  // Custom Fuel Efficiency Override States
-  const [customMileageKmL, setCustomMileageKmL] = useState<number>(() => {
-    return initialVehicle === 'car'
-      ? 14.0
-      : initialVehicle === 'suv_4wd'
-      ? 10.0
-      : initialVehicle === 'motorbike'
-      ? 35.0
-      : initialVehicle === 'bus_truck'
-      ? 4.5
-      : EV_KM_PER_KWH;
-  });
-  const [efficiencyUnit, setEfficiencyUnit] = useState<'km_l' | 'mpg' | 'l_100km'>('km_l');
-
-  // Update default efficiency when vehicle type switches if user hasn't heavily modified it or reset
-  useEffect(() => {
-    const defaultVal =
-      vehicle === 'car'
-        ? 14.0
-        : vehicle === 'suv_4wd'
-        ? 10.0
-        : vehicle === 'motorbike'
-        ? 35.0
-        : vehicle === 'bus_truck'
-        ? 4.5
-        : EV_KM_PER_KWH;
-    setCustomMileageKmL(defaultVal);
-  }, [vehicle]);
-
-  const estimatedTripCostNpr = useMemo(() => {
-    if (!routePlan) return 0;
-    const effKmL = Math.max(1.0, customMileageKmL);
-    const unitsReq = Math.round((routePlan.totalDistanceKm / effKmL) * 10) / 10;
-    const price = fuelPrices ? getEffectiveFuelRate(vehicle, fuelPrices) : getNOCFuelRate(vehicle);
-    return Math.round(unitsReq * price) + (routePlan.totalTollCostNpr || 0);
-  }, [routePlan, customMileageKmL, fuelPrices, vehicle]);
+  // The trip's fuel + toll figure, shown by the verdict and the Costs section
+  // header. It reads the plan's own fuel estimate — the same number the Costs
+  // panel and the printed report use — so every surface quotes one total
+  // instead of three parallel calculations that can drift apart.
+  const estimatedTripCostNpr = routePlan
+    ? routePlan.fuelEstimate.costNpr + (routePlan.totalTollCostNpr || 0)
+    : 0;
 
   // Highway codes covered by the route, used to look up the toll plazas the
   // route actually passes. Without this the fuel estimator showed Rs 0 in tolls
@@ -515,8 +478,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   // Toast Feedback (share modal owned by App — no local ShareTripModal)
   const [trafficSyncedNotification, setTrafficSyncedNotification] = useState<boolean>(false);
-
-  // Telemetry data for embedded option tabs (if opened)
 
   const singleSearchRef = useRef<HTMLDivElement>(null);
   const originSearchRef = useRef<HTMLDivElement>(null);
@@ -1040,7 +1001,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (!textToParse || !textToParse.trim()) return;
 
     setIsParsingAiPrompt(true);
-    setAiParseMessage('Gemini AI analyzing request & corridor geometry...');
+    setAiParseMessage('Planning your route…');
 
     try {
       const data = await fetchJson<Record<string, any>>('/api/ai-smart-route-query', {
@@ -1074,7 +1035,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         setAiParseMessage('Could not parse route. Please choose from dropdown.');
       }
     } catch (err) {
-      setAiParseMessage('AI query fallback applied.');
+      setAiParseMessage('Could not read that prompt — please choose the place from the list.');
     } finally {
       setIsParsingAiPrompt(false);
       setTimeout(() => setAiParseMessage(null), 4000);
@@ -1823,7 +1784,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         {userPickedDestination && isCalculating && !hasCalculated && (
           <div className="pt-2 flex items-center justify-center space-x-2 text-xs text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-            <span>Optimizing Highway Geometry &amp; Telemetry...</span>
+            <span>Calculating the route…</span>
           </div>
         )}
 

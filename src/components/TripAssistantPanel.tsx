@@ -235,12 +235,8 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-base sm:text-lg font-bold text-white font-display">
-                AI Trip Assistant & Highway Concierge
+                Trip assistant
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center space-x-1">
-                <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
-                <span>Gemini 3.7 Flash</span>
-              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Curated stops, riverfront cafes, scenic ridge viewpoints & local food stops along your route to{' '}
@@ -255,7 +251,7 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
           className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 hover:text-white rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center justify-center space-x-1.5 shrink-0 self-start sm:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
-          <span>{loading ? 'Curating Stops...' : 'Regenerate Suggestions'}</span>
+          <span>{loading ? 'Finding stops…' : 'Refresh suggestions'}</span>
         </button>
 
         {/* Emotion selector */}
@@ -516,14 +512,14 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
             })}
           </div>
 
-          {/* Ask AI Trip Concierge Interactive Box */}
+          {/* Ask-about-your-route box */}
           <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-2xl p-5 space-y-4 shadow-lg">
             <div className="flex items-center space-x-2">
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white font-display">Ask the AI Highway Concierge</h4>
+                <h4 className="text-sm font-bold text-white font-display">Ask about your route</h4>
                 <p className="text-[11px] text-slate-400">
                   Ask any question about stops, cafes, restrooms, food specialties, or road conditions
                 </p>
@@ -569,7 +565,7 @@ export const TripAssistantPanel: React.FC<TripAssistantPanelProps> = ({
                 <div className="flex items-center justify-between text-xs font-bold text-emerald-400">
                   <span className="flex items-center space-x-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>AI Concierge Response:</span>
+                    <span>Assistant:</span>
                   </span>
                   <span className={`text-[10px] font-bold ${emotionIconColor(userEmotion)}`}>
                     {EMOTION_LABELS[userEmotion] || userEmotion}

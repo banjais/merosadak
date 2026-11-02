@@ -53,6 +53,8 @@ export const CostsPanel: React.FC<CostsPanelProps> = ({
       highwayCodes={highwayCodes}
       fuelPrices={fuelPrices}
       fuelPriceMetadata={fuelPriceMetadata}
+      planFuelCostNpr={route.fuelEstimate.costNpr}
+      planLiters={route.fuelEstimate.liters}
       onVehicleChange={onVehicleChange}
     />
     <CarbonFootprintCard

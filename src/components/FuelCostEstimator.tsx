@@ -56,6 +56,13 @@ interface FuelCostEstimatorProps {
   onVehicleChange?: (vehicle: VehicleType) => void;
   className?: string;
   highwayCodes?: string[]; // Highway codes traversed by the route
+  /** One-way fuel/energy cost from the route plan itself (plan.fuelEstimate.costNpr).
+   *  When given, this card starts from the plan's own number instead of
+   *  re-deriving mileage, so the verdict, this card and the printed report
+   *  quote the same figure instead of three competing ones. */
+  planFuelCostNpr?: number;
+  /** One-way litres (or kWh) from the plan's fuel estimate. */
+  planLiters?: number;
 }
 
 interface VehicleBenchmark {
@@ -163,16 +170,23 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   onVehicleChange,
   className = '',
   highwayCodes = [],
+  planFuelCostNpr,
+  planLiters,
 }) => {
   const currentBenchmark = getVehicleBenchmarks(fuelPrices)[vehicleType] || getVehicleBenchmarks(fuelPrices).car;
 
   // Custom fuel configuration state
   const [customMileage, setCustomMileage] = useState<number>(currentBenchmark.defaultMileage);
   const [customFuelRate, setCustomFuelRate] = useState<number>(currentBenchmark.defaultRateNpr);
+  /** True once the user edits mileage/rate in the advanced drawer — from then
+   *  on this card deliberately shows their maths instead of the plan's. */
+  const [fuelOverridden, setFuelOverridden] = useState<boolean>(false);
   const [isRoundTrip, setIsRoundTrip] = useState<boolean>(false);
   const [passengers, setPassengers] = useState<number>(1);
   const [includeAcAndLoad, setIncludeAcAndLoad] = useState<boolean>(false);
-  const [includeMountainGradient, setIncludeMountainGradient] = useState<boolean>(elevationGainM > 400);
+  // Off by default: the plan's litres already include the terrain maths, so a
+  // silently-latched surcharge made this card charge for hills twice.
+  const [includeMountainGradient, setIncludeMountainGradient] = useState<boolean>(false);
 
   // Live Toll Plazas from Route Highways
   const [liveTollPlazas, setLiveTollPlazas] = useState<Array<{
@@ -265,7 +279,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
       description: 'Emergency crane and winch recovery from landslide & gorge breakdown zones',
       costNpr: 350,
       icon: Truck,
-      enabled: true,
+      enabled: false,
       recommended: elevationGainM > 300 || distanceKm > 100,
     },
     {
@@ -274,7 +288,7 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
       description: 'On-demand tire repair, emergency battery boost, radiator coolant support',
       costNpr: 250,
       icon: Wrench,
-      enabled: true,
+      enabled: false,
       recommended: true,
     },
     {
@@ -304,13 +318,13 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
   useEffect(() => {
     setCustomMileage(currentBenchmark.defaultMileage);
     setCustomFuelRate(currentBenchmark.defaultRateNpr);
+    setFuelOverridden(false);
   }, [vehicleType, fuelPrices]);
 
-  // Sync mountain gradient if elevation changes
+  // A new route starts without a surcharge — never let the previous route's
+  // hills silently inflate the next one.
   useEffect(() => {
-    // Must also clear: this used to latch on, so recalculating a flatter route
-    // kept the +12% hill-climb surcharge applied for the rest of the session.
-    setIncludeMountainGradient(elevationGainM > 400);
+    setIncludeMountainGradient(false);
   }, [elevationGainM]);
 
   // Toggle toll item
@@ -334,15 +348,13 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     setIsRoundTrip(false);
     setPassengers(1);
     setIncludeAcAndLoad(false);
-    setIncludeMountainGradient(elevationGainM > 400);
+    setIncludeMountainGradient(false);
     setIncludeMeals(false);
     setMealRatePerPerson(250);
     setTolls((prev) => prev.map((t) => ({ ...t, enabled: true })));
-    setEmergencyServices((prev) => [
-      { ...prev[0], enabled: true },
-      { ...prev[1], enabled: true },
-      { ...prev[2], enabled: false },
-    ]);
+    setEmergencyServices((prev) =>
+      prev.map((s) => ({ ...s, enabled: false }))
+    );
   };
 
   // Comprehensive Calculations
@@ -350,14 +362,25 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     const effectiveDistance = isRoundTrip ? distanceKm * 2 : distanceKm;
     const multiplier = isRoundTrip ? 2 : 1;
 
-    // 1. Fuel / Electric Power Calculation
+    // 1. Fuel / Electric Power Calculation. The base is the route plan's own
+    // fuel figure when provided (its litres already include the terrain
+    // maths), so this card cannot disagree with the verdict and the printed
+    // report. The toggles add an explicit, user-chosen surcharge on top —
+    // nothing is added silently.
+    const planBased = planFuelCostNpr != null && planLiters != null && !fuelOverridden;
     let terrainFactor = 1.0;
-    if (includeMountainGradient) terrainFactor += 0.12; // +12% for steep hill climbing in lower gears
-    if (includeAcAndLoad) terrainFactor += 0.08; // +8% for AC and luggage weight
+    if (includeMountainGradient) terrainFactor += 0.12; // +12% steep hill climbing in lower gears
+    if (includeAcAndLoad) terrainFactor += 0.08; // +8% AC and luggage weight
 
-    const effectiveMileage = Math.max(1, customMileage / terrainFactor);
-    const totalFuelVolume = effectiveDistance / effectiveMileage;
-    const totalFuelCostNpr = Math.round(totalFuelVolume * customFuelRate);
+    const oneWayVolume = planBased
+      ? planLiters
+      : effectiveDistance / Math.max(1, customMileage);
+    const oneWayCost = planBased
+      ? planFuelCostNpr
+      : Math.round((effectiveDistance / Math.max(1, customMileage)) * customFuelRate);
+    const totalFuelVolume = oneWayVolume * terrainFactor * multiplier;
+    const totalFuelCostNpr = Math.round(oneWayCost * terrainFactor * multiplier);
+    const effectiveMileage = totalFuelVolume > 0 ? effectiveDistance / totalFuelVolume : customMileage;
 
     // 2. Toll Calculation. `baseCostNpr` is already the gazette rate for the
     // selected vehicle class, so no vehicle multiplier is applied here —
@@ -425,6 +448,9 @@ export const FuelCostEstimator: React.FC<FuelCostEstimatorProps> = ({
     mealRatePerPerson,
     currentBenchmark,
     vehicleType,
+    planFuelCostNpr,
+    planLiters,
+    fuelOverridden,
   ]);
 
   // Comparison across all vehicle types for this exact distance & tolls
@@ -498,8 +524,7 @@ Passengers: ${passengers} person(s)
 🧾 COST BREAKDOWN:
 • Fuel / EV Energy: Rs. ${calculation.totalFuelCostNpr.toLocaleString()} (${calculation.totalFuelVolume} ${calculation.volumeUnit} @ ${calculation.effectiveMileage} ${calculation.unit})
 • Highway Toll Plazas: Rs. ${calculation.totalTollsNpr.toLocaleString()}
-• Emergency Assistance & Recovery: Rs. ${calculation.totalEmergencyNpr.toLocaleString()}
-${includeMeals ? `• Highway Dhaba & Meals: Rs. ${calculation.totalMealsNpr.toLocaleString()}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${calculation.totalEmergencyNpr > 0 ? `• Emergency Assistance & Recovery: Rs. ${calculation.totalEmergencyNpr.toLocaleString()}\n` : ''}${includeMeals ? `• Highway Dhaba & Meals: Rs. ${calculation.totalMealsNpr.toLocaleString()}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💰 GRAND TOTAL: Rs. ${calculation.grandTotalNpr.toLocaleString()}
 👤 Cost per Person: Rs. ${calculation.costPerPerson.toLocaleString()} / person
 🛣️ Cost per KM: Rs. ${calculation.costPerKm} / km
@@ -525,13 +550,13 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-white font-display">Total Trip Cost &amp; Expense Estimator</h3>
+              <h3 className="text-sm font-bold text-white font-display">Trip Cost Estimator</h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Fuel • Tolls • DOR Recovery
+                Fuel • Tolls
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Estimates total highway journey budget including fuel/energy, tunnel tolls, and emergency roadside protection
+              Fuel or energy for this route plus the toll plazas on it. Optional extras below only count when you switch them on.
             </p>
             {fuelPrices && (
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
@@ -574,7 +599,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider block">
-              Estimated Total Trip Expense (All Included)
+              Estimated trip total
             </span>
             <div className="text-3xl sm:text-4xl font-black text-emerald-300 font-display tracking-tight mt-0.5 whitespace-nowrap">
               Rs. {calculation.grandTotalNpr.toLocaleString()}
@@ -636,10 +661,12 @@ Generated via Mero Sadak Nepal Highway GIS`;
               <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
               <span>Tolls: Rs. {calculation.totalTollsNpr.toLocaleString()} ({calculation.tollPercent}%)</span>
             </span>
-            <span className="flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-              <span>Emergency/Safety: Rs. {calculation.totalEmergencyNpr.toLocaleString()} ({calculation.emergencyPercent}%)</span>
-            </span>
+            {calculation.totalEmergencyNpr > 0 && (
+              <span className="flex items-center space-x-1">
+                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span>Emergency/Safety: Rs. {calculation.totalEmergencyNpr.toLocaleString()} ({calculation.emergencyPercent}%)</span>
+              </span>
+            )}
             {includeMeals && (
               <span className="flex items-center space-x-1">
                 <span className="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -650,8 +677,8 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
       </div>
 
-      {/* 4-Item Breakdown Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* 3-Item Breakdown Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {/* Fuel / Power Card */}
         <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
@@ -696,23 +723,9 @@ Generated via Mero Sadak Nepal Highway GIS`;
             Rs. {calculation.totalEmergencyNpr.toLocaleString()}
           </div>
           <span className="text-[10px] text-slate-400 block">
-            {emergencyServices.filter((s) => s.enabled).length} emergency coverages
-          </span>
-        </div>
-
-        {/* CO2 Footprint */}
-        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
-          <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
-            <span className="flex items-center space-x-1">
-              <Leaf className="w-3.5 h-3.5" />
-              <span>CO₂ Emissions</span>
-            </span>
-          </div>
-          <div className="text-xl font-bold text-white font-display">
-            {calculation.totalCo2Kg} <span className="text-xs font-normal text-slate-400">kg</span>
-          </div>
-          <span className="text-[10px] text-slate-400 block">
-            {vehicleType === 'electric_vehicle' ? 'Zero direct tailpipe' : 'Standard highway emission'}
+            {calculation.totalEmergencyNpr > 0
+              ? `${emergencyServices.filter((s) => s.enabled).length} add-on${emergencyServices.filter((s) => s.enabled).length === 1 ? '' : 's'} switched on`
+              : 'Optional — not included'}
           </span>
         </div>
       </div>
@@ -975,7 +988,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
                 min="1"
                 max="100"
                 value={customMileage}
-                onChange={(e) => setCustomMileage(parseFloat(e.target.value) || 1)}
+                onChange={(e) => { setCustomMileage(parseFloat(e.target.value) || 1); setFuelOverridden(true); }}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-emerald-500"
               />
               <span className="text-[10px] text-slate-500">Benchmark: {currentBenchmark.defaultMileage} {calculation.unit}</span>
@@ -991,7 +1004,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
                 step="1"
                 min="1"
                 value={customFuelRate}
-                onChange={(e) => setCustomFuelRate(parseFloat(e.target.value) || 1)}
+                onChange={(e) => { setCustomFuelRate(parseFloat(e.target.value) || 1); setFuelOverridden(true); }}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-emerald-500"
               />
               <span className="text-[10px] text-slate-500">Nepal NOC/NEA standard: Rs. {currentBenchmark.defaultRateNpr}</span>
