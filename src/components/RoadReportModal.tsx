@@ -225,23 +225,23 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-[var(--surface-raised)] border border-slate-800/80 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-              <Radio className="w-4 h-4" />
+        <div className="p-4 sm:p-5 border-b border-slate-800/70 flex items-center justify-between bg-[var(--surface-shell)]">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+              <Radio className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-base">Report Road Condition / Hazard</h3>
+              <h3 className="font-bold text-white text-base font-display">Report Road Condition / Hazard</h3>
               <p className="text-xs text-slate-400">Mero Sadak Roads Board Nepal Crowdsource Portal</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition touch-target"
           >
             <X className="w-5 h-5" />
           </button>
@@ -251,7 +251,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
         {success ? (
           <div className="p-8 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-bounce" />
-            <h4 className="text-lg font-bold text-white">
+            <h4 className="text-lg font-bold text-white font-display">
               {queuedOffline ? 'Saved offline — will sync when online' : 'Report Submitted Successfully!'}
             </h4>
             <p className="text-xs text-slate-400">
@@ -267,7 +267,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                 <select
                   value={highwayCode}
                   onChange={(e) => setHighwayCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
                 >
                   {NEPAL_HIGHWAYS.map((hw) => (
                     <option key={hw.id} value={hw.code}>
@@ -283,7 +283,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                 <select
                   value={incidentType}
                   onChange={(e) => setIncidentType(e.target.value as IncidentType)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
                 >
                   <option value="pothole">Pothole / Road Depression</option>
                   <option value="landslide">Landslide / Mud & Slush</option>
@@ -306,7 +306,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                   placeholder="e.g. Near Malekhu fish market, 2km before Benighat bridge"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
             </div>
@@ -316,18 +316,18 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
               <label className="font-semibold text-slate-300">Severity Level</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: 'minor', label: 'Minor (Drivable)' },
-                  { id: 'moderate', label: 'Moderate (Slow Down)' },
-                  { id: 'severe', label: 'Severe (Single-Lane / Blocked)' },
-                ].map(({ id, label }) => (
+                  { id: 'minor', label: 'Minor (Drivable)', on: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold' },
+                  { id: 'moderate', label: 'Moderate (Slow Down)', on: 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold' },
+                  { id: 'severe', label: 'Severe (Single-Lane / Blocked)', on: 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold' },
+                ].map(({ id, label, on }) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => setSeverity(id as any)}
                     className={`py-1.5 px-2 rounded-lg border text-center font-medium transition ${
                       severity === id
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
+                        ? on
+                        : 'bg-[var(--surface-tile)] text-slate-400 border-slate-800/70 hover:bg-white/5 hover:text-slate-200'
                     }`}
                   >
                     {label}
@@ -368,7 +368,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                       <button
                         type="button"
                         onClick={playRecordedAudio}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] flex items-center space-x-1 px-2"
+                        className="p-1 rounded-lg bg-white/5 hover:bg-white/10 border border-slate-800/70 text-emerald-400 text-[11px] flex items-center space-x-1 px-2"
                         title="Play recorded voice note"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
@@ -377,7 +377,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                       <button
                         type="button"
                         onClick={resetRecording}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                        className="p-1 rounded-lg bg-white/5 hover:bg-white/10 border border-slate-800/70 text-slate-400 hover:text-white"
                         title="Discard audio"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -401,7 +401,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                 placeholder="Describe current road width, mud depth, or whether heavy vehicles can pass... (Or use Voice Record above)"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full p-2.5 bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
               />
             </div>
 
@@ -414,7 +414,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                   placeholder="e.g. Ramesh Giri"
                   value={reporterName}
                   onChange={(e) => setReporterName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
 
@@ -425,7 +425,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
                   placeholder="98XXXXXXXX"
                   value={contactNumber}
                   onChange={(e) => setContactNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
                 />
               </div>
             </div>
@@ -435,7 +435,7 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting || !location.trim() || !description.trim()}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold transition shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2"
+                className="btn-primary w-full py-2.5 rounded-xl font-bold transition disabled:opacity-50 disabled:hover:bg-none disabled:!bg-slate-800 disabled:!text-slate-500 flex items-center justify-center space-x-2"
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 <span>{submitting ? 'Submitting to Roads Board...' : 'Submit Report to Mero Sadak'}</span>

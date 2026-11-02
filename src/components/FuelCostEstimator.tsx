@@ -530,14 +530,14 @@ Generated via Mero Sadak Nepal Highway GIS`;
 
   return (
     <div
-      className={`bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5 ${className}`}
+      className={`bg-[var(--surface-raised)] border border-slate-800/80 rounded-2xl p-5 shadow-xl space-y-5 ${className}`}
       id="fuel-cost-estimator"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/70 pb-4">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/20 to-emerald-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-            {vehicleType === 'electric_vehicle' ? <Zap className="w-4 h-4 text-cyan-400" /> : <Fuel className="w-4 h-4 text-amber-400" />}
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+            {vehicleType === 'electric_vehicle' ? <Zap className="w-4 h-4 text-cyan-400" /> : <Fuel className="w-4 h-4 text-emerald-400" />}
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -551,7 +551,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
             </p>
             {fuelPrices && (
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
-                <span className="flex items-center space-x-1 text-amber-300">
+                <span className="flex items-center space-x-1 text-emerald-300">
                   <Fuel className="w-3 h-3" />
                   <span>Fuel rates live</span>
                 </span>
@@ -602,13 +602,13 @@ Generated via Mero Sadak Nepal Highway GIS`;
       </div>
 
       {/* Main Grand Total Banner & Highlight Bento */}
-      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950/40 p-4 rounded-xl border border-amber-500/30 relative overflow-hidden space-y-3">
+      <div className="bg-gradient-to-r from-[var(--surface-shell)] via-[var(--surface-raised)] to-emerald-950/40 p-4 rounded-xl border border-emerald-500/30 relative overflow-hidden space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <span className="text-xs text-amber-400 font-bold uppercase tracking-wider block">
+            <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider block">
               Estimated Total Trip Expense (All Included)
             </span>
-            <div className="text-3xl sm:text-4xl font-black text-amber-300 font-display tracking-tight mt-0.5">
+            <div className="text-3xl sm:text-4xl font-black text-emerald-300 font-display tracking-tight mt-0.5 whitespace-nowrap">
               Rs. {calculation.grandTotalNpr.toLocaleString()}
             </div>
           </div>
@@ -637,7 +637,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden flex">
             <div
               style={{ width: `${calculation.fuelPercent}%` }}
-              className="bg-amber-400 h-full transition-all"
+              className="bg-emerald-400 h-full transition-all"
               title={`Fuel: ${calculation.fuelPercent}%`}
             />
             <div
@@ -653,7 +653,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
             {includeMeals && (
               <div
                 style={{ width: `${calculation.mealPercent}%` }}
-                className="bg-emerald-400 h-full transition-all"
+                className="bg-amber-400 h-full transition-all"
                 title={`Meals: ${calculation.mealPercent}%`}
               />
             )}
@@ -661,7 +661,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
 
           <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
             <span className="flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>Fuel/EV: Rs. {calculation.totalFuelCostNpr.toLocaleString()} ({calculation.fuelPercent}%)</span>
             </span>
             <span className="flex items-center space-x-1">
@@ -674,7 +674,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
             </span>
             {includeMeals && (
               <span className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                 <span>Meals: Rs. {calculation.totalMealsNpr.toLocaleString()} ({calculation.mealPercent}%)</span>
               </span>
             )}
@@ -685,8 +685,8 @@ Generated via Mero Sadak Nepal Highway GIS`;
       {/* 4-Item Breakdown Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Fuel / Power Card */}
-        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-xs text-amber-400 font-semibold">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
+          <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
             <span className="flex items-center space-x-1">
               <Fuel className="w-3.5 h-3.5" />
               <span>Fuel / Power</span>
@@ -701,7 +701,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Tolls Card */}
-        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-cyan-400 font-semibold">
             <span className="flex items-center space-x-1">
               <CreditCard className="w-3.5 h-3.5" />
@@ -717,7 +717,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Emergency Assistance Card */}
-        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-rose-400 font-semibold">
             <span className="flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -733,7 +733,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* CO2 Footprint */}
-        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
             <span className="flex items-center space-x-1">
               <Leaf className="w-3.5 h-3.5" />
@@ -752,7 +752,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       {/* Itemized Modules: Toll Plazas & Emergency Roadside Protection */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Module A: Highway Toll Plazas & Road Maintenance Fees */}
-        <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-white">
               <Receipt className="w-4 h-4 text-cyan-400" />
@@ -837,7 +837,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Module B: Emergency Assistance, Towing & Contingency Fund */}
-        <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-white">
               <ShieldCheck className="w-4 h-4 text-rose-400" />
@@ -894,7 +894,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       </div>
 
       {/* Quick Interactive Sliders & Surcharges Bar */}
-      <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-4">
+      <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {/* Passenger Count Stepper */}
           <div className="space-y-1.5">
@@ -923,7 +923,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* Mountain Gradient Surcharge Checkbox */}
-          <div className="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
                 <Mountain className="w-3.5 h-3.5 text-purple-400" />
@@ -940,10 +940,10 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* AC & Heavy Luggage Toggle */}
-          <div className="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
-                <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
                 <span>AC / Heavy Load</span>
               </label>
               <span className="text-[10px] text-slate-400 block">+8% cooling & load</span>
@@ -957,7 +957,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* Meal / Dhaba Allowance Option */}
-          <div className="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
                 <Utensils className="w-3.5 h-3.5 text-emerald-400" />
@@ -1079,7 +1079,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
                       <td className="p-2.5 font-mono text-slate-400">
                         {item.volume} {item.volUnit}
                       </td>
-                      <td className="p-2.5 font-mono text-amber-400">
+                      <td className="p-2.5 font-mono text-emerald-400">
                         Rs. {item.fuelCost.toLocaleString()}
                       </td>
                       <td className="p-2.5 font-mono text-cyan-400">

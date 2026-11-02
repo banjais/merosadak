@@ -48,6 +48,8 @@
     "@react-three/fiber": "^9.8.1",
     "@types/express": "^4.17.25",
     "@types/node": "^22.20.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
     "autoprefixer": "^10.5.5",
     "esbuild": "^0.25.12",

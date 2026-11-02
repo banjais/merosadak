@@ -117,6 +117,34 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
     }
   }, [syncProgress, selectedSegmentIds.size]);
 
+  // Calculate stats for currently selected segments
+  // NOTE: kept above the `isOfflineManagerOpen` early-return so the hook count
+  // is identical on every render of this always-mounted modal (React #310).
+  const selectedSegmentsData = allSegmentsWithHighway.filter((item) => selectedSegmentIds.has(item.segment.id));
+  const totalSelectedDistanceKm = selectedSegmentsData.reduce((acc, it) => acc + it.segment.distanceKm, 0);
+
+  // Calculate estimated tiles & download size for the selection
+  const estimatedTilesCount = useMemo(() => {
+    if (selectedSegmentsData.length === 0) return 0;
+    const tileUrls = generateTilesForSegments(selectedSegmentsData.map((it) => it.segment));
+    return tileUrls.length;
+  }, [selectedSegmentsData]);
+
+  // ~25 KB per tile + 15 KB route data per segment
+  const estimatedSizeMb = useMemo(() => {
+    const bytes = estimatedTilesCount * 25000 + selectedSegmentsData.length * 15000;
+    return (bytes / (1024 * 1024)).toFixed(2);
+  }, [estimatedTilesCount, selectedSegmentsData.length]);
+
+  // Bandwidth savings comparison against full 45 MB pack
+  const bandwidthSavingsPercent = useMemo(() => {
+    const fullSizeMb = 45;
+    const currentSizeMb = parseFloat(estimatedSizeMb);
+    if (currentSizeMb <= 0) return 0;
+    const savings = Math.max(0, Math.round(((fullSizeMb - currentSizeMb) / fullSizeMb) * 100));
+    return savings;
+  }, [estimatedSizeMb]);
+
   if (!isOfflineManagerOpen) return null;
 
   const formatDate = (timestamp: number | null) => {
@@ -185,31 +213,6 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
     );
   });
 
-  // Calculate stats for currently selected segments
-  const selectedSegmentsData = allSegmentsWithHighway.filter((item) => selectedSegmentIds.has(item.segment.id));
-  const totalSelectedDistanceKm = selectedSegmentsData.reduce((acc, it) => acc + it.segment.distanceKm, 0);
-
-  // Calculate estimated tiles & download size for the selection
-  const estimatedTilesCount = useMemo(() => {
-    if (selectedSegmentsData.length === 0) return 0;
-    const tileUrls = generateTilesForSegments(selectedSegmentsData.map((it) => it.segment));
-    return tileUrls.length;
-  }, [selectedSegmentsData]);
-
-  // ~25 KB per tile + 15 KB route data per segment
-  const estimatedSizeMb = useMemo(() => {
-    const bytes = estimatedTilesCount * 25000 + selectedSegmentsData.length * 15000;
-    return (bytes / (1024 * 1024)).toFixed(2);
-  }, [estimatedTilesCount, selectedSegmentsData.length]);
-
-  // Bandwidth savings comparison against full 45 MB pack
-  const bandwidthSavingsPercent = useMemo(() => {
-    const fullSizeMb = 45;
-    const currentSizeMb = parseFloat(estimatedSizeMb);
-    if (currentSizeMb <= 0) return 0;
-    const savings = Math.max(0, Math.round(((fullSizeMb - currentSizeMb) / fullSizeMb) * 100));
-    return savings;
-  }, [estimatedSizeMb]);
 
   // Handle caching selected segments
   const handleCacheSelected = async () => {
@@ -219,13 +222,13 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       <div
-        className="bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl shadow-emerald-950/40 text-slate-100 overflow-hidden"
+        className="bg-[var(--surface-raised)] border border-slate-800/80 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl text-slate-100 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-900/90">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between shrink-0 bg-[var(--surface-shell)]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-slate-950 shadow-md shadow-emerald-600/30">
               <Mountain className="w-5 h-5" />
@@ -246,7 +249,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
           </div>
           <button
             onClick={() => setIsOfflineManagerOpen(false)}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition touch-target"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -284,7 +287,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
               </p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 text-slate-200">
+            <div className="p-3.5 rounded-2xl bg-[var(--surface-tile)] border border-slate-800/70 text-slate-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <ShieldCheck className="w-4 h-4 text-teal-400" />
@@ -305,7 +308,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
           </div>
 
           {/* Offline Cache Stats Overview */}
-          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+          <div className="bg-[var(--surface-tile)] border border-slate-800/70 rounded-2xl p-3.5 space-y-2.5">
             <div className="flex items-center justify-between text-xs font-bold text-slate-300 uppercase tracking-wider">
               <span>Local Offline Footprint</span>
               <button
@@ -318,7 +321,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
             </div>
 
             <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-[var(--surface-elev)] p-2.5 rounded-xl border border-slate-800/70">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Map Tiles</span>
                 <strong className="text-sm sm:text-base text-emerald-400 font-mono font-bold block mt-0.5">
                   {cacheStats.tilesCount}
@@ -326,7 +329,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                 <span className="text-[9px] text-slate-500 block">Cached</span>
               </div>
 
-              <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-[var(--surface-elev)] p-2.5 rounded-xl border border-slate-800/70">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Segments</span>
                 <strong className="text-sm sm:text-base text-cyan-400 font-mono font-bold block mt-0.5">
                   {cacheStats.cachedSegmentsCount || cachedSegmentIds.length}
@@ -334,7 +337,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                 <span className="text-[9px] text-slate-500 block">Ready Offline</span>
               </div>
 
-              <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-[var(--surface-elev)] p-2.5 rounded-xl border border-slate-800/70">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Storage</span>
                 <strong className="text-sm sm:text-base text-purple-400 font-mono font-bold block mt-0.5">
                   {cacheStats.approxStorageSizeMb} MB
@@ -342,7 +345,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                 <span className="text-[9px] text-slate-500 block">Disk Space</span>
               </div>
 
-              <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+              <div className="bg-[var(--surface-elev)] p-2.5 rounded-xl border border-slate-800/70">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Last Synced</span>
                 <strong className="text-[11px] text-amber-300 font-semibold block truncate mt-1">
                   {formatDate(cacheStats.lastSyncTimestamp)}
@@ -382,7 +385,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
             >
               <Route className="w-3.5 h-3.5" />
               <span>Targeted Highway Segments</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[var(--surface-badge)] text-slate-300">
                 {selectedSegmentIds.size}
               </span>
             </button>
@@ -405,14 +408,14 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
             <div className="space-y-3.5">
               {/* Active Route Quick Preset Banner (if route exists) */}
               {activeRoute && (
-                <div className="p-3 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 flex items-center justify-between gap-2">
+                <div className="p-3 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 flex items-center justify-between gap-2">
                   <div className="flex items-center space-x-2.5 truncate">
-                    <MapPin className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
                     <div className="truncate">
-                      <span className="text-xs font-bold text-indigo-200 block truncate">
+                      <span className="text-xs font-bold text-cyan-200 block truncate">
                         Active Planned Route: {activeRoute.origin?.name} → {activeRoute.destination?.name}
                       </span>
-                      <span className="text-[10px] text-indigo-300/80">
+                      <span className="text-[10px] text-cyan-300/80">
                         {activeRoute.totalDistanceKm} km • {activeRoute.estimatedTimeMinutes} mins • {activeRoute.routeName || 'Mountain Corridor'}
                       </span>
                     </div>
@@ -434,7 +437,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                       });
                       setSelectedSegmentIds(matched);
                     }}
-                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shrink-0 transition"
+                    className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-slate-950 rounded-lg text-xs font-semibold shrink-0 transition"
                   >
                     Select Route Segments
                   </button>
@@ -468,7 +471,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     onClick={() => selectOnlyHighway('NH04')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH04 Prithvi</span>
                     <span className="text-[9px] text-slate-400">(Kathmandu–Pokhara)</span>
@@ -476,35 +479,35 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
                   <button
                     onClick={() => selectOnlyHighway('NH05')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH05 Narayanghat-Mugling</span>
                   </button>
 
                   <button
                     onClick={() => selectOnlyHighway('NH13')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH13 BP Highway</span>
                   </button>
 
                   <button
                     onClick={() => selectOnlyHighway('NH02')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH02 Tribhuvan</span>
                   </button>
 
                   <button
                     onClick={() => selectOnlyHighway('NH10')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH10 Karnali</span>
                   </button>
 
                   <button
                     onClick={() => selectOnlyHighway('NH01')}
-                    className="px-2.5 py-1 bg-slate-800/90 hover:bg-emerald-950 hover:text-emerald-300 hover:border-emerald-700/60 border border-slate-700 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
+                    className="px-2.5 py-1 bg-[var(--surface-elev)] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-800/70 rounded-xl text-[11px] font-medium transition flex items-center space-x-1"
                   >
                     <span>NH01 East-West</span>
                   </button>
@@ -521,7 +524,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                     placeholder="Search by pass, town or highway (e.g. Mugling, Galchhi, Daman)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                   />
                   {searchQuery && (
                     <button
@@ -537,7 +540,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                 <select
                   value={selectedHighwayFilter}
                   onChange={(e) => setSelectedHighwayFilter(e.target.value)}
-                  className="bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="bg-[var(--surface-tile)] border border-slate-800/70 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 >
                   <option value="ALL">All Highways ({allSegmentsWithHighway.length} segments)</option>
                   <option value="NH04">NH04 Prithvi Highway</option>
@@ -552,7 +555,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
               </div>
 
               {/* Scrollable Segment Checklist */}
-              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-2 max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar">
+              <div className="bg-[var(--surface-tile)] border border-slate-800/70 rounded-2xl p-2 max-h-60 overflow-y-auto space-y-1.5 custom-scrollbar">
                 {filteredSegments.length === 0 ? (
                   <div className="py-6 text-center text-xs text-slate-500">
                     No highway segments match "{searchQuery}".
@@ -569,7 +572,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                         className={`p-2.5 rounded-xl border cursor-pointer transition flex items-center justify-between gap-2.5 ${
                           isSelected
                             ? 'bg-emerald-950/30 border-emerald-600/40 text-slate-100'
-                            : 'bg-slate-900/60 hover:bg-slate-900 border-slate-800/60 text-slate-300'
+                            : 'bg-[var(--surface-elev)] hover:bg-white/5 border-slate-800/60 text-slate-300'
                         }`}
                       >
                         <div className="flex items-center space-x-2.5 min-w-0 flex-1">
@@ -583,7 +586,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center space-x-1.5">
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800 text-emerald-400 border border-slate-700 shrink-0">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--surface-badge)] text-emerald-400 border border-slate-700/60 shrink-0">
                                 {highwayCode}
                               </span>
                               <span className="text-xs font-bold text-white truncate">
@@ -619,7 +622,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                               <span>Offline Ready</span>
                             </span>
                           ) : (
-                            <span className="px-1.5 py-0.5 bg-slate-800/80 border border-slate-700/50 text-slate-400 rounded-md text-[9px]">
+                            <span className="px-1.5 py-0.5 bg-[var(--surface-badge)] border border-slate-700/50 text-slate-400 rounded-md text-[9px]">
                               Cloud only
                             </span>
                           )}
@@ -635,7 +638,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
               </div>
 
               {/* Selection Summary Bar */}
-              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="bg-[var(--surface-tile)] border border-slate-800/70 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="space-y-0.5">
                   <div className="font-bold text-slate-200 flex items-center space-x-1.5">
                     <span>Selected: {selectedSegmentsData.length} segments</span>
@@ -671,7 +674,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
           {/* VIEW 2: FULL NEPAL PACK OPTION */}
           {activeTab === 'full_pack' && (
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div className="bg-[var(--surface-tile)] border border-slate-800/70 rounded-2xl p-4 space-y-3">
               <div className="flex items-start space-x-3">
                 <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 shrink-0">
                   <Layers className="w-5 h-5" />
@@ -692,7 +695,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
               <button
                 onClick={downloadOfflinePack}
                 disabled={isSyncing}
-                className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-md"
+                className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 border border-slate-800/70 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-md"
               >
                 <CloudDownload className="w-4 h-4 text-purple-400" />
                 <span>{isSyncing ? 'Synchronizing Highway Network...' : 'Download Full Nepal Offline Pack (~45 MB)'}</span>
@@ -723,7 +726,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
           {/* DEDICATED PROGRESS BAR COMPONENT (VISUALIZING CACHING PROCESS) */}
           {isSyncing && syncProgress && (
-            <div className="bg-slate-950 border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-lg shadow-emerald-950/50">
+            <div className="bg-[var(--surface-overlay)] border border-emerald-500/50 rounded-2xl p-4 space-y-3 shadow-lg shadow-emerald-950/50">
               {/* Progress Stage Tracker Pipeline */}
               <div className="grid grid-cols-3 gap-2 text-center pb-1">
                 {/* Stage 1: Route Data */}
@@ -733,7 +736,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                       ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 animate-pulse'
                       : syncProgress.processed > 0 && syncProgress.stage !== 'error'
                       ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400/80'
-                      : 'bg-slate-900 border-slate-800 text-slate-500'
+                      : 'bg-[var(--surface-elev)] border-slate-800/70 text-slate-500'
                   }`}
                 >
                   <Route className="w-3.5 h-3.5 mb-1" />
@@ -747,7 +750,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                       ? 'bg-teal-950/60 border-teal-500 text-teal-300 animate-pulse'
                       : syncProgress.stage === 'apis' || syncProgress.stage === 'complete'
                       ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400/80'
-                      : 'bg-slate-900 border-slate-800 text-slate-500'
+                      : 'bg-[var(--surface-elev)] border-slate-800/70 text-slate-500'
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5 mb-1" />
@@ -761,7 +764,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
                       ? 'bg-cyan-950/60 border-cyan-500 text-cyan-300 animate-pulse'
                       : syncProgress.stage === 'complete'
                       ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400'
-                      : 'bg-slate-900 border-slate-800 text-slate-500'
+                      : 'bg-[var(--surface-elev)] border-slate-800/70 text-slate-500'
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5 mb-1" />
@@ -787,7 +790,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
               </div>
 
               {/* The Visual Progress Bar */}
-              <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800 p-0.5 relative">
+              <div className="w-full bg-[var(--surface-elev)] rounded-full h-3 overflow-hidden border border-slate-800/70 p-0.5 relative">
                 <div
                   className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-300 shadow-sm shadow-emerald-500/50 relative overflow-hidden"
                   style={{ width: `${Math.max(4, syncProgress.percentage)}%` }}
@@ -809,7 +812,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
               {/* Throughput and Data Transfer Gauge */}
               {syncProgress.bytesCached !== undefined && syncProgress.bytesCached > 0 && (
-                <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-900 pt-1.5 font-mono">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/70 pt-1.5 font-mono">
                   <span>
                     Cached: {(syncProgress.bytesCached / (1024 * 1024)).toFixed(2)} MB
                   </span>
@@ -826,12 +829,12 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
           {/* SIMULATION AND CACHE UTILITY STRIP */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
             {/* Simulation Toggle Switch */}
-            <label className="flex items-center space-x-2.5 cursor-pointer bg-slate-950/70 hover:bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800 transition select-none flex-1">
+            <label className="flex items-center space-x-2.5 cursor-pointer bg-[var(--surface-tile)] hover:bg-white/5 px-3.5 py-2.5 rounded-xl border border-slate-800/70 transition select-none flex-1">
               <input
                 type="checkbox"
                 checked={isSimulatedOffline}
                 onChange={(e) => setSimulatedOffline(e.target.checked)}
-                className="w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700 rounded focus:ring-emerald-500 focus:ring-1"
+                className="w-4 h-4 text-emerald-500 bg-[var(--surface-elev)] border-slate-800/70 rounded focus:ring-emerald-500 focus:ring-1"
               />
               <div className="text-left">
                 <span className="text-xs font-semibold text-slate-200 block">
@@ -847,7 +850,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
             <button
               onClick={clearCache}
               disabled={isSyncing}
-              className="px-3.5 py-2.5 bg-slate-900 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-xl text-xs font-semibold border border-slate-800 hover:border-red-800/40 transition flex items-center justify-center space-x-1.5 shrink-0"
+              className="px-3.5 py-2.5 bg-[var(--surface-elev)] hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-xl text-xs font-semibold border border-slate-800/70 hover:border-red-800/40 transition flex items-center justify-center space-x-1.5 shrink-0"
               title="Purges all cached tiles and highway telemetry"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -856,7 +859,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
           </div>
 
           {/* MOUNTAIN TRAVEL GUIDE & EXPLANATION */}
-          <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 space-y-1.5 text-xs text-slate-400">
+          <div className="bg-[var(--surface-tile)] p-3.5 rounded-2xl border border-slate-800/70 space-y-1.5 text-xs text-slate-400">
             <div className="font-bold text-slate-300 flex items-center space-x-1.5">
               <Compass className="w-3.5 h-3.5 text-emerald-400" />
               <span>How Targeted Highway Caching Works in Low-Connectivity Gorges:</span>
@@ -874,7 +877,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between text-xs text-slate-400">
+        <div className="p-4 border-t border-slate-800 bg-[var(--surface-shell)] flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center space-x-1.5">
             <span
               className={`w-2 h-2 rounded-full ${
@@ -890,7 +893,7 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
 
           <button
             onClick={() => setIsOfflineManagerOpen(false)}
-            className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition"
+            className="px-4 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-slate-800/70 text-slate-200 font-semibold transition"
           >
             Done
           </button>

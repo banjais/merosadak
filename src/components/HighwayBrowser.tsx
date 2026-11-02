@@ -150,7 +150,7 @@ export const HighwayBrowser: React.FC<HighwayBrowserProps> = ({ cities, onSelect
                     aria-expanded={isOpen}
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-900"
                   >
-                    <span className="shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-300">
+                    <span className="shrink-0 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-300">
                       {highway.code}
                     </span>
                     <span className="min-w-0 flex-1">

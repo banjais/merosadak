@@ -671,7 +671,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       // instead of relying on the static bundled status only.
       const analysis = analyzeHighwayRealtimeStatus(highway, incidents, []);
       const isSelected = activeHighwayInfo?.code === highway.code;
-      const selectedColor = '#38bdf8';
+      const selectedColor = '#22d3ee';
       const overallColor = statusToColor(realtimeToRoadStatus(analysis.realtimeStatus));
       const weight = isSelected ? 3 : 2;
       const opacity = isSelected ? 1.0 : 0.85;
@@ -796,11 +796,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             }
           });
 
+          // Respect the active theme at creation time. The theme-sync effect
+          // below only runs on `data-theme` mutations, and the mask is created
+          // asynchronously after that effect's initial pass — a hardcoded light
+          // fill here left a white mask around Nepal on every dark-mode load.
+          const themeNow = document.documentElement.getAttribute('data-theme');
+          const isLightTheme = themeNow === 'light';
           const mask = L.polygon(
             [worldCorners, ...holes] as unknown as L.LatLngExpression[][],
             {
-              fillColor: '#efefeb',
-              fillOpacity: 1.0,
+              fillColor: isLightTheme ? '#efefeb' : '#0b1220',
+              fillOpacity: isLightTheme ? 1.0 : 0.4,
               color: 'transparent',
               weight: 0,
               interactive: false,
@@ -808,14 +814,19 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           );
           maskGroup.addLayer(mask);
           mask.bringToBack();
+          // StrictMode dev double-mount can resolve two fetches in parallel;
+          // drop any earlier mask so a stale fill never sits under the live one.
+          if (outsideMaskRef.current && outsideMaskRef.current !== mask) {
+            maskGroup.removeLayer(outsideMaskRef.current);
+          }
           outsideMaskRef.current = mask;
 
           const border = L.geoJSON(data, {
             style: {
-              color: '#b91c1c',
+              color: '#10b981',
               weight: 2.5,
               opacity: 0.9,
-              fillColor: '#7f1d1d',
+              fillColor: '#064e3b',
               fillOpacity: 0.08,
             },
             onEachFeature: (feature, layer) => {
@@ -885,9 +896,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         try {
           const geoJsonLayer = L.geoJSON(data, {
             style: {
-              color: '#f59e0b',
+              color: '#22d3ee',
               weight: 1.5,
-              opacity: 0.6,
+              opacity: 0.5,
               fill: false,
               dashArray: '4, 4',
             },
@@ -1218,7 +1229,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       routeGroup.addLayer(animatedFlow);
     } else {
       // Single unified route polyline
-      const activeColor = activeRoute.routeColor || '#38bdf8';
+      const activeColor = activeRoute.routeColor || '#34d399';
 
       const routeGlow = L.polyline(activeRoute.pathCoordinates, {
         color: activeColor,
