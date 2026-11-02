@@ -1094,19 +1094,21 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         const color = altOpt.routeColor || '#a855f7';
         altOpt.pathCoordinates.forEach((c) => bounds.extend(c));
 
-        // Soft ambient glow
+        // Soft ambient glow (matches main route styling)
         const altGlow = L.polyline(altOpt.pathCoordinates, {
           color,
           weight: 8,
-          opacity: 0.25,
+          opacity: 0.20,
+          lineJoin: 'round',
+          lineCap: 'round',
         });
 
         // Dashed alternative polyline
         const altLine = L.polyline(altOpt.pathCoordinates, {
           color,
-          weight: 5,
-          opacity: 0.75,
-          dashArray: '8, 8',
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '8, 10',
           lineCap: 'round',
           lineJoin: 'round',
         });
@@ -1158,127 +1160,107 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     // 2. Render Main Active Route (Multi-Segment Safety Color-Coded or Single Preference)
     activeRoute.pathCoordinates.forEach((c) => bounds.extend(c));
 
-    const isSafetyMode = routeColorMode === 'safety';
-    const hasStepsSafety = activeRoute.steps && activeRoute.steps.length > 0;
+    // A route with <=2 path points is a straight-line aerial fallback (no surveyed
+    // DoR corridor for this origin-destination pair). Render it as a single clean
+    // dashed grey approximation line so users do not mistake it for a real
+    // highway, and skip the always-on aerial overlay that used to draw a
+    // redundant straight line on top of the real curvy corridor.
+    const isAerialFallback = activeRoute.pathCoordinates.length <= 2;
 
-    if (isSafetyMode && hasStepsSafety) {
-      // Multi-segment Highway Safety Index Color-Coding
-      activeRoute.steps.forEach((step, idx) => {
-        const stepCoords: [number, number][] = step.coordinates && step.coordinates.length > 1
-          ? step.coordinates
-          : (step.from && step.to && typeof step.from.lat === 'number' && typeof step.to.lat === 'number')
-          ? [
-              [step.from.lat, step.from.lng] as [number, number],
-              [step.to.lat, step.to.lng] as [number, number],
-            ]
-          : [];
+    if (isAerialFallback) {
+      const approxLine = L.polyline(activeRoute.pathCoordinates, {
+        color: '#94a3b8',
+        weight: 4,
+        opacity: 0.85,
+        dashArray: '8, 12',
+        lineCap: 'round',
+        lineJoin: 'round',
+      });
+      approxLine.bindTooltip(
+        `<strong>Straight-line approximation</strong><br/>No surveyed DoR highway corridor for this pair.`,
+        { className: 'custom-dark-tooltip', sticky: true }
+      );
+      routeGroup.addLayer(approxLine);
+    } else {
+      const isSafetyMode = routeColorMode === 'safety';
+      const hasStepsSafety = activeRoute.steps && activeRoute.steps.length > 0;
 
-        if (stepCoords.length < 2) return;
+      if (isSafetyMode && hasStepsSafety) {
+        // Multi-segment Highway Safety Index Color-Coding — clean glow + core, no overlay noise.
+        activeRoute.steps.forEach((step, idx) => {
+          const stepCoords: [number, number][] = step.coordinates && step.coordinates.length > 1
+            ? step.coordinates
+            : (step.from && step.to && typeof step.from.lat === 'number' && typeof step.to.lat === 'number')
+            ? [
+                [step.from.lat, step.from.lng] as [number, number],
+                [step.to.lat, step.to.lng] as [number, number],
+              ]
+            : [];
 
-        const safetyData = step.safetyData;
-        const segmentColor = safetyData?.color || (step.roadConditionScore >= 80 ? '#10b981' : step.roadConditionScore >= 60 ? '#f59e0b' : '#ef4444');
-        const safetyScore = safetyData?.safetyScore ?? step.roadConditionScore;
-        const safetyTier = safetyData?.safetyTier ?? (safetyScore >= 80 ? 'high_safety' : safetyScore >= 60 ? 'moderate_caution' : 'elevated_risk');
+          if (stepCoords.length < 2) return;
 
-        // Segment glow
-        const segGlow = L.polyline(stepCoords, {
-          color: segmentColor,
-          weight: 14,
-          opacity: 0.35,
+          const safetyData = step.safetyData;
+          const segmentColor = safetyData?.color || (step.roadConditionScore >= 80 ? '#10b981' : step.roadConditionScore >= 60 ? '#f59e0b' : '#ef4444');
+          const safetyScore = safetyData?.safetyScore ?? step.roadConditionScore;
+          const safetyTier = safetyData?.safetyTier ?? (safetyScore >= 80 ? 'high_safety' : safetyScore >= 60 ? 'moderate_caution' : 'elevated_risk');
+
+          // Soft halo (subtle, professional)
+          const segGlow = L.polyline(stepCoords, {
+            color: segmentColor,
+            weight: 10,
+            opacity: 0.22,
+            lineJoin: 'round',
+            lineCap: 'round',
+          });
+
+          // Core polyline
+          const segLine = L.polyline(stepCoords, {
+            color: segmentColor,
+            weight: 5,
+            opacity: 0.95,
+            lineJoin: 'round',
+            lineCap: 'round',
+          });
+
+          // Interactive Segment Tooltip
+          segLine.bindTooltip(
+            `<strong>${step.from.name} ➔ ${step.to.name}</strong><br/><span style="color:${segmentColor}">Safety Index: ${safetyScore}/100 (${safetyTier.replace('_', ' ')})</span>`,
+            { className: 'custom-dark-tooltip', sticky: true }
+          );
+
+          segLine.on('mouseover', () => {
+            segLine.setStyle({ weight: 7, opacity: 1 });
+          });
+          segLine.on('mouseout', () => {
+            segLine.setStyle({ weight: 5, opacity: 0.95 });
+          });
+
+          routeGroup.addLayer(segGlow);
+          routeGroup.addLayer(segLine);
+        });
+      } else {
+        // Single unified route polyline — soft halo + solid core, clean & professional.
+        const activeColor = activeRoute.routeColor || '#34d399';
+
+        const routeGlow = L.polyline(activeRoute.pathCoordinates, {
+          color: activeColor,
+          weight: 10,
+          opacity: 0.22,
           lineJoin: 'round',
           lineCap: 'round',
         });
 
-        // Core polyline
-        const segLine = L.polyline(stepCoords, {
-          color: segmentColor,
-          weight: 7,
+        const routePolyline = L.polyline(activeRoute.pathCoordinates, {
+          color: activeColor,
+          weight: 5,
           opacity: 0.95,
           lineJoin: 'round',
           lineCap: 'round',
         });
 
-        // Interactive Segment Tooltip
-        segLine.bindTooltip(
-          `<strong>${step.from.name} ➔ ${step.to.name}</strong><br/><span style="color:${segmentColor}">Safety Index: ${safetyScore}/100 (${safetyTier.replace('_', ' ')})</span>`,
-          { className: 'custom-dark-tooltip', sticky: true }
-        );
-
-        segLine.on('mouseover', () => {
-          segLine.setStyle({ weight: 9, opacity: 1 });
-        });
-        segLine.on('mouseout', () => {
-          segLine.setStyle({ weight: 7, opacity: 0.95 });
-        });
-
-        routeGroup.addLayer(segGlow);
-        routeGroup.addLayer(segLine);
-      });
-
-      // Subtle animated dash-offset flow line representing movement along the route
-      const animatedFlow = L.polyline(activeRoute.pathCoordinates, {
-        color: '#ffffff',
-        weight: 3.5,
-        opacity: 0.8,
-        dashArray: '10, 14',
-        className: 'animated-route-flow',
-        lineCap: 'round',
-        lineJoin: 'round',
-        interactive: false,
-      });
-      routeGroup.addLayer(animatedFlow);
-    } else {
-      // Single unified route polyline
-      const activeColor = activeRoute.routeColor || '#34d399';
-
-      const routeGlow = L.polyline(activeRoute.pathCoordinates, {
-        color: activeColor,
-        weight: 14,
-        opacity: 0.35,
-        lineJoin: 'round',
-        lineCap: 'round',
-      });
-
-      const routePolyline = L.polyline(activeRoute.pathCoordinates, {
-        color: activeColor,
-        weight: 7,
-        opacity: 0.95,
-        lineJoin: 'round',
-        lineCap: 'round',
-      });
-
-      // Subtle animated dash-offset flow line representing movement along the route
-      const animatedFlow = L.polyline(activeRoute.pathCoordinates, {
-        color: '#ffffff',
-        weight: 3.5,
-        opacity: 0.85,
-        dashArray: '10, 14',
-        className: 'animated-route-flow',
-        lineCap: 'round',
-        lineJoin: 'round',
-        interactive: false,
-      });
-
-      routeGroup.addLayer(routeGlow);
-      routeGroup.addLayer(routePolyline);
-      routeGroup.addLayer(animatedFlow);
-    }
-
-    // Subtle aerial direct line connecting origin to destination
-    if (activeRoute.origin && activeRoute.destination) {
-      const aerialLine = L.polyline(
-        [[activeRoute.origin.lat, activeRoute.origin.lng], [activeRoute.destination.lat, activeRoute.destination.lng]],
-        {
-          color: '#94a3b8',
-          weight: 2,
-          opacity: 0.45,
-          dashArray: '6, 10',
-          lineCap: 'round',
-          lineJoin: 'round',
-          interactive: false,
-        }
-      );
-      routeGroup.addLayer(aerialLine);
+        routeGroup.addLayer(routeGlow);
+        routeGroup.addLayer(routePolyline);
+      }
     }
 
     // 3. Render Active Route Blackspot Danger Badges along the corridor
