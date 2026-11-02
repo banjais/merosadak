@@ -107,6 +107,7 @@ import {
 } from '../utils/highwayCatalogue';
 import { getDistanceKm, findNearestHighwayJunction, findNearestHighwayFromCoords } from '../utils/geoUtils';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
+import { reverseGeocode, movedPastLastGeocode, shortLocalityLabel, type ReverseGeocodeAddress } from '../utils/reverseGeocode';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 
 /**
@@ -349,6 +350,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const locationModeRef = useRef(locationMode);
   /** Name the last GPS fix resolved to, so a follow-up fix can refresh it. */
   const previousGpsNameRef = useRef<string>('');
+  // The real address for the current fix, resolved by the same reverse geocoder
+  // the My Location page uses — so the planner's "My Location" reads as the
+  // same place the page reports, not just the nearest dataset settlement.
+  const [gpsAddress, setGpsAddress] = useState<ReverseGeocodeAddress | null>(null);
+  const gpsAddressRef = useRef<ReverseGeocodeAddress | null>(null);
+  /** Last fix position the reverse geocoder was asked about (movement gate). */
+  const lastGeocodeRef = useRef<{ lat: number; lng: number } | null>(null);
+  /** Generational token: a slow answer for an old position never wins. */
+  const geocodeSeqRef = useRef(0);
 
   // Modern stepper: origin -> destination -> vehicle -> results
   type RoutePlannerStep = 'origin' | 'destination' | 'vehicle' | 'results';
@@ -524,6 +534,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const originCity = useMemo(() => allCities.find((c) => c.id === originId), [originId, allCities]);
   const destCity = useMemo(() => allCities.find((c) => c.id === destId), [destId, allCities]);
   const gpsOriginCity = useMemo(() => allCities.find((c) => c.id === gpsOriginCityId), [gpsOriginCityId, allCities]);
+
+  // The planner's "My Location" description, composed exactly like the My
+  // Location page headline: street-level area, then municipality, then district
+  // (or province when OSM gives no district) — never the same part twice. Null
+  // until the shared reverse geocoder resolves, so the card falls back to the
+  // nearest surveyed settlement in the meantime.
+  const gpsAddressLabel = useMemo(() => {
+    if (!gpsAddress) return null;
+    const placeParts = [gpsAddress.localArea, gpsAddress.municipality].filter(
+      (p): p is string => !!p,
+    );
+    const place = [...new Set(placeParts)].join(', ');
+    if (!place) return null;
+    const region = gpsAddress.district && !placeParts.includes(gpsAddress.district)
+      ? gpsAddress.district
+      : (!gpsAddress.district && gpsAddress.province) || null;
+    return region ? `${place} · ${region}` : place;
+  }, [gpsAddress]);
 
   // Sync search boxes with selected city name — only when the city NAME
   // changes, not when the allCities array refreshes (which would overwrite
@@ -775,17 +803,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       if (myLocationMode) setOriginId(result.city.id);
       setGpsOriginCityId(result.city.id);
       setGpsOriginDistanceKm(result.distanceKm);
-      // Only seed the boxes while they are empty (or still hold the previously
-      // resolved name), so a live fix never fights the user's typing.
-      if (myLocationMode && originSearchQueryRef.current.trim() === '') {
-        setOriginSearchQuery(resolvedName);
-      } else if (originSearchQueryRef.current === previousGpsNameRef.current) {
-        setOriginSearchQuery(resolvedName);
+      // Label the origin with the real address once it has resolved — the same
+      // reverse geocode the My Location page reports — falling back to the
+      // nearest settlement while no address is available (first seconds,
+      // offline). Only seeded while the box still reads like a GPS label
+      // (empty, or exactly the label we last wrote), so a live fix never
+      // fights the user's typing.
+      const label = (myLocationMode && shortLocalityLabel(gpsAddressRef.current)) || resolvedName;
+      if (myLocationMode && label &&
+          (originSearchQueryRef.current.trim() === '' ||
+           originSearchQueryRef.current === previousGpsNameRef.current)) {
+        setOriginSearchQuery(label);
+        previousGpsNameRef.current = label;
       }
-      // The destination box is the user's to type into. A live GPS fix must
-      // never seed it, otherwise the dropdown's "start typing" hint and the
-      // clear button both appear before the user has done anything.
-      previousGpsNameRef.current = resolvedName;
 
       const nearestJunction = findNearestHighwayJunction(latitude, lng);
       if (nearestJunction.city && nearestJunction.distanceKm != null) {
@@ -812,6 +842,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       if (myLocationMode) setOriginId('');
     }
     setOriginSelected(true);
+
+    // Describe the fix with the shared reverse geocoder so this card reads as
+    // the same place the My Location page reports. Throttled by movement and
+    // cached per ~110 m cell inside the module, per OSM usage policy.
+    if (movedPastLastGeocode(latitude, lng, lastGeocodeRef.current)) {
+      lastGeocodeRef.current = { lat: latitude, lng };
+      const seq = ++geocodeSeqRef.current;
+      void reverseGeocode(latitude, lng).then((address) => {
+        if (!address || seq !== geocodeSeqRef.current) return;
+        gpsAddressRef.current = address;
+        setGpsAddress(address);
+        const name = shortLocalityLabel(address);
+        if (name && locationModeRef.current === 'my_location' &&
+            (originSearchQueryRef.current.trim() === '' ||
+             originSearchQueryRef.current === previousGpsNameRef.current)) {
+          setOriginSearchQuery(name);
+          previousGpsNameRef.current = name;
+        }
+      });
+    }
   }, []);
 
   /**
@@ -1394,9 +1444,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <div className="text-[11px] text-slate-400 truncate mt-0.5">
                   {locationMode === 'my_location'
                     ? (detectedLocation
-                        ? (gpsOriginCity
-                            ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
-                            : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
+                        ? (gpsAddressLabel
+                            ? gpsAddressLabel
+                            : gpsOriginCity
+                              ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
+                              : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
                         : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
                     : 'Back to the current location'}
                 </div>

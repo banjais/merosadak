@@ -6,6 +6,7 @@ import {
    CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell,
 } from 'lucide-react';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
+import { reverseGeocode } from '../utils/reverseGeocode';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { CityNode } from '../types';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
@@ -252,38 +253,23 @@ export const MyLocationPage: React.FC<{
     lastGeocodedRef.current = { lat, lng };
     setLocationInfo({ ...base, address: null, formattedAddress: null, localArea: null, municipality: null, district: null, province: null });
 
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-          headers: { 'Accept-Language': 'en' }
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-        const a = data.address || {};
-        const parts: string[] = [];
-        const localPlace = a.road || a.path || a.footway || a.pedestrian || a.neighbourhood || a.suburb || a.hamlet || a.village;
-        if (localPlace) parts.push(localPlace);
-        const city = a.city || a.town || a.municipality || a.county;
-        if (city) parts.push(city);
-        const district = a.district;
-        if (district && district !== city) parts.push(district);
-        const province = a.state || a.province;
-        if (province) parts.push(province);
-        const postcode = a.postcode;
-        if (postcode) parts.push(postcode);
-        const country = a.country;
-        if (country) parts.push(country);
-        setLocationInfo((prev) => (prev && prev.lat === lat && prev.lng === lng)
-          ? { ...prev, address: data.display_name ?? null, formattedAddress: parts.join(', ') || null, localArea: localPlace ?? null, municipality: city ?? null, district: district ?? null, province: province ?? null }
-          : prev);
-      } catch (e) {
-        console.error('Failed to fetch address', e);
-      }
-    })();
+    // The shared reverse geocoder — the Route Planner describes its fix through
+    // the very same call, so both surfaces read as the same place. Movement
+    // throttling and per-cell caching live inside the module.
+    // No cancellation flag. The effect re-runs on every watcher error or
+    // tracking-state change, and a cleanup flag there used to swallow the
+    // in-flight answer, leaving the page on "Detecting address..." until
+    // the user moved 25 m. The setState guard below already discards a
+    // result for a position the page has moved past — the only staleness
+    // that matters — and the shared module dedupes concurrent requests
+    // for one grid cell.
+    void reverseGeocode(lat, lng).then((result) => {
+      if (!result) return;
+      setLocationInfo((prev) => (prev && prev.lat === lat && prev.lng === lng)
+        ? { ...prev, address: result.displayName, formattedAddress: result.formatted, localArea: result.localArea, municipality: result.municipality, district: result.district, province: result.province }
+        : prev);
+    });
 
-    return () => { cancelled = true; };
   }, []);
 
   // One shared device watcher. This page no longer asks for its own position: it
