@@ -263,13 +263,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             ) : user ? (
               <button
                 onClick={() => {
-                  if (userRole === 'superadmin' && onOpenSuperAdminPanel) onOpenSuperAdminPanel();
-                  if (userRole === 'OfficeAdmin' && onOpenOfficeAdminPanel) onOpenOfficeAdminPanel();
-                  if (userRole === 'GeneralUser' && onOpenUserPanel) onOpenUserPanel();
+                  // Every role opens the SAME unified profile control panel.
+                  // Role-wise admin functions live inside that panel as their
+                  // own section, gated by role — no more role-specific entry
+                  // points in the drawer.
+                  onOpenUserPanel?.();
                   onClose();
                 }}
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/50 hover:bg-slate-700 hover:text-white transition shrink-0"
-                title="Open account panel"
+                title="Open profile & settings"
               >
                 {userRole === 'superadmin' || isSuperAdmin ? (
                   <>

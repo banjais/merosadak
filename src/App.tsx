@@ -541,9 +541,9 @@ function AppContent() {
         onOpenOfflineManager={() => setIsOfflineManagerOpen(true)}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onOpenMyLocation={() => setIsMyLocationOpen(true)}
-        onOpenSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+        onOpenSuperAdminPanel={() => setIsProfileOpen(true)}
         onOpenAdminCommand={() => setIsAdminCommandOpen(true)}
-        onOpenOfficeAdminPanel={() => setIsSuperAdminPanelOpen(true)}
+        onOpenOfficeAdminPanel={() => setIsProfileOpen(true)}
         onOpenUserPanel={() => setIsProfileOpen(true)}
         user={user}
         userRole={userRole}
@@ -793,11 +793,14 @@ function AppContent() {
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 group-hover:bg-emerald-300 transition" />
                 </button>
 
-                {/* Profile page panel (signed in only) — settings are inside. */}
+                {/* Profile page panel (signed in only) — settings, logout
+                and role-wise admin functions live inside this single full-page
+                control panel. Opened from the header avatar and the drawer. */}
                 <ProfilePage
                   isOpen={isProfileOpen}
                   onClose={() => setIsProfileOpen(false)}
                   userEmail={user.email || ''}
+                  displayName={user.displayName ?? null}
                   userRole={userRole}
                   isSuperAdmin={isSuperAdmin}
                   photoURL={user.photoURL ?? null}
