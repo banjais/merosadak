@@ -117,6 +117,34 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
     }
   }, [syncProgress, selectedSegmentIds.size]);
 
+  // Calculate stats for currently selected segments
+  // NOTE: kept above the `isOfflineManagerOpen` early-return so the hook count
+  // is identical on every render of this always-mounted modal (React #310).
+  const selectedSegmentsData = allSegmentsWithHighway.filter((item) => selectedSegmentIds.has(item.segment.id));
+  const totalSelectedDistanceKm = selectedSegmentsData.reduce((acc, it) => acc + it.segment.distanceKm, 0);
+
+  // Calculate estimated tiles & download size for the selection
+  const estimatedTilesCount = useMemo(() => {
+    if (selectedSegmentsData.length === 0) return 0;
+    const tileUrls = generateTilesForSegments(selectedSegmentsData.map((it) => it.segment));
+    return tileUrls.length;
+  }, [selectedSegmentsData]);
+
+  // ~25 KB per tile + 15 KB route data per segment
+  const estimatedSizeMb = useMemo(() => {
+    const bytes = estimatedTilesCount * 25000 + selectedSegmentsData.length * 15000;
+    return (bytes / (1024 * 1024)).toFixed(2);
+  }, [estimatedTilesCount, selectedSegmentsData.length]);
+
+  // Bandwidth savings comparison against full 45 MB pack
+  const bandwidthSavingsPercent = useMemo(() => {
+    const fullSizeMb = 45;
+    const currentSizeMb = parseFloat(estimatedSizeMb);
+    if (currentSizeMb <= 0) return 0;
+    const savings = Math.max(0, Math.round(((fullSizeMb - currentSizeMb) / fullSizeMb) * 100));
+    return savings;
+  }, [estimatedSizeMb]);
+
   if (!isOfflineManagerOpen) return null;
 
   const formatDate = (timestamp: number | null) => {
@@ -185,31 +213,6 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
     );
   });
 
-  // Calculate stats for currently selected segments
-  const selectedSegmentsData = allSegmentsWithHighway.filter((item) => selectedSegmentIds.has(item.segment.id));
-  const totalSelectedDistanceKm = selectedSegmentsData.reduce((acc, it) => acc + it.segment.distanceKm, 0);
-
-  // Calculate estimated tiles & download size for the selection
-  const estimatedTilesCount = useMemo(() => {
-    if (selectedSegmentsData.length === 0) return 0;
-    const tileUrls = generateTilesForSegments(selectedSegmentsData.map((it) => it.segment));
-    return tileUrls.length;
-  }, [selectedSegmentsData]);
-
-  // ~25 KB per tile + 15 KB route data per segment
-  const estimatedSizeMb = useMemo(() => {
-    const bytes = estimatedTilesCount * 25000 + selectedSegmentsData.length * 15000;
-    return (bytes / (1024 * 1024)).toFixed(2);
-  }, [estimatedTilesCount, selectedSegmentsData.length]);
-
-  // Bandwidth savings comparison against full 45 MB pack
-  const bandwidthSavingsPercent = useMemo(() => {
-    const fullSizeMb = 45;
-    const currentSizeMb = parseFloat(estimatedSizeMb);
-    if (currentSizeMb <= 0) return 0;
-    const savings = Math.max(0, Math.round(((fullSizeMb - currentSizeMb) / fullSizeMb) * 100));
-    return savings;
-  }, [estimatedSizeMb]);
 
   // Handle caching selected segments
   const handleCacheSelected = async () => {
