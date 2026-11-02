@@ -183,10 +183,10 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         onClick={onClose}
       />
 
-      <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-[#080d15] border-r border-slate-800/70 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
-        <div className="p-3 border-b border-slate-800/70 flex items-center justify-between bg-[#0c141d]/80">
+      <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[90vw] bg-[var(--surface-shell)] border-r border-slate-800/70 z-[1200] flex flex-col shadow-2xl animate-slideInLeft text-slate-100">
+        <div className="p-3 border-b border-slate-800/70 flex items-center justify-between bg-[var(--surface-raised)]">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-lg bg-[#0c141d] border border-emerald-500/30 flex items-center justify-center shadow-md logo-shadow">
+            <div className="w-9 h-9 rounded-lg bg-[var(--surface-raised)] border border-emerald-500/30 flex items-center justify-center shadow-md logo-shadow">
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
               </svg>
@@ -250,7 +250,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
           </div>
         </div>
 
-        <div className="p-3 border-t border-slate-800/70 bg-[#0b111b]/80 text-xs text-tertiary">
+        <div className="p-3 border-t border-slate-800/70 bg-[var(--surface-shell)] text-xs text-tertiary">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />

@@ -504,7 +504,7 @@ function AppContent() {
   return (
     <PullToRefresh
       onRefresh={fetchLiveFeeds}
-      className="h-full bg-[#060a10] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950"
+      className="h-full bg-[var(--surface-base)] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950"
     >
       {/* Animated Flash / Splash Screen */}
       <SplashScreen isReady={isAppReady} onFinished={() => setIsAppReady(true)} />

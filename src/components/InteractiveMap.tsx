@@ -796,11 +796,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             }
           });
 
+          // Respect the active theme at creation time. The theme-sync effect
+          // below only runs on `data-theme` mutations, and the mask is created
+          // asynchronously after that effect's initial pass — a hardcoded light
+          // fill here left a white mask around Nepal on every dark-mode load.
+          const themeNow = document.documentElement.getAttribute('data-theme');
+          const isLightTheme = themeNow === 'light';
           const mask = L.polygon(
             [worldCorners, ...holes] as unknown as L.LatLngExpression[][],
             {
-              fillColor: '#efefeb',
-              fillOpacity: 1.0,
+              fillColor: isLightTheme ? '#efefeb' : '#0b1220',
+              fillOpacity: isLightTheme ? 1.0 : 0.4,
               color: 'transparent',
               weight: 0,
               interactive: false,

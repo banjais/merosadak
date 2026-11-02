@@ -356,7 +356,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner with Real-Time Highway Status Metrics */}
-      <div className="bg-gradient-to-r from-[#0c141d] via-[#0d1b26] to-emerald-950/40 border border-slate-800/80 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[var(--surface-raised)] via-[var(--surface-tile)] to-emerald-950/40 border border-slate-800/80 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
@@ -403,7 +403,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
         if (entries.length === 0) return null;
 
         return (
-          <div className="bg-[#0c141d]/80 border border-slate-800/80 rounded-2xl p-4 space-y-3">
+          <div className="bg-[var(--surface-raised)] border border-slate-800/80 rounded-2xl p-4 space-y-3">
             <div className="flex items-center space-x-2 text-xs font-bold text-slate-300">
               <MapIcon className="w-3.5 h-3.5 text-cyan-400" />
               <span>Province Highway Coverage (DoR SNH 2022/23)</span>
@@ -412,7 +412,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
               {entries.map(([prov, data]) => {
                 const d = data as { total: number; bt: number; gr: number; er: number; uc: number; pl: number };
                 return (
-                  <div key={prov} className="bg-[#0f1927]/60 border border-slate-800/80 rounded-xl p-3 space-y-2">
+                  <div key={prov} className="bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl p-3 space-y-2">
                     <div className="text-xs font-bold text-white truncate">{prov}</div>
                     <div className="text-[11px] font-mono text-slate-300">{d.total.toLocaleString(undefined, { maximumFractionDigits: 1 })} km total</div>
                     <div className="flex flex-wrap gap-1">
@@ -441,7 +441,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             placeholder="Search by code (e.g. NH01, NH17, NH04), name (Prithvi, Postal), district, segment, issue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-[#0f1927] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
           />
           {searchQuery && (
             <button
@@ -604,7 +604,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 >
                   <div className="flex items-start space-x-4 flex-1">
                     {/* Highway Badge */}
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#152435] to-[#0c141d] border border-emerald-500/30 flex flex-col items-center justify-center shrink-0 shadow-lg">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--surface-badge)] to-[var(--surface-raised)] border border-emerald-500/30 flex flex-col items-center justify-center shrink-0 shadow-lg">
                       <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">NEPAL</span>
                       <span className="text-base font-black text-emerald-400 font-display">{highway.code}</span>
                     </div>
@@ -762,7 +762,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                 {/* Quick Actions Overlay (Long Press) */}
                 {quickOverlayFor === highwayKey && !archived && (
                   <div
-                    className="absolute inset-0 z-20 bg-[#080d15]/95 backdrop-blur-md flex flex-col p-4 border border-cyan-500/30 rounded-xl"
+                    className="absolute inset-0 z-20 bg-[var(--surface-shell)] backdrop-blur-md flex flex-col p-4 border border-cyan-500/30 rounded-xl"
                     onClick={() => setQuickOverlayFor(null)}
                   >
                     <div className="flex items-center justify-between mb-4">

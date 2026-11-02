@@ -530,7 +530,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
 
   return (
     <div
-      className={`bg-[#0c141d]/90 border border-slate-800/80 rounded-2xl p-5 shadow-xl space-y-5 ${className}`}
+      className={`bg-[var(--surface-raised)] border border-slate-800/80 rounded-2xl p-5 shadow-xl space-y-5 ${className}`}
       id="fuel-cost-estimator"
     >
       {/* Header */}
@@ -602,7 +602,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       </div>
 
       {/* Main Grand Total Banner & Highlight Bento */}
-      <div className="bg-gradient-to-r from-[#080d15] via-[#0c141d] to-emerald-950/40 p-4 rounded-xl border border-emerald-500/30 relative overflow-hidden space-y-3">
+      <div className="bg-gradient-to-r from-[var(--surface-shell)] via-[var(--surface-raised)] to-emerald-950/40 p-4 rounded-xl border border-emerald-500/30 relative overflow-hidden space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider block">
@@ -685,7 +685,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       {/* 4-Item Breakdown Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Fuel / Power Card */}
-        <div className="bg-[#0f1927]/80 p-3 rounded-xl border border-slate-800/80 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
             <span className="flex items-center space-x-1">
               <Fuel className="w-3.5 h-3.5" />
@@ -701,7 +701,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Tolls Card */}
-        <div className="bg-[#0f1927]/80 p-3 rounded-xl border border-slate-800/80 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-cyan-400 font-semibold">
             <span className="flex items-center space-x-1">
               <CreditCard className="w-3.5 h-3.5" />
@@ -717,7 +717,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Emergency Assistance Card */}
-        <div className="bg-[#0f1927]/80 p-3 rounded-xl border border-slate-800/80 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-rose-400 font-semibold">
             <span className="flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -733,7 +733,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* CO2 Footprint */}
-        <div className="bg-[#0f1927]/80 p-3 rounded-xl border border-slate-800/80 space-y-1">
+        <div className="bg-[var(--surface-tile)] p-3 rounded-xl border border-slate-800/80 space-y-1">
           <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold">
             <span className="flex items-center space-x-1">
               <Leaf className="w-3.5 h-3.5" />
@@ -752,7 +752,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       {/* Itemized Modules: Toll Plazas & Emergency Roadside Protection */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Module A: Highway Toll Plazas & Road Maintenance Fees */}
-        <div className="bg-[#0f1927]/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+        <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-white">
               <Receipt className="w-4 h-4 text-cyan-400" />
@@ -837,7 +837,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
         </div>
 
         {/* Module B: Emergency Assistance, Towing & Contingency Fund */}
-        <div className="bg-[#0f1927]/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+        <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-white">
               <ShieldCheck className="w-4 h-4 text-rose-400" />
@@ -894,7 +894,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
       </div>
 
       {/* Quick Interactive Sliders & Surcharges Bar */}
-      <div className="bg-[#0f1927]/60 p-4 rounded-xl border border-slate-800/80 space-y-4">
+      <div className="bg-[var(--surface-tile)] p-4 rounded-xl border border-slate-800/80 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {/* Passenger Count Stepper */}
           <div className="space-y-1.5">
@@ -923,7 +923,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* Mountain Gradient Surcharge Checkbox */}
-          <div className="flex items-center justify-between p-2.5 bg-[#101a26]/80 rounded-xl border border-slate-800/80">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
                 <Mountain className="w-3.5 h-3.5 text-purple-400" />
@@ -940,7 +940,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* AC & Heavy Luggage Toggle */}
-          <div className="flex items-center justify-between p-2.5 bg-[#101a26]/80 rounded-xl border border-slate-800/80">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
                 <Sliders className="w-3.5 h-3.5 text-cyan-400" />
@@ -957,7 +957,7 @@ Generated via Mero Sadak Nepal Highway GIS`;
           </div>
 
           {/* Meal / Dhaba Allowance Option */}
-          <div className="flex items-center justify-between p-2.5 bg-[#101a26]/80 rounded-xl border border-slate-800/80">
+          <div className="flex items-center justify-between p-2.5 bg-[var(--surface-tile)] rounded-xl border border-slate-800/80">
             <div className="space-y-0.5">
               <label className="text-xs font-semibold text-slate-200 flex items-center space-x-1">
                 <Utensils className="w-3.5 h-3.5 text-emerald-400" />

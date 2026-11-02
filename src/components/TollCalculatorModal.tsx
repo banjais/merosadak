@@ -120,9 +120,9 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#0c141d] border border-slate-800/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[var(--surface-raised)] border border-slate-800/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800/70 flex items-center justify-between bg-[#080d15]/80">
+        <div className="p-5 border-b border-slate-800/70 flex items-center justify-between bg-[var(--surface-shell)]">
           <div className="flex items-center space-x-2.5">
             <span className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">🚧</span>
             <div>
@@ -187,7 +187,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
                   {categories.map((cat) => {
                     const entryRate = tollRates.entry[cat.key];
                     return (
-                      <div key={cat.key} className="flex justify-between items-center p-3.5 bg-[#111c29]/70 border border-slate-800/70 rounded-xl">
+                      <div key={cat.key} className="flex justify-between items-center p-3.5 bg-[var(--surface-elev)] border border-slate-800/70 rounded-xl">
                         <div>
                           <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
                           <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
@@ -212,7 +212,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
                   {categories.map((cat) => {
                     const exitRate = tollRates.exit[cat.key];
                     return (
-                      <div key={`exit-${cat.key}`} className="flex justify-between items-center p-3.5 bg-[#111c29]/70 border border-slate-800/70 rounded-xl">
+                      <div key={`exit-${cat.key}`} className="flex justify-between items-center p-3.5 bg-[var(--surface-elev)] border border-slate-800/70 rounded-xl">
                         <div>
                           <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
                           <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
@@ -263,7 +263,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-[#080d15] border-t border-slate-800/70 flex justify-end">
+        <div className="p-4 bg-[var(--surface-shell)] border-t border-slate-800/70 flex justify-end">
           <button
             onClick={onClose}
             className="px-6 py-2.5 min-h-11 rounded-xl font-bold text-sm transition bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-[#041210] shadow-lg shadow-emerald-500/25"

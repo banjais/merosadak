@@ -1792,14 +1792,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
               {/* Key metrics strip */}
               <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Compass className="h-3 w-3 text-emerald-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Distance</span>
                   </div>
                   <div className="font-mono text-base sm:text-lg font-bold text-white whitespace-nowrap tabular-nums truncate">{routePlan.totalDistanceKm} km</div>
                 </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="h-3 w-3 text-cyan-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Time</span>
@@ -1808,7 +1808,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     {Math.floor(routePlan.estimatedTimeMinutes / 60)}h {Math.round(routePlan.estimatedTimeMinutes % 60)}m
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Fuel className="h-3 w-3 text-amber-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Est. cost</span>
@@ -1817,7 +1817,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     Rs {estimatedTripCostNpr.toLocaleString()}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800/80 bg-[#0c141d]/70 p-3">
+                <div className="rounded-2xl border border-slate-800/80 bg-[var(--surface-raised)] p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Road score</span>
