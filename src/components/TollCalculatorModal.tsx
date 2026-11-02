@@ -120,11 +120,11 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[#0c141d] border border-slate-800/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="p-5 border-b border-slate-800/70 flex items-center justify-between bg-[#080d15]/80">
           <div className="flex items-center space-x-2.5">
-            <span className="text-xl">🚧</span>
+            <span className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0">🚧</span>
             <div>
               <h3 className="text-lg font-bold text-white font-display">Nagdhunga Tunnel Toll Fees & Regulations</h3>
               <p className="text-xs text-slate-400">National Highway Toll Rates & Ministry Guidelines</p>
@@ -132,7 +132,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition touch-target"
           >
             <X className="w-5 h-5" />
           </button>
@@ -141,8 +141,8 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
         {/* Modal Body */}
         <div className="p-5 space-y-4 overflow-y-auto flex-1 text-slate-200 text-sm scrollbar-paddle">
           {/* Gazette Banner */}
-          <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-            <div className="text-xs font-extrabold text-amber-400 mb-1">Official Toll Rate Notification</div>
+          <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+            <div className="text-xs font-extrabold text-emerald-400 mb-1">Official Toll Rate Notification</div>
             <div className="text-xs text-slate-300">
               Effective from Nepal Gazette, Chaitra 26, 2082 BS (Ministry of Physical Infrastructure & Transport, Department of Roads).
               {tollRates?.lastUpdated && (
@@ -179,7 +179,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
             <div className="space-y-3">
               {/* Entry Rates */}
               <div>
-                <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-400 mb-2">
+                <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-400 mb-2">
                   <ArrowUpRight className="w-4 h-4" />
                   <span>Entry to Kathmandu (Dhading → Nagdhunga)</span>
                 </div>
@@ -187,13 +187,13 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
                   {categories.map((cat) => {
                     const entryRate = tollRates.entry[cat.key];
                     return (
-                      <div key={cat.key} className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+                      <div key={cat.key} className="flex justify-between items-center p-3.5 bg-[#111c29]/70 border border-slate-800/70 rounded-xl">
                         <div>
                           <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
                           <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-base font-black text-cyan-400 font-mono">NPR {entryRate.rate}</div>
+                          <div className="text-base font-black text-emerald-400 font-mono whitespace-nowrap">NPR {entryRate.rate}</div>
                           <div className="text-[10px] text-slate-400">Per Single Entry</div>
                         </div>
                       </div>
@@ -204,7 +204,7 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
 
               {/* Exit Rates */}
               <div>
-                <div className="flex items-center space-x-2 text-xs font-semibold text-amber-400 mb-2">
+                <div className="flex items-center space-x-2 text-xs font-semibold text-cyan-400 mb-2">
                   <ArrowDownLeft className="w-4 h-4" />
                   <span>Exit from Kathmandu (Nagdhunga → Dhading)</span>
                 </div>
@@ -212,13 +212,13 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
                   {categories.map((cat) => {
                     const exitRate = tollRates.exit[cat.key];
                     return (
-                      <div key={`exit-${cat.key}`} className="flex justify-between items-center p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl">
+                      <div key={`exit-${cat.key}`} className="flex justify-between items-center p-3.5 bg-[#111c29]/70 border border-slate-800/70 rounded-xl">
                         <div>
                           <div className="font-bold text-white text-sm">{cat.icon} {cat.label}</div>
                           <div className="text-xs text-slate-400 mt-0.5">{cat.desc}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-base font-black text-amber-400 font-mono">NPR {exitRate.rate}</div>
+                          <div className="text-base font-black text-cyan-400 font-mono whitespace-nowrap">NPR {exitRate.rate}</div>
                           <div className="text-[10px] text-slate-400">Per Single Entry</div>
                         </div>
                       </div>
@@ -251,10 +251,10 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
 
           {/* Data Source Info */}
           {tollRates && !isLoading && (
-            <div className="p-2.5 bg-slate-800/40 border border-slate-700/50 rounded-lg">
+            <div className="p-2.5 bg-white/[0.03] border border-slate-800/60 rounded-lg">
               <p className="text-[10px] text-slate-500 text-center">
                 Data source: {tollRates.sourceLabel || 'Nepal Gazette'} · Auto-updated via CI/CD ·{' '}
-                <a href={tollRates.source} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                <a href={tollRates.source} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
                   View official notice
                 </a>
               </p>
@@ -263,10 +263,10 @@ export const TollCalculatorModal: React.FC<TollCalculatorModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+        <div className="p-4 bg-[#080d15] border-t border-slate-800/70 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
+            className="px-6 py-2.5 min-h-11 rounded-xl font-bold text-sm transition bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-[#041210] shadow-lg shadow-emerald-500/25"
           >
             Close
           </button>
