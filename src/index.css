@@ -1497,6 +1497,16 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
      position: relative;
    }
 
+   /* Plain-face variant: the face becomes a transparent carrier so each
+      section's own card styling (rounded border, gradient, shadow) shows
+      through. The 3D rotateY / parallax still applies to the slot, so the
+      inner card still gets the Reels-style depth without double-card nesting. */
+   .reel-stack--tall.reel-stack--plain-face .reel-card-face {
+     background: transparent;
+     border: none;
+     box-shadow: none;
+   }
+
 
 .reel-stack-dot {
   width: 0.4rem;

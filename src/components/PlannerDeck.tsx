@@ -22,6 +22,17 @@ interface PlannerDeckProps {
    * JSX and gate themselves with `id === '...'`, so no markup is hoisted.
    */
   children: (activeId: string) => React.ReactNode;
+  /**
+   * Visual variant of the card face.
+   * - 'default' (default): the face itself is the visible card (border, bg,
+   *   shadow). Use when the inner content has no card styling of its own.
+   * - 'plain': the face is transparent so each section's own card styling
+   *   (rounded border, gradient, shadow) shows through. The 3D rotateY /
+   *   parallax still applies to the slot, so the inner card still gets the
+   *   Reels-style depth without double-card nesting. Use when each section
+   *   already has its own card wrapper.
+   */
+  variant?: 'default' | 'plain';
 }
 
 /**
@@ -31,7 +42,7 @@ interface PlannerDeckProps {
  * `activeId`, so no markup has to be hoisted. The active card is the only
  * draggable surface; horizontal drag or the arrow buttons move between cards.
  */
-export const PlannerDeck: React.FC<PlannerDeckProps> = ({ items, activeId, onChange, children }) => {
+export const PlannerDeck: React.FC<PlannerDeckProps> = ({ items, activeId, onChange, children, variant = 'default' }) => {
   const x = useMotionValue(0);
   const rotateY = useTransform(x, [-160, 0, 160], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
   const dragOpacity = useTransform(x, [-200, -80, 0, 80, 200], [0.6, 1, 1, 1, 0.6]);
@@ -77,7 +88,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({ items, activeId, onCha
   if (!active) return null;
 
   return (
-    <div className="reel-stack reel-stack--tall">
+    <div className={`reel-stack reel-stack--tall${variant === 'plain' ? ' reel-stack--plain-face' : ''}`}>
       <div className="reel-stack-stage">
         <motion.div
           className="reel-card-slot is-active"

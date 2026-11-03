@@ -20,6 +20,8 @@ import { PlaceField, FieldIconButton } from './planner/PlaceField';
 import { TripOptions } from './planner/TripOptions';
 import { RouteVerdict } from './planner/RouteVerdict';
 import { DetailSection } from './planner/DetailSection';
+import { ReelCard } from './planner/ReelCard';
+import { PlannerDeck, DeckItem } from './PlannerDeck';
 import { RouteBlocksPanel } from './planner/RouteBlocksPanel';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
@@ -33,6 +35,8 @@ import {
   MapPin,
   Bike,
   Truck,
+  Car,
+  Navigation,
   Layers,
   ArrowUpDown,
   ArrowUp,
@@ -77,6 +81,7 @@ import { DataAttribution } from './DataAttribution';
 import { UnifiedRouteReport } from './UnifiedRouteReport';
 import {
   VEHICLE_CONFIGS,
+  PREFERENCE_CONFIGS,
   FuelRateConfig,
 } from '../utils/vehicleConfigs';
 import { fetchJson } from '../utils/apiConfig';
@@ -457,6 +462,48 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const toggleSection = useCallback((id: DetailSectionId) => {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
+
+  // PlannerDeck active card id. The deck shows one card at a time; the user
+  // swipes left/right to move between single-info cards. When the planner
+  // flips between pre-calc and post-calc, the deck item set changes, so we
+  // reset the active id to the first card of the new set (location pre-calc,
+  // verdict post-calc).
+  const [plannerDeckActiveId, setPlannerDeckActiveId] = useState<string>('location');
+  const plannerDeckItems: DeckItem[] = useMemo(() => {
+    if (!hasCalculated) {
+      return [
+        { id: 'location', label: 'Where from?', hint: 'My Location / GPS' },
+        { id: 'destination', label: 'Where to?', hint: 'Destination' },
+      ];
+    }
+    const items: DeckItem[] = [
+      { id: 'verdict', label: 'Verdict', hint: 'Can I depart?' },
+      { id: 'actions', label: 'Trip actions', hint: 'Share · SOS' },
+      { id: 'vehicle', label: 'Ride', hint: 'Vehicle' },
+      { id: 'preference', label: 'Route type', hint: 'Fastest / scenic' },
+      { id: 'blocks', label: 'Blocks & alerts', hint: 'On route' },
+      { id: 'journey', label: 'Journey', hint: 'Turn-by-turn' },
+      { id: 'insights', label: 'Insights', hint: 'Road score' },
+      { id: 'costs', label: 'Costs', hint: 'Fuel · tolls' },
+    ];
+    if (routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1) {
+      items.push({ id: 'routes', label: 'Alternative routes', hint: 'Compare options' });
+    }
+    items.push({ id: 'report', label: 'Trip report', hint: 'Print / share' });
+    return items;
+  }, [hasCalculated, routePlan]);
+  // Safety net: if the active id is no longer in the deck (e.g. the deck flipped
+  // from post-calc to pre-calc and the old 'verdict' id is gone, or the
+  // alternative-routes card disappeared after a recalculation), snap back to
+  // the first card. Explicit setPlannerDeckActiveId calls in the transition
+  // handlers below pick the right card for each transition; this only fires
+  // when no explicit choice was made.
+  useEffect(() => {
+    if (plannerDeckItems.length === 0) return;
+    if (!plannerDeckItems.some((it) => it.id === plannerDeckActiveId)) {
+      setPlannerDeckActiveId(plannerDeckItems[0].id);
+    }
+  }, [plannerDeckItems, plannerDeckActiveId]);
   // Calculation animation key for smooth CSS fade-in transitions
   const [calcKey, setCalcKey] = useState<number>(0);
 
@@ -685,6 +732,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       setHasCalculated(true);
       setOpenSections({});
       setTripStarted(false);
+      // Route just calculated → jump the deck to the verdict card so the
+      // user sees the result immediately, not the location/destination card.
+      setPlannerDeckActiveId('verdict');
 
       // User requirement 3: clean previous search From & To in the search bar and show my location default
       setSingleSearchQuery('');
@@ -1133,6 +1183,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     handleDetectDeviceLocation(false);
     setRoutePlannerStep('destination');
+    setPlannerDeckActiveId('location');
     setTimeout(() => {
       singleSearchInputRef.current?.focus();
       setIsSingleDropdownOpen(true);
@@ -1150,6 +1201,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('origin');
     setOriginId('');
     setOriginSearchQuery('');
+    // Switching to custom_from_to → jump the deck to the destination card,
+    // which is where the from/to PlaceFields live in this mode.
+    setPlannerDeckActiveId('destination');
     setTimeout(() => {
       originInputRef.current?.focus();
       setIsOriginDropdownOpen(true);
@@ -1167,6 +1221,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     setRoutePlannerStep('destination');
     handleDetectDeviceLocation(false);
+    setPlannerDeckActiveId('location');
     setTimeout(() => {
       singleSearchInputRef.current?.focus();
       setIsSingleDropdownOpen(true);
@@ -1185,6 +1240,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('origin');
     setOpenSections({});
     setTripStarted(false);
+    // Editing locations → jump the deck to the destination card, which is
+    // where the from/to fields live in custom_from_to mode. (The hasCalculated
+    // flip below already resets the deck to 'location'; this overrides that
+    // so the user lands on the card they actually need to edit.)
+    setPlannerDeckActiveId('destination');
     onRouteClear?.();
     setTimeout(() => {
       destInputRef.current?.focus();
@@ -1202,6 +1262,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setOpenSections({});
+    setPlannerDeckActiveId('destination');
     onRouteClear?.();
     setTimeout(() => {
       originInputRef.current?.focus();
@@ -1363,196 +1424,19 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     );
   }, [routePlan, routeHighwayCodes]);
 
-  // "Start trip" from the verdict: opens the live journey section and the map.
+  // "Start trip" from the verdict: opens the live journey card and the map.
+  // The deck now shows one card at a time, so "open journey" means navigate
+  // the deck to the Journey card (the old expand-collapse is gone).
   const handleStartTrip = () => {
     setTripStarted(true);
-    openSection('journey');
+    setPlannerDeckActiveId('journey');
     onViewOnMap?.();
   };
 
   return (
-    <div className="space-y-4">
-      {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
-      <div className="space-y-3">
-      {/* 1. MY LOCATION CARD - hidden once a route is calculated */}
-      {!hasCalculated && (
-      <div ref={locationMenuRef} className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
-<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div
-              onClick={() => {
-                if (locationMode === 'custom_from_to') {
-                  handleReturnToDefault();
-                } else {
-                  setIsLocationMenuOpen((prev) => !prev);
-                }
-              }}
-              id="btn-my-location-toggle"
-              className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
-              title={locationMode === 'custom_from_to' ? 'Return to default' : 'Change Location'}
-              role="button"
-              aria-expanded={isLocationMenuOpen}
-            >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (locationMode === 'my_location') {
-                    if (liveTracking) stopTracking();
-                    else restartTracking();
-                  }
-                }}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
-                  (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
-                    : 'bg-slate-800 text-slate-400 border-slate-700'
-                }`}
-                title={locationMode === 'my_location'
-                  ? (liveTracking ? 'Stop following your position (saves battery)' : 'Start following your position')
-                  : 'Open location options'}
-                id="btn-my-location-icon"
-              >
-                {locationMode === 'my_location' && detectedLocation ? (
-                  <MapPin className="w-5 h-5 text-emerald-400" />
-                ) : originCity ? (
-                  <MapPin className="w-5 h-5 text-emerald-400" />
-                ) : (
-                  <Crosshair className="w-5 h-5 text-slate-400" />
-                )}
-</button>
-              <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white truncate">
-                  {locationMode === 'my_location'
-                    ? (detectedLocation
-                        ? 'My Location'
-                        : 'My Location (GPS)')
-                    : (originCity ? originCity.name : 'My Location')}
-                </span>
-              </div>
-                <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                  {locationMode === 'my_location'
-                    ? (detectedLocation
-                        ? (gpsAddressLabel
-                            ? gpsAddressLabel
-                            : gpsOriginCity
-                              ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
-                              : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
-                        : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
-                    : 'Back to the current location'}
-                </div>
-              {detectedLocation && locationMode === 'my_location' && (
-                <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
-                  <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
-                    liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-                  }`} />
-                  {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
-                  {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
-                  {liveAccuracy && (
-                    <span className="text-slate-500"> · {liveAccuracy}</span>
-                  )}
-                  {gpsNearestJunction?.name && (
-                    <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>
-                  )}
-                </div>
-              )}
-              {locationMode === 'my_location' && !detectedLocation && liveLocationError && (
-                <div className="text-[10px] font-medium truncate mt-0.5 text-rose-400">
-                  Location blocked — allow GPS access, or pick an origin below
-                </div>
-              )}
-              {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
-                <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
-                  {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
-                </div>
-              )}
-            </div>
-            {locationMode === 'custom_from_to' ? (
-              <ArrowLeft
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleReturnToDefault();
-                }}
-                className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer group-hover:text-emerald-400`}
-              />
-            ) : (
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-            )}
-          </div>
-
-          {/* Quick Action Buttons on Location Card */}
-          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-            {!hasCalculated && (
-              <button
-                type="button"
-                onClick={handleShowLocationOnMap}
-                className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-                title="Show location on map"
-                id="btn-show-location-map"
-              >
-                <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Show on Map</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Location Dropdown Options Menu — only shown in my_location mode.
-           In custom_from_to mode, the card shows a return icon instead. */}
-        {locationMode === 'my_location' && isLocationMenuOpen && (
-          <div className="mt-3.5 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSwitchToGps();
-              }}
-              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-emerald-500/50 bg-emerald-950/30 text-white`}
-            >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
-              }`}>
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                  <span>Use Device GPS</span>
-                  {locationMode === 'my_location' && (
-                    <span className="text-[10px] text-emerald-400 font-normal">(Active)</span>
-                  )}
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  {locationPermissionDenied
-                    ? 'GPS blocked — allow it in your browser, then tap to retry'
-                    : 'Follows your live position as the origin'}
-                </div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSwitchToCustomOrigin();
-              }}
-              className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80`}
-            >
-              <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                  <span>Change Origin City / Hub</span>
-                </div>
-                <div className="text-[11px] text-slate-400 truncate">
-                  Type origin &amp; destination manually
-                </div>
-              </div>
-            </button>
-          </div>
-        )}
-      </div>
-      )}
-
+    <div className="space-y-3">
+      {/* Floating speech-transcript chip — kept outside the deck so it
+          doesn't move when the user swipes between planner cards. */}
       {speechTranscriptNotice && (
         <div className="flex items-center space-x-1.5 text-xs text-emerald-300 animate-fadeIn bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-xl px-3 py-2">
           <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
@@ -1560,290 +1444,538 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         </div>
       )}
 
-        {!hasCalculated &&
-          (locationMode === 'my_location' ? (
-            <PlaceField
-              id="single-dest"
-              containerRef={singleSearchRef}
-              inputRef={singleSearchInputRef}
-              placeholder="Where to?"
-              value={singleSearchQuery}
-              resolved={!!destId}
-              accent="emerald"
-              listening={listeningTarget === 'single'}
-              onChange={(v) => {
-                setSingleSearchQuery(v);
-                closeAllMenus('single');
-                setIsSingleDropdownOpen(true);
-              }}
-              onFocus={() => {
-                closeAllMenus('single');
-                setIsSingleDropdownOpen(true);
-              }}
-              onVoice={() => startVoiceRecognition('single')}
-              onClear={() => setSingleSearchQuery('')}
-              actions={
-                <>
-                  <FieldIconButton
-                    label="AI route planner"
-                    active={isAiPromptOpen}
-                    onClick={() => {
-                      closeAllMenus('ai');
-                      // The sparkle now opens the full conversational AI panel;
-                      // fall back to the inline prompt only when the parent
-                      // has not wired the panel (standalone planner usage).
-                      if (onOpenAiAssistant) {
-                        onOpenAiAssistant();
-                      } else {
-                        setIsAiPromptOpen(!isAiPromptOpen);
-                      }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-cyan-400" />
-                  </FieldIconButton>
-                  {highwayCount > 0 && (
-                    <FieldIconButton label="Browse by highway" onClick={() => onOpenHighwayDirectory?.()}>
-                      <MapPin className="h-4 w-4 text-amber-400" />
-                    </FieldIconButton>
-                  )}
-                </>
-              }
-            >
-              {isSingleDropdownOpen && (
-                <CitySuggestionDropdown
-                  query={singleSearchQuery}
-                  results={filteredSingleCities}
-                  searchablePlaceCount={searchablePlaceCount}
-                  onSelect={(city) => {
-                    setDestId(city.id);
-                    setSingleSearchQuery(city.name);
-                    setDestSearchQuery(city.name);
-                    setIsSingleDropdownOpen(false);
-                    setUserPickedDestination(true);
-                    // Single-field destination pick (no origin yet) → fly the
-                    // map to the chosen place so the user sees its area
-                    // instead of a static whole-Nepal overview.
-                    if (!originId) {
-                      onViewOnMap?.({
-                        lat: city.lat,
-                        lng: city.lng,
-                        title: city.name,
-                        zoom: 11,
-                      });
-                    }
-                    if (hasCalculated) setNeedsRecalculation(true);
-                  }}
-                  totalMatches={singleMatchCount}
-                />
-              )}
-            </PlaceField>
-          ) : (
-            <div className="grid items-start gap-2 md:grid-cols-[1fr_auto_1fr]">
-              <PlaceField
-                id="from-origin"
-                containerRef={originSearchRef}
-                inputRef={originInputRef}
-                placeholder="From where?"
-                value={originSearchQuery}
-                resolved={!!originId}
-                accent="emerald"
-                listening={listeningTarget === 'origin'}
-                onChange={(v) => {
-                  setOriginSearchQuery(v);
-                  closeAllMenus('origin');
-                  setIsOriginDropdownOpen(true);
-                }}
-                onFocus={() => {
-                  setOriginSearchQuery('');
-                  closeAllMenus('origin');
-                  setIsOriginDropdownOpen(true);
-                }}
-                onVoice={() => startVoiceRecognition('origin')}
-                onClear={handleClearOrigin}
-              >
-                {isOriginDropdownOpen && (
-                  <CitySuggestionDropdown
-                    query={originSearchQuery}
-                    results={filteredOriginCities}
-                    searchablePlaceCount={searchablePlaceCount}
-                    onSelect={handleSelectOrigin}
-                    totalMatches={originMatchCount}
-                    showTouchLegend
-                    highwayGroups={originHighwayGroups}
-                  />
-                )}
-              </PlaceField>
-              <button
-                type="button"
-                onClick={handleSwapLocations}
-                aria-label="Swap origin and destination"
-                title="Swap origin and destination"
-                className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
-              >
-                <ArrowUpDown className="h-5 w-5" />
-              </button>
-              <PlaceField
-                id="to-dest"
-                containerRef={destSearchRef}
-                inputRef={destInputRef}
-                placeholder="Where to?"
-                value={destSearchQuery}
-                resolved={!!destId}
-                accent="cyan"
-                listening={listeningTarget === 'dest'}
-                onChange={(v) => {
-                  setDestSearchQuery(v);
-                  closeAllMenus('dest');
-                  setIsDestDropdownOpen(true);
-                }}
-                onFocus={() => {
-                  setDestSearchQuery('');
-                  closeAllMenus('dest');
-                  setIsDestDropdownOpen(true);
-                }}
-                onVoice={() => startVoiceRecognition('dest')}
-                onClear={handleClearDestination}
-              >
-                {isDestDropdownOpen && (
-                  <CitySuggestionDropdown
-                    query={destSearchQuery}
-                    results={filteredDestCities}
-                    searchablePlaceCount={searchablePlaceCount}
-                    onSelect={handleSelectDestination}
-                    totalMatches={destMatchCount}
-                    showTouchLegend
-                    highwayGroups={destHighwayGroups}
-                  />
-                )}
-              </PlaceField>
-            </div>
-          ))}
-
-      {/* Search coverage banner — continuous full-width marquee, one line at a time,
-          shared by every dropdown so the count is seen once and never repeated. */}
-      {!hasCalculated && (
-        <div className="w-full bg-slate-900/40 border-b border-slate-800 py-1.5 overflow-hidden">
-          <div className="flex items-center justify-center gap-8 px-4 animate-marquee">
-            <span className="text-[11px] text-slate-400 whitespace-nowrap">
-              Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
-            </span>
-          </div>
+      {/* Calculating spinner — kept outside the deck so it shows over the
+          location/destination card while the route is being computed. */}
+      {userPickedDestination && isCalculating && !hasCalculated && (
+        <div className="pt-2 flex items-center justify-center space-x-2 text-xs text-slate-400">
+          <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+          <span>Calculating the route…</span>
         </div>
       )}
 
-      {/* The "Searching N places …" banner and the "Start typing a place
-              name, or a highway code like NH01" hint live inside each dropdown
-              (CitySuggestionDropdown), so they appear with the search bar and
-              disappear together when a selection is made. */}
+      {/* Reels-style 3D deck — one card at a time, swipe ⇆ to navigate.
+          Each card carries a single piece of information; no multi-tab
+          expand-collapse. The plain-face variant lets each section's own
+          card styling show through while the slot still applies the 3D
+          rotateY / parallax depth. */}
+      <PlannerDeck
+        items={plannerDeckItems}
+        activeId={plannerDeckActiveId}
+        onChange={setPlannerDeckActiveId}
+        variant="plain"
+      >
+        {(activeId) => (
+          <>
+            {/* ===== PRE-CALCULATION CARDS ===== */}
+            {!hasCalculated && activeId === 'location' && (
+              <ReelCard id="location" title="Where from?" Icon={MapPin} hint="My Location / GPS">
+                <div ref={locationMenuRef} className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div
+                      onClick={() => {
+                        if (locationMode === 'custom_from_to') {
+                          handleReturnToDefault();
+                        } else {
+                          setIsLocationMenuOpen((prev) => !prev);
+                        }
+                      }}
+                      id="btn-my-location-toggle"
+                      className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
+                      title={locationMode === 'custom_from_to' ? 'Return to default' : 'Change Location'}
+                      role="button"
+                      aria-expanded={isLocationMenuOpen}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (locationMode === 'my_location') {
+                            if (liveTracking) stopTracking();
+                            else restartTracking();
+                          }
+                        }}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
+                          (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
+                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}
+                        title={locationMode === 'my_location'
+                          ? (liveTracking ? 'Stop following your position (saves battery)' : 'Start following your position')
+                          : 'Open location options'}
+                        id="btn-my-location-icon"
+                      >
+                        {locationMode === 'my_location' && detectedLocation ? (
+                          <MapPin className="w-5 h-5 text-emerald-400" />
+                        ) : originCity ? (
+                          <MapPin className="w-5 h-5 text-emerald-400" />
+                        ) : (
+                          <Crosshair className="w-5 h-5 text-slate-400" />
+                        )}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-white truncate">
+                            {locationMode === 'my_location'
+                              ? (detectedLocation
+                                  ? 'My Location'
+                                  : 'My Location (GPS)')
+                              : (originCity ? originCity.name : 'My Location')}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                          {locationMode === 'my_location'
+                            ? (detectedLocation
+                                ? (gpsAddressLabel
+                                    ? gpsAddressLabel
+                                    : gpsOriginCity
+                                      ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
+                                      : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
+                                : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
+                            : 'Back to the current location'}
+                        </div>
+                        {detectedLocation && locationMode === 'my_location' && (
+                          <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
+                              liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                            }`} />
+                            {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
+                            {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
+                            {liveAccuracy && (
+                              <span className="text-slate-500"> · {liveAccuracy}</span>
+                            )}
+                            {gpsNearestJunction?.name && (
+                              <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>
+                            )}
+                          </div>
+                        )}
+                        {locationMode === 'my_location' && !detectedLocation && liveLocationError && (
+                          <div className="text-[10px] font-medium truncate mt-0.5 text-rose-400">
+                            Location blocked — allow GPS access, or pick an origin below
+                          </div>
+                        )}
+                        {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
+                          <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
+                            {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
+                          </div>
+                        )}
+                      </div>
+                      {locationMode === 'custom_from_to' ? (
+                        <ArrowLeft
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReturnToDefault();
+                          }}
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer group-hover:text-emerald-400`}
+                        />
+                      ) : (
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+                      )}
+                    </div>
 
-          {/* AI Prompt Input Bar (If user clicks AI icon) - Hidden after calculation */}
-          {!hasCalculated && isAiPromptOpen && (
-          <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
-            <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
-              <div className="flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span>AI Route Planner</span>
+                    {/* Quick Action: Show on Map */}
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleShowLocationOnMap}
+                        className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                        title="Show location on map"
+                        id="btn-show-location-map"
+                      >
+                        <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Show on Map</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Location Dropdown Options Menu — only shown in my_location mode.
+                      In custom_from_to mode, the card shows a return icon instead. */}
+                  {locationMode === 'my_location' && isLocationMenuOpen && (
+                    <div className="pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSwitchToGps();
+                        }}
+                        className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-emerald-500/50 bg-emerald-950/30 text-white`}
+                      >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                          locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
+                        }`}>
+                          <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                            <span>Use Device GPS</span>
+                            {locationMode === 'my_location' && (
+                              <span className="text-[10px] text-emerald-400 font-normal">(Active)</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            {locationPermissionDenied
+                              ? 'GPS blocked — allow it in your browser, then tap to retry'
+                              : 'Follows your live position as the origin'}
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSwitchToCustomOrigin();
+                        }}
+                        className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80`}
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+                          <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                            <span>Change Origin City / Hub</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate">
+                            Type origin &amp; destination manually
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </ReelCard>
+            )}
+
+            {!hasCalculated && activeId === 'destination' && (
+              <ReelCard id="destination" title="Where to?" Icon={Navigation} hint="Destination">
+                <div className="space-y-3">
+                  {locationMode === 'my_location' ? (
+                    <PlaceField
+                      id="single-dest"
+                      containerRef={singleSearchRef}
+                      inputRef={singleSearchInputRef}
+                      placeholder="Where to?"
+                      value={singleSearchQuery}
+                      resolved={!!destId}
+                      accent="emerald"
+                      listening={listeningTarget === 'single'}
+                      onChange={(v) => {
+                        setSingleSearchQuery(v);
+                        closeAllMenus('single');
+                        setIsSingleDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        closeAllMenus('single');
+                        setIsSingleDropdownOpen(true);
+                      }}
+                      onVoice={() => startVoiceRecognition('single')}
+                      onClear={() => setSingleSearchQuery('')}
+                      actions={
+                        <>
+                          <FieldIconButton
+                            label="AI route planner"
+                            active={isAiPromptOpen}
+                            onClick={() => {
+                              closeAllMenus('ai');
+                              if (onOpenAiAssistant) {
+                                onOpenAiAssistant();
+                              } else {
+                                setIsAiPromptOpen(!isAiPromptOpen);
+                              }
+                            }}
+                          >
+                            <Sparkles className="h-4 w-4 text-cyan-400" />
+                          </FieldIconButton>
+                          {highwayCount > 0 && (
+                            <FieldIconButton label="Browse by highway" onClick={() => onOpenHighwayDirectory?.()}>
+                              <MapPin className="h-4 w-4 text-amber-400" />
+                            </FieldIconButton>
+                          )}
+                        </>
+                      }
+                    >
+                      {isSingleDropdownOpen && (
+                        <CitySuggestionDropdown
+                          query={singleSearchQuery}
+                          results={filteredSingleCities}
+                          searchablePlaceCount={searchablePlaceCount}
+                          onSelect={(city) => {
+                            setDestId(city.id);
+                            setSingleSearchQuery(city.name);
+                            setDestSearchQuery(city.name);
+                            setIsSingleDropdownOpen(false);
+                            setUserPickedDestination(true);
+                            if (!originId) {
+                              onViewOnMap?.({
+                                lat: city.lat,
+                                lng: city.lng,
+                                title: city.name,
+                                zoom: 11,
+                              });
+                            }
+                            if (hasCalculated) setNeedsRecalculation(true);
+                          }}
+                          totalMatches={singleMatchCount}
+                        />
+                      )}
+                    </PlaceField>
+                  ) : (
+                    <div className="grid items-start gap-2 md:grid-cols-[1fr_auto_1fr]">
+                      <PlaceField
+                        id="from-origin"
+                        containerRef={originSearchRef}
+                        inputRef={originInputRef}
+                        placeholder="From where?"
+                        value={originSearchQuery}
+                        resolved={!!originId}
+                        accent="emerald"
+                        listening={listeningTarget === 'origin'}
+                        onChange={(v) => {
+                          setOriginSearchQuery(v);
+                          closeAllMenus('origin');
+                          setIsOriginDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                          setOriginSearchQuery('');
+                          closeAllMenus('origin');
+                          setIsOriginDropdownOpen(true);
+                        }}
+                        onVoice={() => startVoiceRecognition('origin')}
+                        onClear={handleClearOrigin}
+                      >
+                        {isOriginDropdownOpen && (
+                          <CitySuggestionDropdown
+                            query={originSearchQuery}
+                            results={filteredOriginCities}
+                            searchablePlaceCount={searchablePlaceCount}
+                            onSelect={handleSelectOrigin}
+                            totalMatches={originMatchCount}
+                            showTouchLegend
+                            highwayGroups={originHighwayGroups}
+                          />
+                        )}
+                      </PlaceField>
+                      <button
+                        type="button"
+                        onClick={handleSwapLocations}
+                        aria-label="Swap origin and destination"
+                        title="Swap origin and destination"
+                        className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                      >
+                        <ArrowUpDown className="h-5 w-5" />
+                      </button>
+                      <PlaceField
+                        id="to-dest"
+                        containerRef={destSearchRef}
+                        inputRef={destInputRef}
+                        placeholder="Where to?"
+                        value={destSearchQuery}
+                        resolved={!!destId}
+                        accent="cyan"
+                        listening={listeningTarget === 'dest'}
+                        onChange={(v) => {
+                          setDestSearchQuery(v);
+                          closeAllMenus('dest');
+                          setIsDestDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                          setDestSearchQuery('');
+                          closeAllMenus('dest');
+                          setIsDestDropdownOpen(true);
+                        }}
+                        onVoice={() => startVoiceRecognition('dest')}
+                        onClear={handleClearDestination}
+                      >
+                        {isDestDropdownOpen && (
+                          <CitySuggestionDropdown
+                            query={destSearchQuery}
+                            results={filteredDestCities}
+                            searchablePlaceCount={searchablePlaceCount}
+                            onSelect={handleSelectDestination}
+                            totalMatches={destMatchCount}
+                            showTouchLegend
+                            highwayGroups={destHighwayGroups}
+                          />
+                        )}
+                      </PlaceField>
+                    </div>
+                  )}
+
+                  {/* Search coverage banner */}
+                  <div className="w-full bg-slate-900/40 border-b border-slate-800 py-1.5 overflow-hidden">
+                    <div className="flex items-center justify-center gap-8 px-4 animate-marquee">
+                      <span className="text-[11px] text-slate-400 whitespace-nowrap">
+                        Search {searchablePlaceCount.toLocaleString('en-US')} places — cities and palikas. Just one letter is enough to start.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* AI Prompt Input Bar (If user clicks AI icon) */}
+                  {isAiPromptOpen && (
+                    <div ref={aiPromptRef} className="p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl space-y-2 animate-fadeIn">
+                      <div className="flex items-center justify-between text-xs text-cyan-300 font-semibold">
+                        <div className="flex items-center space-x-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>AI Route Planner</span>
+                        </div>
+                        <button
+                          onClick={() => closeAllMenus(null)}
+                          className="p-1 rounded hover:bg-cyan-900/50 text-cyan-400"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          name="merosadak-ai-prompt"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck="false"
+                          value={aiPromptText}
+                          onChange={(e) => setAiPromptText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleExecuteAiPrompt()}
+                          placeholder="Describe your route, e.g. scenic ride avoiding steep climbs"
+                          className="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
+                        />
+                        <button
+                          onClick={() => startVoiceRecognition('ai')}
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs border border-slate-700"
+                          title="Speak AI prompt"
+                        >
+                          <Mic className="w-3.5 h-3.5 text-cyan-400" />
+                        </button>
+                        <button
+                          onClick={() => handleExecuteAiPrompt()}
+                          disabled={isParsingAiPrompt || !aiPromptText.trim()}
+                          className="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shrink-0"
+                        >
+                          {isParsingAiPrompt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                          <span>Plan</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ReelCard>
+            )}
+
+            {/* ===== POST-CALCULATION CARDS ===== */}
+            {hasCalculated && routePlan && activeId === 'verdict' && (
+              <div
+                key={`trip-${calcKey}-${routePlan.id}`}
+                id="route-verdict"
+                className="animate-fade-in-smooth"
+              >
+                <RouteVerdict
+                  plan={routePlan}
+                  totalCostNpr={estimatedTripCostNpr}
+                  viaLabel={viaLabel}
+                  tripStarted={tripStarted}
+                  onStartTrip={handleStartTrip}
+                  onEdit={handleEditLocations}
+                />
               </div>
-              <button
-                onClick={() => closeAllMenus(null)}
-                className="p-1 rounded hover:bg-cyan-900/50 text-cyan-400"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            )}
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                name="merosadak-ai-prompt"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                value={aiPromptText}
-                onChange={(e) => setAiPromptText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleExecuteAiPrompt()}
-                placeholder="Describe your route, e.g. scenic ride avoiding steep climbs"
-                className="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
-              />
-              <button
-                onClick={() => startVoiceRecognition('ai')}
-                className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs border border-slate-700"
-                title="Speak AI prompt"
-              >
-                <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              </button>
-              <button
-                onClick={() => handleExecuteAiPrompt()}
-                disabled={isParsingAiPrompt || !aiPromptText.trim()}
-                className="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shrink-0"
-              >
-                {isParsingAiPrompt ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                <span>Plan</span>
-              </button>
-            </div>
-          </div>
-        )}
+            {hasCalculated && activeId === 'actions' && (
+              <ReelCard id="actions" title="Trip actions" Icon={Share2} hint="Share · SOS">
+                <div className="flex items-center gap-2">
+                  {onShareTrip && (
+                    <button
+                      type="button"
+                      onClick={onShareTrip}
+                      aria-label="Share trip"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800 p-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span>Share trip</span>
+                    </button>
+                  )}
+                  {onOpenSos && (
+                    <button
+                      type="button"
+                      onClick={onOpenSos}
+                      aria-label="Emergency SOS"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-red-500/50 bg-red-600/20 p-3 text-sm font-semibold text-red-300 transition hover:bg-red-600/30"
+                    >
+                      <PhoneCall className="h-4 w-4" />
+                      <span>Emergency SOS</span>
+                    </button>
+                  )}
+                </div>
+              </ReelCard>
+            )}
 
-        {/* 3. Route auto-calculates when origin + destination are selected.
-            Show a subtle loading indicator while calculating. */}
-        {userPickedDestination && isCalculating && !hasCalculated && (
-          <div className="pt-2 flex items-center justify-center space-x-2 text-xs text-slate-400">
-            <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-            <span>Calculating the route…</span>
-          </div>
-        )}
+            {hasCalculated && activeId === 'vehicle' && (
+              <ReelCard id="vehicle" title="Ride" Icon={Car} hint={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.shortName ?? 'Vehicle'}>
+                <div>
+                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Vehicle</div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
+                      <button
+                        key={type}
+                        type="button"
+                        title={`${shortName} - ${desc}`}
+                        aria-pressed={vehicle === type}
+                        onClick={() => handleQuickVehicleSwitch(type)}
+                        className={`flex flex-col items-center gap-0.5 rounded-xl border px-0.5 py-2 text-center transition ${
+                          vehicle === type
+                            ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-300'
+                            : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="text-[9px] font-semibold leading-tight">{shortName}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </ReelCard>
+            )}
 
-        {hasCalculated && routePlan && (
-          <div
-            key={`trip-${calcKey}-${routePlan.id}`}
-            id="route-verdict"
-            className="animate-fade-in-smooth space-y-3 p-3 sm:p-4"
-          >
-            {/* 1. THE VERDICT — can I depart, is the road open? Short by design. */}
-            <RouteVerdict
-              plan={routePlan}
-              totalCostNpr={estimatedTripCostNpr}
-              viaLabel={viaLabel}
-              tripStarted={tripStarted}
-              onStartTrip={handleStartTrip}
-              onEdit={handleEditLocations}
-            />
+            {hasCalculated && activeId === 'preference' && (
+              <ReelCard id="preference" title="Route type" Icon={SlidersHorizontal} hint={PREFERENCE_CONFIGS.find((p) => p.pref === preference)?.label ?? preference}>
+                <div>
+                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Route type</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
+                      <button
+                        key={pref}
+                        type="button"
+                        title={desc}
+                        aria-pressed={preference === pref}
+                        onClick={() => handleQuickPrefSwitch(pref)}
+                        className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                          preference === pref
+                            ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300'
+                            : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
+                        }`}
+                      >
+                        <span>{icon}</span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </ReelCard>
+            )}
 
-            <TripOptions
-              vehicle={vehicle}
-              preference={preference}
-              onVehicleChange={handleQuickVehicleSwitch}
-              onPreferenceChange={handleQuickPrefSwitch}
-              onShare={onShareTrip}
-              onOpenSos={onOpenSos}
-            />
-
-            {/* 3. DETAILS ON DEMAND — every section starts collapsed and shows a
-               one-line hint; only the blocks section opens itself, and only
-               when the route actually has something to warn about. */}
-            <div className="space-y-2.5">
-              <DetailSection
+            {hasCalculated && routePlan && activeId === 'blocks' && (
+              <ReelCard
                 id="blocks"
                 title="Blocks & alerts on route"
                 Icon={AlertTriangle}
                 tone="alert"
                 badge={routeSegmentIssues + routeIncidentCount}
                 hint={routeBlockHint}
-                open={isOpen('blocks', routeHasIssues)}
-                onToggle={() => toggleSection('blocks')}
               >
                 <RouteBlocksPanel plan={routePlan} extraIncidents={liveIncidents} />
-              </DetailSection>
+              </ReelCard>
+            )}
 
-              <DetailSection
-                id="journey"
-                title="Journey"
-                Icon={Route}
-                hint="Turn-by-turn, live road feed and elevation"
-                open={isOpen('journey', false)}
-                onToggle={() => toggleSection('journey')}
-              >
+            {hasCalculated && routePlan && activeId === 'journey' && (
+              <ReelCard id="journey" title="Journey" Icon={Route} hint="Turn-by-turn, live road feed and elevation">
                 <ErrorBoundary
                   fallback={<div className="px-1 text-xs text-slate-500">Route information is temporarily unavailable.</div>}
                 >
@@ -1856,16 +1988,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     hideStatusSummary
                   />
                 </ErrorBoundary>
-              </DetailSection>
+              </ReelCard>
+            )}
 
-              <DetailSection
-                id="insights"
-                title="Insights"
-                Icon={Sparkles}
-                hint={`Road score ${routePlan.roadConditionScore} · high point ${routePlan.maxElevationM.toLocaleString()} m`}
-                open={isOpen('insights', false)}
-                onToggle={() => toggleSection('insights')}
-              >
+            {hasCalculated && routePlan && activeId === 'insights' && (
+              <ReelCard id="insights" title="Insights" Icon={Sparkles} hint={`Road score ${routePlan.roadConditionScore} · high point ${routePlan.maxElevationM.toLocaleString()} m`}>
                 <InsightsPanel
                   route={routePlan}
                   vehicle={vehicle}
@@ -1876,16 +2003,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onViewHighwayOnMap={onViewHighwayOnMap}
                   onOpenHighwayDirectory={onOpenHighwayDirectory}
                 />
-              </DetailSection>
+              </ReelCard>
+            )}
 
-              <DetailSection
-                id="costs"
-                title="Costs"
-                Icon={Flame}
-                hint={`Fuel Rs ${Math.max(estimatedTripCostNpr - (routePlan.totalTollCostNpr || 0), 0).toLocaleString()} · tolls Rs ${(routePlan.totalTollCostNpr || 0).toLocaleString()}`}
-                open={isOpen('costs', false)}
-                onToggle={() => toggleSection('costs')}
-              >
+            {hasCalculated && routePlan && activeId === 'costs' && (
+              <ReelCard id="costs" title="Costs" Icon={Flame} hint={`Fuel Rs ${Math.max(estimatedTripCostNpr - (routePlan.totalTollCostNpr || 0), 0).toLocaleString()} · tolls Rs ${(routePlan.totalTollCostNpr || 0).toLocaleString()}`}>
                 <CostsPanel
                   route={routePlan}
                   vehicle={vehicle}
@@ -1899,42 +2021,29 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onVehicleChange={setVehicle}
                   onOpenPreTrip={onOpenPreTrip}
                 />
-              </DetailSection>
+              </ReelCard>
+            )}
 
-              {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
-                <DetailSection
-                  id="routes"
-                  title="Alternative routes"
-                  Icon={Layers}
-                  badge={routePlan.allRouteOptions.length}
-                  hint="Compare distance, time and road score"
-                  open={isOpen('routes', false)}
-                  onToggle={() => toggleSection('routes')}
-                >
-                  <RouteComparisonView
-                    activePlan={routePlan}
-                    allOptions={routePlan.allRouteOptions}
-                    selectedRouteId={routePlan.id}
-                    vehicle={vehicle}
-                    onSelectRoute={(opt) => {
-                      setRoutePlan(opt);
-                      setPreference(opt.preference);
-                      onRouteCalculated(opt);
-                      setOpenSections({});
-                    }}
-                    onViewOnMap={onViewOnMap}
-                  />
-                </DetailSection>
-              )}
+            {hasCalculated && routePlan && routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && activeId === 'routes' && (
+              <ReelCard id="routes" title="Alternative routes" Icon={Layers} badge={routePlan.allRouteOptions.length} hint="Compare distance, time and road score">
+                <RouteComparisonView
+                  activePlan={routePlan}
+                  allOptions={routePlan.allRouteOptions}
+                  selectedRouteId={routePlan.id}
+                  vehicle={vehicle}
+                  onSelectRoute={(opt) => {
+                    setRoutePlan(opt);
+                    setPreference(opt.preference);
+                    onRouteCalculated(opt);
+                    setOpenSections({});
+                  }}
+                  onViewOnMap={onViewOnMap}
+                />
+              </ReelCard>
+            )}
 
-              <DetailSection
-                id="report"
-                title="Trip report"
-                Icon={FileText}
-                hint="Printable and shareable summary"
-                open={isOpen('report', false)}
-                onToggle={() => toggleSection('report')}
-              >
+            {hasCalculated && routePlan && activeId === 'report' && (
+              <ReelCard id="report" title="Trip report" Icon={FileText} hint="Printable and shareable summary">
                 <UnifiedRouteReport
                   route={routePlan}
                   distanceKm={routePlan.totalDistanceKm}
@@ -1956,11 +2065,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   simulationControls={simulationControls}
                   onViewOnMap={onViewOnMap}
                 />
-              </DetailSection>
-            </div>
-          </div>
+              </ReelCard>
+            )}
+          </>
         )}
-      </div>
+      </PlannerDeck>
     </div>
   );
 };
