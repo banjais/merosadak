@@ -18,6 +18,7 @@ import {
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
 import { useDeviceLocation, getCurrentFix } from '../hooks/useDeviceLocation';
+import { readCachedGps, readLastKnownGps } from '../utils/gpsLocation';
 import { getHighwayEnrichment } from '../utils/geoUtils';
 import {
   CITY_HIGHWAY_TOUCH_DISTANCE_KM,
@@ -420,32 +421,48 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (mapInstanceRef.current) return;
 
     // Use focusedTarget as initial center if available. Otherwise open on the
-    // user's cached position (session cache from the shared device watcher) so
-    // a first load or refresh shows their surroundings, never the full Nepal
-    // overview. Only a device with no fix at all falls back to the country view.
+    // user's position — live fix first, then the session cache, then the
+    // persistent last-known fix (survives restarts), so a first load or
+    // refresh shows their surroundings, never the full Nepal overview. Only a
+    // device that has NEVER reported a position falls back to the Kathmandu
+    // city view while the first live fix resolves (the camera flies to the
+    // real location the moment it arrives).
     const hasFocusedTarget = focusedTarget &&
       typeof focusedTarget.lat === 'number' &&
       typeof focusedTarget.lng === 'number' &&
       !isNaN(focusedTarget.lat) &&
       !isNaN(focusedTarget.lng);
-    const bootFix = hasFocusedTarget ? null : getCurrentFix();
+    const liveFix = hasFocusedTarget ? null : getCurrentFix();
+    const bootFix = liveFix ?? (hasFocusedTarget ? null : readCachedGps()) ?? (hasFocusedTarget ? null : readLastKnownGps());
     const hasBootFix = !!bootFix &&
       typeof bootFix.lat === 'number' &&
       typeof bootFix.lng === 'number';
+    // A live/cached DeviceFix carries an accuracy figure; the persisted
+    // last-known GpsFix does not (treated as "unknown" → typical phone zoom).
+    const bootAccuracy: number | null = hasBootFix && 'accuracy' in bootFix
+      ? ((bootFix as { accuracy?: number | null }).accuracy ?? null)
+      : null;
+    // A stale last-known fix (older than the 5-minute freshness window) still
+    // picks the boot area, but the camera stays unlocked so the first LIVE fix
+    // flies the user to where they actually are.
+    const bootFixIsFresh = hasBootFix && (Date.now() - bootFix!.timestamp) <= 5 * 60 * 1000;
     const initialCenter: L.LatLngExpression = hasFocusedTarget
       ? [focusedTarget.lat, focusedTarget.lng]
       : hasBootFix
         ? [bootFix!.lat, bootFix!.lng]
-        : [27.95, 84.6];
+        // Kathmandu city level — deliberately NOT the country-wide view.
+        : [27.7172, 85.324];
     const initialZoom = hasFocusedTarget
       ? (focusedTarget.zoom || 12)
       : hasBootFix
-        ? zoomForAccuracy(bootFix!.accuracy)
-        : 7;
+        ? (bootFixIsFresh ? zoomForAccuracy(bootAccuracy) : 13)
+        : 12;
 
-    // Opening centred on the user counts as the camera being locked on already,
-    // so the first live fix keeps the smooth panTo tracking instead of re-flying.
-    cameraLockedRef.current = hasBootFix;
+    // Opening centred on the user counts as the camera being locked on only
+    // when the boot fix is fresh (live or cached this session). A stale
+    // last-known fix leaves the camera unlocked so the first live fix FLIES to
+    // the user's actual position instead of panning across the country.
+    cameraLockedRef.current = hasBootFix && bootFixIsFresh;
 
     const map = L.map(mapContainerRef.current, {
       center: initialCenter,

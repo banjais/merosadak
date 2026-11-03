@@ -164,6 +164,8 @@ interface RoutePlannerProps {
    * reports: with no feed, the planner simply plans against the road network.
    */
   liveIncidents?: RoadIncident[];
+  /** Opens the full Mero Sadak AI chat panel (replaces the inline AI prompt). */
+  onOpenAiAssistant?: () => void;
 }
 
 const METRO_CITY_NAME_FRAGMENTS = ['kathmandu', 'pokhara', 'bharatpur', 'biratnagar', 'birgunj', 'bhaktapur', 'lalitpur'];
@@ -259,6 +261,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   onOpenSos,
   uiLanguage = 'EN',
   liveIncidents = [],
+  onOpenAiAssistant,
 }) => {
   // Routing states
   const [originId, setOriginId] = useState<string>(initialOriginId);
@@ -1634,7 +1637,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     active={isAiPromptOpen}
                     onClick={() => {
                       closeAllMenus('ai');
-                      setIsAiPromptOpen(!isAiPromptOpen);
+                      // The sparkle now opens the full conversational AI panel;
+                      // fall back to the inline prompt only when the parent
+                      // has not wired the panel (standalone planner usage).
+                      if (onOpenAiAssistant) {
+                        onOpenAiAssistant();
+                      } else {
+                        setIsAiPromptOpen(!isAiPromptOpen);
+                      }
                     }}
                   >
                     <Sparkles className="h-4 w-4 text-cyan-400" />

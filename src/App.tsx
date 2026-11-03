@@ -23,6 +23,7 @@ import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminPanel } from './components/SuperAdminControlPanel';
 import { OfficeAdminPanel } from './components/OfficeAdminPanel';
 import { ProfilePage } from './components/ProfilePage';
+import { AIAssistantChat } from './components/AIAssistantChat';
 import { OfflineProvider, useOffline } from './context/OfflineContext';
 import { SplashScreen } from './components/SplashScreen';
 import { ArchiveTray } from './components/ArchiveTray';
@@ -216,6 +217,10 @@ function AppContent() {
 
   // Profile page panel (header avatar)
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Mero Sadak AI — conversational support chat (routes, hazards, fuel, tolls,
+  // weather). Opened from the planner's AI sparkle, the drawer, or the AI page.
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // Initialize from URL search parameters or default route plan
   useEffect(() => {
@@ -545,6 +550,7 @@ function AppContent() {
         onOpenAdminCommand={() => setIsAdminCommandOpen(true)}
         onOpenOfficeAdminPanel={() => setIsProfileOpen(true)}
         onOpenUserPanel={() => setIsProfileOpen(true)}
+        onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
         user={user}
         userRole={userRole}
         isSuperAdmin={isSuperAdmin}
@@ -903,6 +909,7 @@ function AppContent() {
             onOpenSos={() => setIsSosModalOpen(true)}
             uiLanguage={language}
             liveIncidents={incidents}
+            onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
             onViewOnMap={(target) => {
               if (target && typeof target.lat === 'number' && typeof target.lng === 'number' && !isNaN(target.lat) && !isNaN(target.lng)) {
                 setFocusedTarget(target);
@@ -1176,6 +1183,23 @@ function AppContent() {
           onClose={() => setIsOfficeAdminPanelOpen(false)}
           userEmail={user.email || ''}
           onOpenReportModal={() => setIsReportModalOpen(true)}
+        />
+      )}
+
+      {/* Mero Sadak AI — conversational support chat. Available to everyone
+      (signed-in users get the personalization drawer: avatar + voice). */}
+      {isAiAssistantOpen && (
+        <AIAssistantChat
+          userEmail={user?.email ?? null}
+          isSignedIn={!!user}
+          uiLanguage={language}
+          activeRouteLabel={
+            activeRoute
+              ? `${activeRoute.origin.name} - ${activeRoute.destination.name}`
+              : null
+          }
+          onClose={() => setIsAiAssistantOpen(false)}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
         />
       )}
     </PullToRefresh>

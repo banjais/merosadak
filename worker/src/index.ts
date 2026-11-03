@@ -586,6 +586,140 @@ async function handleAiTripAssistant(request: Request, env: Env): Promise<Respon
   }
 }
 
+/* ==================== AI SUPPORT CHAT ==================== */
+
+interface ChatTurn {
+  role: "user" | "model";
+  text: string;
+}
+
+/** Trim a KV list to the N most useful rows and keep only compact fields, so
+ * the live-data digest stays small enough to prepend to every chat prompt. */
+function compactRows(rows: any[], limit: number, pick: (row: any) => Record<string, unknown>): string {
+  if (!Array.isArray(rows)) return "";
+  return rows
+    .slice(0, limit)
+    .map((row) => JSON.stringify(pick(row)))
+    .join("\n");
+}
+
+/** Pull the app's live KV datasets and flatten them into a compact digest the
+ * model can ground its answers in (incidents, fuel, tolls, mountain weather).
+ * Everything comes from KV — no outbound calls, so the chat stays fast. */
+async function buildLiveContextDigest(env: Env): Promise<string> {
+  const parts: string[] = [];
+  try {
+    const [reports, fuel, tolls, weather] = await Promise.all([
+      readJsonData<any[]>(env, "user-reports.json", []),
+      readJsonData<any>(env, "fuel-prices.json", { prices: {} }),
+      readJsonData<any>(env, "toll-rates.json", { tolls: [] }),
+      readJsonData<any[]>(env, "mountain-weather.json", []),
+    ]);
+    const activeReports = (Array.isArray(reports) ? reports : []).filter(
+      (r) => r && r.status !== "resolved" && r.status !== "cleared"
+    );
+    if (activeReports.length) {
+      parts.push(
+        "ACTIVE HAZARD REPORTS (user + DoR, newest first):\n" +
+        compactRows(activeReports, 12, (r) => ({
+          type: r.type, location: r.location, highway: r.highwayCode ?? undefined,
+          severity: r.severity, when: r.createdAt, verified: r.dorVerified ?? r.verified ?? false,
+        }))
+      );
+    } else {
+      parts.push("ACTIVE HAZARD REPORTS: none in the app right now.");
+    }
+    const prices = fuel && typeof fuel === "object" ? fuel.prices ?? fuel : {};
+    if (prices && Object.keys(prices).length) {
+      parts.push(`FUEL PRICES (updated ${fuel.lastUpdated ?? "unknown"}): ${JSON.stringify(prices)}`);
+    }
+    if (Array.isArray(tolls?.tolls) && tolls.tolls.length) {
+      parts.push(
+        "TOLL RATES:\n" +
+        compactRows(tolls.tolls, 12, (t) => ({
+          name: t.name ?? t.tollPoint ?? t.location, vehicle: t.vehicle ?? undefined, rate: t.rate ?? t.car ?? undefined,
+        }))
+      );
+    }
+    if (Array.isArray(weather) && weather.length) {
+      parts.push(
+        "MOUNTAIN / HIGHWAY WEATHER NODES:\n" +
+        compactRows(weather, 8, (w) => ({
+          place: w.name ?? w.place ?? w.location, temp: w.temperature ?? w.tempC ?? undefined,
+          condition: w.condition ?? w.summary ?? undefined,
+        }))
+      );
+    }
+  } catch {
+    /* digest is best-effort — the chat still works without it */
+  }
+  return parts.join("\n\n").slice(0, 4000);
+}
+
+/** Multi-turn, human-style support chat. Grounds every answer in the app's
+ * live data (hazards, fuel, tolls, weather) and Nepal road-travel knowledge. */
+async function handleAiChat(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await request.json<any>();
+    const messages: ChatTurn[] = Array.isArray(body.messages)
+      ? body.messages
+          .filter((m: any) => m && (m.role === "user" || m.role === "model" || m.role === "assistant") && typeof m.text === "string")
+          .map((m: any) => ({ role: m.role === "user" ? "user" : "model", text: String(m.text).slice(0, 4000) }))
+      : [];
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUser) {
+      return jsonResponse(env, { error: "messages with at least one user turn are required" }, 400);
+    }
+    if (!env.GEMINI_API_KEY) {
+      return jsonResponse(env, { error: "AI service not configured" }, 503);
+    }
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
+
+    const emotion = detectEmotion(lastUser.text);
+    const digest = await buildLiveContextDigest(env);
+    const transcript = messages
+      .slice(-14)
+      .map((m) => `${m.role === "user" ? "Traveler" : "Mero Sadak AI"}: ${m.text}`)
+      .join("\n");
+
+    const persona = `You are "Mero Sadak AI" — the friendly, human-like road-travel concierge living inside the Mero Sadak app (Nepal's national highway network and GIS app). You chat like a helpful Nepali friend who knows roads, highways and travel inside out.
+
+Style:
+- Warm and conversational, like a human travel buddy. Open with a natural greeting or acknowledgment (e.g. "Namaste!"), NEVER say you are a language model.
+- Keep answers compact by default (2-6 sentences). Use short bullet lists when comparing options or giving steps.
+- Answer ONLY about things the Mero Sadak app can help with: routes and distances, road/hazard conditions, live incident reports, fuel prices, toll rates, weather affecting travel, vehicle advice, rest stops, emergency guidance, and app features (route planner, hazard reporting, My Location, offline maps, reminders).
+- GROUND FACTS in the LIVE APP DATA below. If a number (toll, fuel price, road status) is not there, say you don't have live data for it and suggest the app section that does — never invent figures.
+- When the user seems to want to go somewhere, offer to help plan it and mention they can use the Route Planner; when they report a road problem, point them to "Report a Hazard".
+- End with ONE short follow-up question when it keeps the conversation helpful, but not on every single reply.
+- Reply in the language the traveler writes in (English or Nepali).
+- Emergencies: give the Nepal emergency numbers 100 (police), 103 (traffic), 115 (ambulance/disaster) and advise staying safe first.`;
+
+    const prompt = `${persona}
+
+=== LIVE APP DATA (as of ${new Date().toISOString()}) ===
+${digest || "(no live datasets available)"}
+
+=== USER PROFILE ===
+${JSON.stringify(body.profile ?? {})}
+
+=== USER CONTEXT ===
+${JSON.stringify(body.context ?? {})}
+
+=== CONVERSATION SO FAR ===
+${transcript}
+
+Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood: ${emotion} — ${emotionTone(emotion)}`;
+
+    const result = await model.generateContent(prompt);
+    const reply = result.response.text();
+    return jsonResponse(env, { reply, emotion });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "AI chat failed", note: e?.message }, 500);
+  }
+}
+
 async function handleSubmitReport(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
@@ -749,6 +883,9 @@ export default {
     }
     if (url.pathname === "/api/ai-trip-assistant" && request.method === "POST") {
       return handleAiTripAssistant(request, env);
+    }
+    if (url.pathname === "/api/ai-chat" && request.method === "POST") {
+      return handleAiChat(request, env);
     }
     if (url.pathname === "/api/ai-admin-command" && request.method === "POST") {
       return handleAiAdminCommand(request, env);

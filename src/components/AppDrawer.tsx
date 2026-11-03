@@ -43,6 +43,8 @@ interface AppDrawerProps {
   onOpenAdminCommand?: () => void;
   onOpenOfficeAdminPanel?: () => void;
   onOpenUserPanel?: () => void;
+  /** Opens the Mero Sadak AI chat panel. */
+  onOpenAiAssistant?: () => void;
   user?: { displayName?: string; email?: string } | null;
   userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   isSuperAdmin?: boolean;
@@ -75,6 +77,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenAdminCommand,
   onOpenOfficeAdminPanel,
   onOpenUserPanel,
+  onOpenAiAssistant,
   user,
   userRole = 'GeneralUser',
   isSuperAdmin = false,
@@ -169,6 +172,17 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenOfflineManager(); onClose(); },
+    },
+    {
+      id: 'ai-assistant',
+      label: 'Mero Sadak AI',
+      subtitle: 'Ask about roads, fuel, tolls, weather',
+      icon: Sparkles,
+      color: 'text-emerald-400',
+      activeColor: 'accent-bg accent-text',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg accent-text',
+      onClick: () => { onOpenAiAssistant?.(); onClose(); },
     },
     { role: 'OfficeAdmin', id: 'datasources', label: 'Data Sources', subtitle: 'DoR datasets & attribution', icon: Database, color: 'accent-text', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenDataSources?.(); onClose(); } },
     { role: 'superadmin', id: 'superadmin-panel', label: 'Super Admin Control Panel', subtitle: 'System-wide admin controls', icon: ShieldAlert, color: 'text-rose-400', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenSuperAdminPanel?.(); onClose(); } },

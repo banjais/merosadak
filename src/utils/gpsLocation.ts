@@ -6,6 +6,12 @@
 
 export const GPS_CACHE_KEY = 'mero-sadak-gps';
 
+/** Persistent last-known fix (localStorage). Survives browser restarts so a
+ * refresh — even days later — boots the map on the user's area instead of a
+ * country-wide view. Unlike the session cache there is no freshness cutoff:
+ * a stale position still beats showing all of Nepal. */
+export const GPS_LAST_KNOWN_KEY = 'mero-sadak-gps-last';
+
 /** A fix older than this is treated as absent, so a stale pin never wins. */
 export const GPS_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
@@ -50,11 +56,40 @@ export function readFreshCachedGps(maxAgeMs: number = GPS_CACHE_MAX_AGE_MS): Gps
   return cached;
 }
 
+/**
+ * The last known fix from persistent storage (localStorage), whatever its age.
+ * Falls back to null when nothing usable was ever stored or storage is
+ * unavailable. Used for the map boot camera: any real position is a better
+ * first view than the whole-country overview.
+ */
+export function readLastKnownGps(): GpsFix | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(GPS_LAST_KNOWN_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const { lat, lng, timestamp } = parsed as Record<string, unknown>;
+    if (!isFiniteCoord(lat) || !isFiniteCoord(lng)) return null;
+    if (lat === 0 || lng === 0) return null;
+    return { lat, lng, timestamp: isFiniteCoord(timestamp) ? timestamp : 0 };
+  } catch {
+    return null;
+  }
+}
+
 export function writeCachedGps(lat: number, lng: number): void {
-  if (typeof window === 'undefined' || !window.sessionStorage) return;
+  if (typeof window === 'undefined') return;
   if (!isFiniteCoord(lat) || !isFiniteCoord(lng) || lat === 0 || lng === 0) return;
   try {
-    window.sessionStorage.setItem(GPS_CACHE_KEY, JSON.stringify({ lat, lng, timestamp: Date.now() }));
+    if (window.sessionStorage) {
+      window.sessionStorage.setItem(GPS_CACHE_KEY, JSON.stringify({ lat, lng, timestamp: Date.now() }));
+    }
+    // Persist across sessions too, so a refresh always reopens on the user's
+    // area rather than falling back to a country-wide view.
+    if (window.localStorage) {
+      window.localStorage.setItem(GPS_LAST_KNOWN_KEY, JSON.stringify({ lat, lng, timestamp: Date.now() }));
+    }
   } catch {
     /* storage full or blocked — the fix still works, it just isn't cached */
   }
