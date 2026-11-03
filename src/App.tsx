@@ -148,12 +148,19 @@ function AppContent() {
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  // Search box inside the alerts dropdown — filters the full feed by highway,
-  // place, type, status or source. Cleared whenever the dropdown closes so
-  // every open starts unfiltered.
+  // Search box + quick-filter chips + sort inside the alerts dropdown. All of
+  // them reset whenever the dropdown closes so every open starts unfiltered.
   const [alertSearch, setAlertSearch] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState<'all' | 'severe' | 'moderate' | 'minor' | 'unrated'>('all');
+  const [alertHighway, setAlertHighway] = useState<string>('all');
+  const [alertSort, setAlertSort] = useState<'newest' | 'severity'>('newest');
   useEffect(() => {
-    if (!isNotificationsOpen) setAlertSearch('');
+    if (!isNotificationsOpen) {
+      setAlertSearch('');
+      setAlertSeverity('all');
+      setAlertHighway('all');
+      setAlertSort('newest');
+    }
   }, [isNotificationsOpen]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -185,13 +192,42 @@ function AppContent() {
   // sample reports that stayed on screen whenever the live feed was unreachable,
   // so a dead network looked like five real DoR-verified incidents.
   const [incidents, setIncidents] = useState<RoadIncident[]>([]);
-  // Search box filter for the alerts dropdown — the memo must live below the
+  // Alerts-dropdown filter pipeline — the memos must live below the
   // `incidents` declaration (a dep-array read above it would be a TDZ crash).
+  // Chain: severity chip → highway chip → search text, then optional sort.
+  // The live feed mixes DoR-curated alerts (with severity + highway) and Waze
+  // items (no severity/highway), so unrated items get their own bucket.
+  const alertSeverityCounts = useMemo(() => {
+    const c = { all: incidents.length, severe: 0, moderate: 0, minor: 0, unrated: 0 };
+    incidents.forEach((inc) => {
+      if (inc.severity === 'severe' || inc.severity === 'critical') c.severe += 1;
+      else if (inc.severity === 'moderate' || inc.severity === 'high') c.moderate += 1;
+      else if (inc.severity === 'minor') c.minor += 1;
+      else c.unrated += 1;
+    });
+    return c;
+  }, [incidents]);
+
+  const alertHighwayOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    incidents.forEach((inc) => {
+      if (inc.highwayCode) counts.set(inc.highwayCode, (counts.get(inc.highwayCode) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([code, count]) => ({ code, count }));
+  }, [incidents]);
+
   const filteredIncidents = useMemo(() => {
     const q = alertSearch.trim().toLowerCase();
-    if (!q) return incidents;
-    return incidents.filter((inc) =>
-      [
+    const list = incidents.filter((inc) => {
+      if (alertSeverity === 'severe' && inc.severity !== 'severe' && inc.severity !== 'critical') return false;
+      if (alertSeverity === 'moderate' && inc.severity !== 'moderate' && inc.severity !== 'high') return false;
+      if (alertSeverity === 'minor' && inc.severity !== 'minor') return false;
+      if (alertSeverity === 'unrated' && inc.severity) return false;
+      if (alertHighway !== 'all' && inc.highwayCode !== alertHighway) return false;
+      if (!q) return true;
+      return [
         inc.type,
         inc.highwayCode,
         inc.highwayName,
@@ -200,9 +236,13 @@ function AppContent() {
         inc.description,
         inc.status,
         inc.source || '',
-      ].some((f) => String(f).toLowerCase().includes(q)),
-    );
-  }, [incidents, alertSearch]);
+      ].some((f) => String(f).toLowerCase().includes(q));
+    });
+    if (alertSort !== 'severity') return list;
+    const rank = (s: RoadIncident['severity']) =>
+      s === 'severe' || s === 'critical' ? 0 : s === 'moderate' || s === 'high' ? 1 : s === 'minor' ? 2 : 3;
+    return [...list].sort((a, b) => rank(a.severity) - rank(b.severity));
+  }, [incidents, alertSearch, alertSeverity, alertHighway, alertSort]);
   const [userReports, setUserReports] = useState<UserRoadReport[]>([]);
   const [weatherNodes, setWeatherNodes] = useState<any[]>([]);
   const [pois, setPois] = useState<HighwayPOI[]>([]);
@@ -709,6 +749,85 @@ function AppContent() {
                       </div>
                     </div>
 
+                    {/* Quick-filter chips + sort — tame the full-feed scroll */}
+                    <div className="px-3 pt-2 pb-2 border-b border-slate-800 bg-slate-900/60 space-y-1.5">
+                      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
+                        {([
+                          ['all', 'All', alertSeverityCounts.all],
+                          ['severe', 'Severe', alertSeverityCounts.severe],
+                          ['moderate', 'Moderate', alertSeverityCounts.moderate],
+                          ['minor', 'Minor', alertSeverityCounts.minor],
+                          ['unrated', 'Unrated', alertSeverityCounts.unrated],
+                        ] as const).map(([val, label, count]) => (
+                          <button
+                            key={val}
+                            onClick={() => setAlertSeverity(val)}
+                            className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
+                              alertSeverity === val
+                                ? val === 'severe'
+                                  ? 'bg-rose-500/20 border-rose-500/60 text-rose-300'
+                                  : val === 'moderate'
+                                  ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
+                                  : val === 'minor'
+                                  ? 'bg-sky-500/20 border-sky-500/60 text-sky-300'
+                                  : 'accent-bg accent-text accent-border'
+                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {label}
+                            <span className="ml-1 font-mono opacity-80">{count}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {alertHighwayOptions.length > 0 && (
+                        <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
+                          <button
+                            onClick={() => setAlertHighway('all')}
+                            className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
+                              alertHighway === 'all'
+                                ? 'accent-bg accent-text accent-border'
+                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            All highways
+                          </button>
+                          {alertHighwayOptions.map(({ code, count }) => (
+                            <button
+                              key={code}
+                              onClick={() => setAlertHighway(code)}
+                              className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap font-mono ${
+                                alertHighway === code
+                                  ? 'accent-bg accent-text accent-border'
+                                  : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
+                              }`}
+                            >
+                              {code}
+                              <span className="ml-1 opacity-80">{count}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8px] font-mono uppercase tracking-wider text-slate-500 pr-0.5">Sort</span>
+                        {([
+                          ['newest', 'Newest'],
+                          ['severity', 'By severity'],
+                        ] as const).map(([val, label]) => (
+                          <button
+                            key={val}
+                            onClick={() => setAlertSort(val)}
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
+                              alertSort === val
+                                ? 'accent-bg accent-text accent-border'
+                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="max-h-80 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                       {isLiveFeedReachable === false ? (
                         <div className="py-6 text-center text-slate-400 text-xs">
@@ -726,16 +845,16 @@ function AppContent() {
                       ) : filteredIncidents.length === 0 ? (
                         <div className="py-6 text-center text-slate-400 text-xs">
                           <Search className="w-6 h-6 mx-auto mb-1.5 text-slate-500 opacity-80" />
-                          <span>No alerts match your search.</span>
+                          <span>No alerts match your filters.</span>
                         </div>
                       ) : (
                         filteredIncidents.map((inc) => (
                           <div
                             key={inc.id}
                             className={`p-2.5 rounded-xl border transition group ${
-                              inc.severity === 'critical'
+                              inc.severity === 'critical' || inc.severity === 'severe'
                                 ? 'bg-slate-900/80 border-rose-900/60 hover:border-rose-500/70'
-                                : inc.severity === 'high'
+                                : inc.severity === 'high' || inc.severity === 'moderate'
                                 ? 'bg-slate-900/80 border-amber-900/60 hover:border-amber-500/70'
                                 : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
                             }`}
@@ -745,9 +864,9 @@ function AppContent() {
                                 <div className="flex items-center space-x-1.5 flex-wrap mb-0.5">
                                   <span
                                     className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${
-                                      inc.severity === 'critical'
+                                      inc.severity === 'critical' || inc.severity === 'severe'
                                         ? 'bg-rose-500 text-white'
-                                        : inc.severity === 'high'
+                                        : inc.severity === 'high' || inc.severity === 'moderate'
                                         ? 'bg-amber-500 text-slate-950'
                                         : 'bg-sky-500 text-slate-950'
                                     }`}
