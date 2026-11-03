@@ -711,12 +711,15 @@ ${transcript}
 
 Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood: ${emotion} — ${emotionTone(emotion)}`;
 
-    // Primary model first, secondary as backup — some regions/models fail
-    // independently, and one retry costs little.
-    const modelIds = [
-      env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash",
+    // Primary model first, then known-current defaults and the secondary —
+    // Google deprecates model IDs over time, so the list must not depend on a
+    // single stale env value.
+    const modelIds = Array.from(new Set([
+      env.GEMINI_MODEL_PRIMARY || "gemini-3.5-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
       ...(env.GEMINI_MODEL_SECONDARY ? [env.GEMINI_MODEL_SECONDARY] : []),
-    ];
+    ])).slice(0, 4);
     let reply = "";
     let lastModelError: unknown = null;
     for (const modelId of modelIds) {
@@ -731,10 +734,10 @@ Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood:
     }
     if (!reply) {
       const note = String((lastModelError as Error)?.message ?? "");
-      // Geo/quota blocks (e.g. "User location is not supported") would leave
-      // the chat dead in unsupported edge regions. Degrade gracefully instead:
-      // answer with the live app data we already hold.
-      if (/not supported|quota|403|429/i.test(note)) {
+      // Geo/quota blocks ("User location is not supported") and deprecated
+      // model IDs (404 "no longer available") would leave the chat dead.
+      // Degrade gracefully instead: answer with the live app data we hold.
+      if (/not supported|quota|403|429|no longer available|404|deprecat/i.test(note)) {
         const digestSummary = digest
           ? digest.replace(/\n{2,}/g, "\n").slice(0, 900)
           : "(no live datasets available right now)";
