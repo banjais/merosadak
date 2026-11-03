@@ -440,7 +440,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     return Array.from(codes);
   }, [routePlan]);
 
-
   // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
   // Progressive disclosure: which detail sections are open. Defaults are
   // computed per plan — the blocks section opens itself the moment anything on
@@ -459,13 +458,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // PlannerDeck active card id. The deck shows one card at a time; the user
   // swipes left/right to move between single-info cards. When the planner
   // flips between pre-calc and post-calc, the deck item set changes, so we
-  // reset the active id to the first card of the new set (location pre-calc,
+  // reset the active id to the first card of the new set (destination pre-calc,
   // verdict post-calc).
-  const [plannerDeckActiveId, setPlannerDeckActiveId] = useState<string>('location');
+  const [plannerDeckActiveId, setPlannerDeckActiveId] = useState<string>('destination');
   const plannerDeckItems: DeckItem[] = useMemo(() => {
     if (!hasCalculated) {
+      // Pre-calc: a single card. The "Where to?" search bar is the default
+      // visible surface, with a My Location button on its right that reveals
+      // the location info card on demand (no permanent expanded panel).
       return [
-        { id: 'location', label: 'Where from?', hint: 'My Location / GPS' },
         { id: 'destination', label: 'Where to?', hint: 'Destination' },
       ];
     }
@@ -1143,7 +1144,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     handleDetectDeviceLocation(false);
     setRoutePlannerStep('destination');
-    setPlannerDeckActiveId('location');
+    setPlannerDeckActiveId('destination');
+    // Reveal the location info card so the user sees the GPS status change
+    // when switching to GPS mode.
+    setShowMyLocationDetails(true);
     // Open the destination dropdown so suggestions are ready, but do NOT
     // focus the input — on mobile that pops the keyboard without a tap.
     setTimeout(() => setIsSingleDropdownOpen(true), 150);
@@ -1179,7 +1183,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     setRoutePlannerStep('destination');
     handleDetectDeviceLocation(false);
-    setPlannerDeckActiveId('location');
+    setPlannerDeckActiveId('destination');
+    // Reveal the location info card so the user sees the GPS status when
+    // returning to the default (My Location) mode.
+    setShowMyLocationDetails(true);
     // Open the destination dropdown, but do NOT focus the input.
     setTimeout(() => setIsSingleDropdownOpen(true), 150);
   };
@@ -1196,11 +1203,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('origin');
     setOpenSections({});
     setTripStarted(false);
-    // Editing locations → jump the deck to the destination card, which is
-    // where the from/to fields live in custom_from_to mode. (The hasCalculated
-    // flip below already resets the deck to 'location'; this overrides that
-    // so the user lands on the card they actually need to edit.)
+    // Editing locations → jump the deck to the destination card and reveal
+    // the location info card so the from/to fields (custom_from_to mode) are
+    // visible. The hasCalculated flip below will reset the deck to its first
+    // pre-calc card (which is now 'destination' itself); this confirms it.
     setPlannerDeckActiveId('destination');
+    setShowMyLocationDetails(true);
     onRouteClear?.();
     // Do NOT auto-focus the destination input — on mobile that pops the
     // keyboard without the user tapping the field.
@@ -1218,6 +1226,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setSingleSearchQuery('');
     setOpenSections({});
     setPlannerDeckActiveId('destination');
+    setShowMyLocationDetails(true);
     onRouteClear?.();
     // Open the origin dropdown, but do NOT focus the input.
     setTimeout(() => setIsOriginDropdownOpen(true), 150);
@@ -1420,199 +1429,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         {(activeId) => (
           <>
             {/* ===== PRE-CALCULATION CARDS ===== */}
-            {!hasCalculated && activeId === 'location' && (
-              <ReelCard id="location" title="Where from?" Icon={MapPin} hint="My Location / GPS">
-                <div ref={locationMenuRef} className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div
-                      onClick={() => {
-                        if (locationMode === 'custom_from_to') {
-                          handleReturnToDefault();
-                        } else {
-                          setIsLocationMenuOpen((prev) => !prev);
-                        }
-                      }}
-                      id="btn-my-location-toggle"
-                      className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition min-w-0 flex-1 cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
-                      title={locationMode === 'custom_from_to' ? 'Return to default' : 'Change Location'}
-                      role="button"
-                      aria-expanded={isLocationMenuOpen}
-                    >
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (locationMode === 'my_location') {
-                            if (liveTracking) stopTracking();
-                            else restartTracking();
-                          }
-                        }}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
-                          (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
-                            : 'bg-slate-800 text-slate-400 border-slate-700'
-                        }`}
-                        title={locationMode === 'my_location'
-                          ? (liveTracking ? 'Stop following your position (saves battery)' : 'Start following your position')
-                          : 'Open location options'}
-                        id="btn-my-location-icon"
-                      >
-                        {locationMode === 'my_location' && detectedLocation ? (
-                          <MapPin className="w-5 h-5 text-emerald-400" />
-                        ) : originCity ? (
-                          <MapPin className="w-5 h-5 text-emerald-400" />
-                        ) : (
-                          <Crosshair className="w-5 h-5 text-slate-400" />
-                        )}
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-white truncate">
-                            {locationMode === 'my_location'
-                              ? (detectedLocation
-                                  ? 'My Location'
-                                  : 'My Location (GPS)')
-                              : (originCity ? originCity.name : 'My Location')}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                          {locationMode === 'my_location'
-                            ? (showMyLocationDetails
-                                ? (detectedLocation
-                                    ? (gpsAddressLabel
-                                        ? gpsAddressLabel
-                                        : gpsOriginCity
-                                          ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
-                                          : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
-                                    : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
-                                : 'Tap My Location to see GPS details')
-                            : 'Back to the current location'}
-                        </div>
-                        {showMyLocationDetails && detectedLocation && locationMode === 'my_location' && (
-                          <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
-                              liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-                            }`} />
-                            {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
-                            {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
-                            {liveAccuracy && (
-                              <span className="text-slate-500"> · {liveAccuracy}</span>
-                            )}
-                            {gpsNearestJunction?.name && (
-                              <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>
-                            )}
-                          </div>
-                        )}
-                        {locationMode === 'my_location' && !detectedLocation && liveLocationError && (
-                          <div className="text-[10px] font-medium truncate mt-0.5 text-rose-400">
-                            Location blocked — allow GPS access, or pick an origin below
-                          </div>
-                        )}
-                        {showMyLocationDetails && detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
-                          <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
-                            {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
-                          </div>
-                        )}
-                      </div>
-                      {locationMode === 'custom_from_to' ? (
-                        <ArrowLeft
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReturnToDefault();
-                          }}
-                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer group-hover:text-emerald-400`}
-                        />
-                      ) : (
-                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-                      )}
-                    </div>
-
-                    {/* On/off My Location toggle — replaces the old "Show on Map"
-                        button. Default OFF so the first load is clean (just the
-                        card title + this toggle). When ON, the GPS coordinates,
-                        nearest junction/highway and address label are revealed
-                        at the same place where they currently live — inside this
-                        location card. */}
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setShowMyLocationDetails((prev) => !prev)}
-                        aria-pressed={showMyLocationDetails}
-                        className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
-                          showMyLocationDetails
-                            ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/25'
-                            : 'border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-slate-600 text-slate-200 hover:text-white'
-                        }`}
-                        title={showMyLocationDetails ? 'Hide My Location details' : 'Show My Location details'}
-                        id="btn-my-location-details-toggle"
-                      >
-                        <MapPin className={`w-3.5 h-3.5 ${showMyLocationDetails ? 'text-emerald-400' : 'text-slate-400'}`} />
-                        <span>My Location</span>
-                        {/* On/off indicator dot — emerald when on, slate when off */}
-                        <span className={`inline-block h-1.5 w-1.5 rounded-full ml-0.5 ${
-                          showMyLocationDetails ? 'bg-emerald-400' : 'bg-slate-500'
-                        }`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Location Dropdown Options Menu — only shown in my_location mode.
-                      In custom_from_to mode, the card shows a return icon instead. */}
-                  {locationMode === 'my_location' && isLocationMenuOpen && (
-                    <div className="pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSwitchToGps();
-                        }}
-                        className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-emerald-500/50 bg-emerald-950/30 text-white`}
-                      >
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                          locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
-                        }`}>
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                            <span>Use Device GPS</span>
-                            {locationMode === 'my_location' && (
-                              <span className="text-[10px] text-emerald-400 font-normal">(Active)</span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            {locationPermissionDenied
-                              ? 'GPS blocked — allow it in your browser, then tap to retry'
-                              : 'Follows your live position as the origin'}
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSwitchToCustomOrigin();
-                        }}
-                        className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80`}
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
-                          <ArrowUpDown className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                            <span>Change Origin City / Hub</span>
-                          </div>
-                          <div className="text-[11px] text-slate-400 truncate">
-                            Type origin &amp; destination manually
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </ReelCard>
-            )}
 
             {!hasCalculated && activeId === 'destination' && (
               <ReelCard id="destination" title="Where to?" Icon={Navigation} hint="Destination">
@@ -1659,6 +1475,21 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                               <MapPin className="h-4 w-4 text-amber-400" />
                             </FieldIconButton>
                           )}
+                          {/* My Location button — on the right side of the
+                              search bar. Default OFF: only the button shows, the
+                              location info card is hidden. Click → reveal the
+                              location card (GPS status, coordinates, nearest
+                              highway, "Use Device GPS" / "Change Origin City"
+                              options) collapsed below the search bar. Click
+                              again → hide it. The button does NOT permanently
+                              occupy space with the expanded section. */}
+                          <FieldIconButton
+                            label="My Location"
+                            active={showMyLocationDetails}
+                            onClick={() => setShowMyLocationDetails((prev) => !prev)}
+                          >
+                            <Crosshair className={`h-4 w-4 ${showMyLocationDetails ? 'text-emerald-400' : 'text-slate-300'}`} />
+                          </FieldIconButton>
                         </>
                       }
                     >
@@ -1766,6 +1597,173 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           />
                         )}
                       </PlaceField>
+                    </div>
+                  )}
+
+                  {/* Collapsible My Location info card — revealed only when the
+                      user taps the My Location button on the right side of the
+                      search bar. Default OFF (no permanent panel). The card
+                      holds the GPS status (icon, title, address / coordinates,
+                      LIVE GPS line, nearest highway) and the location options
+                      menu (Use Device GPS / Change Origin City). Tapping the
+                      My Location button again hides this whole block. */}
+                  {showMyLocationDetails && !hasCalculated && (
+                    <div ref={locationMenuRef} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 space-y-3 animate-fadeIn">
+                      {/* GPS status row */}
+                      <div
+                        onClick={() => {
+                          if (locationMode === 'custom_from_to') {
+                            handleReturnToDefault();
+                          } else {
+                            setIsLocationMenuOpen((prev) => !prev);
+                          }
+                        }}
+                        id="btn-my-location-toggle"
+                        className="flex items-center space-x-3 group select-none rounded-2xl px-3 py-2.5 border transition cursor-pointer bg-slate-950/60 hover:bg-slate-950 border-slate-800 hover:border-emerald-500/50 shadow-inner"
+                        title={locationMode === 'custom_from_to' ? 'Return to default' : 'Change Location'}
+                        role="button"
+                        aria-expanded={isLocationMenuOpen}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (locationMode === 'my_location') {
+                              if (liveTracking) stopTracking();
+                              else restartTracking();
+                            }
+                          }}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition ${
+                            (locationMode === 'my_location' && detectedLocation) || (locationMode === 'custom_from_to' && originCity)
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10'
+                              : 'bg-slate-800 text-slate-400 border-slate-700'
+                          }`}
+                          title={locationMode === 'my_location'
+                            ? (liveTracking ? 'Stop following your position (saves battery)' : 'Start following your position')
+                            : 'Open location options'}
+                          id="btn-my-location-icon"
+                        >
+                          {locationMode === 'my_location' && detectedLocation ? (
+                            <MapPin className="w-5 h-5 text-emerald-400" />
+                          ) : originCity ? (
+                            <MapPin className="w-5 h-5 text-emerald-400" />
+                          ) : (
+                            <Crosshair className="w-5 h-5 text-slate-400" />
+                          )}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white truncate">
+                              {locationMode === 'my_location'
+                                ? (detectedLocation
+                                    ? 'My Location'
+                                    : 'My Location (GPS)')
+                                : (originCity ? originCity.name : 'My Location')}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                            {locationMode === 'my_location'
+                              ? (detectedLocation
+                                  ? (gpsAddressLabel
+                                      ? gpsAddressLabel
+                                      : gpsOriginCity
+                                        ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
+                                        : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
+                                  : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
+                              : 'Back to the current location'}
+                          </div>
+                          {detectedLocation && locationMode === 'my_location' && (
+                            <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
+                                liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                              }`} />
+                              {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
+                              {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
+                              {liveAccuracy && (
+                                <span className="text-slate-500"> · {liveAccuracy}</span>
+                              )}
+                              {gpsNearestJunction?.name && (
+                                <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>
+                              )}
+                            </div>
+                          )}
+                          {locationMode === 'my_location' && !detectedLocation && liveLocationError && (
+                            <div className="text-[10px] font-medium truncate mt-0.5 text-rose-400">
+                              Location blocked — allow GPS access, or pick an origin below
+                            </div>
+                          )}
+                          {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
+                            <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
+                              {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
+                            </div>
+                          )}
+                        </div>
+                        {locationMode === 'custom_from_to' ? (
+                          <ArrowLeft
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReturnToDefault();
+                            }}
+                            className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer group-hover:text-emerald-400`}
+                          />
+                        ) : (
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 cursor-pointer ${isLocationMenuOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+                        )}
+                      </div>
+
+                      {/* Location Dropdown Options Menu — only shown in my_location mode. */}
+                      {locationMode === 'my_location' && isLocationMenuOpen && (
+                        <div className="pt-1 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 animate-fadeIn">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSwitchToGps();
+                            }}
+                            className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-emerald-500/50 bg-emerald-950/30 text-white`}
+                          >
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                              locationPermissionDenied ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'
+                            }`}>
+                              <ArrowUpDown className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                                <span>Use Device GPS</span>
+                                {locationMode === 'my_location' && (
+                                  <span className="text-[10px] text-emerald-400 font-normal">(Active)</span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-400">
+                                {locationPermissionDenied
+                                  ? 'GPS blocked — allow it in your browser, then tap to retry'
+                                  : 'Follows your live position as the origin'}
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSwitchToCustomOrigin();
+                            }}
+                            className={`flex items-center space-x-3 p-3 rounded-xl border transition text-left border-slate-800 hover:border-sky-500/30 bg-slate-950/80 hover:bg-slate-800/80`}
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+                              <ArrowUpDown className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                                <span>Change Origin City / Hub</span>
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate">
+                                Type origin &amp; destination manually
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
