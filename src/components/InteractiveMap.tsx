@@ -190,6 +190,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const outsideMaskRef = useRef<L.Polygon | null>(null);
+  const nepalBorderRef = useRef<L.GeoJSON | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<{
     highways: L.LayerGroup;
@@ -470,9 +471,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       minZoom: 6,
       maxZoom: 17,
       maxBounds: NEPAL_BOUNDS,
-      maxBoundsViscosity: 1.0,
+      // Viscosity 0.7 keeps the user inside Nepal on a free drag but lets
+      // fitBounds pull the camera where it needs to without the maxBounds
+      // machinery re-anchoring and cancelling the animation.
+      maxBoundsViscosity: 0.7,
       zoomControl: false,
       attributionControl: false,
+      // Smooth navigation: inertia gives a gentle drift after a drag (iOS-like),
+      // zoomSnap 0.25 allows fractional zoom for finer wheel/pinch control,
+      // and zoomAnimation keeps the zoom transitions fluid rather than stepped.
+      inertia: true,
+      inertiaDeceleration: 2400,
+      inertiaMaxSpeed: 1800,
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
+      zoomAnimation: true,
+      zoomAnimationThreshold: 4,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
     });
 
     // Do not force whole-of-Nepal bounds on first load. The camera opens on a
@@ -953,6 +969,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             },
           });
           borderGroup.addLayer(border);
+          nepalBorderRef.current = border;
 
           mapInstanceRef.current?.invalidateSize();
         } catch (e) {
@@ -989,6 +1006,33 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     return () => { observer.disconnect(); };
   }, []);
+
+  // Fade the Nepal border + outside-mask when a route is fixed. The user
+  // wants to see only the required length and area — the whole-of-Nepal
+  // frame (border outline + the dark/light mask covering everything outside
+  // Nepal) is visual noise at route zoom. When a route is active, drop the
+  // border to a faint hairline and the mask to near-transparent so the
+  // basemap + route lines are the only thing that reads. When the route is
+  // cleared, restore the original opacity so the country frame comes back.
+  useEffect(() => {
+    const mask = outsideMaskRef.current;
+    const border = nepalBorderRef.current;
+    if (mask) {
+      if (activeRoute) {
+        mask.setStyle({ fillOpacity: 0.12 });
+      } else {
+        const theme = document.documentElement.getAttribute('data-theme');
+        mask.setStyle({ fillOpacity: theme === 'light' ? 1.0 : 0.4 });
+      }
+    }
+    if (border) {
+      if (activeRoute) {
+        border.setStyle({ opacity: 0.18, fillOpacity: 0.0, weight: 1 });
+      } else {
+        border.setStyle({ opacity: 0.9, fillOpacity: 0.08, weight: 2.5 });
+      }
+    }
+  }, [activeRoute]);
 
   // Render Province Boundaries (always visible)
   useEffect(() => {
@@ -1197,8 +1241,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     const bounds = L.latLngBounds([]);
 
-    // 1. Render Alternative Routes (if enabled and present)
-    if (activeLayer === 'alternatives' && activeRoute.allRouteOptions && activeRoute.allRouteOptions.length > 1) {
+    // 1. Render Alternative Routes — always shown when a route is fixed and
+    //    has alternatives, regardless of the active overlay layer. The user
+    //    wants the route lines (with alternatives if any) visible the moment
+    //    a route is calculated, without having to toggle a layer.
+    if (activeRoute.allRouteOptions && activeRoute.allRouteOptions.length > 1) {
       const altOptions = activeRoute.allRouteOptions.filter((opt) => opt.id !== activeRoute.id);
 
       altOptions.forEach((altOpt) => {
@@ -1454,16 +1501,25 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     routeGroup.addLayer(startMarker);
     routeGroup.addLayer(endMarker);
 
-    // Fit map smoothly to encompass active and alternative route paths
+    // Fit map smoothly to encompass the active route + any alternative paths.
+    // The camera now owns "show me the required length and area" — the user
+    // sees exactly the route corridor, not the whole of Nepal. maxZoom 14 lets
+    // short routes zoom in close; long routes still fit comfortably. Padding
+    // 70px keeps the endpoints clear of the card edges.
     if (bounds.isValid()) {
+      // Activate the map (load tiles, reveal controls) the moment a route is
+      // fixed so the user sees the real area immediately, not a blank canvas.
+      if (!mapActive) setMapActive(true);
+      if (tileProvider === 'none') setTileProvider('arcgis');
       mapInstanceRef.current.fitBounds(bounds, {
-        padding: [60, 60],
-        maxZoom: 11.5,
+        padding: [70, 70],
+        maxZoom: 14,
         animate: true,
         duration: 1.2,
+        easeLinearity: 0.25,
       });
     }
-   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized]);
+   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized, mapActive, tileProvider]);
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 

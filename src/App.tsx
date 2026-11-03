@@ -362,14 +362,13 @@ function AppContent() {
     setActiveRoute(route);
     setSimulationProgressKm(0);
     setIsSimulationPlaying(false);
-    if (route?.destination) {
-      setFocusedTarget({
-        lat: route.destination.lat,
-        lng: route.destination.lng,
-        title: `${route.destination.name} (Destination)`,
-        zoom: 11,
-      });
-    }
+    // NOTE: do NOT set focusedTarget to the destination here. Setting
+    // focusedTarget would trigger the map's flyTo effect (a single-point
+    // camera move) which races the route's fitBounds call and leaves the
+    // map on a single point instead of fitting the whole route corridor.
+    // The InteractiveMap's route-render effect owns the camera when a
+    // route is active: it calls fitBounds over the route + alternatives
+    // so the user sees exactly the required length and area.
   };
 
   useEffect(() => {
