@@ -65,6 +65,7 @@ import {
   Sparkles,
   Route,
   X,
+  Search,
   MapPin,
   RotateCcw,
   Home,
@@ -147,6 +148,29 @@ function AppContent() {
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  // Search box inside the alerts dropdown — filters the full feed by highway,
+  // place, type, status or source. Cleared whenever the dropdown closes so
+  // every open starts unfiltered.
+  const [alertSearch, setAlertSearch] = useState('');
+  useEffect(() => {
+    if (!isNotificationsOpen) setAlertSearch('');
+  }, [isNotificationsOpen]);
+  const filteredIncidents = useMemo(() => {
+    const q = alertSearch.trim().toLowerCase();
+    if (!q) return incidents;
+    return incidents.filter((inc) =>
+      [
+        inc.type,
+        inc.highwayCode,
+        inc.highwayName,
+        inc.locationName,
+        inc.title,
+        inc.description,
+        inc.status,
+        inc.source || '',
+      ].some((f) => String(f).toLowerCase().includes(q)),
+    );
+  }, [incidents, alertSearch]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
@@ -659,6 +683,30 @@ function AppContent() {
                       </span>
                     </div>
 
+                    {/* Search box — tame the full-feed scroll */}
+                    <div className="px-3 pt-2.5 pb-2 border-b border-slate-800 bg-slate-900/60">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+                        <input
+                          value={alertSearch}
+                          onChange={(e) => setAlertSearch(e.target.value)}
+                          placeholder="Search alerts — highway, place, type…"
+                          className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-8 pr-8 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/60"
+                          aria-label="Search road alerts"
+                        />
+                        {alertSearch && (
+                          <button
+                            onClick={() => setAlertSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 hover:text-slate-200 transition"
+                            title="Clear search"
+                            aria-label="Clear alert search"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="max-h-80 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                       {isLiveFeedReachable === false ? (
                         <div className="py-6 text-center text-slate-400 text-xs">
@@ -673,8 +721,13 @@ function AppContent() {
                           <CheckCheck className="w-6 h-6 mx-auto mb-1.5 text-emerald-400 opacity-80" />
                           <span>The live feed reported no road incidents.</span>
                         </div>
+                      ) : filteredIncidents.length === 0 ? (
+                        <div className="py-6 text-center text-slate-400 text-xs">
+                          <Search className="w-6 h-6 mx-auto mb-1.5 text-slate-500 opacity-80" />
+                          <span>No alerts match your search.</span>
+                        </div>
                       ) : (
-                        incidents.map((inc) => (
+                        filteredIncidents.map((inc) => (
                           <div
                             key={inc.id}
                             className={`p-2.5 rounded-xl border transition group ${
@@ -741,6 +794,13 @@ function AppContent() {
                             </div>
                           </div>
                         ))
+                      )}
+                      {isLiveFeedReachable !== false && incidents.length > 0 && (
+                        <p className="text-center text-[9px] text-slate-500 font-mono pt-1">
+                          {alertSearch.trim()
+                            ? `Showing ${filteredIncidents.length} of ${incidents.length} alerts`
+                            : `Showing all ${incidents.length} alerts`}
+                        </p>
                       )}
                     </div>
 
