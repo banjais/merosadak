@@ -3,14 +3,12 @@ import {
    ArrowLeft, Route, Mountain, LocateFixed,
    AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
    UtensilsCrossed, Compass, Shield, Landmark, Info, CloudSun, CloudRain,
-   CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell,
+   CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell, BellOff,
 } from 'lucide-react';
 import { findNearestHighwayFromCoords, findNearestHighwayJunction, findNearestHighwaysFromCoords, getDistanceKm } from '../utils/geoUtils';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { CityNode } from '../types';
-import { SettingsMenu, SettingsButton } from './SettingsMenu';
-import { TextScale } from '../hooks/useTextScale';
 
 interface MyLocationInfo {
   lat: number;
@@ -120,14 +118,9 @@ type TabType = 'weather' | 'incidents' | 'emergency' | 'airport' | 'bus_station'
 
 export const MyLocationPage: React.FC<{
   onBack: () => void;
-  textScale?: TextScale;
-  onTextScaleChange?: (scale: TextScale) => void;
-  accentColor?: string;
-  onAccentColorChange?: (color: string) => void;
-}> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald',
-  onAccentColorChange }) => {
+}> = ({ onBack }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isBellOpen, setIsBellOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('weather');
@@ -508,41 +501,113 @@ export const MyLocationPage: React.FC<{
                 My Location
               </p>
             </div>
-          </div>
-             {/* Settings Menu */}
+          </div>            {/* Place alerts bell — notifications filtered to the current place.
+                Opens a popover listing the road incidents reported within 5 km
+                of this fix; when there are none it says so instead. */}
             <div className="relative flex items-center gap-2 ml-auto">
               <button
-                onClick={() => setActiveTab(nearbyIncidents.length > 0 ? 'incidents' : 'emergency')}
-                className={`p-2 rounded-xl transition relative touch-target ${
-                  nearbyIncidents.length > 0 || nearbyEmergency.length > 0
-                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border border-slate-700/80'
+                onClick={() => setIsBellOpen(!isBellOpen)}
+                className={`p-2 rounded-xl transition relative touch-target border ${
+                  isBellOpen || nearbyIncidents.length > 0
+                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border-rose-500/30'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border-slate-700/80'
                 }`}
-                title={nearbyIncidents.length > 0 ? "View Safety Alerts" : "View Emergency Info"}
-                aria-label={nearbyIncidents.length > 0 ? "View safety alerts" : "View emergency info"}
+                title="Alerts near your current place"
+                aria-label="Alerts near your current place"
+                aria-expanded={isBellOpen}
+                aria-controls="my-location-alerts-popover"
               >
                 <Bell className="w-5 h-5" />
-                {(nearbyIncidents.length > 0 || nearbyEmergency.length > 0) && (
+                {nearbyIncidents.length > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
                 )}
               </button>
 
-             <SettingsButton
-               isOpen={isSettingsOpen}
-               onOpenChange={setIsSettingsOpen}
-             />
+              {isBellOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsBellOpen(false)} />
+                  <div
+                    id="my-location-alerts-popover"
+                    className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-slate-950/98 border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-md animate-fadeIn"
+                  >
+                    <div className="p-3.5 border-b border-slate-800 bg-slate-900/80">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                          <Bell className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-white uppercase tracking-wider">Alerts for This Place</h4>
+                          <p className="text-[10px] text-slate-400 truncate">{addressLabel || 'Your current place'}</p>
+                        </div>
+                      </div>
+                    </div>
 
-              <SettingsMenu
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                onOpenChange={setIsSettingsOpen}
-                showTextSize={true}
-                showAccentColor={true}
-                textScale={textScale}
-                onTextScaleChange={onTextScaleChange}
-                accentColor={accentColor}
-                onAccentColorChange={onAccentColorChange}
-              />
+                    <div className="max-h-80 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                      {nearbyIncidents.length === 0 ? (
+                        <div className="py-6 text-center text-slate-400 text-xs">
+                          <BellOff className="w-6 h-6 mx-auto mb-1.5 text-slate-500 opacity-80" />
+                          <p className="font-semibold text-slate-300">No notifications found</p>
+                          <p className="mt-1 text-[11px] text-slate-500">
+                            No road alerts reported within 5 km of your current place.
+                          </p>
+                        </div>
+                      ) : (
+                        nearbyIncidents.map((inc: any) => {
+                          const dKm = locationInfo && inc.lat && inc.lng
+                            ? getDistanceKm(locationInfo.lat, locationInfo.lng, inc.lat, inc.lng)
+                            : null;
+                          return (
+                            <div key={inc.id} className={`p-2.5 rounded-xl border bg-slate-900/80 ${
+                              inc.severity === 'severe' || inc.severity === 'critical'
+                                ? 'border-rose-900/60'
+                                : inc.severity === 'moderate' || inc.severity === 'high'
+                                ? 'border-amber-900/60'
+                                : 'border-slate-800'
+                            }`}>
+                              <div className="flex items-center space-x-1.5 flex-wrap mb-0.5">
+                                <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${
+                                  inc.severity === 'severe' || inc.severity === 'critical'
+                                    ? 'bg-rose-500 text-white'
+                                    : inc.severity === 'moderate' || inc.severity === 'high'
+                                    ? 'bg-amber-500 text-slate-950'
+                                    : 'bg-sky-500 text-slate-950'
+                                }`}>
+                                  {inc.type}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-amber-300">{inc.highwayCode}</span>
+                                {dKm !== null && (
+                                  <span className="text-[10px] font-bold text-cyan-300">{dKm.toFixed(1)} km away</span>
+                                )}
+                              </div>
+                              {inc.title && (
+                                <p className="text-[11px] font-bold text-white line-clamp-1">{inc.title}</p>
+                              )}
+                              <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{inc.description}</p>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="p-2.5 border-t border-slate-800 bg-slate-900/60">
+                      <button
+                        onClick={() => {
+                          setActiveTab('emergency');
+                          setIsBellOpen(false);
+                        }}
+                        className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
+                      >
+                        <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>
+                          {nearbyEmergency.length > 0
+                            ? `${nearbyEmergency.length} emergency facility/facilities within 50 km`
+                            : 'No emergency facilities within 50 km'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -587,15 +652,14 @@ export const MyLocationPage: React.FC<{
                  <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" />
                  <div>
                    <h4 className="text-sm font-bold">Emergency Info Available</h4>
-                   <p className="text-xs mt-1">{nearbyEmergency.length} emergency facility/facilities within 50 km. Tap bell or Emergency tab for details.</p>
+                   <p className="text-xs mt-1">{nearbyEmergency.length} emergency facility/facilities within 50 km. Open the Emergency tab for details.</p>
                  </div>
                </div>
              )}
 
                             {/* Location identity card, mirroring the Route Planner's "My
                   Location" card: same style, same information (address line,
-                  live GPS fix + accuracy, nearest junction, nearest highway),
-                  plus this page's admin-area chips and DMS coordinates. */}
+                  live GPS fix + accuracy, nearest junction, nearest highway). */}
               <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center space-x-3 min-w-0 flex-1 rounded-2xl px-3 py-2.5 border bg-slate-950/60 border-slate-800 shadow-inner">

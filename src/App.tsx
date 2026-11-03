@@ -847,10 +847,6 @@ function AppContent() {
           <Suspense fallback={<PageLoadingFallback label="Loading My Location…" />}>
             <MyLocationPage
               onBack={() => setIsMyLocationOpen(false)}
-              textScale={textScale}
-              onTextScaleChange={setTextScale}
-              accentColor={accentColor}
-              onAccentColorChange={handleAccentColor}
             />
           </Suspense>
         )}
