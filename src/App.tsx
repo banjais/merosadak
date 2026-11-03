@@ -49,7 +49,6 @@ import {
   RoutePreference,
   RouteSimulationControls,
 } from './types';
-import { readFreshCachedGps, writeCachedGps } from './utils/gpsLocation';
 import {
   CITIES_AND_JUNCTIONS,
 } from './data/nepalHighwaysData';
@@ -185,23 +184,18 @@ function AppContent() {
   const [isLiveFeedReachable, setIsLiveFeedReachable] = useState<boolean | null>(null);
 
   // Map focus target. Explicitly chosen places (a city, an incident) set this;
-  // the live GPS position is owned by InteractiveMap through the shared device
-  // watcher, so nothing here runs its own geolocation call. The cached fix only
-  // seeds the very first centring so the map opens where the user already is.
+  // it is NOT seeded from the GPS cache any more. Seeding it used to fire the
+  // focusedTarget flight on first load, which activated the map (tiles + every
+  // control) before the user had clicked anything, and handed the camera away
+  // from the live watcher. Initial focus on the user is now owned entirely by
+  // InteractiveMap: it centres on the cached/live fix without activating the
+  // map, and the control buttons stay hidden until the first map click.
   const [focusedTarget, setFocusedTarget] = useState<{
     lat: number;
     lng: number;
     title: string;
     zoom?: number;
-  } | null>(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation) {
-      const cached = readFreshCachedGps();
-      if (cached) {
-        return { lat: cached.lat, lng: cached.lng, title: 'Your Location', zoom: 12 };
-      }
-    }
-    return null;
-  });
+  } | null>(null);
 
   // Selected item tracking in sidebar
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);

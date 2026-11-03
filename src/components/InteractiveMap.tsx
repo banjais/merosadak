@@ -17,7 +17,7 @@ import {
   NEPAL_HIGHWAYS,
 } from '../data/nepalHighwaysData';
 import { loadAll79Highways } from '../utils/nepalHighwayDataLoader';
-import { useDeviceLocation } from '../hooks/useDeviceLocation';
+import { useDeviceLocation, getCurrentFix } from '../hooks/useDeviceLocation';
 import { getHighwayEnrichment } from '../utils/geoUtils';
 import {
   CITY_HIGHWAY_TOUCH_DISTANCE_KM,
@@ -392,21 +392,60 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain' | 'territorial' | '3d'>('3d');
   const tileLayerRef = useRef<L.GridLayer | null>(null);
 
+  // Camera lock bookkeeping. True as soon as the camera is on the user — either
+  // because the map opened centred on the cached fix, or because the first live
+  // fix triggered the fly-in. Until then the first fix in the [fix] effect
+  // flies the camera to street level instead of panning at country zoom.
+  const cameraLockedRef = useRef(false);
+
+  // Ref mirror of followMe so the ?e2e=1 diagnostics can read it without
+  // re-subscribing effects.
+  const followMeRef = useRef(true);
+  followMeRef.current = followMe;
+
+  // Pick a street-level zoom that still makes sense for how precise the fix is:
+  // phone GPS (±10-50 m) gets close, a coarse WiFi/cell fix (± km) stays further
+  // out so the dot is not wildly off-screen from the claimed point.
+  const zoomForAccuracy = (accuracy: number | null): number => {
+    if (accuracy == null) return 14; // cached fix — assume typical phone-grade accuracy
+    if (accuracy > 5000) return 11;
+    if (accuracy > 1500) return 12;
+    if (accuracy > 500) return 13;
+    return 14;
+  };
+
   // Initialize map
   useEffect(() => {
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    // Use focusedTarget as initial center if available, otherwise Nepal overview
+    // Use focusedTarget as initial center if available. Otherwise open on the
+    // user's cached position (session cache from the shared device watcher) so
+    // a first load or refresh shows their surroundings, never the full Nepal
+    // overview. Only a device with no fix at all falls back to the country view.
     const hasFocusedTarget = focusedTarget &&
       typeof focusedTarget.lat === 'number' &&
       typeof focusedTarget.lng === 'number' &&
       !isNaN(focusedTarget.lat) &&
       !isNaN(focusedTarget.lng);
+    const bootFix = hasFocusedTarget ? null : getCurrentFix();
+    const hasBootFix = !!bootFix &&
+      typeof bootFix.lat === 'number' &&
+      typeof bootFix.lng === 'number';
     const initialCenter: L.LatLngExpression = hasFocusedTarget
       ? [focusedTarget.lat, focusedTarget.lng]
-      : [27.95, 84.6];
-    const initialZoom = hasFocusedTarget ? (focusedTarget.zoom || 12) : 7;
+      : hasBootFix
+        ? [bootFix!.lat, bootFix!.lng]
+        : [27.95, 84.6];
+    const initialZoom = hasFocusedTarget
+      ? (focusedTarget.zoom || 12)
+      : hasBootFix
+        ? zoomForAccuracy(bootFix!.accuracy)
+        : 7;
+
+    // Opening centred on the user counts as the camera being locked on already,
+    // so the first live fix keeps the smooth panTo tracking instead of re-flying.
+    cameraLockedRef.current = hasBootFix;
 
     const map = L.map(mapContainerRef.current, {
       center: initialCenter,
@@ -419,11 +458,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       attributionControl: false,
     });
 
-    // Do not force whole-of-Nepal bounds on first load. Open at the focused
-    // target (cached user location / chosen city) when present, otherwise at
-    // the default Nepal centre. The live GPS fix effect pans the camera to the
-    // user's actual position once it resolves (followMe is on by default), so
-    // the first load shows the user's area rather than the entire country.
+    // Do not force whole-of-Nepal bounds on first load. The camera opens on a
+    // focused target, the cached user position (street level), or — only when
+    // no fix exists at all — the default Nepal centre. The live GPS fix effect
+    // flies in to the user's actual position once it resolves (followMe is on
+    // by default), and base tiles + control buttons stay hidden until the user
+    // clicks the map.
 
     layersRef.current.highways.addTo(map);
     layersRef.current.cities.addTo(map);
@@ -436,32 +476,48 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     mapInstanceRef.current = map;
 
+    // E2E diagnostics — present only when the page is loaded with ?e2e=1.
+    // Lets browser test harnesses read the real camera state (zoom, center,
+    // follow flag, camera-lock flag) without touching production behaviour.
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('e2e')) {
+      (window as unknown as Record<string, unknown>).__msMap = map;
+      (window as unknown as Record<string, unknown>).__msDebug = {
+        getFollowMe: () => followMeRef.current,
+        getCameraLocked: () => cameraLockedRef.current,
+      };
+    }
+
     // Mark map as initialized after layers are added
     setMapInitialized(true);
 
-    const timer = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 500);
-
-    const splashTimer = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 4500);
-
-    const resizeObs = new ResizeObserver(() => {
-      map.invalidateSize();
-    });
-    resizeObs.observe(mapContainerRef.current);
-
-    const handleResize = () => {
+    // Camera-flight-safe invalidateSize. ANY invalidateSize() during a running
+    // zoom/fly animation re-anchors the view through the maxBounds machinery
+    // (fire('move'/'moveend') → _panInsideMaxBounds → panTo → setView), and
+    // setView CANCELS the animation. That exact chain killed the first-fix
+    // fly-in: the GPS card above the map changed height, the ResizeObserver
+    // fired a few frames into the flight, and the app stayed stuck on the
+    // country-wide view. So while a flight is running (suppressRecenterRef is
+    // set) we skip the resize entirely — the deferred flush in the fly branch
+    // corrects the size once the camera settles.
+    const invalidateSizeSafe = () => {
+      if (suppressRecenterRef.current) return;
       map.invalidateSize();
     };
-    window.addEventListener('resize', handleResize);
+
+    const timer = window.setTimeout(invalidateSizeSafe, 500);
+
+    const splashTimer = window.setTimeout(invalidateSizeSafe, 4500);
+
+    const resizeObs = new ResizeObserver(invalidateSizeSafe);
+    resizeObs.observe(mapContainerRef.current);
+
+    window.addEventListener('resize', invalidateSizeSafe);
 
     return () => {
       window.clearTimeout(timer);
       window.clearTimeout(splashTimer);
       resizeObs.disconnect();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', invalidateSizeSafe);
       map.remove();
       mapInstanceRef.current = null;
       markerRef.current = null;
@@ -473,8 +529,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (!isAppReady) return;
     const map = mapInstanceRef.current;
     if (!map) return;
+    // Same flight guard as the ResizeObserver path above: an invalidateSize
+    // during a camera flight cancels it (maxBounds re-anchor → setView).
+    if (suppressRecenterRef.current) return;
     map.invalidateSize();
     const timer = window.setTimeout(() => {
+      if (suppressRecenterRef.current) return;
       map.invalidateSize();
     }, 500);
     return () => window.clearTimeout(timer);
@@ -509,13 +569,40 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, [placeGpsMarker]);
 
   // Every fix updates the dot, and while following it also moves the camera.
-  // panTo with a short duration keeps the marker under the crosshair without the
-  // jarring 1.2s flyTo a one-shot detection used.
+  // The FIRST fix that the camera locks onto flies in to street level — panTo
+  // alone kept the country-wide zoom 7, which is exactly the "opens on the full
+  // Nepal map" behaviour this replaces. Later fixes pan smoothly so walking and
+  // driving track in real time without re-flying.
   useEffect(() => {
     if (!fix) return;
     updateGpsMarker([fix.lat, fix.lng]);
     if (!followMe) return;
-    mapInstanceRef.current?.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (!cameraLockedRef.current) {
+      cameraLockedRef.current = true;
+      // Guard the flight from the zoomend recenter handler, the same way the
+      // focusedTarget flight does, then release once it settles.
+      suppressRecenterRef.current = true;
+      map.flyTo([fix.lat, fix.lng], zoomForAccuracy(fix.accuracy), {
+        duration: 1.2,
+        easeLinearity: 0.25,
+      });
+      const release = window.setTimeout(() => {
+        suppressRecenterRef.current = false;
+      }, 1400);
+      // Container resizes that were skipped during the flight (GPS card grew,
+      // splash dismissed, panel opened) are flushed here — after the flight is
+      // over, so the maxBounds re-anchor cannot cancel anything.
+      const resizeFlush = window.setTimeout(() => {
+        map.invalidateSize();
+      }, 1500);
+      return () => {
+        window.clearTimeout(release);
+        window.clearTimeout(resizeFlush);
+      };
+    }
+    map.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
   }, [fix, followMe, updateGpsMarker]);
 
   // A manual drag hands the camera back to the user. The dot still tracks;
