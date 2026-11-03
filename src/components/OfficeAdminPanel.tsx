@@ -37,8 +37,10 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
 
   return (
     <div className="fixed inset-0 z-[700] flex flex-col bg-slate-950 text-slate-100">
-      {/* Backdrop dim */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      {/* NOTE: no backdrop div here — same fix as SuperAdminControlPanel.
+      A full-page opaque panel must not contain an `absolute inset-0` backdrop:
+      positioned elements paint above static siblings, so the backdrop dimmed
+      the content and swallowed every click (onClose on any sidebar click). */}
       {/* Top bar */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">

@@ -43,8 +43,12 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
 
   return (
     <div className="fixed inset-0 z-[700] flex flex-col bg-slate-950 text-slate-100">
-      {/* Backdrop dim */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      {/* NOTE: no backdrop div here. This is a full-page opaque panel — there is
+      nothing behind it to dim. A previous `absolute inset-0 bg-black/40` backdrop
+      painted ON TOP of the static-positioned sidebar/main content (positioned
+      elements stack above static ones), which dimmed the whole panel and made
+      every click land on the backdrop's onClose — so clicking any sidebar
+      section instantly closed the panel instead of switching sections. */}
       {/* Top bar */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
