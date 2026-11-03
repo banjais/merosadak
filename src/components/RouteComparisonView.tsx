@@ -21,7 +21,7 @@ import {
   Sparkles,
   TrendingUp,
   TrendingDown,
-  Eye,
+  Map as MapIcon,
   SlidersHorizontal,
   Info,
   Check,
@@ -300,7 +300,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
                 onClick={() => onViewOnMap()}
                 className="text-slate-400 hover:text-white underline flex items-center space-x-1"
               >
-                <Eye className="w-3 h-3" />
+                <MapIcon className="w-3 h-3" />
                 <span>Show on map</span>
               </button>
             )}
@@ -930,7 +930,7 @@ export const RouteComparisonView: React.FC<RouteComparisonViewProps> = ({
             onClick={() => onViewOnMap()}
             className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white rounded-lg font-bold transition flex items-center space-x-1.5 shrink-0"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <MapIcon className="w-3.5 h-3.5" />
             <span>View All on Map</span>
           </button>
         )}

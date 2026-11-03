@@ -26,7 +26,7 @@ import {
  HelpCircle,
  FileText,
  AlertTriangle,
- ChevronRight,
+ LocateFixed,
  Eye,
  Info,
  Activity,
@@ -640,7 +640,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  className="text-xs font-semibold text-red-400 hover:text-red-300 flex items-center space-x-1"
  >
  <span>Pin on Map</span>
- <ChevronRight className="w-3 h-3" />
+ <LocateFixed className="w-3 h-3" />
  </button>
  )}
  </div>

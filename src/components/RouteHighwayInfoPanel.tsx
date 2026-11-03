@@ -4,7 +4,7 @@ import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadSNHReference, lookupSNHDistance, DistanceLookupResult, SNHReferenceData } from '../utils/snhLookup';
 import {
   Route,
-  MapPin,
+  Map as MapIcon,
   Mountain,
   PhoneCall,
   Building,
@@ -199,7 +199,7 @@ export const RouteHighwayInfoPanel: React.FC<RouteHighwayInfoPanelProps> = ({
                 }}
                 className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 flex items-center justify-center gap-2"
               >
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                <MapIcon className="w-3.5 h-3.5 text-emerald-400" />
                 View on map
               </button>
             )}

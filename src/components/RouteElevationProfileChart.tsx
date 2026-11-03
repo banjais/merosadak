@@ -35,7 +35,7 @@ import {
   Bike,
   Flame,
   MapPin,
-  Navigation,
+  Map as MapIcon,
   Compass,
   CheckCircle2,
   Activity,
@@ -984,7 +984,7 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
                   className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-semibold transition flex items-center space-x-1 text-[11px]"
                   title="Center interactive map onto this corridor section"
                 >
-                  <Navigation className="w-3 h-3 text-sky-400" />
+                  <MapIcon className="w-3 h-3 text-sky-400" />
                   <span>Map Sector</span>
                 </button>
               )}
@@ -1367,7 +1367,7 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
                 }}
                 className="w-full py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[10px] font-bold transition flex items-center justify-center space-x-1 shadow-sm"
               >
-                <Navigation className="w-3 h-3" />
+                <MapIcon className="w-3 h-3" />
                 <span>Focus Point on Map</span>
               </button>
             )}
@@ -1712,7 +1712,7 @@ export const RouteElevationProfileChart: React.FC<RouteElevationProfileChartProp
                             }}
                             className="px-2.5 py-1 rounded bg-red-600/30 hover:bg-red-600/50 text-red-300 border border-red-500/40 font-bold transition flex items-center space-x-1"
                           >
-                            <Navigation className="w-3 h-3" />
+                            <MapIcon className="w-3 h-3" />
                             <span>Focus Map</span>
                           </button>
                         )}

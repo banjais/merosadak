@@ -1248,7 +1248,7 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                         onClick={() => onSelectHighwayOnMap && onSelectHighwayOnMap(highway)}
                         className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center space-x-2 card card-interactive"
                       >
-                        <MapPin className="w-4 h-4 text-emerald-400" />
+                        <MapIcon className="w-4 h-4 text-emerald-400" />
                         <span>View Highway Vector on GIS Map</span>
                       </button>
 
