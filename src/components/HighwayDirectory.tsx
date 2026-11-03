@@ -4,7 +4,6 @@ import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
 import { analyzeHighwayRealtimeStatus, HighwayRealtimeStatusType, HighwayRealtimeAnalysis } from '../utils/highwayStatusHelper';
 import { loadSNHReference, lookupSNHDistance, SNHReferenceData } from '../utils/snhLookup';
-import { describeHighwayCoverage } from '../utils/highwayCatalogue';
 import { getTollPlazasForHighway } from '../utils/tollRates.client';
 import { PlannerDeck } from './PlannerDeck';
 import { useCardArchive } from '../context/CardArchiveContext';
@@ -25,7 +24,6 @@ import {
   ShieldAlert,
   Clock,
   Gauge,
-  Layers,
   Star,
   ArrowRight,
   Info,
@@ -355,45 +353,25 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header Banner with Real-Time Highway Status Metrics */}
-      <div className="bg-gradient-to-r from-[var(--surface-raised)] via-[var(--surface-tile)] to-emerald-950/40 border border-slate-800/80 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
-              GOVERNMENT OF NEPAL • DEPARTMENT OF ROADS (DOR)
-            </span>
-          <span className="text-xs text-tertiary flex items-center space-x-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-            <span>Real-Time Segment Telemetry</span>
-          </span>
-          </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight mt-1 font-display">
-            Nepal National Highways Directory
-          </h2>
-          <p className="text-sm text-secondary mt-1 max-w-2xl">
-            Live segment passability, real-time roadwork notices, active landslide obstructions, and DoR surveyed chainage links across{" "}
-            {describeHighwayCoverage().toLowerCase()} (NH01–NH80).
-          </p>
+      {/* Real-time Highway Status Counters — the page-level segment status
+          summary. The provenance + coverage blurb that used to sit beside it
+          now lives inside the info icon on the page header. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+        <div className="text-center px-3 py-1 bg-emerald-950/30 border border-emerald-800/40 rounded-lg">
+          <div className="text-lg font-black text-emerald-400">{statusCounts.open}</div>
+          <div className="text-[10px] text-emerald-300/80 font-bold uppercase tracking-wider">Open</div>
         </div>
-
-        {/* Real-time Highway Status Counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 shrink-0">
-          <div className="text-center px-3 py-1 bg-emerald-950/30 border border-emerald-800/40 rounded-lg">
-            <div className="text-lg font-black text-emerald-400">{statusCounts.open}</div>
-            <div className="text-[10px] text-emerald-300/80 font-bold uppercase tracking-wider">Open</div>
-          </div>
-          <div className="text-center px-3 py-1 bg-amber-950/30 border border-amber-800/40 rounded-lg">
-            <div className="text-lg font-black text-amber-400">{statusCounts.roadwork}</div>
-            <div className="text-[10px] text-amber-300/80 font-bold uppercase tracking-wider">Roadwork</div>
-          </div>
-          <div className="text-center px-3 py-1 bg-rose-950/30 border border-rose-800/40 rounded-lg">
-            <div className="text-lg font-black text-rose-400">{statusCounts.obstruction}</div>
-            <div className="text-[10px] text-rose-300/80 font-bold uppercase tracking-wider">Obstruction</div>
-          </div>
-          <div className="text-center px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg">
-            <div className="text-lg font-black text-cyan-400">{totalCalculatedKm.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total km</div>
-          </div>
+        <div className="text-center px-3 py-1 bg-amber-950/30 border border-amber-800/40 rounded-lg">
+          <div className="text-lg font-black text-amber-400">{statusCounts.roadwork}</div>
+          <div className="text-[10px] text-amber-300/80 font-bold uppercase tracking-wider">Roadwork</div>
+        </div>
+        <div className="text-center px-3 py-1 bg-rose-950/30 border border-rose-800/40 rounded-lg">
+          <div className="text-lg font-black text-rose-400">{statusCounts.obstruction}</div>
+          <div className="text-[10px] text-rose-300/80 font-bold uppercase tracking-wider">Obstruction</div>
+        </div>
+        <div className="text-center px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg">
+          <div className="text-lg font-black text-cyan-400">{totalCalculatedKm.toLocaleString()}</div>
+          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total km</div>
         </div>
       </div>
 
@@ -680,46 +658,6 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
                             </span>
                           </>
                         )}
-                      </div>
-
-                      {/* Real-Time Segment Status Bar (Interactive Visual Progress Strip) */}
-                      <div className="mt-3 pt-2 border-t border-slate-800/60">
-                        <div className="flex items-center justify-between text-[11px] mb-1.5 text-slate-400">
-                          <span className="flex items-center space-x-1 font-semibold">
-                            <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>Segment Real-Time Status ({segments.length} Sections):</span>
-                          </span>
-                          <span className="text-[10px] text-slate-400">
-                            <span className="text-emerald-400 font-bold">{analysis.openSegmentsCount} Open</span>
-                            {analysis.roadworkSegmentsCount > 0 && (
-                              <span className="text-amber-400 font-bold ml-1.5">• {analysis.roadworkSegmentsCount} Roadwork</span>
-                            )}
-                            {analysis.obstructionSegmentsCount > 0 && (
-                              <span className="text-rose-400 font-bold ml-1.5">• {analysis.obstructionSegmentsCount} Obstruction</span>
-                            )}
-                            {analysis.cautionSegmentsCount > 0 && (
-                              <span className="text-yellow-400 font-bold ml-1.5">• {analysis.cautionSegmentsCount} Caution</span>
-                            )}
-                          </span>
-                        </div>
-
-                        {/* Segmented Color Bar */}
-                        <div className="flex items-center space-x-1 h-3 max-w-lg mx-auto bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-                          {segments.map((seg, sIdx) => {
-                            let barColor = 'bg-emerald-500 hover:bg-emerald-400';
-                            if (seg.realtimeStatusType === 'obstruction') barColor = 'bg-rose-500 hover:bg-rose-400 animate-pulse';
-                            else if (seg.realtimeStatusType === 'roadwork') barColor = 'bg-amber-500 hover:bg-amber-400';
-                            else if (seg.realtimeStatusType === 'caution') barColor = 'bg-yellow-500 hover:bg-yellow-400';
-
-                            return (
-                              <div
-                                key={seg.id || sIdx}
-                                className={`h-full rounded-sm flex-1 transition cursor-pointer relative group ${barColor}`}
-                                title={`${seg.from} ➔ ${seg.to} (${seg.distanceKm} km): ${seg.statusLabel} - ${seg.currentIssue || 'Clear flow'}`}
-                              />
-                            );
-                          })}
-                        </div>
                       </div>
 
                       {/* Active Headline Issue Notice (if roadwork or obstruction exists) */}
