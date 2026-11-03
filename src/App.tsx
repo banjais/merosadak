@@ -32,12 +32,35 @@ import { getStoredOfflineBundle } from './utils/offlineSync';
 // Secondary pages are rarely opened and dominate the bundle. Loading them on
 // demand keeps the first paint small; the Suspense fallbacks below cover the
 // brief gap while a chunk is fetched.
-const HighwayDirectoryPage = lazy(() => import('./components/HighwayDirectoryPage').then((m) => ({ default: m.HighwayDirectoryPage })));
-const DistanceCalculatorPage = lazy(() => import('./components/DistanceCalculatorPage').then((m) => ({ default: m.DistanceCalculatorPage })));
-const DataSourcesPage = lazy(() => import('./components/DataSourcesPage').then((m) => ({ default: m.DataSourcesPage })));
-const MyLocationPage = lazy(() => import('./components/MyLocationPage').then((m) => ({ default: m.MyLocationPage })));
-const ReminderServicePage = lazy(() => import('./components/ReminderServicePanel').then((m) => ({ default: m.ReminderServicePanel })));
-const ProofVerifyPage = lazy(() => import('./components/ProofVerifyPage').then((m) => ({ default: m.ProofVerifyPage })));
+/**
+ * Lazy pages are content-hashed chunks; every deploy deletes the old hashes and
+ * Firebase's SPA fallback answers missing /assets/*.js with index.html (HTTP 200,
+ * JS content-type). A tab opened BEFORE a deploy therefore fails to import any
+ * newly-requested page (e.g. drawer → Highway Info) with an HTML-as-JS parse
+ * error. Recover by auto-reloading ONCE to pick up the fresh shell; the
+ * sessionStorage guard prevents a reload loop when the network is truly down.
+ */
+const lazyPage = (factory: () => Promise<{ default: React.ComponentType<any> }>) =>
+  lazy(() =>
+    factory().catch((err) => {
+      try {
+        if (!sessionStorage.getItem('mero-sadak-chunk-reload')) {
+          sessionStorage.setItem('mero-sadak-chunk-reload', '1');
+          window.location.reload();
+        } else {
+          sessionStorage.removeItem('mero-sadak-chunk-reload');
+        }
+      } catch {}
+      throw err;
+    }),
+  );
+
+const HighwayDirectoryPage = lazyPage(() => import('./components/HighwayDirectoryPage').then((m) => ({ default: m.HighwayDirectoryPage })));
+const DistanceCalculatorPage = lazyPage(() => import('./components/DistanceCalculatorPage').then((m) => ({ default: m.DistanceCalculatorPage })));
+const DataSourcesPage = lazyPage(() => import('./components/DataSourcesPage').then((m) => ({ default: m.DataSourcesPage })));
+const MyLocationPage = lazyPage(() => import('./components/MyLocationPage').then((m) => ({ default: m.MyLocationPage })));
+const ReminderServicePage = lazyPage(() => import('./components/ReminderServicePanel').then((m) => ({ default: m.ReminderServicePanel })));
+const ProofVerifyPage = lazyPage(() => import('./components/ProofVerifyPage').then((m) => ({ default: m.ProofVerifyPage })));
 import { fetchJson } from './utils/apiConfig';
 import {
   RoutePlanResult,
@@ -185,6 +208,12 @@ function AppContent() {
       localStorage.setItem(ALERT_PREFS_KEY, JSON.stringify({ severity: alertSeverity, highway: alertHighway, sort: alertSort }));
     } catch {}
   }, [alertSeverity, alertHighway, alertSort]);
+
+  // Boot succeeded → a past chunk-failure reload has served its purpose, so rearm
+  // the one-shot auto-reload guard for the NEXT deploy's stale-tab window.
+  useEffect(() => {
+    try { sessionStorage.removeItem('mero-sadak-chunk-reload'); } catch {}
+  }, []);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
