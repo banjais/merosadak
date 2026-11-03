@@ -28,6 +28,12 @@ function resistance(delta: number, maxPull: number): number {
  * - dead-zone before indicator appears
  * - resistance curve + stable refs (no stale touch state)
  * - stays on the current page; only runs onRefresh
+ *
+ * The indicator is a bare elastic overlay: just the spinning symbol + a
+ * percentage. No frame (border, background, shadow, backdrop), no words
+ * ("Updating feeds" / "Release to refresh" labels removed), no horizontal
+ * progress bar. It floats over the content without pushing it, so the
+ * header and page contents stay in place — nothing is hidden.
  */
 export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   children,
@@ -190,6 +196,9 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   }, [disabled, isTargetAtTop, maxPull, reset, runRefresh, setPull, thresholdPx]);
 
   const visible = pullPx > 4 || refreshing;
+  // Elastic overlay: the indicator slides in from the top edge. Content
+  // underneath is NOT translated, so the header and page contents stay put
+  // — nothing is hidden or pushed.
   const indicatorTranslate = refreshing
     ? Math.min(pullPx, maxPull * 0.45)
     : Math.min(pullPx, maxPull);
@@ -200,6 +209,9 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
       className={`relative flex h-dvh max-h-dvh w-full min-h-0 flex-col overflow-auto overscroll-y-contain ${className}`}
       style={{ overscrollBehaviorY: 'contain', touchAction: 'pan-x pan-y' }}
     >
+      {/* Elastic overlay indicator — bare symbol + percentage only.
+          No frame (border/bg/shadow/backdrop), no words, no horizontal bar.
+          Floats over content; does not push or hide the header. */}
       <div
         className="pointer-events-none fixed left-0 right-0 z-[60] flex justify-center"
         style={{
@@ -213,83 +225,45 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
         }}
         aria-hidden={!visible}
       >
-        <div
-          className={`relative flex flex-col items-center gap-1.5 rounded-2xl border px-4 py-2.5 shadow-xl backdrop-blur-md transition-colors duration-150 ${
-            refreshing
-              ? 'border-emerald-400/50 bg-slate-950/90'
-              : armed
-                ? 'border-amber-400/55 bg-slate-950/90'
-                : 'border-slate-600/50 bg-slate-950/85'
-          }`}
-        >
-          <div className="relative h-11 w-11">
-            <svg className="h-11 w-11 -rotate-90" viewBox="0 0 44 44" aria-hidden>
-              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(148,163,184,0.25)" strokeWidth="3" />
+        <div className="relative flex items-center gap-2">
+          <div className="relative h-9 w-9">
+            <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36" aria-hidden>
+              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(148,163,184,0.25)" strokeWidth="2.5" />
               <circle
-                cx="22"
-                cy="22"
-                r="18"
+                cx="18"
+                cy="18"
+                r="15"
                 fill="none"
                 stroke={refreshing ? 'rgb(52,211,153)' : armed ? 'rgb(251,191,36)' : 'rgb(56,189,248)'}
-                strokeWidth="3"
+                strokeWidth="2.5"
                 strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 18}`}
-                strokeDashoffset={`${2 * Math.PI * 18 * (1 - progress / 100)}`}
+                strokeDasharray={`${2 * Math.PI * 15}`}
+                strokeDashoffset={`${2 * Math.PI * 15 * (1 - progress / 100)}`}
                 style={{ transition: refreshing ? 'stroke-dashoffset 0.2s ease' : 'none' }}
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <RefreshCw
-                className={`h-5 w-5 ${
+                className={`h-4 w-4 ${
                   refreshing ? 'animate-spin text-emerald-400' : armed ? 'text-amber-300' : 'text-cyan-300'
                 }`}
                 style={{ transform: refreshing ? undefined : `rotate(${progress * 3.6}deg)` }}
               />
             </div>
           </div>
-
-          <div className="flex items-baseline gap-1 font-display">
-            <span
-              className={`text-sm font-black tabular-nums ${
-                refreshing ? 'text-emerald-300' : armed ? 'text-amber-300' : 'text-cyan-300'
-              }`}
-            >
-              {refreshing ? '…' : `${progress}`}
-            </span>
-            {!refreshing && <span className="text-[10px] font-bold text-slate-400">%</span>}
-          </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            {refreshing ? 'Updating feeds' : armed ? 'Release to refresh' : 'Pull to refresh'}
+          <span
+            className={`text-sm font-black tabular-nums font-display ${
+              refreshing ? 'text-emerald-300' : armed ? 'text-amber-300' : 'text-cyan-300'
+            }`}
+          >
+            {refreshing ? '…' : `${progress}%`}
           </span>
-
-          <div className="mt-0.5 h-1 w-24 overflow-hidden rounded-full bg-slate-800">
-            <div
-              className={`h-full rounded-full ${
-                refreshing
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-400'
-                  : armed
-                    ? 'bg-gradient-to-r from-amber-400 to-orange-400'
-                    : 'bg-gradient-to-r from-cyan-500 to-sky-400'
-              }`}
-              style={{
-                width: `${refreshing ? 100 : progress}%`,
-                transition: refreshing ? 'width 0.2s ease' : 'none',
-              }}
-            />
-          </div>
         </div>
       </div>
 
-      <div
-        className="flex h-full min-h-0 flex-1 flex-col overflow-auto"
-        style={{
-          transform:
-            pullPx > 0 || refreshing ? `translateY(${Math.min(pullPx, maxPull) * 0.22}px)` : undefined,
-          transition:
-            pullPx === 0 && !refreshing ? 'transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)' : 'none',
-          willChange: pullPx > 0 ? 'transform' : undefined,
-        }}
-      >
+      {/* Content — no translateY. The indicator floats over it without
+          pushing, so the header and page contents stay in place. */}
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-auto">
         {children}
       </div>
     </div>

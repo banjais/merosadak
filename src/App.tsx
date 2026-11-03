@@ -277,6 +277,22 @@ function AppContent() {
 
   const [isRefreshingWeather, setIsRefreshingWeather] = useState(false);
   const liveFeedsInFlightRef = useRef<Promise<void> | null>(null);
+  // Signature of the last-applied feed payload, per feed key. When a pull-to-
+  // refresh fetches the same data the server already returned, we skip the
+  // setState call entirely — no re-render, no UI flicker, no wasted work.
+  // The "don't refresh if no new updates" rule: the network call still
+  // happens (so the server is asked whether anything changed), but React
+  // state only updates when the payload actually differs.
+  const lastFeedSignatureRef = useRef<Record<string, string>>({});
+  const updateIfChanged = useCallback(
+    <T,>(key: string, newData: T, setter: (data: T) => void) => {
+      const sig = JSON.stringify(newData);
+      if (lastFeedSignatureRef.current[key] === sig) return;
+      lastFeedSignatureRef.current[key] = sig;
+      setter(newData);
+    },
+    []
+  );
 
   // Fetch updated data from server or local offline bundle
   const fetchLiveFeeds = useCallback(async () => {
@@ -299,14 +315,14 @@ function AppContent() {
         }
         const data = result.value;
         if (index === 0 && data?.incidents) {
-          setIncidents(data.incidents);
-          if (data.userReports) setUserReports(data.userReports);
+          updateIfChanged('incidents', data.incidents, setIncidents);
+          if (data.userReports) updateIfChanged('userReports', data.userReports, setUserReports);
         } else if (index === 1 && data?.weatherNodes) {
-          setWeatherNodes(data.weatherNodes);
+          updateIfChanged('weatherNodes', data.weatherNodes, setWeatherNodes);
         } else if (index === 2 && data?.pois) {
-          setPois(data.pois);
+          updateIfChanged('pois', data.pois, setPois);
         } else if (index === 3 && data?.corridors) {
-          setTrafficCorridors(data.corridors);
+          updateIfChanged('corridors', data.corridors, setTrafficCorridors);
         }
       });
 
@@ -315,11 +331,11 @@ function AppContent() {
         try {
           const offlineBundle = getStoredOfflineBundle();
           if (offlineBundle) {
-            if (offlineBundle.incidents) setIncidents(offlineBundle.incidents);
-            if (offlineBundle.userReports) setUserReports(offlineBundle.userReports);
-            if (offlineBundle.weatherNodes) setWeatherNodes(offlineBundle.weatherNodes);
-            if (offlineBundle.pois) setPois(offlineBundle.pois);
-            if (offlineBundle.corridors) setTrafficCorridors(offlineBundle.corridors);
+            if (offlineBundle.incidents) updateIfChanged('incidents', offlineBundle.incidents, setIncidents);
+            if (offlineBundle.userReports) updateIfChanged('userReports', offlineBundle.userReports, setUserReports);
+            if (offlineBundle.weatherNodes) updateIfChanged('weatherNodes', offlineBundle.weatherNodes, setWeatherNodes);
+            if (offlineBundle.pois) updateIfChanged('pois', offlineBundle.pois, setPois);
+            if (offlineBundle.corridors) updateIfChanged('corridors', offlineBundle.corridors, setTrafficCorridors);
           }
         } catch (offlineErr) {
           console.warn('[Mero Sadak] Offline bundle fallback failed:', offlineErr);

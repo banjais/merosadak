@@ -359,22 +359,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     allCitiesRef.current = allCities;
   }, [allCities]);
 
-  // Auto-focus "Where to" input after origin is selected
-  const prevOriginId = useRef<string>('');
-  useEffect(() => {
-    if (originId && prevOriginId.current === '') {
-      prevOriginId.current = originId;
-      setTimeout(() => {
-        if (locationMode === 'my_location') {
-          singleSearchInputRef.current?.focus();
-        } else {
-          destInputRef.current?.focus();
-        }
-      }, 100);
-    } else if (originId) {
-      prevOriginId.current = originId;
-    }
-  }, [originId, locationMode]);
+  // NOTE: "Where to" is no longer auto-focused after the origin is picked.
+  // On mobile, auto-focusing an input pops the on-screen keyboard without the
+  // user tapping the field — disturbing. The user taps the input when they
+  // want to type; the keyboard appears only then.
 
   // Search queries & Autocompletions
   const [singleSearchQuery, setSingleSearchQuery] = useState<string>('');
@@ -591,20 +579,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
   }, [originId, destId, hasCalculated, routePlan, detectedLocation]);
 
-  // Auto-focus inputs based on current step
-  useEffect(() => {
-    if (routePlannerStep === 'origin' && !originId && !detectedLocation) {
-      setTimeout(() => originInputRef.current?.focus(), 150);
-    } else if (routePlannerStep === 'destination' && originId && !destId) {
-      setTimeout(() => {
-        if (locationMode === 'my_location') {
-          singleSearchInputRef.current?.focus();
-        } else {
-          destInputRef.current?.focus();
-        }
-      }, 150);
-    }
-  }, [routePlannerStep, originId, destId, detectedLocation, locationMode]);
+  // NOTE: inputs are no longer auto-focused based on the planner step. On
+  // mobile, programmatic focus pops the on-screen keyboard without the user
+  // tapping the field. The user taps an input when they want to type.
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -678,7 +655,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setOriginSelected(false);
     setIsOriginDropdownOpen(false);
     if (hasCalculated) setNeedsRecalculation(true);
-    setTimeout(() => destInputRef.current?.focus(), 100);
+    // NOTE: destination input is no longer auto-focused after picking the
+    // origin. On mobile, popping the keyboard without a tap is disturbing.
   };
 
   const handleSelectDestination = (city: CityNode) => {
@@ -1184,10 +1162,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     handleDetectDeviceLocation(false);
     setRoutePlannerStep('destination');
     setPlannerDeckActiveId('location');
-    setTimeout(() => {
-      singleSearchInputRef.current?.focus();
-      setIsSingleDropdownOpen(true);
-    }, 150);
+    // Open the destination dropdown so suggestions are ready, but do NOT
+    // focus the input — on mobile that pops the keyboard without a tap.
+    setTimeout(() => setIsSingleDropdownOpen(true), 150);
   };
 
   const handleSwitchToCustomOrigin = () => {
@@ -1204,10 +1181,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     // Switching to custom_from_to → jump the deck to the destination card,
     // which is where the from/to PlaceFields live in this mode.
     setPlannerDeckActiveId('destination');
-    setTimeout(() => {
-      originInputRef.current?.focus();
-      setIsOriginDropdownOpen(true);
-    }, 150);
+    // Open the origin dropdown so suggestions are ready, but do NOT focus
+    // the input — on mobile that pops the keyboard without a tap.
+    setTimeout(() => setIsOriginDropdownOpen(true), 150);
   };
 
   const handleReturnToDefault = () => {
@@ -1222,10 +1198,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('destination');
     handleDetectDeviceLocation(false);
     setPlannerDeckActiveId('location');
-    setTimeout(() => {
-      singleSearchInputRef.current?.focus();
-      setIsSingleDropdownOpen(true);
-    }, 150);
+    // Open the destination dropdown, but do NOT focus the input.
+    setTimeout(() => setIsSingleDropdownOpen(true), 150);
   };
 
   const handleEditLocations = () => {
@@ -1246,9 +1220,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     // so the user lands on the card they actually need to edit.)
     setPlannerDeckActiveId('destination');
     onRouteClear?.();
-    setTimeout(() => {
-      destInputRef.current?.focus();
-    }, 150);
+    // Do NOT auto-focus the destination input — on mobile that pops the
+    // keyboard without the user tapping the field.
   };
 
   const handleNewRoute = () => {
@@ -1264,10 +1237,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setOpenSections({});
     setPlannerDeckActiveId('destination');
     onRouteClear?.();
-    setTimeout(() => {
-      originInputRef.current?.focus();
-      setIsOriginDropdownOpen(true);
-    }, 150);
+    // Open the origin dropdown, but do NOT focus the input.
+    setTimeout(() => setIsOriginDropdownOpen(true), 150);
   };
 
   // Auto-calculate route when both origin and destination are selected
