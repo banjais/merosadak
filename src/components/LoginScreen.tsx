@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Chrome, ShieldCheck, X } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Chrome, ChevronDown, ChevronUp, KeyRound, ShieldCheck, X } from 'lucide-react';
+import { useAuth, DEMO_ACCOUNTS, type DemoAccount } from '../context/AuthContext';
 
 interface LoginScreenProps {
   onClose?: () => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
-  const { loginWithGoogle, loginWithGooglePopup, loading, redirectError, clearRedirectError } = useAuth();
+  const { loginWithGoogle, loginWithGooglePopup, loginWithDemo, loading, redirectError, clearRedirectError } = useAuth();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -30,6 +31,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
         setError(redirectErr instanceof Error ? redirectErr.message : 'Google sign-in failed.');
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleDemoLogin = async (account: DemoAccount) => {
+    setError('');
+    clearRedirectError();
+    setIsLoading(true);
+    try {
+      await loginWithDemo(account.email, account.password);
+      setIsLoading(false);
+      onClose?.();
+    } catch (demoErr) {
+      setError(demoErr instanceof Error ? demoErr.message : 'Demo sign-in failed.');
+      setIsLoading(false);
     }
   };
 
@@ -87,6 +102,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onClose }) => {
               />
               <span className="text-xs font-medium text-slate-300">Remember me</span>
             </label>
+
+            {/* Mock/demo accounts — explore each role surface without a Google
+            account. Email/Password sign-in is not enabled on the Firebase
+            project, so these fixed credentials are validated on this device. */}
+            <div className="pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowDemo((prev) => !prev)}
+                className="w-full flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-400 hover:text-amber-300 transition"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>{showDemo ? 'Hide demo accounts' : 'Try a demo account (no Google needed)'}</span>
+                {showDemo ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              {showDemo && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                    Mock credentials for exploring each role panel. Validated on this device only.
+                  </p>
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <div
+                      key={account.email}
+                      className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                            account.role === 'OfficeAdmin'
+                              ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/30'
+                              : 'bg-emerald-900/30 text-emerald-400 border-emerald-500/30'
+                          }`}
+                        >
+                          {account.role === 'OfficeAdmin' ? 'Office Admin' : 'General User'}
+                        </span>
+                        <span className="text-[9px] text-slate-500 font-mono uppercase tracking-wider">demo</span>
+                      </div>
+                      <div className="space-y-0.5 font-mono text-[10px] text-slate-300">
+                        <p className="truncate">
+                          <span className="text-slate-500">Email:&nbsp;</span>{account.email}
+                        </p>
+                        <p>
+                          <span className="text-slate-500">Password:&nbsp;</span>{account.password}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDemoLogin(account)}
+                        disabled={isLoading || loading}
+                        className={`w-full py-2 rounded-lg text-[11px] font-bold transition disabled:opacity-60 disabled:cursor-not-allowed ${
+                          account.role === 'OfficeAdmin'
+                            ? 'bg-cyan-600/80 hover:bg-cyan-500 text-white'
+                            : 'bg-emerald-600/80 hover:bg-emerald-500 text-white'
+                        }`}
+                      >
+                        Sign in as {account.role === 'OfficeAdmin' ? 'Office Admin' : 'General User'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {isLoading && (
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400">

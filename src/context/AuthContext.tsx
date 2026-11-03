@@ -24,8 +24,84 @@ import { auth, db, googleProvider } from '../firebase';
 
 export type UserRole = 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
 
+/** The identity the app renders. A real Firebase `User` satisfies this shape
+ * structurally; mock demo sessions create a lightweight object with the same
+ * fields so every panel can treat both identically. */
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  /** True when the session is a local demo/mock sign-in (no Firebase auth). */
+  isDemo?: boolean;
+}
+
+export interface DemoAccount {
+  email: string;
+  password: string;
+  role: UserRole;
+  name: string;
+}
+
+/**
+ * Mock (demo) accounts for trying Mero Sadak's role surfaces without a Google
+ * account. Firebase Email/Password sign-in is NOT enabled on this project
+ * (Google-only), so these credentials are validated locally on the device.
+ *
+ * A demo session is a client-side convenience only: it holds no Firebase auth,
+ * so Firestore writes (roles, reports) still follow the security rules for an
+ * unauthenticated visitor. If the SuperAdmin assigns one of these emails a
+ * role in User Control, that Firestore record wins wherever Firestore is
+ * readable; otherwise the built-in role below applies on every device.
+ */
+export const DEMO_ACCOUNTS: DemoAccount[] = [
+  {
+    email: 'office.admin@merosadak.com.np',
+    password: 'sadak-office-2026',
+    role: 'OfficeAdmin',
+    name: 'Office Admin (Demo)',
+  },
+  {
+    email: 'general.user@merosadak.com.np',
+    password: 'sadak-user-2026',
+    role: 'GeneralUser',
+    name: 'General User (Demo)',
+  },
+];
+
+/** Guaranteed fallback roles for the mock accounts (used when Firestore roles
+ * cannot be read, e.g. unauthenticated demo sessions). */
+const DEMO_ROLE_MAP: Record<string, UserRole> = Object.fromEntries(
+  DEMO_ACCOUNTS.map((a) => [a.email.toLowerCase(), a.role]),
+);
+
+const DEMO_SESSION_KEY = 'mero-sadak-demo-session';
+
+/** Restore a demo session from localStorage. Returns null when absent,
+ * malformed, or storage is unavailable (private mode, sandboxed frames). */
+function loadDemoSession(): AppUser | null {
+  try {
+    const raw = localStorage.getItem(DEMO_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AppUser | null;
+    if (parsed && parsed.isDemo && parsed.email) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDemoSession(sessionUser: AppUser | null) {
+  try {
+    if (sessionUser) localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(sessionUser));
+    else localStorage.removeItem(DEMO_SESSION_KEY);
+  } catch {
+    /* storage unavailable — demo session just won't persist */
+  }
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   redirectError: string | null;
   /** True only for the designated superadmin (banjais@gmail.com / banjays@gmail.com). */
@@ -34,6 +110,8 @@ interface AuthContextType {
   userRole: UserRole;
   /** Map of email -> role loaded from Firestore. */
   userRoles: Record<string, UserRole>;
+  /** True when the current session is a local mock/demo sign-in. */
+  isDemoSession: boolean;
   /** Promote/demote a user's role (persisted to Firestore). */
   setUserRole: (email: string, role: UserRole) => Promise<void>;
   /** Remove a user's stored role entirely — they fall back to GeneralUser. */
@@ -43,6 +121,8 @@ interface AuthContextType {
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
   /** Popup-based sign-in (more reliable in PWAs / mobile browsers). */
   loginWithGooglePopup: () => Promise<void>;
+  /** Mock/demo sign-in with fixed credentials (no Firebase auth involved). */
+  loginWithDemo: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -53,6 +133,8 @@ const defaultAuthContext: AuthContextType = {
   isSuperAdmin: false,
   userRole: 'GeneralUser',
   userRoles: {},
+  isDemoSession: false,
+  loginWithDemo: async () => {},
   setUserRole: async () => {},
   deleteUserRole: async () => {},
   clearRedirectError: () => {},
@@ -112,15 +194,17 @@ export function isBuiltInSuperadmin(email: string): boolean {
 }
 
 /** Resolve the user's role from email. Checks built-in superadmin list first,
- * then Firestore roles, then localStorage OfficeAdmins. Everyone else is
- * GeneralUser. Comparison is case-insensitive to handle any provider casing
- * variation. */
+ * then Firestore roles, then the demo-account map, then localStorage
+ * OfficeAdmins. Everyone else is GeneralUser. Comparison is case-insensitive
+ * to handle any provider casing variation. */
 function resolveUserRole(email: string | null, userRoles: Record<string, UserRole>): UserRole {
   if (!email) return 'GeneralUser';
   const normalizedEmail = email.trim().toLowerCase();
   if (isBuiltInSuperadmin(normalizedEmail)) return 'superadmin';
   const firestoreRole = userRoles[normalizedEmail] ?? userRoles[email];
   if (firestoreRole) return firestoreRole;
+  const demoRole = DEMO_ROLE_MAP[normalizedEmail];
+  if (demoRole) return demoRole;
   try {
     const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
     if (raw) {
@@ -216,12 +300,35 @@ function setRedirectFlag(value: string | null) {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [demoUser, setDemoUser] = useState<AppUser | null>(loadDemoSession);
   const [loading, setLoading] = useState(true);
   const [redirectError, setRedirectError] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userRole, setUserRoleState] = useState<UserRole>('GeneralUser');
   const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
+
+  // The identity every panel renders: a real Firebase account wins over a
+  // local demo session (signing in with Google discards the demo session).
+  const user: AppUser | null = firebaseUser ?? demoUser;
+  const isDemoSession = !firebaseUser && !!demoUser;
+
+  // Discard any demo session the moment a real Firebase account signs in.
+  useEffect(() => {
+    if (firebaseUser && demoUser) {
+      setDemoUser(null);
+      saveDemoSession(null);
+    }
+  }, [firebaseUser, demoUser]);
+
+  // Single source of truth for role resolution: recompute whenever the
+  // effective identity or the Firestore role map changes. This covers sign-in,
+  // sign-out, demo sessions and live SuperAdmin role edits in one place.
+  useEffect(() => {
+    const role = resolveUserRole(user?.email ?? null, userRoles);
+    setUserRoleState(role);
+    setIsSuperAdmin(role === 'superadmin');
+  }, [user, userRoles]);
 
   // Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
   // assignments made by the superadmin panel.
@@ -235,12 +342,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (data.role) roles[d.id] = data.role;
         });
         setUserRoles(roles);
-        // Re-resolve the signed-in user's role now that Firestore roles are loaded.
-        if (user) {
-          const role = resolveUserRole(user.email ?? null, roles);
-          setUserRoleState(role);
-          setIsSuperAdmin(role === 'superadmin');
-        }
+        // Role re-resolution happens in the unified effect above, which now
+        // also sees the fresh `userRoles` map (it depends on userRoles).
       },
       // Security rules commonly deny reads on `userRoles` for anonymous
       // visitors. Treat a denied snapshot the same as "no roles" instead of
@@ -253,7 +356,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
     return () => unsub();
-  }, [user]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     // The second callback is the error handler. Without it an auth-init or
@@ -262,22 +365,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(
       auth,
       (currentUser) => {
-        setUser(currentUser);
+        setFirebaseUser(currentUser);
         setLoading(false);
-        const role = resolveUserRole(currentUser?.email ?? null, userRoles);
-        setUserRoleState(role);
-        setIsSuperAdmin(role === 'superadmin');
+        // Role resolution happens in the unified effect above.
       },
       (error) => {
         console.error('[Mero Sadak] Auth state subscription failed:', error);
-        setUser(null);
+        setFirebaseUser(null);
         setLoading(false);
         setRedirectError(friendlyAuthError(authErrorCode(error)));
       }
     );
 
     return unsubscribe;
-  }, [userRoles]);
+  }, []);
 
   const setUserRoleFn = useCallback(async (email: string, role: UserRole) => {
     await setUserRole(email, role);
@@ -357,7 +458,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  /** Mock/demo sign-in: validates against the fixed DEMO_ACCOUNTS list and
+   * stores a local session (localStorage) that survives page reloads. No
+   * Firebase auth is involved, so nothing is written to Firestore. */
+  const loginWithDemo = useCallback(async (email: string, password: string) => {
+    const normalized = email.trim().toLowerCase();
+    const account = DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === normalized);
+    if (!account) {
+      throw new Error('No demo account with that email. Use one of the demo accounts listed on the sign-in screen.');
+    }
+    if (account.password !== password) {
+      throw new Error('Incorrect demo password. Check the credentials shown on the sign-in screen.');
+    }
+    const session: AppUser = {
+      uid: `demo:${account.role}`,
+      email: account.email,
+      displayName: account.name,
+      photoURL: null,
+      isDemo: true,
+    };
+    saveDemoSession(session);
+    setDemoUser(session);
+  }, []);
+
   const logout = useCallback(async () => {
+    // Clear a demo session first, then a real Firebase session if present.
+    setDemoUser(null);
+    saveDemoSession(null);
     try {
       await signOut(auth);
     } catch (error) {
@@ -366,7 +493,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, userRoles, setUserRole: setUserRoleFn, deleteUserRole: deleteUserRoleFn, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, userRoles, isDemoSession, setUserRole: setUserRoleFn, deleteUserRole: deleteUserRoleFn, clearRedirectError, loginWithGoogle, loginWithGooglePopup, loginWithDemo, logout }}>
       {children}
     </AuthContext.Provider>
   );
