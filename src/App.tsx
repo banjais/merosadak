@@ -60,7 +60,7 @@ import {
   Bell,
   AlertTriangle,
   CheckCheck,
-  Locate,
+  Map as MapIcon,
   ArrowRight,
   Sparkles,
   Route,
@@ -674,7 +674,7 @@ function AppContent() {
                           <span>The live feed reported no road incidents.</span>
                         </div>
                       ) : (
-                        incidents.slice(0, 6).map((inc) => (
+                        incidents.map((inc) => (
                           <div
                             key={inc.id}
                             className={`p-2.5 rounded-xl border transition group ${
@@ -706,7 +706,7 @@ function AppContent() {
                                     {inc.locationName}
                                   </span>
                                 </div>
-                              <p className="text-[11px] text-secondary line-clamp-2 leading-relaxed">
+                              <p className="text-[11px] text-secondary leading-relaxed">
                                 {inc.description}
                               </p>
                               </div>
@@ -727,7 +727,7 @@ function AppContent() {
                   title="View on Map"
                   aria-label={`View ${inc.highwayCode} incident on map`}
                 >
-                  <Locate className="w-4 h-4" />
+                  <MapIcon className="w-4 h-4" />
                 </button>
                             </div>
 
