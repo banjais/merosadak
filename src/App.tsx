@@ -918,7 +918,7 @@ function AppContent() {
                       )}
                       {isLiveFeedReachable !== false && incidents.length > 0 && (
                         <p className="text-center text-[9px] text-slate-500 font-mono pt-1">
-                          {alertSearch.trim()
+                          {alertSearch.trim() || alertSeverity !== 'all' || alertHighway !== 'all'
                             ? `Showing ${filteredIncidents.length} of ${incidents.length} alerts`
                             : `Showing all ${incidents.length} alerts`}
                         </p>
