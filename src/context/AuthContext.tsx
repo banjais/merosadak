@@ -14,6 +14,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  deleteDoc,
   onSnapshot,
   query,
   where,
@@ -35,6 +36,8 @@ interface AuthContextType {
   userRoles: Record<string, UserRole>;
   /** Promote/demote a user's role (persisted to Firestore). */
   setUserRole: (email: string, role: UserRole) => Promise<void>;
+  /** Remove a user's stored role entirely — they fall back to GeneralUser. */
+  deleteUserRole: (email: string) => Promise<void>;
   /** Clear a surfaced sign-in failure once the user has seen it. */
   clearRedirectError: () => void;
   loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
@@ -51,6 +54,7 @@ const defaultAuthContext: AuthContextType = {
   userRole: 'GeneralUser',
   userRoles: {},
   setUserRole: async () => {},
+  deleteUserRole: async () => {},
   clearRedirectError: () => {},
   loginWithGoogle: async () => {},
   loginWithGooglePopup: async () => {},
@@ -90,20 +94,31 @@ function friendlyAuthError(code: string): string {
   }
 }
 
-const AuthContext = createContext<AuthContextType>(defaultAuthContext);
+// Exported so test harnesses can supply a mocked auth value without Firebase.
+export const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 const REDIRECT_FLAG = 'merosadak_redirecting';
 
 const OFFICE_ADMINS_KEY = 'mero-sadak-office-admins';
 
-/** Resolve the user's role from email. Checks Firestore roles first, then
- * hardcoded superadmin emails, then localStorage OfficeAdmins. Everyone else
- * is GeneralUser. Comparison is case-insensitive to handle any provider
- * casing variation. */
+/** Built-in superadmin accounts. These are hardcoded on purpose: the owner
+ * accounts must always resolve to SuperAdmin on every device, even before any
+ * Firestore record exists, and can never be demoted or deleted from the
+ * User Control panel. */
+export const SUPERADMIN_EMAILS = ['banjais@gmail.com', 'banjays@gmail.com'];
+
+export function isBuiltInSuperadmin(email: string): boolean {
+  return SUPERADMIN_EMAILS.includes(email.trim().toLowerCase());
+}
+
+/** Resolve the user's role from email. Checks built-in superadmin list first,
+ * then Firestore roles, then localStorage OfficeAdmins. Everyone else is
+ * GeneralUser. Comparison is case-insensitive to handle any provider casing
+ * variation. */
 function resolveUserRole(email: string | null, userRoles: Record<string, UserRole>): UserRole {
   if (!email) return 'GeneralUser';
   const normalizedEmail = email.trim().toLowerCase();
-  if (normalizedEmail === 'banjais@gmail.com' || normalizedEmail === 'banjays@gmail.com') return 'superadmin';
+  if (isBuiltInSuperadmin(normalizedEmail)) return 'superadmin';
   const firestoreRole = userRoles[normalizedEmail] ?? userRoles[email];
   if (firestoreRole) return firestoreRole;
   try {
@@ -136,6 +151,34 @@ export async function setUserRole(email: string, role: UserRole) {
         if (idx >= 0) admins.splice(idx, 1);
       }
       localStorage.setItem(OFFICE_ADMINS_KEY, JSON.stringify(admins));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+}
+
+/** Remove a user's stored role — used by the SuperAdmin User Control panel.
+ * The user falls back to GeneralUser at their next sign-in. Built-in
+ * superadmin emails are protected and refuse deletion. Falls back to
+ * localStorage when Firestore is unavailable. */
+export async function deleteUserRole(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (isBuiltInSuperadmin(normalizedEmail)) {
+    throw new Error('Built-in superadmin accounts cannot be deleted.');
+  }
+  try {
+    await deleteDoc(doc(db, 'userRoles', normalizedEmail));
+  } catch {
+    /* Firestore unavailable — remove from localStorage so it still works locally */
+    try {
+      const raw = localStorage.getItem(OFFICE_ADMINS_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      const admins = Array.isArray(list) ? list : [];
+      const idx = admins.findIndex((e: string) => String(e).trim().toLowerCase() === normalizedEmail);
+      if (idx >= 0) {
+        admins.splice(idx, 1);
+        localStorage.setItem(OFFICE_ADMINS_KEY, JSON.stringify(admins));
+      }
     } catch {
       /* storage unavailable */
     }
@@ -246,6 +289,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user?.email, userRoles]);
 
+  const deleteUserRoleFn = useCallback(async (email: string) => {
+    await deleteUserRole(email);
+    // If the deleted user is the one signed in on THIS device, drop their
+    // elevated role immediately instead of waiting for the next sign-in.
+    if (user?.email && user.email.trim().toLowerCase() === email.trim().toLowerCase()) {
+      const updated = resolveUserRole(email, {});
+      setUserRoleState(updated);
+      setIsSuperAdmin(updated === 'superadmin');
+    }
+    // Otherwise the userRoles onSnapshot propagates the removal to every panel.
+  }, [user?.email]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -311,7 +366,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, userRoles, setUserRole: setUserRoleFn, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
+    <AuthContext.Provider value={{ user, loading, redirectError, isSuperAdmin, userRole, userRoles, setUserRole: setUserRoleFn, deleteUserRole: deleteUserRoleFn, clearRedirectError, loginWithGoogle, loginWithGooglePopup, logout }}>
       {children}
     </AuthContext.Provider>
   );

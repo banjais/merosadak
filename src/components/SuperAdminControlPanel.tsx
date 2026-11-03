@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import {
   ShieldAlert,
   Users,
+  UserPlus,
+  Trash2,
+  ShieldCheck,
   LayoutDashboard,
   Settings,
   BarChart3,
@@ -18,6 +21,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { SUPERADMIN_EMAILS, isBuiltInSuperadmin, UserRole } from '../context/AuthContext';
 import { PanelSettings } from './PanelSettings';
 
 interface SuperAdminPanelProps {
@@ -29,8 +33,59 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   userEmail,
   onClose,
 }) => {
-  const { setUserRole, userRoles } = useAuth();
+  const { setUserRole, deleteUserRole, userRoles } = useAuth();
   const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'admin-command' | 'datasources' | 'settings'>('dashboard');
+
+  // --- Add-user form state (User Control section) ---
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>('OfficeAdmin');
+  const [userActionMsg, setUserActionMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  const handleAddUser = async () => {
+    const email = newUserEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) {
+      setUserActionMsg({ ok: false, text: 'Enter a valid email address.' });
+      return;
+    }
+    if (isBuiltInSuperadmin(email)) {
+      setUserActionMsg({ ok: false, text: 'That email is a built-in SuperAdmin — it is already active.' });
+      return;
+    }
+    if (userRoles[email]) {
+      setUserActionMsg({ ok: false, text: `${email} already has a role (${userRoles[email]}). Change it from the table below.` });
+      return;
+    }
+    try {
+      await setUserRole(email, newUserRole);
+      setUserActionMsg({ ok: true, text: `${email} added as ${newUserRole === 'OfficeAdmin' ? 'Office Admin' : newUserRole === 'superadmin' ? 'Super Admin' : 'General User'}. They get the role at their next sign-in.` });
+      setNewUserEmail('');
+    } catch {
+      setUserActionMsg({ ok: false, text: 'Could not save the role. Check your connection and try again.' });
+    }
+  };
+
+  const handleDeleteUser = async (email: string) => {
+    if (isBuiltInSuperadmin(email)) return;
+    if (!window.confirm(`Remove ${email}'s role? They become a General User at their next sign-in.`)) return;
+    try {
+      await deleteUserRole(email);
+      setUserActionMsg({ ok: true, text: `${email} removed — falls back to General User.` });
+    } catch {
+      setUserActionMsg({ ok: false, text: 'Could not remove the role. Check your connection and try again.' });
+    }
+  };
+
+  // Managed-user rows: built-in superadmins first (protected), then every
+  // Firestore-assigned email. Deduped in case the signed-in account is a
+  // built-in superadmin or already has a Firestore record.
+  const managedUsers: Array<{ email: string; role: UserRole; protected: boolean }> = [
+    ...SUPERADMIN_EMAILS.map((email) => ({ email, role: 'superadmin' as const, protected: true })),
+    ...Object.entries(userRoles)
+      .filter(([email]) => !isBuiltInSuperadmin(email))
+      .map(([email, role]) => ({ email, role, protected: false })),
+  ].filter((u, i, arr) => arr.findIndex((x) => x.email === u.email) === i);
 
   const sections = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
@@ -111,7 +166,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { label: 'Active Incidents', value: '0', color: 'text-rose-400', bg: 'bg-rose-900/20', icon: AlertTriangle },
-                  { label: 'Signed-in Users', value: '1', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: Users },
+                  { label: 'Managed Users', value: String(managedUsers.length), color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: Users },
                   { label: 'Live Feeds', value: 'Online', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: BarChart3 },
                   { label: 'System Status', value: 'Healthy', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: CheckCircle },
                 ].map((card) => (
@@ -169,7 +224,52 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
 
           {activeSection === 'users' && (
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-white">User Control</h4>
+              <h4 className="text-sm font-bold text-white">User Control — Add, Manage, Remove</h4>
+
+              {/* Add user form */}
+              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <UserPlus className="w-4 h-4 text-emerald-400" />
+                  <h5 className="text-xs font-bold text-white">Add a user</h5>
+                </div>
+                <p className="text-[10px] text-slate-400 mb-3">
+                  Grant app access by email. New users default to <span className="text-cyan-400 font-bold">Office Admin</span> —
+                  the moment they sign in with that email they land in the Office Admin panel.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    value={newUserEmail}
+                    onChange={(e) => { setNewUserEmail(e.target.value); setUserActionMsg(null); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddUser(); }}
+                    placeholder="colleague@merosadak.com.np"
+                    className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
+                  <select
+                    value={newUserRole}
+                    onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                    className="bg-slate-950 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="OfficeAdmin">Office Admin</option>
+                    <option value="GeneralUser">General User</option>
+                    <option value="superadmin">Super Admin</option>
+                  </select>
+                  <button
+                    onClick={handleAddUser}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition whitespace-nowrap"
+                  >
+                    Add User
+                  </button>
+                </div>
+                {userActionMsg && (
+                  <p className={`mt-3 text-[10px] font-medium flex items-center gap-1.5 ${userActionMsg.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {userActionMsg.ok ? <CheckCircle className="w-3 h-3 shrink-0" /> : <AlertTriangle className="w-3 h-3 shrink-0" />}
+                    {userActionMsg.text}
+                  </p>
+                )}
+              </div>
+
+              {/* Managed users table */}
               <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
                 <table className="w-full text-left text-[11px]">
                   <thead className="bg-slate-950/50 border-b border-slate-800/60">
@@ -178,18 +278,19 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                       <th className="px-4 py-3 text-slate-400 font-medium">Role</th>
                       <th className="px-4 py-3 text-slate-400 font-medium">Status</th>
                       <th className="px-4 py-3 text-slate-400 font-medium text-right">Change Role</th>
+                      <th className="px-4 py-3 text-slate-400 font-medium text-right">Remove</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[
-                      { email: userEmail, role: 'superadmin' as const },
-                      ...Object.entries(userRoles).map(([email, role]) => ({ email, role })),
-                    ].filter((u, i, arr) => arr.findIndex((x) => x.email === u.email) === i).map((u) => (
+                    {managedUsers.map((u) => (
                       <tr
                         key={u.email}
                         className="border-t border-slate-800/40 hover:bg-slate-800/30 transition"
                       >
-                        <td className="px-4 py-3 text-slate-200 font-medium truncate max-w-xs">{u.email}</td>
+                        <td className="px-4 py-3 text-slate-200 font-medium truncate max-w-[220px] sm:max-w-xs">
+                          {u.email}
+                          {u.email === userEmail && <span className="ml-1.5 text-[9px] text-slate-500">(you)</span>}
+                        </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
                             u.role === 'superadmin'
@@ -202,24 +303,43 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
-                          </span>
+                          {u.protected ? (
+                            <span className="flex items-center gap-1 text-[10px] text-amber-400 font-mono">
+                              <ShieldCheck className="w-3 h-3" /> Built-in
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <select
-                            value={u.role}
-                            onChange={(e) => setUserRole(u.email, e.target.value as 'superadmin' | 'OfficeAdmin' | 'GeneralUser')}
-                            className="bg-slate-800 border border-slate-700 text-[10px] text-slate-200 rounded px-2 py-1 focus:outline-none focus:border-accent-text"
-                          >
-                            <option value="GeneralUser">General User</option>
-                            <option value="OfficeAdmin">Office Admin</option>
-                            {u.email === userEmail ? (
-                              <option value="superadmin" disabled>Super Admin (self)</option>
-                            ) : (
+                          {u.protected ? (
+                            <span className="text-[9px] text-slate-600 font-mono italic">locked</span>
+                          ) : (
+                            <select
+                              value={u.role}
+                              onChange={(e) => setUserRole(u.email, e.target.value as UserRole)}
+                              className="bg-slate-800 border border-slate-700 text-[10px] text-slate-200 rounded px-2 py-1 focus:outline-none focus:border-accent-text"
+                            >
+                              <option value="GeneralUser">General User</option>
+                              <option value="OfficeAdmin">Office Admin</option>
                               <option value="superadmin">Super Admin</option>
-                            )}
-                          </select>
+                            </select>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {u.protected ? (
+                            <span className="text-[9px] text-slate-600 font-mono italic">—</span>
+                          ) : (
+                            <button
+                              onClick={() => handleDeleteUser(u.email)}
+                              title={`Remove ${u.email}`}
+                              className="p-1.5 rounded-lg bg-slate-800/60 text-slate-400 hover:text-rose-400 hover:bg-rose-900/30 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -227,7 +347,9 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                 </table>
               </div>
               <p className="text-[10px] text-slate-500">
-                Select a role from the dropdown to promote or demote a user. Changes persist to Firestore and apply at their next sign-in.
+                Added emails keep their role across devices (stored in Firestore). Change a role with the dropdown, or
+                remove it with the trash icon — the user falls back to General User. The two built-in SuperAdmin accounts
+                (banjais@ / banjays@gmail.com) are locked and cannot be demoted or deleted.
               </p>
             </div>
           )}
