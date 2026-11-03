@@ -722,20 +722,30 @@ function AppContent() {
                     {incidents.length}
                   </span>
                 )}
-                {isLiveFeedReachable !== false &&
-                  incidents.some((inc) => inc.severity === 'severe' || inc.severity === 'critical') && (
-                    <span
-                      className="absolute -top-0.5 -left-0.5 flex h-3 w-3"
-                      title="Severe alert in the live feed"
-                    >
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-slate-900" />
-                    </span>
-                  )}
                 {isLiveFeedReachable === false && (
                   <span className="absolute -top-1 -right-1 w-[9px] h-[9px] bg-amber-500 rounded-full ring-2 ring-slate-900" />
                 )}
               </button>
+
+              {/* Severe-alert pulse dot — click-through: jumps into the dropdown
+                  pre-filtered to Severe. A SIBLING of the bell (nested buttons
+                  are invalid HTML) and z-50 so it stays clickable above the
+                  dropdown's backdrop. */}
+              {isLiveFeedReachable !== false && alertSeverityCounts.severe > 0 && (
+                <button
+                  onClick={() => {
+                    setAlertSeverity('severe');
+                    setIsNotificationsOpen(true);
+                  }}
+                  className="absolute -top-0.5 -left-0.5 z-50 flex h-3.5 w-3.5 items-center justify-center"
+                  title="Severe alert — click to view"
+                  aria-label={`Show ${alertSeverityCounts.severe} severe alert${alertSeverityCounts.severe !== 1 ? 's' : ''}`}
+                  id="btn-bell-severe"
+                >
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-slate-900" />
+                </button>
+              )}
 
               {/* Notifications Popover Dropdown */}
               {isNotificationsOpen && (
@@ -762,9 +772,24 @@ function AppContent() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
-                        {isLiveFeedReachable === false ? 'OFFLINE' : 'LIVE SYNC'}
-                      </span>
+                      <div className="flex items-center space-x-1.5">
+                        {alertSeverityCounts.severe > 0 && (
+                          <button
+                            onClick={() => setAlertSeverity('severe')}
+                            className={`text-[9px] font-mono px-2 py-0.5 rounded-full border transition whitespace-nowrap ${
+                              alertSeverity === 'severe'
+                                ? 'bg-rose-500 text-white border-rose-400'
+                                : 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25'
+                            }`}
+                            title="Filter to severe alerts"
+                          >
+                            {alertSeverityCounts.severe} severe
+                          </button>
+                        )}
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
+                          {isLiveFeedReachable === false ? 'OFFLINE' : 'LIVE SYNC'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Search box — tame the full-feed scroll */}
