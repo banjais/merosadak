@@ -1,26 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ArrowLeft, Settings, Settings2 } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { HighwayDirectory } from './HighwayDirectory';
-import { SettingsMenu, SettingsButton } from './SettingsMenu';
-import { TextScale } from '../hooks/useTextScale';
 
 interface HighwayDirectoryPageProps {
   onBack?: () => void;
-  textScale?: TextScale;
-  onTextScaleChange?: (scale: TextScale) => void;
-  accentColor?: string;
-  onAccentColorChange?: (color: string) => void;
 }
 
-export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
-  onBack,
-  textScale,
-  onTextScaleChange,
-  accentColor,
-  onAccentColorChange,
-}) => {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
+export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-[var(--surface-base)] text-slate-100 flex flex-col">
       {/* Page Header */}
@@ -49,25 +35,6 @@ export const HighwayDirectoryPage: React.FC<HighwayDirectoryPageProps> = ({
                 Highway Directory
               </p>
             </div>
-          </div>
-          {/* Settings Menu */}
-          <div className="relative ml-auto">
-            <SettingsButton
-              isOpen={isSettingsOpen}
-              onOpenChange={setIsSettingsOpen}
-            />
-
-            <SettingsMenu
-              isOpen={isSettingsOpen}
-              onClose={() => setIsSettingsOpen(false)}
-              onOpenChange={setIsSettingsOpen}
-              showTextSize={true}
-              showAccentColor={true}
-              textScale={textScale}
-              onTextScaleChange={onTextScaleChange}
-              accentColor={accentColor}
-              onAccentColorChange={onAccentColorChange}
-            />
           </div>
         </div>
       </header>

@@ -729,10 +729,6 @@ function AppContent() {
           <Suspense fallback={<PageLoadingFallback label="Loading Highway Directory…" />}>
             <HighwayDirectoryPage
               onBack={() => setIsHighwayInfoOpen(false)}
-              textScale={textScale}
-              onTextScaleChange={setTextScale}
-              accentColor={accentColor}
-              onAccentColorChange={handleAccentColor}
             />
           </Suspense>
         )}
