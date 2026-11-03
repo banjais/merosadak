@@ -1132,7 +1132,12 @@ function AppContent() {
       <RoadReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        onReportSubmitted={fetchLiveFeeds}
+        onReportSubmitted={() => {
+          fetchLiveFeeds();
+          // ReportingSection (admin panels + profile) listens for this and
+          // reloads so a fresh report appears without a manual refresh.
+          window.dispatchEvent(new Event('merosadak:report-submitted'));
+        }}
       />
 
       {/* Mountain Offline GIS & Tile Pack Manager Modal */}
@@ -1165,6 +1170,7 @@ function AppContent() {
         <SuperAdminPanel
           onClose={() => setIsSuperAdminPanelOpen(false)}
           userEmail={user.email || 'banjais@gmail.com'}
+          onOpenReportModal={() => setIsReportModalOpen(true)}
         />
       )}
 
@@ -1175,6 +1181,7 @@ function AppContent() {
         <OfficeAdminPanel
           onClose={() => setIsOfficeAdminPanelOpen(false)}
           userEmail={user.email || ''}
+          onOpenReportModal={() => setIsReportModalOpen(true)}
         />
       )}
     </PullToRefresh>

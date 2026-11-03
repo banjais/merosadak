@@ -23,11 +23,14 @@ import { ReportingSection } from './ReportingSection';
 interface OfficeAdminPanelProps {
   userEmail: string;
   onClose: () => void;
+  /** Opens the shared hazard-report modal above this panel. */
+  onOpenReportModal?: () => void;
 }
 
 export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
   userEmail,
   onClose,
+  onOpenReportModal,
 }) => {
   const [activeSection, setActiveSection] = useState<'admin-command' | 'reports' | 'datasources' | 'settings'>('admin-command');
 
@@ -148,7 +151,7 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
           )}
 
           {activeSection === 'reports' && (
-            <ReportingSection variant="officeadmin" />
+            <ReportingSection variant="officeadmin" onSubmitReport={onOpenReportModal} />
           )}
 
           {activeSection === 'datasources' && (

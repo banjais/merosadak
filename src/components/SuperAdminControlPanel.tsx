@@ -29,11 +29,14 @@ import { ReportingSection } from './ReportingSection';
 interface SuperAdminPanelProps {
   userEmail: string;
   onClose: () => void;
+  /** Opens the shared hazard-report modal above this panel. */
+  onOpenReportModal?: () => void;
 }
 
 export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   userEmail,
   onClose,
+  onOpenReportModal,
 }) => {
   const { setUserRole, deleteUserRole, userRoles } = useAuth();
   const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'reports' | 'admin-command' | 'datasources' | 'settings'>('dashboard');
@@ -383,7 +386,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
           )}
 
           {activeSection === 'reports' && (
-            <ReportingSection variant="superadmin" />
+            <ReportingSection variant="superadmin" onSubmitReport={onOpenReportModal} />
           )}
 
           {activeSection === 'admin-command' && (

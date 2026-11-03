@@ -80,8 +80,8 @@ function timeAgo(iso?: string): string {
 }
 
 const SUBTITLES: Record<ReportingSectionProps['variant'], string> = {
-  superadmin: 'Every user-submitted hazard report and live feed incident across the network.',
-  officeadmin: 'Review submitted hazard reports and live incidents for office follow-up.',
+  superadmin: 'Every user-submitted hazard report and live incident across the network — file one from here too.',
+  officeadmin: 'Review submitted hazard reports and live incidents for office follow-up — or file one from here too.',
   general: 'Community hazard reports and live road incidents — report one from here too.',
 };
 
@@ -123,6 +123,15 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
     void load();
   }, [load]);
 
+  // A hazard report submitted from the shared RoadReportModal (opened by the
+  // Report-a-Hazard CTA in any role's panel) announces itself here, so the
+  // list refreshes the moment the modal closes.
+  useEffect(() => {
+    const onSubmitted = () => { void load(); };
+    window.addEventListener('merosadak:report-submitted', onSubmitted);
+    return () => window.removeEventListener('merosadak:report-submitted', onSubmitted);
+  }, [load]);
+
   const activeHazards = reports.filter((r) => (r.status ?? 'active') === 'active').length;
   const statCards = [
     { label: 'User Reports', value: String(reports.length), cls: 'text-emerald-400' },
@@ -143,7 +152,7 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
           <p className="text-[10px] text-slate-400 mt-0.5">{SUBTITLES[variant]}</p>
         </div>
         <div className="flex items-center gap-2">
-          {variant === 'general' && onSubmitReport && (
+          {onSubmitReport && (
             <button
               onClick={onSubmitReport}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold text-[11px] shadow-lg shadow-emerald-500/20 transition"
@@ -217,7 +226,7 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
             <p className="text-[10px] text-slate-500 mt-1">
               Hazard reports submitted from the app appear here instantly.
             </p>
-            {variant === 'general' && onSubmitReport && (
+            {onSubmitReport && (
               <button
                 onClick={onSubmitReport}
                 className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition"

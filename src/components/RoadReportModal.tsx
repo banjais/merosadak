@@ -225,7 +225,10 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+    // z-[800]: above the full-page admin panels (z-[700]) so "Report a
+    // Hazard" opened from inside them floats the modal on top instead of
+    // hiding it behind the opaque panel.
+    <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="bg-[var(--surface-raised)] border border-slate-800/80 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800/70 flex items-center justify-between bg-[var(--surface-shell)]">
