@@ -675,7 +675,6 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
     }
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
     const emotion = detectEmotion(lastUser.text);
     const digest = await buildLiveContextDigest(env);
@@ -712,8 +711,44 @@ ${transcript}
 
 Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood: ${emotion} — ${emotionTone(emotion)}`;
 
-    const result = await model.generateContent(prompt);
-    const reply = result.response.text();
+    // Primary model first, secondary as backup — some regions/models fail
+    // independently, and one retry costs little.
+    const modelIds = [
+      env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash",
+      ...(env.GEMINI_MODEL_SECONDARY ? [env.GEMINI_MODEL_SECONDARY] : []),
+    ];
+    let reply = "";
+    let lastModelError: unknown = null;
+    for (const modelId of modelIds) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelId });
+        const result = await model.generateContent(prompt);
+        reply = result.response.text();
+        break;
+      } catch (modelError) {
+        lastModelError = modelError;
+      }
+    }
+    if (!reply) {
+      const note = String((lastModelError as Error)?.message ?? "");
+      // Geo/quota blocks (e.g. "User location is not supported") would leave
+      // the chat dead in unsupported edge regions. Degrade gracefully instead:
+      // answer with the live app data we already hold.
+      if (/not supported|quota|403|429/i.test(note)) {
+        const digestSummary = digest
+          ? digest.replace(/\n{2,}/g, "\n").slice(0, 900)
+          : "(no live datasets available right now)";
+        return jsonResponse(env, {
+          emotion,
+          fallback: true,
+          reply:
+            "Namaste! My AI brain is momentarily unreachable from this region, so I cannot chat freely right now. Here is what the app's live data shows:\n\n" +
+            digestSummary +
+            "\n\nMeanwhile the Route Planner, Reports & Hazards, fuel and toll sections are fully available — and please try me again in a little while.",
+        });
+      }
+      return jsonResponse(env, { error: "AI chat failed", note }, 500);
+    }
     return jsonResponse(env, { reply, emotion });
   } catch (e: any) {
     return jsonResponse(env, { error: "AI chat failed", note: e?.message }, 500);
