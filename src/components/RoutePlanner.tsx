@@ -1496,7 +1496,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   {liveTracking ? 'LIVE GPS' : 'GPS FIX'}{' '}
                   {detectedLocation.lat.toFixed(5)}, {detectedLocation.lng.toFixed(5)}
                   {liveAccuracy && (
-                    <span className="text-slate-500"> · ±{liveAccuracy}</span>
+                    <span className="text-slate-500"> · {liveAccuracy}</span>
                   )}
                   {gpsNearestJunction?.name && (
                     <span className="text-slate-500"> · {gpsNearestJunction.distanceKm?.toFixed(1)} km to {gpsNearestJunction.name}</span>

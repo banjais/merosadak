@@ -136,7 +136,9 @@ export const MyLocationPage: React.FC<{
   onTextScaleChange?: (scale: TextScale) => void;
   accentColor?: string;
   onAccentColorChange?: (color: string) => void;
-}> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald', onAccentColorChange }) => {
+  onShowOnMap?: (coords: { lat: number; lng: number }) => void;
+}> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald',
+  onAccentColorChange, onShowOnMap }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -444,6 +446,29 @@ export const MyLocationPage: React.FC<{
     return nearby.sort((a, b) => a.distanceKm - b.distanceKm);
   }, [locationInfo, airports, pois, landmarks, touristPlaces]);
 
+  // The address line, composed exactly like the Route Planner's "My Location"
+  // card: street-level area, then municipality, then district (or province
+  // when OSM gives no district), never the same part twice. Falls back to
+  // the raw OSM address while the structured fields resolve.
+  const addressLabel = useMemo(() => {
+    if (!locationInfo) return null;
+    const placeParts = [locationInfo.localArea, locationInfo.municipality].filter(
+      (p): p is string => !!p,
+    );
+    const place = [...new Set(placeParts)].join(', ');
+    if (!place) return locationInfo.formattedAddress || locationInfo.address || null;
+    const region = locationInfo.district && !placeParts.includes(locationInfo.district)
+      ? locationInfo.district
+      : (!locationInfo.district && locationInfo.province) || null;
+    return region ? `${place} · ${region}` : place;
+  }, [locationInfo]);
+
+  // Mirror of the planner's "Show on Map" chip: hand the current fix to the
+  // app shell, which closes this page and flies the interactive map to it.
+  const handleShowOnMap = useCallback(() => {
+    if (!locationInfo || !onShowOnMap) return;
+    onShowOnMap({ lat: locationInfo.lat, lng: locationInfo.lng });
+  }, [locationInfo, onShowOnMap]);
   const tabs: { id: TabType; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'weather', label: 'Weather', icon: <CloudSun className="w-3.5 h-3.5" /> },
   ];
@@ -582,39 +607,80 @@ export const MyLocationPage: React.FC<{
                </div>
              )}
 
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                     <h2 className="text-2xl font-black text-white leading-tight">
-                       {locationInfo.localArea || locationInfo.formattedAddress || locationInfo.address || "Detecting address..."}
-                     </h2>
-                   </div>
-                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 mt-1">
-                     {locationInfo.municipality && (
-                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                         {locationInfo.municipality}
-                       </span>
-                     )}
-                     {locationInfo.district && locationInfo.district !== locationInfo.municipality && (
-                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                         {locationInfo.district}
-                       </span>
-                     )}
-                     {locationInfo.province && (
-                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                         {locationInfo.province}
-                       </span>
-                     )}
-                     {(!locationInfo.municipality && locationInfo.nearestJunction.city?.district && (
-                       <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg flex items-center space-x-1">
-                         <Building className="w-3 h-3" />
-                         <span>{locationInfo.nearestJunction.city.district}</span>
-                       </span>
-                     ))}
+                            {/* Location identity card, mirroring the Route Planner's "My
+                  Location" card: same style, same information (address line,
+                  live GPS fix + accuracy, nearest junction, nearest highway),
+                  plus this page's admin-area chips and DMS coordinates. */}
+              <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1 rounded-2xl px-3 py-2.5 border bg-slate-950/60 border-slate-800 shadow-inner">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm shadow-emerald-500/10">
+                      <MapPin className="w-5 h-5" />
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 mt-2">
-                  {formatDMS(locationInfo.lat, locationInfo.lng)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white truncate">My Location</span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {addressLabel || 'Detecting address...'}
+                      </div>
+                      <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
+                        <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${watching ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        {watching ? 'LIVE GPS' : 'GPS FIX'}{' '}
+                        {locationInfo.lat.toFixed(5)}, {locationInfo.lng.toFixed(5)}
+                        {accuracyLabel && <span className="text-slate-500"> · {accuracyLabel}</span>}
+                        {locationInfo.nearestJunction.city?.name && (
+                          <span className="text-slate-500"> · {locationInfo.nearestJunction.distanceKm?.toFixed(1)} km to {locationInfo.nearestJunction.city.name}</span>
+                        )}
+                      </div>
+                      {locationInfo.nearestHighway?.highway?.code && (
+                        <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
+                          {locationInfo.nearestHighway.highway.code} ({locationInfo.nearestHighway.highway.name}) · {locationInfo.nearestHighway.distanceKm?.toFixed(1)} km away
+                        </div>
+                      )}
                     </div>
                   </div>
+                  {onShowOnMap && (
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleShowOnMap}
+                        className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                        title="Show location on map"
+                      >
+                        <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Show on Map</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 mt-3 px-1">
+                  {locationInfo.municipality && (
+                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                      {locationInfo.municipality}
+                    </span>
+                  )}
+                  {locationInfo.district && locationInfo.district !== locationInfo.municipality && (
+                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                      {locationInfo.district}
+                    </span>
+                  )}
+                  {locationInfo.province && (
+                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
+                      {locationInfo.province}
+                    </span>
+                  )}
+                  {!locationInfo.municipality && locationInfo.nearestJunction.city?.district && (
+                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg flex items-center space-x-1">
+                      <Building className="w-3 h-3" />
+                      <span>{locationInfo.nearestJunction.city.district}</span>
+                    </span>
+                  )}
+                  <span className="text-emerald-400">
+                    {formatDMS(locationInfo.lat, locationInfo.lng)}
+                  </span>
+                </div>
+              </div>
 
               {/* Tab Navigation - small buttons */}
             <nav className="flex flex-wrap gap-2" aria-label="Location information tabs">
