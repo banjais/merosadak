@@ -37,7 +37,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Navigation,
+  LocateFixed,
   PhoneCall,
   CheckCircle2,
   AlertTriangle,
@@ -1537,7 +1537,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 title="Show location on map"
                 id="btn-show-location-map"
               >
-                <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+                <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Show on Map</span>
               </button>
             )}
