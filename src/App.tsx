@@ -37,22 +37,28 @@ import { getStoredOfflineBundle } from './utils/offlineSync';
  * Firebase's SPA fallback answers missing /assets/*.js with index.html (HTTP 200,
  * JS content-type). A tab opened BEFORE a deploy therefore fails to import any
  * newly-requested page (e.g. drawer → Highway Info) with an HTML-as-JS parse
- * error. Recover by auto-reloading ONCE to pick up the fresh shell; the
- * sessionStorage guard prevents a reload loop when the network is truly down.
+ * error. Recover by auto-reloading ONCE per failure episode: the guard set on
+ * failure is cleared by the first SUCCESSFUL import, so a stale tab self-heals
+ * while a truly-offline device cannot loop reloads.
  */
 const lazyPage = (factory: () => Promise<{ default: React.ComponentType<any> }>) =>
   lazy(() =>
-    factory().catch((err) => {
-      try {
-        if (!sessionStorage.getItem('mero-sadak-chunk-reload')) {
-          sessionStorage.setItem('mero-sadak-chunk-reload', '1');
-          window.location.reload();
-        } else {
-          sessionStorage.removeItem('mero-sadak-chunk-reload');
-        }
-      } catch {}
-      throw err;
-    }),
+    factory()
+      .then((mod) => {
+        try { sessionStorage.removeItem('mero-sadak-chunk-reload'); } catch {}
+        return mod;
+      })
+      .catch((err) => {
+        try {
+          if (!sessionStorage.getItem('mero-sadak-chunk-reload')) {
+            sessionStorage.setItem('mero-sadak-chunk-reload', '1');
+            window.location.reload();
+          } else {
+            sessionStorage.removeItem('mero-sadak-chunk-reload');
+          }
+        } catch {}
+        throw err;
+      }),
   );
 
 const HighwayDirectoryPage = lazyPage(() => import('./components/HighwayDirectoryPage').then((m) => ({ default: m.HighwayDirectoryPage })));
@@ -208,12 +214,6 @@ function AppContent() {
       localStorage.setItem(ALERT_PREFS_KEY, JSON.stringify({ severity: alertSeverity, highway: alertHighway, sort: alertSort }));
     } catch {}
   }, [alertSeverity, alertHighway, alertSort]);
-
-  // Boot succeeded → a past chunk-failure reload has served its purpose, so rearm
-  // the one-shot auto-reload guard for the NEXT deploy's stale-tab window.
-  useEffect(() => {
-    try { sessionStorage.removeItem('mero-sadak-chunk-reload'); } catch {}
-  }, []);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
