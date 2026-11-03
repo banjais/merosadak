@@ -85,7 +85,6 @@ import type { ReportFuelBasis } from './UnifiedRouteReport';
 import { fetchFuelPrices, getFuelPriceMetadata, getMinutesSinceLastCheck, formatLastChecked, isPriceStale, getEffectiveFuelRate } from '../utils/fuelPriceService';
 import { filterCities, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
 import { CitySuggestionDropdown } from './CityResultRow';
-import { HighwayBrowser } from './HighwayBrowser';
 import {
   isHighwayQuery,
   getHighwayPlaces,
@@ -301,7 +300,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   // Bumped once the corridor catalogue lands so highway-code queries recompute
   // against real data rather than the empty pre-load state.
   const [corridorVersion, setCorridorVersion] = useState(0);
@@ -313,14 +311,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     });
   }, []);
 
-  useEffect(() => {
-    if (!isBrowserOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsBrowserOpen(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isBrowserOpen]);
   const [gpsOriginCityId, setGpsOriginCityId] = useState<string>('');
   const [gpsOriginDistanceKm, setGpsOriginDistanceKm] = useState<number | null>(null);
   const [gpsNearestJunction, setGpsNearestJunction] = useState<{
@@ -634,37 +624,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
    */
   const originHighwayGroups = useMemo(() => buildCorridorGroups(originSearchQuery), [originSearchQuery, corridorVersion]);
   const destHighwayGroups = useMemo(() => buildCorridorGroups(destSearchQuery), [destSearchQuery, corridorVersion]);
-
-  /**
-   * A place picked from the highway browser fills the destination when the
-   * origin is already settled, and the origin otherwise, so browsing a corridor
-   * still ends in a usable pair.
-   */
-  const handleBrowserSelectPlace = (city: CityNode) => {
-    if (originId && originId !== city.id) {
-      setDestId(city.id);
-      setDestSearchQuery(city.name);
-      setSingleSearchQuery(city.name);
-      setUserPickedDestination(true);
-      // No origin yet → fly the map to the destination so the user sees the
-      // actual area they are going to, not a whole-Nepal overview. When both
-      // ends are set, handleRouteCalculated already flies to the route.
-      if (!originId) {
-        onViewOnMap?.({
-          lat: city.lat,
-          lng: city.lng,
-          title: city.name,
-          zoom: 11,
-        });
-      }
-    } else {
-      setOriginId(city.id);
-      setOriginSearchQuery(city.name);
-      setOriginSelected(true);
-    }
-    setIsBrowserOpen(false);
-    if (hasCalculated) setNeedsRecalculation(true);
-  };
 
   const handleSelectOrigin = (city: CityNode) => {
     setOriginId(city.id);
@@ -1413,13 +1372,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
 
   return (
     <div className="space-y-4">
-      {isBrowserOpen && (
-        <HighwayBrowser
-          cities={allCities}
-          onSelectPlace={handleBrowserSelectPlace}
-          onClose={() => setIsBrowserOpen(false)}
-        />
-      )}
       {/* Main Clean Route Planner Box — Reels-style 3D deck of separate cards */}
       <div className="space-y-3">
       {/* 1. MY LOCATION CARD - hidden once a route is calculated */}
@@ -1650,7 +1602,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     <Sparkles className="h-4 w-4 text-cyan-400" />
                   </FieldIconButton>
                   {highwayCount > 0 && (
-                    <FieldIconButton label="Browse by highway" onClick={() => setIsBrowserOpen(true)}>
+                    <FieldIconButton label="Browse by highway" onClick={() => onOpenHighwayDirectory?.()}>
                       <MapPin className="h-4 w-4 text-amber-400" />
                     </FieldIconButton>
                   )}

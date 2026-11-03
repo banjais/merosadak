@@ -86,15 +86,9 @@ import { getNearestRoutingCity } from './utils/cityDataLoader';
 import { getRoutePointAtDistance } from './utils/routeElevationProfile';
 import {
   Menu,
-  Bell,
-  AlertTriangle,
-  CheckCheck,
-  Map as MapIcon,
-  ArrowRight,
   Sparkles,
   Route,
   X,
-  Search,
   MapPin,
   RotateCcw,
   Home,
@@ -136,22 +130,6 @@ function formatIncidentTime(value?: string): string {
   return parsed.toLocaleString();
 }
 
-// Alerts-dropdown preferences (severity chip, highway chip, sort order) persist
-// across sessions in localStorage. The search text stays transient — it clears
-// whenever the dropdown closes.
-const ALERT_PREFS_KEY = 'mero-sadak-alert-prefs';
-const ALERT_SEVERITY_PREFS = ['all', 'severe', 'moderate', 'minor', 'unrated'] as const;
-type AlertSeverityPref = (typeof ALERT_SEVERITY_PREFS)[number];
-type AlertSortPref = 'newest' | 'severity';
-const loadAlertPrefs = (): { severity?: string; highway?: string; sort?: string } => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(ALERT_PREFS_KEY) || '{}');
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-};
-
 function AppContent() {
   const [isAppReady, setIsAppReady] = useState(false);
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
@@ -192,28 +170,6 @@ function AppContent() {
 
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  // Search box + quick-filter chips + sort inside the alerts dropdown. The
-  // search text is transient (cleared on close); chips + sort are session
-  // preferences persisted to localStorage so returning users keep their view.
-  const [alertSearch, setAlertSearch] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState<AlertSeverityPref>(() => {
-    const saved = loadAlertPrefs().severity;
-    return ALERT_SEVERITY_PREFS.includes(saved as AlertSeverityPref) ? (saved as AlertSeverityPref) : 'all';
-  });
-  const [alertHighway, setAlertHighway] = useState<string>(() => {
-    const saved = loadAlertPrefs().highway;
-    return typeof saved === 'string' && saved ? saved : 'all';
-  });
-  const [alertSort, setAlertSort] = useState<AlertSortPref>(() => (loadAlertPrefs().sort === 'severity' ? 'severity' : 'newest'));
-  useEffect(() => {
-    if (!isNotificationsOpen) setAlertSearch('');
-  }, [isNotificationsOpen]);
-  useEffect(() => {
-    try {
-      localStorage.setItem(ALERT_PREFS_KEY, JSON.stringify({ severity: alertSeverity, highway: alertHighway, sort: alertSort }));
-    } catch {}
-  }, [alertSeverity, alertHighway, alertSort]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
@@ -244,72 +200,10 @@ function AppContent() {
   // sample reports that stayed on screen whenever the live feed was unreachable,
   // so a dead network looked like five real DoR-verified incidents.
   const [incidents, setIncidents] = useState<RoadIncident[]>([]);
-  // Alerts-dropdown filter pipeline — the memos must live below the
-  // `incidents` declaration (a dep-array read above it would be a TDZ crash).
-  // Chain: severity chip → highway chip → search text, then optional sort.
-  // The live feed mixes DoR-curated alerts (with severity + highway) and Waze
-  // items (no severity/highway), so unrated items get their own bucket.
-  const alertSeverityCounts = useMemo(() => {
-    const c = { all: incidents.length, severe: 0, moderate: 0, minor: 0, unrated: 0 };
-    incidents.forEach((inc) => {
-      if (inc.severity === 'severe' || inc.severity === 'critical') c.severe += 1;
-      else if (inc.severity === 'moderate' || inc.severity === 'high') c.moderate += 1;
-      else if (inc.severity === 'minor') c.minor += 1;
-      else c.unrated += 1;
-    });
-    return c;
-  }, [incidents]);
-
-  const alertHighwayOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    incidents.forEach((inc) => {
-      if (inc.highwayCode) counts.set(inc.highwayCode, (counts.get(inc.highwayCode) || 0) + 1);
-    });
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([code, count]) => ({ code, count }));
-  }, [incidents]);
-
-  // A highway chip persisted from an earlier session may no longer exist in the
-  // feed (codes get renamed, Waze items come and go) — fall back to All so the
-  // dropdown never opens stuck on a filter that matches nothing.
-  useEffect(() => {
-    if (alertHighway !== 'all' && incidents.length > 0 && !alertHighwayOptions.some((o) => o.code === alertHighway)) {
-      setAlertHighway('all');
-    }
-  }, [incidents, alertHighway, alertHighwayOptions]);
-
-  const filteredIncidents = useMemo(() => {
-    const q = alertSearch.trim().toLowerCase();
-    const list = incidents.filter((inc) => {
-      if (alertSeverity === 'severe' && inc.severity !== 'severe' && inc.severity !== 'critical') return false;
-      if (alertSeverity === 'moderate' && inc.severity !== 'moderate' && inc.severity !== 'high') return false;
-      if (alertSeverity === 'minor' && inc.severity !== 'minor') return false;
-      if (alertSeverity === 'unrated' && inc.severity) return false;
-      if (alertHighway !== 'all' && inc.highwayCode !== alertHighway) return false;
-      if (!q) return true;
-      return [
-        inc.type,
-        inc.highwayCode,
-        inc.highwayName,
-        inc.locationName,
-        inc.title,
-        inc.description,
-        inc.status,
-        inc.source || '',
-      ].some((f) => String(f).toLowerCase().includes(q));
-    });
-    if (alertSort !== 'severity') return list;
-    const rank = (s: RoadIncident['severity']) =>
-      s === 'severe' || s === 'critical' ? 0 : s === 'moderate' || s === 'high' ? 1 : s === 'minor' ? 2 : 3;
-    return [...list].sort((a, b) => rank(a.severity) - rank(b.severity));
-  }, [incidents, alertSearch, alertSeverity, alertHighway, alertSort]);
   const [userReports, setUserReports] = useState<UserRoadReport[]>([]);
   const [weatherNodes, setWeatherNodes] = useState<any[]>([]);
   const [pois, setPois] = useState<HighwayPOI[]>([]);
   const [trafficCorridors, setTrafficCorridors] = useState<TrafficCorridor[]>([]);
-  /** Null until the first attempt resolves; false once a feed is known unreachable. */
-  const [isLiveFeedReachable, setIsLiveFeedReachable] = useState<boolean | null>(null);
 
   // Map focus target. Explicitly chosen places (a city, an incident) set this;
   // it is NOT seeded from the GPS cache any more. Seeding it used to fire the
@@ -415,8 +309,6 @@ function AppContent() {
           setTrafficCorridors(data.corridors);
         }
       });
-
-      setIsLiveFeedReachable(!hasNetworkError);
 
       if (hasNetworkError) {
         console.log('[Mero Sadak] Network unreachable. Checking offline local bundle...');
@@ -728,323 +620,8 @@ function AppContent() {
             </div>
           </div>
 
-          {/* Right Header Controls: Notifications Bell, Fullscreen Maximize, Language Toggle & Emergency SOS */}
+          {/* Right Header Controls: profile only (signed in) */}
           <div className="flex items-center space-x-2 relative">
-            {/* Notification Bell & Dropdown — round style to match FAB / avatar */}
-            <div className="relative">
-              <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className={`w-10 h-10 rounded-full border text-xs font-semibold transition relative touch-target flex items-center justify-center ${
-                  isNotificationsOpen
-                    ? 'bg-accent-bg accent-text accent-border shadow-md shadow-black/10'
-                    : 'bg-slate-800/90 hover:bg-slate-700 accent-text border-slate-700/80'
-                }`}
-                title="Alerts"
-                id="btn-header-notifications"
-                aria-label="Road alerts and notifications"
-                aria-expanded={isNotificationsOpen}
-                aria-controls="header-notifications-dropdown"
-              >
-                <Bell className="w-5 h-5" />
-                {isLiveFeedReachable !== false && incidents.length > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-500 text-white font-black text-[9px] rounded-full flex items-center justify-center ring-2 ring-slate-900 animate-pulse">
-                    {incidents.length}
-                  </span>
-                )}
-                {isLiveFeedReachable === false && (
-                  <span className="absolute -top-1 -right-1 w-[9px] h-[9px] bg-amber-500 rounded-full ring-2 ring-slate-900" />
-                )}
-              </button>
-
-              {/* Severe-alert pulse dot — click-through: jumps into the dropdown
-                  pre-filtered to Severe. A SIBLING of the bell (nested buttons
-                  are invalid HTML) and z-50 so it stays clickable above the
-                  dropdown's backdrop. */}
-              {isLiveFeedReachable !== false && alertSeverityCounts.severe > 0 && (
-                <button
-                  onClick={() => {
-                    setAlertSeverity('severe');
-                    setIsNotificationsOpen(true);
-                  }}
-                  className="absolute -top-0.5 -left-0.5 z-50 flex h-3.5 w-3.5 items-center justify-center"
-                  title="Severe alert — click to view"
-                  aria-label={`Show ${alertSeverityCounts.severe} severe alert${alertSeverityCounts.severe !== 1 ? 's' : ''}`}
-                  id="btn-bell-severe"
-                >
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-slate-900" />
-                </button>
-              )}
-
-              {/* Notifications Popover Dropdown */}
-              {isNotificationsOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsNotificationsOpen(false)}
-                  />
-                  <div
-                    id="header-notifications-dropdown"
-                    className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-950/98 border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-md animate-fadeIn"
-                  >
-                    <div className="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-black text-white uppercase tracking-wider">
-                            Highway Alerts &amp; Notices
-                          </h4>
-                          <p className="text-[10px] text-secondary">
-                            {incidents.length} active road incident{incidents.length !== 1 ? 's' : ''} reported
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1.5">
-                        {alertSeverityCounts.severe > 0 && (
-                          <button
-                            onClick={() => setAlertSeverity('severe')}
-                            className={`text-[9px] font-mono px-2 py-0.5 rounded-full border transition whitespace-nowrap ${
-                              alertSeverity === 'severe'
-                                ? 'bg-rose-500 text-white border-rose-400'
-                                : 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25'
-                            }`}
-                            title="Filter to severe alerts"
-                          >
-                            {alertSeverityCounts.severe} severe
-                          </button>
-                        )}
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full accent-bg accent-text accent-border">
-                          {isLiveFeedReachable === false ? 'OFFLINE' : 'LIVE SYNC'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Search box — tame the full-feed scroll */}
-                    <div className="px-3 pt-2.5 pb-2 border-b border-slate-800 bg-slate-900/60">
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
-                        <input
-                          value={alertSearch}
-                          onChange={(e) => setAlertSearch(e.target.value)}
-                          placeholder="Search alerts — highway, place, type…"
-                          className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-8 pr-8 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/60"
-                          aria-label="Search road alerts"
-                        />
-                        {alertSearch && (
-                          <button
-                            onClick={() => setAlertSearch('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 hover:text-slate-200 transition"
-                            title="Clear search"
-                            aria-label="Clear alert search"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Quick-filter chips + sort — tame the full-feed scroll */}
-                    <div className="px-3 pt-2 pb-2 border-b border-slate-800 bg-slate-900/60 space-y-1.5">
-                      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
-                        {([
-                          ['all', 'All', alertSeverityCounts.all],
-                          ['severe', 'Severe', alertSeverityCounts.severe],
-                          ['moderate', 'Moderate', alertSeverityCounts.moderate],
-                          ['minor', 'Minor', alertSeverityCounts.minor],
-                          ['unrated', 'Unrated', alertSeverityCounts.unrated],
-                        ] as const).map(([val, label, count]) => (
-                          <button
-                            key={val}
-                            onClick={() => setAlertSeverity(val)}
-                            className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
-                              alertSeverity === val
-                                ? val === 'severe'
-                                  ? 'bg-rose-500/20 border-rose-500/60 text-rose-300'
-                                  : val === 'moderate'
-                                  ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
-                                  : val === 'minor'
-                                  ? 'bg-sky-500/20 border-sky-500/60 text-sky-300'
-                                  : 'accent-bg accent-text accent-border'
-                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
-                            }`}
-                          >
-                            {label}
-                            <span className="ml-1 font-mono opacity-80">{count}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {alertHighwayOptions.length > 0 && (
-                        <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
-                          <button
-                            onClick={() => setAlertHighway('all')}
-                            className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
-                              alertHighway === 'all'
-                                ? 'accent-bg accent-text accent-border'
-                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
-                            }`}
-                          >
-                            All highways
-                          </button>
-                          {alertHighwayOptions.map(({ code, count }) => (
-                            <button
-                              key={code}
-                              onClick={() => setAlertHighway(code)}
-                              className={`px-2 py-1 rounded-full text-[9px] font-bold border transition whitespace-nowrap font-mono ${
-                                alertHighway === code
-                                  ? 'accent-bg accent-text accent-border'
-                                  : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
-                              }`}
-                            >
-                              {code}
-                              <span className="ml-1 opacity-80">{count}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <span className="text-[8px] font-mono uppercase tracking-wider text-slate-500 pr-0.5">Sort</span>
-                        {([
-                          ['newest', 'Newest'],
-                          ['severity', 'By severity'],
-                        ] as const).map(([val, label]) => (
-                          <button
-                            key={val}
-                            onClick={() => setAlertSort(val)}
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold border transition whitespace-nowrap ${
-                              alertSort === val
-                                ? 'accent-bg accent-text accent-border'
-                                : 'bg-slate-900/60 border-slate-700/70 text-slate-400 hover:text-slate-200'
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="max-h-80 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                      {isLiveFeedReachable === false ? (
-                        <div className="py-6 text-center text-slate-400 text-xs">
-                          <AlertTriangle className="w-6 h-6 mx-auto mb-1.5 text-amber-400 opacity-80" />
-                          <span>
-                            Road alert feed is unreachable. No current status can be shown — check
-                            connectivity before relying on this screen.
-                          </span>
-                        </div>
-                      ) : incidents.length === 0 ? (
-                        <div className="py-6 text-center text-slate-400 text-xs">
-                          <CheckCheck className="w-6 h-6 mx-auto mb-1.5 text-emerald-400 opacity-80" />
-                          <span>The live feed reported no road incidents.</span>
-                        </div>
-                      ) : filteredIncidents.length === 0 ? (
-                        <div className="py-6 text-center text-slate-400 text-xs">
-                          <Search className="w-6 h-6 mx-auto mb-1.5 text-slate-500 opacity-80" />
-                          <span>No alerts match your filters.</span>
-                        </div>
-                      ) : (
-                        filteredIncidents.map((inc) => (
-                          <div
-                            key={inc.id}
-                            className={`p-2.5 rounded-xl border transition group ${
-                              inc.severity === 'critical' || inc.severity === 'severe'
-                                ? 'bg-slate-900/80 border-rose-900/60 hover:border-rose-500/70'
-                                : inc.severity === 'high' || inc.severity === 'moderate'
-                                ? 'bg-slate-900/80 border-amber-900/60 hover:border-amber-500/70'
-                                : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-1.5">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center space-x-1.5 flex-wrap mb-0.5">
-                                  <span
-                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${
-                                      inc.severity === 'critical' || inc.severity === 'severe'
-                                        ? 'bg-rose-500 text-white'
-                                        : inc.severity === 'high' || inc.severity === 'moderate'
-                                        ? 'bg-amber-500 text-slate-950'
-                                        : 'bg-sky-500 text-slate-950'
-                                    }`}
-                                  >
-                                    {inc.type}
-                                  </span>
-                                  <span className="text-[10px] font-mono font-bold text-amber-300">
-                                    {inc.highwayCode}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-white truncate">
-                                    {inc.locationName}
-                                  </span>
-                                </div>
-                              <p className="text-[11px] text-secondary leading-relaxed">
-                                {inc.description}
-                              </p>
-                              </div>
-
-                <button
-                  onClick={() => {
-                    if (inc.lat && inc.lng) {
-                      setFocusedTarget({
-                        lat: inc.lat,
-                        lng: inc.lng,
-                        title: `${inc.highwayCode} - ${inc.locationName}`,
-                        zoom: 12,
-                      });
-                    }
-                    setIsNotificationsOpen(false);
-                  }}
-                  className="p-2 rounded-lg bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white transition shrink-0 touch-target"
-                  title="View on Map"
-                  aria-label={`View ${inc.highwayCode} incident on map`}
-                >
-                  <MapIcon className="w-4 h-4" />
-                </button>
-                            </div>
-
-                            <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] text-tertiary">
-                              <span>
-                                {inc.source ? `Reported by ${inc.source}` : 'Source not stated'}
-                              </span>
-                              <span className="font-mono text-tertiary">
-                                {formatIncidentTime(inc.reportedAt)}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      {isLiveFeedReachable !== false && incidents.length > 0 && (
-                        <p className="text-center text-[9px] text-slate-500 font-mono pt-1">
-                          {alertSearch.trim() || alertSeverity !== 'all' || alertHighway !== 'all'
-                            ? `Showing ${filteredIncidents.length} of ${incidents.length} alerts`
-                            : `Showing all ${incidents.length} alerts`}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
-                      <button
-                        onClick={() => {
-                          setIsHighwayInfoOpen(true);
-                          setIsNotificationsOpen(false);
-                        }}
-                        className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5"
-                      >
-                        <span>Open Alerts Feed</span>
-                        <ArrowRight className="w-3.5 h-3.5 accent-text" />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-
-
-
-
-
-
-
 
             {/* Header right — profile only (signed in). When not signed in nothing
             is shown here: no sign-in button and no settings button. Settings live
@@ -1233,8 +810,6 @@ function AppContent() {
             focusedTarget={focusedTarget}
           />
         </div>
-
-
 
         {/* Right-Bottom Round +FAB Speed Dial Navigation Menu */}
         <SpeedDialFab
