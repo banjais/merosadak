@@ -107,6 +107,22 @@ function formatIncidentTime(value?: string): string {
   return parsed.toLocaleString();
 }
 
+// Alerts-dropdown preferences (severity chip, highway chip, sort order) persist
+// across sessions in localStorage. The search text stays transient — it clears
+// whenever the dropdown closes.
+const ALERT_PREFS_KEY = 'mero-sadak-alert-prefs';
+const ALERT_SEVERITY_PREFS = ['all', 'severe', 'moderate', 'minor', 'unrated'] as const;
+type AlertSeverityPref = (typeof ALERT_SEVERITY_PREFS)[number];
+type AlertSortPref = 'newest' | 'severity';
+const loadAlertPrefs = (): { severity?: string; highway?: string; sort?: string } => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(ALERT_PREFS_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
 function AppContent() {
   const [isAppReady, setIsAppReady] = useState(false);
   const [activeFeature, setActiveFeature] = useState<ActiveFeatureType>(null);
@@ -148,20 +164,27 @@ function AppContent() {
   // Top header state
   const [language, setLanguage] = useState<'EN' | 'NE'>('EN');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  // Search box + quick-filter chips + sort inside the alerts dropdown. All of
-  // them reset whenever the dropdown closes so every open starts unfiltered.
+  // Search box + quick-filter chips + sort inside the alerts dropdown. The
+  // search text is transient (cleared on close); chips + sort are session
+  // preferences persisted to localStorage so returning users keep their view.
   const [alertSearch, setAlertSearch] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState<'all' | 'severe' | 'moderate' | 'minor' | 'unrated'>('all');
-  const [alertHighway, setAlertHighway] = useState<string>('all');
-  const [alertSort, setAlertSort] = useState<'newest' | 'severity'>('newest');
+  const [alertSeverity, setAlertSeverity] = useState<AlertSeverityPref>(() => {
+    const saved = loadAlertPrefs().severity;
+    return ALERT_SEVERITY_PREFS.includes(saved as AlertSeverityPref) ? (saved as AlertSeverityPref) : 'all';
+  });
+  const [alertHighway, setAlertHighway] = useState<string>(() => {
+    const saved = loadAlertPrefs().highway;
+    return typeof saved === 'string' && saved ? saved : 'all';
+  });
+  const [alertSort, setAlertSort] = useState<AlertSortPref>(() => (loadAlertPrefs().sort === 'severity' ? 'severity' : 'newest'));
   useEffect(() => {
-    if (!isNotificationsOpen) {
-      setAlertSearch('');
-      setAlertSeverity('all');
-      setAlertHighway('all');
-      setAlertSort('newest');
-    }
+    if (!isNotificationsOpen) setAlertSearch('');
   }, [isNotificationsOpen]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(ALERT_PREFS_KEY, JSON.stringify({ severity: alertSeverity, highway: alertHighway, sort: alertSort }));
+    } catch {}
+  }, [alertSeverity, alertHighway, alertSort]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
@@ -217,6 +240,15 @@ function AppContent() {
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([code, count]) => ({ code, count }));
   }, [incidents]);
+
+  // A highway chip persisted from an earlier session may no longer exist in the
+  // feed (codes get renamed, Waze items come and go) — fall back to All so the
+  // dropdown never opens stuck on a filter that matches nothing.
+  useEffect(() => {
+    if (alertHighway !== 'all' && incidents.length > 0 && !alertHighwayOptions.some((o) => o.code === alertHighway)) {
+      setAlertHighway('all');
+    }
+  }, [incidents, alertHighway, alertHighwayOptions]);
 
   const filteredIncidents = useMemo(() => {
     const q = alertSearch.trim().toLowerCase();
@@ -690,6 +722,16 @@ function AppContent() {
                     {incidents.length}
                   </span>
                 )}
+                {isLiveFeedReachable !== false &&
+                  incidents.some((inc) => inc.severity === 'severe' || inc.severity === 'critical') && (
+                    <span
+                      className="absolute -top-0.5 -left-0.5 flex h-3 w-3"
+                      title="Severe alert in the live feed"
+                    >
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-slate-900" />
+                    </span>
+                  )}
                 {isLiveFeedReachable === false && (
                   <span className="absolute -top-1 -right-1 w-[9px] h-[9px] bg-amber-500 rounded-full ring-2 ring-slate-900" />
                 )}
