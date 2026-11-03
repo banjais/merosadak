@@ -847,15 +847,6 @@ function AppContent() {
           <Suspense fallback={<PageLoadingFallback label="Loading My Location…" />}>
             <MyLocationPage
               onBack={() => setIsMyLocationOpen(false)}
-              onShowOnMap={(coords) => {
-                setFocusedTarget({
-                  lat: coords.lat,
-                  lng: coords.lng,
-                  title: 'My Location',
-                  zoom: 14,
-                });
-                setIsMyLocationOpen(false);
-              }}
               textScale={textScale}
               onTextScaleChange={setTextScale}
               accentColor={accentColor}

@@ -511,3 +511,64 @@ export function getDistanceAlongPathToPoint(
 
   return { distanceKm: Math.round(distanceKm * 10) / 10, nearestLat, nearestLng };
 }
+
+/**
+ * Finds the N nearest highways from a coordinate — one best (segment, distance)
+ * per highway, sorted by distance. Mirrors findNearestHighwayFromCoords but
+ * keeps every highway's best result, so the My Location page can list more
+ * roads than just the single closest one.
+ */
+export function findNearestHighwaysFromCoords(
+  lat: number,
+  lng: number,
+  count = 5,
+): Array<{
+  highway: Highway;
+  segment: { from: string; to: string; distanceKm: number } | null;
+  nearestPoint: { lat: number; lng: number } | null;
+  distanceKm: number;
+}> {
+  const bestPerHighway = new Map<string, {
+    highway: Highway;
+    segment: { from: string; to: string; distanceKm: number } | null;
+    nearestPoint: { lat: number; lng: number } | null;
+    distanceKm: number;
+  }>();
+
+  for (const highway of NEPAL_HIGHWAYS) {
+    if (!highway.segments) continue;
+    for (const segment of highway.segments) {
+      if (!segment.coordinates || segment.coordinates.length === 0) continue;
+
+      if (segment.coordinates.length >= 2) {
+        const geoDist = distanceToHighwayGeometry(lat, lng, segment.coordinates);
+        if (!geoDist) continue;
+        const cur = bestPerHighway.get(highway.id);
+        if (!cur || geoDist.distanceKm < cur.distanceKm) {
+          bestPerHighway.set(highway.id, {
+            highway,
+            segment: { from: segment.from, to: segment.to, distanceKm: segment.distanceKm },
+            nearestPoint: { lat: geoDist.nearestLat, lng: geoDist.nearestLng },
+            distanceKm: geoDist.distanceKm,
+          });
+        }
+      } else {
+        const [segLat, segLng] = segment.coordinates[0];
+        const d = getDistanceKm(lat, lng, segLat, segLng);
+        const cur = bestPerHighway.get(highway.id);
+        if (!cur || d < cur.distanceKm) {
+          bestPerHighway.set(highway.id, {
+            highway,
+            segment: { from: segment.from, to: segment.to, distanceKm: segment.distanceKm },
+            nearestPoint: { lat: segLat, lng: segLng },
+            distanceKm: d,
+          });
+        }
+      }
+    }
+  }
+
+  return Array.from(bestPerHighway.values())
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, count);
+}

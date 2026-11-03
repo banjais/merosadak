@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-   ArrowLeft, Route, Building, Mountain, LocateFixed,
+   ArrowLeft, Route, Mountain, LocateFixed,
    AlertTriangle, Camera, MapPin, Plane, Bus, Fuel, Zap, Heart,
    UtensilsCrossed, Compass, Shield, Landmark, Info, CloudSun, CloudRain,
    CloudSnow, Wind, Droplets, Sun, Cloud, Phone, Bell,
 } from 'lucide-react';
-import { findNearestHighwayFromCoords, findNearestHighwayJunction, getDistanceKm } from '../utils/geoUtils';
+import { findNearestHighwayFromCoords, findNearestHighwayJunction, findNearestHighwaysFromCoords, getDistanceKm } from '../utils/geoUtils';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { CityNode } from '../types';
@@ -66,18 +66,6 @@ interface WeatherData {
   timezone: string;
 }
 
-function formatDMS(lat: number, lng: number): string {
-  const convert = (coord: number, isLat: boolean) => {
-    const absolute = Math.abs(coord);
-    const degrees = Math.floor(absolute);
-    const minutesNotTruncated = (absolute - degrees) * 60;
-    const minutes = Math.floor(minutesNotTruncated);
-    const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(1);
-    const direction = isLat ? (coord >= 0 ? 'N' : 'S') : (coord >= 0 ? 'E' : 'W');
-    return `${degrees}°${minutes}'${seconds}"${direction}`;
-  };
-  return `${convert(lat, true)} ${convert(lng, false)}`;
-}
 
 const CATEGORY_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
   airport: { icon: Plane, color: 'text-sky-400', label: 'Airport' },
@@ -128,17 +116,16 @@ function getWeatherIconBg(code: number): string {
   return 'bg-slate-500/20';
 }
 
-type TabType = 'weather' | 'incidents' | 'emergency' | 'airport' | 'bus_station' | 'temple' | 'tourist_place' | 'tourist' | 'landmarks' | 'highway';
+type TabType = 'weather' | 'incidents' | 'emergency' | 'airport' | 'bus_station' | 'temple' | 'tourist_place' | 'landmarks' | 'highway';
 
 export const MyLocationPage: React.FC<{
   onBack: () => void;
   textScale?: TextScale;
   onTextScaleChange?: (scale: TextScale) => void;
   accentColor?: string;
-  onAccentColorChange?: (color: string) => void;
-  onShowOnMap?: (coords: { lat: number; lng: number }) => void;
+  onAccentColorChange?: (color: string) => void;
 }> = ({ onBack, textScale = 'medium', onTextScaleChange, accentColor = 'emerald',
-  onAccentColorChange, onShowOnMap }) => {
+  onAccentColorChange }) => {
   const [locationInfo, setLocationInfo] = useState<MyLocationInfo | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -351,6 +338,13 @@ export const MyLocationPage: React.FC<{
       .filter((item) => item.distanceKm <= 25)
       .sort((a: any, b: any) => a.distanceKm - b.distanceKm);
   }, [locationInfo?.lat, locationInfo?.lng, touristPlaces]);
+  // Top nearest highways - the same engine as the single nearest lookup,
+  // ranked across every national highway so the tab can list more roads.
+  const nearbyHighways = useMemo(() => {
+    if (!locationInfo) return [];
+    return findNearestHighwaysFromCoords(locationInfo.lat, locationInfo.lng, 5);
+  }, [locationInfo?.lat, locationInfo?.lng]);
+
 
   const nearbyLandmarks = useMemo(() => {
     if (!locationInfo) return [];
@@ -463,12 +457,6 @@ export const MyLocationPage: React.FC<{
     return region ? `${place} · ${region}` : place;
   }, [locationInfo]);
 
-  // Mirror of the planner's "Show on Map" chip: hand the current fix to the
-  // app shell, which closes this page and flies the interactive map to it.
-  const handleShowOnMap = useCallback(() => {
-    if (!locationInfo || !onShowOnMap) return;
-    onShowOnMap({ lat: locationInfo.lat, lng: locationInfo.lng });
-  }, [locationInfo, onShowOnMap]);
   const tabs: { id: TabType; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'weather', label: 'Weather', icon: <CloudSun className="w-3.5 h-3.5" /> },
   ];
@@ -485,16 +473,13 @@ export const MyLocationPage: React.FC<{
   if (nearbyTemples.length > 0) {
     tabs.push({ id: 'temple', label: 'Temple', icon: <Landmark className="w-3.5 h-3.5 text-amber-400" />, count: nearbyTemples.length });
   }
-  if (nearbyTouristPlaces.length > 0) {
-    tabs.push({ id: 'tourist_place', label: 'Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" />, count: nearbyTouristPlaces.length });
-  }
-  if (nearestTouristPlace) {
-    tabs.push({ id: 'tourist', label: 'Nearest Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" /> });
+  if (nearbyTouristPlaces.length > 0 || nearestTouristPlace) {
+    tabs.push({ id: 'tourist_place', label: 'Tourist Place', icon: <Camera className="w-3.5 h-3.5 text-fuchsia-400" />, count: nearbyTouristPlaces.length > 0 ? nearbyTouristPlaces.length : undefined });
   }
   if (nearbyLandmarks.length > 0) {
     tabs.push({ id: 'landmarks', label: 'Landmarks', icon: <MapPin className="w-3.5 h-3.5 text-purple-400" />, count: nearbyLandmarks.length });
   }
-  if (locationInfo?.nearestHighway && locationInfo.nearestHighway.highway?.code) {
+  if (nearbyHighways.length > 0) {
     tabs.push({ id: 'highway', label: 'Nearest Highway', icon: <Route className="w-3.5 h-3.5 text-cyan-400" /> });
   }
 
@@ -640,45 +625,6 @@ export const MyLocationPage: React.FC<{
                       )}
                     </div>
                   </div>
-                  {onShowOnMap && (
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                      <button
-                        type="button"
-                        onClick={handleShowOnMap}
-                        className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-                        title="Show location on map"
-                      >
-                        <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Show on Map</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400 mt-3 px-1">
-                  {locationInfo.municipality && (
-                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                      {locationInfo.municipality}
-                    </span>
-                  )}
-                  {locationInfo.district && locationInfo.district !== locationInfo.municipality && (
-                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                      {locationInfo.district}
-                    </span>
-                  )}
-                  {locationInfo.province && (
-                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
-                      {locationInfo.province}
-                    </span>
-                  )}
-                  {!locationInfo.municipality && locationInfo.nearestJunction.city?.district && (
-                    <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded-lg flex items-center space-x-1">
-                      <Building className="w-3 h-3" />
-                      <span>{locationInfo.nearestJunction.city.district}</span>
-                    </span>
-                  )}
-                  <span className="text-emerald-400">
-                    {formatDMS(locationInfo.lat, locationInfo.lng)}
-                  </span>
                 </div>
               </div>
 
@@ -821,7 +767,7 @@ export const MyLocationPage: React.FC<{
                 </div>
               )}
 
-              {activeTab === 'tourist' && nearestTouristPlace && (
+              {activeTab === 'tourist_place' && nearbyTouristPlaces.length === 0 && nearestTouristPlace && (
                 <div className="flex items-center space-x-3 bg-slate-950 p-4 rounded-2xl">
                   <Camera className="w-5 h-5 text-fuchsia-400 flex-shrink-0" />
                   <div className="flex-1">
@@ -969,19 +915,29 @@ export const MyLocationPage: React.FC<{
                 </div>
               )}
 
-              {activeTab === 'highway' && locationInfo.nearestHighway && locationInfo.nearestHighway.highway?.code && (
-                <div className="flex items-center space-x-3 bg-slate-950 p-4 rounded-2xl">
-                  <Route className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-white line-clamp-1">
-                      {locationInfo.nearestHighway.highway.code} - {locationInfo.nearestHighway.highway.name}
-                    </p>
-                    {locationInfo.nearestHighway.segment && (
-                      <p className="text-xs text-slate-400 line-clamp-1">
-                        {locationInfo.nearestHighway.segment.from} → {locationInfo.nearestHighway.segment.to}
-                      </p>
-                    )}
-                  </div>
+                            {activeTab === 'highway' && nearbyHighways.length > 0 && (
+                <div className="space-y-2">
+                  {nearbyHighways.map((h) => (
+                    <div key={h.highway.id} className="flex items-center space-x-3 bg-slate-950 p-4 rounded-2xl">
+                      <Route className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white line-clamp-1">
+                          {h.highway.code} - {h.highway.name}
+                        </p>
+                        {h.segment && (
+                          <p className="text-xs text-slate-400 line-clamp-1">
+                            {h.segment.from} → {h.segment.to}
+                          </p>
+                        )}
+                      </div>
+                      <div className="ml-auto text-right pl-2 border-l border-slate-800 shrink-0">
+                        <p className="text-[10px] text-slate-500 uppercase">Distance</p>
+                        <p className="text-sm font-bold text-cyan-300">
+                          {h.distanceKm.toFixed(1)} km
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
