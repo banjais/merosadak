@@ -9,9 +9,11 @@ import {
   Settings,
   Mail,
   LayoutDashboard,
+  ClipboardList,
   X,
 } from 'lucide-react';
 import { PanelSettings } from './PanelSettings';
+import { ReportingSection } from './ReportingSection';
 
 interface ProfilePageProps {
   isOpen: boolean;
@@ -26,9 +28,11 @@ interface ProfilePageProps {
   onAdminCommand?: () => void;
   onSuperAdminPanel?: () => void;
   onOpenOfficeAdminPanel?: () => void;
+  /** Opens the shared hazard-report modal (General User Reporting CTA). */
+  onOpenReportModal?: () => void;
 }
 
-type SectionId = 'account' | 'settings' | 'admin';
+type SectionId = 'account' | 'reports' | 'settings' | 'admin';
 
 interface Section {
   id: SectionId;
@@ -69,6 +73,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onAdminCommand,
   onSuperAdminPanel,
   onOpenOfficeAdminPanel,
+  onOpenReportModal,
 }) => {
   const [section, setSection] = useState<SectionId>('account');
 
@@ -103,8 +108,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   // SuperAdmin and OfficeAdmin see it; GeneralUser does not.
   const sections: Section[] = [
     { id: 'account', label: 'My Account', icon: LayoutDashboard },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
+  // GeneralUser gets its reporting surface right here — admins have the
+  // Reporting section inside their own dedicated panels.
+  if (userRole === 'GeneralUser') {
+    sections.push({ id: 'reports', label: 'Reporting', icon: ClipboardList });
+  }
+  sections.push({ id: 'settings', label: 'Settings', icon: Settings });
   if (userRole !== 'GeneralUser') {
     sections.push({
       id: 'admin',
@@ -347,6 +357,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </div>
                 </section>
               </>
+            )}
+
+            {section === 'reports' && (
+              <ReportingSection
+                variant="general"
+                onSubmitReport={() => {
+                  onClose();
+                  onOpenReportModal?.();
+                }}
+              />
             )}
 
             {section === 'settings' && (

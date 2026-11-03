@@ -18,11 +18,13 @@ import {
   ChevronRight,
   User,
   Database,
+  FileBarChart,
   FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SUPERADMIN_EMAILS, isBuiltInSuperadmin, UserRole } from '../context/AuthContext';
 import { PanelSettings } from './PanelSettings';
+import { ReportingSection } from './ReportingSection';
 
 interface SuperAdminPanelProps {
   userEmail: string;
@@ -34,7 +36,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
   onClose,
 }) => {
   const { setUserRole, deleteUserRole, userRoles } = useAuth();
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'admin-command' | 'datasources' | 'settings'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'analytics' | 'reports' | 'admin-command' | 'datasources' | 'settings'>('dashboard');
 
   // --- Add-user form state (User Control section) ---
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -91,6 +93,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users' as const, label: 'User Control', icon: Users },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
+    { id: 'reports' as const, label: 'Reporting', icon: FileBarChart },
     { id: 'admin-command' as const, label: 'Data Input', icon: Sparkles },
     { id: 'datasources' as const, label: 'Data Sources', icon: Database },
     { id: 'settings' as const, label: 'System Settings', icon: Settings },
@@ -377,6 +380,10 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                 ))}
               </div>
             </div>
+          )}
+
+          {activeSection === 'reports' && (
+            <ReportingSection variant="superadmin" />
           )}
 
           {activeSection === 'admin-command' && (

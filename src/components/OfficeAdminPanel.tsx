@@ -14,9 +14,11 @@ import {
   ChevronRight,
   User,
   Database,
+  FileBarChart,
   FileText,
 } from 'lucide-react';
 import { PanelSettings } from './PanelSettings';
+import { ReportingSection } from './ReportingSection';
 
 interface OfficeAdminPanelProps {
   userEmail: string;
@@ -27,10 +29,11 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
   userEmail,
   onClose,
 }) => {
-  const [activeSection, setActiveSection] = useState<'admin-command' | 'datasources' | 'settings'>('admin-command');
+  const [activeSection, setActiveSection] = useState<'admin-command' | 'reports' | 'datasources' | 'settings'>('admin-command');
 
   const sections = [
     { id: 'admin-command' as const, label: 'Data Input', icon: Sparkles },
+    { id: 'reports' as const, label: 'Reporting', icon: FileBarChart },
     { id: 'datasources' as const, label: 'Data Sources', icon: Database },
     { id: 'settings' as const, label: 'Settings', icon: Settings },
   ];
@@ -142,6 +145,10 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
                 </button>
               </div>
             </div>
+          )}
+
+          {activeSection === 'reports' && (
+            <ReportingSection variant="officeadmin" />
           )}
 
           {activeSection === 'datasources' && (

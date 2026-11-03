@@ -589,18 +589,27 @@ async function handleAiTripAssistant(request: Request, env: Env): Promise<Respon
 async function handleSubmitReport(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
-    const { type, location, description, latitude, longitude, reporterId } = body;
-    if (!type || !location || !description) {
+    const { location, description, latitude, longitude, reporterId } = body;
+    // The RoadReportModal posts the incident kind as `incidentType` (with
+    // severity/highwayCode/reporterName alongside). Accept the older `type`
+    // spelling too so both client generations pass validation.
+    const reportType: string = body.type || body.incidentType || "";
+    if (!reportType || !location || !description) {
       return jsonResponse(env, { error: "Type, location, and description are required" }, 400);
     }
     const reports = await readJsonData<any[]>(env, "user-reports.json", []);
     const newReport = {
       id: `report-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      type,
+      type: reportType,
       location,
       description,
-      latitude,
-      longitude,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      highwayCode: body.highwayCode ?? null,
+      severity: body.severity ?? "moderate",
+      reporterName: body.reporterName ?? null,
+      contactNumber: body.contactNumber ?? null,
+      hasVoiceAudio: !!body.hasVoiceAudio,
       reporterId: reporterId || "anonymous",
       upvotes: 0,
       createdAt: new Date().toISOString(),
@@ -608,9 +617,25 @@ async function handleSubmitReport(request: Request, env: Env): Promise<Response>
     };
     reports.unshift(newReport);
     if (env.DATA) await env.DATA.put("user-reports.json", JSON.stringify(reports.slice(0, 500)));
-    return jsonResponse(env, { report: newReport });
+    // `success` is what the client checks (result.ok && result.data?.success).
+    return jsonResponse(env, { report: newReport, success: true });
   } catch (e: any) {
     return jsonResponse(env, { error: "Failed to submit report", note: e?.message }, 500);
+  }
+}
+
+async function handleGetReports(_request: Request, env: Env): Promise<Response> {
+  try {
+    const reports = await readJsonData<any[]>(env, "user-reports.json", []);
+    const list = Array.isArray(reports) ? reports : [];
+    return jsonResponse(env, {
+      source: "user-reports",
+      syncedAt: new Date().toISOString(),
+      count: list.length,
+      reports: list,
+    });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Failed to load reports", note: e?.message }, 500);
   }
 }
 
@@ -742,6 +767,9 @@ export default {
     }
     if (url.pathname.match(/^\/api\/upvote-report\/[^/]+$/) && request.method === "POST") {
       return handleUpvoteReport(request, env);
+    }
+    if (url.pathname === "/api/reports" && request.method === "GET") {
+      return handleGetReports(request, env);
     }
     if (url.pathname === "/api/cached-segments" && (request.method === "GET" || request.method === "POST")) {
       return handleCachedSegments(request, env);

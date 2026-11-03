@@ -814,6 +814,7 @@ function AppContent() {
                   onAdminCommand={() => setIsAdminCommandOpen(true)}
                   onSuperAdminPanel={() => setIsSuperAdminPanelOpen(true)}
                   onOpenOfficeAdminPanel={() => setIsOfficeAdminPanelOpen(true)}
+                  onOpenReportModal={() => setIsReportModalOpen(true)}
                 />
               </div>
             )}
