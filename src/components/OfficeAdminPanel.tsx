@@ -82,7 +82,7 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition rounded-lg ${
                   activeSection === section.id
-                    ? 'bg-accent-bg text-slate-950 border-r-2 border-accent-border shadow-sm'
+                    ? 'bg-accent-bg accent-text border-r-2 border-accent-border shadow-sm'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                 }`}
               >

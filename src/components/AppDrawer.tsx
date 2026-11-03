@@ -96,9 +96,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: 'Plan your next trip',
       icon: Compass,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onNavigateTab('route'); onClose(); },
     },
     {
@@ -107,9 +107,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: 'GPS & nearby roads',
       icon: LocateFixed,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenMyLocation(); onClose(); },
     },
     {
@@ -118,9 +118,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: hasActiveRoute ? 'On your route' : 'Highway directory',
       icon: Route,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenHighwayInfo ? onOpenHighwayInfo() : onNavigateTab('highways'); onClose(); },
     },
     {
@@ -129,9 +129,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: 'Exact inter-city highway km',
       icon: Calculator,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenDistanceCalculator(); onClose(); },
     },
     {
@@ -140,9 +140,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: 'Vehicle tariffs & bypass rates',
       icon: Coins,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenTollModal(); onClose(); },
     },
     {
@@ -151,9 +151,9 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: hasActiveRoute ? 'Route-specific alerts' : 'Road hazard reporting',
       icon: AlertTriangle,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => {
         if (!user) { onOpenLogin(); onClose(); return; }
         onOpenReportModal(); onClose();
@@ -165,15 +165,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       subtitle: 'Download for offline use',
       icon: HardDriveDownload,
       color: 'accent-text',
-      activeColor: 'accent-bg text-slate-950',
+      activeColor: 'accent-bg accent-text',
       activeBg: 'accent-bg accent-text accent-border border',
-      activeIcon: 'accent-bg text-slate-950',
+      activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenOfflineManager(); onClose(); },
     },
-    { role: 'OfficeAdmin', id: 'datasources', label: 'Data Sources', subtitle: 'DoR datasets & attribution', icon: Database, color: 'accent-text', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenDataSources?.(); onClose(); } },
-    { role: 'superadmin', id: 'superadmin-panel', label: 'Super Admin Control Panel', subtitle: 'System-wide admin controls', icon: ShieldAlert, color: 'text-rose-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenSuperAdminPanel?.(); onClose(); } },
-    { role: 'superadmin', id: 'admin-command', label: 'AI Admin Command', subtitle: 'Update fuel, tolls, incidents via AI', icon: Sparkles, color: 'text-cyan-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenAdminCommand?.(); onClose(); } },
-    { role: 'OfficeAdmin', id: 'office-admin', label: 'Office Admin Panel', subtitle: 'Office-level administration', icon: Activity, color: 'text-cyan-400', activeColor: 'accent-bg text-slate-950', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg text-slate-950', onClick: () => { onOpenOfficeAdminPanel?.(); onClose(); } },
+    { role: 'OfficeAdmin', id: 'datasources', label: 'Data Sources', subtitle: 'DoR datasets & attribution', icon: Database, color: 'accent-text', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenDataSources?.(); onClose(); } },
+    { role: 'superadmin', id: 'superadmin-panel', label: 'Super Admin Control Panel', subtitle: 'System-wide admin controls', icon: ShieldAlert, color: 'text-rose-400', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenSuperAdminPanel?.(); onClose(); } },
+    { role: 'superadmin', id: 'admin-command', label: 'AI Admin Command', subtitle: 'Update fuel, tolls, incidents via AI', icon: Sparkles, color: 'text-cyan-400', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenAdminCommand?.(); onClose(); } },
+    { role: 'OfficeAdmin', id: 'office-admin', label: 'Office Admin Panel', subtitle: 'Office-level administration', icon: Activity, color: 'text-cyan-400', activeColor: 'accent-bg accent-text', activeBg: 'accent-bg accent-text accent-border border', activeIcon: 'accent-bg accent-text', onClick: () => { onOpenOfficeAdminPanel?.(); onClose(); } },
   ];
 
   return (
