@@ -41,7 +41,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  LocateFixed,
   PhoneCall,
   CheckCircle2,
   AlertTriangle,
@@ -303,6 +302,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   const [locationMode, setLocationMode] = useState<'my_location' | 'custom_from_to'>('my_location');
   const isCustomLocationMode = locationMode === 'custom_from_to';
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
+  // On/off toggle for the detailed My-Location info on the location card.
+  // Default OFF so the first load is clean: the card shows only the title and
+  // the toggle button. Tapping "My Location" (the toggle) reveals the GPS
+  // coordinates, nearest junction/highway, address label, etc. at the same
+  // place where they currently live — inside the location card.
+  const [showMyLocationDetails, setShowMyLocationDetails] = useState<boolean>(false);
   const [originSelected, setOriginSelected] = useState<boolean>(false);
   const [detectedLocation, setDetectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   // Bumped once the corridor catalogue lands so highway-code queries recompute
@@ -1123,33 +1128,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) setNeedsRecalculation(true);
   };
 
-  const handleShowLocationOnMap = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    if (locationMode === 'my_location' && detectedLocation) {
-      onViewOnMap?.({
-        lat: detectedLocation.lat,
-        lng: detectedLocation.lng,
-        title: gpsOriginCity?.name || 'My Location',
-        zoom: 14,
-      });
-    } else if (originCity) {
-      onViewOnMap?.({
-        lat: originCity.lat,
-        lng: originCity.lng,
-        title: originCity.name,
-        zoom: 14,
-      });
-    } else if (detectedLocation) {
-      onViewOnMap?.({
-        lat: detectedLocation.lat,
-        lng: detectedLocation.lng,
-        title: 'My Location',
-        zoom: 14,
-      });
-    } else {
-      handleDetectDeviceLocation(false);
-    }
-  };
+  // NOTE: handleShowLocationOnMap was removed — the "Show on Map" button it
+  // backed is now an on/off "My Location" toggle. The map-centering
+  // behaviour it provided is dropped per the user's request to replace that
+  // button with the toggle.
 
   const handleSwitchToGps = () => {
     setLocationMode('my_location');
@@ -1495,16 +1477,18 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         </div>
                         <div className="text-[11px] text-slate-400 truncate mt-0.5">
                           {locationMode === 'my_location'
-                            ? (detectedLocation
-                                ? (gpsAddressLabel
-                                    ? gpsAddressLabel
-                                    : gpsOriginCity
-                                      ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
-                                      : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
-                                : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
+                            ? (showMyLocationDetails
+                                ? (detectedLocation
+                                    ? (gpsAddressLabel
+                                        ? gpsAddressLabel
+                                        : gpsOriginCity
+                                          ? `${gpsOriginCity.name} · ${gpsOriginCity.district || gpsOriginCity.province || ''}`
+                                          : `${detectedLocation.lat.toFixed(4)}, ${detectedLocation.lng.toFixed(4)}`)
+                                    : (liveLocationError ? 'GPS unavailable' : 'Waiting for a GPS fix — your origin updates automatically'))
+                                : 'Tap My Location to see GPS details')
                             : 'Back to the current location'}
                         </div>
-                        {detectedLocation && locationMode === 'my_location' && (
+                        {showMyLocationDetails && detectedLocation && locationMode === 'my_location' && (
                           <div className="text-[10px] text-emerald-400/80 font-mono truncate mt-0.5">
                             <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1 align-middle ${
                               liveTracking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
@@ -1524,7 +1508,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                             Location blocked — allow GPS access, or pick an origin below
                           </div>
                         )}
-                        {detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
+                        {showMyLocationDetails && detectedLocation && gpsNearestHighway && locationMode === 'my_location' && (
                           <div className="text-[10px] text-cyan-400 font-medium truncate mt-0.5">
                             {gpsNearestHighway.code} ({gpsNearestHighway.name}) · {gpsNearestHighway.distanceKm.toFixed(1)} km away
                           </div>
@@ -1543,17 +1527,31 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       )}
                     </div>
 
-                    {/* Quick Action: Show on Map */}
+                    {/* On/off My Location toggle — replaces the old "Show on Map"
+                        button. Default OFF so the first load is clean (just the
+                        card title + this toggle). When ON, the GPS coordinates,
+                        nearest junction/highway and address label are revealed
+                        at the same place where they currently live — inside this
+                        location card. */}
                     <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                       <button
                         type="button"
-                        onClick={handleShowLocationOnMap}
-                        className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-cyan-500/50 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-                        title="Show location on map"
-                        id="btn-show-location-map"
+                        onClick={() => setShowMyLocationDetails((prev) => !prev)}
+                        aria-pressed={showMyLocationDetails}
+                        className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
+                          showMyLocationDetails
+                            ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/25'
+                            : 'border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-slate-600 text-slate-200 hover:text-white'
+                        }`}
+                        title={showMyLocationDetails ? 'Hide My Location details' : 'Show My Location details'}
+                        id="btn-my-location-details-toggle"
                       >
-                        <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Show on Map</span>
+                        <MapPin className={`w-3.5 h-3.5 ${showMyLocationDetails ? 'text-emerald-400' : 'text-slate-400'}`} />
+                        <span>My Location</span>
+                        {/* On/off indicator dot — emerald when on, slate when off */}
+                        <span className={`inline-block h-1.5 w-1.5 rounded-full ml-0.5 ${
+                          showMyLocationDetails ? 'bg-emerald-400' : 'bg-slate-500'
+                        }`} />
                       </button>
                     </div>
                   </div>
