@@ -155,22 +155,6 @@ function AppContent() {
   useEffect(() => {
     if (!isNotificationsOpen) setAlertSearch('');
   }, [isNotificationsOpen]);
-  const filteredIncidents = useMemo(() => {
-    const q = alertSearch.trim().toLowerCase();
-    if (!q) return incidents;
-    return incidents.filter((inc) =>
-      [
-        inc.type,
-        inc.highwayCode,
-        inc.highwayName,
-        inc.locationName,
-        inc.title,
-        inc.description,
-        inc.status,
-        inc.source || '',
-      ].some((f) => String(f).toLowerCase().includes(q)),
-    );
-  }, [incidents, alertSearch]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Returning from the Google redirect is a fresh page load, so the modal flag
@@ -201,6 +185,24 @@ function AppContent() {
   // sample reports that stayed on screen whenever the live feed was unreachable,
   // so a dead network looked like five real DoR-verified incidents.
   const [incidents, setIncidents] = useState<RoadIncident[]>([]);
+  // Search box filter for the alerts dropdown — the memo must live below the
+  // `incidents` declaration (a dep-array read above it would be a TDZ crash).
+  const filteredIncidents = useMemo(() => {
+    const q = alertSearch.trim().toLowerCase();
+    if (!q) return incidents;
+    return incidents.filter((inc) =>
+      [
+        inc.type,
+        inc.highwayCode,
+        inc.highwayName,
+        inc.locationName,
+        inc.title,
+        inc.description,
+        inc.status,
+        inc.source || '',
+      ].some((f) => String(f).toLowerCase().includes(q)),
+    );
+  }, [incidents, alertSearch]);
   const [userReports, setUserReports] = useState<UserRoadReport[]>([]);
   const [weatherNodes, setWeatherNodes] = useState<any[]>([]);
   const [pois, setPois] = useState<HighwayPOI[]>([]);
