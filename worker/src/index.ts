@@ -425,6 +425,10 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const userId = identity.uid;
     const body = await request.json<any>();
     const { input, routeContext, emotion } = body;
+    const scheduledAt = typeof body.scheduledAt === "string" ? body.scheduledAt : null;
+    if (scheduledAt && (!Number.isFinite(Date.parse(scheduledAt)) || Date.parse(scheduledAt) <= Date.now())) {
+      return jsonResponse(env, { error: "Choose a valid future reminder date and time" }, 400);
+    }
     const sector = ["vehicle", "belongings", "travel", "other"].includes(body.sector) ? body.sector : "travel";
     const sectorGuidance: Record<string, string> = {
       vehicle: "Focus on vehicle care: servicing, insurance, tax, licence, tyres, fuel, parking and vehicle documents.",
@@ -472,7 +476,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
       sector,
       title: s.title || 'Reminder',
       description: s.description || '',
-      suggestedTime: s.suggestedTime || null,
+      suggestedTime: scheduledAt || s.suggestedTime || null,
       suggestedPlace: s.suggestedPlace || null,
       highwayCode: s.highwayCode || null,
       approxKmFromOrigin: s.approxKmFromOrigin || null,
