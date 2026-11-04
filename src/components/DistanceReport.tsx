@@ -117,7 +117,7 @@ export function DistanceReport({
   }
 
   return (
-    <section id="distance-report" className="card card-elevated p-4 sm:p-5 space-y-4" aria-label="Distance report">
+    <section id="distance-report" className="card card-elevated ms-depth-card p-4 sm:p-5 space-y-4" aria-label="Distance report">
       {/* A. Route + headline */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-black font-display text-white">
         <span className="truncate">{originName}</span>
