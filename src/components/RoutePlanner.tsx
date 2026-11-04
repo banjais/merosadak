@@ -1840,6 +1840,15 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </div>
             )}
 
+            {hasCalculated && activeId === 'actions' && (
+              <ReelCard id="actions" title="Trip actions" Icon={Share2} hint="Share your trip or call for help">
+                <div className="flex gap-2">
+                  {onShareTrip && <button type="button" onClick={onShareTrip} className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-xs font-bold text-slate-200"><Share2 className="mr-1 inline h-4 w-4" />Share trip</button>}
+                  {onOpenSos && <button type="button" onClick={onOpenSos} className="flex-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3 text-xs font-bold text-rose-300"><PhoneCall className="mr-1 inline h-4 w-4" />SOS</button>}
+                </div>
+              </ReelCard>
+            )}
+
             {hasCalculated && activeId === 'options' && (
               <ReelCard id="options" title="Trip options" Icon={SlidersHorizontal} hint="Change vehicle or route preference">
                 <div className="space-y-3">
