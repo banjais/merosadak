@@ -29,15 +29,15 @@
 
 /* ===== DESIGN TOKENS ===== */
 :root {
-  --surface-base: #060a10;
-  --surface-shell: #080d15;
-  --surface-raised: #0c141d;
-  --surface-overlay: #101a26;
-  --surface-tile: #0f1927;
-  --surface-elev: #111c29;
-  --surface-badge: #152435;
-  --surface-glass: rgba(10, 17, 26, 0.86);
-  --header-glass-bg: rgba(6, 10, 16, 0.82);
+  --surface-base: #08111c;
+  --surface-shell: #0b1623;
+  --surface-raised: #101d2b;
+  --surface-overlay: #152437;
+  --surface-tile: #142235;
+  --surface-elev: #18283a;
+  --surface-badge: #20354b;
+  --surface-glass: rgba(12, 22, 35, 0.88);
+  --header-glass-bg: rgba(8, 17, 28, 0.84);
   --border-subtle: rgba(148, 163, 184, 0.08);
   --border-default: rgba(148, 163, 184, 0.13);
   --border-strong: rgba(148, 163, 184, 0.2);
@@ -767,22 +767,22 @@
 
 /* ===== LIGHT THEME OVERRIDES ===== */
 html[data-theme='light'] {
-  --surface-base: #eef1f4;
-  --surface-shell: #f3f4f1;
-  --surface-raised: #f9faf7;
-  --surface-overlay: #eceee9;
-  --surface-tile: #eef0ea;
-  --surface-elev: #e6e9e2;
-  --surface-badge: #dde4dc;
-  --surface-glass: rgba(249, 250, 247, 0.9);
-  --header-glass-bg: rgba(243, 244, 241, 0.88);
+  --surface-base: #edf2f7;
+  --surface-shell: #f4f7fa;
+  --surface-raised: #ffffff;
+  --surface-overlay: #e7eef5;
+  --surface-tile: #eaf1f7;
+  --surface-elev: #e3ebf4;
+  --surface-badge: #d9e5f0;
+  --surface-glass: rgba(255, 255, 255, 0.9);
+  --header-glass-bg: rgba(244, 247, 250, 0.9);
   --border-subtle: rgba(15, 23, 42, 0.08);
   --border-default: rgba(15, 23, 42, 0.13);
   --border-strong: rgba(15, 23, 42, 0.2);
 }
 
 html[data-theme='light'] body {
-  background-color: #f1f5f9 !important;
+  background-color: #edf2f7 !important;
   color: #0f172a !important;
 }
 
@@ -1874,4 +1874,30 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
 @media (prefers-reduced-motion: reduce) {
   .ms-depth-card, .ms-depth-card::after { transition: none !important; }
   .ms-depth-card:hover, .ms-depth-card:active { transform: none !important; }
+}
+
+
+/* Light-theme counterparts for the report/reel depth cards. */
+html[data-theme='light'] .ms-depth-card {
+  border-color: rgba(51, 65, 85, 0.16);
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(13, 148, 136, 0.09), transparent 48%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(231, 239, 247, 0.99));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 12px 24px rgba(30, 55, 80, 0.09),
+    0 3px 7px rgba(30, 55, 80, 0.06);
+}
+html[data-theme='light'] .ms-depth-card::before {
+  background: linear-gradient(125deg, rgba(255,255,255,.75), transparent 30%, transparent 70%, rgba(13,148,136,.045));
+}
+html[data-theme='light'] .ms-depth-card--alert {
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(217, 119, 6, 0.10), transparent 48%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 242, 229, 0.99));
+}
+html[data-theme='light'] .ms-depth-stat {
+  border-color: rgba(51, 65, 85, 0.14);
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(232,240,247,.98));
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 8px 18px rgba(30,55,80,.07);
 }
