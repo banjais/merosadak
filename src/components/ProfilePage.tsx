@@ -7,7 +7,6 @@ import {
   LogOut,
   ChevronRight,
   Settings,
-  Mail,
   LayoutDashboard,
   ClipboardList,
   X,
@@ -58,8 +57,7 @@ interface Section {
  *                  office admin panel. Hidden entirely for GeneralUser so
  *                  the panel stays clean for non-admins.
  *
- * Logout lives in the top bar (always visible) and at the bottom of the
- * My Account section, so users can sign out without scrolling.
+ * Sign-out is intentionally available in one place only: the top bar.
  */
 export const ProfilePage: React.FC<ProfilePageProps> = ({
   isOpen,
@@ -174,41 +172,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   return (
     <div className="fixed inset-0 z-[600] flex flex-col bg-slate-950 text-slate-100 animate-fadeIn">
-      {/* Top bar — back/close on left, identity center, sign-out right */}
+      {/* Compact top bar: one close action, one role indicator and one sign-out. */}
       <header className="bg-slate-900/95 border-b border-slate-700/60 px-3 sm:px-5 py-3 flex items-center justify-between gap-3 shrink-0 backdrop-blur-md">
         <div className="flex items-center gap-2.5 min-w-0">
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0"
-            aria-label="Close profile"
+            aria-label="Close account panel"
             title="Close"
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2.5 min-w-0">
-            {/* Round avatar — same round motif as the header / FAB family */}
-            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-slate-600/60 ring-1 ring-slate-700/40 shrink-0">
-              {photoURL ? (
-                <img src={photoURL} alt="Profile" className="w-full h-full object-cover bg-slate-800" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 flex items-center justify-center text-sm font-black text-white">
-                  {initial}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-white truncate font-display tracking-tight">
-                {displayNameClean}
-              </h2>
-              <p className="text-[10px] text-slate-400 font-mono truncate max-w-[220px]">
-                {userEmail || 'Signed in'}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-white tracking-tight">Account & Preferences</h2>
+            <p className="text-[10px] text-slate-500">Manage your profile and access</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`hidden sm:inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-full border ${roleBadgeClasses}`}>
+          <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-full border ${roleBadgeClasses}`}>
             {roleLabel}
           </span>
           <button
@@ -261,30 +243,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             })}
           </div>
 
-          {/* Footer card — identity summary + sign-out (mobile-friendly duplicate) */}
-          <div className="p-3 border-t border-slate-800 space-y-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
-                <Mail className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-white truncate">{roleLabel}</p>
-                <p className="text-[10px] text-slate-500 font-mono truncate">
-                  {userEmail || 'Signed in'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                onClose();
-                onSignOut();
-              }}
-              className="sm:hidden w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-900/20 text-rose-300 border border-rose-500/30 text-xs font-bold"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign Out
-            </button>
-          </div>
+
         </aside>
 
         {/* Main content */}
@@ -343,17 +302,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                         <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                       </button>
                     )}
-                    <button
-                      onClick={() => {
-                        onClose();
-                        onSignOut();
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-3 text-sm text-rose-400 hover:bg-rose-900/20 hover:text-rose-300 transition rounded-xl"
-                    >
-                      <LogOut className="w-4 h-4 shrink-0" />
-                      <span className="font-medium flex-1 text-left">Sign Out</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                    </button>
                   </div>
                 </section>
               </>
