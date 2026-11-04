@@ -889,8 +889,8 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
   return parts.join("\n\n").slice(0, 4000);
 }
 
-/** Multi-turn, human-style support chat. Grounds every answer in the app's
- * live data (hazards, fuel, tolls, weather) and Nepal road-travel knowledge. */
+/** Multi-turn support chat. Grounds factual answers in the app's available
+ * data snapshots (hazards, fuel, tolls, weather) and Nepal road-travel knowledge. */
 async function handleAiChat(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
@@ -973,12 +973,12 @@ Reply as Mero Sadak AI to the traveler's latest message. Use a neutral, respectf
       if (/not supported|quota|403|429|no longer available|404|deprecat/i.test(note)) {
         const digestSummary = digest
           ? digest.replace(/\n{2,}/g, "\n").slice(0, 900)
-          : "(no live datasets available right now)";
+          : "(no app data snapshot available right now)";
         return jsonResponse(env, {
           emotion,
           fallback: true,
           reply:
-            "Namaste! My AI brain is momentarily unreachable from this region, so I cannot chat freely right now. Here is what the app's live data shows:\n\n" +
+            "Namaste! The AI service is temporarily unavailable. Here is the app data snapshot I can access; its source update times may be old or unavailable:\n\n" +
             digestSummary +
             "\n\nMeanwhile the Route Planner, Reports & Hazards, fuel and toll sections are fully available — and please try me again in a little while.",
         });
