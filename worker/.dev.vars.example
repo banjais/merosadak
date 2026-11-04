@@ -1,0 +1,18 @@
+# Local Wrangler development only.
+# Copy this file to .dev.vars in the worker/ directory and add local keys.
+# For production, use: npx wrangler secret put SECRET_NAME
+# Never commit .dev.vars or paste real keys into GitHub.
+
+ALLOWED_ORIGIN=http://localhost:3000
+FIREBASE_PROJECT_ID=sadak-sathi-3ab73
+ADMIN_EMAILS=
+GEMINI_MODEL_PRIMARY=gemini-2.5-flash
+GEMINI_MODEL_SECONDARY=gemini-2.0-flash-lite
+
+# Optional service credentials. Leave blank to use free/fallback sources.
+GEMINI_API_KEY=
+TOMTOM_API_KEY=
+OPENWEATHERMAP_API_KEY=
+WAZE_FEED_URL=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
