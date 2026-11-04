@@ -83,7 +83,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
         id={`reel-card-body-${id}`}
         role="region"
         aria-labelledby={`reel-card-${id}`}
-        className="border-t border-slate-800/70 p-3 sm:p-4"
+        className="planner-reel-card__body border-t border-slate-800/70 p-3 sm:p-4"
       >
         {children}
       </div>
