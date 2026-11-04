@@ -12,17 +12,25 @@ export const WORKER_BASE_URL = (() => {
 
 export function getApiUrl(endpoint: string): string {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  // The local Express/Vite server owns the existing development API routes.
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    // Vite does not proxy /api by default. Use the local Wrangler Worker
-    // (port 8787) unless VITE_WORKER_URL explicitly points elsewhere.
-    const localWorker = (import.meta as any)?.env?.VITE_WORKER_URL || 'http://127.0.0.1:8787';
-    return `${String(localWorker).replace(/\/+$/, '')}${cleanEndpoint}`;
+    return cleanEndpoint;
   }
   return `${WORKER_BASE_URL.replace(/\/+$/, '')}${cleanEndpoint}`;
 }
 
-export async function fetchJson<T = unknown>(endpoint: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(getApiUrl(endpoint), init);
+function getWorkerApiUrl(endpoint: string): string {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const isLocalhost = typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const base = isLocalhost
+    ? ((import.meta as any)?.env?.VITE_WORKER_URL || 'http://127.0.0.1:8787')
+    : WORKER_BASE_URL;
+  return `${String(base).replace(/\/+$/, '')}${cleanEndpoint}`;
+}
+
+async function fetchJsonFromUrl<T = unknown>(url: string, endpoint: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     throw new Error(`Expected JSON response from ${endpoint} (HTTP ${response.status}, ${contentType || 'unknown content type'})`);
@@ -37,6 +45,9 @@ export async function fetchJson<T = unknown>(endpoint: string, init?: RequestIni
   return data;
 }
 
+export async function fetchJson<T = unknown>(endpoint: string, init?: RequestInit): Promise<T> {
+  return fetchJsonFromUrl<T>(getApiUrl(endpoint), endpoint, init);
+}
 
 /** Call a Worker endpoint with the current Firebase user's signed ID token. */
 export async function fetchJsonWithFirebaseAuth<T = unknown>(
@@ -50,5 +61,5 @@ export async function fetchJsonWithFirebaseAuth<T = unknown>(
   const token = await currentUser.getIdToken();
   const headers = new Headers(init?.headers);
   headers.set('Authorization', `Bearer ${token}`);
-  return fetchJson<T>(endpoint, { ...init, headers });
+  return fetchJsonFromUrl<T>(getWorkerApiUrl(endpoint), endpoint, { ...init, headers });
 }
