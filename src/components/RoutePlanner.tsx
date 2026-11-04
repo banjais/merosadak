@@ -483,7 +483,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1) {
       items.push({ id: 'routes', label: 'Alternative routes', hint: 'Compare options' });
     }
-    items.push({ id: 'report', label: 'Trip report', hint: 'Print / share' });
+    items.push(
+      { id: 'report-overview', label: 'Report overview', hint: 'Distance · time · safety' },
+      { id: 'report-route', label: 'Route breakdown', hint: 'Highways · segments' },
+      { id: 'report-conditions', label: 'Road & evidence', hint: 'Conditions · methodology' },
+    );
     return items;
   }, [hasCalculated, routePlan]);
   // Safety net: if the active id is no longer in the deck (e.g. the deck flipped
@@ -2016,9 +2020,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               </ReelCard>
             )}
 
-            {hasCalculated && routePlan && activeId === 'report' && (
-              <ReelCard id="report" title="Trip report" Icon={FileText} hint="Printable and shareable summary">
+            {hasCalculated && routePlan && activeId === 'report-overview' && (
+              <ReelCard id="report-overview" title="Report overview" Icon={FileText} hint="Distance · time · safety">
                 <UnifiedRouteReport
+                  reportSection="overview"
                   route={routePlan}
                   distanceKm={routePlan.totalDistanceKm}
                   distanceSource="dor_gis_route"
@@ -2029,10 +2034,55 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   preferenceLabel={preference.replace('_', ' ')}
                   onPrint={() => window.print()}
                   onShare={() => onShareTrip?.()}
-                  userIdentity={{
-                    name: user?.displayName || undefined,
-                    email: user?.email || undefined,
-                  }}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  fuelBasis={buildFuelBasis()}
+                  embedded
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
+              </ReelCard>
+            )}
+
+            {hasCalculated && routePlan && activeId === 'report-route' && (
+              <ReelCard id="report-route" title="Route breakdown" Icon={Route} hint="Route steps · highway sections">
+                <UnifiedRouteReport
+                  reportSection="route"
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => onShareTrip?.()}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  fuelBasis={buildFuelBasis()}
+                  embedded
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
+              </ReelCard>
+            )}
+
+            {hasCalculated && routePlan && activeId === 'report-conditions' && (
+              <ReelCard id="report-conditions" title="Road & evidence" Icon={ShieldCheck} hint="Road conditions · methodology">
+                <UnifiedRouteReport
+                  reportSection="conditions"
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => onShareTrip?.()}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
                   fuelBasis={buildFuelBasis()}
                   embedded
                   showElevationProfile
