@@ -1203,6 +1203,25 @@ if (typeof window !== 'undefined') {
   });
 }
 
+/**
+ * Guarantees the curated edges carry REAL on-highway geometry before a route
+ * is drawn. The module-load kick-off (`preloadRoadGraph().then(...)`) races
+ * the user: anyone who calculates a route before the road-graph JSON lands
+ * gets the hand-estimated 3-point edge lines, and the map then draws the path
+ * ACROSS the country instead of along the actual highway. Await this before
+ * running findOptimizedRoute / findRouteByPreference.
+ */
+export async function ensureRealRoadGeometry(): Promise<void> {
+  if (realRoadDataApplied) return;
+  try {
+    const g = await preloadRoadGraph();
+    if (g) applyRealRoadDataToEdges();
+  } catch {
+    // Graph unavailable (offline, corrupt cache) — curated coarse geometry
+    // still produces a valid plan, just with simplified lines.
+  }
+}
+
 // Helper to calculate cost and fuel - uses shared vehicleConfigs.ts
 
 // Distance matrix calculator between any two cities

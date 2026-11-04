@@ -1277,6 +1277,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           opacity: 0.20,
           lineJoin: 'round',
           lineCap: 'round',
+          smoothFactor: 0.1,
         });
 
         // Dashed alternative polyline
@@ -1287,6 +1288,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           dashArray: '8, 10',
           lineCap: 'round',
           lineJoin: 'round',
+          smoothFactor: 0.1,
         });
 
         // Hover & Click interaction
@@ -1374,6 +1376,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         opacity: 0.22,
         lineJoin: 'round',
         lineCap: 'round',
+        // Keep the surveyed alignment: Leaflet's default smoothFactor (1.0)
+        // simplifies the projected path per zoom and at route-fit zooms that
+        // collapsed ~440 surveyed points to ~30 segments — the line then
+        // visibly cut ACROSS the country instead of following the highway.
+        smoothFactor: 0.1,
       });
 
       const routePolyline = L.polyline(activeRoute.pathCoordinates, {
@@ -1382,10 +1389,33 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         opacity: 0.95,
         lineJoin: 'round',
         lineCap: 'round',
+        smoothFactor: 0.1,
       });
 
       routeGroup.addLayer(routeGlow);
       routeGroup.addLayer(routePolyline);
+
+      // Directional flow — short bright dashes drifting SLOWLY along the path
+      // (origin → destination) so the eye can follow which way the route runs.
+      // Purely decorative: not interactive, skipped for reduced-motion users.
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const flowLine = L.polyline(activeRoute.pathCoordinates, {
+        color: '#ffffff',
+        weight: 2,
+        opacity: 0.85,
+        dashArray: '6 20',
+        lineCap: 'round',
+        lineJoin: 'round',
+        interactive: false,
+        smoothFactor: 0.1,
+      });
+      routeGroup.addLayer(flowLine);
+      const flowPath = (flowLine as unknown as { _path?: SVGPathElement })._path;
+      if (flowPath && !prefersReducedMotion) flowPath.classList.add('route-flow-line');
     }
 
     // 3. Render Active Route Blackspot Danger Badges along the corridor
@@ -1429,25 +1459,31 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
     }
 
-    // Start/End markers — identical to the Distance Calculator's RouteMapView:
-    // 26px A/B round badges with a white ring; place names appear ONLY on
-    // hover (no permanent From/To labels on the map).
-    const endpointBadge = (letter: string, color: string, letterColor: string) =>
-      L.divIcon({
-        className: 'route-endpoint-marker',
-        html: `<div style="width:26px;height:26px;border-radius:9999px;background:${color};border:2.5px solid #ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;color:${letterColor};font:900 13px/1 system-ui,sans-serif;">${letter}</div>`,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
-      });
+    // Start/End markers — professional navigation set: a small origin dot
+    // (you start here) and a classic map pin at the destination. No cartoon
+    // letter badges; place names appear on hover only.
+    const originDot = L.divIcon({
+      className: 'route-endpoint-marker',
+      html: `<div style="width:14px;height:14px;border-radius:9999px;background:#10b981;border:3px solid #ffffff;box-shadow:0 1px 8px rgba(0,0,0,0.55);"></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+
+    const destPin = L.divIcon({
+      className: 'route-endpoint-marker',
+      html: `<svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg"><path d="M15 0C6.7 0 0 6.7 0 15c0 11.2 15 27 15 27s15-15.8 15-27C30 6.7 23.3 0 15 0z" fill="#f43f5e" stroke="#ffffff" stroke-width="2"/><circle cx="15" cy="15" r="5.5" fill="#ffffff"/></svg>`,
+      iconSize: [30, 42],
+      iconAnchor: [15, 42],
+    });
 
     const startCoord = activeRoute.pathCoordinates[0];
-    const startMarker = L.marker(startCoord, { icon: endpointBadge('A', '#10b981', '#022c22') }).bindTooltip(
+    const startMarker = L.marker(startCoord, { icon: originDot }).bindTooltip(
       activeRoute.origin.name,
       { direction: 'top', className: 'custom-dark-tooltip' }
     );
 
     const endCoord = activeRoute.pathCoordinates[activeRoute.pathCoordinates.length - 1];
-    const endMarker = L.marker(endCoord, { icon: endpointBadge('B', '#f43f5e', '#ffffff') }).bindTooltip(
+    const endMarker = L.marker(endCoord, { icon: destPin }).bindTooltip(
       activeRoute.destination.name,
       { direction: 'top', className: 'custom-dark-tooltip' }
     );

@@ -13,7 +13,7 @@ import {
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
-import { findOptimizedRoute, pickVerifiedRoute } from '../utils/routeOptimizer';
+import { findOptimizedRoute, pickVerifiedRoute, ensureRealRoadGeometry } from '../utils/routeOptimizer';
 import { RouteComparisonView } from './RouteComparisonView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
@@ -700,7 +700,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
 
     setIsCalculating(true);
-    setTimeout(() => {
+    setTimeout(async () => {
+      // Real DoR highway geometry loads asynchronously. Awaiting it here means
+      // the drawn route follows the actual surveyed highway alignment instead
+      // of the hand-estimated 3-point edge lines (the "route floats off the
+      // highway" bug).
+      await ensureRealRoadGeometry();
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined, liveIncidents);
       // Respect the chosen preference, but never present a straight-line
       // approximation as a road distance.

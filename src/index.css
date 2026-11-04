@@ -620,10 +620,31 @@
 .custom-city-marker,
 .route-badge-marker,
 .route-end-marker,
+.route-endpoint-marker,
 .leaflet-div-icon {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Slow directional flow along the active route line (origin → destination).
+   The flow overlay is a dashed polyline whose dash pattern (6 + 20 = 26px)
+   drifts forward via stroke-dashoffset, so the dashes travel WITH the path
+   direction — from the origin dot toward the destination pin. */
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+.route-flow-line {
+  animation: route-flow 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-flow-line {
+    animation: none;
+  }
 }
 
 .leaflet-tooltip,
