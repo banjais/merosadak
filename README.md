@@ -29,6 +29,29 @@ Worker backend for anything that needs a paid/rate-limited key.
 - Live weather strip on the destination via Open-Meteo (free, no key).
 - Routing/distance via OSRM (free, no key) — unchanged from before.
 
+## Local development
+
+Run the app server and the Worker in separate terminals:
+
+```bash
+# Terminal 1 — frontend + existing Express development API
+npm ci
+npm run dev
+```
+
+```bash
+# Terminal 2 — local Cloudflare Worker API (Wrangler listens on port 8787)
+cd worker
+npm ci --legacy-peer-deps
+npx wrangler dev --var ALLOWED_ORIGIN:http://localhost:3000
+```
+
+The browser uses the Express server for the existing local `/api/*` routes.
+Firebase-authenticated personal endpoints (reminders and private trip data)
+are sent to the local Worker at `http://127.0.0.1:8787`. Set
+`VITE_WORKER_URL` if your local Worker uses another address. Put local-only
+Worker secrets in `worker/.dev.vars`; never commit that file.
+
 ## Free APIs in use (no key required)
 Called directly from the browser:
 - Photon (search-as-you-type place autocomplete)
