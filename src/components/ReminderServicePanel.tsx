@@ -79,6 +79,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
     { id: 'luggage', label: 'Luggage', checked: false },
   ]);
   const [newBelonging, setNewBelonging] = useState('');
+  const [parkingNote, setParkingNote] = useState('');
   const [tripDataSaving, setTripDataSaving] = useState(false);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<any>(null);
@@ -111,6 +112,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
       .then((data) => {
         if (cancelled) return;
         setParkedVehicle(data.parkedVehicle || null);
+        setParkingNote(data.parkedVehicle?.note || '');
         if (data.updatedAt) setBelongings(Array.isArray(data.belongings) ? data.belongings : []);
       })
       .catch((e: any) => {
@@ -157,6 +159,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         savedAt: new Date().toISOString(),
+        ...(parkingNote.trim() ? { note: parkingNote.trim().slice(0, 160) } : {}),
       };
       if (await persistTripData(next, belongings)) {
         setParkedVehicle(next);
@@ -507,6 +510,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
               <p className="text-[10px] text-emerald-300 font-semibold">Location saved</p>
               <p className="text-[10px] text-slate-400">{new Date(parkedVehicle.savedAt).toLocaleString()}</p>
               <p className="text-[10px] text-slate-500 font-mono">{parkedVehicle.lat.toFixed(5)}, {parkedVehicle.lng.toFixed(5)}</p>
+              {parkedVehicle.note && <p className="text-[10px] text-slate-300">Note: {parkedVehicle.note}</p>}
               <div className="flex items-center gap-3 pt-1">
                 <a
                   href={`https://www.google.com/maps?q=${parkedVehicle.lat},${parkedVehicle.lng}`}
@@ -524,6 +528,14 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
           ) : (
             <p className="text-[10px] text-slate-400">No parking location saved yet.</p>
           )}
+          <input
+            value={parkingNote}
+            onChange={(event) => setParkingNote(event.target.value)}
+            maxLength={160}
+            placeholder="Optional note (e.g. Level B2, bay 18)"
+            aria-label="Optional parking note"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-[10px] text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+          />
           <button
             type="button"
             onClick={saveParkingLocation}
