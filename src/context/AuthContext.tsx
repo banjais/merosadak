@@ -336,8 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (data.role) roles[d.id] = data.role;
         });
         setUserRoles(roles);
-        // Role re-resolution happens in the unified effect above, which now
-        // also sees the fresh `userRoles` map (it depends on userRoles).
+        // The current user's role is derived directly from this updated map.
       },
       // Security rules commonly deny reads on `userRoles` for anonymous
       // visitors. Treat a denied snapshot the same as "no roles" instead of
