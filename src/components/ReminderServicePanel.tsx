@@ -315,8 +315,22 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   };
 
   const handleDelete = async (id: string) => {
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-    setTriggeredReminders((prev) => prev.filter((r) => r.id !== id));
+    setSaving(true);
+    setError(null);
+    try {
+      await fetchJsonWithFirebaseAuth('/api/reminders/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reminderId: id }),
+      });
+      setReminders((prev) => prev.filter((r) => r.id !== id));
+      setTriggeredReminders((prev) => prev.filter((r) => r.id !== id));
+      announcedRef.current.delete(id);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to delete reminder.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const clearTriggered = (id: string) => {
