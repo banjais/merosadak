@@ -23,7 +23,8 @@
     "worker:deploy": "node deploy-worker.cjs",
     "worker:tail": "cd worker && npx wrangler tail --config wrangler.toml",
     "deploy": "node deploy-worker.cjs",
-    "prebuild": "node scripts/build-road-graph.cjs"
+    "prebuild": "node scripts/build-road-graph.cjs",
+    "test:unit": "tsx --test src/utils/citySearch.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",
