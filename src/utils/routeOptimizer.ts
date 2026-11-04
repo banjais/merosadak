@@ -2248,8 +2248,10 @@ export function findOptimizedRoute(
       const nameKey = cityNode.name.toLowerCase();
       if (nameKey in roadGraphForResolve.citySnapByName) return nameKey;
     }
-    // 4. Fall back: snap to nearest curated junction for pathfinding
-    return cityNode ? snapToNearestRoutingCity(cityNode).id : cityId;
+    // 4. Do not snap an off-network settlement to an unrelated nearby junction.
+    // Keep its own ID so the unified engine can use a published pair reference
+    // or return a clearly labelled aerial estimate instead of a fake road route.
+    return cityId;
   };
   const routingOriginId = resolveRoutingId(originId, originNode);
   const routingDestId = resolveRoutingId(destinationId, destinationNode);
@@ -2268,18 +2270,10 @@ export function findOptimizedRoute(
     let origin = CITIES_AND_JUNCTIONS.find((c) => c.id === routingOriginId);
     let destination = CITIES_AND_JUNCTIONS.find((c) => c.id === routingDestId);
     if (!origin && originNode && originNode.lat && originNode.lng) {
-      const rg = roadGraphForResolve;
-      const nameKey = originNode.name?.toLowerCase();
-      const hasRoadMatch = (rg?.citySnap && originId in rg.citySnap) ||
-        (rg?.citySnapByName && nameKey && nameKey in rg.citySnapByName);
-      origin = hasRoadMatch ? originNode : snapToNearestRoutingCity(originNode);
+      origin = originNode;
     }
     if (!destination && destinationNode && destinationNode.lat && destinationNode.lng) {
-      const rg = roadGraphForResolve;
-      const nameKey = destinationNode.name?.toLowerCase();
-      const hasRoadMatch = (rg?.citySnap && destinationId in rg.citySnap) ||
-        (rg?.citySnapByName && nameKey && nameKey in rg.citySnapByName);
-      destination = hasRoadMatch ? destinationNode : snapToNearestRoutingCity(destinationNode);
+      destination = destinationNode;
     }
     if (origin && destination) {
       // Use unified distance chain: road graph → SNH published → aerial
