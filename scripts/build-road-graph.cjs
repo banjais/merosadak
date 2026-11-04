@@ -24,11 +24,11 @@ const OUT_FILE = path.join(__dirname, '..', 'public', 'data', 'road-graph.json')
 
 // ---- tunables ----
 const SIMPLIFY_TOLERANCE_KM = 0.05; // ~50m — Douglas-Peucker tolerance for rendering
-const SNAP_GRID_KM = 0.06;          // ~60m — grid cell used to merge nearby vertices into shared graph nodes
+const SNAP_GRID_KM = 0.015;         // ~15m — only merge genuinely coincident survey vertices
 const CITY_SNAP_MAX_KM = 0.05;      // only treat a point as on-network within 50m
-const CITY_INJECT_MAX_KM = 25;      // farther points need an explicit inferred access connector or remain unsnapped
-const ENDPOINT_JOIN_MAX_KM = 0.25;   // merge nearby polyline endpoints (~250m) across gaps
-const COMPONENT_JOIN_MAX_KM = 2.0;   // bridge small components to nearest other component
+const CITY_INJECT_MAX_KM = 0;       // never invent a straight-line city-to-highway access road
+const ENDPOINT_JOIN_MAX_KM = 0;     // do not bridge surveyed geometry gaps by proximity alone
+const COMPONENT_JOIN_MAX_KM = 0;    // disconnected components remain disconnected unless survey topology connects them
 const JOIN_HWY_IDX = -1;             // synthetic join edges (not a real NH code)
 
 function haversineKm(a, b) {
