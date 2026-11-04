@@ -50,6 +50,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 34 });
       return;
     }
+    setDirection(index > activeIndex ? 1 : -1);
     x.set(0);
     onChange(items[index].id);
     try {
@@ -73,9 +74,9 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   const onDragEnd = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const { offset, velocity } = info;
     if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) {
-      void animate(x, -260, { duration: 0.17, ease: 'easeOut' }).then(() => goTo(activeIndex + 1));
+      goTo(activeIndex + 1);
     } else if (offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY) {
-      void animate(x, 260, { duration: 0.17, ease: 'easeOut' }).then(() => goTo(activeIndex - 1));
+      goTo(activeIndex - 1);
     } else {
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 32, mass: 0.6 });
     }
