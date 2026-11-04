@@ -132,13 +132,12 @@ function createNepalTileLayer(
         // onload assignment has a chance to run, leaving opacity stuck at 0
         // (the symptom was: 45 "loaded" tiles reported by Leaflet but all
         // visually blank because img.onload never ran to flip opacity to 1).
-        let errorCount = 0;
         img.onload = () => { img.style.opacity = '1'; };
         img.onerror = () => {
-          errorCount += 1;
-          if (errorCount >= 3) {
-            this.options.onTileError?.();
-          }
+          // Report on the FIRST failure. An <img> fires onerror exactly once
+          // per src, so the old "count to 3" guard could never be reached and
+          // the ArcGIS→OSM fallback never engaged (map stayed blank forever).
+          this.options.onTileError?.();
           img.style.opacity = '0';
         };
         img.src = tileUrl;
@@ -227,7 +226,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [followMe, setFollowMe] = useState(true);
 
   const showBlackspots = false;
-  const routeColorMode = 'safety' as const;
   const toolbarToggleRef = useRef<HTMLButtonElement>(null);
   const toolbarContainerRef = useRef<HTMLDivElement>(null);
   const mapStyleToggleRef = useRef<HTMLButtonElement>(null);
@@ -696,6 +694,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       tileLayerRef.current = null;
     }
 
+    // Each effect run installs a fresh tile layer, so failure counting
+    // restarts with it. Without this reset a provider switch inherited the
+    // previous provider's failure count and could cascade straight to 'none'.
+    arcGisFailRef.current = 0;
+    osmFailRef.current = 0;
+
     // 'none' = transparent map, no base tiles. Keep overlay layers (routes,
     // incidents, cities) on a transparent background.
     if (tileProvider === 'none') {
@@ -725,9 +729,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       url = `${baseArcGis}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
       maxZoom = 16;
     } else {
-      // '3d' default — shaded relief / topographic for a 3D terrain appearance
-      url = `${baseArcGis}/Canvas/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}`;
-      maxZoom = 19;
+      // '3d' default — Esri RETIRED Canvas/World_Terrain_Base (every tile
+      // 404s, which left the map permanently blank). World_Dark_Gray_Base is
+      // the same dark canvas family the Distance Calculator uses and is live.
+      url = `${baseArcGis}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+      maxZoom = 16;
     }
 
     const onTileError = () => {
@@ -1309,7 +1315,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             html: `
               <div style="background: rgba(15, 23, 42, 0.92); border: 1px solid ${color}; color: #f8fafc; padding: 1px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; gap: 3px;">
                 <span>${altOpt.routeBadge || 'Alt'}</span>
-                <span style="color: ${color};">${altOpt.totalDistanceKm} km</span>
+                <span style="color: ${color};">${Math.round(altOpt.totalDistanceKm)} km</span>
               </div>
             `,
             iconSize: [72, 18],
@@ -1327,7 +1333,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
     }
 
-    // 2. Render Main Active Route (Multi-Segment Safety Color-Coded or Single Preference)
+    // 2. Render Main Active Route — Distance-Calculator style (RouteMapView):
+    //    ONE soft glow + ONE solid core drawn straight from the surveyed
+    //    pathCoordinates. The previous multi-segment "safety color-coding"
+    //    branch silently drew NOTHING because engine steps carry no segment
+    //    geometry (no coordinates / from-to lat-lng), so every step was
+    //    skipped — the exact "map shows no line, only From/To labels" bug.
     activeRoute.pathCoordinates.forEach((c) => bounds.extend(c));
 
     // A route with <=2 path points is a straight-line aerial fallback (no surveyed
@@ -1352,85 +1363,29 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       );
       routeGroup.addLayer(approxLine);
     } else {
-      const isSafetyMode = routeColorMode === 'safety';
-      const hasStepsSafety = activeRoute.steps && activeRoute.steps.length > 0;
+      // Clean glow + core, same visual family as the Distance Calculator's
+      // RouteMapView (glow ≈ w8 @ 0.22 halo, core ≈ w4 @ 0.95). The planner's
+      // mode color (drive/bike/etc.) is kept for the core stroke.
+      const activeColor = activeRoute.routeColor || '#34d399';
 
-      if (isSafetyMode && hasStepsSafety) {
-        // Multi-segment Highway Safety Index Color-Coding — clean glow + core, no overlay noise.
-        activeRoute.steps.forEach((step, idx) => {
-          const stepCoords: [number, number][] = step.coordinates && step.coordinates.length > 1
-            ? step.coordinates
-            : (step.from && step.to && typeof step.from.lat === 'number' && typeof step.to.lat === 'number')
-            ? [
-                [step.from.lat, step.from.lng] as [number, number],
-                [step.to.lat, step.to.lng] as [number, number],
-              ]
-            : [];
+      const routeGlow = L.polyline(activeRoute.pathCoordinates, {
+        color: activeColor,
+        weight: 8,
+        opacity: 0.22,
+        lineJoin: 'round',
+        lineCap: 'round',
+      });
 
-          if (stepCoords.length < 2) return;
+      const routePolyline = L.polyline(activeRoute.pathCoordinates, {
+        color: activeColor,
+        weight: 4,
+        opacity: 0.95,
+        lineJoin: 'round',
+        lineCap: 'round',
+      });
 
-          const safetyData = step.safetyData;
-          const segmentColor = safetyData?.color || (step.roadConditionScore >= 80 ? '#10b981' : step.roadConditionScore >= 60 ? '#f59e0b' : '#ef4444');
-          const safetyScore = safetyData?.safetyScore ?? step.roadConditionScore;
-          const safetyTier = safetyData?.safetyTier ?? (safetyScore >= 80 ? 'high_safety' : safetyScore >= 60 ? 'moderate_caution' : 'elevated_risk');
-
-          // Soft halo (subtle, professional)
-          const segGlow = L.polyline(stepCoords, {
-            color: segmentColor,
-            weight: 10,
-            opacity: 0.22,
-            lineJoin: 'round',
-            lineCap: 'round',
-          });
-
-          // Core polyline
-          const segLine = L.polyline(stepCoords, {
-            color: segmentColor,
-            weight: 5,
-            opacity: 0.95,
-            lineJoin: 'round',
-            lineCap: 'round',
-          });
-
-          // Interactive Segment Tooltip
-          segLine.bindTooltip(
-            `<strong>${step.from.name} ➔ ${step.to.name}</strong><br/><span style="color:${segmentColor}">Safety Index: ${safetyScore}/100 (${safetyTier.replace('_', ' ')})</span>`,
-            { className: 'custom-dark-tooltip', sticky: true }
-          );
-
-          segLine.on('mouseover', () => {
-            segLine.setStyle({ weight: 7, opacity: 1 });
-          });
-          segLine.on('mouseout', () => {
-            segLine.setStyle({ weight: 5, opacity: 0.95 });
-          });
-
-          routeGroup.addLayer(segGlow);
-          routeGroup.addLayer(segLine);
-        });
-      } else {
-        // Single unified route polyline — soft halo + solid core, clean & professional.
-        const activeColor = activeRoute.routeColor || '#34d399';
-
-        const routeGlow = L.polyline(activeRoute.pathCoordinates, {
-          color: activeColor,
-          weight: 10,
-          opacity: 0.22,
-          lineJoin: 'round',
-          lineCap: 'round',
-        });
-
-        const routePolyline = L.polyline(activeRoute.pathCoordinates, {
-          color: activeColor,
-          weight: 5,
-          opacity: 0.95,
-          lineJoin: 'round',
-          lineCap: 'round',
-        });
-
-        routeGroup.addLayer(routeGlow);
-        routeGroup.addLayer(routePolyline);
-      }
+      routeGroup.addLayer(routeGlow);
+      routeGroup.addLayer(routePolyline);
     }
 
     // 3. Render Active Route Blackspot Danger Badges along the corridor
@@ -1474,10 +1429,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
     }
 
-    // Start/End markers — same A/B badge style as the Distance Calculator's
-    // RouteMapView (26px round badges, white ring), with the place names shown
-    // as PERMANENT labels above the markers so From and To read at a glance
-    // without hovering.
+    // Start/End markers — identical to the Distance Calculator's RouteMapView:
+    // 26px A/B round badges with a white ring; place names appear ONLY on
+    // hover (no permanent From/To labels on the map).
     const endpointBadge = (letter: string, color: string, letterColor: string) =>
       L.divIcon({
         className: 'route-endpoint-marker',
@@ -1488,14 +1442,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     const startCoord = activeRoute.pathCoordinates[0];
     const startMarker = L.marker(startCoord, { icon: endpointBadge('A', '#10b981', '#022c22') }).bindTooltip(
-      `<strong>From:</strong> ${activeRoute.origin.name}`,
-      { direction: 'top', className: 'custom-dark-tooltip', permanent: true, offset: [0, -14] }
+      activeRoute.origin.name,
+      { direction: 'top', className: 'custom-dark-tooltip' }
     );
 
     const endCoord = activeRoute.pathCoordinates[activeRoute.pathCoordinates.length - 1];
     const endMarker = L.marker(endCoord, { icon: endpointBadge('B', '#f43f5e', '#ffffff') }).bindTooltip(
-      `<strong>To:</strong> ${activeRoute.destination.name}`,
-      { direction: 'top', className: 'custom-dark-tooltip', permanent: true, offset: [0, -14] }
+      activeRoute.destination.name,
+      { direction: 'top', className: 'custom-dark-tooltip' }
     );
 
     routeGroup.addLayer(startMarker);
@@ -1519,7 +1473,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         easeLinearity: 0.25,
       });
     }
-   }, [activeRoute, activeLayer, routeColorMode, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized, mapActive, tileProvider]);
+   }, [activeRoute, activeLayer, onSelectAlternativeRoute, onSelectBlackspot, mapInitialized, mapActive, tileProvider]);
 
   const hasAlternatives = activeRoute?.allRouteOptions && activeRoute.allRouteOptions.length > 1;
 
