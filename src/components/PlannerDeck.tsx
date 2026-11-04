@@ -107,25 +107,31 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
           </div>
         )}
 
-        <motion.div
-          key={active.id}
-          className="planner-deck-3d__active"
-          style={{ x, rotateY, opacity: dragOpacity, transformPerspective: 1200 }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          dragMomentum={false}
-          dragDirectionLock
-          onDragEnd={onDragEnd}
-          whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
-          initial={{ opacity: 0.7, scale: 0.975 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 330, damping: 30, mass: 0.8 }}
-        >
-          <div className="planner-deck-3d__face">
-            {children(active.id)}
-          </div>
-        </motion.div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={active.id}
+            className="planner-deck-3d__active"
+            initial={{ opacity: 0, rotateY: 16, scale: 0.94 }}
+            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+            exit={{ opacity: 0, rotateY: -16, scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+          >
+            <motion.div
+              style={{ x, rotateY, opacity: dragOpacity, transformPerspective: 1200 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.24}
+              dragMomentum={false}
+              dragDirectionLock
+              onDragEnd={onDragEnd}
+              whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
+            >
+              <div className="planner-deck-3d__face">
+                {children(active.id)}
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {items.length > 1 && (
