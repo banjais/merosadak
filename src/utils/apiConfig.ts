@@ -1,3 +1,5 @@
+import { auth } from '../firebase';
+
 export const WORKER_BASE_URL = (() => {
   if (typeof window !== 'undefined') {
     const meta = document.querySelector('meta[name="worker-base-url"]');
@@ -30,4 +32,20 @@ export async function fetchJson<T = unknown>(endpoint: string, init?: RequestIni
     throw error;
   }
   return data;
+}
+
+
+/** Call a Worker endpoint with the current Firebase user's signed ID token. */
+export async function fetchJsonWithFirebaseAuth<T = unknown>(
+  endpoint: string,
+  init?: RequestInit
+): Promise<T> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Please sign in with Google to use this personal feature.');
+  }
+  const token = await currentUser.getIdToken();
+  const headers = new Headers(init?.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  return fetchJson<T>(endpoint, { ...init, headers });
 }
