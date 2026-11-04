@@ -88,24 +88,39 @@ function simplifyIndices(points, toleranceKm) {
   return out;
 }
 
-// ---- grid-based node snapping (union nearby vertices from different links/highways) ----
+// ---- grid-assisted node snapping with a true-distance guard ----
+const SNAP_MERGE_MAX_KM = 0.005; // merge only survey vertices within 5m
 function makeSnapper(cellKm) {
-  const cellDeg = cellKm / 111.0; // rough, fine at Nepal's latitudes
-  const grid = new Map(); // "cellX,cellY" -> nodeId
-  const nodes = []; // nodeId -> [lat,lng] (running centroid-ish: first-seen wins, good enough)
+  const cellDeg = cellKm / 111.0; // coarse grid only narrows the candidate search
+  const grid = new Map(); // "cellX,cellY" -> nodeIds
+  const nodes = []; // nodeId -> [lat,lng], first-seen survey coordinate
 
-  function cellKey(lat, lng) {
-    const cx = Math.round(lat / cellDeg);
-    const cy = Math.round(lng / cellDeg);
+  function cellKey(cx, cy) {
     return `${cx},${cy}`;
   }
 
   function getOrCreate(lat, lng) {
-    const key = cellKey(lat, lng);
-    if (grid.has(key)) return grid.get(key);
+    const cx = Math.floor(lat / cellDeg);
+    const cy = Math.floor(lng / cellDeg);
+    // A vertex near a cell edge may share a node with a point in a neighbour.
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const bucket = grid.get(cellKey(cx + dx, cy + dy));
+        if (!bucket) continue;
+        for (const nodeId of bucket) {
+          if (haversineKm([lat, lng], nodes[nodeId]) <= SNAP_MERGE_MAX_KM) {
+            return nodeId;
+          }
+        }
+      }
+    }
+
     const id = nodes.length;
     nodes.push([lat, lng]);
-    grid.set(key, id);
+    const key = cellKey(cx, cy);
+    const bucket = grid.get(key) || [];
+    bucket.push(id);
+    grid.set(key, bucket);
     return id;
   }
 
