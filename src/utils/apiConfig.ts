@@ -11,10 +11,13 @@ export const WORKER_BASE_URL = (() => {
 })();
 
 export function getApiUrl(endpoint: string): string {
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return endpoint;
-  }
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    // Vite does not proxy /api by default. Use the local Wrangler Worker
+    // (port 8787) unless VITE_WORKER_URL explicitly points elsewhere.
+    const localWorker = (import.meta as any)?.env?.VITE_WORKER_URL || 'http://127.0.0.1:8787';
+    return `${String(localWorker).replace(/\/+$/, '')}${cleanEndpoint}`;
+  }
   return `${WORKER_BASE_URL.replace(/\/+$/, '')}${cleanEndpoint}`;
 }
 
