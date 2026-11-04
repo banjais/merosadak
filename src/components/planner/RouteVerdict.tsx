@@ -56,6 +56,7 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
 
   const hasBlocked = obstructedKm > 0;
   const hasCaution = !hasBlocked && (cautionKm > 0 || incidents > 0);
+  const hasStatusData = clearKm + cautionKm + obstructedKm > 0 || incidents > 0;
 
   const verdict: Verdict = isAerialFallback
     ? {
@@ -89,14 +90,23 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
           ring: 'border-amber-500/40',
           bar: 'bg-amber-400',
         }
-      : {
-          tone: 'clear',
-          label: 'ROUTE CLEAR',
-          sentence: 'Every surveyed segment on this route reports open status.',
-          pill: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300',
-          ring: 'border-emerald-500/40',
-          bar: 'bg-emerald-400',
-        };
+      : !hasStatusData
+        ? {
+            tone: 'caution',
+            label: 'STATUS UNVERIFIED',
+            sentence: 'No recent road-status information is available for this route. Check official updates before departure.',
+            pill: 'border-amber-500/50 bg-amber-500/15 text-amber-300',
+            ring: 'border-amber-500/40',
+            bar: 'bg-amber-400',
+          }
+        : {
+            tone: 'clear',
+            label: 'ROUTE CLEAR',
+            sentence: 'Every surveyed segment on this route reports open status.',
+            pill: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300',
+            ring: 'border-emerald-500/40',
+            bar: 'bg-emerald-400',
+          };
 
   const total = Math.max(clearKm + cautionKm + obstructedKm, 0.001);
   const hours = Math.floor(plan.estimatedTimeMinutes / 60);
