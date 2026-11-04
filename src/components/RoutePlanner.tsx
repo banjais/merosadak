@@ -440,21 +440,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     return Array.from(codes);
   }, [routePlan]);
 
-  // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
-  // Progressive disclosure: which detail sections are open. Defaults are
-  // computed per plan — the blocks section opens itself the moment anything on
-  // the route is not clear — and a fresh calculation resets every section, so
-  // each new search starts with the short verdict, never with stale panels.
-  type DetailSectionId = 'blocks' | 'journey' | 'insights' | 'costs' | 'routes' | 'report';
-  const [openSections, setOpenSections] = useState<Partial<Record<DetailSectionId, boolean>>>({});
-  const isOpen = useCallback((id: DetailSectionId, def: boolean) => openSections[id] ?? def, [openSections]);
-  const openSection = useCallback((id: DetailSectionId) => {
-    setOpenSections((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
-  }, []);
-  const toggleSection = useCallback((id: DetailSectionId) => {
-    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
   // PlannerDeck active card id. The deck shows one card at a time; the user
   // swipes left/right to move between single-info cards. When the planner
   // flips between pre-calc and post-calc, the deck item set changes, so we
