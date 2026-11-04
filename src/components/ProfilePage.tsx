@@ -176,7 +176,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     <div className="fixed inset-0 z-[600] flex flex-col bg-slate-950 text-slate-100 animate-fadeIn">
       {/* Top bar — back/close on left, identity center, sign-out right */}
       <header className="bg-slate-900/95 border-b border-slate-700/60 px-3 sm:px-5 py-3 flex items-center justify-between gap-3 shrink-0 backdrop-blur-md">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition shrink-0"
