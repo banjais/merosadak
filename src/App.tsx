@@ -634,7 +634,7 @@ function AppContent() {
                     मेरो सडक
                   </span>
                 </div>
-                <div className="hidden xs:block text-[9px] accent-text-dim font-semibold tracking-wider truncate">
+                <div className="text-[8px] sm:text-[9px] accent-text-dim font-semibold tracking-tight sm:tracking-wider leading-tight whitespace-normal">
                   Highway Routes · Road Alerts · Travel Info
                 </div>
               </div>
