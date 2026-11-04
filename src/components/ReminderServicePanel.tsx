@@ -75,6 +75,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
 }) => {
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
   const [input, setInput] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
   const [selectedSector, setSelectedSector] = useState<ReminderSector>(routePlan ? 'travel' : 'vehicle');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -388,6 +389,10 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    if (scheduledAt && (!Number.isFinite(Date.parse(scheduledAt)) || Date.parse(scheduledAt) <= Date.now())) {
+      setError('Please choose a future date and time.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -397,6 +402,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
         body: JSON.stringify({
           input: input.trim(),
           sector: selectedSector,
+          scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
           routeContext: routePlan
             ? {
                 origin: routePlan.origin?.name,
@@ -411,6 +417,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
       });
       setReminders((prev) => [...data.suggestions, ...prev]);
       setInput('');
+      setScheduledAt('');
       setShowVoiceHint(false);
       if (data.suggestions.length) {
         speak(`I found ${data.suggestions.length} reminder suggestions for your trip.`);
@@ -616,8 +623,8 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
             <p className="text-[10px] text-slate-500">Type naturally or use your voice. AI will organize it for you.</p>
           </div>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1 min-w-0">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+          <div className="relative w-full min-w-0">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -629,10 +636,23 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
               {voiceActive ? <MicOff className="w-4 h-4 animate-pulse" /> : <Mic className="w-4 h-4" />}
             </button>
           </div>
-          <button type="submit" disabled={loading || !input.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 sm:min-w-[142px]">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            {loading ? 'Creating…' : 'Create reminder'}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label className="flex-1 min-w-0">
+              <span className="mb-1 block text-[10px] font-semibold text-slate-400">Choose date & time <span className="font-normal text-slate-500">(optional — AI can suggest if left blank)</span></span>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                aria-label="Optional reminder date and time"
+              />
+            </label>
+            <button type="submit" disabled={loading || !input.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 sm:mt-5 sm:min-w-[142px]">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {loading ? 'Creating…' : 'Create reminder'}
+            </button>
+          </div>
         </form>
         <div className="flex flex-wrap gap-1.5">
           {selectedSector === 'vehicle' && ['Service my vehicle next month', 'Renew my insurance', 'Check tyre pressure before a trip'].map((example) => (
