@@ -21,7 +21,7 @@ import {
   Locate,
   Car,
   Plus,
-  BriefcaseBusiness,
+  Briefcase,
   Plane,
 } from 'lucide-react';
 import { fetchJsonWithFirebaseAuth } from '../utils/apiConfig';
@@ -42,7 +42,7 @@ const CATEGORY_META: Record<ReminderCategory, { label: string; icon: any; color:
 
 const REMINDER_SECTORS: Array<{ id: ReminderSector; label: string; description: string; icon: any; example: string }> = [
   { id: 'vehicle', label: 'Vehicle', description: 'Care, servicing, documents & parking', icon: Car, example: 'Remind me to renew my vehicle insurance next week' },
-  { id: 'belongings', label: 'Belongings', description: 'Things to carry, pack or check', icon: BriefcaseBusiness, example: 'Remind me to take my laptop and charger' },
+  { id: 'belongings', label: 'Belongings', description: 'Things to carry, pack or check', icon: Briefcase, example: 'Remind me to take my laptop and charger' },
   { id: 'travel', label: 'Travel', description: 'Trips, routes, stops & departure', icon: Plane, example: 'Remind me to leave for Pokhara at 5 AM' },
   { id: 'other', label: 'Other', description: 'Appointments, bills, work & anything else', icon: Sparkles, example: 'Remind me about my appointment tomorrow' },
 ];
@@ -866,7 +866,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
           </div>
           <p className="text-xs text-slate-400">No reminders yet.</p>
           <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs mx-auto">
-            Type or speak what you need to remember, and Mero Sadak AI will suggest places, times & events along your route.
+            Choose a sector, enter a simple request, and Mero Sadak AI will create a reminder for it.
           </p>
         </div>
       )}
