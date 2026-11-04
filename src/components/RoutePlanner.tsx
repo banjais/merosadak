@@ -2094,6 +2094,31 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </>
         )}
       </PlannerDeck>
+
+      {/* Keep a complete report in the print tree; on-screen navigation remains sector-by-sector. */}
+      {hasCalculated && routePlan && (
+        <div className="planner-print-report">
+          <UnifiedRouteReport
+            reportSection="all"
+            route={routePlan}
+            distanceKm={routePlan.totalDistanceKm}
+            distanceSource="dor_gis_route"
+            distanceEvidence="route_graph"
+            distanceSourceUrl="https://dor.gov.np"
+            distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+            vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+            preferenceLabel={preference.replace('_', ' ')}
+            onPrint={() => window.print()}
+            onShare={() => onShareTrip?.()}
+            userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+            fuelBasis={buildFuelBasis()}
+            embedded
+            showElevationProfile
+            simulationControls={simulationControls}
+            onViewOnMap={onViewOnMap}
+          />
+        </div>
+      )}
     </div>
   );
 };
