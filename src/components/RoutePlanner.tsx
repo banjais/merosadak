@@ -1424,7 +1424,29 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
             {/* ===== PRE-CALCULATION CARDS ===== */}
 
             {!hasCalculated && activeId === 'destination' && (
-              <ReelCard id="destination" title="Where to?" Icon={Navigation} hint="Destination">
+              <ReelCard
+                id="destination"
+                title="Destination search"
+                Icon={Navigation}
+                hideTitle
+                headerActions={
+                  <button
+                    type="button"
+                    onClick={() => setShowMyLocationDetails((prev) => !prev)}
+                    aria-label="My Location"
+                    aria-expanded={showMyLocationDetails}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                      showMyLocationDetails
+                        ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300'
+                        : 'border-slate-700 bg-slate-800/80 text-slate-200 hover:border-emerald-500/40 hover:bg-slate-800'
+                    }`}
+                  >
+                    <Crosshair className="h-4 w-4" />
+                    <span>My Location</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showMyLocationDetails ? 'rotate-180' : ''}`} />
+                  </button>
+                }
+              >
                 <div className="space-y-3">
                   {locationMode === 'my_location' ? (
                     <PlaceField
@@ -1468,21 +1490,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                               <MapPin className="h-4 w-4 text-amber-400" />
                             </FieldIconButton>
                           )}
-                          {/* My Location button — on the right side of the
-                              search bar. Default OFF: only the button shows, the
-                              location info card is hidden. Click → reveal the
-                              location card (GPS status, coordinates, nearest
-                              highway, "Use Device GPS" / "Change Origin City"
-                              options) collapsed below the search bar. Click
-                              again → hide it. The button does NOT permanently
-                              occupy space with the expanded section. */}
-                          <FieldIconButton
-                            label="My Location"
-                            active={showMyLocationDetails}
-                            onClick={() => setShowMyLocationDetails((prev) => !prev)}
-                          >
-                            <Crosshair className={`h-4 w-4 ${showMyLocationDetails ? 'text-emerald-400' : 'text-slate-300'}`} />
-                          </FieldIconButton>
+
                         </>
                       }
                     >
