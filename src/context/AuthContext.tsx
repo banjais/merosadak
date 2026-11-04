@@ -324,7 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [firebaseUser, demoUser]);
 
-remove role effect  // Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
+// Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
   // assignments made by the superadmin panel.
   useEffect(() => {
     const unsub = onSnapshot(
