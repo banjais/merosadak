@@ -421,7 +421,12 @@ function main() {
       snappedNear++;
     } else if (bestId >= 0 && bestDist <= CITY_INJECT_MAX_KM) {
       const cityNodeId = snapper.nodes.length;
-      snapper.nodes.push([city.lat, city.lng]);
+      // Give the injected node the COORD of its nearest survey node instead of
+      // the raw city-center coordinate. Routing cost is unchanged (the access
+      // edge still weighs accessKm), but every drawn path that passes through
+      // this city now starts/ends ON the surveyed highway — previously the
+      // city-center anchor yanked the line up to 2km off the road corridor.
+      snapper.nodes.push([snapper.nodes[bestId][0], snapper.nodes[bestId][1]]);
       const accessKm = Math.round(bestDist * 1000) / 1000;
       addEdge(cityNodeId, bestId, accessKm, JOIN_HWY_IDX);
       citySnap[city.id] = cityNodeId;

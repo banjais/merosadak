@@ -1216,14 +1216,19 @@ function applyRealRoadDataToEdges(patch: Record<string, EdgeGeometryPatch> | nul
     }
 
     // Second chance: baked raw-highway corridor geometry (keeps the road on
-    // the real alignment where the graph itself is disconnected).
+    // the real alignment where the graph itself is disconnected). A baked
+    // entry with km === 0 is a GEOMETRY-ONLY patch: draw the real-road coords
+    // but keep the curated km/time (the offline bake judged the OSRM/DoR
+    // distance too far off the curated figure to trust for planning math).
     const baked = patch?.[`${edge.fromId}|${edge.toId}`];
-    if (baked && baked.coords.length >= 2 && !(oldDistanceKm > 0 && baked.km > oldDistanceKm * 2.5)) {
-      edge.distanceKm = baked.km;
-      edge.intermediateCoords = baked.coords;
-      if (oldDistanceKm > 0) {
-        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (baked.km / oldDistanceKm));
+    if (baked && baked.coords.length >= 2 && (baked.km === 0 || !(oldDistanceKm > 0 && baked.km > oldDistanceKm * 2.5))) {
+      if (baked.km > 0) {
+        edge.distanceKm = baked.km;
+        if (oldDistanceKm > 0) {
+          edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (baked.km / oldDistanceKm));
+        }
       }
+      edge.intermediateCoords = baked.coords;
       patched++;
       continue;
     }
