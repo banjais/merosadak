@@ -96,13 +96,10 @@ jobs:
   # ── Frontend ─────────────────────────────────────────────────────────────────
 
   build-frontend:
-    name: Build frontend (with data sync)
+    name: Build static frontend
     needs: [typecheck, worker-typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
         - uses: actions/checkout@v4
         - uses: actions/setup-node@v4
