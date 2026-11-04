@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { RoutePlanResult, RouteSimulationControls } from '../types';
 import { EvidenceLevel, SNHCitation, getSourceDescription, getSourceLabel } from '../utils/snhLookup';
+import { segmentsFromBreakdown } from '../utils/distanceEngine';
 import { getTollPlazasForHighway, isEnteringKathmandu } from '../utils/tollRates.client';
 import { RouteElevationProfileChart } from './RouteElevationProfileChart';
 import { SwipeableReelStack, ReelCardItem } from './SwipeableReelStack';
@@ -373,21 +374,27 @@ export function UnifiedRouteReport({
 
   // The reported total includes synthetic access and network-join edges, so the
   // surveyed share is what can honestly be called mapped highway geometry.
+  // Uses the SHARED segment model from distanceEngine so the planner and the
+  // calculator label the measurement composition identically.
   const distanceParts = useMemo(() => {
     const b = route.distanceBreakdown;
     if (!b) return null;
-    const parts = [
-      { label: 'Origin access', km: b.originAccessKm, tone: 'text-amber-300' },
-      { label: 'Surveyed highway', km: b.surveyedKm, tone: 'text-emerald-400' },
-      { label: 'Network join', km: b.networkJoinKm, tone: 'text-cyan-300' },
-      { label: 'Destination access', km: b.destAccessKm, tone: 'text-amber-300' },
-    ];
+    const parts = segmentsFromBreakdown(b).map((s) => ({
+      label: s.label,
+      km: s.km,
+      tone:
+        s.kind === 'surveyed'
+          ? 'text-emerald-400'
+          : s.label === 'Network joins'
+            ? 'text-cyan-300'
+            : 'text-amber-300',
+    }));
     const sum = parts.reduce((acc, p) => acc + p.km, 0);
     if (!(sum > 0)) return null;
     return parts;
   }, [route.distanceBreakdown]);
   const surveyedSharePercent = distanceParts
-    ? Math.round((distanceParts[1].km / distanceParts.reduce((acc, p) => acc + p.km, 0)) * 100)
+    ? Math.round(((distanceParts.find((p) => p.label === 'Surveyed highway')?.km ?? 0) / distanceParts.reduce((acc, p) => acc + p.km, 0)) * 100)
     : null;
 
   const citationText = useMemo(() => {
@@ -494,38 +501,25 @@ export function UnifiedRouteReport({
           </div>
         </div>
 
-        {/* Highway breakdown: origin access + surveyed highway + destination access */}
+        {/* Distance composition: shared segment model (connecting road / joins / surveyed) */}
         {distanceParts && (
         <div className="card card-elevated card-interactive p-3.5">
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">Highway break-down</div>
-          <div className="grid grid-cols-2 gap-1.5 mb-2">
-            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-              <div>
-                <div className="text-[9px] text-slate-500 uppercase tracking-wider">To highway</div>
-                <div className="text-xs font-bold text-amber-300">{formatNumber(distanceParts[0].km, 1)} km</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">Distance composition</div>
+          <div className="space-y-1.5">
+            {distanceParts.map((part) => (
+              <div key={part.label} className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider">{part.label}</span>
+                <span className={`text-xs font-bold ${part.tone}`}>{formatNumber(part.km, 1)} km</span>
               </div>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-              <div>
-                <div className="text-[9px] text-slate-500 uppercase tracking-wider">On highway</div>
-                <div className="text-xs font-bold text-emerald-400">{formatNumber(distanceParts[1].km, 1)} km</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-              <div>
-                <div className="text-[9px] text-slate-500 uppercase tracking-wider">From highway</div>
-                <div className="text-xs font-bold text-amber-300">{formatNumber(distanceParts[3].km, 1)} km</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-              <div>
-                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Total</div>
-                <div className="text-xs font-bold text-white">{formatNumber(distanceKm, 1)} km</div>
-              </div>
+            ))}
+            <div className="flex items-center justify-between p-2 bg-slate-950/50 rounded-lg border border-slate-700/60">
+              <span className="text-[9px] text-slate-400 uppercase tracking-wider">Total</span>
+              <span className="text-xs font-bold text-white">{formatNumber(distanceKm, 1)} km</span>
             </div>
           </div>
           <p className="mt-2 text-[10px] text-slate-400">
-            {formatNumber(distanceParts[1].km, 1)} km of surveyed highway ({surveyedSharePercent ?? 0}% of route). Remaining is local access from/to your location.
+            {formatNumber(distanceParts.find((p) => p.label === 'Surveyed highway')?.km ?? 0, 1)} km of surveyed highway
+            {surveyedSharePercent != null ? ` (${surveyedSharePercent}% of route)` : ''}. The rest is connecting road outside the surveyed corridor.
           </p>
         </div>
         )}

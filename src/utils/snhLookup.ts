@@ -78,12 +78,30 @@ export interface SNHReferenceData {
 
 let cachedReferenceData: SNHReferenceData | null = null;
 
+/**
+ * The SNH source PDF contains OCR-damaged rows, including exact duplicate link
+ * records (e.g. "Samsi - Sitalpur" and "Samsi - Si talpur" share the same code
+ * and chainage span). Summing a chain across a duplicated link would count the
+ * same highway section twice, so exact duplicates are collapsed at load time.
+ */
+function dedupeLinks(links: SNHReferenceData['links']): SNHReferenceData['links'] {
+  const seen = new Set<string>();
+  return links.filter((l) => {
+    const key = `${l.code}|${l.from_km}|${l.to_km}|${l.length_km}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function loadSNHReference(): Promise<SNHReferenceData | null> {
   if (cachedReferenceData) return cachedReferenceData;
   try {
     const res = await fetch('/data/snh-reference.json');
     if (!res.ok) return null;
-    cachedReferenceData = await res.json();
+    const data: SNHReferenceData = await res.json();
+    data.links = dedupeLinks(data.links || []);
+    cachedReferenceData = data;
     return cachedReferenceData;
   } catch {
     return null;

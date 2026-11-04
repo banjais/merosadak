@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, pickRouteByCertification, ensureRealRoadGeometry } from '../utils/routeOptimizer';
+import { ensureRealRoadGeometry } from '../utils/routeOptimizer';
 import { findRoadGraphAlternatives } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
@@ -13,11 +13,11 @@ import {
   preloadHighwayCatalogue,
   getHighwayCatalogue,
 } from '../utils/highwayCatalogue';
-import { formatDistanceKm } from '../utils/formatDistance';
-import { loadSNHReference, lookupDistanceWithFallback, estimateDistance, getSourceLabel, getEvidenceLevelLabel, getEvidenceLevelColor, SNHReferenceData, DataSourceType, DistanceWithSource, EvidenceLevel } from '../utils/snhLookup';
+import { calculateDistance, methodologyLabel, type DistanceResult } from '../utils/distanceEngine';
+import { loadSNHReference, type SNHReferenceData, type DistanceWithSource, type EvidenceLevel } from '../utils/snhLookup';
 import { generateProofSheet } from '../utils/proofSheet';
 import { sha256Hex } from '../utils/proofLinks';
-import { ArrowRight, ArrowUpDown, Search, ArrowLeft, Calculator, ChevronDown, ExternalLink, X, MapPin, Layers } from 'lucide-react';
+import { ArrowUpDown, Search, ArrowLeft, X, MapPin } from 'lucide-react';
 import { CitySuggestionDropdown } from './CityResultRow';
 import { HighwayBrowser } from './HighwayBrowser';
 
@@ -25,115 +25,12 @@ import { HighwayBrowser } from './HighwayBrowser';
 const CITY_SUGGESTION_LIMIT = 8;
 import { DataAttribution } from './DataAttribution';
 import { SettingsMenu, SettingsButton } from './SettingsMenu';
-import { UnifiedRouteReport } from './UnifiedRouteReport';
+import { DistanceReport } from './DistanceReport';
 import { RouteLineDrawing } from './RouteLineDrawing';
 import { RouteMapView } from './RouteMapView';
 
 import { TextScale } from '../hooks/useTextScale';
 import { useAuth } from '../context/AuthContext';
-
-interface DataSourceSelectorProps {
-  selectedSource: DataSourceType;
-  onChange: (source: DataSourceType) => void;
-  evidenceLevel?: EvidenceLevel;
-}
-
-function DataSourceSelector({ selectedSource, onChange, evidenceLevel }: DataSourceSelectorProps): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const sources: Array<{ value: DataSourceType; label: string; url: string; description: string }> = [
-    {
-      value: 'dor_snh',
-      label: 'DoR sources (SNH + highway archive)',
-      url: 'https://dor.gov.np/home/page/statistics-of-national-highway--snh--2022-23',
-      description: 'Uses a published SNH pair when available; otherwise computes a route from archived DoR highway geometry.',
-    },
-    {
-      value: 'estimate_aerial',
-      label: 'Aerial (Straight-Line)',
-      url: '',
-      description: 'Geodesic Great Circle distance — no surveyed corridor data available',
-    },
-  ];
-
-  const openExternalLink = (url: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  };
-
-  const selected = sources.find((s) => s.value === selectedSource) || sources[0];
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white hover:border-cyan-500 transition"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <span className="truncate max-w-[140px]">{selected.label}</span>
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl z-50 overflow-hidden">
-          {sources.map((src) => (
-            <div
-              key={src.value}
-              role="option"
-              aria-selected={src.value === selectedSource}
-              onClick={() => {
-                onChange(src.value);
-                setIsOpen(false);
-              }}
-              className={`w-full px-3 py-2 text-left text-xs transition cursor-pointer ${
-                src.value === selectedSource
-                  ? 'bg-cyan-500/10 text-cyan-300'
-                  : 'text-slate-300 hover:bg-slate-900 hover:text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  onClick={(e) => openExternalLink(src.url, e)}
-                  className={`flex items-center gap-1 font-medium ${src.url ? 'hover:underline cursor-pointer' : ''}`}
-                >
-                  {src.label}
-                  {src.url && (
-                    <ExternalLink className="w-2.5 h-2.5 text-slate-400 hover:text-white" />
-                  )}
-                </span>
-                {src.value === selectedSource && evidenceLevel && (
-                  <span className="text-[8px] font-bold px-1 py-0.5 rounded border shrink-0" style={{
-                    backgroundColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.15)`,
-                    borderColor: `rgba(${getEvidenceLevelColor(evidenceLevel).join(',')}, 0.3)`,
-                    color: `rgb(${getEvidenceLevelColor(evidenceLevel).join(',')})`,
-                  }}>
-                    {getEvidenceLevelLabel(evidenceLevel)}
-                  </span>
-                )}
-              </div>
-              <div className="text-[9px] text-slate-500 mt-0.5">{src.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * A one-character query like "a" is a prefix scan over ~2,400 places, so the
@@ -197,8 +94,6 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
   const originInputRef = useRef<HTMLInputElement>(null);
   const destInputRef = useRef<HTMLInputElement>(null);
   const [snhReference, setSnhReference] = useState<SNHReferenceData | null>(null);
-  const [distanceWithSource, setDistanceWithSource] = useState<DistanceWithSource | null>(null);
-  const [selectedDataSource, setSelectedDataSource] = useState<DataSourceType>('dor_snh');
   const [mapOpen, setMapOpen] = useState(false);
   const [browserOpen, setBrowserOpen] = useState(false);
 
@@ -384,21 +279,23 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
     setDestSearch(origin?.name ?? '');
   };
 
-  const routeResult = useMemo(
-    () => {
-      if (!(originId && destId && originId !== destId && origin && destination)) return null;
-      const plan = findOptimizedRoute(originId, destId, 'fastest', 'car', {}, origin, destination);
-      return plan ? pickRouteByCertification(plan) : null;
-    },
-    [originId, destId, roadGraphVersion, origin, destination]
-  );
+  /**
+   * THE distance result — one shared engine, one hierarchy, one source line.
+   * The Route Planner reads the same survey-backed breakdown from its own
+   * plans, so the two features can never report conflicting numbers.
+   */
+  const engineResult: DistanceResult | null = useMemo(() => {
+    if (!(origin && destination && originId !== destId)) return null;
+    return calculateDistance(origin, destination, { vehicle: 'car', snhReference });
+  }, [origin, destination, originId, destId, roadGraphVersion, snhReference]);
+
   // Real k-shortest alternatives on the surveyed graph (not preference
   // re-weightings). Aerial pairs have no surveyed corridor to branch from.
   const graphAlternatives = useMemo(() => {
     if (!(originId && destId && originId !== destId)) return [];
-    if (routeResult?.__aerialWarning) return [];
+    if (engineResult?.quality.aerialFallback) return [];
     return findRoadGraphAlternatives(originId, destId, 3);
-  }, [originId, destId, roadGraphVersion, routeResult]);
+  }, [originId, destId, roadGraphVersion, engineResult]);
 
   // Keep the selection valid when the pair or option count changes.
   useEffect(() => {
@@ -409,71 +306,13 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   // Only override the drawn route when the user picked a non-default option.
   const drawnPathCoordinates =
-    altSelected > 0 && activeAlternative ? activeAlternative.pathCoordinates : routeResult?.pathCoordinates ?? [];
+    altSelected > 0 && activeAlternative ? activeAlternative.pathCoordinates : engineResult?.pathCoordinates ?? [];
+  const drawnSegments =
+    altSelected > 0 && activeAlternative ? activeAlternative.pathSegments : engineResult?.pathSegments ?? [];
   const drawnDistanceKm =
     altSelected > 0 && activeAlternative ? activeAlternative.distanceKm : null;
   const drawnHighways =
-    altSelected > 0 && activeAlternative ? activeAlternative.highwaysUsed : distanceWithSource?.highwaysUsed ?? [];
-
-  const displayedDistance = useMemo(() => {
-    if (!origin || !destination) return 0;
-    if (!distanceWithSource) return 0;
-    return distanceWithSource.distanceKm;
-  }, [origin, destination, distanceWithSource]);
-
-  const displayedSource = useMemo(() => {
-    if (distanceWithSource) return distanceWithSource.source;
-    return 'dor_snh' as DataSourceType;
-  }, [distanceWithSource]);
-
-  const handleDataSourceChange = (source: DataSourceType) => {
-    setSelectedDataSource(source);
-    if (!origin || !destination) return;
-
-    if (source === 'estimate_aerial') {
-      setDistanceWithSource({
-        ...estimateDistance(origin.lat, origin.lng, destination.lat, destination.lng),
-        source: 'estimate_aerial',
-      });
-      return;
-    }
-
-    const result = lookupDistanceWithFallback(
-      origin.name,
-      destination.name,
-      origin.id,
-      destination.id,
-      origin.lat,
-      origin.lng,
-      destination.lat,
-      destination.lng,
-      snhReference
-    );
-    setDistanceWithSource(result);
-    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
-  };
-
-  useEffect(() => {
-    if (!origin || !destination) {
-      setDistanceWithSource(null);
-      setSelectedDataSource('dor_snh');
-      return;
-    }
-
-    const result = lookupDistanceWithFallback(
-        origin.name,
-        destination.name,
-        origin.id,
-        destination.id,
-        origin.lat,
-        origin.lng,
-        destination.lat,
-        destination.lng,
-        snhReference
-      );
-    setDistanceWithSource(result);
-    setSelectedDataSource(result?.source === 'estimate_aerial' ? 'estimate_aerial' : 'dor_snh');
-  }, [origin, destination, snhReference, routeResult]);
+    altSelected > 0 && activeAlternative ? activeAlternative.highwaysUsed : engineResult?.highwaysUsed ?? [];
 
   const handleSelectOrigin = (cityId: string) => {
     const city = allCities.find((candidate) => candidate.id === cityId)
@@ -542,11 +381,27 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   const { user } = useAuth();
 
+  /** Proof-sheet input rebuilt from the ONE engine result — same numbers as the report. */
+  const proofLookup: DistanceWithSource | null = useMemo(() => {
+    if (!engineResult) return null;
+    const evidenceLevel: EvidenceLevel =
+      engineResult.methodology === 'aerial_fallback' ? 'estimate' : 'geodesic';
+    return {
+      distanceKm: engineResult.totalKm,
+      evidenceLevel,
+      source: engineResult.methodology === 'aerial_fallback' ? 'estimate_aerial' : 'dor_geojson',
+      citation: engineResult.publishedCitation || engineResult.citation,
+      note: engineResult.sourceDetail,
+      highwaysUsed: engineResult.highwaysUsed,
+      distanceBreakdown: undefined,
+    };
+  }, [engineResult]);
+
   const handleExportProofSheet = useCallback(async () => {
-    if (!origin || !destination || !distanceWithSource) return;
-    const sourceData = distanceWithSource.source === 'dor_geojson'
+    if (!origin || !destination || !proofLookup) return;
+    const sourceData = proofLookup.source === 'dor_geojson'
       ? await fetch('/data/road-graph.json').then((response) => response.ok ? response.text() : '').catch(() => '')
-      : distanceWithSource.source === 'dor_snh'
+      : proofLookup.source === 'dor_snh'
         ? JSON.stringify(snhReference || '')
         : `unverified-aerial:${origin.lat},${origin.lng}:${destination.lat},${destination.lng}`;
     const dataHash = sourceData ? (await sha256Hex(sourceData)).slice(0, 12) : 'unavailable';
@@ -555,33 +410,27 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
       to: destination.name,
       fromDistrict: origin.district,
       toDistrict: destination.district,
-      lookupResult: distanceWithSource,
+      lookupResult: proofLookup,
       generatedAt: new Date().toISOString(),
       dataHash,
       issuedToName: user?.displayName || undefined,
       issuedToEmail: user?.email || undefined,
     });
-  }, [origin, destination, distanceWithSource, snhReference, user]);
+  }, [origin, destination, proofLookup, snhReference, user]);
 
   const handleShareReport = useCallback(async () => {
-    if (!origin || !destination || !routeResult) return;
+    if (!origin || !destination || !engineResult) return;
 
-    const durationFormatted = `${Math.floor(routeResult.estimatedTimeMinutes / 60)}h ${routeResult.estimatedTimeMinutes % 60}m`;
-    const sourceLabel = distanceWithSource ? getSourceLabel(distanceWithSource.source) : 'DoR Nepal Highway GIS';
-    const evidenceLabel = distanceWithSource?.evidenceLevel ? getEvidenceLevelLabel(distanceWithSource.evidenceLevel) : '';
+    const isAerial = engineResult.methodology === 'aerial_fallback';
+    const durationFormatted = engineResult.estimatedTimeMinutes
+      ? `${Math.floor(engineResult.estimatedTimeMinutes / 60)}h ${engineResult.estimatedTimeMinutes % 60}m`
+      : '';
 
-    const shareText = `🛣️ NEPAL HIGHWAY TRIP PLAN: ${origin.name} ➔ ${destination.name}
+    const shareText = `🛣️ MERO SADAK DISTANCE: ${origin.name} ➔ ${destination.name}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 From: ${origin.name} (${origin.district} - ${origin.elevationM}m)
-🏁 To: ${destination.name} (${destination.district} - ${destination.elevationM}m)
-📏 Distance: ${displayedDistance.toFixed(2)} km
-⏱️ Duration: ~${durationFormatted}
-📊 Source: ${sourceLabel}
-${evidenceLabel ? `🔬 Evidence: ${evidenceLabel}` : ''}
-${distanceWithSource?.citation ? `📚 Citation: ${distanceWithSource.citation.document}, ${distanceWithSource.citation.table}${distanceWithSource.citation.printedPage ? `, p. ${distanceWithSource.citation.printedPage}` : ''}` : ''}
-${distanceWithSource?.highwaysUsed?.length ? `🛣️ Highways: ${distanceWithSource.highwaysUsed.join(' → ')}` : ''}
-${distanceWithSource?.note ? `📝 Note: ${distanceWithSource.note}` : ''}
-${distanceWithSource?.evidenceLevel !== 'published' ? '⚠️ This distance is computed from source data and is not a DoR-published city-pair figure.' : ''}
+📏 ${isAerial ? 'Aerial estimate' : 'Road distance'}: ${engineResult.totalKm.toFixed(1)} km${durationFormatted ? `  ·  ~${durationFormatted}` : ''}
+🛣️ Route type: ${methodologyLabel(engineResult.methodology)}${engineResult.highwaysUsed.length ? ` (${engineResult.highwaysUsed.join(' → ')})` : ''}${engineResult.segments.length > 1 ? `\n📐 Breakdown: ${engineResult.segments.map((s) => `${s.label} ${s.km.toFixed(1)} km`).join(' + ')} = ${engineResult.totalKm.toFixed(1)} km` : ''}
+📊 Source: ${engineResult.sourceLabel}${engineResult.publishedKm ? `\n✅ DoR publishes ${engineResult.publishedKm.toFixed(1)} km for this pair (SNH)` : ''}${isAerial ? '\n⚠️ Straight-line estimate — the real road distance will be longer.' : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Not an official Department of Roads document.`;
 
@@ -598,7 +447,7 @@ Not an official Department of Roads document.`;
     }
 
     await navigator.clipboard.writeText(shareText);
-  }, [origin, destination, routeResult, displayedDistance, distanceWithSource]);
+  }, [origin, destination, engineResult]);
 
   const handlePrintReport = useCallback(async () => {
     window.print();
@@ -680,15 +529,6 @@ Not an official Department of Roads document.`;
                     <span className="text-[10px] font-mono px-2 py-1 rounded bg-emerald-900/40 text-emerald-300 border border-emerald-700/50">
                       DoR SNH + highway archive
                     </span>
-                  {distanceWithSource && (
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
-                        distanceWithSource.evidenceLevel === 'published' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :
-                        distanceWithSource.evidenceLevel === 'estimate' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' :
-                        'border-blue-500/30 bg-blue-500/10 text-blue-300'
-                    }`}>
-                        {getEvidenceLevelLabel(distanceWithSource.evidenceLevel)}
-                    </span>
-                  )}
                 </div>
               </div>
               {highwayCount > 0 && (
@@ -821,16 +661,16 @@ Not an official Department of Roads document.`;
           )}
 
           {/* Calculation Result Display - Shown only when route is found */}
-          {!showSearchBars && routeResult && (
+          {!showSearchBars && engineResult && origin && destination && (
             <>
-              {/* Aerial warning banner */}
-              {routeResult.__aerialWarning && (
+              {/* Aerial warning banner — only for the explicitly labelled fallback */}
+              {engineResult.quality.aerialFallback && (
                 <div className="bg-amber-900/90 border border-amber-500/40 text-amber-200 rounded-xl p-3 mb-3 flex items-start gap-2.5 text-sm">
                   <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.8 0h13.6c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1H5c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1z" />
                   </svg>
                   <span>
-                    <strong className="font-bold">Aerial approximation only.</strong> No surveyed DoR highway corridor covers this origin-destination pair. The distance shown is a straight-line estimate — actual road distance will be longer, especially in mountain terrain.
+                    <strong className="font-bold">Aerial estimate only.</strong> No surveyed highway corridor or connected road network covers this pair. The figure is a straight-line estimate — the real road distance will be longer, especially in mountain terrain.
                   </span>
                 </div>
               )}
@@ -839,16 +679,16 @@ Not an official Department of Roads document.`;
               <RouteLineDrawing
                 pathCoordinates={drawnPathCoordinates}
                 origin={{
-                  lat: origin?.lat ?? 0,
-                  lng: origin?.lng ?? 0,
-                  label: origin?.name || 'Origin',
+                  lat: origin.lat,
+                  lng: origin.lng,
+                  label: origin.name || 'Origin',
                 }}
                 destination={{
-                  lat: destination?.lat ?? 0,
-                  lng: destination?.lng ?? 0,
-                  label: destination?.name || 'Destination',
+                  lat: destination.lat,
+                  lng: destination.lng,
+                  label: destination.name || 'Destination',
                 }}
-                isAerial={Boolean(routeResult.__aerialWarning)}
+                isAerial={engineResult.quality.aerialFallback}
                 onChangeLocation={handleChangeLocation}
                 onShowMap={() => setMapOpen(true)}
               />
@@ -880,94 +720,52 @@ Not an official Department of Roads document.`;
                     </button>
                     <RouteMapView
                       pathCoordinates={drawnPathCoordinates}
+                      segments={drawnSegments}
                       origin={{
-                        lat: origin?.lat ?? 0,
-                        lng: origin?.lng ?? 0,
-                        label: origin?.name || 'Origin',
+                        lat: origin.lat,
+                        lng: origin.lng,
+                        label: origin.name || 'Origin',
                       }}
                       destination={{
-                        lat: destination?.lat ?? 0,
-                        lng: destination?.lng ?? 0,
-                        label: destination?.name || 'Destination',
+                        lat: destination.lat,
+                        lng: destination.lng,
+                        label: destination.name || 'Destination',
                       }}
-                      isAerial={Boolean(routeResult.__aerialWarning)}
+                      isAerial={engineResult.quality.aerialFallback}
                     />
                   </div>
                 </div>
               )}
 
-              {graphAlternatives.length >= 1 && (
-                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
-                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                    <Layers className="h-3.5 w-3.5 text-cyan-500" />
-                    <span>Alternative routes</span>
-                    <span className="ml-auto normal-case tracking-normal font-mono text-slate-500">
-                      {graphAlternatives.length} surveyed paths
-                    </span>
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    {graphAlternatives.map((alt, idx) => {
-                      const selected = idx === altSelected;
-                      const deltaKm = Math.round((alt.distanceKm - graphAlternatives[0].distanceKm) * 10) / 10;
-                      const highways = alt.highwaysUsed.join(' → ') || 'Local road network';
-                      return (
-                        <button
-                          key={`${idx}-${alt.highwaysUsed.join('>')}`}
-                          type="button"
-                          onClick={() => setAltSelected(idx)}
-                          aria-pressed={selected}
-                          className={`w-full flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                            selected
-                              ? 'border-cyan-500/60 bg-cyan-500/10'
-                              : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
-                          }`}
-                        >
-                          <span className="min-w-0">
-                            <span className="block text-sm font-bold text-white">
-                              {idx === 0 ? 'Shortest' : `Alternative ${idx}`}
-                              {deltaKm > 0 && (
-                                <span className="ml-2 text-[11px] font-semibold text-amber-400">+{deltaKm.toFixed(1)} km</span>
-                              )}
-                            </span>
-                            <span className="mt-0.5 block truncate text-[11px] text-cyan-300">{highways}</span>
-                          </span>
-                          <span className="shrink-0 text-base font-bold text-white">{alt.distanceKm.toFixed(1)} km</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {graphAlternatives.length === 1 && (
-                    <p className="mt-3 text-[11px] text-slate-500">
-                      The surveyed network has a single corridor for this pair — no bypass is mapped.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <UnifiedRouteReport
-              showCostMetrics={false}
-              route={routeResult}
-              distanceKm={drawnDistanceKm ?? displayedDistance}
-              distanceSource={displayedSource}
-              distanceEvidence={distanceWithSource?.evidenceLevel || 'route_graph'}
-              distanceCitation={distanceWithSource?.citation || null}
-              distanceNote={distanceWithSource?.note || null}
-              distanceHighways={drawnHighways}
-              sourceControl={
-                <DataSourceSelector
-                  selectedSource={selectedDataSource}
-                  onChange={handleDataSourceChange}
-                  evidenceLevel={distanceWithSource?.evidenceLevel}
-                />
-              }
-              onPrint={handlePrintReport}
-              onShare={handleShareReport}
-              onDownloadReport={handleDownloadReport}
-              userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
-            />
-          </>
+              <DistanceReport
+                originName={origin.name}
+                destinationName={destination.name}
+                result={{
+                  ...engineResult,
+                  // When the user picked an alternative, the headline follows it
+                  // so map distance and report distance always agree.
+                  ...(drawnDistanceKm != null && altSelected > 0
+                    ? {
+                        totalKm: drawnDistanceKm,
+                        highwaysUsed: drawnHighways,
+                        pathSegments: drawnSegments,
+                        pathCoordinates: drawnPathCoordinates,
+                      }
+                    : {}),
+                }}
+                alternatives={graphAlternatives.map((alt, idx) => ({
+                  label: idx === 0 ? 'Shortest surveyed path' : `Alternative ${idx}`,
+                  km: alt.distanceKm,
+                  highways: alt.highwaysUsed.join(' → '),
+                }))}
+                selectedAltIndex={altSelected}
+                onSelectAlternative={setAltSelected}
+                onShare={handleShareReport}
+                onPrint={handlePrintReport}
+                onDownloadReport={handleDownloadReport}
+                onChangeLocation={handleChangeLocation}
+              />
+</>
           )}
         </div>
       </main>

@@ -70,12 +70,21 @@ export interface RouteDistanceBreakdown {
   networkJoinKm: number;
 }
 
+/** A run of the drawn path that is all-surveyed or all-connector, in order. */
+export interface RoadPathSegment {
+  kind: 'surveyed' | 'connection';
+  coords: [number, number][];
+}
+
 export interface RoadGraphRoute {
   distanceKm: number;
   pathCoordinates: [number, number][];
   highwaysUsed: string[];
   inferredConnectorKm: number;
   distanceBreakdown: RouteDistanceBreakdown;
+  /** The path split into surveyed-highway runs and connector runs, in order —
+   *  lets the map draw access roads differently from the surveyed corridor. */
+  pathSegments: RoadPathSegment[];
 }
 
 let graph: RoadGraph | null = null;
@@ -302,6 +311,7 @@ export function findRoadGraphRoute(originCityId: string, destCityId: string): Ro
     highwaysUsed: built.highwaysUsed,
     inferredConnectorKm: Math.round(built.inferredConnectorKm * 10) / 10,
     distanceBreakdown: roundBreakdown(classifyDistance(built.pathNodeIds)),
+    pathSegments: splitPathSegments(built.pathNodeIds),
   };
 }
 
@@ -383,6 +393,35 @@ function classifyDistance(pathNodeIds: number[]): RouteDistanceBreakdown {
   return breakdown;
 }
 
+/**
+ * Splits a node path into consecutive surveyed / connector runs so the map can
+ * render access roads differently from the surveyed corridor. Mirrors the
+ * positional rules of classifyDistance: leading connectors leave the origin,
+ * trailing connectors enter the destination, mid-path connectors are joins —
+ * all of them render as 'connection' kind.
+ */
+function splitPathSegments(pathNodeIds: number[]): RoadPathSegment[] {
+  const g = graph!;
+  if (pathNodeIds.length < 2) return [];
+  const segments: RoadPathSegment[] = [];
+  // Walk the edges; label each node transition by the edge kind. The first
+  // edge opens the first run, and every kind switch starts a new run that
+  // repeats the boundary point so runs stay connected on the map.
+  for (let i = 1; i < pathNodeIds.length; i++) {
+    const edge = (g.adjacency[pathNodeIds[i - 1]] || []).find(([to]) => to === pathNodeIds[i]);
+    const kind: 'surveyed' | 'connection' = edge && edge[2] >= 0 ? 'surveyed' : 'connection';
+    const fromCoord = g.nodes[pathNodeIds[i - 1]];
+    const toCoord = g.nodes[pathNodeIds[i]];
+    const last = segments[segments.length - 1];
+    if (last && last.kind === kind) {
+      last.coords.push(toCoord);
+    } else {
+      segments.push({ kind, coords: last ? [last.coords[last.coords.length - 1], toCoord] : [fromCoord, toCoord] });
+    }
+  }
+  return segments;
+}
+
 /** Build a full route record from a node-id path. */
 function buildRoute(pathNodeIds: number[]): RoadGraphRoute | null {
   const g = graph!;
@@ -394,6 +433,7 @@ function buildRoute(pathNodeIds: number[]): RoadGraphRoute | null {
     highwaysUsed: sum.highwaysUsed,
     inferredConnectorKm: Math.round(sum.connectorKm * 10) / 10,
     distanceBreakdown: roundBreakdown(classifyDistance(pathNodeIds)),
+    pathSegments: splitPathSegments(pathNodeIds),
   };
 }
 
@@ -432,6 +472,7 @@ export function findRoadGraphAlternatives(
       highwaysUsed: firstBuilt.highwaysUsed,
       inferredConnectorKm: Math.round(firstBuilt.inferredConnectorKm * 10) / 10,
       distanceBreakdown: roundBreakdown(classifyDistance(firstBuilt.pathNodeIds)),
+      pathSegments: splitPathSegments(firstBuilt.pathNodeIds),
     },
   ];
   const acceptedNodes: number[][] = [firstBuilt.pathNodeIds];
