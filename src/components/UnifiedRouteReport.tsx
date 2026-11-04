@@ -415,7 +415,7 @@ export function UnifiedRouteReport({
 
   return (
     <section
-      id="route-report"
+      id={reportSection === 'all' ? 'route-report-print' : 'route-report'}
       className="space-y-4"
     >
       {(reportSection === 'all' || reportSection === 'overview') && (
