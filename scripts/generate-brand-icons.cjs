@@ -107,9 +107,8 @@ const maskableSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 51
 </svg>`;
 
 async function generateAll() {
-  console.log('Writing public/logo.svg and public/icon.svg...');
+  console.log('Writing public/logo.svg...');
   fs.writeFileSync(path.join(publicDir, 'logo.svg'), logoSvg, 'utf8');
-  fs.writeFileSync(path.join(publicDir, 'icon.svg'), logoSvg, 'utf8');
 
   const svgBuffer = Buffer.from(logoSvg);
   const maskableBuffer = Buffer.from(maskableSvg);
@@ -123,9 +122,6 @@ async function generateAll() {
 
   await sharp(svgBuffer).resize(180, 180).png().toFile(path.join(iconsDir, 'apple-touch-icon.png'));
   console.log('  -> public/assets/icons/apple-touch-icon.png (180x180)');
-
-  await sharp(svgBuffer).resize(512, 512).png().toFile(path.join(publicDir, 'logo.png'));
-  console.log('  -> public/logo.png (512x512)');
 
   await sharp(maskableBuffer).resize(512, 512).png().toFile(path.join(iconsDir, 'icon-maskable-512.png'));
   console.log('  -> public/assets/icons/icon-maskable-512.png (512x512)');
