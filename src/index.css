@@ -1960,6 +1960,13 @@ html[data-theme='light'] .ms-depth-stat {
   }
 }
 
+/* Complete report is mounted separately for printing; the interactive deck is screen-only. */
+.planner-print-report{display:none}
+@media print{
+  .planner-deck-3d{display:none!important}
+  .planner-print-report{display:block!important}
+}
+
 /* ===== TRIP PLANNER 3D SECTOR DECK ===== */
 .planner-deck-3d{position:relative;width:100%;perspective:1500px;perspective-origin:50% 42%;isolation:isolate}
 .planner-deck-3d__stage{position:relative;min-height:7rem;transform-style:preserve-3d}
