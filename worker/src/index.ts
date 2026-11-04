@@ -381,6 +381,7 @@ async function handleSaveTripData(request: Request, env: Env): Promise<Response>
 type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
 
 interface ReminderItem {
+  sector?: 'vehicle' | 'belongings' | 'travel' | 'other';
   id: string;
   userId: string;
   category: ReminderCategory;
@@ -424,6 +425,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const userId = identity.uid;
     const body = await request.json<any>();
     const { input, routeContext, emotion } = body;
+    const sector = ['vehicle', 'belongings', 'travel', 'other'].includes(body.sector) ? body.sector : 'travel';
 
     if (typeof input !== "string" || !input.trim()) {
       return jsonResponse(env, { error: "input is required" }, 400);
@@ -440,8 +442,14 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
+    const sectorGuidance: Record<string, string> = {
+      vehicle: 'Focus on vehicle care and ownership: servicing, insurance, tax, licence, tyre checks, fuel/charging, parking and vehicle documents.',
+      belongings: 'Focus on personal items and checklists: phone, wallet, keys, documents, luggage, chargers, medication or user-specified items.',
+      travel: 'Focus on journeys: departure, route, rest stops, fuel, weather, tolls, border checks and arrival.',
+      other: 'Handle any useful reminder outside the other sections, such as appointments, bills, study, work, events or household tasks.',
+    };
     const prompt = buildSystemPrompt(
-      "You are Mero Sadak's practical AI travel-reminder assistant for Nepal. Understand the user's language (Nepali or English) and intent. Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.",
+      `You are Mero Sadak's practical AI reminder assistant. The selected reminder sector is ${sector}. ${sectorGuidance[sector] || sectorGuidance.travel} Understand the user's language (Nepali or English). Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.` Understand the user's language (Nepali or English) and intent. Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.",
       { routeContext, emotion: detectedEmotion },
       detectedEmotion
     );
@@ -461,6 +469,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
       id: `rem-${Date.now()}-${idx}`,
       userId,
       category: s.category || 'custom',
+      sector,
       title: s.title || 'Reminder',
       description: s.description || '',
       suggestedTime: s.suggestedTime || null,
