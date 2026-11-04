@@ -384,6 +384,7 @@ interface ReminderItem {
   id: string;
   userId: string;
   category: ReminderCategory;
+  sector?: 'vehicle' | 'belongings' | 'travel' | 'other';
   title: string;
   description: string;
   suggestedTime?: string;      // ISO or relative like "2h before departure"
@@ -424,6 +425,17 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const userId = identity.uid;
     const body = await request.json<any>();
     const { input, routeContext, emotion } = body;
+    const scheduledAt = typeof body.scheduledAt === "string" ? body.scheduledAt : null;
+    if (scheduledAt && (!Number.isFinite(Date.parse(scheduledAt)) || Date.parse(scheduledAt) <= Date.now())) {
+      return jsonResponse(env, { error: "Choose a valid future reminder date and time" }, 400);
+    }
+    const sector = ["vehicle", "belongings", "travel", "other"].includes(body.sector) ? body.sector : "travel";
+    const sectorGuidance: Record<string, string> = {
+      vehicle: "Focus on vehicle care: servicing, insurance, tax, licence, tyres, fuel, parking and vehicle documents.",
+      belongings: "Focus on personal items: phone, wallet, keys, documents, luggage, chargers and user-specified packing lists.",
+      travel: "Focus on journeys: departure, route, rest stops, fuel, tolls, border checks and arrival.",
+      other: "Handle other reminders such as appointments, bills, study, work, events and household tasks.",
+    };
 
     if (typeof input !== "string" || !input.trim()) {
       return jsonResponse(env, { error: "input is required" }, 400);
@@ -441,7 +453,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
     const prompt = buildSystemPrompt(
-      "You are Mero Sadak's practical AI travel-reminder assistant for Nepal. Understand the user's language (Nepali or English) and intent. Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.",
+            `You are Mero Sadak's practical AI reminder assistant. The selected sector is ${sector}. ${sectorGuidance[sector] || sectorGuidance.travel} Understand Nepali or English. Return a valid JSON array of 1-5 reminders directly matching the request. Each item: category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (ISO date-time only if timing is clear, else short relative phrase or null), suggestedPlace (only if grounded in request/route, else null), highwayCode (only if grounded in route, else null), approxKmFromOrigin (only if supported by route context, else null). Never invent dates, live traffic, closures, weather, travel times, distances or location. Do not claim a device notification is scheduled; reminders are saved to the user's account. Keep wording short and useful.`,
       { routeContext, emotion: detectedEmotion },
       detectedEmotion
     );
@@ -461,9 +473,10 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
       id: `rem-${Date.now()}-${idx}`,
       userId,
       category: s.category || 'custom',
+      sector,
       title: s.title || 'Reminder',
       description: s.description || '',
-      suggestedTime: s.suggestedTime || null,
+      suggestedTime: scheduledAt || s.suggestedTime || null,
       suggestedPlace: s.suggestedPlace || null,
       highwayCode: s.highwayCode || null,
       approxKmFromOrigin: s.approxKmFromOrigin || null,
