@@ -111,9 +111,9 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
           <motion.div
             key={active.id}
             className="planner-deck-3d__active"
-            initial={{ opacity: 0, rotateY: 16, scale: 0.94 }}
+            initial={{ opacity: 0, rotateY: direction > 0 ? -16 : 16, x: direction > 0 ? 48 : -48, scale: 0.94 }}
             animate={{ opacity: 1, rotateY: 0, scale: 1 }}
-            exit={{ opacity: 0, rotateY: -16, scale: 0.94 }}
+            exit={{ opacity: 0, rotateY: direction > 0 ? 16 : -16, x: direction > 0 ? -48 : 48, scale: 0.94 }}
             transition={{ type: 'spring', stiffness: 280, damping: 28 }}
           >
             <motion.div
