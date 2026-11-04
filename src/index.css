@@ -1901,3 +1901,61 @@ html[data-theme='light'] .ms-depth-stat {
   background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(232,240,247,.98));
   box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 8px 18px rgba(30,55,80,.07);
 }
+
+
+/* ===== MOBILE 3D DEPTH INTERACTION =====
+   Touch devices do not have hover, so keep a restrained perspective at rest
+   and use a tactile 3D press response. This applies to report/stat/reel cards
+   that opt into .ms-depth-card without changing page scrolling or gestures. */
+@media (hover: none) and (pointer: coarse) {
+  .ms-depth-card {
+    transform: perspective(1100px) rotateX(0.35deg);
+    transform-style: preserve-3d;
+    transition:
+      transform 180ms cubic-bezier(.2,.8,.2,1),
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.07) inset,
+      0 14px 26px rgba(0,0,0,0.24),
+      0 4px 9px rgba(0,0,0,0.16);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .ms-depth-card > * {
+    transform: translateZ(5px);
+  }
+
+  .ms-depth-card::before {
+    opacity: 0.82;
+  }
+
+  .ms-depth-card:active {
+    transform: perspective(900px) rotateX(1.15deg) rotateY(-0.55deg) translateY(-2px) scale(0.994);
+    border-color: rgba(52,211,153,0.38);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.1) inset,
+      0 20px 34px rgba(0,0,0,0.3),
+      0 7px 13px rgba(0,0,0,0.2);
+  }
+
+  .ms-depth-card:active::after {
+    opacity: 0.42;
+    transform: rotate(24deg) translateX(115%);
+  }
+
+  html[data-theme='light'] .ms-depth-card {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.95) inset,
+      0 14px 26px rgba(30,55,80,0.1),
+      0 4px 9px rgba(30,55,80,0.07);
+  }
+
+  html[data-theme='light'] .ms-depth-card:active {
+    border-color: rgba(13,148,136,0.32);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,1) inset,
+      0 20px 34px rgba(30,55,80,0.14),
+      0 7px 13px rgba(30,55,80,0.09);
+  }
+}
