@@ -249,7 +249,206 @@ async function handleAiAdminCommand(request: Request, env: Env): Promise<Respons
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
     const prompt = buildSystemPrompt(
-      `You are Mero Sadak's practical AI reminder assistant. The selected reminder sector is ${sector}. ${sectorGuidance[sector] || sectorGuidance.travel} Understand the user's language (Nepali or English). Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.`,
+      "You are an admin data manager for Mero Sadak. Parse the admin's natural language command and return JSON with: action (update_fuel | update_tolls | add_incident | update_cities | unknown), details (structured data for the action), confirmation (human-readable summary). If unsure, set action to 'unknown'.",
+      { emotion },
+      emotion
+    );
+
+    const result = await model.generateContent(`${prompt}\n\nAdmin command: "${command}"`);
+    const text = result.response.text();
+
+    // Try to parse the AI's JSON response
+    let parsed: any = null;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+    } catch {}
+
+    // Execute the parsed action
+    let execution: any = { action: parsed?.action || 'unknown', details: parsed?.details || null };
+
+    if (parsed?.action === 'update_fuel' && parsed?.details) {
+      execution.result = await updateFuelPrices(env, parsed.details);
+    } else if (parsed?.action === 'update_tolls' && parsed?.details) {
+      execution.result = await updateTollRates(env, parsed.details);
+    } else if (parsed?.action === 'add_incident' && parsed?.details) {
+      execution.result = await addIncident(env, parsed.details);
+    } else if (parsed?.action === 'update_cities' && parsed?.details) {
+      execution.result = await updateCityData(env, parsed.details);
+    }
+
+    return jsonResponse(env, {
+      emotion,
+      aiResponse: text,
+      parsed,
+      execution,
+      confirmed: execution.action !== 'unknown',
+    });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "AI admin command failed", note: e?.message }, 500);
+  }
+}
+
+
+/* ==================== PRIVATE TRIP DATA ==================== */
+
+interface BelongingChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+interface PrivateTripData {
+  parkedVehicle: { lat: number; lng: number; savedAt: string; note?: string } | null;
+  belongings: BelongingChecklistItem[];
+  updatedAt: string | null;
+}
+
+async function handleGetTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to access your saved trip data" }, 401);
+  const key = `private-trip-data:${identity.uid}`;
+  const saved = await env.DATA.get(key);
+  if (!saved) {
+    return jsonResponse(env, {
+      parkedVehicle: null,
+      belongings: [],
+      updatedAt: null,
+    } satisfies PrivateTripData);
+  }
+  try {
+    const data = JSON.parse(saved) as PrivateTripData;
+    return jsonResponse(env, {
+      parkedVehicle: data.parkedVehicle || null,
+      belongings: Array.isArray(data.belongings) ? data.belongings : [],
+      updatedAt: data.updatedAt || null,
+    });
+  } catch {
+    return jsonResponse(env, { error: "Saved trip data could not be read" }, 500);
+  }
+}
+
+async function handleSaveTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to save your trip data" }, 401);
+  try {
+    const body = await request.json<any>();
+    let parkedVehicle: PrivateTripData["parkedVehicle"] = null;
+    if (body?.parkedVehicle && typeof body.parkedVehicle === "object") {
+      const { lat, lng, savedAt, note } = body.parkedVehicle;
+      if (
+        typeof lat !== "number" || !Number.isFinite(lat) || lat < 26 || lat > 31 ||
+        typeof lng !== "number" || !Number.isFinite(lng) || lng < 79 || lng > 89 ||
+        typeof savedAt !== "string" || Number.isNaN(Date.parse(savedAt))
+      ) {
+        return jsonResponse(env, { error: "Invalid parked vehicle location" }, 400);
+      }
+      parkedVehicle = {
+        lat,
+        lng,
+        savedAt,
+        ...(typeof note === "string" && note.trim() ? { note: note.trim().slice(0, 160) } : {}),
+      };
+    }
+
+    const rawBelongings = Array.isArray(body?.belongings) ? body.belongings.slice(0, 40) : [];
+    const belongings: BelongingChecklistItem[] = [];
+    for (const item of rawBelongings) {
+      if (!item || typeof item.id !== "string" || typeof item.label !== "string") continue;
+      const label = item.label.trim().slice(0, 80);
+      if (!label) continue;
+      belongings.push({
+        id: item.id.slice(0, 80),
+        label,
+        checked: item.checked === true,
+      });
+    }
+
+    const data: PrivateTripData = {
+      parkedVehicle,
+      belongings,
+      updatedAt: new Date().toISOString(),
+    };
+    await env.DATA.put(`private-trip-data:${identity.uid}`, JSON.stringify(data));
+    return jsonResponse(env, { ok: true, data });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Save trip data failed", note: e?.message }, 500);
+  }
+}
+
+/* ==================== AI REMINDER SERVICE ==================== */
+
+type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
+
+interface ReminderItem {
+  id: string;
+  userId: string;
+  category: ReminderCategory;
+  title: string;
+  description: string;
+  suggestedTime?: string;      // ISO or relative like "2h before departure"
+  suggestedPlace?: string;
+  highwayCode?: string;
+  approxKmFromOrigin?: number;
+  routeId?: string;
+  createdAt: string;
+  active: boolean;
+  dismissed: boolean;
+}
+
+async function readReminders(env: Env, userId: string): Promise<ReminderItem[]> {
+  const key = `user-reminders:${userId}`;
+  const saved = await env.DATA.get(key);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // One-time compatibility read for reminders saved by the older shared-key format.
+  const legacy = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
+  return legacy.filter((reminder) => reminder.userId === userId);
+}
+
+async function saveReminders(env: Env, userId: string, reminders: ReminderItem[]): Promise<void> {
+  await env.DATA.put(`user-reminders:${userId}`, JSON.stringify(reminders));
+}
+
+async function handleAiReminder(request: Request, env: Env): Promise<Response> {
+  try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to use personal reminders" }, 401);
+    const userId = identity.uid;
+    const body = await request.json<any>();
+    const { input, routeContext, emotion } = body;
+    const sector = ["vehicle", "belongings", "travel", "other"].includes(body.sector) ? body.sector : "travel";
+    const sectorGuidance: Record<string, string> = {
+      vehicle: "Focus on vehicle care: servicing, insurance, tax, licence, tyres, fuel, parking and vehicle documents.",
+      belongings: "Focus on personal items: phone, wallet, keys, documents, luggage, chargers and user-specified packing lists.",
+      travel: "Focus on journeys: departure, route, rest stops, fuel, tolls, border checks and arrival.",
+      other: "Handle other reminders such as appointments, bills, study, work, events and household tasks.",
+    };
+
+    if (typeof input !== "string" || !input.trim()) {
+      return jsonResponse(env, { error: "input is required" }, 400);
+    }
+    if (input.length > 1200) {
+      return jsonResponse(env, { error: "Reminder request is too long (maximum 1,200 characters)" }, 400);
+    }
+    if (!env.GEMINI_API_KEY) {
+      return jsonResponse(env, { error: "AI service not configured" }, 503);
+    }
+
+    const detectedEmotion = emotion || detectEmotion(input);
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
+
+    const prompt = buildSystemPrompt(
+            `You are Mero Sadak's practical AI reminder assistant. The selected sector is ${sector}. ${sectorGuidance[sector] || sectorGuidance.travel} Understand Nepali or English. Return a valid JSON array of 1-5 reminders directly matching the request. Each item: category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (ISO date-time only if timing is clear, else short relative phrase or null), suggestedPlace (only if grounded in request/route, else null), highwayCode (only if grounded in route, else null), approxKmFromOrigin (only if supported by route context, else null). Never invent dates, live traffic, closures, weather, travel times, distances or location. Do not claim a device notification is scheduled; reminders are saved to the user's account. Keep wording short and useful.`,
       { routeContext, emotion: detectedEmotion },
       detectedEmotion
     );
