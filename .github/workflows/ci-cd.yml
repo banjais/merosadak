@@ -63,6 +63,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund --prefer-offline --loglevel=error
       - run: npx tsc --noEmit
+      - run: npm run test:unit
 
   worker-typecheck:
     name: Type check worker
