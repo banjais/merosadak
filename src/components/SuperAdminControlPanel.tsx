@@ -9,7 +9,6 @@ import {
   Settings,
   BarChart3,
   AlertTriangle,
-  LogOut,
   Mail,
   CheckCircle,
   RefreshCw,
@@ -122,51 +121,48 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <span className="hidden sm:inline-flex items-center rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[10px] font-bold text-rose-300">
+            SUPER ADMIN
+          </span>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-sm font-medium"
+            className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-xs sm:text-sm font-semibold"
           >
-            Close Panel
-          </button>
-          <button
-            onClick={() => {}}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-900/20 text-rose-400 border border-rose-500/30 hover:bg-rose-900/40 hover:text-rose-300 transition text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign Out</span>
+            Back to account
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-64 bg-slate-900/50 border-r border-slate-800 shrink-0 flex flex-col">
-          <div className="px-4 py-3 border-b border-slate-800">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sections</p>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Responsive navigation: horizontal section rail on phones, sidebar on desktop. */}
+        <aside className="flex w-full shrink-0 flex-col border-b border-slate-800 bg-slate-900/70 lg:w-64 lg:border-b-0 lg:border-r">
+          <div className="hidden border-b border-slate-800 px-4 py-3 lg:block">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Workspace</p>
           </div>
-          <div className="flex-1 overflow-y-auto p-1 space-y-0.5">
+          <nav aria-label="Super Admin sections" className="flex gap-1 overflow-x-auto p-2 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition rounded-lg ${
+                className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition lg:w-full lg:gap-3 lg:text-sm ${
                   activeSection === section.id
-                    ? 'bg-accent-bg accent-text border-r-2 border-accent-border shadow-sm'
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                    ? 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+                    : 'border-transparent text-slate-400 hover:bg-slate-800/70 hover:text-white'
                 }`}
+                aria-current={activeSection === section.id ? 'page' : undefined}
               >
-                <section.icon className="w-4 h-4 shrink-0" />
+                <section.icon className="h-4 w-4 shrink-0" />
                 <span>{section.label}</span>
               </button>
             ))}
-          </div>
-          <div className="p-4 border-t border-slate-800">
-            <p className="text-[10px] text-slate-500 font-mono">Mero Sadak v2.4.0</p>
+          </nav>
+          <div className="hidden border-t border-slate-800 p-4 lg:block">
+            <p className="text-[10px] font-mono text-slate-500">Mero Sadak · Admin</p>
           </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950/40 custom-scrollbar p-6 lg:p-8">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-slate-950/40 custom-scrollbar p-3 sm:p-5 lg:p-8">
           {activeSection === 'dashboard' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -277,7 +273,8 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
 
               {/* Managed users table */}
               <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
-                <table className="w-full text-left text-[11px]">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-[11px]">
                   <thead className="bg-slate-950/50 border-b border-slate-800/60">
                     <tr>
                       <th className="px-4 py-3 text-slate-400 font-medium">Email</th>
@@ -295,7 +292,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                       >
                         <td className="px-4 py-3 text-slate-200 font-medium truncate max-w-[220px] sm:max-w-xs">
                           {u.email}
-                          {u.email === userEmail && <span className="ml-1.5 text-[9px] text-slate-500">(you)</span>}
+                          {u.email.trim().toLowerCase() === userEmail.trim().toLowerCase() && <span className="ml-1.5 text-[9px] text-emerald-400">(you)</span>}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
@@ -314,8 +311,8 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                               <ShieldCheck className="w-3 h-3" /> Built-in
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active
+                            <span className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Role assigned
                             </span>
                           )}
                         </td>
@@ -351,6 +348,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
               <p className="text-[10px] text-slate-500">
                 Added emails keep their role across devices (stored in Firestore). Change a role with the dropdown, or
