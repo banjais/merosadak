@@ -79,8 +79,8 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
     : hasCaution
       ? {
           tone: 'caution',
-          label: 'PASS WITH CAUTION',
-          sentence: `Open the whole way, but ${[
+          label: 'CAUTION IN DATA',
+          sentence: `Stored route data flags this route for caution: ${[
             cautionKm > 0 ? `${Math.round(cautionKm)} km needs care` : null,
             incidents > 0 ? `${incidents} active alert${incidents === 1 ? '' : 's'}` : null,
           ]
