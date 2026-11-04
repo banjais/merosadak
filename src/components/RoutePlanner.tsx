@@ -13,7 +13,7 @@ import {
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
-import { findOptimizedRoute, pickVerifiedRoute, ensureRealRoadGeometry } from '../utils/routeOptimizer';
+import { findOptimizedRoute, pickVerifiedRoute, pickRouteByCertification, ensureRealRoadGeometry } from '../utils/routeOptimizer';
 import { RouteComparisonView } from './RouteComparisonView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
@@ -707,9 +707,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       // highway" bug).
       await ensureRealRoadGeometry();
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined, liveIncidents);
-      // Respect the chosen preference, but never present a straight-line
-      // approximation as a road distance.
-      const resolved = plan ? pickVerifiedRoute(plan) : null;
+      // Prefer a verified road route. If no connected road path exists,
+      // retain the explicitly labelled aerial estimate instead of snapping
+      // the user to an unrelated junction or silently showing no result.
+      const resolved = plan
+        ? (pickVerifiedRoute(plan) || pickRouteByCertification(plan))
+        : null;
       if (resolved && fuelPrices) {
         const updatedPlan = applyLiveFuelPrices(resolved, veh, fuelPrices);
         setRoutePlan(updatedPlan);
