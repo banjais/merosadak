@@ -48,22 +48,22 @@ export const OfficeAdminPanel: React.FC<OfficeAdminPanelProps> = ({
       positioned elements paint above static siblings, so the backdrop dimmed
       the content and swallowed every click (onClose on any sidebar click). */}
       {/* Top bar */}
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-md shadow-cyan-500/20">
+      <header className="bg-slate-900 border-b border-slate-800 px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
             <Database className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white font-display tracking-tight">Office Admin Panel</h3>
+            <h3 className="text-xs sm:text-sm font-bold text-white font-display tracking-tight leading-tight">Office Admin Panel</h3>
             <p className="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{userEmail}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-sm font-medium"
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition text-xs sm:text-sm font-medium shrink-0"
           >
-            Close Panel
+            <span className="hidden sm:inline">Close Panel</span><span className="sm:hidden">Close</span>
           </button>
           <button
             onClick={() => {}}
