@@ -289,6 +289,93 @@ async function handleAiAdminCommand(request: Request, env: Env): Promise<Respons
   }
 }
 
+
+/* ==================== PRIVATE TRIP DATA ==================== */
+
+interface BelongingChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+interface PrivateTripData {
+  parkedVehicle: { lat: number; lng: number; savedAt: string; note?: string } | null;
+  belongings: BelongingChecklistItem[];
+  updatedAt: string | null;
+}
+
+async function handleGetTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to access your saved trip data" }, 401);
+  const key = `private-trip-data:${identity.uid}`;
+  const saved = await env.DATA.get(key);
+  if (!saved) {
+    return jsonResponse(env, {
+      parkedVehicle: null,
+      belongings: [],
+      updatedAt: null,
+    } satisfies PrivateTripData);
+  }
+  try {
+    const data = JSON.parse(saved) as PrivateTripData;
+    return jsonResponse(env, {
+      parkedVehicle: data.parkedVehicle || null,
+      belongings: Array.isArray(data.belongings) ? data.belongings : [],
+      updatedAt: data.updatedAt || null,
+    });
+  } catch {
+    return jsonResponse(env, { error: "Saved trip data could not be read" }, 500);
+  }
+}
+
+async function handleSaveTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to save your trip data" }, 401);
+  try {
+    const body = await request.json<any>();
+    let parkedVehicle: PrivateTripData["parkedVehicle"] = null;
+    if (body?.parkedVehicle && typeof body.parkedVehicle === "object") {
+      const { lat, lng, savedAt, note } = body.parkedVehicle;
+      if (
+        typeof lat !== "number" || !Number.isFinite(lat) || lat < 26 || lat > 31 ||
+        typeof lng !== "number" || !Number.isFinite(lng) || lng < 79 || lng > 89 ||
+        typeof savedAt !== "string" || Number.isNaN(Date.parse(savedAt))
+      ) {
+        return jsonResponse(env, { error: "Invalid parked vehicle location" }, 400);
+      }
+      parkedVehicle = {
+        lat,
+        lng,
+        savedAt,
+        ...(typeof note === "string" && note.trim() ? { note: note.trim().slice(0, 160) } : {}),
+      };
+    }
+
+    const rawBelongings = Array.isArray(body?.belongings) ? body.belongings.slice(0, 40) : [];
+    const belongings: BelongingChecklistItem[] = [];
+    for (const item of rawBelongings) {
+      if (!item || typeof item.id !== "string" || typeof item.label !== "string") continue;
+      const label = item.label.trim().slice(0, 80);
+      if (!label) continue;
+      belongings.push({
+        id: item.id.slice(0, 80),
+        label,
+        checked: item.checked === true,
+      });
+    }
+
+    const data: PrivateTripData = {
+      parkedVehicle,
+      belongings,
+      updatedAt: new Date().toISOString(),
+    };
+    await env.DATA.put(`private-trip-data:${identity.uid}`, JSON.stringify(data));
+    return jsonResponse(env, { ok: true, data });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Save trip data failed", note: e?.message }, 500);
+  }
+}
+
 /* ==================== AI REMINDER SERVICE ==================== */
 
 type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
@@ -453,7 +540,7 @@ async function handleDeleteReminder(request: Request, env: Env): Promise<Respons
 function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
@@ -1072,6 +1159,12 @@ export default {
     }
     if (url.pathname === "/api/ai-admin-command" && request.method === "POST") {
       return handleAiAdminCommand(request, env);
+    }
+    if (url.pathname === "/api/trip-data" && request.method === "GET") {
+      return handleGetTripData(request, env);
+    }
+    if (url.pathname === "/api/trip-data" && request.method === "PUT") {
+      return handleSaveTripData(request, env);
     }
     if (url.pathname === "/api/ai-reminder" && request.method === "POST") {
       return handleAiReminder(request, env);
