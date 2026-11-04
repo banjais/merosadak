@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fetchJson } from '../utils/apiConfig';
+import { fetchJsonWithFirebaseAuth } from '../utils/apiConfig';
 import { Sparkles, Send, Loader2, ShieldAlert, Fuel, Compass, AlertTriangle, MapPin, Database } from 'lucide-react';
 
 interface AdminCommandPanelProps {
@@ -12,27 +12,24 @@ export const AdminCommandPanel: React.FC<AdminCommandPanelProps> = ({
   onClose,
 }) => {
   const [command, setCommand] = useState('');
-  const [adminKey, setAdminKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const ADMIN_KEY_HINT = 'Enter your admin key';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!command.trim() || !adminKey.trim()) {
-      setError('Command and admin key are required.');
+    if (!command.trim()) {
+      setError('Enter an admin command.');
       return;
     }
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const data = await fetchJson<any>('/api/ai-admin-command', {
+      const data = await fetchJsonWithFirebaseAuth<any>('/api/ai-admin-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command: command.trim(), adminKey }),
+        body: JSON.stringify({ command: command.trim() }),
       });
       setResult(data);
     } catch (err: any) {
@@ -79,17 +76,6 @@ export const AdminCommandPanel: React.FC<AdminCommandPanelProps> = ({
           </p>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Admin Key</label>
-            <input
-              type="password"
-              value={adminKey}
-              onChange={(e) => setAdminKey(e.target.value)}
-              placeholder={ADMIN_KEY_HINT}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500"
-            />
-          </div>
-
-          <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Command</label>
             <textarea
               value={command}
@@ -109,7 +95,7 @@ export const AdminCommandPanel: React.FC<AdminCommandPanelProps> = ({
 
           <button
             onClick={handleSubmit}
-            disabled={loading || !command.trim() || !adminKey.trim()}
+            disabled={loading || !command.trim()}
             className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-sm shadow-lg shadow-rose-500/20 disabled:opacity-50 transition flex items-center justify-center space-x-2"
           >
             {loading ? (
