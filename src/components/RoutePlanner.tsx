@@ -458,6 +458,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }
     const items: DeckItem[] = [
       { id: 'verdict', label: 'Trip summary', hint: 'Distance · time · status' },
+      { id: 'actions', label: 'Trip actions', hint: 'Share · emergency help' },
       { id: 'blocks', label: 'Road alerts', hint: 'Only important issues' },
       { id: 'journey', label: 'Journey', hint: 'Key road sections' },
       { id: 'options', label: 'Trip options', hint: 'Vehicle · route type' },
