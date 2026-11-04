@@ -32,7 +32,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'jnp', name: 'Janakpur', nepaliName: 'जनकपुर', district: 'Dhanusha', province: 'Madhesh', lat: 26.7200, lng: 85.9200, elevationM: 74, isMajorHub: false, connectedHighways: ['NH22', 'NH30'] },
   { id: 'rbj', name: 'Rajbiraj', nepaliName: 'राजविराज', district: 'Saptari', province: 'Madhesh', lat: 26.5333, lng: 86.7333, elevationM: 70, isMajorHub: false, connectedHighways: ['NH14'] },
   { id: 'ctr', name: 'Chautara', nepaliName: 'चौतारा', district: 'Sindhupalchok', province: 'Bagmati', lat: 27.8667, lng: 85.7000, elevationM: 1500, isMajorHub: false, connectedHighways: ['NH31'] },
-  { id: 'bid', name: 'Bidur', nepaliName: 'बिदुर', district: 'Nuwakot', province: 'Bagmati', lat: 27.8833, lng: 85.3167, elevationM: 1100, isMajorHub: false, connectedHighways: ['NH40'] },
+  { id: 'bid', name: 'Bidur', nepaliName: 'बिदुर', district: 'Nuwakot', province: 'Bagmati', lat: 27.9083, lng: 85.1519, elevationM: 830, isMajorHub: false, connectedHighways: ['NH40'] },
   { id: 'pyt', name: 'Pyuthan', nepaliName: 'प्युठान', district: 'Pyuthan', province: 'Lumbini', lat: 28.0833, lng: 82.8500, elevationM: 1300, isMajorHub: false, connectedHighways: ['NH19'] },
   { id: 'bsl', name: 'Besisahar', nepaliName: 'बेसिसहार', district: 'Lamjung', province: 'Gandaki', lat: 28.2333, lng: 84.3667, elevationM: 760, isMajorHub: false, connectedHighways: ['NH25'] },
   { id: 'chm', name: 'Chame', nepaliName: 'चामे', district: 'Manang', province: 'Gandaki', lat: 28.5833, lng: 84.2167, elevationM: 2700, isMajorHub: false, connectedHighways: ['NH25'] },
@@ -40,7 +40,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'bhp', name: 'Bhadrapur', nepaliName: 'भद्रपुर', district: 'Jhapa', province: 'Koshi', lat: 26.5333, lng: 88.0833, elevationM: 101, isMajorHub: false, connectedHighways: ['NH01'] },
   { id: 'khn', name: 'Khunuwa', nepaliName: 'खुनेउवा', district: 'Kapilvastu', province: 'Lumbini', lat: 27.4167, lng: 82.8667, elevationM: 180, isMajorHub: false, connectedHighways: ['NH50'] },
   { id: 'sdk', name: 'Sandhikharka', nepaliName: 'सन्धिखर्क', district: 'Arghakhanchi', province: 'Lumbini', lat: 28.0000, lng: 83.0333, elevationM: 1600, isMajorHub: false, connectedHighways: ['NH51'] },
-  { id: 'ghr', name: 'Ghorahi', nepaliName: 'घोराही', district: 'Dang', province: 'Lumbini', lat: 28.2500, lng: 82.4833, elevationM: 700, isMajorHub: false, connectedHighways: ['NH55'] },
+  { id: 'ghr', name: 'Ghorahi', nepaliName: 'घोराही', district: 'Dang', province: 'Lumbini', lat: 28.0264, lng: 82.4917, elevationM: 630, isMajorHub: false, connectedHighways: ['NH55'] },
   { id: 'jjk', name: 'Jajarkot', nepaliName: 'जाजरकोट', district: 'Jajarkot', province: 'Karnali', lat: 28.7000, lng: 82.2000, elevationM: 1400, isMajorHub: false, connectedHighways: ['NH56'] },
   { id: 'dun', name: 'Dunai', nepaliName: 'दुनै', district: 'Dolpa', province: 'Karnali', lat: 29.2500, lng: 82.4000, elevationM: 2000, isMajorHub: false, connectedHighways: ['NH57'] },
   { id: 'gly', name: 'Gulariya', nepaliName: 'गुलारिया', district: 'Bardiya', province: 'Lumbini', lat: 28.2167, lng: 81.3333, elevationM: 150, isMajorHub: false, connectedHighways: ['NH59'] },
@@ -49,7 +49,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'dpl', name: 'Dipayal', nepaliName: 'दिपायल', district: 'Doti', province: 'Sudurpashchim', lat: 28.7167, lng: 80.9167, elevationM: 180, isMajorHub: false, connectedHighways: ['NH65'] },
   { id: 'ark', name: 'Arungkhola', nepaliName: 'अरुङखोला', district: 'Bara', province: 'Madhesh', lat: 27.7167, lng: 84.1167, elevationM: 200, isMajorHub: false, connectedHighways: ['NH68'] },
   { id: 'ith', name: 'Itahari', nepaliName: 'इटहरी', district: 'Sunsari', province: 'Koshi', lat: 26.6583, lng: 87.2833, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
-  { id: 'dmk', name: 'Damak', nepaliName: 'दमक', district: 'Jhapa', province: 'Koshi', lat: 26.8667, lng: 87.7000, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
+  { id: 'dmk', name: 'Damak', nepaliName: 'दमक', district: 'Jhapa', province: 'Koshi', lat: 26.6640, lng: 87.6990, elevationM: 100, isMajorHub: false, connectedHighways: ['NH01'] },
   { id: 'ptl', name: 'Pathlaiya', nepaliName: 'पाथलैया', district: 'Bara', province: 'Madhesh', lat: 27.0167, lng: 84.9500, elevationM: 100, isMajorHub: false, connectedHighways: ['NH01', 'NH02'] },
   { id: 'lhn', name: 'Lahan', nepaliName: 'लहान', district: 'Siraha', province: 'Madhesh', lat: 26.7333, lng: 86.4833, elevationM: 110, isMajorHub: false, connectedHighways: ['NH01'] },
   { id: 'atr', name: 'Attariya', nepaliName: 'अटरिया', district: 'Kailali', province: 'Sudurpashchim', lat: 28.8833, lng: 80.1500, elevationM: 190, isMajorHub: false, connectedHighways: ['NH01'] },
@@ -66,7 +66,7 @@ export const CITIES_AND_JUNCTIONS: CityNode[] = [
   { id: 'khk', name: 'Khurkot', nepaliName: 'खुर्कोट', district: 'Sindhuli', province: 'Bagmati', lat: 27.3333, lng: 86.0167, elevationM: 470, isMajorHub: false, connectedHighways: ['NH13'] },
   { id: 'smd', name: 'Sindhuli Madi', nepaliName: 'सिन्धुली माडी', district: 'Sindhuli', province: 'Bagmati', lat: 27.2800, lng: 85.9100, elevationM: 500, isMajorHub: false, connectedHighways: ['NH13'] },
   { id: 'bkt', name: 'Bhaktapur', nepaliName: 'भक्तपुर', district: 'Bhaktapur', province: 'Bagmati', lat: 27.6880, lng: 85.4412, elevationM: 1380, isMajorHub: false, connectedHighways: ['NH03'] },
-  { id: 'bnp', name: 'Banepa', nepaliName: 'बाँपेपा', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.9330, lng: 85.5330, elevationM: 1040, isMajorHub: false, connectedHighways: ['NH13'] }
+  { id: 'bnp', name: 'Banepa', nepaliName: 'बानेपा', district: 'Kavrepalanchok', province: 'Bagmati', lat: 27.6298, lng: 85.5215, elevationM: 1480, isMajorHub: false, connectedHighways: ['NH13'] }
 ];
 
 export const NEPAL_HIGHWAYS: Highway[] = [

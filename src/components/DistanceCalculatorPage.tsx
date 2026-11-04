@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
-import { findOptimizedRoute, pickRouteByCertification } from '../utils/routeOptimizer';
-import { preloadRoadGraph, findRoadGraphAlternatives } from '../utils/roadGraphRouter';
+import { findOptimizedRoute, pickRouteByCertification, ensureRealRoadGeometry } from '../utils/routeOptimizer';
+import { findRoadGraphAlternatives } from '../utils/roadGraphRouter';
 import { CityNode } from '../types';
 import { loadExpandedCities } from '../utils/cityDataLoader';
 import { filterCities, searchCitiesWithGeocode, countCityMatches, citySuggestionLimit } from '../utils/citySearch';
@@ -272,7 +272,10 @@ export const DistanceCalculatorPage: React.FC<DistanceCalculatorPageProps> = ({ 
 
   useEffect(() => {
     let cancelled = false;
-    preloadRoadGraph().then(() => {
+    // Await BOTH the road graph and the baked edge-geometry patch, then apply
+    // the real highway geometry to the curated edges before recomputing the
+    // plan — otherwise the drawn line uses the hand-estimated 3-point chords.
+    ensureRealRoadGeometry().then(() => {
       if (cancelled) return;
       if (!roadGraphLoadedRef.current) {
         roadGraphLoadedRef.current = true;

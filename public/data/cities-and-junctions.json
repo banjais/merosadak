@@ -464,9 +464,9 @@
     "nepaliName": "बिदुर",
     "district": "Nuwakot",
     "province": "Bagmati",
-    "lat": 27.8833,
-    "lng": 85.3167,
-    "elevationM": 1100,
+    "lat": 27.9083,
+    "lng": 85.1519,
+    "elevationM": 830,
     "isMajorHub": false,
     "connectedHighways": [
       "NH40"
@@ -576,9 +576,9 @@
     "nepaliName": "घोराही",
     "district": "Dang",
     "province": "Lumbini",
-    "lat": 28.25,
-    "lng": 82.4833,
-    "elevationM": 700,
+    "lat": 28.0264,
+    "lng": 82.4917,
+    "elevationM": 630,
     "isMajorHub": false,
     "connectedHighways": [
       "NH55"
@@ -702,9 +702,9 @@
     "nepaliName": "दमक",
     "district": "Jhapa",
     "province": "Koshi",
-    "lat": 26.8667,
-    "lng": 87.7,
-    "elevationM": 110,
+    "lat": 26.664,
+    "lng": 87.699,
+    "elevationM": 100,
     "isMajorHub": false,
     "connectedHighways": [
       "NH01"
@@ -939,12 +939,12 @@
   {
     "id": "bnp",
     "name": "Banepa",
-    "nepaliName": "बाँपेपा",
+    "nepaliName": "बानेपा",
     "district": "Kavrepalanchok",
     "province": "Bagmati",
-    "lat": 27.933,
-    "lng": 85.533,
-    "elevationM": 1040,
+    "lat": 27.6298,
+    "lng": 85.5215,
+    "elevationM": 1480,
     "isMajorHub": false,
     "connectedHighways": [
       "NH13"

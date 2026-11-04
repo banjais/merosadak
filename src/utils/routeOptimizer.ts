@@ -1163,43 +1163,83 @@ export const ROAD_NETWORK_EDGES: GraphEdge[] = [
 // estimate. Road status/surface/elevation stay as curated (the raw survey
 // data doesn't carry live condition info).
 let realRoadDataApplied = false;
-function applyRealRoadDataToEdges(): void {
+
+/**
+ * Baked geometry for edges the road graph cannot route plausibly (survey
+ * coverage gaps force absurd detours). Produced in an offline pass: each
+ * edge's line is rebuilt from the raw DoR highway GeoJSON points
+ * (public/data/highway/*.geojson) inside a corridor around the two
+ * endpoints, so the drawn path lies ON the real road. Keyed "fromId|toId".
+ */
+interface EdgeGeometryPatch {
+  km: number;
+  coords: [number, number][];
+}
+let edgeGeometryPatch: Record<string, EdgeGeometryPatch> | null = null;
+let edgePatchPromise: Promise<Record<string, EdgeGeometryPatch> | null> | null = null;
+
+function loadEdgeGeometryPatch(): Promise<Record<string, EdgeGeometryPatch> | null> {
+  if (edgeGeometryPatch) return Promise.resolve(edgeGeometryPatch);
+  if (edgePatchPromise) return edgePatchPromise;
+  edgePatchPromise = fetch('/data/edge-geometry-patch.json')
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      edgeGeometryPatch = data;
+      return data;
+    })
+    .catch(() => null);
+  return edgePatchPromise;
+}
+
+function applyRealRoadDataToEdges(patch: Record<string, EdgeGeometryPatch> | null): void {
   if (realRoadDataApplied) return;
   let updated = 0;
   let skippedAsImplausible = 0;
+  let patched = 0;
   for (const edge of ROAD_NETWORK_EDGES) {
     const real = findRoadGraphRoute(edge.fromId, edge.toId);
-    if (!real || real.pathCoordinates.length < 2) continue;
 
     // Sanity guard: the source highway link data has real coverage gaps, which
     // occasionally forces the pathfinder into an absurd long detour instead of
     // the true short local road. If the real-graph distance is wildly larger
-    // than the curated estimate, that's a data-gap artifact, not a real route
-    // — keep the curated estimate for that edge rather than replace it with a
-    // broken one.
+    // than the curated estimate, that's a data-gap artifact — fall through to
+    // the baked corridor-stitched geometry instead of drawing the detour.
     const oldDistanceKm = edge.distanceKm;
-    if (oldDistanceKm > 0 && real.distanceKm > oldDistanceKm * 2.5) {
-      skippedAsImplausible++;
+    if (real && real.pathCoordinates.length >= 2 && !(oldDistanceKm > 0 && real.distanceKm > oldDistanceKm * 2.5)) {
+      edge.distanceKm = real.distanceKm;
+      edge.intermediateCoords = real.pathCoordinates;
+      if (oldDistanceKm > 0) {
+        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real.distanceKm / oldDistanceKm));
+      }
+      updated++;
       continue;
     }
 
-    edge.distanceKm = real.distanceKm;
-    edge.intermediateCoords = real.pathCoordinates;
-    if (oldDistanceKm > 0) {
-      edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real.distanceKm / oldDistanceKm));
+    // Second chance: baked raw-highway corridor geometry (keeps the road on
+    // the real alignment where the graph itself is disconnected).
+    const baked = patch?.[`${edge.fromId}|${edge.toId}`];
+    if (baked && baked.coords.length >= 2 && !(oldDistanceKm > 0 && baked.km > oldDistanceKm * 2.5)) {
+      edge.distanceKm = baked.km;
+      edge.intermediateCoords = baked.coords;
+      if (oldDistanceKm > 0) {
+        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (baked.km / oldDistanceKm));
+      }
+      patched++;
+      continue;
     }
-    updated++;
+
+    skippedAsImplausible++;
   }
   realRoadDataApplied = true;
   if (typeof window !== 'undefined') {
     // eslint-disable-next-line no-console
-    console.info(`[roadGraph] Applied real highway geometry to ${updated}/${ROAD_NETWORK_EDGES.length} route edges (${skippedAsImplausible} skipped as implausible detours, kept curated estimate)`);
+    console.info(`[roadGraph] Applied real highway geometry to ${updated + patched}/${ROAD_NETWORK_EDGES.length} route edges (${patched} via corridor stitch, ${skippedAsImplausible} kept curated estimate)`);
   }
 }
 
 if (typeof window !== 'undefined') {
-  preloadRoadGraph().then((g) => {
-    if (g) applyRealRoadDataToEdges();
+  Promise.all([preloadRoadGraph(), loadEdgeGeometryPatch()]).then(([g]) => {
+    if (g) applyRealRoadDataToEdges(edgeGeometryPatch);
   });
 }
 
@@ -1214,8 +1254,8 @@ if (typeof window !== 'undefined') {
 export async function ensureRealRoadGeometry(): Promise<void> {
   if (realRoadDataApplied) return;
   try {
-    const g = await preloadRoadGraph();
-    if (g) applyRealRoadDataToEdges();
+    const [g] = await Promise.all([preloadRoadGraph(), loadEdgeGeometryPatch()]);
+    if (g) applyRealRoadDataToEdges(edgeGeometryPatch);
   } catch {
     // Graph unavailable (offline, corrupt cache) — curated coarse geometry
     // still produces a valid plan, just with simplified lines.
