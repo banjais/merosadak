@@ -304,14 +304,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [demoUser, setDemoUser] = useState<AppUser | null>(loadDemoSession);
   const [loading, setLoading] = useState(true);
   const [redirectError, setRedirectError] = useState<string | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [userRole, setUserRoleState] = useState<UserRole>('GeneralUser');
   const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
 
   // The identity every panel renders: a real Firebase account wins over a
   // local demo session (signing in with Google discards the demo session).
   const user: AppUser | null = firebaseUser ?? demoUser;
   const isDemoSession = !firebaseUser && !!demoUser;
+  // Derive permissions synchronously from the current identity and role map.
+  // Built-in owner accounts therefore render as Super Admin on the first
+  // authenticated render, without a transient General User state.
+  const userRole = resolveUserRole(user?.email ?? null, userRoles);
+  const isSuperAdmin = userRole === 'superadmin';
 
   // Discard any demo session the moment a real Firebase account signs in.
   useEffect(() => {
@@ -321,17 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [firebaseUser, demoUser]);
 
-  // Single source of truth for role resolution: recompute whenever the
-  // effective identity or the Firestore role map changes. This covers sign-in,
-  // sign-out, demo sessions and live SuperAdmin role edits in one place.
-  useEffect(() => {
-    const role = resolveUserRole(user?.email ?? null, userRoles);
-    setUserRoleState(role);
-    setIsSuperAdmin(role === 'superadmin');
-  }, [user, userRoles]);
-
-  // Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
-  // assignments made by the superadmin panel.
+  // Load role assignments from Firestore for cross-device role synchronization.
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, 'userRoles'),
@@ -342,8 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (data.role) roles[d.id] = data.role;
         });
         setUserRoles(roles);
-        // Role re-resolution happens in the unified effect above, which now
-        // also sees the fresh `userRoles` map (it depends on userRoles).
+        // The current user's role is derived directly from this updated map.
       },
       // Security rules commonly deny reads on `userRoles` for anonymous
       // visitors. Treat a denied snapshot the same as "no roles" instead of
@@ -367,7 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (currentUser) => {
         setFirebaseUser(currentUser);
         setLoading(false);
-        // Role resolution happens in the unified effect above.
+        // The role is derived from the updated Firebase identity on render.
       },
       (error) => {
         console.error('[Mero Sadak] Auth state subscription failed:', error);
@@ -382,25 +374,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setUserRoleFn = useCallback(async (email: string, role: UserRole) => {
     await setUserRole(email, role);
-    // Refresh local state immediately so the panel reflects the change.
-    const updated = resolveUserRole(email, { ...userRoles, [email]: role });
-    if (email === user?.email) {
-      setUserRoleState(updated);
-      setIsSuperAdmin(updated === 'superadmin');
-    }
-  }, [user?.email, userRoles]);
+    const normalizedEmail = email.trim().toLowerCase();
+    setUserRoles((current) => ({ ...current, [normalizedEmail]: role }));
+  }, []);
 
   const deleteUserRoleFn = useCallback(async (email: string) => {
     await deleteUserRole(email);
-    // If the deleted user is the one signed in on THIS device, drop their
-    // elevated role immediately instead of waiting for the next sign-in.
-    if (user?.email && user.email.trim().toLowerCase() === email.trim().toLowerCase()) {
-      const updated = resolveUserRole(email, {});
-      setUserRoleState(updated);
-      setIsSuperAdmin(updated === 'superadmin');
-    }
-    // Otherwise the userRoles onSnapshot propagates the removal to every panel.
-  }, [user?.email]);
+    const normalizedEmail = email.trim().toLowerCase();
+    setUserRoles((current) => {
+      const next = { ...current };
+      delete next[normalizedEmail];
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
