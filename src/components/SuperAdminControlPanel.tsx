@@ -9,9 +9,7 @@ import {
   Settings,
   BarChart3,
   AlertTriangle,
-  Mail,
   CheckCircle,
-  RefreshCw,
   Activity,
   Sparkles,
   ChevronRight,
@@ -182,45 +180,35 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({
                 ))}
               </div>
 
-              <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-bold text-white">Superadmin Actions</h4>
-                  <button
-                    onClick={() => {}}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 transition"
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" />
-                    Refresh Data
-                  </button>
+              <section className="rounded-2xl border border-slate-800/70 bg-slate-900 p-5 sm:p-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300">Control center</p>
+                <h4 className="mt-2 text-lg font-bold text-white">Manage Mero Sadak</h4>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
+                  Manage access, review community reports and maintain road information from one workspace.
+                </p>
+                <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {[
+                    { id: 'users' as const, label: 'Manage users', detail: 'Roles and access', icon: Users },
+                    { id: 'reports' as const, label: 'Review reports', detail: 'Road and incident reports', icon: FileBarChart },
+                    { id: 'admin-command' as const, label: 'Data input', detail: 'AI-assisted updates', icon: Sparkles },
+                  ].map((action) => (
+                    <button
+                      key={action.id}
+                      onClick={() => setActiveSection(action.id)}
+                      className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-left transition hover:border-rose-500/30 hover:bg-slate-800/70"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-300">
+                        <action.icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-slate-100">{action.label}</span>
+                        <span className="mt-0.5 block text-[10px] text-slate-500">{action.detail}</span>
+                      </span>
+                      <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-slate-600" />
+                    </button>
+                  ))}
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
-                        <Mail className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-200">Superadmin account</p>
-                        <p className="text-[10px] text-slate-500 font-mono truncate">{userEmail}</p>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-900/40 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
-                      Verified
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-800/40">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-slate-400">
-                        <Sparkles className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-200">AI Admin Command</p>
-                        <p className="text-[10px] text-slate-500">Update fuel, tolls, incidents via natural language</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </section>
             </div>
           )}
 
