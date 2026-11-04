@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
+import React, { useCallback, useState } from 'react';
+import { AnimatePresence, motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/haptic';
 
@@ -34,6 +34,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   variant = 'default',
 }) => {
   const x = useMotionValue(0);
+  const [direction, setDirection] = useState(1);
   const rotateY = useTransform(x, [-220, 0, 220], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
   const dragOpacity = useTransform(x, [-260, -80, 0, 80, 260], [0.55, 1, 1, 1, 0.55]);
 
@@ -49,6 +50,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 34 });
       return;
     }
+    setDirection(index > activeIndex ? 1 : -1);
     x.set(0);
     onChange(items[index].id);
     try {
@@ -72,9 +74,9 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   const onDragEnd = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const { offset, velocity } = info;
     if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) {
-      void animate(x, -260, { duration: 0.17, ease: 'easeOut' }).then(() => goTo(activeIndex + 1));
+      goTo(activeIndex + 1);
     } else if (offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY) {
-      void animate(x, 260, { duration: 0.17, ease: 'easeOut' }).then(() => goTo(activeIndex - 1));
+      goTo(activeIndex - 1);
     } else {
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 32, mass: 0.6 });
     }
@@ -105,25 +107,31 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
           </div>
         )}
 
-        <motion.div
-          key={active.id}
-          className="planner-deck-3d__active"
-          style={{ x, rotateY, opacity: dragOpacity, transformPerspective: 1200 }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.2}
-          dragMomentum={false}
-          dragDirectionLock
-          onDragEnd={onDragEnd}
-          whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
-          initial={{ opacity: 0.7, scale: 0.975 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 330, damping: 30, mass: 0.8 }}
-        >
-          <div className="planner-deck-3d__face">
-            {children(active.id)}
-          </div>
-        </motion.div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={active.id}
+            className="planner-deck-3d__active"
+            initial={{ opacity: 0, rotateY: direction > 0 ? -16 : 16, x: direction > 0 ? 48 : -48, scale: 0.94 }}
+            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+            exit={{ opacity: 0, rotateY: direction > 0 ? 16 : -16, x: direction > 0 ? -48 : 48, scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+          >
+            <motion.div
+              style={{ x, rotateY, opacity: dragOpacity, transformPerspective: 1200 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.24}
+              dragMomentum={false}
+              dragDirectionLock
+              onDragEnd={onDragEnd}
+              whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
+            >
+              <div className="planner-deck-3d__face">
+                {children(active.id)}
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {items.length > 1 && (
