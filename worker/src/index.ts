@@ -14,6 +14,8 @@ export interface Env {
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
   ALLOWED_ORIGIN: string;
+  FIREBASE_PROJECT_ID?: string;
+  ADMIN_EMAILS?: string;
   DATA: KVNamespace;
 }
 
@@ -116,19 +118,126 @@ async function updateCityData(env: Env, updates: any[]): Promise<any> {
   return { added: updates.length, total: merged.length };
 }
 
+
+/* ==================== FIREBASE ID TOKEN AUTH ==================== */
+
+interface FirebaseIdentity {
+  uid: string;
+  email?: string;
+  emailVerified: boolean;
+}
+
+interface FirebaseTokenClaims {
+  aud?: string;
+  iss?: string;
+  sub?: string;
+  exp?: number;
+  iat?: number;
+  email?: string;
+  email_verified?: boolean;
+}
+
+let firebaseJwkCache: { keys: JsonWebKey[]; expiresAt: number } | null = null;
+
+function decodeBase64Url(value: string): Uint8Array {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function getFirebaseSigningKey(kid: string): Promise<JsonWebKey | null> {
+  const now = Date.now();
+  if (!firebaseJwkCache || firebaseJwkCache.expiresAt <= now) {
+    const response = await fetch(
+      "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
+      { headers: { Accept: "application/json" } }
+    );
+    if (!response.ok) throw new Error("Firebase signing keys are temporarily unavailable");
+    const payload = await response.json() as { keys?: JsonWebKey[] };
+    const cacheControl = response.headers.get("cache-control") || "";
+    const maxAge = Number(cacheControl.match(/max-age=(\d+)/i)?.[1] || 3600);
+    firebaseJwkCache = {
+      keys: Array.isArray(payload.keys) ? payload.keys : [],
+      expiresAt: now + Math.max(60, Math.min(maxAge, 86400)) * 1000,
+    };
+  }
+  return firebaseJwkCache.keys.find((key: any) => key.kid === kid) || null;
+}
+
+/** Verify a Firebase Auth ID token and return its signed-in identity. */
+async function verifyFirebaseIdentity(request: Request, env: Env): Promise<FirebaseIdentity | null> {
+  const authorization = request.headers.get("Authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const parts = match[1].split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0]))) as { alg?: string; kid?: string };
+    if (header.alg !== "RS256" || !header.kid) return null;
+
+    const projectId = env.FIREBASE_PROJECT_ID || "sadak-sathi-3ab73";
+    const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1]))) as FirebaseTokenClaims;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (
+      claims.aud !== projectId ||
+      claims.iss !== `https://securetoken.google.com/${projectId}` ||
+      !claims.sub ||
+      claims.sub.length > 128 ||
+      !claims.exp ||
+      claims.exp <= nowSeconds ||
+      !claims.iat ||
+      claims.iat > nowSeconds + 60
+    ) return null;
+
+    const jwk = await getFirebaseSigningKey(header.kid);
+    if (!jwk) return null;
+    const publicKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const valid = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      publicKey,
+      decodeBase64Url(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    );
+    if (!valid) return null;
+
+    return {
+      uid: claims.sub,
+      email: typeof claims.email === "string" ? claims.email : undefined,
+      emailVerified: claims.email_verified === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /* ==================== ADMIN COMMAND PARSING ==================== */
 
 async function handleAiAdminCommand(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity || !identity.email || !identity.emailVerified) {
+      return jsonResponse(env, { error: "Verified Google sign-in is required" }, 401);
+    }
+    const allowedAdmins = (env.ADMIN_EMAILS || "banjais@gmail.com,banjays@gmail.com")
+      .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+    if (!allowedAdmins.includes(identity.email.toLowerCase())) {
+      return jsonResponse(env, { error: "Administrator access required" }, 403);
+    }
+
     const body = await request.json<any>();
-    const { command, adminKey } = body;
+    const { command } = body;
 
     if (!command || typeof command !== "string") {
       return jsonResponse(env, { error: "Command string is required" }, 400);
-    }
-    if (!adminKey || adminKey !== env.DOR_GOOGLE_SHEET_URL) {
-      // Simple admin key check — in production use a proper secret
-      return jsonResponse(env, { error: "Admin authentication required" }, 403);
     }
     if (!env.GEMINI_API_KEY) {
       return jsonResponse(env, { error: "AI service not configured" }, 503);
@@ -201,21 +310,36 @@ interface ReminderItem {
 }
 
 async function readReminders(env: Env, userId: string): Promise<ReminderItem[]> {
-  const all = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
-  return all.filter((r) => r.userId === userId);
+  const key = `user-reminders:${userId}`;
+  const saved = await env.DATA.get(key);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // One-time compatibility read for reminders saved by the older shared-key format.
+  const legacy = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
+  return legacy.filter((reminder) => reminder.userId === userId);
 }
 
-async function saveReminders(env: Env, reminders: ReminderItem[]): Promise<void> {
-  await env.DATA.put("user-reminders.json", JSON.stringify(reminders));
+async function saveReminders(env: Env, userId: string, reminders: ReminderItem[]): Promise<void> {
+  await env.DATA.put(`user-reminders:${userId}`, JSON.stringify(reminders));
 }
 
 async function handleAiReminder(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to use personal reminders" }, 401);
+    const userId = identity.uid;
     const body = await request.json<any>();
-    const { userId, input, routeContext, emotion } = body;
+    const { input, routeContext, emotion } = body;
 
-    if (!userId || typeof userId !== "string") {
-      return jsonResponse(env, { error: "userId is required" }, 400);
+    if (!input || typeof input !== "string") {
+      return jsonResponse(env, { error: "input is required" }, 400);
     }
     if (!input || typeof input !== "string") {
       return jsonResponse(env, { error: "input is required" }, 400);
@@ -265,7 +389,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     // Persist
     const existing = await readReminders(env, userId);
     const merged = [...existing, ...reminders];
-    await saveReminders(env, merged);
+    await saveReminders(env, userId, merged);
 
     return jsonResponse(env, {
       emotion: detectedEmotion,
@@ -281,10 +405,9 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
 
 async function handleListReminders(request: Request, env: Env): Promise<Response> {
   try {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
-    if (!userId) return jsonResponse(env, { error: "userId required" }, 400);
-    const reminders = await readReminders(env, userId);
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to view personal reminders" }, 401);
+    const reminders = await readReminders(env, identity.uid);
     return jsonResponse(env, { reminders, count: reminders.length });
   } catch (e: any) {
     return jsonResponse(env, { error: "List reminders failed", note: e?.message }, 500);
@@ -293,12 +416,16 @@ async function handleListReminders(request: Request, env: Env): Promise<Response
 
 async function handleDismissReminder(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to update personal reminders" }, 401);
     const body = await request.json<any>();
-    const { userId, reminderId } = body;
-    if (!userId || !reminderId) return jsonResponse(env, { error: "userId and reminderId required" }, 400);
-    const all = await readReminders(env, userId);
+    const { reminderId } = body;
+    if (!reminderId || typeof reminderId !== "string") {
+      return jsonResponse(env, { error: "reminderId is required" }, 400);
+    }
+    const all = await readReminders(env, identity.uid);
     const updated = all.map((r) => (r.id === reminderId ? { ...r, dismissed: true } : r));
-    await saveReminders(env, updated);
+    await saveReminders(env, identity.uid, updated);
     return jsonResponse(env, { ok: true });
   } catch (e: any) {
     return jsonResponse(env, { error: "Dismiss reminder failed", note: e?.message }, 500);
@@ -309,7 +436,7 @@ function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
 
