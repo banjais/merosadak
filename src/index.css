@@ -1959,3 +1959,30 @@ html[data-theme='light'] .ms-depth-stat {
       0 7px 13px rgba(30,55,80,0.09);
   }
 }
+
+/* ===== TRIP PLANNER 3D SECTOR DECK ===== */
+.planner-deck-3d{position:relative;width:100%;perspective:1500px;perspective-origin:50% 42%;isolation:isolate}
+.planner-deck-3d__stage{position:relative;min-height:7rem;transform-style:preserve-3d}
+.planner-deck-3d__active{position:relative;z-index:4;margin:0 .7rem;transform-style:preserve-3d;transform-origin:50% 50%;touch-action:pan-y;cursor:grab;will-change:transform}
+.planner-deck-3d__face{position:relative;min-height:7rem;overflow:visible;border-radius:1.45rem;transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden;filter:drop-shadow(0 18px 24px rgba(0,0,0,.24))}
+.planner-deck-3d__preview{position:absolute;top:.8rem;bottom:.8rem;z-index:1;width:88%;display:flex;flex-direction:column;justify-content:center;gap:.28rem;overflow:hidden;padding:1rem 1.25rem;border:1px solid rgba(148,163,184,.2);border-radius:1.3rem;background:radial-gradient(120% 100% at 0% 0%,rgba(16,185,129,.13),transparent 48%),linear-gradient(145deg,rgba(25,42,60,.98),rgba(7,15,26,.98));box-shadow:0 14px 30px rgba(0,0,0,.28),0 1px 0 rgba(255,255,255,.07) inset;pointer-events:none;transform-style:preserve-3d}
+.planner-deck-3d__preview--previous{left:0;transform:translateX(-17%) rotateY(13deg) scale(.91);transform-origin:left center;opacity:.58}
+.planner-deck-3d__preview--next{right:0;transform:translateX(17%) rotateY(-13deg) scale(.91);transform-origin:right center;opacity:.68}
+.planner-deck-3d__preview-kicker{color:rgba(110,231,183,.78);font-size:.58rem;font-weight:900;letter-spacing:.16em}
+.planner-deck-3d__preview-title{color:rgba(241,245,249,.9);font-size:.88rem;font-weight:900}
+.planner-deck-3d__preview-hint{color:rgba(148,163,184,.8);font-size:.68rem}
+.planner-deck-3d__controls{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:.8rem .7rem 0}
+.planner-deck-3d__arrow{display:inline-flex;width:2.45rem;height:2.45rem;flex:0 0 auto;align-items:center;justify-content:center;border:1px solid rgba(52,211,153,.3);border-radius:.85rem;color:#a7f3d0;background:linear-gradient(145deg,rgba(16,185,129,.16),rgba(15,23,42,.92));box-shadow:0 5px 12px rgba(0,0,0,.2),0 1px 0 rgba(255,255,255,.08) inset;transition:transform .18s ease,opacity .18s ease}
+.planner-deck-3d__arrow:active:not(:disabled){transform:translateY(2px) scale(.96)}
+.planner-deck-3d__arrow:disabled{opacity:.28;cursor:not-allowed}
+.planner-deck-3d__position{min-width:0;display:flex;flex:1;align-items:center;justify-content:center;gap:.65rem}
+.planner-deck-3d__position-title{overflow:hidden;color:#e2e8f0;font-size:.76rem;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.planner-deck-3d__position-count{flex:0 0 auto;border:1px solid rgba(148,163,184,.18);border-radius:999px;padding:.18rem .52rem;color:#a7f3d0;background:rgba(15,23,42,.75);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.65rem;font-weight:800}
+.planner-deck-3d__hint{margin:.45rem 0 0;color:rgba(148,163,184,.72);font-size:.65rem;text-align:center}
+html[data-theme='light'] .planner-deck-3d__preview{border-color:rgba(51,65,85,.17);background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(224,235,244,.98));box-shadow:0 14px 28px rgba(30,55,80,.12),0 1px 0 rgba(255,255,255,.95) inset}
+html[data-theme='light'] .planner-deck-3d__preview-title,html[data-theme='light'] .planner-deck-3d__position-title{color:#1e293b}
+html[data-theme='light'] .planner-deck-3d__preview-hint,html[data-theme='light'] .planner-deck-3d__hint{color:#64748b}
+html[data-theme='light'] .planner-deck-3d__arrow{color:#047857;border-color:rgba(5,150,105,.25);background:linear-gradient(145deg,rgba(209,250,229,.95),rgba(241,245,249,.98))}
+html[data-theme='light'] .planner-deck-3d__position-count{color:#047857;border-color:rgba(51,65,85,.16);background:rgba(255,255,255,.8)}
+@media(max-width:420px){.planner-deck-3d__active{margin:0 .45rem}.planner-deck-3d__preview{width:91%}.planner-deck-3d__preview--previous{transform:translateX(-19%) rotateY(15deg) scale(.9)}.planner-deck-3d__preview--next{transform:translateX(19%) rotateY(-15deg) scale(.9)}}
+@media(prefers-reduced-motion:reduce){.planner-deck-3d__arrow{transition:none}}
