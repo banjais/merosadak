@@ -1,0 +1,23 @@
+# Never send local credentials or generated files to the Docker build context.
+.env
+.env.*
+**/.env
+**/.env.*
+.dev.vars*
+**/.dev.vars*
+!.dev.vars.example
+!**/.dev.vars.example
+*.pem
+*.key
+
+# Dependencies, build output and local tooling state.
+node_modules
+**/node_modules
+dist
+build
+.firebase
+.wrangler
+.git
+.github
+*.log
+.DS_Store
