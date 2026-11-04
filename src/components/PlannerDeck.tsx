@@ -102,8 +102,8 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
           dragDirectionLock
           onDragEnd={onDragEnd}
           whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
-          initial={{ opacity: 0.7, x: direction.current * 34, rotateY: direction.current * -8 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
+          initial={{ opacity: 0.7, scale: 0.975 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 330, damping: 30, mass: 0.8 }}
         >
           <div className="planner-deck-3d__face">
