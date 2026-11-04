@@ -1199,17 +1199,27 @@ function applyRealRoadDataToEdges(patch: Record<string, EdgeGeometryPatch> | nul
   for (const edge of ROAD_NETWORK_EDGES) {
     const real = findRoadGraphRoute(edge.fromId, edge.toId);
 
+    // The graph builder injects direct city-to-city links carrying the curated
+    // hand-estimated 3-7 point lines (km matches curated exactly, few vertices).
+    // Those are NOT surveyed geometry — a real surveyed path always has dozens
+    // of vertices (45m survey spacing). Treat short paths as injected echoes so
+    // the baked real-road geometry below takes precedence over them.
+    const SURVEYED_MIN_POINTS = 15;
+    const realIsSurveyed = !!real && real.pathCoordinates.length >= SURVEYED_MIN_POINTS;
+
     // Sanity guard: the source highway link data has real coverage gaps, which
     // occasionally forces the pathfinder into an absurd long detour instead of
     // the true short local road. If the real-graph distance is wildly larger
     // than the curated estimate, that's a data-gap artifact — fall through to
     // the baked corridor-stitched geometry instead of drawing the detour.
     const oldDistanceKm = edge.distanceKm;
-    if (real && real.pathCoordinates.length >= 2 && !(oldDistanceKm > 0 && real.distanceKm > oldDistanceKm * 2.5)) {
-      edge.distanceKm = real.distanceKm;
-      edge.intermediateCoords = real.pathCoordinates;
+    const realIsPlausible = !!real && real.pathCoordinates.length >= 2 && !(oldDistanceKm > 0 && real.distanceKm > oldDistanceKm * 2.5);
+
+    if (realIsSurveyed && realIsPlausible) {
+      edge.distanceKm = real!.distanceKm;
+      edge.intermediateCoords = real!.pathCoordinates;
       if (oldDistanceKm > 0) {
-        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real.distanceKm / oldDistanceKm));
+        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real!.distanceKm / oldDistanceKm));
       }
       updated++;
       continue;
@@ -1230,6 +1240,18 @@ function applyRealRoadDataToEdges(patch: Record<string, EdgeGeometryPatch> | nul
       }
       edge.intermediateCoords = baked.coords;
       patched++;
+      continue;
+    }
+
+    // Last resort: accept the (possibly injected short) graph path so the line
+    // at least connects at the right anchors when no baked geometry exists.
+    if (realIsPlausible) {
+      edge.distanceKm = real!.distanceKm;
+      edge.intermediateCoords = real!.pathCoordinates;
+      if (oldDistanceKm > 0) {
+        edge.baseTimeMinutes = Math.round(edge.baseTimeMinutes * (real!.distanceKm / oldDistanceKm));
+      }
+      updated++;
       continue;
     }
 
