@@ -1993,3 +1993,13 @@ html[data-theme='light'] .planner-deck-3d__arrow{color:#047857;border-color:rgba
 html[data-theme='light'] .planner-deck-3d__position-count{color:#047857;border-color:rgba(51,65,85,.16);background:rgba(255,255,255,.8)}
 @media(max-width:420px){.planner-deck-3d__active{margin:0 .45rem}.planner-deck-3d__preview{width:91%}.planner-deck-3d__preview--previous{transform:translateX(-19%) rotateY(15deg) scale(.9)}.planner-deck-3d__preview--next{transform:translateX(19%) rotateY(-15deg) scale(.9)}}
 @media(prefers-reduced-motion:reduce){.planner-deck-3d__arrow{transition:none}}
+
+/* Keep interactive trip cards within one mobile viewport. */
+.planner-deck-3d__drag-surface{min-width:0;transform-style:preserve-3d;touch-action:pan-y}
+@media(max-width:640px){
+  .planner-deck-3d__active{margin:0 .35rem}
+  .planner-deck-3d__active .ms-depth-card{display:flex;flex-direction:column;max-height:min(58svh,500px)}
+  .planner-deck-3d__active .planner-reel-card__body{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  .planner-deck-3d__controls{margin:.55rem .35rem 0}
+  .planner-deck-3d__hint{margin-top:.25rem}
+}
