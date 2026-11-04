@@ -82,6 +82,8 @@ export interface UnifiedRouteReportProps {
   simulationControls?: RouteSimulationControls;
   onViewOnMap?: (target?: { lat: number; lng: number; title?: string; zoom?: number }) => void;
   calculatorCoverage?: { total: number; publishedDistanceCoverage: { totalPublishedCities: number; coveredCities: number }; highwayCoverage?: { totalCities: number; citiesOnHighway: number } } | null;
+  /** Render one independent report sector inside the planner's outer 3D deck. */
+  reportSection?: 'all' | 'overview' | 'route' | 'conditions';
 }
 
 const evidenceLabels: Record<ReportEvidenceLevel, string> = {
@@ -280,6 +282,7 @@ export function UnifiedRouteReport({
   simulationControls,
   onViewOnMap,
   calculatorCoverage,
+  reportSection = 'all',
 }: UnifiedRouteReportProps) {
   const [expanded, setExpanded] = useState(false);
   const [showElevation, setShowElevation] = useState(false);
@@ -415,6 +418,8 @@ export function UnifiedRouteReport({
       id="route-report"
       className="space-y-4"
     >
+      {(reportSection === 'all' || reportSection === 'overview') && (
+      <div className="space-y-4">
       <DorLetterhead timestamp={reportTimestamp} identity={userIdentity} />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -601,7 +606,11 @@ export function UnifiedRouteReport({
         </div>
       )}
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+      </div>
+      )}
+
+      {(reportSection === 'all' || reportSection === 'route') && (
+      <div className="mt-4 space-y-4">
         <div className="space-y-4">
           <div className="card card-elevated p-4">
             <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -707,8 +716,11 @@ export function UnifiedRouteReport({
             </div>
           )}
         </div>
+      </div>
+      )}
 
-        <div className="space-y-4">
+      {(reportSection === 'all' || reportSection === 'conditions') && (
+        <div className="mt-4 space-y-4">
           <div className="card card-elevated p-4">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
               <Database className="h-3.5 w-3.5 text-cyan-500" />
@@ -756,8 +768,9 @@ export function UnifiedRouteReport({
             </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {(reportSection === 'all' || reportSection === 'overview') && (
       <footer className="mt-4 border-t border-slate-800 pt-3">
         <div className="flex flex-col gap-2 border-t border-slate-800 pt-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -774,6 +787,8 @@ export function UnifiedRouteReport({
         </div>
         <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged; the report states the source used and the roughness/uncertainty of the result.</p>
       </footer>
+      )}
+      </div>
     </section>
   );
 }
