@@ -80,9 +80,9 @@ function timeAgo(iso?: string): string {
 }
 
 const SUBTITLES: Record<ReportingSectionProps['variant'], string> = {
-  superadmin: 'Every user-submitted hazard report and live incident across the network — file one from here too.',
-  officeadmin: 'Review submitted hazard reports and live incidents for office follow-up — or file one from here too.',
-  general: 'Community hazard reports and live road incidents — report one from here too.',
+  superadmin: 'Network reports and live incidents.',
+  officeadmin: 'Reports and incidents for office review.',
+  general: 'Community reports and road incidents.',
 };
 
 const USER_REPORT_PAGE = 20;
@@ -134,10 +134,10 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
 
   const activeHazards = reports.filter((r) => (r.status ?? 'active') === 'active').length;
   const statCards = [
-    { label: 'User Reports', value: String(reports.length), cls: 'text-emerald-400' },
-    { label: 'Active Hazards', value: String(activeHazards), cls: 'text-amber-400' },
-    { label: 'Live Incidents', value: String(incidents.length), cls: 'text-cyan-400' },
-    { label: 'DoR Verified', value: String(counts.dor), cls: 'text-violet-400' },
+    { label: 'Reports', value: String(reports.length), cls: 'text-emerald-400' },
+    { label: 'Active', value: String(activeHazards), cls: 'text-amber-400' },
+    { label: 'Live', value: String(incidents.length), cls: 'text-cyan-400' },
+    { label: 'DoR verified', value: String(counts.dor), cls: 'text-violet-400' },
   ];
 
   return (
@@ -147,7 +147,7 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
             <FileBarChart className="w-4 h-4 text-emerald-400" />
-            Reporting — Hazard Reports &amp; Live Incidents
+            Road reports
           </h4>
           <p className="text-[10px] text-slate-400 mt-0.5">{SUBTITLES[variant]}</p>
         </div>
@@ -175,7 +175,7 @@ export const ReportingSection: React.FC<ReportingSectionProps> = ({ variant, onS
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((c) => (
-          <div key={c.label} className="bg-slate-900 border border-slate-800/60 rounded-2xl p-4">
+          <div key={c.label} className="ms-depth-card rounded-2xl p-4">
             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{c.label}</p>
             <p className={`text-xl font-black font-mono mt-1 ${c.cls}`}>{loading ? '—' : c.value}</p>
           </div>
