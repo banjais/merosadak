@@ -584,6 +584,13 @@ function AppContent() {
         onOpenOfficeAdminPanel={() => setIsProfileOpen(true)}
         onOpenUserPanel={() => setIsProfileOpen(true)}
         onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
+        onOpenReminders={() => {
+          if (!user || user.isDemo) {
+            setIsLoginModalOpen(true);
+            return;
+          }
+          setIsReminderOpen(true);
+        }}
         user={user}
         userRole={userRole}
         isSuperAdmin={isSuperAdmin}
@@ -724,7 +731,6 @@ function AppContent() {
             <ReminderServicePage
               onBack={() => setIsReminderOpen(false)}
               routePlan={activeRoute}
-              userId="default-user"
               vehicle={plannerVehicle}
               preference={plannerPref}
             />

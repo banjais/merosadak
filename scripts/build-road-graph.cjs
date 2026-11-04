@@ -24,11 +24,11 @@ const OUT_FILE = path.join(__dirname, '..', 'public', 'data', 'road-graph.json')
 
 // ---- tunables ----
 const SIMPLIFY_TOLERANCE_KM = 0.05; // ~50m — Douglas-Peucker tolerance for rendering
-const SNAP_GRID_KM = 0.06;          // ~60m — grid cell used to merge nearby vertices into shared graph nodes
+const SNAP_GRID_KM = 0.015;         // ~15m — only merge genuinely coincident survey vertices
 const CITY_SNAP_MAX_KM = 0.05;      // only treat a point as on-network within 50m
-const CITY_INJECT_MAX_KM = 25;      // farther points need an explicit inferred access connector or remain unsnapped
-const ENDPOINT_JOIN_MAX_KM = 0.25;   // merge nearby polyline endpoints (~250m) across gaps
-const COMPONENT_JOIN_MAX_KM = 2.0;   // bridge small components to nearest other component
+const CITY_INJECT_MAX_KM = 0;       // never invent a straight-line city-to-highway access road
+const ENDPOINT_JOIN_MAX_KM = 0;     // do not bridge surveyed geometry gaps by proximity alone
+const COMPONENT_JOIN_MAX_KM = 0;    // disconnected components remain disconnected unless survey topology connects them
 const JOIN_HWY_IDX = -1;             // synthetic join edges (not a real NH code)
 
 function haversineKm(a, b) {
@@ -88,24 +88,39 @@ function simplifyIndices(points, toleranceKm) {
   return out;
 }
 
-// ---- grid-based node snapping (union nearby vertices from different links/highways) ----
+// ---- grid-assisted node snapping with a true-distance guard ----
+const SNAP_MERGE_MAX_KM = 0.005; // merge only survey vertices within 5m
 function makeSnapper(cellKm) {
-  const cellDeg = cellKm / 111.0; // rough, fine at Nepal's latitudes
-  const grid = new Map(); // "cellX,cellY" -> nodeId
-  const nodes = []; // nodeId -> [lat,lng] (running centroid-ish: first-seen wins, good enough)
+  const cellDeg = cellKm / 111.0; // coarse grid only narrows the candidate search
+  const grid = new Map(); // "cellX,cellY" -> nodeIds
+  const nodes = []; // nodeId -> [lat,lng], first-seen survey coordinate
 
-  function cellKey(lat, lng) {
-    const cx = Math.round(lat / cellDeg);
-    const cy = Math.round(lng / cellDeg);
+  function cellKey(cx, cy) {
     return `${cx},${cy}`;
   }
 
   function getOrCreate(lat, lng) {
-    const key = cellKey(lat, lng);
-    if (grid.has(key)) return grid.get(key);
+    const cx = Math.floor(lat / cellDeg);
+    const cy = Math.floor(lng / cellDeg);
+    // A vertex near a cell edge may share a node with a point in a neighbour.
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const bucket = grid.get(cellKey(cx + dx, cy + dy));
+        if (!bucket) continue;
+        for (const nodeId of bucket) {
+          if (haversineKm([lat, lng], nodes[nodeId]) <= SNAP_MERGE_MAX_KM) {
+            return nodeId;
+          }
+        }
+      }
+    }
+
     const id = nodes.length;
     nodes.push([lat, lng]);
-    grid.set(key, id);
+    const key = cellKey(cx, cy);
+    const bucket = grid.get(key) || [];
+    bucket.push(id);
+    grid.set(key, bucket);
     return id;
   }
 
@@ -757,7 +772,7 @@ const out = {
       citiesWithNoHighway: Object.values(cityLinks).filter((l) => l.highways.length === 0).length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
-      distanceBasis: 'DoR link_len-scaled highway geometry; inferred access and component connectors are included and tagged as non-highway edges',
+      distanceBasis: 'DoR link_len-scaled highway geometry; only survey vertices within 5m are merged; off-network places and disconnected components remain unconnected',
       totalOfficialChainageKm: Math.round(totalOfficialKm),
       inferredAccessLinks: injected,
       unsnappedPlaces: unsnapped,

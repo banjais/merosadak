@@ -43,26 +43,34 @@ export const CostsPanel: React.FC<CostsPanelProps> = ({
       minutesSinceLastCheck={minutesSinceLastCheck}
       isStale={isPriceStale}
     />
-    <FuelCostEstimator
-      distanceKm={route.totalDistanceKm}
-      vehicleType={vehicle}
-      elevationGainM={route.elevationGainM}
-      origin={route.origin}
-      destination={route.destination}
-      defaultTollCost={route.totalTollCostNpr}
-      highwayCodes={highwayCodes}
-      fuelPrices={fuelPrices}
-      fuelPriceMetadata={fuelPriceMetadata}
-      planFuelCostNpr={route.fuelEstimate.costNpr}
-      planLiters={route.fuelEstimate.liters}
-      onVehicleChange={onVehicleChange}
-    />
-    <CarbonFootprintCard
-      distanceKm={route.totalDistanceKm}
-      vehicleType={vehicle}
-      elevationGainM={route.elevationGainM}
-      onVehicleChange={onVehicleChange}
-    />
+    {route.__aerialWarning ? (
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 text-xs leading-relaxed text-amber-200">
+        Fuel use, tolls and emissions are not estimated from a straight-line distance. A connected road route is needed for a meaningful trip-cost estimate.
+      </div>
+    ) : (
+      <>
+        <FuelCostEstimator
+          distanceKm={route.totalDistanceKm}
+          vehicleType={vehicle}
+          elevationGainM={route.elevationGainM}
+          origin={route.origin}
+          destination={route.destination}
+          defaultTollCost={route.totalTollCostNpr}
+          highwayCodes={highwayCodes}
+          fuelPrices={fuelPrices}
+          fuelPriceMetadata={fuelPriceMetadata}
+          planFuelCostNpr={route.fuelEstimate.costNpr}
+          planLiters={route.fuelEstimate.liters}
+          onVehicleChange={onVehicleChange}
+        />
+        <CarbonFootprintCard
+          distanceKm={route.totalDistanceKm}
+          vehicleType={vehicle}
+          elevationGainM={route.elevationGainM}
+          onVehicleChange={onVehicleChange}
+        />
+      </>
+    )}
     {onOpenPreTrip && (
       <button
         type="button"

@@ -27,13 +27,36 @@ Worker backend for anything that needs a paid/rate-limited key.
 - "Browse by area" toggle keeps the old District → Palika dropdown flow for
   anyone who prefers it.
 - Live weather strip on the destination via Open-Meteo (free, no key).
-- Routing/distance via OSRM (free, no key) — unchanged from before.
+- Distance and route measurements use the DoR highway graph and published SNH references where coverage exists. Unsupported pairs are labelled as aerial estimates; they are not presented as road distances. OSRM is used by the offline geometry-stitching script, not guaranteed as a live in-app routing service.
+
+## Local development
+
+Run the app server and the Worker in separate terminals:
+
+```bash
+# Terminal 1 — frontend + existing Express development API
+npm ci
+npm run dev
+```
+
+```bash
+# Terminal 2 — local Cloudflare Worker API (Wrangler listens on port 8787)
+cd worker
+npm ci --legacy-peer-deps
+npx wrangler dev --var ALLOWED_ORIGIN:http://localhost:3000
+```
+
+The browser uses the Express server for the existing local `/api/*` routes.
+Firebase-authenticated personal endpoints (reminders and private trip data)
+are sent to the local Worker at `http://127.0.0.1:8787`. Set
+`VITE_WORKER_URL` if your local Worker uses another address. Put local-only
+Worker secrets in `worker/.dev.vars`; never commit that file.
 
 ## Free APIs in use (no key required)
 Called directly from the browser:
 - Photon (search-as-you-type place autocomplete)
 - Nominatim (reverse geocoding for map clicks)
-- OSRM (routing, distance, ETA)
+- OSRM (used by the offline geometry-stitching script; not a guaranteed live in-app router)
 - Open-Meteo (weather)
 
 Called from the Worker (proxied):
@@ -77,7 +100,8 @@ free/keyless source first and only falls back to a paid key if that fails:
 | `/api/weather` | Open-Meteo *(free)* | OpenWeatherMap *(key)* |
 | `/api/pois` | Overpass *(free)* | Nominatim *(free)* |
 | `/api/assistant` | Gemini primary model *(key)* | Gemini secondary model *(key)* |
-| Routing (future) | OSRM / OpenRouteService | — |
+| Distance / route geometry | DoR survey graph + DoR SNH pair references; aerial fallback when unsupported | — |
+| Optional external road routing (not currently guaranteed) | OSRM / OpenRouteService | — |
 | Geocoding (future) | Photon / Nominatim | LocationIQ or OpenCage |
 | Air quality (future) | WAQI | — |
 

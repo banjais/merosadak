@@ -48,11 +48,26 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
 }) => {
   const { clearKm = 0, cautionKm = 0, obstructedKm = 0 } = plan.statusSummary ?? {};
   const incidents = plan.incidentsOnRoute?.length ?? 0;
+  const isAerialFallback = Boolean(
+    plan.__aerialWarning ||
+    plan.routeName?.toLowerCase().includes('aerial') ||
+    plan.routeBadge?.toLowerCase().includes('aerial')
+  );
 
   const hasBlocked = obstructedKm > 0;
   const hasCaution = !hasBlocked && (cautionKm > 0 || incidents > 0);
+  const hasStatusData = clearKm + cautionKm + obstructedKm > 0 || incidents > 0;
 
-  const verdict: Verdict = hasBlocked
+  const verdict: Verdict = isAerialFallback
+    ? {
+        tone: 'caution',
+        label: 'AERIAL ESTIMATE',
+        sentence: 'No connected road route is available for this pair. This is straight-line distance only; actual road distance and travel time will be longer. Road conditions are not verified.',
+        pill: 'border-amber-500/50 bg-amber-500/15 text-amber-300',
+        ring: 'border-amber-500/40',
+        bar: 'bg-amber-400',
+      }
+    : hasBlocked
     ? {
         tone: 'blocked',
         label: 'PARTIALLY BLOCKED',
@@ -64,8 +79,8 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
     : hasCaution
       ? {
           tone: 'caution',
-          label: 'PASS WITH CAUTION',
-          sentence: `Open the whole way, but ${[
+          label: 'CAUTION IN DATA',
+          sentence: `Stored route data flags this route for caution: ${[
             cautionKm > 0 ? `${Math.round(cautionKm)} km needs care` : null,
             incidents > 0 ? `${incidents} active alert${incidents === 1 ? '' : 's'}` : null,
           ]
@@ -75,24 +90,33 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
           ring: 'border-amber-500/40',
           bar: 'bg-amber-400',
         }
-      : {
-          tone: 'clear',
-          label: 'ROUTE CLEAR',
-          sentence: 'Every surveyed segment on this route reports open status.',
-          pill: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300',
-          ring: 'border-emerald-500/40',
-          bar: 'bg-emerald-400',
-        };
+      : !hasStatusData
+        ? {
+            tone: 'caution',
+            label: 'STATUS UNVERIFIED',
+            sentence: 'No recent road-status information is available for this route. Check official updates before departure.',
+            pill: 'border-amber-500/50 bg-amber-500/15 text-amber-300',
+            ring: 'border-amber-500/40',
+            bar: 'bg-amber-400',
+          }
+        : {
+            tone: 'clear',
+            label: 'ROUTE CLEAR',
+            sentence: 'Every surveyed segment on this route reports open status.',
+            pill: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300',
+            ring: 'border-emerald-500/40',
+            bar: 'bg-emerald-400',
+          };
 
   const total = Math.max(clearKm + cautionKm + obstructedKm, 0.001);
   const hours = Math.floor(plan.estimatedTimeMinutes / 60);
   const mins = Math.round(plan.estimatedTimeMinutes % 60);
 
   const stats = [
-    { Icon: Navigation, tone: 'text-emerald-400', label: 'Distance', value: `${plan.totalDistanceKm.toFixed(1)} km` },
-    { Icon: Clock, tone: 'text-cyan-400', label: 'Drive time', value: hours > 0 ? `${hours}h ${mins}m` : `${mins} min` },
-    { Icon: Fuel, tone: 'text-amber-400', label: 'Fuel + toll', value: `Rs ${totalCostNpr.toLocaleString()}` },
-    { Icon: Mountain, tone: 'text-purple-400', label: 'High point', value: `${plan.maxElevationM.toLocaleString()} m` },
+    { Icon: Navigation, tone: 'text-emerald-400', label: 'Distance', value: isAerialFallback ? `${plan.totalDistanceKm.toFixed(1)} km · aerial` : `${plan.totalDistanceKm.toFixed(1)} km` },
+    { Icon: Clock, tone: 'text-cyan-400', label: 'Drive time', value: isAerialFallback ? 'Not available' : hours > 0 ? `${hours}h ${mins}m` : `${mins} min` },
+    { Icon: Fuel, tone: 'text-amber-400', label: 'Fuel + toll', value: isAerialFallback ? 'Not available' : `Rs ${totalCostNpr.toLocaleString()}` },
+    { Icon: Mountain, tone: 'text-purple-400', label: 'High point', value: isAerialFallback ? 'Not available' : `${plan.maxElevationM.toLocaleString()} m` },
   ];
 
   return (
@@ -123,16 +147,18 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
 
       <p className="mt-2 text-[13px] leading-snug text-slate-300">{verdict.sentence}</p>
 
-      {/* Road status bar: one look shows how much of the drive is open. */}
-      <div
-        className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800"
-        role="img"
-        aria-label={`${Math.round(clearKm)} km clear, ${Math.round(cautionKm)} km caution, ${Math.round(obstructedKm)} km obstructed`}
-      >
-        {clearKm > 0 && <div className="h-full bg-emerald-400" style={{ width: `${(clearKm / total) * 100}%` }} />}
-        {cautionKm > 0 && <div className="h-full bg-amber-400" style={{ width: `${(cautionKm / total) * 100}%` }} />}
-        {obstructedKm > 0 && <div className="h-full bg-rose-500" style={{ width: `${(obstructedKm / total) * 100}%` }} />}
-      </div>
+      {/* Road status is shown only when a road route has status data. */}
+      {!isAerialFallback && total > 0.001 && (
+        <div
+          className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800"
+          role="img"
+          aria-label={`${Math.round(clearKm)} km clear, ${Math.round(cautionKm)} km caution, ${Math.round(obstructedKm)} km obstructed`}
+        >
+          {clearKm > 0 && <div className="h-full bg-emerald-400" style={{ width: `${(clearKm / total) * 100}%` }} />}
+          {cautionKm > 0 && <div className="h-full bg-amber-400" style={{ width: `${(cautionKm / total) * 100}%` }} />}
+          {obstructedKm > 0 && <div className="h-full bg-rose-500" style={{ width: `${(obstructedKm / total) * 100}%` }} />}
+        </div>
+      )}
 
       {/* The short facts, one row, no hunting. */}
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -156,14 +182,16 @@ export const RouteVerdict: React.FC<RouteVerdictProps> = ({
           <Pencil className="mr-1 inline h-3.5 w-3.5" />
           Change
         </button>
-        <button
-          type="button"
-          onClick={onStartTrip}
-          className="flex-1 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/25 transition-all"
-        >
-          {tripStarted ? 'Following trip' : 'Start trip'}
-          <Navigation className="ml-1 inline h-3.5 w-3.5" />
-        </button>
+        {!isAerialFallback && (
+          <button
+            type="button"
+            onClick={onStartTrip}
+            className="flex-1 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/25 transition-all"
+          >
+            {tripStarted ? 'Following trip' : 'Start trip'}
+            <Navigation className="ml-1 inline h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </section>
   );

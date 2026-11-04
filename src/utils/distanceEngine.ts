@@ -2,7 +2,6 @@ import type { CityNode, VehicleType } from '../types';
 import { findRoadGraphRoute, getRoadGraph, isRoadGraphReady, type RouteDistanceBreakdown } from './roadGraphRouter';
 import { lookupSNHDistance, estimateDistance, type SNHCitation, type SNHReferenceData } from './snhLookup';
 import { estimateMinutesFromSpeed } from './vehicleConfigs';
-import { snapToNearestRoutingCity } from './routeOptimizer';
 
 /**
  * Shared distance-calculation engine — the SINGLE measurement authority used by
@@ -75,96 +74,6 @@ function havKm(a: { lat: number; lng: number }, b: { lat: number; lng: number })
   return estimateDistance(a.lat, a.lng, b.lat, b.lng).distanceKm;
 }
 
-/**
- * Priority 2 — road-network connection for a place that does not directly sit
- * on the surveyed network: snap it to the nearest routing junction, measure the
- * junction-to-junction route over the surveyed graph, and ADD the two access
- * legs as honest connecting-road segments (never hide them inside the total).
- *
- * Places farther than MAX_ACCESS_SNAP_KM from any junction have no credible
- * road connection in the dataset — they fall through to the aerial fallback
- * instead of producing a fake route from a distant junction.
- */
-const MAX_ACCESS_SNAP_KM = 40;
-
-function calculateWithAccessConnector(
-  origin: CityNode,
-  destination: CityNode,
-  vehicle: VehicleType,
-  published: { distanceKm: number; citation?: SNHCitation } | null
-): DistanceResult | null {
-  const graph = getRoadGraph();
-  if (!graph) return null;
-  const resolvable = (c: CityNode) =>
-    graph.citySnap[c.id] !== undefined ||
-    (c.name && graph.citySnapByName[c.name.toLowerCase()] !== undefined);
-  const originDirect = resolvable(origin);
-  const destDirect = resolvable(destination);
-  if (originDirect && destDirect) return null; // direct lookup already handled it
-
-  const snapO = originDirect ? origin : snapToNearestRoutingCity(origin);
-  const snapD = destDirect ? destination : snapToNearestRoutingCity(destination);
-  if (!snapO || !snapD || snapO.id === snapD.id) return null;
-  const accessO = originDirect ? 0 : havKm(origin, snapO);
-  const accessD = destDirect ? 0 : havKm(snapD, destination);
-  // Beyond the guard distance the "connection" would be fiction, not a road.
-  if (accessO > MAX_ACCESS_SNAP_KM || accessD > MAX_ACCESS_SNAP_KM) return null;
-  const route = findRoadGraphRoute(snapO.id, snapD.id);
-  if (!route || route.distanceKm <= 0 || route.pathCoordinates.length < 2) return null;
-
-  // Access legs are straight connectors to the snapped junctions — reported,
-  // not hidden. (The junction itself is on the surveyed network.)
-  const accessKm = Math.round((accessO + accessD) * 10) / 10;
-  const totalKm = Math.round((route.distanceKm + accessO + accessD) * 10) / 10;
-
-  const b = route.distanceBreakdown;
-  // One honest "Connecting road" row covers every non-surveyed access leg
-  // (user→junction stubs plus the graph's own origin/destination connectors);
-  // joins and the surveyed run stay their own rows.
-  const connectorTotalKm = Math.round((accessO + accessD + b.originAccessKm + b.destAccessKm) * 10) / 10;
-  const segments: DistanceSegment[] = [];
-  if (connectorTotalKm > 0.05) segments.push({ label: 'Connecting road', km: connectorTotalKm, kind: 'connection' });
-  if (b.networkJoinKm > 0.05) segments.push({ label: 'Network joins', km: Math.round(b.networkJoinKm * 10) / 10, kind: 'connection' });
-  if (b.surveyedKm > 0.05) segments.push({ label: 'Surveyed highway', km: Math.round(b.surveyedKm * 10) / 10, kind: 'surveyed' });
-
-  const pathCoordinates: [number, number][] = [];
-  const pathSegments: DistanceResult['pathSegments'] = [];
-  if (accessO > 0.05) {
-    const leg: [number, number][] = [[origin.lat, origin.lng], [snapO.lat, snapO.lng]];
-    pathCoordinates.push(...leg);
-    pathSegments.push({ kind: 'connection', coords: leg });
-  }
-  pathCoordinates.push(...route.pathCoordinates);
-  pathSegments.push(...route.pathSegments);
-  if (accessD > 0.05) {
-    const leg: [number, number][] = [[snapD.lat, snapD.lng], [destination.lat, destination.lng]];
-    pathCoordinates.push(...leg);
-    pathSegments.push({ kind: 'connection', coords: leg });
-  }
-
-  const aerialKm = aerialKmBetween(origin, destination);
-  return {
-    totalKm,
-    methodology: b.surveyedKm > 0.05 ? 'surveyed_highway' : 'road_network',
-    segments,
-    highwaysUsed: route.highwaysUsed,
-    pathCoordinates,
-    pathSegments,
-    aerialKm,
-    publishedKm: published && published.distanceKm > 0 ? published.distanceKm : undefined,
-    publishedCitation: published?.citation,
-    sourceLabel: 'Surveyed highway + connecting road',
-    sourceDetail: `Measured over the DoR surveyed highway network, plus ${accessKm} km of connecting road to reach the highway access point${published ? `. DoR publishes ${published.distanceKm} km for this exact pair (SNH).` : ''}`,
-    quality: {
-      surveyed: b.surveyedKm > 0.05,
-      connectorUsed: true,
-      aerialFallback: false,
-      partialCoverage: true,
-    },
-    estimatedTimeMinutes: estimateMinutesFromSpeed(totalKm, vehicle),
-  };
-}
-
 /** Turns a graph breakdown into the report's compact segment model. */
 export function segmentsFromBreakdown(b: RouteDistanceBreakdown): DistanceSegment[] {
   const segments: DistanceSegment[] = [];
@@ -227,9 +136,10 @@ export function calculateDistance(
       };
     }
 
-    // ---- Priority 2: one endpoint is off-network → connect to the highway ----
-    const connected = calculateWithAccessConnector(origin, destination, options.vehicle ?? 'car', published);
-    if (connected) return connected;
+    // An endpoint that is not directly represented in the surveyed graph is
+    // not snapped with a straight-line stub and called a road connection.
+    // Continue to the official pair reference (if available), otherwise use
+    // the explicitly labelled aerial fallback below.
   }
 
   // ---- Priority 1b: official published pair (no alignment geometry) ----

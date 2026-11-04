@@ -14,6 +14,8 @@ export interface Env {
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
   ALLOWED_ORIGIN: string;
+  FIREBASE_PROJECT_ID?: string;
+  ADMIN_EMAILS?: string;
   DATA: KVNamespace;
 }
 
@@ -116,19 +118,126 @@ async function updateCityData(env: Env, updates: any[]): Promise<any> {
   return { added: updates.length, total: merged.length };
 }
 
+
+/* ==================== FIREBASE ID TOKEN AUTH ==================== */
+
+interface FirebaseIdentity {
+  uid: string;
+  email?: string;
+  emailVerified: boolean;
+}
+
+interface FirebaseTokenClaims {
+  aud?: string;
+  iss?: string;
+  sub?: string;
+  exp?: number;
+  iat?: number;
+  email?: string;
+  email_verified?: boolean;
+}
+
+let firebaseJwkCache: { keys: JsonWebKey[]; expiresAt: number } | null = null;
+
+function decodeBase64Url(value: string): Uint8Array {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function getFirebaseSigningKey(kid: string): Promise<JsonWebKey | null> {
+  const now = Date.now();
+  if (!firebaseJwkCache || firebaseJwkCache.expiresAt <= now) {
+    const response = await fetch(
+      "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
+      { headers: { Accept: "application/json" } }
+    );
+    if (!response.ok) throw new Error("Firebase signing keys are temporarily unavailable");
+    const payload = await response.json() as { keys?: JsonWebKey[] };
+    const cacheControl = response.headers.get("cache-control") || "";
+    const maxAge = Number(cacheControl.match(/max-age=(\d+)/i)?.[1] || 3600);
+    firebaseJwkCache = {
+      keys: Array.isArray(payload.keys) ? payload.keys : [],
+      expiresAt: now + Math.max(60, Math.min(maxAge, 86400)) * 1000,
+    };
+  }
+  return firebaseJwkCache.keys.find((key: any) => key.kid === kid) || null;
+}
+
+/** Verify a Firebase Auth ID token and return its signed-in identity. */
+async function verifyFirebaseIdentity(request: Request, env: Env): Promise<FirebaseIdentity | null> {
+  const authorization = request.headers.get("Authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const parts = match[1].split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0]))) as { alg?: string; kid?: string };
+    if (header.alg !== "RS256" || !header.kid) return null;
+
+    const projectId = env.FIREBASE_PROJECT_ID || "sadak-sathi-3ab73";
+    const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1]))) as FirebaseTokenClaims;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (
+      claims.aud !== projectId ||
+      claims.iss !== `https://securetoken.google.com/${projectId}` ||
+      !claims.sub ||
+      claims.sub.length > 128 ||
+      !claims.exp ||
+      claims.exp <= nowSeconds ||
+      !claims.iat ||
+      claims.iat > nowSeconds + 60
+    ) return null;
+
+    const jwk = await getFirebaseSigningKey(header.kid);
+    if (!jwk) return null;
+    const publicKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const valid = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      publicKey,
+      decodeBase64Url(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    );
+    if (!valid) return null;
+
+    return {
+      uid: claims.sub,
+      email: typeof claims.email === "string" ? claims.email : undefined,
+      emailVerified: claims.email_verified === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /* ==================== ADMIN COMMAND PARSING ==================== */
 
 async function handleAiAdminCommand(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity || !identity.email || !identity.emailVerified) {
+      return jsonResponse(env, { error: "Verified Google sign-in is required" }, 401);
+    }
+    const allowedAdmins = (env.ADMIN_EMAILS || "banjais@gmail.com,banjays@gmail.com")
+      .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+    if (!allowedAdmins.includes(identity.email.toLowerCase())) {
+      return jsonResponse(env, { error: "Administrator access required" }, 403);
+    }
+
     const body = await request.json<any>();
-    const { command, adminKey } = body;
+    const { command } = body;
 
     if (!command || typeof command !== "string") {
       return jsonResponse(env, { error: "Command string is required" }, 400);
-    }
-    if (!adminKey || adminKey !== env.DOR_GOOGLE_SHEET_URL) {
-      // Simple admin key check — in production use a proper secret
-      return jsonResponse(env, { error: "Admin authentication required" }, 403);
     }
     if (!env.GEMINI_API_KEY) {
       return jsonResponse(env, { error: "AI service not configured" }, 503);
@@ -180,6 +289,93 @@ async function handleAiAdminCommand(request: Request, env: Env): Promise<Respons
   }
 }
 
+
+/* ==================== PRIVATE TRIP DATA ==================== */
+
+interface BelongingChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+}
+
+interface PrivateTripData {
+  parkedVehicle: { lat: number; lng: number; savedAt: string; note?: string } | null;
+  belongings: BelongingChecklistItem[];
+  updatedAt: string | null;
+}
+
+async function handleGetTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to access your saved trip data" }, 401);
+  const key = `private-trip-data:${identity.uid}`;
+  const saved = await env.DATA.get(key);
+  if (!saved) {
+    return jsonResponse(env, {
+      parkedVehicle: null,
+      belongings: [],
+      updatedAt: null,
+    } satisfies PrivateTripData);
+  }
+  try {
+    const data = JSON.parse(saved) as PrivateTripData;
+    return jsonResponse(env, {
+      parkedVehicle: data.parkedVehicle || null,
+      belongings: Array.isArray(data.belongings) ? data.belongings : [],
+      updatedAt: data.updatedAt || null,
+    });
+  } catch {
+    return jsonResponse(env, { error: "Saved trip data could not be read" }, 500);
+  }
+}
+
+async function handleSaveTripData(request: Request, env: Env): Promise<Response> {
+  const identity = await verifyFirebaseIdentity(request, env);
+  if (!identity) return jsonResponse(env, { error: "Sign in to save your trip data" }, 401);
+  try {
+    const body = await request.json<any>();
+    let parkedVehicle: PrivateTripData["parkedVehicle"] = null;
+    if (body?.parkedVehicle && typeof body.parkedVehicle === "object") {
+      const { lat, lng, savedAt, note } = body.parkedVehicle;
+      if (
+        typeof lat !== "number" || !Number.isFinite(lat) || lat < 26 || lat > 31 ||
+        typeof lng !== "number" || !Number.isFinite(lng) || lng < 79 || lng > 89 ||
+        typeof savedAt !== "string" || Number.isNaN(Date.parse(savedAt))
+      ) {
+        return jsonResponse(env, { error: "Invalid parked vehicle location" }, 400);
+      }
+      parkedVehicle = {
+        lat,
+        lng,
+        savedAt,
+        ...(typeof note === "string" && note.trim() ? { note: note.trim().slice(0, 160) } : {}),
+      };
+    }
+
+    const rawBelongings = Array.isArray(body?.belongings) ? body.belongings.slice(0, 40) : [];
+    const belongings: BelongingChecklistItem[] = [];
+    for (const item of rawBelongings) {
+      if (!item || typeof item.id !== "string" || typeof item.label !== "string") continue;
+      const label = item.label.trim().slice(0, 80);
+      if (!label) continue;
+      belongings.push({
+        id: item.id.slice(0, 80),
+        label,
+        checked: item.checked === true,
+      });
+    }
+
+    const data: PrivateTripData = {
+      parkedVehicle,
+      belongings,
+      updatedAt: new Date().toISOString(),
+    };
+    await env.DATA.put(`private-trip-data:${identity.uid}`, JSON.stringify(data));
+    return jsonResponse(env, { ok: true, data });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Save trip data failed", note: e?.message }, 500);
+  }
+}
+
 /* ==================== AI REMINDER SERVICE ==================== */
 
 type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
@@ -201,24 +397,39 @@ interface ReminderItem {
 }
 
 async function readReminders(env: Env, userId: string): Promise<ReminderItem[]> {
-  const all = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
-  return all.filter((r) => r.userId === userId);
+  const key = `user-reminders:${userId}`;
+  const saved = await env.DATA.get(key);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // One-time compatibility read for reminders saved by the older shared-key format.
+  const legacy = await readJsonData<ReminderItem[]>(env, "user-reminders.json", []);
+  return legacy.filter((reminder) => reminder.userId === userId);
 }
 
-async function saveReminders(env: Env, reminders: ReminderItem[]): Promise<void> {
-  await env.DATA.put("user-reminders.json", JSON.stringify(reminders));
+async function saveReminders(env: Env, userId: string, reminders: ReminderItem[]): Promise<void> {
+  await env.DATA.put(`user-reminders:${userId}`, JSON.stringify(reminders));
 }
 
 async function handleAiReminder(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to use personal reminders" }, 401);
+    const userId = identity.uid;
     const body = await request.json<any>();
-    const { userId, input, routeContext, emotion } = body;
+    const { input, routeContext, emotion } = body;
 
-    if (!userId || typeof userId !== "string") {
-      return jsonResponse(env, { error: "userId is required" }, 400);
-    }
-    if (!input || typeof input !== "string") {
+    if (typeof input !== "string" || !input.trim()) {
       return jsonResponse(env, { error: "input is required" }, 400);
+    }
+    if (input.length > 1200) {
+      return jsonResponse(env, { error: "Reminder request is too long (maximum 1,200 characters)" }, 400);
     }
     if (!env.GEMINI_API_KEY) {
       return jsonResponse(env, { error: "AI service not configured" }, 503);
@@ -230,12 +441,12 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
     const prompt = buildSystemPrompt(
-      "You are Mero Sadak's AI Reminder Concierge. The user has shared a reminder request along with their route context. Generate 3-5 practical reminder suggestions as JSON array. Each reminder needs: id (unique), category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (ISO string or relative like '2h before departure'), suggestedPlace (place name or null), highwayCode (relevant highway or null), approxKmFromOrigin (number or null). Be specific to Nepal highways. Tailor tone to the user's emotion.",
+      "You are Mero Sadak's practical AI travel-reminder assistant for Nepal. Understand the user's language (Nepali or English) and intent. Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.",
       { routeContext, emotion: detectedEmotion },
       detectedEmotion
     );
 
-    const result = await model.generateContent(`${prompt}\n\nUser input: "${input}"\nRoute context: ${JSON.stringify(routeContext || {})}`);
+    const result = await model.generateContent(`${prompt}\n\nUser input (JSON string): ${JSON.stringify(input)}\nRoute context (JSON): ${JSON.stringify(routeContext || {})}`);
     const text = result.response.text();
 
     let suggestions: any[] = [];
@@ -265,7 +476,7 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     // Persist
     const existing = await readReminders(env, userId);
     const merged = [...existing, ...reminders];
-    await saveReminders(env, merged);
+    await saveReminders(env, userId, merged);
 
     return jsonResponse(env, {
       emotion: detectedEmotion,
@@ -281,10 +492,9 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
 
 async function handleListReminders(request: Request, env: Env): Promise<Response> {
   try {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
-    if (!userId) return jsonResponse(env, { error: "userId required" }, 400);
-    const reminders = await readReminders(env, userId);
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to view personal reminders" }, 401);
+    const reminders = await readReminders(env, identity.uid);
     return jsonResponse(env, { reminders, count: reminders.length });
   } catch (e: any) {
     return jsonResponse(env, { error: "List reminders failed", note: e?.message }, 500);
@@ -293,23 +503,45 @@ async function handleListReminders(request: Request, env: Env): Promise<Response
 
 async function handleDismissReminder(request: Request, env: Env): Promise<Response> {
   try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to update personal reminders" }, 401);
     const body = await request.json<any>();
-    const { userId, reminderId } = body;
-    if (!userId || !reminderId) return jsonResponse(env, { error: "userId and reminderId required" }, 400);
-    const all = await readReminders(env, userId);
+    const { reminderId } = body;
+    if (!reminderId || typeof reminderId !== "string") {
+      return jsonResponse(env, { error: "reminderId is required" }, 400);
+    }
+    const all = await readReminders(env, identity.uid);
     const updated = all.map((r) => (r.id === reminderId ? { ...r, dismissed: true } : r));
-    await saveReminders(env, updated);
+    await saveReminders(env, identity.uid, updated);
     return jsonResponse(env, { ok: true });
   } catch (e: any) {
     return jsonResponse(env, { error: "Dismiss reminder failed", note: e?.message }, 500);
   }
 }
 
+async function handleDeleteReminder(request: Request, env: Env): Promise<Response> {
+  try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to delete personal reminders" }, 401);
+    const body = await request.json<any>();
+    const { reminderId } = body;
+    if (!reminderId || typeof reminderId !== "string") {
+      return jsonResponse(env, { error: "reminderId is required" }, 400);
+    }
+    const all = await readReminders(env, identity.uid);
+    const updated = all.filter((reminder) => reminder.id !== reminderId);
+    await saveReminders(env, identity.uid, updated);
+    return jsonResponse(env, { ok: true, count: updated.length });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Delete reminder failed", note: e?.message }, 500);
+  }
+}
+
 function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
 
@@ -635,7 +867,7 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
     }
     if (Array.isArray(tolls?.tolls) && tolls.tolls.length) {
       parts.push(
-        "TOLL RATES:\n" +
+        `TOLL RATES (dataset updated ${tolls.lastUpdated ?? "unknown"}):\n` +
         compactRows(tolls.tolls, 12, (t) => ({
           name: t.name ?? t.tollPoint ?? t.location, vehicle: t.vehicle ?? undefined, rate: t.rate ?? t.car ?? undefined,
         }))
@@ -643,10 +875,11 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
     }
     if (Array.isArray(weather) && weather.length) {
       parts.push(
-        "MOUNTAIN / HIGHWAY WEATHER NODES:\n" +
+        "MOUNTAIN / HIGHWAY WEATHER NODES (individual observation times included when available):\n" +
         compactRows(weather, 8, (w) => ({
           place: w.name ?? w.place ?? w.location, temp: w.temperature ?? w.tempC ?? undefined,
           condition: w.condition ?? w.summary ?? undefined,
+          observedAt: w.observedAt ?? w.updatedAt ?? w.lastUpdated ?? undefined,
         }))
       );
     }
@@ -656,8 +889,8 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
   return parts.join("\n\n").slice(0, 4000);
 }
 
-/** Multi-turn, human-style support chat. Grounds every answer in the app's
- * live data (hazards, fuel, tolls, weather) and Nepal road-travel knowledge. */
+/** Multi-turn support chat. Grounds factual answers in the app's available
+ * data snapshots (hazards, fuel, tolls, weather) and Nepal road-travel knowledge. */
 async function handleAiChat(request: Request, env: Env): Promise<Response> {
   try {
     const body = await request.json<any>();
@@ -686,10 +919,10 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
     const persona = `You are "Mero Sadak AI" — the friendly, human-like road-travel concierge living inside the Mero Sadak app (Nepal's national highway network and GIS app). You chat like a helpful Nepali friend who knows roads, highways and travel inside out.
 
 Style:
-- Warm and conversational, like a human travel buddy. Open with a natural greeting or acknowledgment (e.g. "Namaste!"), NEVER say you are a language model.
+- Be warm, concise and conversational, but do not pretend to be a human or claim a personal relationship. If asked, clearly say you are an AI assistant.
 - Keep answers compact by default (2-6 sentences). Use short bullet lists when comparing options or giving steps.
-- Answer ONLY about things the Mero Sadak app can help with: routes and distances, road/hazard conditions, live incident reports, fuel prices, toll rates, weather affecting travel, vehicle advice, rest stops, emergency guidance, and app features (route planner, hazard reporting, My Location, offline maps, reminders).
-- GROUND FACTS in the LIVE APP DATA below. If a number (toll, fuel price, road status) is not there, say you don't have live data for it and suggest the app section that does — never invent figures.
+- Answer ONLY about things the Mero Sadak app can help with: routes and distances, road/hazard conditions, incident reports, fuel prices, toll rates, weather affecting travel, vehicle advice, rest stops, emergency guidance, and app features (route planner, hazard reporting, My Location, offline maps, reminders).
+- GROUND FACTS in the app data below. The KV snapshot may be cached or old: use each dataset's own update/observation timestamp, and never call it "live", "current", or "real-time" unless a fresh timestamp supports that claim. If a timestamp is missing, say the update time is unavailable. If a number (toll, fuel price, road status) is not present, say you cannot verify it — never invent figures.
 - When the user seems to want to go somewhere, offer to help plan it and mention they can use the Route Planner; when they report a road problem, point them to "Report a Hazard".
 - End with ONE short follow-up question when it keeps the conversation helpful, but not on every single reply.
 - Reply in the language the traveler writes in (English or Nepali).
@@ -697,7 +930,7 @@ Style:
 
     const prompt = `${persona}
 
-=== LIVE APP DATA (as of ${new Date().toISOString()}) ===
+=== APP DATA SNAPSHOT (read at ${new Date().toISOString()}; this is not proof that source data is current) ===
 ${digest || "(no live datasets available)"}
 
 === USER PROFILE ===
@@ -709,7 +942,7 @@ ${JSON.stringify(body.context ?? {})}
 === CONVERSATION SO FAR ===
 ${transcript}
 
-Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood: ${emotion} — ${emotionTone(emotion)}`;
+Reply as Mero Sadak AI to the traveler's latest message. Use a neutral, respectful tone; do not label or infer the traveler's mood.`;
 
     // Primary model first, then known-current defaults and the secondary —
     // Google deprecates model IDs over time, so the list must not depend on a
@@ -740,12 +973,12 @@ Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood:
       if (/not supported|quota|403|429|no longer available|404|deprecat/i.test(note)) {
         const digestSummary = digest
           ? digest.replace(/\n{2,}/g, "\n").slice(0, 900)
-          : "(no live datasets available right now)";
+          : "(no app data snapshot available right now)";
         return jsonResponse(env, {
           emotion,
           fallback: true,
           reply:
-            "Namaste! My AI brain is momentarily unreachable from this region, so I cannot chat freely right now. Here is what the app's live data shows:\n\n" +
+            "Namaste! The AI service is temporarily unavailable. Here is the app data snapshot I can access; its source update times may be old or unavailable:\n\n" +
             digestSummary +
             "\n\nMeanwhile the Route Planner, Reports & Hazards, fuel and toll sections are fully available — and please try me again in a little while.",
         });
@@ -928,6 +1161,12 @@ export default {
     if (url.pathname === "/api/ai-admin-command" && request.method === "POST") {
       return handleAiAdminCommand(request, env);
     }
+    if (url.pathname === "/api/trip-data" && request.method === "GET") {
+      return handleGetTripData(request, env);
+    }
+    if (url.pathname === "/api/trip-data" && request.method === "PUT") {
+      return handleSaveTripData(request, env);
+    }
     if (url.pathname === "/api/ai-reminder" && request.method === "POST") {
       return handleAiReminder(request, env);
     }
@@ -936,6 +1175,9 @@ export default {
     }
     if (url.pathname === "/api/reminders/dismiss" && request.method === "POST") {
       return handleDismissReminder(request, env);
+    }
+    if (url.pathname === "/api/reminders/delete" && request.method === "POST") {
+      return handleDeleteReminder(request, env);
     }
     if (url.pathname === "/api/submit-report" && request.method === "POST") {
       return handleSubmitReport(request, env);

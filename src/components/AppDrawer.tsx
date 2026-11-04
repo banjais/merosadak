@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Compass,
@@ -12,9 +12,11 @@ import {
   HardDriveDownload,
   Database,
   ChevronRight,
+  ChevronDown,
   LocateFixed,
   ShieldAlert,
   Sparkles,
+  Bell,
   User,
   LogIn,
 } from 'lucide-react';
@@ -45,7 +47,8 @@ interface AppDrawerProps {
   onOpenUserPanel?: () => void;
   /** Opens the Mero Sadak AI chat panel. */
   onOpenAiAssistant?: () => void;
-  user?: { displayName?: string; email?: string } | null;
+  onOpenReminders?: () => void;
+  user?: { displayName?: string; email?: string; isDemo?: boolean } | null;
   userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   isSuperAdmin?: boolean;
   incidentsCount?: number;
@@ -78,6 +81,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenOfficeAdminPanel,
   onOpenUserPanel,
   onOpenAiAssistant,
+  onOpenReminders,
   user,
   userRole = 'GeneralUser',
   isSuperAdmin = false,
@@ -90,13 +94,15 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
 }) => {
   const { loading } = useAuth();
 
+  const [showMoreTools, setShowMoreTools] = useState(false);
+
   if (!isOpen) return null;
 
   const drawerMenuItems = [
     {
       id: 'route',
-      label: 'Route Planner',
-      subtitle: 'Plan your next trip',
+      label: 'Explore & Plan',
+      subtitle: 'Search places and plan a journey',
       icon: Compass,
       color: 'accent-text',
       activeColor: 'accent-bg accent-text',
@@ -174,6 +180,21 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       onClick: () => { onOpenOfflineManager(); onClose(); },
     },
     {
+      id: 'reminders',
+      label: 'My Reminders',
+      subtitle: 'Saved places, belongings & trip reminders',
+      icon: Bell,
+      color: 'accent-text',
+      activeColor: 'accent-bg accent-text',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg accent-text',
+      onClick: () => {
+        if (!user || user.isDemo) { onOpenLogin(); onClose(); return; }
+        onOpenReminders?.();
+        onClose();
+      },
+    },
+    {
       id: 'ai-assistant',
       label: 'Mero Sadak AI',
       subtitle: 'Ask about roads, fuel, tolls, weather',
@@ -227,41 +248,58 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             </p>
           )}
 
-          <div className="space-y-1">
-            {drawerMenuItems
-              .filter((item) => {
-                if (!item.role) return true;
-                if (item.role === 'superadmin') return userRole === 'superadmin';
-                if (item.role === 'OfficeAdmin') return userRole === 'OfficeAdmin' || userRole === 'superadmin';
-                return true;
-              })
-              .map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={item.onClick}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 min-h-12 rounded-xl text-sm font-medium transition text-left group ${
-                      isActive
-                        ? item.activeBg
-                        : 'text-slate-300 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className={`p-1.5 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900/70 ${item.color} group-hover:bg-slate-800/80`}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block text-[13px] font-medium truncate leading-tight">{item.label}</span>
-                        <span className="text-[10px] text-tertiary font-normal block truncate leading-tight mt-0.5">{item.subtitle}</span>
-                      </div>
+          {(() => {
+            const canSee = (item: typeof drawerMenuItems[number]) => {
+              if (!item.role) return true;
+              if (item.role === 'superadmin') return userRole === 'superadmin';
+              if (item.role === 'OfficeAdmin') return userRole === 'OfficeAdmin' || userRole === 'superadmin';
+              return true;
+            };
+            const primaryIds = ['route', 'distance', 'reminders', 'ai-assistant'];
+            const renderItem = (item: typeof drawerMenuItems[number]) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={item.onClick}
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 min-h-12 rounded-xl text-sm font-medium transition text-left group ${
+                    isActive ? item.activeBg : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className={`p-1.5 rounded-lg shrink-0 ${isActive ? item.activeIcon : `bg-slate-900/70 ${item.color} group-hover:bg-slate-800/80`}`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                    <div className="min-w-0">
+                      <span className="block text-[13px] font-medium truncate leading-tight">{item.label}</span>
+                      <span className="text-[10px] text-tertiary font-normal block truncate leading-tight mt-0.5">{item.subtitle}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'accent-text' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                </button>
+              );
+            };
+            const primary = drawerMenuItems.filter((item) => primaryIds.includes(item.id) && canSee(item));
+            const secondary = drawerMenuItems.filter((item) => !primaryIds.includes(item.id) && canSee(item));
+            return (
+              <div className="space-y-3">
+                <div className="space-y-1">{primary.map(renderItem)}</div>
+                <div className="border-t border-slate-800/70 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreTools((value) => !value)}
+                    aria-expanded={showMoreTools}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition"
+                  >
+                    <span>More travel tools & settings</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showMoreTools ? 'rotate-180' : ''}`} />
                   </button>
-                );
-              })}
-          </div>
+                  {showMoreTools && <div className="space-y-1 pt-1">{secondary.map(renderItem)}</div>}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="p-3 border-t border-slate-800/70 bg-[var(--surface-shell)] text-xs text-tertiary">

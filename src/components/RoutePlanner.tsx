@@ -13,7 +13,7 @@ import {
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { CITIES_AND_JUNCTIONS } from '../data/nepalHighwaysData';
 import { loadExpandedCities, getCachedExpandedCities } from '../utils/cityDataLoader';
-import { findOptimizedRoute, pickVerifiedRoute, ensureRealRoadGeometry } from '../utils/routeOptimizer';
+import { findOptimizedRoute, pickVerifiedRoute, pickRouteByCertification, ensureRealRoadGeometry } from '../utils/routeOptimizer';
 import { RouteComparisonView } from './RouteComparisonView';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PlaceField, FieldIconButton } from './planner/PlaceField';
@@ -707,10 +707,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       // highway" bug).
       await ensureRealRoadGeometry();
       const plan = findOptimizedRoute(fromId, toId, pref, veh, terrainFilters, originCity || undefined, destCity || undefined, liveIncidents);
-      // Respect the chosen preference, but never present a straight-line
-      // approximation as a road distance.
-      const resolved = plan ? pickVerifiedRoute(plan) : null;
-      if (resolved && fuelPrices) {
+      // Prefer a verified road route. If no connected road path exists,
+      // retain the explicitly labelled aerial estimate instead of snapping
+      // the user to an unrelated junction or silently showing no result.
+      const resolved = plan
+        ? (pickVerifiedRoute(plan) || pickRouteByCertification(plan))
+        : null;
+      if (resolved && fuelPrices && !resolved.__aerialWarning) {
         const updatedPlan = applyLiveFuelPrices(resolved, veh, fuelPrices);
         setRoutePlan(updatedPlan);
         onRouteCalculated(updatedPlan);
@@ -1150,9 +1153,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     handleDetectDeviceLocation(false);
     setRoutePlannerStep('destination');
     setPlannerDeckActiveId('destination');
-    // Reveal the location info card so the user sees the GPS status change
-    // when switching to GPS mode.
-    setShowMyLocationDetails(true);
+    // Keep the map/search compact; details appear only when the user taps
+    // the My Location control beside the destination search bar.
+    setShowMyLocationDetails(false);
     // Open the destination dropdown so suggestions are ready, but do NOT
     // focus the input — on mobile that pops the keyboard without a tap.
     setTimeout(() => setIsSingleDropdownOpen(true), 150);
@@ -1189,9 +1192,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setRoutePlannerStep('destination');
     handleDetectDeviceLocation(false);
     setPlannerDeckActiveId('destination');
-    // Reveal the location info card so the user sees the GPS status when
-    // returning to the default (My Location) mode.
-    setShowMyLocationDetails(true);
+    // Do not force-open a location panel when returning to GPS mode.
+    setShowMyLocationDetails(false);
     // Open the destination dropdown, but do NOT focus the input.
     setTimeout(() => setIsSingleDropdownOpen(true), 150);
   };
@@ -1213,7 +1215,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     // visible. The hasCalculated flip below will reset the deck to its first
     // pre-calc card (which is now 'destination' itself); this confirms it.
     setPlannerDeckActiveId('destination');
-    setShowMyLocationDetails(true);
+    setShowMyLocationDetails(false);
     onRouteClear?.();
     // Do NOT auto-focus the destination input — on mobile that pops the
     // keyboard without the user tapping the field.
