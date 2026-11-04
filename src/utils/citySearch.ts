@@ -111,6 +111,7 @@ export function countCityMatches(  cities: CityNode[],
   const seenPlaces = new Set<string>();
   for (const city of cities) {
     if (options.excludeIds?.has(city.id)) continue;
+    if (city.cityType && NON_SETTLEMENT_TYPES.has(city.cityType.trim().toLowerCase())) continue;
     if (scoreCity(city, normalizedQuery) === NO_MATCH) continue;
     const key = placeDedupeKey(city);
     if (seenPlaces.has(key)) continue;
