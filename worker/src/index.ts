@@ -432,6 +432,24 @@ async function handleDismissReminder(request: Request, env: Env): Promise<Respon
   }
 }
 
+async function handleDeleteReminder(request: Request, env: Env): Promise<Response> {
+  try {
+    const identity = await verifyFirebaseIdentity(request, env);
+    if (!identity) return jsonResponse(env, { error: "Sign in to delete personal reminders" }, 401);
+    const body = await request.json<any>();
+    const { reminderId } = body;
+    if (!reminderId || typeof reminderId !== "string") {
+      return jsonResponse(env, { error: "reminderId is required" }, 400);
+    }
+    const all = await readReminders(env, identity.uid);
+    const updated = all.filter((reminder) => reminder.id !== reminderId);
+    await saveReminders(env, identity.uid, updated);
+    return jsonResponse(env, { ok: true, count: updated.length });
+  } catch (e: any) {
+    return jsonResponse(env, { error: "Delete reminder failed", note: e?.message }, 500);
+  }
+}
+
 function corsHeaders(env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
@@ -1063,6 +1081,9 @@ export default {
     }
     if (url.pathname === "/api/reminders/dismiss" && request.method === "POST") {
       return handleDismissReminder(request, env);
+    }
+    if (url.pathname === "/api/reminders/delete" && request.method === "POST") {
+      return handleDeleteReminder(request, env);
     }
     if (url.pathname === "/api/submit-report" && request.method === "POST") {
       return handleSubmitReport(request, env);
