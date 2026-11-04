@@ -19,6 +19,8 @@ import {
   Target,
   Radio,
   Locate,
+  Car,
+  Plus,
 } from 'lucide-react';
 import { fetchJsonWithFirebaseAuth } from '../utils/apiConfig';
 import { ReminderItem, ReminderCategory } from '../types';
@@ -68,6 +70,16 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   const [distanceToDestinationKm, setDistanceToDestinationKm] = useState<number | null>(null);
   const [triggeredReminders, setTriggeredReminders] = useState<ReminderItem[]>([]);
   const [showTriggeredPanel, setShowTriggeredPanel] = useState(false);
+  const [parkedVehicle, setParkedVehicle] = useState<{ lat: number; lng: number; savedAt: string; note?: string } | null>(null);
+  const [belongings, setBelongings] = useState<Array<{ id: string; label: string; checked: boolean }>>([
+    { id: 'phone', label: 'Phone', checked: false },
+    { id: 'wallet', label: 'Wallet', checked: false },
+    { id: 'keys', label: 'Keys', checked: false },
+    { id: 'documents', label: 'ID & documents', checked: false },
+    { id: 'luggage', label: 'Luggage', checked: false },
+  ]);
+  const [newBelonging, setNewBelonging] = useState('');
+  const [tripDataSaving, setTripDataSaving] = useState(false);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<any>(null);
   const watchRef = useRef<number | null>(null);
@@ -87,6 +99,98 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
     };
     load();
   }, []);
+
+  // Load private parking and belongings data from the authenticated Worker profile.
+  useEffect(() => {
+    let cancelled = false;
+    fetchJsonWithFirebaseAuth<{
+      parkedVehicle: { lat: number; lng: number; savedAt: string; note?: string } | null;
+      belongings: Array<{ id: string; label: string; checked: boolean }>;
+      updatedAt: string | null;
+    }>('/api/trip-data')
+      .then((data) => {
+        if (cancelled) return;
+        setParkedVehicle(data.parkedVehicle || null);
+        if (data.updatedAt) setBelongings(Array.isArray(data.belongings) ? data.belongings : []);
+      })
+      .catch((e: any) => {
+        if (!cancelled) setError(e?.message || 'Could not load your saved trip data.');
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const persistTripData = async (
+    nextParkedVehicle: { lat: number; lng: number; savedAt: string; note?: string } | null,
+    nextBelongings: Array<{ id: string; label: string; checked: boolean }>
+  ) => {
+    setTripDataSaving(true);
+    try {
+      await fetchJsonWithFirebaseAuth('/api/trip-data', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parkedVehicle: nextParkedVehicle, belongings: nextBelongings }),
+      });
+      return true;
+    } catch (e: any) {
+      setError(e?.message || 'Could not save your trip data.');
+      return false;
+    } finally {
+      setTripDataSaving(false);
+    }
+  };
+
+  const saveParkingLocation = async () => {
+    if (!navigator.geolocation) {
+      setError('Location access is not supported by this browser.');
+      return;
+    }
+    setError(null);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          maximumAge: 10000,
+          timeout: 15000,
+        });
+      });
+      const next = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        savedAt: new Date().toISOString(),
+      };
+      if (await persistTripData(next, belongings)) {
+        setParkedVehicle(next);
+        setGpsFix({ lat: next.lat, lng: next.lng, timestamp: Date.now() });
+        speak('Your parking location has been saved.');
+      }
+    } catch (e: any) {
+      setError(e?.code === 1
+        ? 'Location permission was not granted. Allow location access and try again.'
+        : 'Could not get your current location. Please try again.');
+    }
+  };
+
+  const clearParkingLocation = async () => {
+    if (await persistTripData(null, belongings)) setParkedVehicle(null);
+  };
+
+  const toggleBelonging = async (id: string) => {
+    const next = belongings.map((item) => item.id === id ? { ...item, checked: !item.checked } : item);
+    if (await persistTripData(parkedVehicle, next)) setBelongings(next);
+  };
+
+  const addBelonging = async () => {
+    const label = newBelonging.trim();
+    if (!label || belongings.length >= 40) return;
+    const next = [...belongings, { id: `custom-${Date.now()}`, label, checked: false }];
+    if (await persistTripData(parkedVehicle, next)) setBelongings(next);
+    setNewBelonging('');
+  };
+
+  const removeBelonging = async (id: string) => {
+    const next = belongings.filter((item) => item.id !== id);
+    if (await persistTripData(parkedVehicle, next)) setBelongings(next);
+  };
 
   // Seed GPS from cache on mount
   useEffect(() => {
@@ -386,7 +490,98 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
         </div>
       </div>
 
-      {/* Input area */}
+      {/* Personal trip essentials: parking memory and a user-confirmed checklist. */}
+      <div className="px-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-slate-700/70 bg-slate-950/60 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <Car className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white">Parked vehicle</h4>
+              <p className="text-[10px] text-slate-500">Remember where you parked</p>
+            </div>
+          </div>
+          {parkedVehicle ? (
+            <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3 space-y-1">
+              <p className="text-[10px] text-emerald-300 font-semibold">Location saved</p>
+              <p className="text-[10px] text-slate-400">{new Date(parkedVehicle.savedAt).toLocaleString()}</p>
+              <p className="text-[10px] text-slate-500 font-mono">{parkedVehicle.lat.toFixed(5)}, {parkedVehicle.lng.toFixed(5)}</p>
+              <div className="flex items-center gap-3 pt-1">
+                <a
+                  href={`https://www.google.com/maps?q=${parkedVehicle.lat},${parkedVehicle.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-bold text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+                >
+                  Open saved location
+                </a>
+                <button type="button" onClick={clearParkingLocation} disabled={tripDataSaving} className="text-[10px] text-slate-400 hover:text-rose-300 disabled:opacity-50">
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[10px] text-slate-400">No parking location saved yet.</p>
+          )}
+          <button
+            type="button"
+            onClick={saveParkingLocation}
+            disabled={tripDataSaving}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-2.5 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/15 disabled:opacity-50"
+          >
+            {tripDataSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Locate className="w-3.5 h-3.5" />}
+            Save current location
+          </button>
+          <p className="text-[9px] leading-relaxed text-slate-500">This saves one parking spot. It does not track a moving vehicle.</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-700/70 bg-slate-950/60 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-300 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white">Before you leave</h4>
+              <p className="text-[10px] text-slate-500">Tick off your belongings</p>
+            </div>
+          </div>
+          <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+            {belongings.map((item) => (
+              <div key={item.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-900/70">
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={() => toggleBelonging(item.id)}
+                  disabled={tripDataSaving}
+                  className="accent-emerald-500"
+                  aria-label={`Mark ${item.label} as ${item.checked ? 'not packed' : 'packed'}`}
+                />
+                <span className={`flex-1 text-[11px] ${item.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>{item.label}</span>
+                <button type="button" onClick={() => removeBelonging(item.id)} disabled={tripDataSaving} className="p-1 text-slate-600 hover:text-rose-300 disabled:opacity-40" aria-label={`Remove ${item.label}`}>
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={newBelonging}
+              onChange={(e) => setNewBelonging(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addBelonging()}
+              maxLength={80}
+              placeholder="Add an item"
+              className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2 text-[10px] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+            />
+            <button type="button" onClick={addBelonging} disabled={tripDataSaving || !newBelonging.trim() || belongings.length >= 40} className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 text-cyan-300 disabled:opacity-40" aria-label="Add belongings item">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="text-[9px] text-slate-500">{belongings.filter((item) => item.checked).length} of {belongings.length} items checked · Saved to your account</p>
+        </div>
+      </div>
+
+      {/* AI-generated journey reminders */}
       <div className="p-5 space-y-4">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">
           <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
