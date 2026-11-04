@@ -384,6 +384,7 @@ interface ReminderItem {
   id: string;
   userId: string;
   category: ReminderCategory;
+  sector?: 'vehicle' | 'belongings' | 'travel' | 'other';
   title: string;
   description: string;
   suggestedTime?: string;      // ISO or relative like "2h before departure"
