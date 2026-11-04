@@ -32,9 +32,9 @@ export const ReelCard: React.FC<ReelCardProps> = ({
   const alert = tone === 'alert';
   return (
     <section
-      className={`overflow-hidden rounded-3xl border backdrop-blur-md ${
+      className={`ms-depth-card overflow-hidden rounded-3xl border backdrop-blur-md ${
         alert && badge
-          ? 'border-amber-500/40 bg-gradient-to-b from-amber-950/20 to-slate-950/80'
+          ? 'ms-depth-card--alert border-amber-500/40 bg-gradient-to-b from-amber-950/20 to-slate-950/80'
           : 'border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-950/80'
       }`}
       aria-label={title}
