@@ -867,7 +867,7 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
     }
     if (Array.isArray(tolls?.tolls) && tolls.tolls.length) {
       parts.push(
-        "TOLL RATES:\n" +
+        `TOLL RATES (dataset updated ${tolls.lastUpdated ?? "unknown"}):\n` +
         compactRows(tolls.tolls, 12, (t) => ({
           name: t.name ?? t.tollPoint ?? t.location, vehicle: t.vehicle ?? undefined, rate: t.rate ?? t.car ?? undefined,
         }))
@@ -875,10 +875,11 @@ async function buildLiveContextDigest(env: Env): Promise<string> {
     }
     if (Array.isArray(weather) && weather.length) {
       parts.push(
-        "MOUNTAIN / HIGHWAY WEATHER NODES:\n" +
+        "MOUNTAIN / HIGHWAY WEATHER NODES (individual observation times included when available):\n" +
         compactRows(weather, 8, (w) => ({
           place: w.name ?? w.place ?? w.location, temp: w.temperature ?? w.tempC ?? undefined,
           condition: w.condition ?? w.summary ?? undefined,
+          observedAt: w.observedAt ?? w.updatedAt ?? w.lastUpdated ?? undefined,
         }))
       );
     }
@@ -918,10 +919,10 @@ async function handleAiChat(request: Request, env: Env): Promise<Response> {
     const persona = `You are "Mero Sadak AI" — the friendly, human-like road-travel concierge living inside the Mero Sadak app (Nepal's national highway network and GIS app). You chat like a helpful Nepali friend who knows roads, highways and travel inside out.
 
 Style:
-- Warm and conversational, like a human travel buddy. Open with a natural greeting or acknowledgment (e.g. "Namaste!"), NEVER say you are a language model.
+- Be warm, concise and conversational, but do not pretend to be a human or claim a personal relationship. If asked, clearly say you are an AI assistant.
 - Keep answers compact by default (2-6 sentences). Use short bullet lists when comparing options or giving steps.
-- Answer ONLY about things the Mero Sadak app can help with: routes and distances, road/hazard conditions, live incident reports, fuel prices, toll rates, weather affecting travel, vehicle advice, rest stops, emergency guidance, and app features (route planner, hazard reporting, My Location, offline maps, reminders).
-- GROUND FACTS in the LIVE APP DATA below. If a number (toll, fuel price, road status) is not there, say you don't have live data for it and suggest the app section that does — never invent figures.
+- Answer ONLY about things the Mero Sadak app can help with: routes and distances, road/hazard conditions, incident reports, fuel prices, toll rates, weather affecting travel, vehicle advice, rest stops, emergency guidance, and app features (route planner, hazard reporting, My Location, offline maps, reminders).
+- GROUND FACTS in the app data below. The KV snapshot may be cached or old: use each dataset's own update/observation timestamp, and never call it "live", "current", or "real-time" unless a fresh timestamp supports that claim. If a timestamp is missing, say the update time is unavailable. If a number (toll, fuel price, road status) is not present, say you cannot verify it — never invent figures.
 - When the user seems to want to go somewhere, offer to help plan it and mention they can use the Route Planner; when they report a road problem, point them to "Report a Hazard".
 - End with ONE short follow-up question when it keeps the conversation helpful, but not on every single reply.
 - Reply in the language the traveler writes in (English or Nepali).
@@ -929,7 +930,7 @@ Style:
 
     const prompt = `${persona}
 
-=== LIVE APP DATA (as of ${new Date().toISOString()}) ===
+=== APP DATA SNAPSHOT (read at ${new Date().toISOString()}; this is not proof that source data is current) ===
 ${digest || "(no live datasets available)"}
 
 === USER PROFILE ===
@@ -941,7 +942,7 @@ ${JSON.stringify(body.context ?? {})}
 === CONVERSATION SO FAR ===
 ${transcript}
 
-Reply as Mero Sadak AI to the traveler's latest message. Detected traveler mood: ${emotion} — ${emotionTone(emotion)}`;
+Reply as Mero Sadak AI to the traveler's latest message. Use a neutral, respectful tone; do not label or infer the traveler's mood.`;
 
     // Primary model first, then known-current defaults and the secondary —
     // Google deprecates model IDs over time, so the list must not depend on a
