@@ -76,7 +76,7 @@ key is unset the Worker simply skips that source.
 | WAQI / AQICN         | `WAQI_API_KEY`               | Air quality (Kathmandu & major cities)       | Free key (aqicn.org)               |
 | OpenTopoData         | (no key)                     | Elevation for mountain highways              | Public instances                   |
 
-See `worker/.env.example` and the root `.env.example` for full details.
+Copy `.env.example` to `.env` for local Express development. Copy `worker/.dev.vars.example` to `worker/.dev.vars` for local Worker development.
 
 ## Where paid keys live
 Nothing in `public/` ever holds a real API key — that folder is served
@@ -89,7 +89,7 @@ wrangler secret put <NAME>
 wrangler deploy
 ```
 
-See `worker/.env.example` for the full list of secrets the worker
+See `worker/.dev.vars.example` for the full list of secrets the worker
 reads, what each one is a primary vs. fallback source for, and where to
 get a free key. Short version — every Worker-proxied endpoint tries a
 free/keyless source first and only falls back to a paid key if that fails:
