@@ -473,7 +473,11 @@ export type EmergencyDistressType =
 
 export type ReminderCategory = 'departure_time' | 'rest_stop' | 'fuel_stop' | 'event' | 'weather' | 'toll_plaza' | 'border_check' | 'custom';
 
+export type ReminderSector = 'vehicle' | 'belongings' | 'travel' | 'other';
+
 export interface ReminderItem {
+  /** User-selected section used to organize personal reminders. */
+  sector?: ReminderSector;
   id: string;
   userId: string;
   category: ReminderCategory;
