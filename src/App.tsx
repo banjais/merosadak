@@ -18,7 +18,6 @@ import { AppDrawer } from './components/AppDrawer';
 import { LoginScreen } from './components/LoginScreen';
 import { TravelStepsGuide } from './components/TravelStepsGuide';
 import { SpeedDialFab } from './components/SpeedDialFab';
-import { MyRouteFab } from './components/MyRouteFab';
 import { AdminCommandPanel } from './components/AdminCommandPanel';
 import { SuperAdminPanel } from './components/SuperAdminControlPanel';
 import { OfficeAdminPanel } from './components/OfficeAdminPanel';
@@ -831,24 +830,9 @@ function AppContent() {
           onOpenHighwayInfo={() => setIsHighwayInfoOpen(true)}
         />
 
-        {/* Left-Bottom "My Route" FAB — appears only when a route is planned.
-        Clicking it scrolls the planner verdict into view (the route summary
-        that lives below the fold). Sits on the left so it doesn't collide
-        with the right-side SpeedDialFab. */}
-        <MyRouteFab
-          route={activeRoute}
-          onClear={() => setActiveRoute(null)}
-          onClick={() => {
-            const verdict = document.getElementById('route-verdict');
-            if (verdict) {
-              verdict.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-              // No verdict in DOM (e.g. the planner collapsed it): fall back
-              // to the main scroll container so the FAB is never a dead click.
-              document.querySelector('main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }}
-        />
+        {/* NOTE: the left-bottom "My Route" FAB was removed — the user found the
+        icon + route info redundant. The route itself is shown on the map with
+        A/B endpoint markers, and the verdict lives in the planner deck. */}
         {/* Feature Sliding Panel / Bottom Sheet (Progressive Disclosure - Only Shown When Clicked) */}
         {activeFeature && (
           <>

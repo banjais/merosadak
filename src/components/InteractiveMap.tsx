@@ -606,10 +606,16 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // alone kept the country-wide zoom 7, which is exactly the "opens on the full
   // Nepal map" behaviour this replaces. Later fixes pan smoothly so walking and
   // driving track in real time without re-flying.
+  // EXCEPTION: when a route is fixed, the ROUTE owns the camera — the route
+  // render effect frames the corridor with fitBounds. Follow-me panning would
+  // yank the camera back to the user's dot on every GPS tick and destroy the
+  // route view (the exact "map shows me, not my route" complaint). The dot
+  // still updates; only the camera is left alone.
   useEffect(() => {
     if (!fix) return;
     updateGpsMarker([fix.lat, fix.lng]);
     if (!followMe) return;
+    if (activeRoute) return; // route owns the camera
     const map = mapInstanceRef.current;
     if (!map) return;
     if (!cameraLockedRef.current) {
@@ -636,11 +642,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       };
     }
     map.panTo([fix.lat, fix.lng], { animate: true, duration: 0.6, easeLinearity: 0.5 });
-  }, [fix, followMe, updateGpsMarker]);
+  }, [fix, followMe, updateGpsMarker, activeRoute]);
 
   // A manual drag hands the camera back to the user. The dot still tracks;
   // only following stops. A zoom (mouse wheel or +/- buttons) recenters on the
   // user's location while keeping the chosen zoom level.
+  // EXCEPTION: while a route is active, zoom-end does NOT recenter on the
+  // user — the route's fitBounds ends with a zoomend, and recentering would
+  // immediately pull the camera off the route corridor.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -649,6 +658,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     // keeping the current zoom level — panTo is smooth, flyTo jumps.
     const recenterOnZoom = () => {
       if (suppressRecenterRef.current) return;
+      if (activeRoute) return; // route owns the camera
       setFollowMe(true);
       if (fix) {
         map.panTo([fix.lat, fix.lng], { animate: true, duration: 0.5, easeLinearity: 0.4 });
@@ -660,7 +670,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       map.off('dragstart', releaseOnDrag);
       map.off('zoomend', recenterOnZoom);
     };
-  }, [mapInitialized, fix, suppressRecenterRef]);
+  }, [mapInitialized, fix, suppressRecenterRef, activeRoute]);
 
   const recenterOnMe = useCallback(() => {
     setFollowMe(true);
@@ -1464,38 +1474,28 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
     }
 
-    // Start Origin Marker
+    // Start/End markers — same A/B badge style as the Distance Calculator's
+    // RouteMapView (26px round badges, white ring), with the place names shown
+    // as PERMANENT labels above the markers so From and To read at a glance
+    // without hovering.
+    const endpointBadge = (letter: string, color: string, letterColor: string) =>
+      L.divIcon({
+        className: 'route-endpoint-marker',
+        html: `<div style="width:26px;height:26px;border-radius:9999px;background:${color};border:2.5px solid #ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;color:${letterColor};font:900 13px/1 system-ui,sans-serif;">${letter}</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+      });
+
     const startCoord = activeRoute.pathCoordinates[0];
-    const startIcon = L.divIcon({
-      className: 'route-start-marker',
-      html: `
-        <div style="background: #10b981; border: 2px solid #ffffff; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #10b981; display: flex; align-items: center; justify-content: center; color: #020617; font-size: 11px; font-weight: 900;">
-          A
-        </div>
-      `,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-    });
-    const startMarker = L.marker(startCoord, { icon: startIcon }).bindTooltip(
-      `<strong>Start:</strong> ${activeRoute.origin.name}`,
-      { direction: 'top', className: 'custom-dark-tooltip' }
+    const startMarker = L.marker(startCoord, { icon: endpointBadge('A', '#10b981', '#022c22') }).bindTooltip(
+      `<strong>From:</strong> ${activeRoute.origin.name}`,
+      { direction: 'top', className: 'custom-dark-tooltip', permanent: true, offset: [0, -14] }
     );
 
-    // End Destination Marker
     const endCoord = activeRoute.pathCoordinates[activeRoute.pathCoordinates.length - 1];
-    const endIcon = L.divIcon({
-      className: 'route-end-marker',
-      html: `
-        <div style="background: #f43f5e; border: 2px solid #ffffff; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px #f43f5e; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 11px; font-weight: 900;">
-          B
-        </div>
-      `,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-    });
-    const endMarker = L.marker(endCoord, { icon: endIcon }).bindTooltip(
-      `<strong>Destination:</strong> ${activeRoute.destination.name}`,
-      { direction: 'top', className: 'custom-dark-tooltip' }
+    const endMarker = L.marker(endCoord, { icon: endpointBadge('B', '#f43f5e', '#ffffff') }).bindTooltip(
+      `<strong>To:</strong> ${activeRoute.destination.name}`,
+      { direction: 'top', className: 'custom-dark-tooltip', permanent: true, offset: [0, -14] }
     );
 
     routeGroup.addLayer(startMarker);
