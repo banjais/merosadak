@@ -20,7 +20,7 @@ import {
   Radio,
   Locate,
 } from 'lucide-react';
-import { fetchJson } from '../utils/apiConfig';
+import { fetchJsonWithFirebaseAuth } from '../utils/apiConfig';
 import { ReminderItem, ReminderCategory } from '../types';
 import { readFreshCachedGps, writeCachedGps } from '../utils/gpsLocation';
 import { getDistanceAlongPathToPoint, getDistanceKm } from '../utils/geoUtils';
@@ -45,7 +45,6 @@ interface ReminderServicePanelProps {
     id?: string;
     pathCoordinates?: [number, number][];
   };
-  userId?: string;
   vehicle?: string;
   preference?: string;
 }
@@ -53,7 +52,6 @@ interface ReminderServicePanelProps {
 export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   onBack,
   routePlan,
-  userId = 'default-user',
   vehicle = 'car',
   preference = 'fastest',
 }) => {
@@ -79,8 +77,8 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchJson<{ reminders: ReminderItem[]; count: number }>(
-          `/api/reminders?userId=${encodeURIComponent(userId)}`
+        const data = await fetchJsonWithFirebaseAuth<{ reminders: ReminderItem[]; count: number }>(
+          '/api/reminders'
         );
         if (data.reminders) setReminders(data.reminders);
       } catch (e: any) {
@@ -88,7 +86,7 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
       }
     };
     load();
-  }, [userId]);
+  }, []);
 
   // Seed GPS from cache on mount
   useEffect(() => {
@@ -269,11 +267,10 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchJson<any>('/api/ai-reminder', {
+      const data = await fetchJsonWithFirebaseAuth<any>('/api/ai-reminder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
           input: input.trim(),
           routeContext: routePlan
             ? {
@@ -303,10 +300,10 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
   const handleDismiss = async (id: string) => {
     setSaving(true);
     try {
-      await fetchJson('/api/reminders/dismiss', {
+      await fetchJsonWithFirebaseAuth('/api/reminders/dismiss', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, reminderId: id }),
+        body: JSON.stringify({ reminderId: id }),
       });
       setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, dismissed: true } : r)));
       setTriggeredReminders((prev) => prev.map((r) => (r.id === id ? { ...r, dismissed: true } : r)));
