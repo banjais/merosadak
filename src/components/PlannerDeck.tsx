@@ -36,7 +36,6 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   const x = useMotionValue(0);
   const rotateY = useTransform(x, [-220, 0, 220], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
   const dragOpacity = useTransform(x, [-260, -80, 0, 80, 260], [0.55, 1, 1, 1, 0.55]);
-  const direction = useRef(1);
 
   const activeIndex = Math.max(0, items.findIndex((item) => item.id === activeId));
   const active = items[activeIndex];
@@ -50,7 +49,6 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 34 });
       return;
     }
-    direction.current = index > activeIndex ? 1 : -1;
     x.set(0);
     onChange(items[index].id);
     try {
