@@ -15,6 +15,7 @@ import {
   LocateFixed,
   ShieldAlert,
   Sparkles,
+  Bell,
   User,
   LogIn,
 } from 'lucide-react';
@@ -45,7 +46,8 @@ interface AppDrawerProps {
   onOpenUserPanel?: () => void;
   /** Opens the Mero Sadak AI chat panel. */
   onOpenAiAssistant?: () => void;
-  user?: { displayName?: string; email?: string } | null;
+  onOpenReminders?: () => void;
+  user?: { displayName?: string; email?: string; isDemo?: boolean } | null;
   userRole?: 'superadmin' | 'OfficeAdmin' | 'GeneralUser';
   isSuperAdmin?: boolean;
   incidentsCount?: number;
@@ -78,6 +80,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenOfficeAdminPanel,
   onOpenUserPanel,
   onOpenAiAssistant,
+  onOpenReminders,
   user,
   userRole = 'GeneralUser',
   isSuperAdmin = false,
@@ -172,6 +175,21 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       activeBg: 'accent-bg accent-text accent-border border',
       activeIcon: 'accent-bg accent-text',
       onClick: () => { onOpenOfflineManager(); onClose(); },
+    },
+    {
+      id: 'reminders',
+      label: 'My Reminders',
+      subtitle: 'Saved places, belongings & trip reminders',
+      icon: Bell,
+      color: 'accent-text',
+      activeColor: 'accent-bg accent-text',
+      activeBg: 'accent-bg accent-text accent-border border',
+      activeIcon: 'accent-bg accent-text',
+      onClick: () => {
+        if (!user || user.isDemo) { onOpenLogin(); onClose(); return; }
+        onOpenReminders?.();
+        onClose();
+      },
     },
     {
       id: 'ai-assistant',
