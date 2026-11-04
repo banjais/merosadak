@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
+  ArrowLeft,
   Sparkles,
   Clock,
   MapPin,
@@ -484,42 +485,25 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
     : 'tracking stopped';
 
   return (
-    <section className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl shadow-2xl shadow-black/40 overflow-hidden animate-fade-in-smooth">
-      {/* Header */}
-      <div className="bg-slate-800/80 border-b border-slate-700 px-5 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-cyan-500/20 shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white font-display">AI Reminder Service</h3>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Get smart reminders for departure, stops, fuel, weather & events on your route
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {onBack ? (
-            <button
-              onClick={onBack}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
-              title="Close reminder service"
-            >
-              <span className="sr-only">Close</span>
-              <span className="text-[10px]">✕</span>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-40 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center gap-3">
+          {onBack && (
+            <button type="button" onClick={onBack} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-slate-700/80 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400" title="Back to Main App" aria-label="Back to Main App">
+              <ArrowLeft className="w-4 h-4" />
             </button>
-          ) : null}
-          <button
-            onClick={() => speak('AI Reminder Service is active. Tell me what you need to remember on your trip.')}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
-            title="Hear intro"
-          >
-            <span className="sr-only">Speak intro</span>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[10px] font-semibold text-cyan-300 tracking-[0.2em] uppercase">Mero Sadak · Personal Assistant</h1>
+            <p className="text-xl font-black tracking-tight text-white font-display">AI Reminder Service</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">Smart reminders for your vehicle, belongings, travel and everyday tasks</p>
+          </div>
+          <button type="button" onClick={() => speak('AI Reminder Service is active. Tell me what you need to remember.')} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Hear introduction" aria-label="Hear introduction">
             <Mic className="w-4 h-4" />
           </button>
         </div>
-      </div>
-
+      </header>
+      <section className="w-full max-w-7xl mx-auto flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border-x border-slate-800 shadow-2xl shadow-black/30 overflow-hidden animate-fade-in-smooth">
       {/* Sector navigation */}
       <div className="px-3 sm:px-5 pt-4">
         <div className="grid grid-cols-4 gap-1.5 rounded-2xl border border-slate-800 bg-slate-950/70 p-1.5" role="tablist" aria-label="Reminder sectors">
@@ -984,5 +968,6 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
         </div>
       )}
     </section>
+    </div>
   );
 };
