@@ -324,8 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [firebaseUser, demoUser]);
 
-// Load all user roles from Firestore so sign-in reflects superadmin/OfficeAdmin
-  // assignments made by the superadmin panel.
+  // Load role assignments from Firestore for cross-device role synchronization.
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, 'userRoles'),
@@ -360,7 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (currentUser) => {
         setFirebaseUser(currentUser);
         setLoading(false);
-        // Role resolution happens in the unified effect above.
+        // The role is derived from the updated Firebase identity on render.
       },
       (error) => {
         console.error('[Mero Sadak] Auth state subscription failed:', error);
