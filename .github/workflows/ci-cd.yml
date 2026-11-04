@@ -3,7 +3,7 @@ name: CI/CD
 on:
   push:
     # Feature branches receive CI validation only. Live deploy jobs below remain main-only.
-    branches: [main, 'redesign/**']
+    branches: [main, 'redesign/**', 'production/**']
     paths:
       - 'src/**'
       - 'public/**'
