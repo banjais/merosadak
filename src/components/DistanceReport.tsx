@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -81,6 +81,7 @@ export function DistanceReport({
   onDownloadReport,
   onChangeLocation,
 }: DistanceReportProps) {
+  const [activeSector, setActiveSector] = useState('distance-overview');
   const isAerial = result.methodology === 'aerial_fallback';
   const multiComponent = result.segments.length > 1;
   const breakdownSum = result.segments.reduce((acc, segment) => acc + segment.km, 0);
@@ -311,11 +312,8 @@ export function DistanceReport({
       <div className="distance-report-deck">
         <PlannerDeck
           items={items}
-          activeId="distance-overview"
-          onChange={(id) => {
-            const event = new CustomEvent('merosadak-distance-report-sector', { detail: id });
-            window.dispatchEvent(event);
-          }}
+          activeId={activeSector}
+          onChange={setActiveSector}
         >
           {renderSector}
         </PlannerDeck>
