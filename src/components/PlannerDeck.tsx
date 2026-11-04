@@ -58,6 +58,17 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
     }
   }, [items, activeIndex, onChange, x]);
 
+  const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      goTo(activeIndex + 1);
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      goTo(activeIndex - 1);
+    }
+  }, [activeIndex, goTo]);
+
   const onDragEnd = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const { offset, velocity } = info;
     if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) {
@@ -72,7 +83,12 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   if (!active) return null;
 
   return (
-    <section className={`planner-deck-3d ${variant === 'plain' ? 'planner-deck-3d--plain' : ''}`} aria-label="Trip planner sectors">
+    <section
+      className={`planner-deck-3d ${variant === 'plain' ? 'planner-deck-3d--plain' : ''}`}
+      aria-label="Trip planner sectors"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+    >
       <div className="planner-deck-3d__stage">
         {previous && (
           <div className="planner-deck-3d__preview planner-deck-3d__preview--previous" aria-hidden="true">
