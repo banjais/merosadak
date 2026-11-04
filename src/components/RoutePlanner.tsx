@@ -65,6 +65,7 @@ import {
   Wrench,
   Leaf,
   Shield,
+  ShieldCheck,
   Receipt,
   Scale,
   Milestone,
@@ -711,7 +712,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(resolved);
       }
       setHasCalculated(true);
-      setOpenSections({});
       setTripStarted(false);
       // Route just calculated → jump the deck to the verdict card so the
       // user sees the result immediately, not the location/destination card.
@@ -1175,7 +1175,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) {
       setHasCalculated(false);
       setRoutePlan(null);
-      setOpenSections({});
       onRouteClear?.();
     }
     setRoutePlannerStep('destination');
@@ -1197,7 +1196,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setRoutePlannerStep('origin');
-    setOpenSections({});
     setTripStarted(false);
     // Editing locations → jump the deck to the destination card and reveal
     // the location info card so the from/to fields (custom_from_to mode) are
@@ -1220,7 +1218,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestId('');
     setDestSearchQuery('');
     setSingleSearchQuery('');
-    setOpenSections({});
     setPlannerDeckActiveId('destination');
     setShowMyLocationDetails(true);
     onRouteClear?.();
@@ -1998,7 +1995,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setRoutePlan(opt);
                     setPreference(opt.preference);
                     onRouteCalculated(opt);
-                    setOpenSections({});
                   }}
                   onViewOnMap={onViewOnMap}
                 />
