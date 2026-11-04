@@ -788,7 +788,6 @@ export function UnifiedRouteReport({
         <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged; the report states the source used and the roughness/uncertainty of the result.</p>
       </footer>
       )}
-      </div>
     </section>
   );
 }
