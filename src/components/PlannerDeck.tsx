@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/haptic';
