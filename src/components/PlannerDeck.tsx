@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
+import { AnimatePresence, motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/haptic';
 
@@ -34,6 +34,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   variant = 'default',
 }) => {
   const x = useMotionValue(0);
+  const [direction, setDirection] = useState(1);
   const rotateY = useTransform(x, [-220, 0, 220], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
   const dragOpacity = useTransform(x, [-260, -80, 0, 80, 260], [0.55, 1, 1, 1, 0.55]);
 
