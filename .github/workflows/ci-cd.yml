@@ -23,6 +23,10 @@ on:
       - '.dockerignore'
       - '.gitignore'
       - 'worker/.dev.vars.example'
+      - '.env.example'
+      - '.dockerignore'
+      - '.gitignore'
+      - 'worker/.dev.vars.example'
       - '.github/workflows/ci-cd.yml'
       - 'worker/**'
   pull_request:
@@ -42,6 +46,10 @@ on:
       - 'firebase-applet-config.json'
       - 'server.ts'
       - 'Dockerfile'
+      - '.env.example'
+      - '.dockerignore'
+      - '.gitignore'
+      - 'worker/.dev.vars.example'
       - '.github/workflows/ci-cd.yml'
       - 'worker/**'
   workflow_dispatch:
