@@ -713,7 +713,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       const resolved = plan
         ? (pickVerifiedRoute(plan) || pickRouteByCertification(plan))
         : null;
-      if (resolved && fuelPrices) {
+      if (resolved && fuelPrices && !resolved.__aerialWarning) {
         const updatedPlan = applyLiveFuelPrices(resolved, veh, fuelPrices);
         setRoutePlan(updatedPlan);
         onRouteCalculated(updatedPlan);
