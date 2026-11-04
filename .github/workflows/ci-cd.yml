@@ -23,10 +23,6 @@ on:
       - '.dockerignore'
       - '.gitignore'
       - 'worker/.dev.vars.example'
-      - '.env.example'
-      - '.dockerignore'
-      - '.gitignore'
-      - 'worker/.dev.vars.example'
       - '.github/workflows/ci-cd.yml'
       - 'worker/**'
   pull_request:
