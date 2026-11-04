@@ -772,7 +772,7 @@ const out = {
       citiesWithNoHighway: Object.values(cityLinks).filter((l) => l.highways.length === 0).length,
       connectedComponents: components,
       giantComponentPct: Math.round((giant / snapper.nodes.length) * 1000) / 10,
-      distanceBasis: 'DoR link_len-scaled highway geometry; inferred access and component connectors are included and tagged as non-highway edges',
+      distanceBasis: 'DoR link_len-scaled highway geometry; only survey vertices within 5m are merged; off-network places and disconnected components remain unconnected',
       totalOfficialChainageKm: Math.round(totalOfficialKm),
       inferredAccessLinks: injected,
       unsnappedPlaces: unsnapped,
