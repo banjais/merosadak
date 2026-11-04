@@ -23,6 +23,14 @@ const MATCH_DISTRICT = 5;
 const MATCH_PROVINCE = 6;
 const NO_MATCH = -1;
 
+function placeDedupeKey(city: CityNode, name = city.name): string {
+  return [
+    name.trim().toLocaleLowerCase(),
+    (city.district || '').trim().toLocaleLowerCase(),
+    (city.province || '').trim().toLocaleLowerCase(),
+  ].join('|');
+}
+
 /** Infrastructure / POI types that are not routeable settlements and should not
  * appear in city search results for origin/destination planning. */
 const NON_SETTLEMENT_TYPES = new Set([
@@ -100,13 +108,13 @@ export function countCityMatches(  cities: CityNode[],
   if (!normalizedQuery) return 0;
 
   let count = 0;
-  const seenNames = new Set<string>();
+  const seenPlaces = new Set<string>();
   for (const city of cities) {
     if (options.excludeIds?.has(city.id)) continue;
     if (scoreCity(city, normalizedQuery) === NO_MATCH) continue;
-    const nameKey = city.name.trim().toLowerCase();
-    if (seenNames.has(nameKey)) continue;
-    seenNames.add(nameKey);
+    const key = placeDedupeKey(city);
+    if (seenPlaces.has(key)) continue;
+    seenPlaces.add(key);
     count += 1;
   }
   return count;
@@ -161,37 +169,34 @@ export const filterCities = (
     return a.city.name.localeCompare(b.city.name);
   });
 
-  // Deduplicate by city name (case-insensitive): keep only the best-ranked
-  // entry per name so "Banepa" shows once with district+province, not twice
-  // under two district spellings.
-  const seenNames = new Set<string>();
+  // Deduplicate repeated source records for the same place, but retain
+  // same-named settlements in different districts (e.g. Tribeni, Annapurna).
+  const seenPlaces = new Set<string>();
   const uniqueScored: typeof scored = [];
   for (const entry of scored) {
-    const key = entry.city.name.trim().toLowerCase();
-    if (seenNames.has(key)) continue;
-    seenNames.add(key);
+    const key = placeDedupeKey(entry.city);
+    if (seenPlaces.has(key)) continue;
+    seenPlaces.add(key);
     uniqueScored.push(entry);
   }
 
-  // Collapse whole-word prefix variants: "Rampur Palpa" collapses to "Rampur"
-  // so a search for "Rampur" shows one entry, not one per district suffix.
-  // Among variants, keep the one connected to a highway (preferred by drivers).
-  // The kept entry's district/province still appear on line 2.
+  // Collapse whole-word prefix variants only inside the same district and
+  // province. Never collapse two distinct settlements just because their
+  // display names happen to match.
   const collapsedScored: typeof scored = [];
   const processed = new Set<string>();
   for (const entry of uniqueScored) {
     const name = entry.city.name.trim();
-    if (processed.has(name.toLowerCase())) continue;
+    const entryKey = placeDedupeKey(entry.city);
+    if (processed.has(entryKey)) continue;
     const group = uniqueScored.filter((other) => {
+      if (entry.city.district !== other.city.district || entry.city.province !== other.city.province) return false;
       const oname = other.city.name.trim();
       if (oname === name) return true;
-      const sameDistrict = entry.city.district === other.city.district;
-      if (!sameDistrict) return false;
       return name.startsWith(oname + ' ') || oname.startsWith(name + ' ') ||
              name.startsWith(oname) || oname.startsWith(name);
     });
-    group.forEach((g) => processed.add(g.city.name.trim().toLowerCase()));
-    // Pick the variant with the most highways, then best type priority.
+    group.forEach((g) => processed.add(placeDedupeKey(g.city)));
     group.sort((a, b) => {
       if (a.highways !== b.highways) return b.highways - a.highways;
       if (a.rank !== b.rank) return a.rank - b.rank;
@@ -216,11 +221,11 @@ export const filterCities = (
     }
     return name;
   };
-  const baseNames = new Set(collapsedScored.map((e) => e.city.name.trim().toLowerCase()));
+  const basePlaces = new Set(collapsedScored.map((entry) => placeDedupeKey(entry.city)));
   const finalScored: typeof scored = [];
   for (const entry of collapsedScored) {
     const base = stripSuffix(entry.city.name).trim().toLowerCase();
-    if (base !== entry.city.name.trim().toLowerCase() && baseNames.has(base)) {
+    if (base !== entry.city.name.trim().toLowerCase() && basePlaces.has(placeDedupeKey(entry.city, base))) {
       continue;
     }
     finalScored.push(entry);
