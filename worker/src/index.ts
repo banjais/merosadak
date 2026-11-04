@@ -425,11 +425,11 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const body = await request.json<any>();
     const { input, routeContext, emotion } = body;
 
-    if (!input || typeof input !== "string") {
+    if (typeof input !== "string" || !input.trim()) {
       return jsonResponse(env, { error: "input is required" }, 400);
     }
-    if (!input || typeof input !== "string") {
-      return jsonResponse(env, { error: "input is required" }, 400);
+    if (input.length > 1200) {
+      return jsonResponse(env, { error: "Reminder request is too long (maximum 1,200 characters)" }, 400);
     }
     if (!env.GEMINI_API_KEY) {
       return jsonResponse(env, { error: "AI service not configured" }, 503);
@@ -441,12 +441,12 @@ async function handleAiReminder(request: Request, env: Env): Promise<Response> {
     const model = genAI.getGenerativeModel({ model: env.GEMINI_MODEL_PRIMARY || "gemini-1.5-flash" });
 
     const prompt = buildSystemPrompt(
-      "You are Mero Sadak's AI Reminder Concierge. The user has shared a reminder request along with their route context. Generate 3-5 practical reminder suggestions as JSON array. Each reminder needs: id (unique), category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (ISO string or relative like '2h before departure'), suggestedPlace (place name or null), highwayCode (relevant highway or null), approxKmFromOrigin (number or null). Be specific to Nepal highways. Tailor tone to the user's emotion.",
+      "You are Mero Sadak's practical AI travel-reminder assistant for Nepal. Understand the user's language (Nepali or English) and intent. Return only a valid JSON array containing 1-5 reminders that directly match the request; do not create unrelated suggestions just to fill the list. Each item must have category (departure_time | rest_stop | fuel_stop | event | weather | toll_plaza | border_check | custom), title, description, suggestedTime (an ISO date-time only when the user supplied enough timing information, otherwise a short relative phrase or null), suggestedPlace (only a place grounded in the request or route context, otherwise null), highwayCode (only when grounded in route context, otherwise null), and approxKmFromOrigin (only when supported by route context, otherwise null). Never invent live traffic, closures, weather, travel times, distances, or the user's location. If an essential detail is missing, use null rather than guessing. Keep titles and descriptions short and useful. Do not claim that a reminder is scheduled on the device; the application saves it to the user's account. Tailor wording gently to the user's tone without inferring a mental-health condition.",
       { routeContext, emotion: detectedEmotion },
       detectedEmotion
     );
 
-    const result = await model.generateContent(`${prompt}\n\nUser input: "${input}"\nRoute context: ${JSON.stringify(routeContext || {})}`);
+    const result = await model.generateContent(`${prompt}\n\nUser input (JSON string): ${JSON.stringify(input)}\nRoute context (JSON): ${JSON.stringify(routeContext || {})}`);
     const text = result.response.text();
 
     let suggestions: any[] = [];
