@@ -65,6 +65,7 @@ import {
   Wrench,
   Leaf,
   Shield,
+  ShieldCheck,
   Receipt,
   Scale,
   Milestone,
@@ -440,21 +441,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     return Array.from(codes);
   }, [routePlan]);
 
-  // Active Option Button / Module Expansion (Default: none - don't show contents if user hasn't clicked!)
-  // Progressive disclosure: which detail sections are open. Defaults are
-  // computed per plan — the blocks section opens itself the moment anything on
-  // the route is not clear — and a fresh calculation resets every section, so
-  // each new search starts with the short verdict, never with stale panels.
-  type DetailSectionId = 'blocks' | 'journey' | 'insights' | 'costs' | 'routes' | 'report';
-  const [openSections, setOpenSections] = useState<Partial<Record<DetailSectionId, boolean>>>({});
-  const isOpen = useCallback((id: DetailSectionId, def: boolean) => openSections[id] ?? def, [openSections]);
-  const openSection = useCallback((id: DetailSectionId) => {
-    setOpenSections((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
-  }, []);
-  const toggleSection = useCallback((id: DetailSectionId) => {
-    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
   // PlannerDeck active card id. The deck shows one card at a time; the user
   // swipes left/right to move between single-info cards. When the planner
   // flips between pre-calc and post-calc, the deck item set changes, so we
@@ -483,7 +469,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1) {
       items.push({ id: 'routes', label: 'Alternative routes', hint: 'Compare options' });
     }
-    items.push({ id: 'report', label: 'Trip report', hint: 'Print / share' });
+    items.push(
+      { id: 'report-overview', label: 'Report overview', hint: 'Distance · time · safety' },
+      { id: 'report-route', label: 'Route breakdown', hint: 'Highways · segments' },
+      { id: 'report-conditions', label: 'Road & evidence', hint: 'Conditions · methodology' },
+    );
     return items;
   }, [hasCalculated, routePlan]);
   // Safety net: if the active id is no longer in the deck (e.g. the deck flipped
@@ -722,7 +712,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
         onRouteCalculated(resolved);
       }
       setHasCalculated(true);
-      setOpenSections({});
       setTripStarted(false);
       // Route just calculated → jump the deck to the verdict card so the
       // user sees the result immediately, not the location/destination card.
@@ -1186,7 +1175,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     if (hasCalculated) {
       setHasCalculated(false);
       setRoutePlan(null);
-      setOpenSections({});
       onRouteClear?.();
     }
     setRoutePlannerStep('destination');
@@ -1208,7 +1196,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestSearchQuery('');
     setSingleSearchQuery('');
     setRoutePlannerStep('origin');
-    setOpenSections({});
     setTripStarted(false);
     // Editing locations → jump the deck to the destination card and reveal
     // the location info card so the from/to fields (custom_from_to mode) are
@@ -1231,7 +1218,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     setDestId('');
     setDestSearchQuery('');
     setSingleSearchQuery('');
-    setOpenSections({});
     setPlannerDeckActiveId('destination');
     setShowMyLocationDetails(true);
     onRouteClear?.();
@@ -2009,16 +1995,16 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                     setRoutePlan(opt);
                     setPreference(opt.preference);
                     onRouteCalculated(opt);
-                    setOpenSections({});
                   }}
                   onViewOnMap={onViewOnMap}
                 />
               </ReelCard>
             )}
 
-            {hasCalculated && routePlan && activeId === 'report' && (
-              <ReelCard id="report" title="Trip report" Icon={FileText} hint="Printable and shareable summary">
+            {hasCalculated && routePlan && activeId === 'report-overview' && (
+              <ReelCard id="report-overview" title="Report overview" Icon={FileText} hint="Distance · time · safety">
                 <UnifiedRouteReport
+                  reportSection="overview"
                   route={routePlan}
                   distanceKm={routePlan.totalDistanceKm}
                   distanceSource="dor_gis_route"
@@ -2029,10 +2015,55 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   preferenceLabel={preference.replace('_', ' ')}
                   onPrint={() => window.print()}
                   onShare={() => onShareTrip?.()}
-                  userIdentity={{
-                    name: user?.displayName || undefined,
-                    email: user?.email || undefined,
-                  }}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  fuelBasis={buildFuelBasis()}
+                  embedded
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
+              </ReelCard>
+            )}
+
+            {hasCalculated && routePlan && activeId === 'report-route' && (
+              <ReelCard id="report-route" title="Route breakdown" Icon={Route} hint="Route steps · highway sections">
+                <UnifiedRouteReport
+                  reportSection="route"
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => onShareTrip?.()}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+                  fuelBasis={buildFuelBasis()}
+                  embedded
+                  showElevationProfile
+                  simulationControls={simulationControls}
+                  onViewOnMap={onViewOnMap}
+                />
+              </ReelCard>
+            )}
+
+            {hasCalculated && routePlan && activeId === 'report-conditions' && (
+              <ReelCard id="report-conditions" title="Road & evidence" Icon={ShieldCheck} hint="Road conditions · methodology">
+                <UnifiedRouteReport
+                  reportSection="conditions"
+                  route={routePlan}
+                  distanceKm={routePlan.totalDistanceKm}
+                  distanceSource="dor_gis_route"
+                  distanceEvidence="route_graph"
+                  distanceSourceUrl="https://dor.gov.np"
+                  distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+                  vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+                  preferenceLabel={preference.replace('_', ' ')}
+                  onPrint={() => window.print()}
+                  onShare={() => onShareTrip?.()}
+                  userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
                   fuelBasis={buildFuelBasis()}
                   embedded
                   showElevationProfile
@@ -2044,6 +2075,31 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
           </>
         )}
       </PlannerDeck>
+
+      {/* Keep a complete report in the print tree; on-screen navigation remains sector-by-sector. */}
+      {hasCalculated && routePlan && (
+        <div className="planner-print-report">
+          <UnifiedRouteReport
+            reportSection="all"
+            route={routePlan}
+            distanceKm={routePlan.totalDistanceKm}
+            distanceSource="dor_gis_route"
+            distanceEvidence="route_graph"
+            distanceSourceUrl="https://dor.gov.np"
+            distanceSourceDescription="DoR Nepal highway GIS route geometry and certified road network."
+            vehicleLabel={VEHICLE_CONFIGS.find((v) => v.type === vehicle)?.label}
+            preferenceLabel={preference.replace('_', ' ')}
+            onPrint={() => window.print()}
+            onShare={() => onShareTrip?.()}
+            userIdentity={{ name: user?.displayName || undefined, email: user?.email || undefined }}
+            fuelBasis={buildFuelBasis()}
+            embedded
+            showElevationProfile
+            simulationControls={simulationControls}
+            onViewOnMap={onViewOnMap}
+          />
+        </div>
+      )}
     </div>
   );
 };
