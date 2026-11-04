@@ -461,29 +461,29 @@ Not an official Department of Roads document.`;
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header */}
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-3">
+        <div className="w-full max-w-7xl mx-auto flex items-center gap-2 sm:gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition"
+              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition shrink-0"
               title="Back to Main App"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <div className="min-w-0">
-              <h1 className="text-[10px] font-semibold accent-text tracking-[0.2em] uppercase">
+          <div className="min-w-0 flex-1">
+              <h1 className="text-[10px] font-semibold accent-text tracking-[0.15em] sm:tracking-[0.2em] uppercase leading-tight">
                 Highway Distance Service
               </h1>
-              <p className="text-xl font-black tracking-tight text-white font-display">
+              <p className="text-lg sm:text-xl font-black tracking-tight text-white font-display leading-tight">
                 Distance Calculator
               </p>
-              <p className="mt-0.5 text-[10px] text-slate-400">
+              <p className="mt-1 text-[10px] leading-snug text-slate-400 whitespace-normal break-words">
                 Road distance between Nepali cities and junctions, over Department of Roads highway data
               </p>
             </div>
           {/* Three-dot Settings Menu (no bell notification) */}
-          <div className="relative ml-auto">
+          <div className="relative ml-auto shrink-0">
             <SettingsButton
               isOpen={isSettingsOpen}
               onOpenChange={setIsSettingsOpen}

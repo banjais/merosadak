@@ -480,31 +480,31 @@ export const MyLocationPage: React.FC<{
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Page Header - matching Distance Calculator style */}
       <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-3">
+        <div className="w-full max-w-7xl mx-auto flex items-center gap-2 sm:gap-3">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition touch-target"
+            className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition touch-target shrink-0"
             title="Back to Main App"
             aria-label="Back to main app"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md">
+          <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md shrink-0">
               <LocateFixed className="w-5 h-5 accent-text" />
             </div>
             <div>
               <h1 className="text-sm font-semibold accent-text tracking-wider">
                 Mero Sadak
               </h1>
-              <p className="text-xl font-black tracking-tight text-white font-display">
+              <p className="text-lg sm:text-xl font-black tracking-tight text-white font-display leading-tight">
                 My Location
               </p>
             </div>
           </div>            {/* Place alerts bell — notifications filtered to the current place.
                 Opens a popover listing the road incidents reported within 5 km
                 of this fix; when there are none it says so instead. */}
-            <div className="relative flex items-center gap-2 ml-auto">
+            <div className="relative flex items-center gap-2 ml-auto shrink-0">
               <button
                 onClick={() => setIsBellOpen(!isBellOpen)}
                 className={`p-2 rounded-xl transition relative touch-target border ${

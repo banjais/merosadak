@@ -603,9 +603,9 @@ function AppContent() {
       {/* Top Header Matching Reference UI - Hidden when on Distance Calculator, Data Sources, or Highway Directory pages */}
       {!isDistanceCalculatorOpen && !isDataSourcesOpen && !isHighwayInfoOpen && !proofClaim && !isMyLocationOpen && !isReminderOpen && (
       <header className="header-glass sticky top-0 z-40 px-3 sm:px-5 py-2.5">
-        <div className="max-w-[1720px] mx-auto flex items-center justify-between gap-3">
+        <div className="w-full max-w-[1720px] mx-auto flex items-center justify-between gap-2 sm:gap-3 min-w-0">
           {/* Left: Hamburger Menu Button, App Logo, Header & Sub-header */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
@@ -619,7 +619,7 @@ function AppContent() {
 
             {/* App Logo - static background element */}
             <div
-              className="flex items-center space-x-2.5"
+              className="flex items-center space-x-2.5 min-w-0"
               aria-hidden="true"
             >
               <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/90 flex items-center justify-center shadow-md logo-shadow group-hover:border-accent-border transition">
@@ -627,14 +627,14 @@ function AppContent() {
                   <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" className="logo-svg" />
                 </svg>
               </div>
-              <div>
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-base font-black tracking-tight text-white font-display">Mero Sadak</span>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 min-w-0">
+                  <span className="text-sm sm:text-base font-black tracking-tight text-white font-display whitespace-nowrap">Mero Sadak</span>
                   <span className="px-1.5 py-0.2 text-[9px] font-extrabold accent-bg accent-text accent-border border rounded">
                     मेरो सडक
                   </span>
                 </div>
-                <div className="text-[9px] accent-text-dim font-semibold tracking-wider truncate">
+                <div className="text-[8px] sm:text-[9px] accent-text-dim font-semibold tracking-tight sm:tracking-wider leading-tight whitespace-normal">
                   Highway Routes · Road Alerts · Travel Info
                 </div>
               </div>
@@ -642,7 +642,7 @@ function AppContent() {
           </div>
 
           {/* Right Header Controls: profile only (signed in) */}
-          <div className="flex items-center space-x-2 relative">
+          <div className="flex items-center space-x-2 relative shrink-0">
 
             {/* Header right — profile only (signed in). When not signed in nothing
             is shown here: no sign-in button and no settings button. Settings live
