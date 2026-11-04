@@ -1798,3 +1798,80 @@ html.high-contrast .custom-weather-popup .leaflet-popup-tip {
     page-break-after: always;
   }
 }
+
+
+/* ===== MEROSADAK 3D REPORT & REEL CARD SYSTEM =====
+   Layered, tactile surfaces inspired by short-form content cards.
+   Motion is deliberately restrained so data stays readable. */
+.ms-depth-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(16, 185, 129, 0.12), transparent 48%),
+    linear-gradient(145deg, rgba(22, 35, 51, 0.98), rgba(5, 12, 22, 0.98));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.07) inset,
+    0 12px 24px rgba(0,0,0,0.28),
+    0 3px 7px rgba(0,0,0,0.22);
+  transform: perspective(1100px) translateZ(0);
+  transform-style: preserve-3d;
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), box-shadow 260ms ease, border-color 220ms ease;
+}
+.ms-depth-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .72;
+  background: linear-gradient(125deg, rgba(255,255,255,.10), transparent 27%, transparent 70%, rgba(52,211,153,.055));
+}
+.ms-depth-card::after {
+  content: "";
+  position: absolute;
+  top: -65%;
+  left: -35%;
+  width: 72%;
+  height: 190%;
+  pointer-events: none;
+  opacity: 0;
+  transform: rotate(24deg) translateX(-35%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.075), transparent);
+  transition: opacity 240ms ease, transform 500ms cubic-bezier(.2,.8,.2,1);
+}
+.ms-depth-card > * { position: relative; z-index: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .ms-depth-card:hover {
+    transform: perspective(1100px) translateY(-4px) rotateX(1.1deg);
+    border-color: rgba(52,211,153,.34);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.09) inset,
+      0 22px 38px rgba(0,0,0,.36),
+      0 6px 12px rgba(0,0,0,.24);
+  }
+  .ms-depth-card:hover::after { opacity: 1; transform: rotate(24deg) translateX(210%); }
+}
+.ms-depth-card:active {
+  transform: perspective(1100px) translateY(-1px) scale(.997);
+}
+.ms-depth-card:focus-within {
+  outline: 2px solid rgba(52,211,153,.48);
+  outline-offset: 2px;
+}
+.ms-depth-card--alert {
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(245,158,11,.14), transparent 48%),
+    linear-gradient(145deg, rgba(40,30,22,.98), rgba(12,13,20,.98));
+}
+.ms-depth-stat {
+  border: 1px solid rgba(148,163,184,.14);
+  background: linear-gradient(145deg, rgba(30,41,59,.82), rgba(10,17,28,.94));
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 8px 18px rgba(0,0,0,.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-depth-card, .ms-depth-card::after { transition: none !important; }
+  .ms-depth-card:hover, .ms-depth-card:active { transform: none !important; }
+}
