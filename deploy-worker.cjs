@@ -57,6 +57,8 @@ async function main() {
     'toll-rates.json',
     'all-toll-rates.json',
     'highway/index.json',
+    'nepal_boundary.geojson',
+    'palika.geojson',
     'cities-and-junctions.json',
     'incidents.json',
     'pois.json',
