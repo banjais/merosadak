@@ -93,6 +93,7 @@ async function main() {
     'palika-names.json',
     'highway/index.json',
     'nepal_boundary.geojson',
+    'palika.geojson',
     'highway-info.json',
     'blackspots.json',
     'mountain-weather.json',
