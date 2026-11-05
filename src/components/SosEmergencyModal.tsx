@@ -166,6 +166,10 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  },
  (err) => {
  setIsLocating(false);
+ setLat(null);
+ setLng(null);
+ setAccuracy(null);
+ setAltitude(null);
  let msg = 'Unable to retrieve your location.';
  if (err.code === err.PERMISSION_DENIED) {
  msg = 'Location permission was denied. You can select your approximate Nepal location below.';
@@ -187,7 +191,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  maximumAge: 0,
  }
  );
- }, [activeRoute, lat, lng]);
+ }, [activeRoute]);
 
  // Check battery status if available
  useEffect(() => {
