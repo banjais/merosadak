@@ -139,7 +139,7 @@ export function DistanceReport({
           </div>
           {!isAerial && result.aerialKm > 0 && (
             <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-              Straight-line reference: {formatNumber(result.aerialKm, 1)} km
+              {formatNumber(result.aerialKm, 1)} km straight-line reference
             </p>
           )}
           {isAerial && (
@@ -162,14 +162,7 @@ export function DistanceReport({
             </div>
             <p className="mt-1 text-[10px] text-slate-500">Planning estimate, not a live traffic guarantee</p>
           </div>
-          <div className="rounded-2xl border border-slate-700/70 bg-slate-900/70 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-              <Gauge className="h-3.5 w-3.5 text-violet-300" />
-              Measurement method
-            </div>
-            <div className="mt-2 text-sm font-bold text-slate-100">{methodologyLabel(result.methodology)}</div>
-            <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{result.sourceLabel}</p>
-          </div>
+
         </div>
       </div>
     </div>
@@ -182,11 +175,9 @@ export function DistanceReport({
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Distance composition</div>
-              <p className="mt-1 text-[10px] text-slate-500">How the reported distance is assembled</p>
+              <p className="mt-1 text-[10px] text-slate-500">Contribution of each measured road section</p>
             </div>
-            <span className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-white">
-              {formatNumber(breakdownSum, 1)} km
-            </span>
+
           </div>
           <div className="mt-3 space-y-2">
             {result.segments.map((segment, index) => {
@@ -211,8 +202,11 @@ export function DistanceReport({
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-700/70 bg-slate-950/55 p-4 text-[11px] leading-relaxed text-slate-400">
-          No separate distance components are available for this route. The total above is the current engine result.
+        <div className="rounded-2xl border border-slate-700/70 bg-slate-950/55 p-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Road corridor</div>
+          <p className="mt-2 break-words text-sm font-semibold leading-relaxed text-slate-100">
+            {result.highwaysUsed.length > 0 ? result.highwaysUsed.join('  →  ') : 'Local road network'}
+          </p>
         </div>
       )}
 
