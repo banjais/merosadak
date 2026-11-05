@@ -9,6 +9,7 @@ import {
 import { Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react';
 import { useCardArchive } from '../context/CardArchiveContext';
 import { triggerHaptic } from '../utils/haptic';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 export type ReelCardType = 'highway' | 'incident' | 'tip' | 'custom' | 'report' | 'distance';
 
@@ -36,7 +37,7 @@ interface SwipeableReelStackProps {
 const SWIPE_DISTANCE = 72;
 const SWIPE_VELOCITY = 450;
 /** Max rotateY degrees at full drag */
-const ROTATE_RANGE = 10;
+const ROTATE_RANGE = 24;
 
 /**
  * High-performance Reels stack: MotionValues for drag (no React re-renders per frame),
@@ -52,6 +53,7 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
   defaultExpanded = false,
 }) => {
   const { isArchived, archiveCard, restoreCard } = useCardArchive();
+  const isDesktop = useIsDesktop();
   const [index, setIndex] = useState(0);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   // Compositor-thread friendly — do not put drag offset in React state
@@ -156,6 +158,41 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
 
   const active = visible[activeIndex];
 
+  if (isDesktop) {
+    return (
+      <div className={`reel-stack ${className}`}>
+        {visible.length > 1 && (
+          <div role="tablist" className="planner-deck-desktop__tabs">
+            {visible.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                aria-selected={i === activeIndex}
+                onClick={() => goTo(i)}
+                className={`planner-deck-desktop__tab ${i === activeIndex ? 'is-active' : ''}`}
+              >
+                {c.title || `Card ${i + 1}`}
+              </button>
+            ))}
+          </div>
+        )}
+        <div role="tabpanel" className="reel-card-face p-4">
+          {active.summary || active.detail ? (
+            <>
+              <div className="text-sm text-slate-200">{active.summary}</div>
+              {active.detail && (
+                <div className="mt-3 space-y-2 border-t border-slate-800/80 pt-3 text-xs text-slate-300">{active.detail}</div>
+              )}
+            </>
+          ) : (
+            active.content
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`reel-stack ${className}`}>
       <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
@@ -176,7 +213,7 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
                 type="button"
                 aria-label="Previous"
                 onClick={() => goTo(activeIndex - 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -184,7 +221,7 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
                 type="button"
                 aria-label="Next"
                 onClick={() => goTo(activeIndex + 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -330,7 +367,7 @@ export const SwipeableReelStack: React.FC<SwipeableReelStackProps> = ({
         </div>
       )}
       <p className="mt-1.5 text-center text-[10px] text-slate-500">
-        Swipe ⇆ · tap for more · archive ↗
+        Swipe left or right
       </p>
     </div>
   );

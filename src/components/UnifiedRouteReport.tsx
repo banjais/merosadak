@@ -442,7 +442,7 @@ export function UnifiedRouteReport({
               onClick={() => setPrintMenuOpen((v) => !v)}
               aria-haspopup="menu"
               aria-expanded={printMenuOpen}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-2.5 py-1.5 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/60 bg-amber-950/40 px-4 py-2.5 text-xs font-bold text-amber-300 transition hover:bg-amber-900/50"
             >
               <Printer className="h-3.5 w-3.5" />
               {printLabel}
@@ -476,7 +476,7 @@ export function UnifiedRouteReport({
           <button
             type="button"
             onClick={onShare}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-900/50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700/60 bg-emerald-950/40 px-4 py-2.5 text-xs font-bold text-emerald-300 transition hover:bg-emerald-900/50"
           >
             <Share2 className="h-3.5 w-3.5" />
             Share
@@ -485,7 +485,7 @@ export function UnifiedRouteReport({
             <button
               type="button"
               onClick={onChangeLocation}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-800"
             >
               <MapPin className="h-3.5 w-3.5" />
               Change
@@ -567,7 +567,7 @@ export function UnifiedRouteReport({
         <div className="card card-elevated card-interactive p-3.5">
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Safety</div>
           <div className="mt-3 text-2xl font-black text-emerald-400 font-display">{route.roadConditionScore}<span className="text-base text-slate-500">/100</span></div>
-          <p className="mt-2 text-[11px] text-slate-400">{route.statusSummary.clearKm} km corridor is in clear condition.</p>
+          <p className="mt-2 text-[11px] text-slate-400">{route.statusSummary.clearKm} km clear.</p>
         </div>
       </div>
 
@@ -785,7 +785,7 @@ export function UnifiedRouteReport({
             {distanceSource === 'dor_geojson' && <SourceLink label="SSRN" href="https://ssrn.dor.gov.np/road_network/getNationCategoryAndPavement" />}
           </div>
         </div>
-        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Route geometry, published distances, link-sums and estimates are shown as separate evidence layers. They are not silently merged; the report states the source used and the roughness/uncertainty of the result.</p>
+        <p className="mt-2 text-[9px] leading-relaxed text-slate-600">Distance sources are shown separately and never merged.</p>
       </footer>
       )}
     </section>

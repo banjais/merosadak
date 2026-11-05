@@ -1,11 +1,14 @@
 import React, { useCallback, useState } from 'react';
-import { AnimatePresence, motion, useMotionValue, useTransform, PanInfo, animate } from 'motion/react';
+import { AnimatePresence, motion, useMotionValue, useTransform, useDragControls, PanInfo, animate } from 'motion/react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/haptic';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 const SWIPE_DISTANCE = 64;
 const SWIPE_VELOCITY = 420;
-const ROTATE_RANGE = 13;
+const ROTATE_RANGE = 24;
+/** Elements that must keep their own pointer behaviour instead of starting a card swipe. */
+const NO_SWIPE_SELECTOR = 'input,textarea,select,button,a,[data-no-swipe],.leaflet-container,canvas,[role="slider"]';
 
 export interface DeckItem {
   id: string;
@@ -33,6 +36,8 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   children,
   variant = 'default',
 }) => {
+  const isDesktop = useIsDesktop();
+  const dragControls = useDragControls();
   const x = useMotionValue(0);
   const [direction, setDirection] = useState(1);
   const rotateY = useTransform(x, [-220, 0, 220], [ROTATE_RANGE, 0, -ROTATE_RANGE]);
@@ -73,16 +78,43 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
 
   const onDragEnd = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const { offset, velocity } = info;
-    if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) {
-      goTo(activeIndex + 1);
-    } else if (offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY) {
-      goTo(activeIndex - 1);
+    const wentNext = offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY;
+    const wentPrev = offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY;
+    if ((wentNext && activeIndex < items.length - 1) || (wentPrev && activeIndex > 0)) {
+      goTo(wentNext ? activeIndex + 1 : activeIndex - 1);
     } else {
       void animate(x, 0, { type: 'spring', stiffness: 420, damping: 32, mass: 0.6 });
     }
-  }, [activeIndex, goTo, x]);
+  }, [activeIndex, goTo, items.length, x]);
 
   if (!active) return null;
+
+  if (isDesktop) {
+    return (
+      <section className="planner-deck-desktop" aria-label="Sections">
+        {items.length > 1 && (
+          <div role="tablist" className="planner-deck-desktop__tabs">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={item.id === active.id}
+                title={item.hint}
+                onClick={() => onChange(item.id)}
+                className={`planner-deck-desktop__tab ${item.id === active.id ? 'is-active' : ''}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <div role="tabpanel" className="planner-deck-desktop__panel">
+          {children(active.id)}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -111,14 +143,16 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
           <motion.div
             key={active.id}
             className="planner-deck-3d__active"
-            initial={{ opacity: 0, rotateY: direction > 0 ? -16 : 16, x: direction > 0 ? 48 : -48, scale: 0.94 }}
-            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
-            exit={{ opacity: 0, rotateY: direction > 0 ? 16 : -16, x: direction > 0 ? -48 : 48, scale: 0.94 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            initial={{ opacity: 0, rotateY: direction > 0 ? -55 : 55, x: direction > 0 ? 90 : -90, z: -140, scale: 0.88 }}
+            animate={{ opacity: 1, rotateY: 0, x: 0, z: 0, scale: 1 }}
+            exit={{ opacity: 0, rotateY: direction > 0 ? 55 : -55, x: direction > 0 ? -90 : 90, z: -140, scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
           >
             <motion.div
               style={{ x, rotateY, opacity: dragOpacity, transformPerspective: 1200 }}
               drag="x"
+              dragListener={false}
+              dragControls={dragControls}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.24}
               dragMomentum={false}
@@ -126,7 +160,13 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
               onDragEnd={onDragEnd}
               whileDrag={{ scale: 0.985, z: 36, cursor: 'grabbing' }}
             >
-              <div className="planner-deck-3d__face">
+              <div
+                className="planner-deck-3d__face"
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement).closest(NO_SWIPE_SELECTOR)) return;
+                  dragControls.start(e);
+                }}
+              >
                 {children(active.id)}
               </div>
             </motion.div>
@@ -163,7 +203,7 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
         </div>
       )}
       {items.length > 1 && (
-        <p className="planner-deck-3d__hint">Drag the card left or right to explore each trip sector</p>
+        <p className="planner-deck-3d__hint">Swipe left or right</p>
       )}
     </section>
   );

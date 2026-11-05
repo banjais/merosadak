@@ -2003,3 +2003,16 @@ html[data-theme='light'] .planner-deck-3d__position-count{color:#047857;border-c
   .planner-deck-3d__controls{margin:.55rem .35rem 0}
   .planner-deck-3d__hint{margin-top:.25rem}
 }
+
+/* ===== Desktop: normal tab navigation instead of swipe cards ===== */
+.planner-deck-desktop__tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;padding:.35rem;border:1px solid rgba(51,65,85,.7);border-radius:1rem;background:rgba(15,23,42,.7)}
+.planner-deck-desktop__tab{padding:.65rem 1.1rem;border-radius:.75rem;font-size:.875rem;font-weight:700;color:#cbd5e1;transition:background .15s,color .15s}
+.planner-deck-desktop__tab:hover{background:rgba(51,65,85,.6)}
+.planner-deck-desktop__tab.is-active{background:rgba(16,185,129,.18);color:#6ee7b7;box-shadow:0 0 0 1px rgba(52,211,153,.35) inset}
+html[data-theme='light'] .planner-deck-desktop__tabs{background:rgba(255,255,255,.85);border-color:rgba(51,65,85,.18)}
+html[data-theme='light'] .planner-deck-desktop__tab{color:#334155}
+html[data-theme='light'] .planner-deck-desktop__tab.is-active{color:#047857}
+/* Touch swipe deck: bigger tap targets and deeper perspective */
+.planner-deck-3d{perspective:1100px}
+.planner-deck-3d__arrow{width:3rem;height:3rem;border-radius:1rem}
+.planner-deck-3d__position-title{font-size:.875rem}

@@ -486,19 +486,18 @@ export const ReminderServicePanel: React.FC<ReminderServicePanelProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-40 px-4 py-3">
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-700/60 accent-border sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           {onBack && (
-            <button type="button" onClick={onBack} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-slate-700/80 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400" title="Back to Main App" aria-label="Back to Main App">
-              <ArrowLeft className="w-4 h-4" />
+            <button type="button" onClick={onBack} className="p-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 accent-text border border-slate-700/80 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400" title="Back to Main App" aria-label="Back to Main App">
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="text-[10px] font-semibold text-cyan-300 tracking-[0.2em] uppercase">Mero Sadak · Personal Assistant</h1>
+            <h1 className="text-[10px] font-semibold accent-text tracking-[0.2em] uppercase">Personal Assistant</h1>
             <p className="text-xl font-black tracking-tight text-white font-display">AI Reminder Service</p>
-            <p className="mt-0.5 text-[10px] text-slate-400">Smart reminders for your vehicle, belongings, travel and everyday tasks</p>
           </div>
-          <button type="button" onClick={() => speak('AI Reminder Service is active. Tell me what you need to remember.')} className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Hear introduction" aria-label="Hear introduction">
+          <button type="button" onClick={() => speak('AI Reminder Service is active. Tell me what you need to remember.')} className="p-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Hear introduction" aria-label="Hear introduction">
             <Mic className="w-4 h-4" />
           </button>
         </div>

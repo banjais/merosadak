@@ -233,12 +233,9 @@ export const RoadReportModal: React.FC<RoadReportModalProps> = ({
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800/70 flex items-center justify-between bg-[var(--surface-shell)]">
           <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
-              <Radio className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white text-base font-display">Report Road Condition / Hazard</h3>
-              <p className="text-xs text-slate-400">Mero Sadak Roads Board Nepal Crowdsource Portal</p>
+            <div className="min-w-0">
+              <h2 className="text-[10px] font-semibold accent-text tracking-[0.2em] uppercase">Road Reports</h2>
+              <p className="text-xl font-black tracking-tight text-white font-display">Report a Hazard</p>
             </div>
           </div>
 

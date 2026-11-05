@@ -230,21 +230,16 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ active
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-800 flex items-center justify-between shrink-0 bg-[var(--surface-shell)]">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-slate-950 shadow-md shadow-emerald-600/30">
-              <Mountain className="w-5 h-5" />
-            </div>
             <div>
+              <h3 className="text-[10px] font-semibold accent-text tracking-[0.2em] uppercase">Offline Service</h3>
               <div className="flex items-center space-x-2">
-                <h2 className="text-base font-bold text-white tracking-tight">
-                  Mountain Offline GIS & Tile Pack
+                <h2 className="text-xl font-black tracking-tight text-white font-display">
+                  Offline GIS Bundle
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
                   v1.2 GIS
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Cache map tiles, road telemetry, and route data for low-connectivity Himalayan corridors
-              </p>
             </div>
           </div>
           <button

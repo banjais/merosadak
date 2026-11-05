@@ -144,7 +144,7 @@ export function DistanceReport({
           )}
           {isAerial && (
             <p className="mt-2 text-[10px] leading-relaxed text-amber-200/80">
-              This is not a road-distance result. Actual travel distance may be longer.
+              Straight-line only; road distance is longer.
             </p>
           )}
         </div>
@@ -212,7 +212,7 @@ export function DistanceReport({
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-700/70 bg-slate-950/55 p-4 text-[11px] leading-relaxed text-slate-400">
-          No separate distance components are available for this route. The total above is the current engine result.
+          No breakdown available.
         </div>
       )}
 
@@ -291,7 +291,7 @@ export function DistanceReport({
             : <QualityChip text="No additional quality flags" tone="info" />}
         </div>
         <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
-          These indicators describe the available source and route coverage. They do not certify current road conditions or guarantee travel time.
+          Not a guarantee of current road conditions or travel time.
         </p>
       </div>
     </div>
@@ -323,14 +323,14 @@ export function DistanceReport({
         <button
           type="button"
           onClick={onShare}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-700/60 bg-emerald-950/40 px-3 py-2 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-900/50"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-700/60 bg-emerald-950/40 px-4 py-2.5 text-xs font-bold text-emerald-300 transition hover:bg-emerald-900/50"
         >
           <Share2 className="h-3.5 w-3.5" /> Share
         </button>
         <button
           type="button"
           onClick={onPrint}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-700/60 bg-amber-950/40 px-3 py-2 text-[10px] font-bold text-amber-300 transition hover:bg-amber-900/50"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-700/60 bg-amber-950/40 px-4 py-2.5 text-xs font-bold text-amber-300 transition hover:bg-amber-900/50"
         >
           <Printer className="h-3.5 w-3.5" /> Print
         </button>
@@ -338,7 +338,7 @@ export function DistanceReport({
           <button
             type="button"
             onClick={onDownloadReport}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/40 px-3 py-2 text-[10px] font-bold text-sky-300 transition hover:bg-sky-900/50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-700/60 bg-sky-950/40 px-4 py-2.5 text-xs font-bold text-sky-300 transition hover:bg-sky-900/50"
           >
             <Download className="h-3.5 w-3.5" /> PDF
           </button>

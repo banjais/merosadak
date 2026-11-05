@@ -406,7 +406,7 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
             <Sparkles className="w-5 h-5 text-slate-950" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-white font-display tracking-tight flex items-center gap-2">
+            <h3 className="text-xl font-black text-white font-display tracking-tight flex items-center gap-2">
               Mero Sadak AI
               <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-900/40 border border-emerald-500/30 rounded-full px-1.5 py-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online
