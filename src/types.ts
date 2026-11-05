@@ -4,7 +4,7 @@ export type RoadStatusType = 'clear' | 'caution' | 'obstructed' | 'closed';
 
 export type SurfaceType = 'asphalt_excellent' | 'blacktopped_fair' | 'gravel' | 'under_construction' | 'offroad_mud';
 
-export type IncidentType = 'landslide' | 'flood' | 'construction' | 'fallen_rocks' | 'one_way' | 'accident' | 'bridge_maintenance' | 'traffic_jam' | 'pothole';
+export type IncidentType = 'landslide' | 'flood' | 'construction' | 'fallen_rocks' | 'one_way' | 'accident' | 'bridge_maintenance' | 'traffic_jam' | 'pothole' | 'road_obstruction';
 
 export type VehicleType = 'car' | 'suv_4wd' | 'motorbike' | 'bus_truck' | 'electric_vehicle';
 
@@ -214,6 +214,17 @@ export interface RoadIncident {
   chainageKm?: string;
   lat: number;
   lng: number;
+  province?: string;
+  district?: string;
+  municipality?: string;
+  incidentPlace?: string;
+  geometrySource?: 'reported-coordinate' | 'estimated-from-chainage' | 'none';
+  dorStatus?: string;
+  resumedDate?: string;
+  blockedHours?: string;
+  contactPerson?: string;
+  restorationEfforts?: string;
+  remarks?: string;
   type: IncidentType;
   severity: 'minor' | 'moderate' | 'severe' | 'high' | 'critical';
   title: string;
