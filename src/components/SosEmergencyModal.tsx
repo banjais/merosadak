@@ -355,40 +355,67 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
 
  <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto h-[94dvh] max-h-[860px]">
- {/* Header */}
-  <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-red-900/80 to-slate-950 border-b border-red-800/60 flex items-center justify-between gap-2 flex-wrap">
-  <div className="flex items-center space-x-3.5">
-  <div className="relative">
-  <div className="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40">
-  <AlertOctagon className="w-6 h-6 animate-pulse" />
-  </div>
-  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-400 border-2 border-slate-900 rounded-full animate-ping" />
-  </div>
-  <div>
-  <div className="flex items-center space-x-2">
-  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/30 border border-red-400/50 text-red-300">
-  SOS
-  </span>
-  </div>
-  <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
-  <span>Emergency Assist</span>
-  </h2>
-  </div>
+
+ {/* SOS identity + live location header */}
+ <div className="shrink-0 border-b border-red-800/60 bg-gradient-to-br from-red-950 via-slate-950 to-slate-900 px-4 py-3 sm:px-6 sm:py-4">
+  <div className="flex items-center justify-between gap-3">
+   <div className="flex min-w-0 items-center gap-3">
+    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-950/50">
+     <AlertOctagon className="h-6 w-6" />
+     <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-slate-950 bg-red-300 animate-pulse" />
+    </div>
+    <div className="min-w-0">
+     <div className="text-[10px] font-black uppercase tracking-[0.22em] text-red-300">SOS</div>
+     <h2 className="truncate text-lg font-black tracking-tight text-white sm:text-xl">SOS Emergency Assist</h2>
+    </div>
+   </div>
+   <button onClick={onClose} className="shrink-0 rounded-xl p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white" aria-label="Close SOS Dialog">
+    <X className="h-5 w-5" />
+   </button>
   </div>
 
- <div className="flex items-center space-x-2">
- 
+  <div className="mt-3 rounded-xl border border-emerald-900/60 bg-slate-950/75 p-3">
+   <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex items-center gap-2">
+     <span className={`h-2.5 w-2.5 rounded-full ${isLocating ? 'animate-ping bg-amber-400' : !useManualLocation && accuracy !== null ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">GPS coordinates</span>
+     <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${isLocating ? 'bg-amber-950 text-amber-300' : !useManualLocation && accuracy !== null ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'}`}>
+      {isLocating ? 'Locating' : !useManualLocation && accuracy !== null ? 'GPS fix' : useManualLocation ? 'Approximate' : 'Not fixed'}
+     </span>
+    </div>
+    <button type="button" onClick={acquireLocation} disabled={isLocating} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700/60 bg-emerald-950/60 px-3 py-2 text-[11px] font-bold text-emerald-200 transition hover:bg-emerald-900/70 disabled:opacity-50">
+     <RefreshCw className={`h-3.5 w-3.5 ${isLocating ? 'animate-spin' : ''}`} />Refresh GPS
+    </button>
+   </div>
+   <div className="mt-1.5 break-words font-mono text-base font-black tracking-tight text-emerald-300 sm:text-lg">
+    {lat !== null && lng !== null ? `${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}` : 'Waiting for GPS fix…'}
+   </div>
+   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
+    <span>Accuracy: {accuracy !== null && !useManualLocation ? `±${Math.round(accuracy)} m` : useManualLocation ? 'Approximate location — GPS accuracy unavailable' : 'Waiting for GPS fix'}</span>
+    {locationTimestamp && <span>Updated: {locationTimestamp.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>}
+    {batteryPercent !== null && <span>Battery: {batteryPercent}%</span>}
+   </div>
+   {geoError && <p className="mt-2 rounded-lg border border-amber-800/50 bg-amber-950/40 p-2 text-[10px] leading-relaxed text-amber-300">{geoError}</p>}
+  </div>
 
- <button
- onClick={onClose}
- className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
- aria-label="Close SOS Dialog"
- >
- <X className="w-5 h-5" />
- </button>
+  <div className="mt-2.5 rounded-xl border border-slate-700/80 bg-slate-900/80 p-3">
+   <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-300">
+    <Mountain className="h-3.5 w-3.5 text-amber-300" />Nearest mapped landmark & highway
+   </div>
+   <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <div className="text-sm font-black text-white">{lat !== null && lng !== null ? nearestLandmark.city.name : "Waiting for GPS location"}</div>
+    {lat !== null && lng !== null && <div className="text-[10px] font-semibold text-amber-300">{nearestLandmark.distanceKm} km {nearestLandmark.direction}</div>}
+   </div>
+   {lat !== null && lng !== null ? <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+    <span>{nearestLandmark.city.district} District</span><span>{nearestLandmark.city.province} Province</span>
+    {nearestLandmark.nearestHighway && <span className="font-semibold text-amber-200">{nearestLandmark.nearestHighway}</span>}
+   </div> : <p className="mt-1 text-[10px] text-slate-500">Nearest mapped landmark and highway will appear after GPS is fixed or an approximate location is selected.</p>}
+   <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-800 pt-2">
+    <span className="text-[9px] leading-snug text-slate-500">Nearest mapped place only; not a verified street address.</span>
+    <a href={`https://maps.google.com/?q=${currentLat.toFixed(6)},${currentLng.toFixed(6)}`} target="_blank" rel="noreferrer" className="shrink-0 text-[10px] font-bold text-sky-300 hover:text-sky-200">View map ↗</a>
+   </div>
+  </div>
  </div>
- </div>
-
  {/* Active alert */}
  {isAlertActive && (
  <div
@@ -481,113 +508,21 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
 
  {/* Modal Body */}
  <div className="p-3 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-4 text-slate-200 scrollbar-paddle">
- {/* Top Row: GPS Coordinates & Proximity Landmark Banner */}
- <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
- {/* GPS Status Card */}
- <div className="md:col-span-6 bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
- <div className="flex items-center justify-between mb-2">
- <div className="flex items-center space-x-2">
- <div className={`w-2.5 h-2.5 rounded-full ${isLocating ? 'bg-amber-400 animate-ping' : geoError ? 'bg-amber-500' : 'bg-emerald-400 animate-pulse'}`} />
- <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
- {isLocating ? 'Acquiring High-Precision GPS...' : useManualLocation ? 'Manual / Offline Landmark' : 'GPS Fix Locked'}
- </span>
- </div>
- <button
- onClick={acquireLocation}
- disabled={isLocating}
- className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors disabled:opacity-50"
- >
- <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
- <span>Refresh GPS</span>
- </button>
- </div>
-
- <div className="my-1.5 space-y-1">
- <div className="flex items-baseline space-x-2">
- <span className="text-xs text-slate-400 font-mono">LAT / LNG:</span>
- <span className="text-base sm:text-lg font-mono font-black text-emerald-400 tracking-tight">
- {currentLat.toFixed(5)}, {currentLng.toFixed(5)}
- </span>
- </div>
- <div className="flex items-center space-x-3 text-xs text-slate-400">
- <span>Accuracy: ±{accuracy ? Math.round(accuracy) : 15}m</span>
- <span>•</span>
- <span>Alt: {altitude ? `${Math.round(altitude)}m ASL` : `${nearestLandmark.city.elevationM}m ASL`}</span>
- {batteryPercent != null && (
- <>
- <span>•</span>
- <span className="text-slate-300">🔋 {batteryPercent}%</span>
- </>
- )}
- </div>
- </div>
-
- {geoError && (
- <div className="mt-2 text-[11px] text-amber-400/90 bg-amber-950/40 border border-amber-800/40 rounded-lg p-2">
- {geoError}
- </div>
- )}
- </div>
-
- {/* Nearest Nepal Landmark & Route Context Card */}
- <div className="md:col-span-6 bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
- <div>
- <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
- <Mountain className="w-3.5 h-3.5 text-red-400" />
- <span>Highway Landmark & Proximity</span>
- </div>
- <div className="space-y-1">
- <p className="text-sm font-bold text-white">
- ~{nearestLandmark.distanceKm} km {nearestLandmark.direction} of {nearestLandmark.city.name}
- </p>
- <p className="text-xs text-slate-400">
- District: <strong className="text-slate-200">{nearestLandmark.city.district}</strong> • Province:{' '}
- <strong className="text-slate-200">{nearestLandmark.city.province}</strong>
- </p>
- {nearestLandmark.nearestHighway && (
- <p className="text-xs text-amber-300 font-medium mt-1">
- Corridor: {nearestLandmark.nearestHighway}
- </p>
- )}
- </div>
- </div>
-
- <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between">
- <span className="text-xs text-slate-400">
- {activeRoute
- ? `Active Route: ${activeRoute.origin.name} ➔ ${activeRoute.destination.name}`
- : 'Independent Highway Travel'}
- </span>
- {onFocusCoordinatesOnMap && (
- <button
- onClick={() => {
- onFocusCoordinatesOnMap(currentLat, currentLng, 'My location');
- onClose();
- }}
- className="text-xs font-semibold text-red-400 hover:text-red-300 flex items-center space-x-1"
- >
- <span>Pin on Map</span>
- <LocateFixed className="w-3 h-3" />
- </button>
- )}
- </div>
- </div>
- </div>
 <div className="sticky top-0 z-20 -mx-3 mb-1 border-b border-slate-800 bg-slate-900/95 px-3 py-3 backdrop-blur sm:-mx-5 sm:px-5">
-   <div role="tablist" aria-label="Emergency tools" className="grid grid-cols-3 gap-2">
-    {([['alert', 'Alert'], ['messages', 'Message'], ['help', 'Call for help']] as const).map(([tab, label]) => (
-     <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
-      aria-controls={`sos-panel-${tab}`} onClick={() => setActiveTab(tab)}
-      className={`min-h-11 rounded-lg border px-2 py-2 text-xs font-bold transition-colors ${activeTab === tab ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
-      {label}
-     </button>
-    ))}
-   </div>
-  </div><div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
+ <div role="tablist" aria-label="Emergency tools" className="grid grid-cols-3 gap-2 sm:gap-3">
+  {([['alert', 'Alert'], ['messages', 'Message'], ['help', 'Call for help']] as const).map(([tab, label]) => (
+   <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
+    aria-controls={`sos-panel-${tab}`} onClick={() => setActiveTab(tab)}
+    className={`min-h-[56px] rounded-xl border px-2 py-3 text-sm font-extrabold tracking-wide transition-all sm:min-h-[64px] sm:text-base ${activeTab === tab ? 'border-red-500 bg-red-600/25 text-white shadow-lg shadow-red-950/30 ring-1 ring-red-500/50' : 'border-slate-700 bg-slate-950/70 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
+    {label}
+   </button>
+  ))}
+ </div>
+</div><div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
 
  <div id="sos-panel-visual" hidden={activeTab !== 'alert'} className="space-y-5">
   <div className="grid grid-cols-2 gap-2">
-   <button type="button" onClick={() => setAlertSignalMode('sound')} aria-pressed={alertSignalMode === 'sound'} className={`rounded-xl border px-3 py-2.5 text-sm font-bold ${alertSignalMode === 'sound' ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950 text-slate-400'}`}>
+   <button type="button" onClick={() => setAlertSignalMode('sound')} aria-pressed={alertSignalMode === 'sound'} className={`rounded-lg border px-2.5 py-2 text-xs font-bold ${alertSignalMode === 'sound' ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950 text-slate-400'}`}>
     <Volume2 className="inline-block mr-2 h-4 w-4" />Sound
    </button>
    <button type="button" onClick={() => setAlertSignalMode('visual')} aria-pressed={alertSignalMode === 'visual'} className={`rounded-xl border px-3 py-2.5 text-sm font-bold ${alertSignalMode === 'visual' ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950 text-slate-400'}`}>
