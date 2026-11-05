@@ -663,43 +663,397 @@ async function handleWeather(url: URL, env: Env): Promise<Response> {
   return jsonResponse(env, { source: "none", current: null, note: "Weather unavailable" });
 }
 
+
+type IncidentCoordinate = { lng: number; lat: number };
+
+function parseCsvRows(csv: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+    if (char === '"') {
+      if (quoted && csv[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && csv[i + 1] === "\n") i++;
+      row.push(cell);
+      if (row.some((value) => value.trim())) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  row.push(cell);
+  if (row.some((value) => value.trim())) rows.push(row);
+  return rows;
+}
+
+function parseIncidentCoordinate(value: unknown): IncidentCoordinate | null {
+  if (value == null) return null;
+  const numbers = String(value).match(/-?\d+(?:\.\d+)?/g);
+  if (!numbers || numbers.length < 2) return null;
+  const first = Number(numbers[0]);
+  const second = Number(numbers[1]);
+  if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+  // Accept both the documented [lng,lat] form and common "lat,lng" entry.
+  const lng = Math.abs(first) <= 90 && Math.abs(second) > 90 ? second : first;
+  const lat = lng === first ? second : first;
+  if (lng < 79 || lng > 89.5 || lat < 25 || lat > 31.5) return null;
+  return { lng, lat };
+}
+
+function parseChainageKm(value: unknown): number | null {
+  if (value == null || !String(value).trim()) return null;
+  const raw = String(value).replace(/,/g, "").trim();
+  const plus = raw.match(/(\d{1,4})\s*\+\s*(\d{1,3})/);
+  if (plus) return Number(plus[1]) + Number(plus[2]) / 1000;
+  const number = raw.match(/-?\d+(?:\.\d+)?/);
+  if (!number) return null;
+  const parsed = Number(number[0]);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function haversineKm(a: number[], b: number[]): number {
+  const rad = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * rad;
+  const dLng = (b[0] - a[0]) * rad;
+  const lat1 = a[1] * rad;
+  const lat2 = b[1] * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371.0088 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function pointAlongGeometry(geometry: any, fraction: number): IncidentCoordinate | null {
+  if (!geometry || !Number.isFinite(fraction)) return null;
+  const lines: number[][][] = geometry.type === "LineString"
+    ? [geometry.coordinates]
+    : geometry.type === "MultiLineString"
+      ? geometry.coordinates
+      : [];
+  const segments: Array<{ a: number[]; b: number[]; length: number }> = [];
+  let total = 0;
+  for (const line of lines) {
+    for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1];
+      const b = line[i];
+      const length = haversineKm(a, b);
+      if (Number.isFinite(length) && length > 0) {
+        segments.push({ a, b, length });
+        total += length;
+      }
+    }
+  }
+  if (!total || !segments.length) return null;
+  const target = Math.max(0, Math.min(1, fraction)) * total;
+  let traversed = 0;
+  for (const segment of segments) {
+    if (traversed + segment.length >= target) {
+      const t = Math.max(0, Math.min(1, (target - traversed) / segment.length));
+      return {
+        lng: segment.a[0] + (segment.b[0] - segment.a[0]) * t,
+        lat: segment.a[1] + (segment.b[1] - segment.a[1]) * t,
+      };
+    }
+    traversed += segment.length;
+  }
+  const last = segments[segments.length - 1].b;
+  return { lng: last[0], lat: last[1] };
+}
+
+function normalizeLocationName(value: unknown): string {
+  return String(value ?? "").toLowerCase().replace(/chitawan/g, "chitwan").replace(/[^a-z0-9]/g, "");
+}
+
+async function resolveChainagePoint(
+  env: Env,
+  roadRef: string,
+  district: string,
+  chainageKm: number,
+  highwayCache: Map<string, any>,
+): Promise<IncidentCoordinate | null> {
+  const index = await readJsonData<any[]>(env, "highway/index.json", []);
+  const entry = (Array.isArray(index) ? index : []).find((item) =>
+    String(item.code || "").toUpperCase() === roadRef.toUpperCase()
+  );
+  if (!entry?.file) return null;
+  let geojson = highwayCache.get(entry.file);
+  if (!geojson) {
+    try {
+      const response = await fetchWithTimeout(
+        `https://merosadak.web.app/data/highway/${encodeURIComponent(entry.file)}`,
+        { headers: { Accept: "application/geo+json, application/json" }, timeoutMs: 9000 } as any,
+      );
+      if (!response.ok) return null;
+      geojson = await response.json<any>();
+      highwayCache.set(entry.file, geojson);
+    } catch {
+      return null;
+    }
+  }
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  const districtKey = normalizeLocationName(district);
+  const candidates = features.filter((feature: any) => {
+    const props = feature?.properties || {};
+    if (String(props.road_refno || "").toUpperCase() !== roadRef.toUpperCase()) return false;
+    const featureDistrict = normalizeLocationName(props.dist_name);
+    if (districtKey && featureDistrict && featureDistrict !== districtKey) return false;
+    const from = Number(props.link_from);
+    const to = Number(props.link_to);
+    return Number.isFinite(from) && Number.isFinite(to) &&
+      chainageKm >= Math.min(from, to) - 0.05 && chainageKm <= Math.max(from, to) + 0.05;
+  });
+  const feature = candidates[0];
+  if (!feature) return null;
+  const from = Number(feature.properties.link_from);
+  const to = Number(feature.properties.link_to);
+  if (from === to) return pointAlongGeometry(feature.geometry, 0);
+  return pointAlongGeometry(feature.geometry, (chainageKm - from) / (to - from));
+}
+
+function pointInRing(point: number[], ring: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    const intersects = ((yi > point[1]) !== (yj > point[1])) &&
+      (point[0] < ((xj - xi) * (point[1] - yi)) / ((yj - yi) || Number.EPSILON) + xi);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function geometryContainsPoint(geometry: any, point: number[]): boolean {
+  if (!geometry) return false;
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.type === "MultiPolygon"
+      ? geometry.coordinates
+      : [];
+  return polygons.some((rings: number[][][]) =>
+    Array.isArray(rings?.[0]) &&
+    pointInRing(point, rings[0]) &&
+    !rings.slice(1).some((hole) => pointInRing(point, hole))
+  );
+}
+
+function geometryBounds(geometry: any): [number, number, number, number] | null {
+  let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+  const visit = (value: any): void => {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && typeof value[0] === "number" && typeof value[1] === "number") {
+      minLng = Math.min(minLng, value[0]); maxLng = Math.max(maxLng, value[0]);
+      minLat = Math.min(minLat, value[1]); maxLat = Math.max(maxLat, value[1]);
+      return;
+    }
+    value.forEach(visit);
+  };
+  visit(geometry?.coordinates);
+  return Number.isFinite(minLng) ? [minLng, minLat, maxLng, maxLat] : null;
+}
+
+let cachedAdminGeoData: { districts: any[]; palikas: any[]; districtIndex: any[]; palikaIndex: any[] } | null = null;
+
+async function loadAdminGeoData(env: Env) {
+  if (cachedAdminGeoData) return cachedAdminGeoData;
+  const load = async (key: string, url: string) => {
+    let data = await readJsonData<any>(env, key, null);
+    if (!data?.features?.length) {
+      try {
+        const response = await fetchWithTimeout(url, { headers: { Accept: "application/geo+json, application/json" }, timeoutMs: 12000 } as any);
+        if (response.ok) data = await response.json<any>();
+      } catch {}
+    }
+    return Array.isArray(data?.features) ? data.features : [];
+  };
+  const [districts, palikas] = await Promise.all([
+    load("nepal_boundary.geojson", "https://merosadak.web.app/data/nepal_boundary.geojson"),
+    load("palika.geojson", "https://merosadak.web.app/data/palika.geojson"),
+  ]);
+  const index = (features: any[]) => features.map((feature) => ({
+    feature,
+    bounds: geometryBounds(feature.geometry),
+  })).filter((item) => item.bounds);
+  cachedAdminGeoData = { districts, palikas, districtIndex: index(districts), palikaIndex: index(palikas) };
+  return cachedAdminGeoData;
+}
+
+function findFeatureAtPoint(index: any[], lng: number, lat: number): any | null {
+  for (const item of index) {
+    const [minLng, minLat, maxLng, maxLat] = item.bounds;
+    if (lng < minLng || lng > maxLng || lat < minLat || lat > maxLat) continue;
+    if (geometryContainsPoint(item.feature.geometry, [lng, lat])) return item.feature;
+  }
+  return null;
+}
+
+function firstProperty(properties: any, names: string[]): string {
+  if (!properties) return "";
+  for (const name of names) {
+    const key = Object.keys(properties).find((candidate) => candidate.toLowerCase() === name.toLowerCase());
+    const value = key ? properties[key] : undefined;
+    if (value != null && String(value).trim()) return String(value).trim();
+  }
+  return "";
+}
+
+async function resolveAdminNames(
+  env: Env,
+  point: IncidentCoordinate | null,
+  districtFallback: string,
+) {
+  const data = await loadAdminGeoData(env);
+  const districtFeature = point
+    ? findFeatureAtPoint(data.districtIndex, point.lng, point.lat)
+    : data.districts.find((feature) =>
+        normalizeLocationName(firstProperty(feature.properties, ["DIST_EN", "district", "dist_name"])) ===
+        normalizeLocationName(districtFallback)
+      );
+  const palikaFeature = point ? findFeatureAtPoint(data.palikaIndex, point.lng, point.lat) : null;
+  const districtProps = districtFeature?.properties || {};
+  const palikaProps = palikaFeature?.properties || {};
+  return {
+    province: firstProperty(palikaProps, ["ADM1_EN", "province", "Province"]) ||
+      firstProperty(districtProps, ["ADM1_EN", "province", "Province"]),
+    district: firstProperty(palikaProps, ["District", "DIST_EN", "district"]) ||
+      firstProperty(districtProps, ["DIST_EN", "district", "dist_name"]) || districtFallback,
+    municipality: firstProperty(palikaProps, ["FIRST_GaPa", "GaPa_NP", "Palika", "Municipality", "local_level", "NAME_3"]),
+  };
+}
+
+function inferIncidentType(text: string): string {
+  const value = text.toLowerCase();
+  if (/landslide|पहिरो/.test(value)) return "landslide";
+  if (/flood|बाढी/.test(value)) return "flood";
+  if (/accident|दुर्घटना/.test(value)) return "accident";
+  if (/rock|boulder|ढुंगा|ढिस्को/.test(value)) return "fallen_rocks";
+  if (/bridge|पुल/.test(value)) return "bridge_maintenance";
+  if (/construction|maintenance|निर्माण|मर्मत/.test(value)) return "construction";
+  return "road_obstruction";
+}
+
 async function handleRoadAlerts(env: Env): Promise<Response> {
-  let dorIncidents: any[] = [];
+  const syncedAt = new Date().toISOString();
+  const dorIncidents: any[] = [];
   if (env.DOR_GOOGLE_SHEET_URL) {
     try {
-      const res = await fetchWithTimeout(env.DOR_GOOGLE_SHEET_URL);
-      if (res.ok) {
-        const text = await res.text();
-        const lines = text.split(/\r?\n/).filter((l) => l.trim());
-        if (lines.length >= 2) {
-          const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-          const idx = (name: string) => headers.indexOf(name);
-          for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(",");
-            const get = (name: string) => (cols[idx(name)] || "").trim();
-            const status = get("status") || "";
-            if (!status || status.toLowerCase() === "clear") continue;
-            const roadRef = get("road_refno") || "";
-            const roadName = get("road_name") || roadRef;
+      const response = await fetchWithTimeout(env.DOR_GOOGLE_SHEET_URL, { headers: { Accept: "text/csv,text/plain" } });
+      if (response.ok) {
+        const rows = parseCsvRows(await response.text());
+        if (rows.length >= 2) {
+          const headers = rows[0].map((header) => header.replace(/^\uFEFF/, "").trim().toLowerCase());
+          const highwayCache = new Map<string, any>();
+          for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+            const columns = rows[rowIndex];
+            const get = (name: string) => {
+              const index = headers.indexOf(name.toLowerCase());
+              return index >= 0 ? String(columns[index] ?? "").trim() : "";
+            };
+            const rawStatus = get("status");
+            if (!rawStatus) continue;
+            const normalizedStatus = rawStatus.toLowerCase().replace(/[\s_-]/g, "");
+            const status = normalizedStatus === "blocked" ? "closed"
+              : normalizedStatus === "onelane" ? "caution"
+                : ["resumed", "clear", "open"].includes(normalizedStatus) ? "clear"
+                  : "caution";
+            const roadRef = get("road_refno").toUpperCase();
+            const roadName = get("road_name") || roadRef || "Road incident";
+            const districtInput = get("dist_name");
+            const place = get("incidentplace");
+            const chainage = get("chainage");
+            let point = parseIncidentCoordinate(get("incidentcoordinate"));
+            let geometrySource = point ? "reported-coordinate" : "none";
+            const chainageKm = parseChainageKm(chainage);
+            if (!point && chainageKm != null && roadRef) {
+              point = await resolveChainagePoint(env, roadRef, districtInput, chainageKm, highwayCache);
+              if (point) geometrySource = "estimated-from-chainage";
+            }
+            const admin = point || districtInput
+              ? await resolveAdminNames(env, point, districtInput)
+              : { province: "", district: "", municipality: "" };
+            const locationParts = [place, admin.district || districtInput].filter(Boolean);
+            const locationName = locationParts.join(", ") || "Unknown";
+            const descriptiveText = [get("restorationefforts"), get("remarks")].filter(Boolean).join(" — ");
+            const restoration = get("estimatedrestoration");
+            const contact = get("contactperson");
+            const description = [descriptiveText, restoration ? `Estimated restoration: ${restoration}` : "", contact ? `Contact: ${contact}` : ""]
+              .filter(Boolean).join(" | ") || rawStatus;
+            const incidentText = [place, descriptiveText, roadName].filter(Boolean).join(" ");
             dorIncidents.push({
-              id: `dor-${i}-${roadRef}`.replace(/\s+/g, "-"),
+              id: `dor-${rowIndex}-${roadRef || "road"}`.replace(/\s+/g, "-"),
               highwayCode: roadRef,
               highwayName: roadName,
-              locationName: get("incidentplace") || get("dist_name") || "Unknown",
-              type: "landslide",
-              severity: "moderate",
-              title: `${status}: ${roadName}`,
-              description: get("remarks") || status,
-              status: "caution",
-              reportedAt: get("incidentstarted") || new Date().toISOString(),
+              locationName,
+              incidentPlace: place,
+              district: admin.district || districtInput,
+              province: admin.province,
+              municipality: admin.municipality,
+              chainageKm: chainage,
+              lat: point?.lat ?? null,
+              lng: point?.lng ?? null,
+              geometrySource,
+              type: inferIncidentType(incidentText),
+              severity: status === "closed" ? "severe" : status === "caution" ? "moderate" : "minor",
+              title: `${rawStatus}: ${roadName}${place ? ` — ${place}` : ""}`,
+              description,
+              status,
+              dorStatus: rawStatus,
+              reportedAt: get("incidentstarted") || get("reportdate") || syncedAt,
+              estimatedClearance: restoration,
+              resumedDate: get("resumeddate"),
+              blockedHours: get("blockedhours"),
+              contactPerson: contact,
+              restorationEfforts: get("restorationefforts"),
+              remarks: get("remarks"),
               dorVerified: true,
               source: "dor",
+              upvotes: 0,
             });
           }
         }
       }
+    } catch (error) {
+      console.warn("[road-alerts] DoR sheet sync failed:", error);
+    }
+  }
+  let wazeIncidents: any[] = [];
+  if (env.WAZE_FEED_URL) {
+    try {
+      const data = await fetchWithTimeout(env.WAZE_FEED_URL).then((r) => r.json<any>());
+      for (const a of data.alerts || []) {
+        wazeIncidents.push({
+          id: `waze-${a.uuid || Math.random().toString(36).slice(2)}`,
+          locationName: a.street || "Unknown",
+          lat: a.location?.y,
+          lng: a.location?.x,
+          type: a.type || "traffic_jam",
+          title: `${a.type || "Alert"}: ${a.reportDescription || ""}`.trim(),
+          description: a.reportDescription || "",
+          status: "caution",
+          reportedAt: new Date(a.startTime || Date.now()).toISOString(),
+          source: "waze",
+        });
+      }
     } catch {}
   }
+  const local = await readJsonData<any[]>(env, "incidents.json", []);
+  const merged = [...dorIncidents, ...wazeIncidents, ...(Array.isArray(local) ? local : [])];
+  return jsonResponse(env, {
+    source: "dor+waze+local",
+    syncedAt,
+    incidents: merged,
+    counts: { dor: dorIncidents.length, waze: wazeIncidents.length, local: Array.isArray(local) ? local.length : 0, total: merged.length },
+  });
+}
   let wazeIncidents: any[] = [];
   if (env.WAZE_FEED_URL) {
     try {
