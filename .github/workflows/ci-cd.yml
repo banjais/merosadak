@@ -165,11 +165,12 @@ jobs:
 
   deploy-worker:
     name: Deploy Cloudflare Worker
-    needs: sync-kv
+    needs: [sync-kv, worker-typecheck]
     # Data sync can fail on Cloudflare's free KV quota without blocking the
     # worker deploy — the worker keeps serving the last-synced data, and the
-    # next push retries. Previously a failed sync aborted the whole workflow.
-    if: always() && github.ref == 'refs/heads/main'
+    # next push retries. However, never deploy Worker code that failed
+    # its dedicated type-check.
+    if: always() && github.ref == 'refs/heads/main' && needs.worker-typecheck.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
