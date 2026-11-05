@@ -90,7 +90,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  const [alarmMode, setAlarmMode] = useState<SosAlarmMode>('high_frequency');
  const [isStrobeActive, setIsStrobeActive] = useState<boolean>(false);
  const [strobeState, setStrobeState] = useState<boolean>(false);
- const [activeTab, setActiveTab] = useState<'alert' | 'visual' | 'messages' | 'share' | 'help' | 'settings'>('alert');
+ const [activeTab, setActiveTab] = useState<'alert' | 'messages' | 'help'>('alert');
 
  // Battery API status
  const [batteryPercent, setBatteryPercent] = useState<number | null>(null);
@@ -305,20 +305,6 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  // Whether SOS Alert is actively on (either sound, flash, or both)
  const isAlertActive = isAudioPlaying || isStrobeActive;
 
- // Master SOS Alert Activation / Deactivation
- const handleActivateAlert = () => {
- if (!isAudioPlaying) {
- setAlarmMode('high_frequency');
- sosAudioAlert.start('high_frequency');
- setIsAudioPlaying(true);
- }
- };
-
- const handleDeactivateAlert = () => {
- sosAudioAlert.stop();
- setIsAudioPlaying(false);
- setIsStrobeActive(false);
- };
 
  if (!isOpen) return null;
 
@@ -354,7 +340,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  )}
 
- <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[94vh]">
+ <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto h-[min(94dvh,860px)] min-h-[560px]">
  {/* Header */}
   <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-red-900/80 to-slate-950 border-b border-red-800/60 flex items-center justify-between gap-2 flex-wrap">
   <div className="flex items-center space-x-3.5">
@@ -377,10 +363,10 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
   </div>
 
  <div className="flex items-center space-x-2">
- {/* Alert toggle */}
+ {/* Close control */}
  <button
- onClick={isAlertActive ? handleDeactivateAlert : handleActivateAlert}
- id="sos-alert-master-btn"
+ onClick={onClose}
+ aria-label="Close SOS Dialog"
  title={isAlertActive ? 'Stop alert' : 'Start alert'}
  className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center space-x-2 transition-all shadow-md active:scale-95 ${
  isAlertActive
@@ -401,13 +387,6 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
  </button>
 
- <button
- onClick={onClose}
- className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
- aria-label="Close SOS Dialog"
- >
- <X className="w-5 h-5" />
- </button>
  </div>
  </div>
 
@@ -502,93 +481,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
 
  {/* Modal Body */}
- <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-slate-200 scrollbar-paddle">
- <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-1 border-b border-slate-800 bg-slate-900/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
-  <div role="tablist" aria-label="Emergency tools" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-   {([
-    ['alert', 'Alert'], ['visual', 'Visual alerts'], ['messages', 'Messages'],
-    ['share', 'Share'], ['help', 'Call for help'], ['settings', 'Settings'],
-   ] as const).map(([tab, label]) => (
-    <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
-     aria-controls={`sos-panel-${tab}`} onClick={() => setActiveTab(tab)}
-     className={`min-h-10 rounded-lg border px-2 py-2 text-[11px] font-bold transition-colors sm:text-xs ${activeTab === tab ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
-     {label}
-    </button>
-   ))}
-  </div>
- </div>
- <section id="sos-panel-settings" role="tabpanel" hidden={activeTab !== 'settings'} className="space-y-3">
-  <h3 className="text-sm font-bold text-white">Alert preferences</h3>
-  <p className="text-xs text-slate-400">Choose the sound pattern used when you start an alert.</p>
-   {/* Alarm Mode Selectors & Frequency Waveform */}
- <div className="pt-3 border-t border-red-900/50 grid grid-cols-1 sm:grid-cols-3 gap-2">
- <button
- type="button"
- onClick={() => {
- setAlarmMode('high_frequency');
- if (isAudioPlaying) sosAudioAlert.start('high_frequency');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'high_frequency'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-amber-300">🏔️ Mountain Penetration</span>
- <span className="text-[10px] font-mono text-red-300">2.8–3.6 kHz</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- High-frequency sweep for river canyons & blizzard whiteouts
- </div>
- </button>
-
- <button
- type="button"
- onClick={() => {
- setAlarmMode('two_tone_siren');
- if (isAudioPlaying) sosAudioAlert.start('two_tone_siren');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'two_tone_siren'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-cyan-300">🚨 Two-Tone Warble</span>
- <span className="text-[10px] font-mono text-cyan-300">2.4 / 3.2 kHz</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- High-contrast alternating alarm for ground SAR localization
- </div>
- </button>
-
- <button
- type="button"
- onClick={() => {
- setAlarmMode('morse_sos');
- if (isAudioPlaying) sosAudioAlert.start('morse_sos');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'morse_sos'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-emerald-300">📻 Sound signal</span>
- <span className="text-[10px] font-mono text-emerald-300">... --- ...</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- International standard distress audio pattern (1.2 kHz tone)
- </div>
- </button>
- </div>
-
-
- </section>
- <div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
+ <div className="p-3 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-4 text-slate-200 scrollbar-paddle">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
 
  {/* Top Row: GPS Coordinates & Proximity Landmark Banner */}
  <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
@@ -637,25 +531,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  )}
 
- {/* Manual Selection Fallback */}
- {useManualLocation && (
- <div className="mt-3 pt-2.5 border-t border-slate-800/80">
- <label className="block text-[11px] font-semibold text-slate-400 mb-1">
- Select Nearest Known Nepal Hub / Junction:
- </label>
- <select
- value={manualCityId}
- onChange={(e) => handleManualCityChange(e.target.value)}
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-red-500"
- >
- {CITIES_AND_JUNCTIONS.map((c) => (
- <option key={c.id} value={c.id}>
- {c.name} - {c.district}, {c.province}
- </option>
- ))}
- </select>
- </div>
- )}
+
  </div>
 
  {/* Nearest Nepal Landmark & Route Context Card */}
@@ -704,7 +580,18 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
 
  </div>
- <div id="sos-panel-visual" role="tabpanel" hidden={activeTab !== 'visual'} className="space-y-5">
+ <div className="sticky top-0 z-20 -mx-3 -mt-3 mb-1 border-b border-slate-800 bg-slate-900/95 px-3 py-3 backdrop-blur sm:-mx-5 sm:-mt-5 sm:px-5">
+  <div role="tablist" aria-label="Emergency tools" className="grid grid-cols-3 gap-2">
+   {([['alert', 'Alert'], ['messages', 'Message'], ['help', 'Call for help']] as const).map(([tab, label]) => (
+    <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
+     aria-controls={`sos-panel-${tab}`} onClick={() => setActiveTab(tab)}
+     className={`min-h-11 rounded-lg border px-2 py-2 text-xs font-bold transition-colors ${activeTab === tab ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
+     {label}
+    </button>
+   ))}
+  </div>
+ </div><div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-4">
+ <div id="sos-panel-alert-options" className="space-y-5">
  {/* Sound & Optical Distress Signaling Card */}
  <div className="bg-gradient-to-r from-red-950/70 via-slate-900 to-red-950/70 border-2 border-red-500/50 rounded-2xl p-4 shadow-xl">
  <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -802,7 +689,9 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
   </div>
  </div>
  </div>
- <div id="sos-panel-alert-details" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
+
+</div><div id="sos-panel-messages" role="tabpanel" hidden={activeTab !== 'messages'} className="space-y-4">
+ <div id="sos-message-details" className="space-y-5">
  {/* Emergency Distress Nature Selection */}
  <div>
  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center space-x-1.5">
@@ -914,6 +803,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
 
  </div>
+
  <div id="sos-panel-messages" role="tabpanel" hidden={activeTab !== 'messages'} className="space-y-5">
  {/* Generated Rescue Text Dispatch Area */}
  <div>
@@ -963,6 +853,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
 
  </div>
+
  <div id="sos-panel-share" role="tabpanel" hidden={activeTab !== 'share'} className="space-y-5">
  {/* Quick External Transmission Channels */}
  <div>
@@ -981,7 +872,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  />
  </div>
 
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+ <div className="grid grid-cols-4 gap-2.5">
  {/* WhatsApp Button */}
  <button
  type="button"
@@ -990,7 +881,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/50 transition-all active:scale-98"
  >
  <MessageSquare className="w-4 h-4" />
- <span>Send via WhatsApp</span>
+ <span className="sr-only">WhatsApp</span>
  </button>
 
  {/* Direct SMS Button */}
@@ -1001,7 +892,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  className="py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-950/50 transition-all active:scale-98"
  >
  <Send className="w-4 h-4" />
- <span>Send via Direct SMS</span>
+ <span className="sr-only">SMS</span>
  </button>
 
  {/* Telegram Button */}
@@ -1012,13 +903,15 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  className="py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-sky-950/50 transition-all active:scale-98"
  >
  <Radio className="w-4 h-4" />
- <span>Send via Telegram</span>
+ <span className="sr-only">Telegram</span>
  </button>
+ <button type="button" onClick={() => { const url = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(`https://maps.google.com/?q=${currentLat.toFixed(5)},${currentLng.toFixed(5)}`)}&app_id=`; window.open(url, "_blank", "noopener,noreferrer"); }} aria-label="Messenger" title="Messenger" className="py-3 px-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center"><MessageSquare className="w-5 h-5" /><span className="sr-only">Messenger</span></button>
  </div>
  </div>
 
  </div>
- <div id="sos-panel-help" role="tabpanel" hidden={activeTab !== 'help'} className="space-y-5">
+
+</div> <div id="sos-panel-help" role="tabpanel" hidden={activeTab !== 'help'} className="space-y-5">
  {/* Nepal Emergency Hotlines Speed-Dial Grid */}
  <div className="pt-2 border-t border-slate-800">
  <div className="flex items-center justify-between mb-2">
