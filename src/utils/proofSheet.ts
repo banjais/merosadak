@@ -170,9 +170,11 @@ export async function buildProofSheet(
     ? 'Method: derived route with an uncertain section'
     : res.evidenceLevel === 'published'
       ? 'Method: distance published in the cited road statistics'
-      : res.source === 'dor_geojson'
-        ? 'Method: calculated from archived road-network geometry'
-        : 'Method: straight-line estimate (not road distance)';
+      : res.evidenceLevel === 'link_sum'
+        ? 'Method: summed road-link lengths from DoR reference data'
+        : res.source === 'dor_geojson'
+          ? 'Method: calculated from archived road-network geometry'
+          : 'Method: straight-line estimate (not road distance)';
   setText(method, M, resultY + 7, 7.5, 'normal', MUTED);
   rule(resultY + 12);
 
