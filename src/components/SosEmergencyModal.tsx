@@ -388,7 +388,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
     </button>
    </div>
    <div className="mt-1.5 break-words font-mono text-base font-black tracking-tight text-emerald-300 sm:text-lg">
-    {currentLat.toFixed(6)}, {currentLng.toFixed(6)}
+    {lat !== null && lng !== null ? `${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}` : 'Waiting for GPS fix…'}
    </div>
    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
     <span>Accuracy: {accuracy !== null && !useManualLocation ? `±${Math.round(accuracy)} m` : useManualLocation ? 'Approximate location — GPS accuracy unavailable' : 'Waiting for GPS fix'}</span>
@@ -403,15 +403,15 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
     <Mountain className="h-3.5 w-3.5 text-amber-300" />Nearest mapped landmark & highway
    </div>
    <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-    <div className="text-sm font-black text-white">{nearestLandmark.city.name}</div>
-    <div className="text-[10px] font-semibold text-amber-300">{nearestLandmark.distanceKm} km {nearestLandmark.direction}</div>
+    <div className="text-sm font-black text-white">{lat !== null && lng !== null ? nearestLandmark.city.name : "Waiting for GPS location"}</div>
+    {lat !== null && lng !== null && <div className="text-[10px] font-semibold text-amber-300">{nearestLandmark.distanceKm} km {nearestLandmark.direction}</div>}
    </div>
-   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+   {lat !== null && lng !== null ? <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
     <span>{nearestLandmark.city.district} District</span><span>{nearestLandmark.city.province} Province</span>
     {nearestLandmark.nearestHighway && <span className="font-semibold text-amber-200">{nearestLandmark.nearestHighway}</span>}
-   </div>
+   </div> : <p className="mt-1 text-[10px] text-slate-500">Nearest mapped landmark and highway will appear after GPS is fixed or an approximate location is selected.</p>}
    <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-800 pt-2">
-    <span className="text-[9px] leading-snug text-slate-500">Nearest place in the mapped road database; not a verified street address.</span>
+    <span className="text-[9px] leading-snug text-slate-500">Nearest mapped place only; not a verified street address.</span>
     <a href={`https://maps.google.com/?q=${currentLat.toFixed(6)},${currentLng.toFixed(6)}`} target="_blank" rel="noreferrer" className="shrink-0 text-[10px] font-bold text-sky-300 hover:text-sky-200">View map ↗</a>
    </div>
   </div>
