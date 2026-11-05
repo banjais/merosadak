@@ -124,8 +124,10 @@ export function analyzeHighwayRealtimeStatus(
   const name = highway.name || `National Highway ${code}`;
 
   // Find all incidents matching this highway
+  // Resumed / clear DoR rows remain in the feed for history, but must not
+  // continue colouring the highway as blocked or under roadwork.
   const matchedIncidents = liveIncidents.filter((inc) =>
-    isIncidentMatchingHighway(inc, code, name)
+    inc.status !== 'clear' && isIncidentMatchingHighway(inc, code, name)
   );
   const matchedReports = userReports.filter((rep) =>
     isIncidentMatchingHighway(rep, code, name)
@@ -143,7 +145,7 @@ export function analyzeHighwayRealtimeStatus(
       // Check if any incident specifically affects this segment
       const segIncident = matchedIncidents.find((inc) => {
         const loc = (inc.locationName || inc.title || '').toLowerCase();
-        return loc.includes(segFrom) || loc.includes(segTo) || (inc.chainageKm && seg.id.includes('seg'));
+        return loc.includes(segFrom) || loc.includes(segTo);
       });
 
       const segReport = matchedReports.find((rep) => {
