@@ -74,6 +74,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  // Manual fallback selection if GPS is denied or unavailable
  const [manualCityId, setManualCityId] = useState<string>('mgl');
  const [useManualLocation, setUseManualLocation] = useState<boolean>(false);
+ const [manualLocationConfirmed, setManualLocationConfirmed] = useState<boolean>(false);
 
  // Emergency Form State
  const [distressType, setDistressType] = useState<EmergencyDistressType>('accident');
@@ -161,6 +162,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  setLocationTimestamp(new Date(pos.timestamp));
  setIsLocating(false);
  setUseManualLocation(false);
+ setManualLocationConfirmed(false);
  },
  (err) => {
  setIsLocating(false);
@@ -175,16 +177,9 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  setGeoError(msg);
  setUseManualLocation(true);
 
- // Fallback default coordinates if not already set (e.g. Mugling or Route midpoint)
- if (lat === null || lng === null) {
- if (activeRoute && activeRoute.origin) {
- setLat(activeRoute.origin.lat);
- setLng(activeRoute.origin.lng);
- } else {
- setLat(27.8617); // Mugling
- setLng(84.5542);
- }
- }
+ // Never silently substitute a route origin or fixed coordinates for GPS.
+ // Require the user to choose a fallback place before sharing an SOS message.
+ setManualLocationConfirmed(false);
  },
  {
  enableHighAccuracy: true,
@@ -237,12 +232,15 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  setAccuracy(50);
  setAltitude(city.elevationM);
  setLocationTimestamp(new Date());
+ setManualLocationConfirmed(true);
  }
  };
 
  // Current active coordinates to use
- const currentLat = lat ?? 27.8617;
- const currentLng = lng ?? 84.5542;
+ const selectedFallbackCity = CITIES_AND_JUNCTIONS.find((city) => city.id === manualCityId);
+ const currentLat = lat ?? selectedFallbackCity?.lat ?? 27.8617;
+ const currentLng = lng ?? selectedFallbackCity?.lng ?? 84.5542;
+ const locationReady = (lat !== null && lng !== null) || (useManualLocation && manualLocationConfirmed);
 
  // Nearest landmark calculation
  const nearestLandmark = useMemo(() => {
@@ -430,9 +428,13 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
           {isLocating ? 'Getting your location…' : useManualLocation ? 'Approximate location' : 'Your location'}
          </h3>
         </div>
-        <p className="break-all font-mono text-sm font-bold text-emerald-300">
-         {currentLat.toFixed(5)}, {currentLng.toFixed(5)}
-        </p>
+        {locationReady ? (
+         <p className="break-all font-mono text-sm font-bold text-emerald-300">
+          {currentLat.toFixed(5)}, {currentLng.toFixed(5)}
+         </p>
+        ) : (
+         <p className="text-xs font-semibold text-amber-300">Location not confirmed — choose a nearby place below</p>
+        )}
         <p className="mt-1 text-[11px] text-slate-400">
          {accuracy ? `GPS accuracy ±${Math.round(accuracy)} m` : 'GPS accuracy unavailable'}
          {nearestLandmark?.city?.name ? ` · Near ${nearestLandmark.city.name}` : ''}
@@ -513,7 +515,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
      <section className="rounded-xl border border-slate-700 bg-slate-950/60 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-300">Share your location</h3>
-       <button type="button" onClick={handleCopy} className="text-[11px] font-semibold text-slate-300 hover:text-white">
+       <button type="button" onClick={handleCopy} disabled={!locationReady} className="text-[11px] font-semibold text-slate-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
         {copiedText ? 'Copied' : 'Copy message'}
        </button>
       </div>
@@ -522,14 +524,14 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
        <input type="tel" value={customPhone} onChange={(e) => setCustomPhone(e.target.value)} placeholder="+977 98XXXXXXXX" className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-600" />
       </label>
       <div className="grid grid-cols-2 gap-2">
-       <button type="button" onClick={handleSendWhatsApp} className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-emerald-500">
+       <button type="button" onClick={handleSendWhatsApp} disabled={!locationReady} className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40">
         <MessageSquare className="h-4 w-4" /> WhatsApp
        </button>
-       <button type="button" onClick={handleSendSms} className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-blue-500">
+       <button type="button" onClick={handleSendSms} disabled={!locationReady} className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40">
         <Send className="h-4 w-4" /> SMS
        </button>
       </div>
-      <p className="mt-2 text-[10px] text-slate-500">Your message includes coordinates and the selected emergency details. Sending requires your confirmation in the messaging app.</p>
+      <p className="mt-2 text-[10px] text-slate-500">{locationReady ? 'Your message includes confirmed coordinates and emergency details. Sending requires your confirmation in the messaging app.' : 'Allow GPS or choose your nearest known place before sharing. An unconfirmed default location will never be sent.'}</p>
      </section>
     </main>
    </div>
