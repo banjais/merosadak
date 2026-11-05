@@ -245,7 +245,7 @@ export async function buildProofSheet(
   const citation = res.citation;
   const citationParts = [
     citation?.document,
-    citation?.table ? `Table ${citation.table}` : '',
+    citation?.table || '',
     citation?.row ? `row ${citation.row}` : '',
     citation?.printedPage ? `printed p.${citation.printedPage}` : '',
     citation?.pdfPage ? `PDF p.${citation.pdfPage}` : '',
