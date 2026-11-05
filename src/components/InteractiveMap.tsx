@@ -201,6 +201,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     nepalBorder: L.LayerGroup;
     outsideMask: L.LayerGroup;
     provinces: L.LayerGroup;
+    districts: L.LayerGroup;
+    localLevels: L.LayerGroup;
   }>({
     highways: L.layerGroup(),
     cities: L.layerGroup(),
@@ -211,6 +213,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     nepalBorder: L.layerGroup(),
     outsideMask: L.layerGroup(),
     provinces: L.layerGroup(),
+    districts: L.layerGroup(),
+    localLevels: L.layerGroup(),
   });
 
   // Mutually Exclusive Overlay Layer Selection
@@ -504,6 +508,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.outsideMask.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
+    layersRef.current.districts.addTo(map);
+    layersRef.current.localLevels.addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -922,7 +928,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         }
         try {
           const worldCorners: L.LatLngExpression[] = [
-            [-180, -90], [180, -90], [180, 90], [-180, 90],
+            [-90, -180], [-90, 180], [90, 180], [90, -180],
           ];
           const holes: L.LatLngExpression[][] = [];
 
@@ -993,6 +999,77 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         }
       })
       .catch(err => console.warn('Failed to load Nepal border:', err));
+  }, []);
+
+  // Optional district and local-level administrative boundaries.
+  // Prefer Worker KV data, then fall back to static GeoJSON files. Missing or
+  // empty datasets are ignored so the base map and highway layers stay usable.
+  useEffect(() => {
+    let cancelled = false;
+    const loadBoundary = async (urls: string[]) => {
+      for (const url of urls) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (data?.type === 'FeatureCollection' && Array.isArray(data.features) && data.features.length) {
+            return data;
+          }
+        } catch {
+          // Try the next source; a missing optional boundary must not break map loading.
+        }
+      }
+      return null;
+    };
+
+    const renderBoundary = async (
+      group: L.LayerGroup,
+      urls: string[],
+      style: L.PathOptions,
+      propertyNames: string[],
+    ) => {
+      const data = await loadBoundary(urls);
+      if (cancelled || !data) return;
+      const layer = L.geoJSON(data, {
+        style: () => style,
+        onEachFeature: (feature, featureLayer) => {
+          const properties = feature.properties || {};
+          const labelKey = Object.keys(properties).find((key) =>
+            propertyNames.some((name) => name.toLowerCase() === key.toLowerCase())
+          );
+          const label = labelKey ? String(properties[labelKey] ?? '') : '';
+          if (label) featureLayer.bindTooltip(escapeHtml(label), {
+            sticky: true,
+            className: 'custom-dark-tooltip',
+          });
+        },
+      });
+      if (!cancelled) group.addLayer(layer);
+    };
+
+    const districts = layersRef.current.districts;
+    const localLevels = layersRef.current.localLevels;
+    districts.clearLayers();
+    localLevels.clearLayers();
+
+    void renderBoundary(
+      districts,
+      ['/api/data/nepal_boundary.geojson', '/data/nepal_boundary.geojson'],
+      { color: '#fbbf24', weight: 1, opacity: 0.5, fill: false, interactive: true },
+      ['DIST_EN', 'district', 'dist_name', 'name'],
+    );
+    void renderBoundary(
+      localLevels,
+      ['/api/data/palika.geojson', '/data/palika.geojson'],
+      { color: '#a78bfa', weight: 0.6, opacity: 0.35, fill: false, interactive: true },
+      ['FIRST_GaPa', 'GaPa_NP', 'Palika', 'Municipality', 'name'],
+    );
+
+    return () => {
+      cancelled = true;
+      districts.clearLayers();
+      localLevels.clearLayers();
+    };
   }, []);
 
   // Update outside mask color based on theme
@@ -1104,6 +1181,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const incidentsList = liveIncidents ?? [];
 
     incidentsList.forEach((inc) => {
+      // A sheet row without a verified coordinate remains available in the
+      // incident feed, but must never create a fake marker at [0, 0].
+      if (!Number.isFinite(inc.lat) || !Number.isFinite(inc.lng) ||
+          inc.lat < 25 || inc.lat > 31.5 || inc.lng < 79 || inc.lng > 89.5) return;
+
       const isCritical = inc.severity === 'critical' || inc.severity === 'severe';
       const markerHtml = `
         <div class="relative flex items-center justify-center cursor-pointer group">
@@ -1129,6 +1211,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
       const marker = L.marker([inc.lat, inc.lng], { icon });
+      const adminLocation = [inc.municipality, inc.district, inc.province].filter(Boolean).join(' · ');
+      const incidentLocation = [inc.incidentPlace || inc.locationName, inc.chainageKm].filter(Boolean).join(' · ');
+      marker.bindTooltip(
+        `<div class="p-1.5 text-xs font-sans">
+          <div class="font-bold text-white">${escapeHtml(inc.title || 'Road incident')}</div>
+          <div class="text-slate-200">${escapeHtml(incidentLocation)}</div>
+          ${adminLocation ? `<div class="text-slate-400">${escapeHtml(adminLocation)}</div>` : ''}
+          <div class="text-slate-300">${escapeHtml(inc.status || '')}</div>
+        </div>`,
+        { className: 'custom-dark-tooltip', direction: 'top' }
+      );
 
       incidentsGroup.addLayer(marker);
     });
