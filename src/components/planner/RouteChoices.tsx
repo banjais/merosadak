@@ -1,12 +1,14 @@
 import React from 'react';
 import { Check, Map as MapIcon } from 'lucide-react';
 import type { RoutePlanResult } from '../../types';
+import { makeT, type UiLang } from '../../utils/plannerText';
 
 interface RouteChoicesProps {
   options: RoutePlanResult[];
   selectedId: string;
   onSelect: (route: RoutePlanResult) => void;
   onViewOnMap?: () => void;
+  language?: UiLang;
 }
 
 const fmtTime = (min: number) => {
@@ -19,7 +21,8 @@ const fmtTime = (min: number) => {
  * Compact alternative-route picker: one tappable row per route
  * (name · distance · time · road score). No extra panels or tabs.
  */
-export const RouteChoices: React.FC<RouteChoicesProps> = ({ options, selectedId, onSelect, onViewOnMap }) => {
+export const RouteChoices: React.FC<RouteChoicesProps> = ({ options, selectedId, onSelect, onViewOnMap, language = 'EN' }) => {
+  const t = makeT(language);
   const fastest = Math.min(...options.map((o) => o.estimatedTimeMinutes));
   const shortest = Math.min(...options.map((o) => o.totalDistanceKm));
   const best = Math.max(...options.map((o) => o.roadConditionScore));
@@ -29,9 +32,9 @@ export const RouteChoices: React.FC<RouteChoicesProps> = ({ options, selectedId,
       {options.map((opt, i) => {
         const selected = opt.id === selectedId;
         const tags = [
-          opt.estimatedTimeMinutes === fastest && 'Fastest',
-          opt.totalDistanceKm === shortest && 'Shortest',
-          opt.roadConditionScore === best && options.length > 1 && 'Best road',
+          opt.estimatedTimeMinutes === fastest && t('fastest'),
+          opt.totalDistanceKm === shortest && t('shortest'),
+          opt.roadConditionScore === best && options.length > 1 && t('bestRoad'),
         ].filter(Boolean) as string[];
         return (
           <button
@@ -60,7 +63,7 @@ export const RouteChoices: React.FC<RouteChoicesProps> = ({ options, selectedId,
               <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400">
                 <span>{opt.totalDistanceKm.toFixed(0)} km</span>
                 <span>· {fmtTime(opt.estimatedTimeMinutes)}</span>
-                <span>· Road {opt.roadConditionScore}</span>
+                <span>· {t('road')} {opt.roadConditionScore}</span>
               </span>
             </span>
             {tags[0] && (
@@ -77,7 +80,7 @@ export const RouteChoices: React.FC<RouteChoicesProps> = ({ options, selectedId,
           onClick={onViewOnMap}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800"
         >
-          <MapIcon className="h-4 w-4" /> View on map
+          <MapIcon className="h-4 w-4" /> {t('viewOnMap')}
         </button>
       )}
     </div>

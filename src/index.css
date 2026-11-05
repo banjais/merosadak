@@ -2016,3 +2016,10 @@ html[data-theme='light'] .planner-deck-desktop__tab.is-active{color:#047857}
 .planner-deck-3d{perspective:1100px}
 .planner-deck-3d__arrow{width:3rem;height:3rem;border-radius:1rem}
 .planner-deck-3d__position-title{font-size:.875rem}
+
+/* ===== Light-theme coverage for the simplified planner cards ===== */
+html[data-theme='light'] .bg-slate-950\/70,
+html[data-theme='light'] .bg-slate-950\/55 { background-color: rgba(255, 255, 255, 0.85) !important; }
+html[data-theme='light'] .text-amber-200 { color: #92400e !important; }
+html[data-theme='light'] .text-cyan-300 { color: #0e7490 !important; }
+html[data-theme='light'] .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }

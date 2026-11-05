@@ -24,6 +24,7 @@ import { ReelCard } from './planner/ReelCard';
 import { PlannerDeck, DeckItem } from './PlannerDeck';
 import { RouteChoices } from './planner/RouteChoices';
 import { rememberRecentPlace, withRecentsFirst } from '../utils/recentPlaces';
+import { makeT } from '../utils/plannerText';
 import { RouteBlocksPanel } from './planner/RouteBlocksPanel';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
@@ -449,23 +450,24 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   // reset the active id to the first card of the new set (destination pre-calc,
   // verdict post-calc).
   const [plannerDeckActiveId, setPlannerDeckActiveId] = useState<string>('destination');
+  const tp = makeT(uiLanguage);
   const plannerDeckItems: DeckItem[] = useMemo(() => {
     if (!hasCalculated) {
       // Pre-calc: a single card. The "Where to?" search bar is the default
       // visible surface, with a My Location button on its right that reveals
       // the location info card on demand (no permanent expanded panel).
       return [
-        { id: 'destination', label: 'Where to?', hint: 'Destination' },
+        { id: 'destination', label: tp('whereTo'), hint: 'Destination' },
       ];
     }
     const items: DeckItem[] = [
-      { id: 'verdict', label: 'Summary', hint: 'Distance · time · status' },
-      { id: 'journey', label: 'Journey', hint: 'Road sections · alerts' },
-      { id: 'costs', label: 'Cost', hint: 'Fuel · tolls' },
-      { id: 'routes', label: 'Routes', hint: 'Vehicle · alternatives' },
+      { id: 'verdict', label: tp('summary'), hint: 'Distance · time · status' },
+      { id: 'journey', label: tp('journey'), hint: 'Road sections · alerts' },
+      { id: 'costs', label: tp('cost'), hint: 'Fuel · tolls' },
+      { id: 'routes', label: tp('routes'), hint: 'Vehicle · alternatives' },
     ];
     return items;
-  }, [hasCalculated, routePlan]);
+  }, [hasCalculated, routePlan, uiLanguage]);
   // Safety net: if the active id is no longer in the deck (e.g. the deck flipped
   // from post-calc to pre-calc and the old 'verdict' id is gone, or the
   // alternative-routes card disappeared after a recalculation), snap back to
@@ -1452,7 +1454,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       id="single-dest"
                       containerRef={singleSearchRef}
                       inputRef={singleSearchInputRef}
-                      placeholder="Where to?"
+                      placeholder={tp('whereTo')}
                       value={singleSearchQuery}
                       resolved={!!destId}
                       accent="emerald"
@@ -1499,6 +1501,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           results={filteredSingleCities}
                           searchablePlaceCount={searchablePlaceCount}
                           recentCount={singleSuggestions.recentCount}
+                          recentLabel={tp('recentFirst')}
                           onSelect={(city) => {
                             rememberRecentPlace(city.id);
                             setDestId(city.id);
@@ -1569,7 +1572,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                         id="to-dest"
                         containerRef={destSearchRef}
                         inputRef={destInputRef}
-                        placeholder="Where to?"
+                        placeholder={tp('whereTo')}
                         value={destSearchQuery}
                         resolved={!!destId}
                         accent="cyan"
@@ -1593,6 +1596,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                             results={filteredDestCities}
                             searchablePlaceCount={searchablePlaceCount}
                             recentCount={destSuggestions.recentCount}
+                            recentLabel={tp('recentFirst')}
                             onSelect={handleSelectDestination}
                             totalMatches={destMatchCount}
                             showTouchLegend
@@ -1844,11 +1848,12 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   tripStarted={tripStarted}
                   onStartTrip={handleStartTrip}
                   onEdit={handleEditLocations}
+                  language={uiLanguage}
                 />
                 {(onShareTrip || onOpenSos) && (
                   <div className="mt-3 flex gap-2">
-                    {onShareTrip && <button type="button" onClick={onShareTrip} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800"><Share2 className="h-4 w-4" />Share</button>}
-                    {onOpenSos && <button type="button" onClick={onOpenSos} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500/20"><PhoneCall className="h-4 w-4" />SOS</button>}
+                    {onShareTrip && <button type="button" onClick={onShareTrip} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800"><Share2 className="h-4 w-4" />{tp('share')}</button>}
+                    {onOpenSos && <button type="button" onClick={onOpenSos} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500/20"><PhoneCall className="h-4 w-4" />{tp('sos')}</button>}
                   </div>
                 )}
               </div>
@@ -1858,13 +1863,13 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
               <ReelCard id="journey" title="Journey" Icon={Route} hint="Road sections and alerts">
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Road score</p><p className="text-lg font-black text-emerald-300">{routePlan.roadConditionScore}<span className="text-xs text-slate-500">/100</span></p></div>
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Highest point</p><p className="text-lg font-black text-cyan-300">{routePlan.maxElevationM.toLocaleString()}<span className="text-xs text-slate-500"> m</span></p></div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{tp('roadScore')}</p><p className="text-lg font-black text-emerald-300">{routePlan.roadConditionScore}<span className="text-xs text-slate-500">/100</span></p></div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{tp('highestPoint')}</p><p className="text-lg font-black text-cyan-300">{routePlan.maxElevationM.toLocaleString()}<span className="text-xs text-slate-500"> m</span></p></div>
                   </div>
                   {(routeSegmentIssues + routeIncidentCount) > 0 && <RouteBlocksPanel plan={routePlan} extraIncidents={liveIncidents} />}
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2">
                     <span className="truncate text-xs font-semibold text-slate-200">{routePlan.origin.name} <ArrowRight className="inline h-3 w-3 text-emerald-400" /> {routePlan.destination.name}</span>
-                    <span className="shrink-0 text-[10px] font-bold text-cyan-300">{routePlan.steps.length} sections</span>
+                    <span className="shrink-0 text-[10px] font-bold text-cyan-300">{routePlan.steps.length} {tp('sections')}</span>
                   </div>
                   {routePlan.steps.slice(0, 3).map((step, index) => (
                     <div key={`${step.highwayCode || 'road'}-${index}`} className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2">
@@ -1892,23 +1897,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Fuel estimate</p>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{tp('fuel')}</p>
                         <p className="mt-1 text-lg font-black text-amber-300">Rs {routePlan.fuelEstimate.costNpr.toLocaleString()}</p>
                         <p className="text-[10px] text-slate-500">{Number(routePlan.fuelEstimate.liters || 0).toFixed(1)} L approx.</p>
                       </div>
                       <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Tolls</p>
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{tp('tolls')}</p>
                         <p className="mt-1 text-lg font-black text-cyan-300">Rs {(routePlan.totalTollCostNpr || 0).toLocaleString()}</p>
                         <p className="text-[10px] text-slate-500">Along selected route</p>
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimated total</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{tp('total')}</span>
                       <span className="text-base font-black text-emerald-300">Rs {estimatedTripCostNpr.toLocaleString()}</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="text-[9px] leading-relaxed text-slate-500">Estimate only.</p>
-                      <button type="button" onClick={handleRefreshFuelPrices} disabled={isLoadingPrices} aria-label="Refresh fuel prices" className="shrink-0 rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 disabled:opacity-50">{isLoadingPrices ? 'Updating…' : 'Refresh rates'}</button>
+                      <p className="text-[11px] leading-relaxed text-slate-500">{tp('estimateOnly')}</p>
+                      <button type="button" onClick={handleRefreshFuelPrices} disabled={isLoadingPrices} aria-label="Refresh fuel prices" className="shrink-0 rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 disabled:opacity-50">{isLoadingPrices ? '…' : tp('refreshRates')}</button>
                     </div>
                   </>
                 )}
@@ -1920,7 +1925,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div>
-                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Vehicle</div>
+                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{tp('vehicle')}</div>
                       <div className="grid grid-cols-5 gap-1">
                         {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
                           <button
@@ -1942,7 +1947,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       </div>
                     </div>
                     <div>
-                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Route preference</div>
+                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{tp('preference')}</div>
                       <div className="flex flex-wrap gap-1.5">
                         {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
                           <button
@@ -1966,7 +1971,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   </div>
                   {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
                     <div>
-                      <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Alternative routes</div>
+                      <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">{tp('alternatives')}</div>
                       <RouteChoices
                         options={routePlan.allRouteOptions}
                         selectedId={routePlan.id}
@@ -1976,6 +1981,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           onRouteCalculated(opt);
                         }}
                         onViewOnMap={onViewOnMap ? () => onViewOnMap() : undefined}
+                        language={uiLanguage}
                       />
                     </div>
                   )}
