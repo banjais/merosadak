@@ -305,14 +305,6 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  // Whether SOS Alert is actively on (either sound, flash, or both)
  const isAlertActive = isAudioPlaying || isStrobeActive;
 
- // Master SOS Alert Activation / Deactivation
- const handleActivateAlert = () => {
- if (!isAudioPlaying) {
- setAlarmMode('high_frequency');
- sosAudioAlert.start('high_frequency');
- setIsAudioPlaying(true);
- }
- };
 
  const handleDeactivateAlert = () => {
  sosAudioAlert.stop();
@@ -354,7 +346,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  )}
 
- <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto h-[min(94dvh,860px)] min-h-[540px]">
+ <div className="bg-slate-900 border-2 border-red-600/70 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto h-[94dvh] max-h-[860px]">
  {/* Header */}
   <div className="p-4 sm:p-5 bg-gradient-to-r from-red-950 via-red-900/80 to-slate-950 border-b border-red-800/60 flex items-center justify-between gap-2 flex-wrap">
   <div className="flex items-center space-x-3.5">
@@ -377,29 +369,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
   </div>
 
  <div className="flex items-center space-x-2">
- {/* Alert toggle */}
- <button
- onClick={isAlertActive ? handleDeactivateAlert : handleActivateAlert}
- id="sos-alert-master-btn"
- title={isAlertActive ? 'Stop alert' : 'Start alert'}
- className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center space-x-2 transition-all shadow-md active:scale-95 ${
- isAlertActive
- ? 'bg-red-500 text-white animate-pulse border border-red-200 shadow-red-500/60'
- : 'bg-red-600 hover:bg-red-500 text-white border border-red-400'
- }`}
- >
- {isAlertActive ? (
- <>
- <Square className="w-3.5 h-3.5 fill-white" />
- <span>Stop</span>
- </>
- ) : (
- <>
- <AlertOctagon className="w-3.5 h-3.5 text-white animate-pulse" />
- <span>Start alert</span>
- </>
- )}
- </button>
+ 
 
  <button
  onClick={onClose}
@@ -549,6 +519,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  {geoError}
  </div>
  )}
+ </div>
 
  {/* Nearest Nepal Landmark & Route Context Card */}
  <div className="md:col-span-6 bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
