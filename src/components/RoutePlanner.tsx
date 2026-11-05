@@ -23,6 +23,7 @@ import { DetailSection } from './planner/DetailSection';
 import { ReelCard } from './planner/ReelCard';
 import { PlannerDeck, DeckItem } from './PlannerDeck';
 import { RouteChoices } from './planner/RouteChoices';
+import { rememberRecentPlace, withRecentsFirst } from '../utils/recentPlaces';
 import { RouteBlocksPanel } from './planner/RouteBlocksPanel';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
@@ -601,18 +602,26 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
     }),
     [allCities, originSearchQuery, destId]
   );
-  const filteredDestCities = useMemo(
-    () => filterCities(allCities, destSearchQuery, citySuggestionLimit(destSearchQuery), {
-      excludeIds: originId ? new Set([originId]) : undefined,
-    }),
-    [allCities, destSearchQuery, originId]
+  const destSuggestions = useMemo(
+    () => withRecentsFirst(
+      filterCities(allCities, destSearchQuery, citySuggestionLimit(destSearchQuery), {
+        excludeIds: originId ? new Set([originId]) : undefined,
+      }),
+      allCities, destSearchQuery, originId
+    ),
+    [allCities, destSearchQuery, originId, isDestDropdownOpen]
   );
-  const filteredSingleCities = useMemo(
-    () => filterCities(allCities, singleSearchQuery, citySuggestionLimit(singleSearchQuery), {
-      excludeIds: originId ? new Set([originId]) : undefined,
-    }),
-    [allCities, singleSearchQuery, originId]
+  const filteredDestCities = destSuggestions.list;
+  const singleSuggestions = useMemo(
+    () => withRecentsFirst(
+      filterCities(allCities, singleSearchQuery, citySuggestionLimit(singleSearchQuery), {
+        excludeIds: originId ? new Set([originId]) : undefined,
+      }),
+      allCities, singleSearchQuery, originId
+    ),
+    [allCities, singleSearchQuery, originId, isSingleDropdownOpen]
   );
+  const filteredSingleCities = singleSuggestions.list;
   const originMatchCount = useMemo(
     () => countCityMatches(allCities, originSearchQuery, { excludeIds: destId ? new Set([destId]) : undefined }),
     [allCities, originSearchQuery, destId]
@@ -645,6 +654,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
   };
 
   const handleSelectDestination = (city: CityNode) => {
+    rememberRecentPlace(city.id);
     setDestId(city.id);
     setDestSearchQuery(city.name);
     setSingleSearchQuery(city.name);
@@ -1488,7 +1498,9 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                           query={singleSearchQuery}
                           results={filteredSingleCities}
                           searchablePlaceCount={searchablePlaceCount}
+                          recentCount={singleSuggestions.recentCount}
                           onSelect={(city) => {
+                            rememberRecentPlace(city.id);
                             setDestId(city.id);
                             setSingleSearchQuery(city.name);
                             setDestSearchQuery(city.name);
@@ -1580,6 +1592,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                             query={destSearchQuery}
                             results={filteredDestCities}
                             searchablePlaceCount={searchablePlaceCount}
+                            recentCount={destSuggestions.recentCount}
                             onSelect={handleSelectDestination}
                             totalMatches={destMatchCount}
                             showTouchLegend

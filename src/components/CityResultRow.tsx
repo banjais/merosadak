@@ -128,6 +128,8 @@ interface HighwayGroup {
 }
 
 interface CitySuggestionDropdownProps {
+  /** Leading rows that are recently picked places (shown with a small label). */
+  recentCount?: number;
   query: string;
   results: CityNode[];
   onSelect: (city: CityNode) => void;
@@ -239,6 +241,7 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
   totalMatches,
   searchablePlaceCount,
   showTouchLegend = false,
+  recentCount = 0,
 }) => {
   const groups = groupByDistrict ? groupResultsByDistrict(results) : [];
   const showHighwayBlock = highwayGroups.length > 0;
@@ -262,6 +265,11 @@ export const CitySuggestionDropdown: React.FC<CitySuggestionDropdownProps> = ({
             <span className={`w-2 h-2 rounded-sm border ${STATUS_STYLES.off_corridor}`} />
             none within {HIGHWAY_TOUCH_KM} km
           </span>
+        </div>
+      )}
+      {recentCount > 0 && query.trim().length === 0 && (
+        <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          Recent places first
         </div>
       )}
       {isSearchingMaps && !showHighwayBlock ? (
