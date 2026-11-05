@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Highway, RoadIncident, UserRoadReport } from '../types';
 import { NEPAL_HIGHWAYS } from '../data/nepalHighwaysData';
 import { loadAll79Highways, loadRealtimeIncidents } from '../utils/nepalHighwayDataLoader';
@@ -9,6 +9,8 @@ import { PlannerDeck } from './PlannerDeck';
 import { useCardArchive } from '../context/CardArchiveContext';
 import {
   Search,
+  Mic,
+  MicOff,
   Route,
   Zap,
   PhoneCall,
@@ -175,6 +177,9 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   const [incidents, setIncidents] = useState<RoadIncident[]>(liveIncidents);
   const [reports, setReports] = useState<UserRoadReport[]>(userReports);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
+  const [voiceSearchNotice, setVoiceSearchNotice] = useState('');
+  const voiceRecognitionRef = useRef<any>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | HighwayRealtimeStatusType>('all');
   const [terrainFilter, setTerrainFilter] = useState<'all' | 'Hilly' | 'High Mountain' | 'Plains'>('all');
   const [expandedHighwayId, setExpandedHighwayId] = useState<string | null>(null);
@@ -234,6 +239,61 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
   useEffect(() => {
     setIsFilterRouteOnly(filterToRouteOnly);
   }, [filterToRouteOnly]);
+
+
+  // A single voice-search control lives inside the directory search field.
+  // Unsupported browsers keep normal text search fully available.
+  const toggleVoiceSearch = useCallback(() => {
+    if (isVoiceSearchActive) {
+      voiceRecognitionRef.current?.stop?.();
+      setIsVoiceSearchActive(false);
+      return;
+    }
+
+    const SpeechRecognitionAPI =
+      typeof window !== 'undefined'
+        ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+        : null;
+
+    if (!SpeechRecognitionAPI) {
+      setVoiceSearchNotice('Voice search is not supported in this browser.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognitionAPI();
+      voiceRecognitionRef.current = recognition;
+      recognition.lang = typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onstart = () => {
+        setIsVoiceSearchActive(true);
+        setVoiceSearchNotice('');
+      };
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (typeof transcript === 'string' && transcript.trim()) {
+          setSearchQuery(transcript.trim());
+        }
+      };
+      recognition.onerror = () => {
+        setVoiceSearchNotice('Could not capture voice. Please try again or type your search.');
+      };
+      recognition.onend = () => {
+        setIsVoiceSearchActive(false);
+        voiceRecognitionRef.current = null;
+      };
+      recognition.start();
+    } catch {
+      setIsVoiceSearchActive(false);
+      setVoiceSearchNotice('Voice search could not start. Please try again.');
+    }
+  }, [isVoiceSearchActive]);
+
+  useEffect(() => () => {
+    voiceRecognitionRef.current?.stop?.();
+  }, []);
 
   // Compute real-time status analysis for each highway using segments data & incidents
   const highwayAnalyses = useMemo(() => {
@@ -353,23 +413,36 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Real-time Highway Status Counters — the page-level segment status
-          summary. The provenance + coverage blurb that used to sit beside it
-          now lives inside the info icon on the page header. */}
+      {/* Clickable status summaries filter the directory below. */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
-        <div className="text-center px-3 py-1 bg-emerald-950/30 border border-emerald-800/40 rounded-lg">
+        <button
+          type="button"
+          aria-pressed={statusFilter === 'open'}
+          onClick={() => setStatusFilter(statusFilter === 'open' ? 'all' : 'open')}
+          className={`text-center px-3 py-2 rounded-lg border transition ${statusFilter === 'open' ? 'bg-emerald-900/50 border-emerald-500 ring-1 ring-emerald-500/40' : 'bg-emerald-950/30 border-emerald-800/40 hover:bg-emerald-900/40'}`}
+        >
           <div className="text-lg font-black text-emerald-400">{statusCounts.open}</div>
           <div className="text-[10px] text-emerald-300/80 font-bold uppercase tracking-wider">Open</div>
-        </div>
-        <div className="text-center px-3 py-1 bg-amber-950/30 border border-amber-800/40 rounded-lg">
+        </button>
+        <button
+          type="button"
+          aria-pressed={statusFilter === 'roadwork'}
+          onClick={() => setStatusFilter(statusFilter === 'roadwork' ? 'all' : 'roadwork')}
+          className={`text-center px-3 py-2 rounded-lg border transition ${statusFilter === 'roadwork' ? 'bg-amber-900/50 border-amber-500 ring-1 ring-amber-500/40' : 'bg-amber-950/30 border-amber-800/40 hover:bg-amber-900/40'}`}
+        >
           <div className="text-lg font-black text-amber-400">{statusCounts.roadwork}</div>
           <div className="text-[10px] text-amber-300/80 font-bold uppercase tracking-wider">Roadwork</div>
-        </div>
-        <div className="text-center px-3 py-1 bg-rose-950/30 border border-rose-800/40 rounded-lg">
+        </button>
+        <button
+          type="button"
+          aria-pressed={statusFilter === 'obstruction'}
+          onClick={() => setStatusFilter(statusFilter === 'obstruction' ? 'all' : 'obstruction')}
+          className={`text-center px-3 py-2 rounded-lg border transition ${statusFilter === 'obstruction' ? 'bg-rose-900/50 border-rose-500 ring-1 ring-rose-500/40' : 'bg-rose-950/30 border-rose-800/40 hover:bg-rose-900/40'}`}
+        >
           <div className="text-lg font-black text-rose-400">{statusCounts.obstruction}</div>
           <div className="text-[10px] text-rose-300/80 font-bold uppercase tracking-wider">Obstruction</div>
-        </div>
-        <div className="text-center px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg">
+        </button>
+        <div className="text-center px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg">
           <div className="text-lg font-black text-cyan-400">{totalCalculatedKm.toLocaleString()}</div>
           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total km</div>
         </div>
@@ -408,9 +481,8 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
         );
       })()}
 
-      {/* Search & Real-Time Status Filters */}
+      {/* One search field with one working voice-search control. */}
       <div className="flex flex-col lg:flex-row gap-3">
-        {/* Search Input */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -419,19 +491,30 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             placeholder="Search highway, code or district"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            className="w-full pl-10 pr-24 py-3 bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-1 py-1 min-h-6"
+              className="absolute right-12 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-1 py-1 min-h-6"
             >
               Clear
             </button>
           )}
-                 </div>
-
-        {/* Route Filter Toggle */}
+          <button
+            type="button"
+            onClick={toggleVoiceSearch}
+            aria-label={isVoiceSearchActive ? 'Stop voice search' : 'Start voice search'}
+            title={isVoiceSearchActive ? 'Stop voice search' : 'Search by voice'}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${isVoiceSearchActive ? 'bg-rose-500/15 text-rose-300' : 'text-slate-400 hover:bg-slate-800 hover:text-emerald-300'}`}
+          >
+            {isVoiceSearchActive ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+        </div>
+        {voiceSearchNotice && (
+          <p role="status" className="text-[11px] text-amber-300 lg:self-center">{voiceSearchNotice}</p>
+        )}
         {routeHighwayCodes.length > 0 && (
           <div className="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0 text-xs">
             <input
@@ -446,31 +529,6 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
             </label>
           </div>
         )}
-
-        {/* Real-time Status Filter Tabs */}
-        <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 shrink-0 text-xs overflow-x-auto">
-          {[
-            { id: 'all', label: `All (${filteredHighways.length})`, icon: '🌐' },
-            { id: 'open', label: `Open (${statusCounts.open})`, icon: '🟢' },
-            { id: 'roadwork', label: `Roadwork (${statusCounts.roadwork})`, icon: '🚧' },
-            { id: 'obstruction', label: `Obstruction (${statusCounts.obstruction})`, icon: '⛔' },
-            { id: 'caution', label: `Caution (${statusCounts.caution})`, icon: '⚠️' },
-          ].map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setStatusFilter(s.id as any)}
-              title={`Filter by ${s.label}`}
-              className={`px-3.5 py-2.5 rounded-xl font-semibold transition flex items-center space-x-1.5 whitespace-nowrap ${
-                statusFilter === s.id
-                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              <span>{s.icon}</span>
-              <span className="text-xs font-bold">{s.label}</span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Highway Cards List */}
