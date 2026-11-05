@@ -1002,7 +1002,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
  </div>
-
+  </div>
   </div>
   </div>
   );
