@@ -465,7 +465,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
         </select>
        </div>
       )}
-      {onFocusCoordinatesOnMap && (
+      {onFocusCoordinatesOnMap && locationReady && (
        <button type="button" onClick={() => { onFocusCoordinatesOnMap(currentLat, currentLng, 'My location'); onClose(); }} className="mt-3 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
         View location on map →
        </button>
