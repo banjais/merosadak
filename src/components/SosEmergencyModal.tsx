@@ -88,6 +88,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  const [messageFormat, setMessageFormat] = useState<'full' | 'compact'>('full');
  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
  const [alarmMode, setAlarmMode] = useState<SosAlarmMode>('high_frequency');
+ const [alertSignalMode, setAlertSignalMode] = useState<'sound' | 'visual'>('sound');
  const [isStrobeActive, setIsStrobeActive] = useState<boolean>(false);
  const [strobeState, setStrobeState] = useState<boolean>(false);
  const [activeTab, setActiveTab] = useState<'alert' | 'messages' | 'help'>('alert');
@@ -578,6 +579,15 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
   </div><div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
 
  <div id="sos-panel-visual" hidden={activeTab !== 'alert'} className="space-y-5">
+  <div className="grid grid-cols-2 gap-2">
+   <button type="button" onClick={() => setAlertSignalMode('sound')} aria-pressed={alertSignalMode === 'sound'} className={`rounded-xl border px-3 py-2.5 text-sm font-bold ${alertSignalMode === 'sound' ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950 text-slate-400'}`}>
+    <Volume2 className="inline-block mr-2 h-4 w-4" />Sound
+   </button>
+   <button type="button" onClick={() => setAlertSignalMode('visual')} aria-pressed={alertSignalMode === 'visual'} className={`rounded-xl border px-3 py-2.5 text-sm font-bold ${alertSignalMode === 'visual' ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950 text-slate-400'}`}>
+    <Eye className="inline-block mr-2 h-4 w-4" />Visual
+   </button>
+  </div>
+  <div hidden={alertSignalMode !== 'sound'} className="space-y-4">
 {/* Alarm Mode Selectors & Frequency Waveform */}
  <div className="pt-3 border-t border-red-900/50 grid grid-cols-1 sm:grid-cols-3 gap-2">
  <button
@@ -732,7 +742,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
  </div>
 
- <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+ </div>
+ <div hidden={alertSignalMode !== 'visual'} className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
   <div className="flex items-center justify-between gap-3">
    <div><h3 className="text-sm font-bold text-white">Visual rescue beacon</h3>
     <p className="text-xs text-slate-400">Use the high-contrast screen signal to help rescuers locate you.</p></div>
