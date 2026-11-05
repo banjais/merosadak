@@ -706,8 +706,9 @@ function parseIncidentCoordinate(value: unknown): IncidentCoordinate | null {
   const second = Number(numbers[1]);
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
   // Accept both the documented [lng,lat] form and common "lat,lng" entry.
-  const lng = Math.abs(first) <= 90 && Math.abs(second) > 90 ? second : first;
-  const lat = lng === first ? second : first;
+  const looksLikeLatLng = first >= 25 && first <= 31.5 && second >= 79 && second <= 89.5;
+  const lng = looksLikeLatLng ? second : first;
+  const lat = looksLikeLatLng ? first : second;
   if (lng < 79 || lng > 89.5 || lat < 25 || lat > 31.5) return null;
   return { lng, lat };
 }
@@ -804,18 +805,19 @@ async function resolveChainagePoint(
   const districtKey = normalizeLocationName(district);
   const candidates = features.filter((feature: any) => {
     const props = feature?.properties || {};
-    if (String(props.road_refno || "").toUpperCase() !== roadRef.toUpperCase()) return false;
-    const featureDistrict = normalizeLocationName(props.dist_name);
+    const featureRoadRef = firstProperty(props, ["road_refno", "roadRefNo", "road_ref", "road_code"]);
+    if (featureRoadRef.toUpperCase() !== roadRef.toUpperCase()) return false;
+    const featureDistrict = normalizeLocationName(firstProperty(props, ["dist_name", "DIST_EN", "district"]));
     if (districtKey && featureDistrict && featureDistrict !== districtKey) return false;
-    const from = Number(props.link_from);
-    const to = Number(props.link_to);
+    const from = Number(firstProperty(props, ["link_from", "linkFrom", "chainage_from", "start_chainage"]));
+    const to = Number(firstProperty(props, ["link_to", "linkTo", "chainage_to", "end_chainage"]));
     return Number.isFinite(from) && Number.isFinite(to) &&
       chainageKm >= Math.min(from, to) - 0.05 && chainageKm <= Math.max(from, to) + 0.05;
   });
   const feature = candidates[0];
   if (!feature) return null;
-  const from = Number(feature.properties.link_from);
-  const to = Number(feature.properties.link_to);
+  const from = Number(firstProperty(feature.properties, ["link_from", "linkFrom", "chainage_from", "start_chainage"]));
+  const to = Number(firstProperty(feature.properties, ["link_to", "linkTo", "chainage_to", "end_chainage"]));
   if (from === to) return pointAlongGeometry(feature.geometry, 0);
   return pointAlongGeometry(feature.geometry, (chainageKm - from) / (to - from));
 }
