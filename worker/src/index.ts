@@ -1056,35 +1056,6 @@ async function handleRoadAlerts(env: Env): Promise<Response> {
     counts: { dor: dorIncidents.length, waze: wazeIncidents.length, local: Array.isArray(local) ? local.length : 0, total: merged.length },
   });
 }
-  let wazeIncidents: any[] = [];
-  if (env.WAZE_FEED_URL) {
-    try {
-      const data = await fetchWithTimeout(env.WAZE_FEED_URL).then((r) => r.json<any>());
-      for (const a of data.alerts || []) {
-        wazeIncidents.push({
-          id: `waze-${a.uuid || Math.random().toString(36).slice(2)}`,
-          locationName: a.street || "Unknown",
-          lat: a.location?.y,
-          lng: a.location?.x,
-          type: a.type || "traffic_jam",
-          title: `${a.type || "Alert"}: ${a.reportDescription || ""}`.trim(),
-          description: a.reportDescription || "",
-          status: "caution",
-          reportedAt: new Date(a.startTime || Date.now()).toISOString(),
-          source: "waze",
-        });
-      }
-    } catch {}
-  }
-  const local = await readJsonData<any[]>(env, "incidents.json", []);
-  const merged = [...dorIncidents, ...wazeIncidents, ...(Array.isArray(local) ? local : [])];
-  return jsonResponse(env, {
-    source: "dor+waze+local",
-    syncedAt: new Date().toISOString(),
-    incidents: merged,
-    counts: { dor: dorIncidents.length, waze: wazeIncidents.length, local: Array.isArray(local) ? local.length : 0, total: merged.length },
-  });
-}
 
 async function handleCalculateRoute(request: Request, env: Env): Promise<Response> {
   try {
