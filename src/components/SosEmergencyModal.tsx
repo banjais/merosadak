@@ -90,6 +90,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  const [alarmMode, setAlarmMode] = useState<SosAlarmMode>('high_frequency');
  const [isStrobeActive, setIsStrobeActive] = useState<boolean>(false);
  const [strobeState, setStrobeState] = useState<boolean>(false);
+ const [activeTab, setActiveTab] = useState<'alert' | 'visual' | 'messages' | 'share' | 'help' | 'settings'>('alert');
 
  // Battery API status
  const [batteryPercent, setBatteryPercent] = useState<number | null>(null);
@@ -400,38 +401,6 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
  </button>
 
- {/* Sound Toggle */}
- <button
- onClick={() => toggleAudioSiren('high_frequency')}
- id="sos-audio-siren-btn"
- title="Toggle Acoustic Distress Alarm (2.8 kHz – 3.6 kHz)"
- className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all ${
- isAudioPlaying && alarmMode === 'high_frequency'
- ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50 border border-red-300'
- : isAudioPlaying
- ? 'bg-amber-600 text-white border border-amber-400'
- : 'bg-slate-800 hover:bg-slate-700 text-red-300 hover:text-red-200 border border-red-900/60'
- }`}
- >
- {isAudioPlaying ? (
- <Volume2 className="w-4 h-4 animate-bounce text-yellow-300" />
- ) : (
- <VolumeX className="w-4 h-4 text-red-400" />
- )}
- <span>{isAudioPlaying ? 'Alarm Active' : 'Sound'}</span>
- </button>
-
- {/* Flash Alert Toggle */}
- <button
- onClick={toggleStrobe}
- id="sos-visual-strobe-btn"
- title="Fullscreen Flashing Visual Alert"
- className="p-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
- >
- <Flame className="w-4 h-4 text-amber-400" />
- <span className="hidden sm:inline">Visual Alert</span>
- </button>
-
  <button
  onClick={onClose}
  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -534,6 +503,93 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
 
  {/* Modal Body */}
  <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-slate-200 scrollbar-paddle">
+ <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-1 border-b border-slate-800 bg-slate-900/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
+  <div role="tablist" aria-label="Emergency tools" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+   {([
+    ['alert', 'Alert'], ['visual', 'Visual alerts'], ['messages', 'Messages'],
+    ['share', 'Share'], ['help', 'Call for help'], ['settings', 'Settings'],
+   ] as const).map(([tab, label]) => (
+    <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
+     aria-controls={`sos-panel-${tab}`} onClick={() => setActiveTab(tab)}
+     className={`min-h-10 rounded-lg border px-2 py-2 text-[11px] font-bold transition-colors sm:text-xs ${activeTab === tab ? 'border-red-500 bg-red-600/20 text-white' : 'border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
+     {label}
+    </button>
+   ))}
+  </div>
+ </div>
+ <section id="sos-panel-settings" role="tabpanel" hidden={activeTab !== 'settings'} className="space-y-3">
+  <h3 className="text-sm font-bold text-white">Alert preferences</h3>
+  <p className="text-xs text-slate-400">Choose the sound pattern used when you start an alert.</p>
+   {/* Alarm Mode Selectors & Frequency Waveform */}
+ <div className="pt-3 border-t border-red-900/50 grid grid-cols-1 sm:grid-cols-3 gap-2">
+ <button
+ type="button"
+ onClick={() => {
+ setAlarmMode('high_frequency');
+ if (isAudioPlaying) sosAudioAlert.start('high_frequency');
+ }}
+ className={`p-2.5 rounded-xl text-left border transition-all ${
+ alarmMode === 'high_frequency'
+ ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
+ : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+ }`}
+ >
+ <div className="flex items-center justify-between text-xs font-bold mb-1">
+ <span className="text-amber-300">🏔️ Mountain Penetration</span>
+ <span className="text-[10px] font-mono text-red-300">2.8–3.6 kHz</span>
+ </div>
+ <div className="text-[11px] text-slate-400 leading-snug">
+ High-frequency sweep for river canyons & blizzard whiteouts
+ </div>
+ </button>
+
+ <button
+ type="button"
+ onClick={() => {
+ setAlarmMode('two_tone_siren');
+ if (isAudioPlaying) sosAudioAlert.start('two_tone_siren');
+ }}
+ className={`p-2.5 rounded-xl text-left border transition-all ${
+ alarmMode === 'two_tone_siren'
+ ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
+ : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+ }`}
+ >
+ <div className="flex items-center justify-between text-xs font-bold mb-1">
+ <span className="text-cyan-300">🚨 Two-Tone Warble</span>
+ <span className="text-[10px] font-mono text-cyan-300">2.4 / 3.2 kHz</span>
+ </div>
+ <div className="text-[11px] text-slate-400 leading-snug">
+ High-contrast alternating alarm for ground SAR localization
+ </div>
+ </button>
+
+ <button
+ type="button"
+ onClick={() => {
+ setAlarmMode('morse_sos');
+ if (isAudioPlaying) sosAudioAlert.start('morse_sos');
+ }}
+ className={`p-2.5 rounded-xl text-left border transition-all ${
+ alarmMode === 'morse_sos'
+ ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
+ : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+ }`}
+ >
+ <div className="flex items-center justify-between text-xs font-bold mb-1">
+ <span className="text-emerald-300">📻 Sound signal</span>
+ <span className="text-[10px] font-mono text-emerald-300">... --- ...</span>
+ </div>
+ <div className="text-[11px] text-slate-400 leading-snug">
+ International standard distress audio pattern (1.2 kHz tone)
+ </div>
+ </button>
+ </div>
+
+
+ </section>
+ <div id="sos-panel-alert" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
+
  {/* Top Row: GPS Coordinates & Proximity Landmark Banner */}
  <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
  {/* GPS Status Card */}
@@ -647,6 +703,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
 
+ </div>
+ <div id="sos-panel-visual" role="tabpanel" hidden={activeTab !== 'visual'} className="space-y-5">
  {/* Sound & Optical Distress Signaling Card */}
  <div className="bg-gradient-to-r from-red-950/70 via-slate-900 to-red-950/70 border-2 border-red-500/50 rounded-2xl p-4 shadow-xl">
  <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -706,72 +764,6 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </button>
  </div>
 
- {/* Alarm Mode Selectors & Frequency Waveform */}
- <div className="pt-3 border-t border-red-900/50 grid grid-cols-1 sm:grid-cols-3 gap-2">
- <button
- type="button"
- onClick={() => {
- setAlarmMode('high_frequency');
- if (isAudioPlaying) sosAudioAlert.start('high_frequency');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'high_frequency'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-amber-300">🏔️ Mountain Penetration</span>
- <span className="text-[10px] font-mono text-red-300">2.8–3.6 kHz</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- High-frequency sweep for river canyons & blizzard whiteouts
- </div>
- </button>
-
- <button
- type="button"
- onClick={() => {
- setAlarmMode('two_tone_siren');
- if (isAudioPlaying) sosAudioAlert.start('two_tone_siren');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'two_tone_siren'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-cyan-300">🚨 Two-Tone Warble</span>
- <span className="text-[10px] font-mono text-cyan-300">2.4 / 3.2 kHz</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- High-contrast alternating alarm for ground SAR localization
- </div>
- </button>
-
- <button
- type="button"
- onClick={() => {
- setAlarmMode('morse_sos');
- if (isAudioPlaying) sosAudioAlert.start('morse_sos');
- }}
- className={`p-2.5 rounded-xl text-left border transition-all ${
- alarmMode === 'morse_sos'
- ? 'bg-red-900/60 border-red-400 text-white ring-1 ring-red-400'
- : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
- }`}
- >
- <div className="flex items-center justify-between text-xs font-bold mb-1">
- <span className="text-emerald-300">📻 Sound signal</span>
- <span className="text-[10px] font-mono text-emerald-300">... --- ...</span>
- </div>
- <div className="text-[11px] text-slate-400 leading-snug">
- International standard distress audio pattern (1.2 kHz tone)
- </div>
- </button>
- </div>
-
  {/* Live Audio Waves Active Visualizer */}
  {isAudioPlaying && (
  <div className="mt-3 p-2.5 rounded-xl bg-black/50 border border-red-500/40 flex items-center justify-between animate-fadeIn">
@@ -799,6 +791,18 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  )}
  </div>
 
+ <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+  <div className="flex items-center justify-between gap-3">
+   <div><h3 className="text-sm font-bold text-white">Visual rescue beacon</h3>
+    <p className="text-xs text-slate-400">Use the high-contrast screen signal to help rescuers locate you.</p></div>
+   <button type="button" onClick={toggleStrobe} aria-pressed={isStrobeActive}
+    className={`rounded-lg px-3 py-2 text-xs font-bold ${isStrobeActive ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}`}>
+    {isStrobeActive ? 'Stop visual alert' : 'Start visual alert'}
+   </button>
+  </div>
+ </div>
+ </div>
+ <div id="sos-panel-alert-details" role="tabpanel" hidden={activeTab !== 'alert'} className="space-y-5">
  {/* Emergency Distress Nature Selection */}
  <div>
  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center space-x-1.5">
@@ -909,6 +913,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
 
+ </div>
+ <div id="sos-panel-messages" role="tabpanel" hidden={activeTab !== 'messages'} className="space-y-5">
  {/* Generated Rescue Text Dispatch Area */}
  <div>
  <div className="flex items-center justify-between mb-2">
@@ -956,6 +962,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
 
+ </div>
+ <div id="sos-panel-share" role="tabpanel" hidden={activeTab !== 'share'} className="space-y-5">
  {/* Quick External Transmission Channels */}
  <div>
  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
@@ -1009,6 +1017,8 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  </div>
  </div>
 
+ </div>
+ <div id="sos-panel-help" role="tabpanel" hidden={activeTab !== 'help'} className="space-y-5">
  {/* Nepal Emergency Hotlines Speed-Dial Grid */}
  <div className="pt-2 border-t border-slate-800">
  <div className="flex items-center justify-between mb-2">
@@ -1035,6 +1045,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  <span className="text-[9px] text-slate-400 block mt-0.5">Dial {hotline.number}</span>
  </a>
  ))}
+ </div>
  </div>
  </div>
  </div>
