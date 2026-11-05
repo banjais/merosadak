@@ -286,6 +286,13 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  window.open(url, '_blank', 'noopener,noreferrer');
  };
 
+
+ // Messenger cannot accept a prefilled message from a standard web share URL.
+ const handleSendMessenger = () => {
+  window.open('https://www.messenger.com/', '_blank', 'noopener,noreferrer');
+  void navigator.clipboard?.writeText(activeMessageText).then(() => setCopiedText(true)).catch(() => {});
+ };
+
  // Toggle Audio Siren / Sound
  const toggleAudioSiren = (modeToPlay: SosAlarmMode = alarmMode) => {
  if (isAudioPlaying && alarmMode === modeToPlay) {
@@ -754,253 +761,117 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
   </div>
  </div>
  </div>
- <div id="sos-panel-alert-details" hidden={activeTab !== 'messages'} className="space-y-5">
- {/* Emergency Distress Nature Selection */}
- <div>
- <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center space-x-1.5">
- <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
- <span>What happened?</span>
- </label>
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
- {(Object.keys(DISTRESS_TYPE_CONFIG) as EmergencyDistressType[]).map((type) => {
- const item = DISTRESS_TYPE_CONFIG[type];
- const isSelected = distressType === type;
- return (
- <button
- key={type}
- type="button"
- onClick={() => setDistressType(type)}
- className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
- isSelected
- ? 'bg-red-950/60 border-red-500 text-white shadow-md shadow-red-950/50 ring-1 ring-red-500'
- : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-300'
- }`}
- >
- <div className="flex items-center justify-between mb-1">
- <span className="text-lg">{item.iconEmoji}</span>
- <span
- className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide ${
- item.priority === 'Critical'
- ? 'bg-red-500/20 text-red-300'
- : item.priority === 'Urgent'
- ? 'bg-amber-500/20 text-amber-300'
- : 'bg-blue-500/20 text-blue-300'
- }`}
- >
- {item.priority}
- </span>
- </div>
- <span className="text-xs font-bold leading-tight block">{item.label}</span>
- <span className="text-[10px] text-slate-400 block mt-0.5">{item.nepaliLabel}</span>
- </button>
- );
- })}
- </div>
+ 
+ <div id="sos-panel-messages" role="tabpanel" hidden={activeTab !== 'messages'} className="space-y-4">
+  <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 sm:p-4">
+   <div className="mb-3 flex items-center justify-between gap-2">
+    <div><h3 className="text-sm font-black text-white">What happened?</h3><p className="mt-0.5 text-xs text-slate-400">Choose the closest situation to prepare your help message.</p></div>
+    <ShieldAlert className="h-5 w-5 shrink-0 text-red-400" />
+   </div>
+   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    {(Object.keys(DISTRESS_TYPE_CONFIG) as EmergencyDistressType[]).map((type) => {
+     const item = DISTRESS_TYPE_CONFIG[type];
+     const selected = distressType === type;
+     return <button key={type} type="button" onClick={() => setDistressType(type)} aria-pressed={selected}
+      className={`min-h-[76px] rounded-xl border p-2.5 text-left transition-all ${selected ? 'border-red-500 bg-red-950/60 text-white ring-1 ring-red-500/60' : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-slate-600'}`}>
+      <span className="flex items-center justify-between gap-1"><span className="text-lg">{item.iconEmoji}</span><span className="text-[9px] font-bold uppercase text-slate-400">{item.priority}</span></span>
+      <span className="mt-1 block text-xs font-bold leading-tight">{item.label}</span>
+      <span className="mt-0.5 block text-[10px] text-slate-400">{item.nepaliLabel}</span>
+     </button>;
+    })}
+   </div>
+   <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+    <label className="text-[11px] font-semibold text-slate-400">Vehicle
+     <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value as VehicleType)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white">
+      <option value="car">Car / Sedan</option><option value="suv_4wd">SUV / 4WD</option><option value="motorbike">Motorcycle / Scooter</option><option value="bus_truck">Bus / Truck</option><option value="electric_vehicle">Electric vehicle</option>
+     </select>
+    </label>
+    <label className="text-[11px] font-semibold text-slate-400">Vehicle plate <span className="font-normal">(optional)</span>
+     <input value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} placeholder="e.g. BA 02 PA 4821" className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white placeholder:text-slate-500" />
+    </label>
+    <div className="text-[11px] font-semibold text-slate-400">People onboard
+     <div className="mt-1 flex items-center gap-2">
+      <button type="button" aria-label="Remove one person" onClick={() => setPassengerCount(c => Math.max(1,c-1))} className="h-9 w-9 rounded-lg border border-slate-700 bg-slate-900 text-white">−</button>
+      <span className="flex-1 rounded-lg border border-slate-700 bg-slate-900 py-2 text-center text-xs font-bold text-white">{passengerCount}</span>
+      <button type="button" aria-label="Add one person" onClick={() => setPassengerCount(c => Math.min(50,c+1))} className="h-9 w-9 rounded-lg border border-slate-700 bg-slate-900 text-white">+</button>
+     </div>
+    </div>
+   </div>
+   <label className="mt-3 block text-[11px] font-semibold text-slate-400">Further information <span className="font-normal">(optional)</span>
+    <textarea rows={2} value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} placeholder="Describe injuries, immediate needs, nearby signs, or other useful details…" className="mt-1 w-full resize-y rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-xs text-white placeholder:text-slate-500" />
+   </label>
+  </section>
+
+  <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 sm:p-4">
+   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <div><h3 className="text-sm font-black text-white">Prepared emergency message</h3><p className="text-xs text-slate-400">Updates automatically with your selection and location.</p></div>
+    <div className="flex rounded-lg border border-slate-700 bg-slate-900 p-1">
+     <button type="button" onClick={() => setMessageFormat('full')} aria-pressed={messageFormat === 'full'} className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold ${messageFormat === 'full' ? 'bg-red-600 text-white' : 'text-slate-400'}`}>Full</button>
+     <button type="button" onClick={() => setMessageFormat('compact')} aria-pressed={messageFormat === 'compact'} className={`rounded-md px-2.5 py-1.5 text-[10px] font-bold ${messageFormat === 'compact' ? 'bg-red-600 text-white' : 'text-slate-400'}`}>SMS</button>
+    </div>
+   </div>
+   <pre className="max-h-44 overflow-y-auto whitespace-pre-wrap break-words rounded-xl border border-slate-800 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-200">{activeMessageText}</pre>
+   <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+    <label className="min-w-[190px] flex-1 text-[10px] font-semibold text-slate-400">Recipient number <span className="font-normal">(optional)</span>
+     <input type="tel" value={customPhone} onChange={(e) => setCustomPhone(e.target.value)} placeholder="+977 98XXXXXXXX" className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-500" />
+    </label>
+    <button type="button" onClick={handleCopy} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-xs font-bold text-white hover:bg-slate-700">
+     {copiedText ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}{copiedText ? 'Copied' : 'Copy message'}
+    </button>
+   </div>
+  </section>
+
+  <section className="rounded-2xl border border-red-900/50 bg-red-950/20 p-3 sm:p-4">
+   <div className="mb-3"><h3 className="text-sm font-black text-white">Share for assistance</h3><p className="text-xs text-slate-400">Choose an app. Review the message before sending.</p></div>
+   <div className="grid grid-cols-4 gap-2">
+    <button type="button" onClick={handleSendWhatsApp} aria-label="Share via WhatsApp" title="WhatsApp" className="flex h-12 items-center justify-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-500"><MessageSquare className="h-5 w-5" /></button>
+    <button type="button" onClick={handleSendSms} aria-label="Send SMS" title="SMS" className="flex h-12 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-500"><Send className="h-5 w-5" /></button>
+    <button type="button" onClick={handleSendTelegram} aria-label="Share via Telegram" title="Telegram" className="flex h-12 items-center justify-center rounded-xl bg-sky-600 text-white hover:bg-sky-500"><Radio className="h-5 w-5" /></button>
+    <button type="button" onClick={handleSendMessenger} aria-label="Open Messenger (message copied)" title="Messenger — message copied" className="flex h-12 items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-500"><MessageSquare className="h-5 w-5" /></button>
+   </div>
+   <p className="mt-2 text-[10px] text-slate-500">Messenger opens separately; the message is copied so you can paste it into the conversation.</p>
+  </section>
  </div>
 
- {/* Vehicle, Passengers, and Rescuer Details Form */}
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/50 border border-slate-800/80 rounded-2xl p-3.5">
- <div>
- <label className="block text-[11px] font-semibold text-slate-400 mb-1">Vehicle Type:</label>
- <select
- value={vehicleType}
- onChange={(e) => setVehicleType(e.target.value as VehicleType)}
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
- >
- <option value="car">Car / Sedan / Hatchback</option>
- <option value="suv_4wd">SUV / 4WD Mountain Jeep</option>
- <option value="motorbike">Motorcycle / Scooter</option>
- <option value="bus_truck">Bus / Heavy Commercial Truck</option>
- <option value="electric_vehicle">Electric Vehicle (EV)</option>
- </select>
- </div>
-
- <div>
- <label className="block text-[11px] font-semibold text-slate-400 mb-1">
- Vehicle Plate / Reg No (Optional):
- </label>
- <input
- type="text"
- value={vehiclePlate}
- onChange={(e) => setVehiclePlate(e.target.value)}
- placeholder="e.g. BA 02 PA 4821"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500 font-mono"
- />
- </div>
-
- <div>
- <label className="block text-[11px] font-semibold text-slate-400 mb-1">Persons Onboard:</label>
- <div className="flex items-center space-x-2">
- <button
- type="button"
- onClick={() => setPassengerCount((c) => Math.max(1, c - 1))}
- className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm"
- >
- -
- </button>
- <span className="flex-1 text-center font-bold text-sm bg-slate-900 border border-slate-700 py-1 rounded-lg">
- {passengerCount} {passengerCount === 1 ? 'Person' : 'People'}
- </span>
- <button
- type="button"
- onClick={() => setPassengerCount((c) => Math.min(50, c + 1))}
- className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm"
- >
- +
- </button>
- </div>
- </div>
-
- <div className="sm:col-span-3">
- <label className="block text-[11px] font-semibold text-slate-400 mb-1">
- Distress Situation & Immediate Needs (Optional Note):
- </label>
- <input
- type="text"
- value={customNotes}
- onChange={(e) => setCustomNotes(e.target.value)}
- placeholder="e.g., Stranded after rockfall 2km past Kurintar, child onboard, 4WD axle damaged, need crane and medical check"
- className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
- />
- </div>
- </div>
-
- </div>
- <div id="sos-panel-messages" role="tabpanel" hidden={activeTab !== 'messages'} className="space-y-5">
- {/* Generated Rescue Text Dispatch Area */}
- <div>
- <div className="flex items-center justify-between mb-2">
- <div className="flex items-center space-x-2">
- <FileText className="w-4 h-4 text-emerald-400" />
- <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
- Generated Search & Rescue (SAR) Dispatch Message
- </span>
- </div>
- <div className="flex items-center space-x-1.5">
- <button
- onClick={() => setMessageFormat('full')}
- className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
- messageFormat === 'full'
- ? 'bg-red-600 text-white font-bold'
- : 'bg-slate-800 text-slate-400 hover:text-slate-200'
- }`}
- >
- Full SAR (WhatsApp/Telegram)
- </button>
- <button
- onClick={() => setMessageFormat('compact')}
- className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
- messageFormat === 'compact'
- ? 'bg-red-600 text-white font-bold'
- : 'bg-slate-800 text-slate-400 hover:text-slate-200'
- }`}
- >
- Compact 2G SMS
- </button>
- </div>
- </div>
-
- <div className="relative">
- <pre className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
- {activeMessageText}
- </pre>
- <button
- onClick={handleCopy}
- className="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 flex items-center space-x-1.5 shadow-lg transition-all"
- >
- {copiedText ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
- <span>{copiedText ? 'Copied to Clipboard!' : 'Copy SAR Text'}</span>
- </button>
- </div>
- </div>
-
- </div>
- <div id="sos-panel-share" hidden={activeTab !== 'messages'} className="space-y-5">
- {/* Quick External Transmission Channels */}
- <div>
- <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
- Share location
- </label>
-
- {/* Optional Custom Phone Number Input */}
- <div className="mb-3 flex items-center space-x-2">
- <input
- type="tel"
- value={customPhone}
- onChange={(e) => setCustomPhone(e.target.value)}
- placeholder="Optional: Enter specific recipient phone (e.g. +977 98XXXXXXXX or family contact)"
- className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
- />
- </div>
-
- <div className="grid grid-cols-4 gap-2.5">
- {/* WhatsApp Button */}
- <button
- type="button"
- onClick={handleSendWhatsApp}
- id="sos-send-whatsapp-btn"
- className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/50 transition-all active:scale-98"
- >
- <MessageSquare className="w-4 h-4" />
- <span className="sr-only">WhatsApp</span>
- </button>
-
- {/* Direct SMS Button */}
- <button
- type="button"
- onClick={handleSendSms}
- id="sos-send-sms-btn"
- className="py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-950/50 transition-all active:scale-98"
- >
- <Send className="w-4 h-4" />
- <span className="sr-only">SMS</span>
- </button>
-
- {/* Telegram Button */}
- <button
- type="button"
- onClick={handleSendTelegram}
- id="sos-send-telegram-btn"
- className="py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-lg shadow-sky-950/50 transition-all active:scale-98"
- >
- <Radio className="w-4 h-4" />
- <span className="sr-only">Telegram</span>
- </button>
- <button type="button" onClick={() => window.open('https://www.messenger.com/', '_blank', 'noopener,noreferrer')} aria-label="Messenger" title="Messenger" className="py-3 px-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center"><MessageSquare className="w-5 h-5" /></button>
+<div id="sos-panel-help" role="tabpanel" hidden={activeTab !== 'help'} className="space-y-4">
+ <section className="rounded-2xl border border-red-800/60 bg-gradient-to-br from-red-950/70 to-slate-950 p-4">
+  <div className="flex items-start gap-3">
+   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white"><PhoneCall className="h-5 w-5" /></div>
+   <div><h3 className="text-base font-black text-white">Emergency contacts — Nepal</h3><p className="mt-1 text-xs leading-relaxed text-slate-300">Choose the service that matches your situation. Tap a contact to open your phone dialer; confirm the number before placing the call.</p></div>
   </div>
+  <div className="mt-3 rounded-xl border border-red-500/30 bg-black/20 p-3 text-xs leading-relaxed text-red-100">
+   If anyone is in immediate danger or needs urgent medical attention, contact the appropriate emergency service now. Share your GPS coordinates and nearest landmark when connected.
+  </div>
+ </section>
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  {NEPAL_EMERGENCY_HOTLINES.map((hotline, index) => (
+   <article key={hotline.number} className={`flex min-w-0 items-center gap-3 rounded-2xl border p-3 sm:p-4 ${index < 3 ? 'border-red-900/60 bg-slate-950/90' : 'border-slate-800 bg-slate-950/60'}`}>
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-xl">{hotline.badge.split(' ')[0]}</div>
+    <div className="min-w-0 flex-1">
+     <h4 className="text-sm font-bold text-white">{hotline.name}</h4>
+     <p className="mt-0.5 text-[11px] leading-snug text-slate-400">{hotline.role}</p>
+     <p className="mt-1 font-mono text-sm font-black text-red-300">{hotline.number}</p>
+    </div>
+    <a href={hotline.tel} aria-label={`Call ${hotline.name} at ${hotline.number}`} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2.5 text-xs font-black text-white shadow-lg shadow-red-950/40 hover:bg-red-500">
+     <PhoneCall className="h-3.5 w-3.5" /><span>Call</span>
+    </a>
+   </article>
+  ))}
  </div>
+ <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 sm:p-4">
+  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-300">Before you call</h3>
+  <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-slate-400">
+   <li>• State what happened and whether anyone is injured.</li>
+   <li>• Give your GPS coordinates and nearest landmark shown above.</li>
+   <li>• Mention the road or highway, direction of travel, and number of people needing help.</li>
+   <li>• Keep the line available for a callback and follow the operator's instructions.</li>
+  </ul>
+  <button type="button" onClick={handleCopy} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700">
+   <Copy className="h-3.5 w-3.5" />Copy prepared SOS details
+  </button>
+ </section>
+</div>
 
- </div>
- <div id="sos-panel-help" role="tabpanel" hidden={activeTab !== 'help'} className="space-y-5">
- {/* Nepal Emergency Hotlines Speed-Dial Grid */}
- <div className="pt-2 border-t border-slate-800">
- <div className="flex items-center justify-between mb-2">
- <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-1.5">
- <PhoneCall className="w-3.5 h-3.5 text-red-400" />
- <span>Call for help</span>
- </span>
- <span className="text-[11px] text-slate-400">24/7 Nepal</span>
- </div>
-
- <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
- {NEPAL_EMERGENCY_HOTLINES.map((hotline) => (
- <a
- key={hotline.number}
- href={hotline.tel}
- className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-red-500/60 hover:bg-slate-800/80 transition-all text-center flex flex-col items-center justify-center group"
- >
- <span className="text-sm font-black text-red-400 group-hover:text-red-300">
- {hotline.badge}
- </span>
- <span className="text-[10px] font-semibold text-slate-300 block truncate max-w-full">
- {hotline.name}
- </span>
- <span className="text-[9px] text-slate-400 block mt-0.5">Dial {hotline.number}</span>
- </a>
- ))}
- </div>
- </div>
- </div>
  </div>
   </div>
   </div>
