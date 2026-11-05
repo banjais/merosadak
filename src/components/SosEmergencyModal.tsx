@@ -72,7 +72,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  const [locationTimestamp, setLocationTimestamp] = useState<Date | null>(null);
 
  // Manual fallback selection if GPS is denied or unavailable
- const [manualCityId, setManualCityId] = useState<string>('mgl');
+ const [manualCityId, setManualCityId] = useState<string>('');
  const [useManualLocation, setUseManualLocation] = useState<boolean>(false);
  const [manualLocationConfirmed, setManualLocationConfirmed] = useState<boolean>(false);
 
@@ -465,6 +465,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
        <div className="mt-3 border-t border-slate-800 pt-3">
         <label htmlFor="sos-manual-location" className="mb-1 block text-[11px] text-slate-400">Choose nearest known place</label>
         <select id="sos-manual-location" value={manualCityId} onChange={(e) => handleManualCityChange(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white">
+         <option value="" disabled>Choose a place…</option>
          {CITIES_AND_JUNCTIONS.map((city) => <option key={city.id} value={city.id}>{city.name} — {city.district}</option>)}
         </select>
        </div>
