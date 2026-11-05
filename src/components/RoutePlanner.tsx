@@ -22,6 +22,7 @@ import { RouteVerdict } from './planner/RouteVerdict';
 import { DetailSection } from './planner/DetailSection';
 import { ReelCard } from './planner/ReelCard';
 import { PlannerDeck, DeckItem } from './PlannerDeck';
+import { RouteChoices } from './planner/RouteChoices';
 import { RouteBlocksPanel } from './planner/RouteBlocksPanel';
 import { JourneyPanel } from './planner/JourneyPanel';
 import { InsightsPanel } from './planner/InsightsPanel';
@@ -457,17 +458,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
       ];
     }
     const items: DeckItem[] = [
-      { id: 'verdict', label: 'Trip summary', hint: 'Distance · time · status' },
-      { id: 'actions', label: 'Trip actions', hint: 'Share · emergency help' },
-      { id: 'blocks', label: 'Road alerts', hint: 'Only important issues' },
-      { id: 'journey', label: 'Journey', hint: 'Key road sections' },
-      { id: 'options', label: 'Trip options', hint: 'Vehicle · route type' },
-      { id: 'costs', label: 'Trip cost', hint: 'Fuel · tolls' },
-      { id: 'insights', label: 'Road insights', hint: 'Score · AI advice' },
+      { id: 'verdict', label: 'Summary', hint: 'Distance · time · status' },
+      { id: 'journey', label: 'Journey', hint: 'Road sections · alerts' },
+      { id: 'costs', label: 'Cost', hint: 'Fuel · tolls' },
+      { id: 'routes', label: 'Routes', hint: 'Vehicle · alternatives' },
     ];
-    if (routePlan?.allRouteOptions && routePlan.allRouteOptions.length > 1) {
-      items.push({ id: 'routes', label: 'Route choices', hint: 'Compare alternatives' });
-    }
     return items;
   }, [hasCalculated, routePlan]);
   // Safety net: if the active id is no longer in the deck (e.g. the deck flipped
@@ -1837,85 +1832,23 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   onStartTrip={handleStartTrip}
                   onEdit={handleEditLocations}
                 />
+                {(onShareTrip || onOpenSos) && (
+                  <div className="mt-3 flex gap-2">
+                    {onShareTrip && <button type="button" onClick={onShareTrip} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-800"><Share2 className="h-4 w-4" />Share</button>}
+                    {onOpenSos && <button type="button" onClick={onOpenSos} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition hover:bg-rose-500/20"><PhoneCall className="h-4 w-4" />SOS</button>}
+                  </div>
+                )}
               </div>
             )}
 
-            {hasCalculated && activeId === 'actions' && (
-              <ReelCard id="actions" title="Trip actions" Icon={Share2} hint="Share your trip or call for help">
-                <div className="flex gap-2">
-                  {onShareTrip && <button type="button" onClick={onShareTrip} className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-xs font-bold text-slate-200"><Share2 className="mr-1 inline h-4 w-4" />Share trip</button>}
-                  {onOpenSos && <button type="button" onClick={onOpenSos} className="flex-1 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3 text-xs font-bold text-rose-300"><PhoneCall className="mr-1 inline h-4 w-4" />SOS</button>}
-                </div>
-              </ReelCard>
-            )}
-
-            {hasCalculated && activeId === 'options' && (
-              <ReelCard id="options" title="Trip options" Icon={SlidersHorizontal} hint="Change vehicle or route preference">
-                <div className="space-y-3">
-                  <div>
-                    <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Vehicle</div>
-                    <div className="grid grid-cols-5 gap-1">
-                      {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
-                        <button
-                          key={type}
-                          type="button"
-                          title={`${shortName} - ${desc}`}
-                          aria-pressed={vehicle === type}
-                          onClick={() => handleQuickVehicleSwitch(type)}
-                          className={`flex flex-col items-center gap-0.5 rounded-xl border px-0.5 py-2 text-center transition ${
-                            vehicle === type
-                              ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-300'
-                              : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span className="text-[9px] font-semibold leading-tight">{shortName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Route preference</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
-                        <button
-                          key={pref}
-                          type="button"
-                          title={desc}
-                          aria-pressed={preference === pref}
-                          onClick={() => handleQuickPrefSwitch(pref)}
-                          className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold transition ${
-                            preference === pref
-                              ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300'
-                              : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
-                          }`}
-                        >
-                          <span>{icon}</span>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </ReelCard>
-            )}
-
-            {hasCalculated && routePlan && activeId === 'blocks' && (
-              <ReelCard
-                id="blocks"
-                title="Blocks & alerts on route"
-                Icon={AlertTriangle}
-                tone="alert"
-                badge={routeSegmentIssues + routeIncidentCount}
-                hint={routeBlockHint}
-              >
-                <RouteBlocksPanel plan={routePlan} extraIncidents={liveIncidents} />
-              </ReelCard>
-            )}
-
             {hasCalculated && routePlan && activeId === 'journey' && (
-              <ReelCard id="journey" title="Journey" Icon={Route} hint="Key road sections · no extra tabs">
+              <ReelCard id="journey" title="Journey" Icon={Route} hint="Road sections and alerts">
                 <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Road score</p><p className="text-lg font-black text-emerald-300">{routePlan.roadConditionScore}<span className="text-xs text-slate-500">/100</span></p></div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Highest point</p><p className="text-lg font-black text-cyan-300">{routePlan.maxElevationM.toLocaleString()}<span className="text-xs text-slate-500"> m</span></p></div>
+                  </div>
+                  {(routeSegmentIssues + routeIncidentCount) > 0 && <RouteBlocksPanel plan={routePlan} extraIncidents={liveIncidents} />}
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2">
                     <span className="truncate text-xs font-semibold text-slate-200">{routePlan.origin.name} <ArrowRight className="inline h-3 w-3 text-emerald-400" /> {routePlan.destination.name}</span>
                     <span className="shrink-0 text-[10px] font-bold text-cyan-300">{routePlan.steps.length} sections</span>
@@ -1935,36 +1868,6 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                   )}
                   {routePlan.steps.length === 0 && <p className="text-xs text-slate-400">Detailed road sections are not available for this route.</p>}
                 </div>
-              </ReelCard>
-            )}
-
-            {hasCalculated && routePlan && activeId === 'insights' && (
-              <ReelCard id="insights" title="Road insights" Icon={Sparkles} hint="A few useful facts and optional AI advice">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Road score</p>
-                    <p className="mt-1 text-xl font-black text-emerald-300">{routePlan.roadConditionScore}<span className="text-xs text-slate-500">/100</span></p>
-                  </div>
-                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Highest point</p>
-                    <p className="mt-1 text-xl font-black text-cyan-300">{routePlan.maxElevationM.toLocaleString()}<span className="text-xs text-slate-500"> m</span></p>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-slate-300">AI travel advice</span>
-                  <button type="button" onClick={handleFetchAiAdvisory} disabled={loadingAiAdvisory} className="rounded-xl bg-emerald-600 px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">
-                    {loadingAiAdvisory ? 'Analysing…' : aiCustomAdvisory ? 'Refresh' : 'Generate'}
-                  </button>
-                </div>
-                {aiCustomAdvisory ? (
-                  <div className="mt-2 space-y-1.5 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-[11px] leading-relaxed text-slate-300">
-                    <p>{aiCustomAdvisory.summary}</p>
-                    {aiCustomAdvisory.bestDepartureWindow && <p className="text-cyan-300">Best departure: {aiCustomAdvisory.bestDepartureWindow}</p>}
-                    {aiCustomAdvisory.monsoonOrWeatherWarning && <p className="text-amber-300">⚠ {aiCustomAdvisory.monsoonOrWeatherWarning}</p>}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[10px] text-slate-500">AI advice is optional. Generate it when you need a route-specific travel summary.</p>
-                )}
               </ReelCard>
             )}
 
@@ -1991,28 +1894,79 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({
                       <span className="text-base font-black text-emerald-300">Rs {estimatedTripCostNpr.toLocaleString()}</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="text-[9px] leading-relaxed text-slate-500">Planning estimate; actual cost varies with traffic and driving style.</p>
-                      <button type="button" onClick={handleRefreshFuelPrices} disabled={isLoadingPrices} aria-label="Refresh fuel prices" className="shrink-0 rounded-lg border border-slate-700 px-2 py-1.5 text-[10px] font-semibold text-slate-300 disabled:opacity-50">{isLoadingPrices ? 'Updating…' : 'Refresh rates'}</button>
+                      <p className="text-[9px] leading-relaxed text-slate-500">Estimate only.</p>
+                      <button type="button" onClick={handleRefreshFuelPrices} disabled={isLoadingPrices} aria-label="Refresh fuel prices" className="shrink-0 rounded-xl border border-slate-700 px-3.5 py-2.5 text-xs font-semibold text-slate-300 disabled:opacity-50">{isLoadingPrices ? 'Updating…' : 'Refresh rates'}</button>
                     </div>
                   </>
                 )}
               </ReelCard>
             )}
 
-            {hasCalculated && routePlan && routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && activeId === 'routes' && (
-              <ReelCard id="routes" title="Alternative routes" Icon={Layers} badge={routePlan.allRouteOptions.length} hint="Compare distance, time and road score">
-                <RouteComparisonView
-                  activePlan={routePlan}
-                  allOptions={routePlan.allRouteOptions}
-                  selectedRouteId={routePlan.id}
-                  vehicle={vehicle}
-                  onSelectRoute={(opt) => {
-                    setRoutePlan(opt);
-                    setPreference(opt.preference);
-                    onRouteCalculated(opt);
-                  }}
-                  onViewOnMap={onViewOnMap}
-                />
+            {hasCalculated && routePlan && activeId === 'routes' && (
+              <ReelCard id="routes" title="Routes" Icon={Layers} hint="Vehicle and alternatives">
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div>
+                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Vehicle</div>
+                      <div className="grid grid-cols-5 gap-1">
+                        {VEHICLE_CONFIGS.map(({ type, shortName, icon: Icon, desc }) => (
+                          <button
+                            key={type}
+                            type="button"
+                            title={`${shortName} - ${desc}`}
+                            aria-pressed={vehicle === type}
+                            onClick={() => handleQuickVehicleSwitch(type)}
+                            className={`flex flex-col items-center gap-0.5 rounded-xl border px-0.5 py-3 text-center transition ${
+                              vehicle === type
+                                ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-300'
+                                : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span className="text-[10px] font-semibold leading-tight">{shortName}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Route preference</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PREFERENCE_CONFIGS.map(({ pref, icon, label, desc }) => (
+                          <button
+                            key={pref}
+                            type="button"
+                            title={desc}
+                            aria-pressed={preference === pref}
+                            onClick={() => handleQuickPrefSwitch(pref)}
+                            className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition ${
+                              preference === pref
+                                ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300'
+                                : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800'
+                            }`}
+                          >
+                            <span>{icon}</span>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {routePlan.allRouteOptions && routePlan.allRouteOptions.length > 1 && (
+                    <div>
+                      <div className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Alternative routes</div>
+                      <RouteChoices
+                        options={routePlan.allRouteOptions}
+                        selectedId={routePlan.id}
+                        onSelect={(opt) => {
+                          setRoutePlan(opt);
+                          setPreference(opt.preference);
+                          onRouteCalculated(opt);
+                        }}
+                        onViewOnMap={onViewOnMap ? () => onViewOnMap() : undefined}
+                      />
+                    </div>
+                  )}
+                </div>
               </ReelCard>
             )}
 

@@ -416,10 +416,10 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
           <input
             id="input-highway-search"
             type="text"
-            placeholder="Search by code (e.g. NH01, NH17, NH04), name (Prithvi, Postal), district, segment, issue..."
+            placeholder="Search highway, code or district"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            className="w-full pl-10 pr-4 py-3 bg-[var(--surface-tile)] border border-slate-800/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
           />
           {searchQuery && (
             <button
@@ -460,38 +460,14 @@ export const HighwayDirectory: React.FC<HighwayDirectoryProps> = ({
               key={s.id}
               onClick={() => setStatusFilter(s.id as any)}
               title={`Filter by ${s.label}`}
-              className={`px-2.5 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 whitespace-nowrap ${
+              className={`px-3.5 py-2.5 rounded-xl font-semibold transition flex items-center space-x-1.5 whitespace-nowrap ${
                 statusFilter === s.id
                   ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
               }`}
             >
               <span>{s.icon}</span>
-              <span className="text-[11px] font-bold">{s.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Terrain Filter */}
-        <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800 shrink-0 text-xs">
-          {[
-            { id: 'all', icon: '🗺️', label: 'All Terrains' },
-            { id: 'Hilly', icon: '⛰️', label: 'Hills' },
-            { id: 'High Mountain', icon: '🏔️', label: 'Alpine' },
-            { id: 'Plains', icon: '🌾', label: 'Terai' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTerrainFilter(t.id as any)}
-              title={`${t.label} Terrain`}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition flex items-center space-x-1 ${
-                terrainFilter === t.id
-                  ? 'bg-emerald-500/15 text-emerald-300'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span>{t.icon}</span>
-              <span className="text-[11px]">{t.label}</span>
+              <span className="text-xs font-bold">{s.label}</span>
             </button>
           ))}
         </div>

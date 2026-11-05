@@ -92,7 +92,20 @@ export const PlannerDeck: React.FC<PlannerDeckProps> = ({
   if (isDesktop) {
     return (
       <section className="planner-deck-desktop" aria-label="Sections">
-        {items.length > 1 && (
+        {items.length > 8 && (
+          <div className="planner-deck-desktop__tabs items-center justify-between">
+            <button type="button" onClick={() => goTo(activeIndex - 1)} disabled={activeIndex === 0} className="planner-deck-desktop__tab disabled:opacity-30" aria-label="Previous">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <span className="min-w-0 flex-1 truncate text-center text-sm font-bold text-slate-200">
+              {active.label} <span className="font-mono text-xs text-emerald-300">{activeIndex + 1} / {items.length}</span>
+            </span>
+            <button type="button" onClick={() => goTo(activeIndex + 1)} disabled={activeIndex === items.length - 1} className="planner-deck-desktop__tab disabled:opacity-30" aria-label="Next">
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        {items.length > 1 && items.length <= 8 && (
           <div role="tablist" className="planner-deck-desktop__tabs">
             {items.map((item) => (
               <button
