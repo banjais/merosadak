@@ -12,25 +12,20 @@
       "Dhanusha",
       "Mahottari",
       "Sarlahi",
-      "Bara",
-      "Parsa",
-      "Chitwan",
-      "Makwanpur",
       "Rautahat",
-      "Nawalparasi",
+      "Bara",
+      "Makwanpur",
+      "Chitawan",
+      "Nawalparasi East",
+      "Nawalparasi West",
       "Rupandehi",
-      "Kapilvastu",
+      "Kapilbastu",
       "Dang",
+      "Arghakhanchi",
       "Banke",
       "Bardiya",
       "Kailali",
-      "Kanchanpur",
-      "Chitawan",
-      "Nawalparasi West",
-      "Nawalparasi East",
-      "Kapilbastu",
-      "Arghakhanchi",
-      "Dhanusa"
+      "Kanchanpur"
     ],
     "file": "NH01_mahendra_highway.geojson"
   },
@@ -51,33 +46,32 @@
     "name": "Pushpalal Mid Hill Highway",
     "route": "Khotang - Bhojpur - Dhankuta - Terhathum - Panchthar - Ilam",
     "districts": [
-      "Khotang",
-      "Bhojpur",
-      "Dhankuta",
-      "Terhathum",
       "Panchthar",
-      "Ilam",
-      "Nuwakot",
+      "Terhathum",
+      "Dhankuta",
+      "Bhojpur",
+      "Khotang",
+      "Okhaldhunga",
+      "Udayapur",
+      "Sindhuli",
+      "Ramechhap",
+      "Kavrepalanchok",
       "Sindhupalchok",
+      "Nuwakot",
       "Dhading",
-      "Achham",
-      "Lamjung",
-      "Baglung",
       "Gorkha",
-      "Dailekh",
+      "Lamjung",
       "Kaski",
+      "Parbat",
+      "Baglung",
+      "Rukum East",
+      "Rukum West",
+      "Jajarkot",
+      "Dailekh",
+      "Achham",
       "Doti",
       "Dadeldhura",
-      "Sindhuli",
-      "Parbat",
-      "Baitadi",
-      "Rukum East",
-      "Kavrepalanchok",
-      "Jajarkot",
-      "Rukum West",
-      "Ramechhap",
-      "Okhaldhunga",
-      "Udayapur"
+      "Baitadi"
     ],
     "file": "NH03_pushpalal_mid_hill_highway.geojson"
   },
@@ -103,22 +97,19 @@
       "Dhanusha",
       "Mahottari",
       "Sarlahi",
+      "Rautahat",
       "Bara",
       "Parsa",
-      "Chitwan",
-      "Nawalparasi",
+      "Chitawan",
+      "Nawalparasi East",
+      "Nawalparasi West",
       "Rupandehi",
-      "Kapilvastu",
+      "Kapilbastu",
       "Dang",
       "Banke",
       "Bardiya",
       "Kailali",
-      "Kanchanpur",
-      "Rautahat",
-      "Kapilbastu",
-      "Chitawan",
-      "Dhanusa",
-      "Nawalparasi West"
+      "Kanchanpur"
     ],
     "file": "NH05_postal_highway.geojson"
   },
@@ -128,8 +119,6 @@
     "route": "Chatara - Mulghat - Majhitar",
     "districts": [
       "Sunsari",
-      "Tehrathum",
-      "Sankhuwasabha",
       "Dhankuta",
       "Panchthar"
     ],
@@ -140,9 +129,8 @@
     "name": "Pakali Nayakoshipul Rupnagar Highway",
     "route": "Pakali - Nayakoshi Pul - Rupnagar",
     "districts": [
-      "Sunsari",
-      "Dhankuta",
-      "Saptari"
+      "Saptari",
+      "Sunsari"
     ],
     "file": "NH07_pakali_nayakoshipul_rupnagar.geojson"
   },
@@ -164,22 +152,22 @@
     "route": "Bahundangi - Shantinagar - Dharan",
     "districts": [
       "Jhapa",
+      "Ilam",
       "Morang",
       "Sunsari",
-      "Surkhet",
-      "Palpa",
-      "Doti",
-      "Salyan",
       "Udayapur",
+      "Sindhuli",
+      "Makwanpur",
       "Nawalparasi East",
-      "Dadeldhura",
-      "Ilam",
-      "Kailali",
-      "Rolpa",
+      "Palpa",
       "Gulmi",
       "Pyuthan",
-      "Sindhuli",
-      "Makwanpur"
+      "Rolpa",
+      "Salyan",
+      "Surkhet",
+      "Doti",
+      "Kailali",
+      "Dadeldhura"
     ],
     "file": "NH09_bahundangi_shantinagar_dharan.geojson"
   },
@@ -188,8 +176,8 @@
     "name": "Deurali Mudhe Chainpur Bohoratar Highway",
     "route": "Deurali - Mudhe - Chainpur - Bohoratar",
     "districts": [
-      "Sankhuwasabha",
-      "Terhathum"
+      "Terhathum",
+      "Sankhuwasabha"
     ],
     "file": "NH10_deurali_mudhe_chainpur_bohoratar.geojson"
   },
@@ -198,8 +186,7 @@
     "name": "Phikkal Shreeantu Chabbise Highway",
     "route": "Phikkal - Shreeantu - Chabbise",
     "districts": [
-      "Ilam",
-      "Panchthar"
+      "Ilam"
     ],
     "file": "NH11_phikkal_shreeantu_chabbise.geojson"
   },
@@ -208,7 +195,6 @@
     "name": "Ghurmi Chatara Udayapur Highway",
     "route": "Ghurmi - Chatara - Udayapur",
     "districts": [
-      "Sunsari",
       "Udayapur",
       "Khotang",
       "Bhojpur"
@@ -220,10 +206,10 @@
     "name": "Bardibas Sindhuli Khurkot Dhulikhel Highway",
     "route": "Bardibas - Sindhuli - Khurkot - Dhulikhel",
     "districts": [
+      "Mahottari",
       "Dhanusha",
       "Sindhuli",
-      "Kavrepalanchok",
-      "Mahottari"
+      "Kavrepalanchok"
     ],
     "file": "NH13_bardibas_sindhuli_khurkot_dhulikhel.geojson"
   },
@@ -252,8 +238,8 @@
     "name": "Thadi Bhagawanpur Lahan Kadmaha Highway",
     "route": "Thadi - Bhagawanpur - Lahan - Kadmaha",
     "districts": [
-      "Saptari",
       "Siraha",
+      "Saptari",
       "Udayapur",
       "Khotang"
     ],
@@ -265,10 +251,9 @@
     "route": "Naubise - Mugling - Dumre",
     "districts": [
       "Dhading",
-      "Chitwan",
+      "Chitawan",
       "Tanahu",
-      "Kaski",
-      "Chitawan"
+      "Kaski"
     ],
     "file": "NH17_prithivi_highway.geojson"
   },
@@ -289,12 +274,11 @@
     "route": "Ridi - Balkot - Hanshpur - Pyuthan",
     "districts": [
       "Gulmi",
-      "Palpa",
-      "Pyuthan",
       "Arghakhanchi",
-      "Surkhet",
+      "Pyuthan",
+      "Dang",
       "Salyan",
-      "Dang"
+      "Surkhet"
     ],
     "file": "NH19_ridi_balkot_hanshpur_pyuthan.geojson"
   },
@@ -303,7 +287,6 @@
     "name": "Madar Chauharwa Mirchaiya Katari Highway",
     "route": "Madar - Chauharwa - Mirchaiya - Katari",
     "districts": [
-      "Dhanusha",
       "Siraha",
       "Udayapur",
       "Okhaldhunga",
@@ -326,9 +309,7 @@
     "name": "Dhalkebar Janakpur Jatahi Ghorghar Highway",
     "route": "Dhalkebar - Janakpur - Jatahi - Ghorghar",
     "districts": [
-      "Dhanusha",
-      "Mahottari",
-      "Dhanusa"
+      "Dhanusha"
     ],
     "file": "NH22_dhalkebar_janakpur_jatahi_ghorghar.geojson"
   },
@@ -339,10 +320,9 @@
     "districts": [
       "Khotang",
       "Solukhumbu",
-      "Okhaldhunga",
+      "Ramechhap",
       "Dolakha",
-      "Sindhupalchok",
-      "Ramechhap"
+      "Sindhupalchok"
     ],
     "file": "NH23_diktel_solu_junbesi_khahare_jiribazar.geojson"
   },
@@ -352,8 +332,6 @@
     "route": "Lalgadh - Ranibas - Bishma",
     "districts": [
       "Dhanusha",
-      "Mahottari",
-      "Dhanusa",
       "Sindhuli"
     ],
     "file": "NH24_lalgadh_ranibas_bishma.geojson"
@@ -374,9 +352,7 @@
     "name": "Jamunibas Bateshwar Shantipur Highway",
     "route": "Jamunibas - Bateshwar - Shantipur",
     "districts": [
-      "Dhanusha",
-      "Siraha",
-      "Dhanusa"
+      "Dhanusha"
     ],
     "file": "NH26_jamunibas_bateshwar_shantipur.geojson"
   },
@@ -385,7 +361,6 @@
     "name": "Bhittamod Jaleswor Bardibas Highway",
     "route": "Bhittamod - Jaleswor - Bardibas",
     "districts": [
-      "Dhanusha",
       "Mahottari",
       "Ramechhap",
       "Dolakha"
@@ -397,8 +372,7 @@
     "name": "Kanchanban Janaki Medical College Highway",
     "route": "Kanchanban - Janaki Medical College",
     "districts": [
-      "Dhanusha",
-      "Dhanusa"
+      "Dhanusha"
     ],
     "file": "NH29_kanchanban_janakimedicalcollege.geojson"
   },
@@ -407,8 +381,7 @@
     "name": "Janakpur Dhanushadham Highway",
     "route": "Janakpur - Dhanushadham",
     "districts": [
-      "Dhanusha",
-      "Dhanusa"
+      "Dhanusha"
     ],
     "file": "NH30_janakpur_dhanushadham.geojson"
   },
@@ -417,8 +390,7 @@
     "name": "Dolalghat Chautara Highway",
     "route": "Dolalghat - Chautara",
     "districts": [
-      "Sindhupalchok",
-      "Kavrepalanchok"
+      "Sindhupalchok"
     ],
     "file": "NH31_dolalghat_chautara.geojson"
   },
@@ -427,7 +399,6 @@
     "name": "Nawalpur Malangawa Sonbarsha Highway",
     "route": "Nawalpur - Malangawa - Sonbarsha",
     "districts": [
-      "Nawalparasi",
       "Sarlahi"
     ],
     "file": "NH32_nawalpur_malangawa_sonbarsha.geojson"
@@ -450,9 +421,9 @@
     "route": "Kathmandu - Dhulikhel - Dolalghat",
     "districts": [
       "Kathmandu",
+      "Bhaktapur",
       "Kavrepalanchok",
-      "Sindhupalchok",
-      "Bhaktapur"
+      "Sindhupalchok"
     ],
     "file": "NH34_kathmandu_dhulikhel_dolalghat.geojson"
   },
@@ -461,8 +432,7 @@
     "name": "Piluhawa Manmat Kalaiya Martihawa Highway",
     "route": "Piluhawa - Manmat - Kalaiya - Martihawa",
     "districts": [
-      "Bara",
-      "Mahottari"
+      "Bara"
     ],
     "file": "NH35_piluhawa_manmat_kalaiya_martihawa.geojson"
   },
@@ -491,8 +461,8 @@
     "route": "Ring road around Kathmandu Valley",
     "districts": [
       "Kathmandu",
-      "Lalitpur",
-      "Bhaktapur"
+      "Bhaktapur",
+      "Lalitpur"
     ],
     "file": "NH38_kathmandu_outer_ringroad.geojson"
   },
@@ -521,11 +491,11 @@
     "name": "Sirsiya Pathlaiya Hetauda Bhaise Highway",
     "route": "Sirsiya - Pathlaiya - Hetauda - Bhaise",
     "districts": [
+      "Parsa",
       "Bara",
       "Makwanpur",
       "Dhading",
-      "Kathmandu",
-      "Parsa"
+      "Kathmandu"
     ],
     "file": "NH41_sirsiya_pathlaiya_hetauda_bhaise.geojson"
   },
@@ -535,11 +505,10 @@
     "route": "Thori - Bhandara - Malekhu - Galchi - Trishuli",
     "districts": [
       "Parsa",
-      "Makwanpur",
+      "Chitawan",
       "Dhading",
       "Nuwakot",
-      "Rasuwa",
-      "Chitawan"
+      "Rasuwa"
     ],
     "file": "NH42_thori_bhandara_malekhu_galchi_trishuli.geojson"
   },
@@ -557,11 +526,9 @@
     "name": "Thori Bharatpur Mugling Highway",
     "route": "Thori - Bharatpur - Mugling",
     "districts": [
-      "Parsa",
-      "Chitwan",
       "Chitawan",
-      "Gorkha",
-      "Tanahu"
+      "Tanahu",
+      "Gorkha"
     ],
     "file": "NH44_thori_bharatpur_mugling.geojson"
   },
@@ -571,8 +538,7 @@
     "route": "Khairenitar - Bhimad - Kawasoti",
     "districts": [
       "Tanahu",
-      "Nawalparasi",
-      "Rupandehi"
+      "Nawalparasi East"
     ],
     "file": "NH45_khairenitar_bhimad_kawasoti.geojson"
   },
@@ -581,7 +547,6 @@
     "name": "Bhumahi Parasi Highway",
     "route": "Bhumahi - Parasi",
     "districts": [
-      "Nawalparasi",
       "Nawalparasi West"
     ],
     "file": "NH46_bhumahi_parasi.geojson"
@@ -593,8 +558,8 @@
     "districts": [
       "Rupandehi",
       "Palpa",
-      "Kaski",
-      "Syangja"
+      "Syangja",
+      "Kaski"
     ],
     "file": "NH47_belahiya_bhairahawa_butwal_bartung.geojson"
   },
@@ -605,10 +570,10 @@
     "districts": [
       "Palpa",
       "Gulmi",
-      "Mustang",
+      "Baglung",
       "Parbat",
       "Myagdi",
-      "Baglung"
+      "Mustang"
     ],
     "file": "NH48_tansen_ridi_korla.geojson"
   },
@@ -617,9 +582,7 @@
     "name": "Bartung Tansen Ridi Wamitaksar Khalanga Highway",
     "route": "Bartung - Tansen - Ridi - Wamitaksar - Khalanga",
     "districts": [
-      "Palpa",
-      "Gulmi",
-      "Rolpa"
+      "Gulmi"
     ],
     "file": "NH49_bartung_tansen_ridi_wamitaksar_khalanga.geojson"
   },
@@ -628,8 +591,6 @@
     "name": "Jitpur Taulihawa Khunuwa Highway",
     "route": "Jitpur - Taulihawa - Khunuwa",
     "districts": [
-      "Kapilvastu",
-      "Rupandehi",
       "Kapilbastu"
     ],
     "file": "NH50_jitpur_taulihawa_khunuwa.geojson"
@@ -639,9 +600,8 @@
     "name": "Taulihawa Gorusinge Sandhikharka Highway",
     "route": "Taulihawa - Gorusinge - Sandhikharka",
     "districts": [
-      "Kapilvastu",
-      "Arghakhanchi",
-      "Kapilbastu"
+      "Kapilbastu",
+      "Arghakhanchi"
     ],
     "file": "NH51_taulihawa_gorusinge_sandhikharka.geojson"
   },
@@ -650,12 +610,11 @@
     "name": "Kakarhawa Rudrapur Highway",
     "route": "Kakarhawa - Rudrapur",
     "districts": [
-      "Kapilvastu",
-      "Arghakhanchi",
-      "Baglung",
-      "Palpa",
       "Rupandehi",
-      "Gulmi"
+      "Palpa",
+      "Arghakhanchi",
+      "Gulmi",
+      "Baglung"
     ],
     "file": "NH52_kakarhawa_rudrapur.geojson"
   },
@@ -665,8 +624,8 @@
     "route": "Bhalubang - Liwang - Madichaur",
     "districts": [
       "Dang",
-      "Rolpa",
-      "Pyuthan"
+      "Pyuthan",
+      "Rolpa"
     ],
     "file": "NH53_bhalubang_liwang_madichaur.geojson"
   },
@@ -675,11 +634,9 @@
     "name": "Koilabas Lamahi Arjunkholagau Highway",
     "route": "Koilabas - Lamahi - Arjunkholagau",
     "districts": [
-      "Banke",
       "Dang",
-      "Salyan",
-      "Rukum East",
-      "Rolpa"
+      "Rolpa",
+      "Rukum East"
     ],
     "file": "NH54_koilabas_lamahi_arjunkholagau.geojson"
   },
@@ -699,12 +656,10 @@
     "name": "Tharmare Chaurjahari Jajarkot Highway",
     "route": "Tharmare - Chaurjahari - Jajarkot",
     "districts": [
-      "Rukum",
-      "Jajarkot",
-      "Jumla",
-      "Rukum West",
       "Salyan",
-      "Mugu"
+      "Rukum West",
+      "Jajarkot",
+      "Jumla"
     ],
     "file": "NH56_tharmare_chaurjahari_jajarkot.geojson"
   },
@@ -713,10 +668,11 @@
     "name": "Chinchu Kuda Jajarkot Dunai Highway",
     "route": "Chinchu - Kuda - Jajarkot - Dunai",
     "districts": [
-      "Jajarkot",
-      "Dolpa",
       "Surkhet",
-      "Salyan"
+      "Salyan",
+      "Jajarkot",
+      "Rukum West",
+      "Dolpa"
     ],
     "file": "NH57_chinchu_kuda_jajarkot_dunai.geojson"
   },
@@ -726,13 +682,12 @@
     "route": "Jamunaha - Nepalgunj - Kohalpur - Surkhet",
     "districts": [
       "Banke",
-      "Surkhet",
       "Bardiya",
+      "Surkhet",
       "Dailekh",
+      "Kalikot",
       "Bajura",
-      "Humla",
-      "Mugu",
-      "Kalikot"
+      "Humla"
     ],
     "file": "NH58_jamunaha_nepalgunj_kohalpur_surkhet.geojson"
   },
@@ -742,9 +697,9 @@
     "route": "Murtiya - Gulariya - Bhurigaun",
     "districts": [
       "Bardiya",
+      "Surkhet",
       "Dailekh",
-      "Kalikot",
-      "Surkhet"
+      "Kalikot"
     ],
     "file": "NH59_murtiya_gulariya_bhurigaun.geojson"
   },
@@ -755,9 +710,9 @@
     "districts": [
       "Surkhet",
       "Dailekh",
+      "Kalikot",
       "Jumla",
-      "Mugu",
-      "Kalikot"
+      "Mugu"
     ],
     "file": "NH60_surkhet_dailekh_mahabulekh_galje.geojson"
   },
@@ -766,7 +721,6 @@
     "name": "Surkhet Tallo Dundeshwor Satkham Highway",
     "route": "Surkhet - Tallo Dundeshwor - Satkham",
     "districts": [
-      "Surkhet",
       "Dailekh",
       "Kalikot",
       "Jumla"
@@ -779,10 +733,10 @@
     "route": "Khakraula - Tikapur - Lamki - Lodeghat",
     "districts": [
       "Kailali",
-      "Bajhang",
-      "Bajura",
+      "Doti",
       "Achham",
-      "Doti"
+      "Bajura",
+      "Bajhang"
     ],
     "file": "NH62_khakraula_tikapur_lamki_lodeghat.geojson"
   },
@@ -791,9 +745,8 @@
     "name": "Saphebagar Martadi Kolti Highway",
     "route": "Saphebagar - Martadi - Kolti",
     "districts": [
-      "Bajhang",
-      "Bajura",
-      "Achham"
+      "Achham",
+      "Bajura"
     ],
     "file": "NH63_saphebagar_martadi_kolti.geojson"
   },
@@ -802,8 +755,8 @@
     "name": "Khodpe Chainpur Bajhang Highway",
     "route": "Khodpe - Chainpur - Bajhang",
     "districts": [
-      "Bajhang",
-      "Baitadi"
+      "Baitadi",
+      "Bajhang"
     ],
     "file": "NH64_khodpe_chainpur_bajhang.geojson"
   },
@@ -812,10 +765,9 @@
     "name": "Khuttiya Dipayal Chainpur Uraibhanjyang Highway",
     "route": "Khuttiya - Dipayal - Chainpur - Uraibhanjyang",
     "districts": [
-      "Kanchanpur",
-      "Bajhang",
+      "Kailali",
       "Doti",
-      "Kailali"
+      "Bajhang"
     ],
     "file": "NH65_khuttiya_dipayal_chainpur_uraibhanjyang.geojson"
   },
@@ -838,9 +790,8 @@
     "route": "Chandani - Bhimdatta - Bramhadev",
     "districts": [
       "Kanchanpur",
-      "Baitadi",
       "Dadeldhura",
-      "Darchula"
+      "Baitadi"
     ],
     "file": "NH67_chandani_bhimdatta_bramhadev.geojson"
   },
@@ -851,8 +802,6 @@
     "districts": [
       "Tanahu",
       "Syangja",
-      "Parbat",
-      "Baglung",
       "Palpa",
       "Nawalparasi East"
     ],
@@ -863,8 +812,6 @@
     "name": "Jagatbhanjyang Mandalithan Kewar Highway",
     "route": "Jagatbhanjyang - Mandalithan - Kewar",
     "districts": [
-      "Surkhet",
-      "Dailekh",
       "Syangja"
     ],
     "file": "NH69_jagatbhanjyang_mandalithan_kewar.geojson"
@@ -874,9 +821,8 @@
     "name": "Setidovan Wejang Panchmul Highway",
     "route": "Setidovan - Wejang - Panchmul",
     "districts": [
-      "Baitadi",
-      "Darchula",
-      "Syangja"
+      "Syangja",
+      "Parbat"
     ],
     "file": "NH70_setidovan_wejang_panchmul.geojson"
   },
@@ -885,10 +831,8 @@
     "name": "Bhaluwang Nuwakot Khandaha Highway",
     "route": "Bhaluwang - Nuwakot - Khandaha",
     "districts": [
-      "Pyuthan",
-      "Rolpa",
-      "Gulmi",
-      "Arghakhanchi"
+      "Arghakhanchi",
+      "Gulmi"
     ],
     "file": "NH71_bhaluwang_nuwakot_khandaha.geojson"
   },
@@ -897,7 +841,6 @@
     "name": "Dumkibas Baguban Triveni Highway",
     "route": "Dumkibas - Baguban - Triveni",
     "districts": [
-      "Salyan",
       "Nawalparasi East"
     ],
     "file": "NH72_dumkibas_baguban_triveni.geojson"
@@ -925,8 +868,8 @@
     "name": "Swarna Sagarmatha Ring Road",
     "route": "Ring road around Sagarmatha region",
     "districts": [
-      "Solukhumbu",
       "Okhaldhunga",
+      "Solukhumbu",
       "Khotang"
     ],
     "file": "NH75_sworna_sagarmatha_ringroad.geojson"
@@ -937,8 +880,8 @@
     "route": "Damak - Chisapani - Rabi",
     "districts": [
       "Jhapa",
-      "Panchthar",
-      "Ilam"
+      "Ilam",
+      "Panchthar"
     ],
     "file": "NH76_damak_chisapani_rabi.geojson"
   },
@@ -947,7 +890,6 @@
     "name": "Bharatpur Mahanagariya Brihat Chakrapath",
     "route": "Greater ring road of Bharatpur",
     "districts": [
-      "Chitwan",
       "Chitawan"
     ],
     "file": "NH77_bharatpur_mahanagariya_brihat_chakrapath.geojson"
@@ -966,9 +908,7 @@
     "name": "Godar Chisapani Mainawa Highway",
     "route": "Godar - Chisapani - Mainawa",
     "districts": [
-      "Parsa",
-      "Bara",
-      "Dhanusa",
+      "Dhanusha",
       "Sindhuli"
     ],
     "file": "NH79_godar_chisapani_mainawa.geojson"
@@ -978,7 +918,6 @@
     "name": "Mara Bastipurchowk Highway",
     "route": "Mara - Bastipurchowk",
     "districts": [
-      "Kathmandu",
       "Siraha",
       "Udayapur"
     ],
