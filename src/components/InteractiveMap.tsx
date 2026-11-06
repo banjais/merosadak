@@ -508,8 +508,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     layersRef.current.outsideMask.addTo(map);
     layersRef.current.nepalBorder.addTo(map);
     layersRef.current.provinces.addTo(map);
-    layersRef.current.districts.addTo(map);
-    layersRef.current.localLevels.addTo(map);
+    // District / local-level outlines attach lazily by zoom (see the boundary effect).
 
     mapInstanceRef.current = map;
 
@@ -1027,9 +1026,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       urls: string[],
       style: L.PathOptions,
       propertyNames: string[],
-    ) => {
+    ): Promise<boolean> => {
       const data = await loadBoundary(urls);
-      if (cancelled || !data) return;
+      if (cancelled || !data) return false;
       const layer = L.geoJSON(data, {
         style: () => style,
         onEachFeature: (feature, featureLayer) => {
@@ -1045,30 +1044,60 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         },
       });
       if (!cancelled) group.addLayer(layer);
+      return true;
     };
 
+    const map = mapInstanceRef.current;
+    if (!map) return;
     const districts = layersRef.current.districts;
     const localLevels = layersRef.current.localLevels;
-    districts.clearLayers();
-    localLevels.clearLayers();
 
-    void renderBoundary(
-      districts,
-      ['/api/data/nepal_boundary.geojson', '/data/nepal_boundary.geojson'],
-      { color: '#fbbf24', weight: 1, opacity: 0.5, fill: false, interactive: true },
-      ['DIST_EN', 'district', 'dist_name', 'name'],
-    );
-    void renderBoundary(
-      localLevels,
-      ['/api/data/palika.geojson', '/data/palika.geojson'],
-      { color: '#a78bfa', weight: 0.6, opacity: 0.35, fill: false, interactive: true },
-      ['FIRST_GaPa', 'GaPa_NP', 'Palika', 'Municipality', 'name'],
-    );
+    // The district file is ~14 MB and the local-level file ~5 MB: fetch and draw them only
+    // when the person has zoomed in far enough to use them, never on first paint.
+    const layers = [
+      {
+        key: 'districts', group: districts, minZoom: 8,
+        urls: ['/api/data/nepal_boundary.geojson', '/data/nepal_boundary.geojson'],
+        style: { color: '#fbbf24', weight: 1, opacity: 0.5, fill: false, interactive: true } as L.PathOptions,
+        names: ['DIST_EN', 'district', 'dist_name', 'name'],
+        state: 'idle' as 'idle' | 'loading' | 'done',
+      },
+      {
+        key: 'localLevels', group: localLevels, minZoom: 10,
+        urls: ['/api/data/palika.geojson', '/data/palika.geojson'],
+        style: { color: '#a78bfa', weight: 0.6, opacity: 0.35, fill: false, interactive: true } as L.PathOptions,
+        names: ['FIRST_GaPa', 'GaPa_NP', 'Palika', 'Municipality', 'name'],
+        state: 'idle' as 'idle' | 'loading' | 'done',
+      },
+    ];
+
+    const syncBoundaries = () => {
+      const zoom = map.getZoom();
+      for (const layer of layers) {
+        if (zoom >= layer.minZoom) {
+          if (layer.state === 'idle') {
+            layer.state = 'loading';
+            void renderBoundary(layer.group, layer.urls, layer.style, layer.names).then((ok) => {
+              layer.state = ok ? 'done' : 'idle'; // a failed load retries on the next zoom
+            });
+          }
+          if (!map.hasLayer(layer.group)) layer.group.addTo(map);
+        } else if (map.hasLayer(layer.group)) {
+          map.removeLayer(layer.group);
+        }
+      }
+    };
+
+    map.on('zoomend', syncBoundaries);
+    syncBoundaries();
 
     return () => {
       cancelled = true;
+      map.off('zoomend', syncBoundaries);
       districts.clearLayers();
       localLevels.clearLayers();
+      if (map.hasLayer(districts)) map.removeLayer(districts);
+      if (map.hasLayer(localLevels)) map.removeLayer(localLevels);
     };
   }, []);
 

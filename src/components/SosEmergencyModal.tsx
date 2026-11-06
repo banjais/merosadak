@@ -72,7 +72,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  const [locationTimestamp, setLocationTimestamp] = useState<Date | null>(null);
 
  // Manual fallback selection if GPS is denied or unavailable
- const [manualCityId, setManualCityId] = useState<string>('mgl');
+ const [manualCityId, setManualCityId] = useState<string>('');
  const [useManualLocation, setUseManualLocation] = useState<boolean>(false);
 
  // Emergency Form State
@@ -136,25 +136,14 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  }
  setGeoError(msg);
  setUseManualLocation(true);
-
- // Fallback default coordinates if not already set (e.g. Mugling or Route midpoint)
- if (lat === null || lng === null) {
- if (activeRoute && activeRoute.origin) {
- setLat(activeRoute.origin.lat);
- setLng(activeRoute.origin.lng);
- } else {
- setLat(27.8617); // Mugling
- setLng(84.5542);
- }
- }
- },
+},
  {
  enableHighAccuracy: true,
  timeout: 12000,
  maximumAge: 0,
  }
  );
- }, [activeRoute, lat, lng]);
+ }, []);
 
  // Check battery status if available
  useEffect(() => {
@@ -180,6 +169,21 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  }
  }, [isOpen, acquireLocation]);
 
+ // Never leave the siren running if the screen is closed or unmounted.
+ useEffect(() => () => { sosAudioAlert.stop(); }, []);
+
+ // Escape stops a running strobe first, then closes the dialog.
+ useEffect(() => {
+ if (!isOpen) return;
+ const onKey = (e: KeyboardEvent) => {
+ if (e.key !== 'Escape') return;
+ if (isStrobeActive) setIsStrobeActive(false);
+ else onClose();
+ };
+ window.addEventListener('keydown', onKey);
+ return () => window.removeEventListener('keydown', onKey);
+ }, [isOpen, isStrobeActive, onClose]);
+
  // Strobe effect timer
  useEffect(() => {
  if (!isStrobeActive) return;
@@ -192,15 +196,26 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  // Handle manual city selection
  const handleManualCityChange = (cityId: string) => {
  setManualCityId(cityId);
+ if (!cityId) return;
  const city = CITIES_AND_JUNCTIONS.find((c) => c.id === cityId);
  if (city) {
  setLat(city.lat);
  setLng(city.lng);
- setAccuracy(50);
+ setAccuracy(null);
+ setUseManualLocation(true);
  setAltitude(city.elevationM);
  setLocationTimestamp(new Date());
  }
  };
+
+ // A real position exists only after a GPS fix or an explicit town choice.
+ const hasLocation = lat !== null && lng !== null;
+ const isApproximate = useManualLocation || accuracy === null;
+
+ const sortedPlaces = useMemo(
+ () => [...CITIES_AND_JUNCTIONS].sort((a, b) => a.name.localeCompare(b.name)),
+ []
+ );
 
  // Current active coordinates to use
  const currentLat = lat ?? 27.8617;
@@ -217,6 +232,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  lat: currentLat,
  lng: currentLng,
  accuracyM: accuracy ?? undefined,
+ approximate: isApproximate,
  altitudeM: altitude ?? nearestLandmark.city.elevationM,
  distressType,
  customNotes: customNotes.trim() || undefined,
@@ -230,6 +246,7 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  currentLat,
  currentLng,
  accuracy,
+ isApproximate,
  altitude,
  nearestLandmark,
  distressType,
@@ -249,48 +266,98 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  customNotes: customNotes.trim() || undefined,
  vehicleType,
  passengerCount,
+ approximate: isApproximate,
  });
- }, [currentLat, currentLng, distressType, customNotes, vehicleType, passengerCount]);
+ }, [currentLat, currentLng, distressType, customNotes, vehicleType, passengerCount, isApproximate]);
 
  const activeMessageText = messageFormat === 'full' ? fullSosMessage : compactSosMessage;
 
- // Copy to clipboard
- const handleCopy = () => {
- navigator.clipboard.writeText(activeMessageText);
+ // Every send action needs a real position (GPS fix or a chosen town); never
+ // share the placeholder coordinates.
+ const ensureLocation = (): boolean => {
+ if (hasLocation) return true;
+ setGeoError('Location not ready yet. Wait for GPS or choose your nearest town below, then send.');
+ return false;
+ };
+
+ const flashCopied = () => {
  setCopiedText(true);
  setTimeout(() => setCopiedText(false), 2500);
  };
 
+ // Clipboard with a fallback for insecure contexts and older browsers.
+ const copyText = async (text: string): Promise<boolean> => {
+ try {
+ if (navigator.clipboard?.writeText) {
+ await navigator.clipboard.writeText(text);
+ return true;
+ }
+ } catch {
+ /* fall through to legacy copy */
+ }
+ try {
+ const area = document.createElement('textarea');
+ area.value = text;
+ area.setAttribute('readonly', '');
+ area.style.position = 'fixed';
+ area.style.opacity = '0';
+ document.body.appendChild(area);
+ area.select();
+ const ok = document.execCommand('copy');
+ document.body.removeChild(area);
+ return ok;
+ } catch {
+ return false;
+ }
+ };
+
+ // WhatsApp needs the country code; Nepali mobiles are often typed as 98XXXXXXXX.
+ const toInternationalPhone = (raw: string): string => {
+ const digits = raw.replace(/\D/g, '');
+ if (digits.startsWith('977')) return digits;
+ if (digits.startsWith('00')) return digits.slice(2);
+ if (digits.length === 10 && digits.startsWith('9')) return `977${digits}`;
+ return digits;
+ };
+
+ const handleCopy = async () => {
+ if (!ensureLocation()) return;
+ if (await copyText(activeMessageText)) flashCopied();
+ else setGeoError('Could not copy. Press and hold the message to copy it manually.');
+ };
+
  // WhatsApp Dispatch
  const handleSendWhatsApp = () => {
+ if (!ensureLocation()) return;
  let url = `https://wa.me/?text=${encodeURIComponent(activeMessageText)}`;
  if (customPhone.trim()) {
- const sanitized = customPhone.replace(/\D/g, '');
- url = `https://wa.me/${sanitized}?text=${encodeURIComponent(activeMessageText)}`;
+ url = `https://wa.me/${toInternationalPhone(customPhone)}?text=${encodeURIComponent(activeMessageText)}`;
  }
  window.open(url, '_blank', 'noopener,noreferrer');
  };
 
  // SMS Dispatch
  const handleSendSms = () => {
+ if (!ensureLocation()) return;
  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
  const separator = isIOS ? '&' : '?';
- const targetRecipient = customPhone.trim() ? customPhone.replace(/\D/g, '') : '';
+ const targetRecipient = customPhone.trim() ? customPhone.replace(/[^\d+]/g, '') : '';
  const smsUrl = `sms:${targetRecipient}${separator}body=${encodeURIComponent(activeMessageText)}`;
  window.location.href = smsUrl;
  };
 
  // Telegram Dispatch
  const handleSendTelegram = () => {
+ if (!ensureLocation()) return;
  const url = `https://t.me/share/url?url=${encodeURIComponent(`https://maps.google.com/?q=${currentLat.toFixed(5)},${currentLng.toFixed(5)}`)}&text=${encodeURIComponent(activeMessageText)}`;
  window.open(url, '_blank', 'noopener,noreferrer');
  };
 
-
  // Messenger cannot accept a prefilled message from a standard web share URL.
- const handleSendMessenger = () => {
-  window.open('https://www.messenger.com/', '_blank', 'noopener,noreferrer');
-  void navigator.clipboard?.writeText(activeMessageText).then(() => setCopiedText(true)).catch(() => {});
+ const handleSendMessenger = async () => {
+ if (!ensureLocation()) return;
+ window.open('https://www.messenger.com/', '_blank', 'noopener,noreferrer');
+ if (await copyText(activeMessageText)) flashCopied();
  };
 
  // Toggle Audio Siren / Sound
@@ -326,6 +393,9 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
  <div
  className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto scrollbar-paddle animate-fadeIn"
  id="emergency-sos-modal"
+ role="dialog"
+ aria-modal="true"
+ aria-label="SOS Emergency Assist"
  >
  {/* Fullscreen Strobe Visual Alert (if active) */}
  {isStrobeActive && (
@@ -395,7 +465,22 @@ export const SosEmergencyModal: React.FC<SosEmergencyModalProps> = ({
     {locationTimestamp && <span>Updated: {locationTimestamp.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>}
     {batteryPercent !== null && <span>Battery: {batteryPercent}%</span>}
    </div>
-   {geoError && <p className="mt-2 rounded-lg border border-amber-800/50 bg-amber-950/40 p-2 text-[10px] leading-relaxed text-amber-300">{geoError}</p>}
+   {geoError && <p role="status" className="mt-2 rounded-lg border border-amber-800/50 bg-amber-950/40 p-2 text-[11px] leading-relaxed text-amber-300">{geoError}</p>}
+   {(useManualLocation || !hasLocation) && !isLocating && (
+    <label className="mt-2 block">
+     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-300">No GPS? Choose your nearest town</span>
+     <select
+      value={manualCityId}
+      onChange={(e) => handleManualCityChange(e.target.value)}
+      className="mt-1 min-h-11 w-full rounded-xl border border-slate-600 bg-slate-900 px-3 text-sm font-semibold text-white focus:border-emerald-500 focus:outline-none"
+     >
+      <option value="">Select a town or junction…</option>
+      {sortedPlaces.map((c) => (
+       <option key={c.id} value={c.id}>{c.name}{c.district ? ` — ${c.district}` : ''}</option>
+      ))}
+     </select>
+    </label>
+   )}
   </div>
 
   <div className="mt-2.5 rounded-xl border border-slate-700/80 bg-slate-900/80 p-3">

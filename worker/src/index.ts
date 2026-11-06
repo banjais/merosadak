@@ -772,7 +772,11 @@ function pointAlongGeometry(geometry: any, fraction: number): IncidentCoordinate
 }
 
 function normalizeLocationName(value: unknown): string {
-  return String(value ?? "").toLowerCase().replace(/chitawan/g, "chitwan").replace(/[^a-z0-9]/g, "");
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/chitawan/g, "chitwan")
+    .replace(/dhanusha?$/, "dhanusha");
 }
 
 async function resolveChainagePoint(
@@ -782,7 +786,12 @@ async function resolveChainagePoint(
   chainageKm: number,
   highwayCache: Map<string, any>,
 ): Promise<IncidentCoordinate | null> {
-  const index = await readJsonData<any[]>(env, "highway/index.json", []);
+  // One KV read per request, not one per incident row (free-plan subrequest budget).
+  let index = highwayCache.get("__index") as any[] | undefined;
+  if (!index) {
+    index = await readJsonData<any[]>(env, "highway/index.json", []);
+    highwayCache.set("__index", index);
+  }
   const entry = (Array.isArray(index) ? index : []).find((item) =>
     String(item.code || "").toUpperCase() === roadRef.toUpperCase()
   );
@@ -803,18 +812,20 @@ async function resolveChainagePoint(
   }
   const features = Array.isArray(geojson?.features) ? geojson.features : [];
   const districtKey = normalizeLocationName(district);
-  const candidates = features.filter((feature: any) => {
+  const matchCandidates = (useDistrict: boolean) => features.filter((feature: any) => {
     const props = feature?.properties || {};
     const featureRoadRef = firstProperty(props, ["road_refno", "roadRefNo", "road_ref", "road_code"]);
     if (featureRoadRef.toUpperCase() !== roadRef.toUpperCase()) return false;
     const featureDistrict = normalizeLocationName(firstProperty(props, ["dist_name", "DIST_EN", "district"]));
-    if (districtKey && featureDistrict && featureDistrict !== districtKey) return false;
+    if (useDistrict && districtKey && featureDistrict && featureDistrict !== districtKey) return false;
     const from = Number(firstProperty(props, ["link_from", "linkFrom", "chainage_from", "start_chainage"]));
     const to = Number(firstProperty(props, ["link_to", "linkTo", "chainage_to", "end_chainage"]));
     return Number.isFinite(from) && Number.isFinite(to) &&
       chainageKm >= Math.min(from, to) - 0.05 && chainageKm <= Math.max(from, to) + 0.05;
   });
-  const feature = candidates[0];
+  // Chainage is cumulative along the whole highway, so if the sheet's district label
+  // is spelled differently from the survey's, the chainage alone still identifies the link.
+  const feature = matchCandidates(true)[0] ?? matchCandidates(false)[0];
   if (!feature) return null;
   const from = Number(firstProperty(feature.properties, ["link_from", "linkFrom", "chainage_from", "start_chainage"]));
   const to = Number(firstProperty(feature.properties, ["link_to", "linkTo", "chainage_to", "end_chainage"]));
@@ -863,30 +874,39 @@ function geometryBounds(geometry: any): [number, number, number, number] | null 
   return Number.isFinite(minLng) ? [minLng, minLat, maxLng, maxLat] : null;
 }
 
-let cachedAdminGeoData: { districts: any[]; palikas: any[]; districtIndex: any[]; palikaIndex: any[] } | null = null;
+type AdminLayer = { features: any[]; index: Array<{ feature: any; bounds: [number, number, number, number] }> };
+const adminLayerCache = new Map<string, Promise<AdminLayer>>();
+const PROVINCE_NAMES: Record<string, string> = {
+  "1": "Koshi", "2": "Madhesh", "3": "Bagmati", "4": "Gandaki", "5": "Lumbini", "6": "Karnali", "7": "Sudurpashchim",
+};
 
-async function loadAdminGeoData(env: Env) {
-  if (cachedAdminGeoData) return cachedAdminGeoData;
-  const load = async (key: string, url: string) => {
-    let data = await readJsonData<any>(env, key, null);
-    if (!data?.features?.length) {
-      try {
-        const response = await fetchWithTimeout(url, { headers: { Accept: "application/geo+json, application/json" }, timeoutMs: 12000 } as any);
-        if (response.ok) data = await response.json<any>();
-      } catch {}
-    }
-    return Array.isArray(data?.features) ? data.features : [];
-  };
-  const [districts, palikas] = await Promise.all([
-    load("nepal_boundary.geojson", "https://merosadak.web.app/data/nepal_boundary.geojson"),
-    load("palika.geojson", "https://merosadak.web.app/data/palika.geojson"),
-  ]);
-  const index = (features: any[]) => features.map((feature) => ({
-    feature,
-    bounds: geometryBounds(feature.geometry),
-  })).filter((item) => item.bounds);
-  cachedAdminGeoData = { districts, palikas, districtIndex: index(districts), palikaIndex: index(palikas) };
-  return cachedAdminGeoData;
+// Layers load on demand and independently: the 4.7 MB palika file is only parsed when an incident has
+// coordinates, and the 14 MB district file only when nothing smaller can name the district.
+function loadAdminLayer(env: Env, key: string): Promise<AdminLayer> {
+  let pending = adminLayerCache.get(key);
+  if (!pending) {
+    pending = (async () => {
+      let data = await readJsonData<any>(env, key, null);
+      if (!data?.features?.length) {
+        try {
+          const response = await fetchWithTimeout(`https://merosadak.web.app/data/${key}`, {
+            headers: { Accept: "application/geo+json, application/json" },
+            timeoutMs: 12000,
+          } as any);
+          if (response.ok) data = await response.json<any>();
+        } catch {}
+      }
+      const features: any[] = Array.isArray(data?.features) ? data.features : [];
+      const index = features
+        .map((feature) => ({ feature, bounds: geometryBounds(feature.geometry) }))
+        .filter((item): item is { feature: any; bounds: [number, number, number, number] } => !!item.bounds);
+      return { features, index };
+    })();
+    adminLayerCache.set(key, pending);
+    // An empty result (network blip) must not be remembered for the life of the isolate.
+    pending.then((layer) => { if (!layer.features.length) adminLayerCache.delete(key); }).catch(() => adminLayerCache.delete(key));
+  }
+  return pending;
 }
 
 function findFeatureAtPoint(index: any[], lng: number, lat: number): any | null {
@@ -913,21 +933,28 @@ async function resolveAdminNames(
   point: IncidentCoordinate | null,
   districtFallback: string,
 ) {
-  const data = await loadAdminGeoData(env);
-  const districtFeature = point
-    ? findFeatureAtPoint(data.districtIndex, point.lng, point.lat)
-    : data.districts.find((feature) =>
-        normalizeLocationName(firstProperty(feature.properties, ["DIST_EN", "district", "dist_name"])) ===
-        normalizeLocationName(districtFallback)
-      );
-  const palikaFeature = point ? findFeatureAtPoint(data.palikaIndex, point.lng, point.lat) : null;
-  const districtProps = districtFeature?.properties || {};
+  const palikaFeature = point
+    ? findFeatureAtPoint((await loadAdminLayer(env, "palika.geojson")).index, point.lng, point.lat)
+    : null;
   const palikaProps = palikaFeature?.properties || {};
+  let district = firstProperty(palikaProps, ["District", "DIST_EN", "district"]) || districtFallback;
+  let province = "";
+
+  if (point) {
+    const provinceFeature = findFeatureAtPoint((await loadAdminLayer(env, "nepal-provinces.geojson")).index, point.lng, point.lat);
+    province = firstProperty(provinceFeature?.properties, ["name"]);
+  }
+  if (!district) {
+    const districts = await loadAdminLayer(env, "nepal_boundary.geojson");
+    const districtFeature = point ? findFeatureAtPoint(districts.index, point.lng, point.lat) : null;
+    const props = districtFeature?.properties || {};
+    district = firstProperty(props, ["DIST_EN", "district", "dist_name"]);
+    // The district file stores the province as a number ("7"), not a name.
+    if (!province) province = PROVINCE_NAMES[firstProperty(props, ["ADM1_EN", "province", "Province"])] || "";
+  }
   return {
-    province: firstProperty(palikaProps, ["ADM1_EN", "province", "Province"]) ||
-      firstProperty(districtProps, ["ADM1_EN", "province", "Province"]),
-    district: firstProperty(palikaProps, ["District", "DIST_EN", "district"]) ||
-      firstProperty(districtProps, ["DIST_EN", "district", "dist_name"]) || districtFallback,
+    province,
+    district,
     municipality: firstProperty(palikaProps, ["FIRST_GaPa", "GaPa_NP", "Palika", "Municipality", "local_level", "NAME_3"]),
   };
 }
@@ -943,7 +970,13 @@ function inferIncidentType(text: string): string {
   return "road_obstruction";
 }
 
+let roadAlertsCache: { at: number; body: any } | null = null;
+const ROAD_ALERTS_TTL_MS = 3 * 60 * 1000;
+
 async function handleRoadAlerts(env: Env): Promise<Response> {
+  if (roadAlertsCache && Date.now() - roadAlertsCache.at < ROAD_ALERTS_TTL_MS) {
+    return jsonResponse(env, roadAlertsCache.body);
+  }
   const syncedAt = new Date().toISOString();
   const dorIncidents: any[] = [];
   if (env.DOR_GOOGLE_SHEET_URL) {
@@ -1049,12 +1082,15 @@ async function handleRoadAlerts(env: Env): Promise<Response> {
   }
   const local = await readJsonData<any[]>(env, "incidents.json", []);
   const merged = [...dorIncidents, ...wazeIncidents, ...(Array.isArray(local) ? local : [])];
-  return jsonResponse(env, {
+  const body = {
     source: "dor+waze+local",
     syncedAt,
     incidents: merged,
     counts: { dor: dorIncidents.length, waze: wazeIncidents.length, local: Array.isArray(local) ? local.length : 0, total: merged.length },
-  });
+  };
+  // Don't pin an empty result when the DoR sheet is configured but didn't answer.
+  if (!env.DOR_GOOGLE_SHEET_URL || dorIncidents.length > 0) roadAlertsCache = { at: Date.now(), body };
+  return jsonResponse(env, body);
 }
 
 async function handleCalculateRoute(request: Request, env: Env): Promise<Response> {

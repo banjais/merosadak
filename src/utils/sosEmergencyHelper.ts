@@ -157,6 +157,8 @@ export interface GenerateSosMessageOptions {
   passengerCount?: number;
   activeRoute?: RoutePlanResult | null;
   batteryPercent?: number | null;
+  /** True when the position is a chosen town or default, not a GPS fix. */
+  approximate?: boolean;
 }
 
 /**
@@ -175,6 +177,7 @@ export function generateFullSosMessage(options: GenerateSosMessageOptions): stri
     passengerCount = 1,
     activeRoute,
     batteryPercent,
+    approximate = false,
   } = options;
 
   const now = new Date();
@@ -201,9 +204,9 @@ export function generateFullSosMessage(options: GenerateSosMessageOptions): stri
     `🚨 *EMERGENCY SOS RESCUE DISPATCH - NEPAL HIGHWAY* 🚨`,
     `⚠️ PRIORITY: ${distress.priority.toUpperCase()} | TIME: ${timeFormatted} NPT`,
     ``,
-    `📍 *PRECISE GPS LOCATION / COORDINATES*:`,
+    approximate ? `📍 *APPROXIMATE LOCATION (no GPS fix)*:` : `📍 *PRECISE GPS LOCATION / COORDINATES*:`,
     `• Lat/Lng: ${lat.toFixed(5)}, ${lng.toFixed(5)} (${coordsFormatted})`,
-    `• Accuracy: ±${accuracyM ? Math.round(accuracyM) : 15} meters${altitudeM ? ` | Alt: ${Math.round(altitudeM)}m ASL` : ''}`,
+    `• Accuracy: ${approximate ? 'APPROXIMATE — nearest town, not a GPS fix' : accuracyM ? `±${Math.round(accuracyM)} meters` : 'GPS accuracy not reported'}${altitudeM ? ` | Alt: ${Math.round(altitudeM)}m ASL` : ''}`,
     `• 🗺️ Live Map Pin: ${mapLink}`,
     ``,
     `🏔️ *NEAREST HIGHWAY LANDMARK*:`,
@@ -236,12 +239,12 @@ export function generateFullSosMessage(options: GenerateSosMessageOptions): stri
  * Generates compact SMS format (<160-300 chars) for weak 2G / SMS emergency transmission
  */
 export function generateCompactSms(options: GenerateSosMessageOptions): string {
-  const { lat, lng, distressType, customNotes, passengerCount = 1, vehicleType } = options;
+  const { lat, lng, distressType, customNotes, passengerCount = 1, vehicleType, approximate = false } = options;
   const distress = DISTRESS_TYPE_CONFIG[distressType];
   const landmark = findNearestLandmark(lat, lng);
   const mapLink = `https://maps.google.com/?q=${lat.toFixed(5)},${lng.toFixed(5)}`;
 
-  return `SOS NEPAL RESCUE: ${distress.iconEmoji} ${distress.label}. Loc: ${lat.toFixed(5)},${lng.toFixed(5)} (~${landmark.distanceKm}km ${landmark.direction} of ${landmark.city.name}). People: ${passengerCount}. Vehicle: ${vehicleType}. ${customNotes ? `Note: ${customNotes}. ` : ''}Map: ${mapLink} Police:100/103`;
+  return `SOS NEPAL RESCUE: ${distress.iconEmoji} ${distress.label}. Loc${approximate ? ' (approx, no GPS)' : ''}: ${lat.toFixed(5)},${lng.toFixed(5)} (~${landmark.distanceKm}km ${landmark.direction} of ${landmark.city.name}). People: ${passengerCount}. Vehicle: ${vehicleType}. ${customNotes ? `Note: ${customNotes}. ` : ''}Map: ${mapLink} Police:100/103`;
 }
 
 /**
